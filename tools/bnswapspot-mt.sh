@@ -16,3 +16,6 @@ chmod 755 "./dist/hft-mirco-bnswapspot-mt.$dt"
 
 echo "pd02"
 rsync -avx --progress "./dist/hft-mirco-bnswapspot-mt.$dt" pd02:/usr/local/bin/
+
+echo "ff04"
+rsync -avx --progress "./dist/hft-mirco-bnswapspot-mt.$dt" ff04:/usr/local/bin/
