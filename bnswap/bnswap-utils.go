@@ -344,6 +344,7 @@ func WatchPositionsFromHttp(
 	ctx context.Context, api *API, symbols []string, interval time.Duration,
 	output chan []Position,
 ) {
+	logger.Debugf("%s", WatchPositionsFromHttp)
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
