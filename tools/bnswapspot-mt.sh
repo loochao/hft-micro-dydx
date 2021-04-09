@@ -6,13 +6,13 @@ echo "$version"
 sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/bnswapspot-mt/init.go
 
 
-env GOOS=linux GOARCH=amd64 go build -o "./dist/bnswapspot-mt.$dt" ./applications/bnswapspot-mt
+env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-mirco-bnswapspot-mt.$dt" ./applications/bnswapspot-mt
 
 git add -A
-git commit -m "build bnswapspot-mt.$dt"
+git commit -m "build hft-mirco-bnswapspot-mt.$dt"
 git push origin master
 
-chmod 755 "./dist/bnswapspot-mt.$dt"
+chmod 755 "./dist/hft-mirco-bnswapspot-mt.$dt"
 
 echo "pd02"
-rsync -avx --progress "./dist/bnswapspot-mt.$dt" pd02:/usr/local/bin/
+rsync -avx --progress "./dist/hft-mirco-bnswapspot-mt.$dt" pd02:/usr/local/bin/
