@@ -1,0 +1,47 @@
+name: bnswap-t-ff01
+dryRun: false
+proxyAddress: socks5://127.0.0.1:1080
+cpuProfile: /Users/chenjilin/Downloads/bnswap-t.prof
+internalInflux:
+  address: http://jilinchen.com:18086
+  username: hft
+  password: hft
+  database: test
+  measurement: bnswap-t-ff01
+  batchSize: 10
+  saveInterval: 1m0s
+externalInflux:
+  address: http://jilinchen.com:18086
+  username: hft
+  password: hft
+  database: test
+  measurement: accounts
+  batchSize: 0
+  saveInterval: 1m0s
+marginType: CROSSED
+apiKey: ksu8ZMYNnhIXbq0KQtEczuZxMQH5eoRAnJGDBGj6BzlMVtvGpQccIN8kmzU4bE52
+apiSecret: ZEEI4X5FJ2CoPNwjE05UoJafVl0LM0HtUWIdhxaROvi9StKyihaIZMNEh06JS004
+leverage: 10
+changeLeverage: false
+loopInterval: 1s
+pullInterval: 1m0s
+
+tradeMinCount: 30
+tradeLookback: 3m
+quantile: 0.5
+quantileUpdateInterval: 1m
+positionMaxAge: 3m
+
+symbolBatchSize: 30
+signalTimeToLive: 500ms
+
+enterSlippage: 0.05
+startValue: 278
+enterValue: 20
+
+orderTimeout: 5s
+orderSilent: 1m
+enterSilent: 1m
+
+bnbMinSize: 0.1
+bnbCheckInterval: 1m
