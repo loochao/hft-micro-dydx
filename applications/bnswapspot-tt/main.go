@@ -322,7 +322,11 @@ func main() {
 			if data.CurrentOrderStatus == bnspot.OrderStatusFilled {
 				if data.CumulativeFilledQuantity > 0 && data.CumulativeQuoteAssetTransactedQuantity > 0 {
 					filledPrice := data.CumulativeQuoteAssetTransactedQuantity / data.CumulativeFilledQuantity
-					bnspotLastFilledPrices[data.Symbol] = filledPrice
+					if data.Side == common.OrderSideBuy {
+						bnspotLastFilledBuyPrices[data.Symbol] = filledPrice
+					} else {
+						bnspotLastFilledSellPrices[data.Symbol] = filledPrice
+					}
 					logger.Debugf("SPOT WS ORDER FILLED %s %s SIZE %f PRICE %f", data.Symbol, data.Side, data.CumulativeFilledQuantity, filledPrice)
 				}
 			} else if data.CurrentOrderStatus == bnspot.OrderStatusCancelled {
@@ -407,9 +411,16 @@ func main() {
 				bnswapOrderSilentTimes[order.Symbol] = time.Now().Add(time.Second)
 				bnswapPositionsUpdateTimes[order.Symbol] = time.Unix(0, 0)
 			}
-			if spotPrice, ok := bnspotLastFilledPrices[order.Symbol]; ok && order.Status == "FILLED" {
-				bnRealisedSpread[order.Symbol] = (order.CumQuote - spotPrice) / spotPrice
-				logger.Debugf("%s REALISED Spread %f", order.Symbol, bnRealisedSpread[order.Symbol])
+			if order.Status == "FILLED" && order.Side == common.OrderSideSell {
+				if spotPrice, ok := bnspotLastFilledBuyPrices[order.Symbol]; ok {
+					bnRealisedSpread[order.Symbol] = (order.CumQuote - spotPrice) / spotPrice
+					logger.Debugf("%s REALISED OPEN SPREAD %f", order.Symbol, bnRealisedSpread[order.Symbol])
+				}
+			}else if order.Status == "FILLED" && order.Side == common.OrderSideBuy {
+				if spotPrice, ok := bnspotLastFilledSellPrices[order.Symbol]; ok {
+					bnRealisedSpread[order.Symbol] = (order.CumQuote - spotPrice) / spotPrice
+					logger.Debugf("%s REALISED CLOSE SPREAD %f", order.Symbol, bnRealisedSpread[order.Symbol])
+				}
 			}
 			logger.Debug(logStr)
 			break
@@ -431,7 +442,11 @@ func main() {
 				}
 				if sumQty != 0 && sumVal != 0 {
 					filledPrice := sumVal / sumQty
-					bnspotLastFilledPrices[order.Symbol] = filledPrice
+					if order.Side == common.OrderSideBuy {
+						bnspotLastFilledBuyPrices[order.Symbol] = filledPrice
+					} else {
+						bnspotLastFilledSellPrices[order.Symbol] = filledPrice
+					}
 					logStr = fmt.Sprintf("%s FILLED PRICE %f", logStr, filledPrice)
 				}
 			}

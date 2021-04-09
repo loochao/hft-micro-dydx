@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/hft-arbitrage.iml" filepath="$PROJECT_DIR$/.idea/hft-arbitrage.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/hft-micro.iml" filepath="$PROJECT_DIR$/.idea/hft-micro.iml" />
     </modules>
   </component>
 </project>

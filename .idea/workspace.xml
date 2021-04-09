@@ -1,246 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="f4835bb2-b74a-4cec-bb9b-4701a3750f07" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-t/main-state.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-t/state-base_gen.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-t/state-base_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-t/strategy.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/common/byptes_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/common/strings_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/common/symbols_gen.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/common/symbols_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+    <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswap-t/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-t/config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswap-t/http-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-t/http-swap.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswap-t/influx.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-t/influx.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswap-t/init.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswap-t/loop.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-t/loop.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswap-t/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-t/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswap-t/quantile.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-t/quantile.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswap-t/trade.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-t/trade.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswap-t/type.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-t/type.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswap-t/ws-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-t/ws-spot.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswap-t/ws-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-t/ws-swap.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/http-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/http-spot.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/http-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/http-swap.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/influx.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/influx.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/init.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/lob-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/lob-spot.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/lob-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/lob-swap.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/loop.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/loop.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/order-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/order-spot.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/quantile.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/quantile.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/spread.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/spread.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/sync-bars.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/sync-bars.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/type.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/type.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/ws-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/ws-spot.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/ws-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/ws-swap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/http-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/http-spot.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/http-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/http-swap.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/influx.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/influx.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/init.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/lob-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/lob-spot.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/lob-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/lob-swap.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/loop.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/loop.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/quantile.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/quantile.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/spread.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/spread.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/sync-bars.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/sync-bars.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/type.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/type.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/ws-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/ws-spot.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/ws-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/ws-swap.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-api.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-depth20-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-depth20-ws.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-user-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-user-ws.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-user-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-user-ws_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-api.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-markprice-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-markprice-ws.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-markprice-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-markprice-ws_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-trade-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-trade-ws.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-trade-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-trade-ws_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-types.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-types.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-user-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-user-ws.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-user-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-user-ws_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/influx-writer.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/influx-writer.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/utils_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/utils_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/influx/client/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/influx/client/client.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/influx/models/inline_fnv_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/influx/models/inline_fnv_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/influx/models/points.go" beforeDir="false" afterPath="$PROJECT_DIR$/influx/models/points.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/influx/models/points_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/influx/models/points_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/influx/models/statistic_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/influx/models/statistic_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-api.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-public-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-public-api.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-websockt.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-websockt.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-websockt_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-websockt_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/bnswapspot-tt.sh" beforeDir="false" afterPath="$PROJECT_DIR$/tools/bnswapspot-tt.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Go File" />
-      </list>
-    </option>
-  </component>
   <component name="GOROOT" url="file:///usr/local/go" />
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../hft-micro" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GoLibraries">
     <option name="indexEntireGoPath" value="false" />
   </component>
-  <component name="ProjectId" id="1qSLSj4cfNRIqLzrJyfb5vuUPeG" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectId" id="1qvauEVBFglOIq86Zf0YVkdcBvV" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
-    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
-    <property name="DefaultGoTemplateProperty" value="Go File" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="configurable..is.expanded" value="false" />
-    <property name="configurable.GoLibrariesConfigurable.is.expanded" value="true" />
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../hft-micro/tools" />
-    <property name="settings.editor.selected.configurable" value="go.vgo" />
-  </component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/../hft-micro/tools" />
-      <recent name="$PROJECT_DIR$/../hft-micro/applications/bnswap-t" />
-      <recent name="$PROJECT_DIR$/applications/bnswap-t" />
-      <recent name="$PROJECT_DIR$/common" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/applications/bnswap-t" />
-      <recent name="$PROJECT_DIR$/common" />
-    </key>
-  </component>
-  <component name="RunManager" selected="Go Build.go build github.com/geometrybase/hft-micro/applications/bnswap-t">
-    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$" />
-      <go_parameters value="-i" />
-      <kind value="FILE" />
-      <filePath value="$PROJECT_DIR$" />
-      <package value="github.com/geometrybase/bn-mm" />
-      <directory value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="go build github.com/geometrybase/hft-micro/applications/bnswap-t" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/../hft-micro" />
-      <parameters value="-config $PROJECT_DIR$/../hft-micro/applications/bnswap-t/config.yaml" />
-      <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/applications/bnswap-t" />
-      <directory value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="go build state-base_gen.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="FILE" />
-      <filePath value="$PROJECT_DIR$/applications/bnswap-t/state-base_gen.go" />
-      <package value="github.com/geometrybase/bn-mm" />
-      <directory value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="go build symbols_gen.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="FILE" />
-      <filePath value="$PROJECT_DIR$/applications/bnswap-t/symbols_gen.go" />
-      <package value="github.com/geometrybase/bn-mm" />
-      <directory value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$" />
-      <go_parameters value="-i" />
-      <framework value="gotest" />
-      <kind value="DIRECTORY" />
-      <package value="github.com/geometrybase/bn-mm" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="gobench symbols_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/../hft-micro/applications/bnswap-t" />
-      <framework value="gobench" />
-      <kind value="FILE" />
-      <package value="github.com/geometrybase/bn-mm" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/../hft-micro/applications/bnswap-t/symbols_test.go" />
-      <method v="2" />
-    </configuration>
-    <configuration name="state-base_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/applications/bnswap-t" />
-      <framework value="gotest" />
-      <kind value="FILE" />
-      <package value="github.com/geometrybase/bn-mm" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/applications/bnswap-t/state-base_test.go" />
-      <method v="2" />
-    </configuration>
-    <list>
-      <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/bnswap-t" />
-      <item itemvalue="Go Build.go build state-base_gen.go" />
-      <item itemvalue="Go Build.go build symbols_gen.go" />
-      <item itemvalue="Go Test.gobench symbols_test.go" />
-      <item itemvalue="Go Test.state-base_test.go" />
-    </list>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/bnswap-t" />
-        <item itemvalue="Go Test.gobench symbols_test.go" />
-        <item itemvalue="Go Test.state-base_test.go" />
-        <item itemvalue="Go Build.go build state-base_gen.go" />
-        <item itemvalue="Go Build.go build symbols_gen.go" />
-      </list>
-    </recent_temporary>
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
-  </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
-    <environment>
-      <map>
-        <entry key="BN_SYMBOLS" value="BTCUSDT,LTCUSDT,ETHUSDT,NEOUSDT,QTUMUSDT,EOSUSDT,ZRXUSDT,OMGUSDT,LRCUSDT,TRXUSDT,KNCUSDT,IOTAUSDT,LINKUSDT,CVCUSDT,ETCUSDT,ZECUSDT,BATUSDT,DASHUSDT,XMRUSDT,ENJUSDT,XRPUSDT,STORJUSDT,BTSUSDT,ADAUSDT,XLMUSDT,WAVESUSDT,ICXUSDT,RLCUSDT,IOSTUSDT,BLZUSDT,ONTUSDT,ZILUSDT,ZENUSDT,THETAUSDT,VETUSDT,RENUSDT,MATICUSDT,ATOMUSDT,FTMUSDT,CHZUSDT,ALGOUSDT,DOGEUSDT,ANKRUSDT,TOMOUSDT,BANDUSDT,XTZUSDT,KAVAUSDT,BCHUSDT,SOLUSDT,HNTUSDT,COMPUSDT,MKRUSDT,SXPUSDT,SNXUSDT,DOTUSDT,RUNEUSDT,BALUSDT,YFIUSDT,SRMUSDT,CRVUSDT,SANDUSDT,OCEANUSDT,LUNAUSDT,RSRUSDT,TRBUSDT,EGLDUSDT,BZRXUSDT,KSMUSDT,SUSHIUSDT,YFIIUSDT,BELUSDT,UNIUSDT,AVAXUSDT,FLMUSDT,ALPHAUSDT,NEARUSDT,AAVEUSDT,FILUSDT,CTKUSDT,AXSUSDT,AKROUSDT,SKLUSDT,GRTUSDT,1INCHUSDT,LITUSDT,RVNUSDT,SFPUSDT,REEFUSDT,DODOUSDT,COTIUSDT,CHRUSDT,ALICEUSDT,HBARUSDT,MANAUSDT,STMXUSDT,UNFIUSDT,XEMUSDT" />
-      </map>
-    </environment>
   </component>
 </project>
