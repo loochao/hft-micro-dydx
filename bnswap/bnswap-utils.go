@@ -368,9 +368,9 @@ func WatchPositionsFromHttp(
 				for _, position := range positions {
 					position := position
 					position.UpdateTime = time.Now()
-					if position.PositionAmt == 0 {
-						position.PositionSide = "BOTH"
-					}
+					//if position.PositionAmt == 0 {
+					//	position.PositionSide = "BOTH"
+					//}
 					positionBySymbols[position.Symbol] = position
 				}
 				outPositions := make([]Position, len(symbols))
