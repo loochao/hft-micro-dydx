@@ -19,3 +19,6 @@ rsync -avx --progress "./dist/hft-mirco-bnswapspot-mt.$dt" pd02:/usr/local/bin/
 
 echo "ff04"
 rsync -avx --progress "./dist/hft-mirco-bnswapspot-mt.$dt" ff04:/usr/local/bin/
+
+echo "wenzhe"
+rsync -avx --progress "./dist/hft-mirco-bnswapspot-mt.$dt" wenzhe:/usr/local/bin/
