@@ -93,7 +93,8 @@ var bnBarsMapUpdated = make(map[string]bool)
 var bnBarsMapCh = make(chan [2]common.KLinesMap, 10)
 var bnQuantilesCh = make(chan map[string]Quantile)
 var bnQuantiles = make(map[string]Quantile)
-var bnspotLastFilledPrices = make(map[string]float64)
+var bnspotLastFilledBuyPrices = make(map[string]float64)
+var bnspotLastFilledSellPrices = make(map[string]float64)
 var bnRealisedSpread = make(map[string]float64)
 var bnSpreads = make(map[string]Spread)
 
@@ -103,7 +104,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210409 07:40:10  ####")
+	logger.Debug("####  BUILD @ 20210409 08:08:46  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
