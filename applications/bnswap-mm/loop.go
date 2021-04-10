@@ -68,10 +68,10 @@ func updateSwapNewOrders() {
 			if order.Quantity < 0 {
 				order.Quantity = -order.Quantity
 				order.Side = common.OrderSideBuy
-				order.Price = math.Floor(spread.OrderBook.CloseBidVWAP/swapTickSize) * swapTickSize
+				order.Price = math.Floor(spread.OrderBook.BidPrice/swapTickSize) * swapTickSize
 			} else {
 				order.Side = common.OrderSideSell
-				order.Price = math.Ceil(spread.OrderBook.CloseAskVWAP/swapTickSize) * swapTickSize
+				order.Price = math.Ceil(spread.OrderBook.AskPrice/swapTickSize) * swapTickSize
 			}
 			bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
 			bnswapOrderCancelCounts[symbol] = 0
