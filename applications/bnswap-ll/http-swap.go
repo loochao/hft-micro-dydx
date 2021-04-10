@@ -24,7 +24,7 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != nextPos.PositionAmt ||
 			lastPosition.EntryPrice != nextPos.EntryPrice {
-			logger.Debugf("%s HTTP POSITION %s", nextPos.Symbol,nextPos.ToString())
+			//logger.Debugf("%s HTTP POSITION %s", nextPos.Symbol,nextPos.ToString())
 			if lastPosition != nil && lastPosition.PositionAmt*nextPos.PositionAmt < 0 {
 				if lastPosition.PositionAmt > 0 {
 					bnRealisedPnl[nextPos.Symbol] = (nextPos.EntryPrice - lastPosition.EntryPrice)/lastPosition.EntryPrice
