@@ -154,11 +154,11 @@ func watchTrade(
 			signal.SlowSellPrice = slowSellPricesSortedSlices.Median()
 			if signal.FastBuyPrice < signal.SlowBuyPrice &&
 				signal.FastSellPrice < signal.SlowSellPrice &&
-				signal.FastSellPrice-signal.SlowSellPrice < signal.FastBuyPrice-signal.SlowBuyPrice {
+				signal.FastSellPrice-signal.SlowSellPrice < 2.0*(signal.FastBuyPrice-signal.SlowBuyPrice) {
 				signal.Direction = -1
 			} else if signal.FastBuyPrice > signal.SlowBuyPrice &&
 				signal.FastSellPrice > signal.SlowSellPrice &&
-				signal.FastSellPrice-signal.SlowSellPrice < signal.FastBuyPrice-signal.SlowBuyPrice {
+				2*(signal.FastSellPrice-signal.SlowSellPrice) < signal.FastBuyPrice-signal.SlowBuyPrice {
 				signal.Direction = 1
 			}
 			outputCh <- signal
