@@ -39,7 +39,16 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			lastPosition.PositionAmt != bnswapPositions[pos.Symbol].PositionAmt ||
 			lastPosition.EntryPrice != bnswapPositions[pos.Symbol].EntryPrice {
 			//bnswapOrderSilentTimes[pos.Symbol] = time.Now()
-			logger.Debugf("WS POSITION CHANGED NEW %s", pos.ToString())
+			logger.Debugf("%s WS POSITION CHANGED NEW %s", pos.Symbol, pos.ToString())
+			if lastPosition != nil && bnswapPositions[pos.Symbol].PositionAmt == 0 {
+				if lastPosition.PositionAmt > 0 {
+					bnRealisedPnl[pos.Symbol] = (pos.EntryPrice - lastPosition.EntryPrice) / lastPosition.EntryPrice
+					logger.Debugf("%s REALISED LONG PNL %f", pos.Symbol, bnRealisedPnl[pos.Symbol])
+				} else {
+					bnRealisedPnl[pos.Symbol] = (lastPosition.EntryPrice - pos.EntryPrice) / lastPosition.EntryPrice
+					logger.Debugf("%s REALISED SHORT PNL %f", pos.Symbol, bnRealisedPnl[pos.Symbol])
+				}
+			}
 		}
 	}
 	for _, balance := range data.Account.Balances {
@@ -48,8 +57,8 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			cwb := balance.CrossWalletBalance
 			if bnswapUSDTAsset == nil {
 				bnswapUSDTAsset = &bnswap.Asset{
-					Asset:         balance.Asset,
-					WalletBalance: &wb,
+					Asset:              balance.Asset,
+					WalletBalance:      &wb,
 					CrossWalletBalance: &cwb,
 				}
 			} else {
@@ -63,8 +72,8 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			cwb := balance.CrossWalletBalance
 			if bnswapBNBAsset == nil {
 				bnswapBNBAsset = &bnswap.Asset{
-					Asset:         balance.Asset,
-					WalletBalance: &wb,
+					Asset:              balance.Asset,
+					WalletBalance:      &wb,
 					CrossWalletBalance: &cwb,
 				}
 			} else {

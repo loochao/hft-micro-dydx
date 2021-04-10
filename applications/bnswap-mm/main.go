@@ -317,20 +317,6 @@ func main() {
 				bnswapOrderSilentTimes[order.Symbol] = time.Now().Add(time.Second)
 				bnswapPositionsUpdateTimes[order.Symbol] = time.Unix(0, 0)
 			}
-			if order.Status == common.OrderStatusFilled {
-				if order.Side == common.OrderSideSell {
-					if lastOrder, ok := bnswapLastFilledOrders[order.Symbol]; ok && lastOrder.Side == common.OrderSideBuy && !lastOrder.ReduceOnly {
-						bnRealisedPnl[order.Symbol] = (order.CumQuote - lastOrder.CumQuote) / lastOrder.CumQuote
-						logger.Debugf("%s REALISED LONG PNL %f", order.Symbol, bnRealisedPnl[order.Symbol])
-					}
-				} else if order.Side == common.OrderSideBuy {
-					if lastOrder, ok := bnswapLastFilledOrders[order.Symbol]; ok && lastOrder.Side == common.OrderSideSell && !lastOrder.ReduceOnly {
-						bnRealisedPnl[order.Symbol] = (lastOrder.CumQuote - order.CumQuote) / lastOrder.CumQuote
-						logger.Debugf("%s REALISED SHORT PNL %f", order.Symbol, bnRealisedPnl[order.Symbol])
-					}
-				}
-				bnswapLastFilledOrders[order.Symbol] = order
-			}
 			delete(bnswapOpenOrders, order.Symbol)
 			logger.Debug(logStr)
 			break
@@ -350,18 +336,6 @@ func main() {
 					delete(bnswapOpenOrders, order.Symbol)
 				}
 			} else if order.Status == common.OrderStatusFilled {
-				if order.Side == common.OrderSideSell {
-					if lastOrder, ok := bnswapLastFilledOrders[order.Symbol]; ok && lastOrder.Side == common.OrderSideBuy && !lastOrder.ReduceOnly {
-						bnRealisedPnl[order.Symbol] = (order.CumQuote - lastOrder.CumQuote) / lastOrder.CumQuote
-						logger.Debugf("%s REALISED LONG PNL %f", order.Symbol, bnRealisedPnl[order.Symbol])
-					}
-				} else if order.Side == common.OrderSideBuy && order.Status == "FILLED" {
-					if lastOrder, ok := bnswapLastFilledOrders[order.Symbol]; ok && lastOrder.Side == common.OrderSideSell && !lastOrder.ReduceOnly {
-						bnRealisedPnl[order.Symbol] = (lastOrder.CumQuote - order.CumQuote) / lastOrder.CumQuote
-						logger.Debugf("%s REALISED SHORT PNL %f", order.Symbol, bnRealisedPnl[order.Symbol])
-					}
-				}
-				bnswapLastFilledOrders[order.Symbol] = order
 				if openOrder, ok := bnswapOpenOrders[order.Symbol]; ok && openOrder.NewClientOrderId == order.ClientOrderId {
 					delete(bnswapOpenOrders, order.Symbol)
 				}

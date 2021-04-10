@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
@@ -30,7 +29,16 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 			lastPosition.EntryPrice != nextPos.EntryPrice {
 			//如果SWAP变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			bnswapOrderSilentTimes[nextPos.Symbol] = time.Now()
-			logger.Debugf("SWAP HTTP POSITION %s", nextPos.ToString())
+			logger.Debugf("%s HTTP POSITION %s", nextPos.Symbol,nextPos.ToString())
+			if lastPosition != nil && bnswapPositions[nextPos.Symbol].PositionAmt == 0 {
+				if lastPosition.PositionAmt > 0 {
+					bnRealisedPnl[nextPos.Symbol] = (nextPos.EntryPrice - lastPosition.EntryPrice) / lastPosition.EntryPrice
+					logger.Debugf("%s REALISED LONG PNL %f", nextPos.Symbol, bnRealisedPnl[nextPos.Symbol])
+				} else {
+					bnRealisedPnl[nextPos.Symbol] = (lastPosition.EntryPrice - nextPos.EntryPrice) / lastPosition.EntryPrice
+					logger.Debugf("%s REALISED SHORT PNL %f", nextPos.Symbol, bnRealisedPnl[nextPos.Symbol])
+				}
+			}
 		}
 	}
 }
@@ -50,27 +58,3 @@ func handleSwapHttpAccount(account bnswap.Account) {
 	}
 }
 
-func swapCreateOrder(
-	ctx context.Context,
-	api *bnswap.API,
-	timeout time.Duration,
-	params bnswap.NewOrderParams,
-) {
-	childCtx, _ := context.WithTimeout(ctx, timeout)
-	order, err := api.SubmitOrder(childCtx, params)
-	if err != nil {
-		logger.Debugf("SUBMIT ERROR %s  %v ", params.ToString(), err)
-		select {
-		case <-ctx.Done():
-		case bnswapOrderNewErrorCh <- SwapOrderNewError{
-			Error:  err,
-			Params: params,
-		}:
-		}
-	} else if order.Status == "FILLED" ||
-		order.Status == "CANCELED" ||
-		order.Status == "REJECTED" ||
-		order.Status == "EXPIRED" {
-		bnswapOrderFinishCh <- *order
-	}
-}
