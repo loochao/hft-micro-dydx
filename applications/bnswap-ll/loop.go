@@ -75,6 +75,7 @@ func updateSwapPosition() {
 			}
 			if position.PositionAmt <= 0 {
 				bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
+				bnswapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
 				bnswapOrderNewChs[symbol] <- order
 			}
 		} else {
@@ -105,6 +106,7 @@ func updateSwapPosition() {
 			}
 			if position.PositionAmt >= 0 {
 				bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
+				bnswapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
 				bnswapOrderNewChs[symbol] <- order
 			}
 		}
