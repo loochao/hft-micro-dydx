@@ -40,6 +40,15 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			lastPosition.EntryPrice != bnswapPositions[pos.Symbol].EntryPrice {
 			//如果开仓立即挂平仓单, 如果平仓至少等一个OrderInterval
 			logger.Debugf("%s WS POSITION CHANGED NEW %s", pos.Symbol, pos.ToString())
+			if lastPosition != nil && lastPosition.PositionAmt*pos.PositionAmt < 0 {
+				if lastPosition.PositionAmt > 0 {
+					bnRealisedPnl[pos.Symbol] = (pos.EntryPrice - lastPosition.EntryPrice)/lastPosition.EntryPrice
+					logger.Debugf("%s CLOSE LONG PNL %f", pos.Symbol, bnRealisedPnl[pos.Symbol])
+				}else{
+					bnRealisedPnl[pos.Symbol] = (lastPosition.EntryPrice - pos.EntryPrice)/lastPosition.EntryPrice
+					logger.Debugf("%s CLOSE SHORT PNL %f", pos.Symbol, bnRealisedPnl[pos.Symbol])
+				}
+			}
 		}
 	}
 	for _, balance := range data.Account.Balances {
