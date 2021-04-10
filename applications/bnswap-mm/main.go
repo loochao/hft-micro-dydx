@@ -171,8 +171,6 @@ func main() {
 		)
 		go watchSwapWalkedOrderBooks(
 			bnGlobalCtx, *bnConfig.ProxyAddress,
-			*bnConfig.OrderBookSmallImpact,
-			*bnConfig.OrderBookLargeImpact,
 			bnSymbols[start:end],
 			quantilesCh,
 			walkedOrderBookCh,

@@ -9,7 +9,7 @@ import (
 
 func watchSwapWalkedOrderBooks(
 	ctx context.Context, proxyAddress string,
-	takerImpact, makerImpact float64, symbols []string,
+	symbols []string,
 	quantilesCh chan map[string]Quantile,
 	outputWLob chan WalkedOrderBook,
 ) {
@@ -24,7 +24,7 @@ func watchSwapWalkedOrderBooks(
 	var quantiles map[string]Quantile
 	for {
 		select {
-		case quantiles = <- quantilesCh:
+		case quantiles = <-quantilesCh:
 			logger.Debugf("QUANTILES %v", quantiles)
 			break
 		case <-ws.Done():

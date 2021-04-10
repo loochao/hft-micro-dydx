@@ -39,8 +39,6 @@ type Config struct {
 
 	Symbols []string `yaml:"symbols,omitempty"`
 
-	OrderBookSmallImpact *float64 `yaml:"orderBookSmallImpact,omitempty"`
-	OrderBookLargeImpact *float64 `yaml:"orderBookLargeImpact,omitempty"`
 	OrderBookBatchSize   *int     `yaml:"orderBookBatchSize,omitempty"`
 
 	OrderBookMaxAgeDiff         *time.Duration `yaml:"orderBookMaxAgeDiff,omitempty"`
