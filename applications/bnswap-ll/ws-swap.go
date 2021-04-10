@@ -39,7 +39,6 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			lastPosition.PositionAmt != bnswapPositions[pos.Symbol].PositionAmt ||
 			lastPosition.EntryPrice != bnswapPositions[pos.Symbol].EntryPrice {
 			//如果开仓立即挂平仓单, 如果平仓至少等一个OrderInterval
-			//logger.Debugf("%s WS POSITION CHANGED NEW %s", pos.Symbol, pos.ToString())
 			if lastPosition != nil && lastPosition.PositionAmt*pos.PositionAmt < 0 {
 				if lastPosition.PositionAmt > 0 {
 					bnRealisedPnl[pos.Symbol] = (pos.EntryPrice - lastPosition.EntryPrice)/lastPosition.EntryPrice
