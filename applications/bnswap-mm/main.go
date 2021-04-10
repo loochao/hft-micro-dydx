@@ -290,7 +290,13 @@ func main() {
 			)
 			break
 		case newError := <-bnswapOrderNewErrorCh:
-			bnswapOrderSilentTimes[newError.Params.Symbol] = time.Now().Add(time.Second * 15)
+			order := newError.Params
+			bnswapOrderSilentTimes[order.Symbol] = time.Now()
+			bnswapCancelSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent*3)
+			bnswapOrderCancelCounts[order.Symbol] += 1
+			bnswapOrderRequestChs[order.Symbol] <- SwapOrderRequest{
+				Cancel: &bnswap.CancelAllOrderParams{Symbol: order.Symbol},
+			}
 			break
 
 		case order := <-bnswapOrderFinishCh:
