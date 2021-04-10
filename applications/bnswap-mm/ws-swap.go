@@ -38,8 +38,11 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != bnswapPositions[pos.Symbol].PositionAmt ||
 			lastPosition.EntryPrice != bnswapPositions[pos.Symbol].EntryPrice {
+			//如果开仓立即挂平仓单, 如果平仓至少等一个OrderInterval
 			if pos.PositionAmt != 0 {
 				bnswapOrderSilentTimes[pos.Symbol] = time.Now()
+			}else {
+				bnswapOrderSilentTimes[pos.Symbol] = bnswapLastOrderTimes[pos.Symbol].Add(*bnConfig.OrderInterval)
 			}
 			logger.Debugf("%s WS POSITION CHANGED NEW %s", pos.Symbol, pos.ToString())
 		}

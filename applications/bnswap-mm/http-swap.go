@@ -27,11 +27,12 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != nextPos.PositionAmt ||
 			lastPosition.EntryPrice != nextPos.EntryPrice {
-			//如果SWAP变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
-			bnswapOrderSilentTimes[nextPos.Symbol] = time.Now()
 			logger.Debugf("%s HTTP POSITION %s", nextPos.Symbol,nextPos.ToString())
+			//如果开仓立即挂平仓单, 如果平仓至少等一个OrderInterval
 			if nextPos.PositionAmt != 0 {
 				bnswapOrderSilentTimes[nextPos.Symbol] = time.Now()
+			}else {
+				bnswapOrderSilentTimes[nextPos.Symbol] = bnswapLastOrderTimes[nextPos.Symbol].Add(*bnConfig.OrderInterval)
 			}
 		}
 	}

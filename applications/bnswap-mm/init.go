@@ -65,7 +65,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210410 12:45:08  ####")
+	logger.Debug("####  BUILD @ 20210410 12:53:31  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -104,7 +104,6 @@ func init() {
 		symbol := bnConfig.Symbols[i]
 		bnSymbols = append(bnSymbols, symbol)
 		bnSymbolsMap[symbol] = true
-		bnswapOrderSilentTimes[symbol] = time.Now()
 		bnswapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
 		bnswapOrderSilentTimes[symbol] = time.Now()
 

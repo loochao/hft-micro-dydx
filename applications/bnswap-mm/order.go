@@ -77,7 +77,7 @@ func updateSwapOldOrders() {
 		if time.Now().Sub(bnswapLastOrderTimes[symbol]) < *bnConfig.OrderInterval {
 			continue
 		}
-		bnswapOrderSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderSilent)
+		bnswapOrderSilentTimes[order.Symbol] = time.Now()
 		bnswapCancelSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent)
 		bnswapOrderCancelCounts[order.Symbol] += 1
 		bnswapOrderRequestChs[order.Symbol] <- SwapOrderRequest{
