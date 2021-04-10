@@ -2,25 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/config.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/config.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/http-swap.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/influx.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/init.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/lob.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/loop.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/main.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/order.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/spread.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/type.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/ws-swap.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tools/bnswap-mm.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/quantile.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-mm/sync-bars.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-api.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-types.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-types.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/influx-writer.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/influx-writer.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/types.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/types.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswap-mm/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-mm/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswap-mm/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-mm/config.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswap-mm/lob.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-mm/lob.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswap-mm/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-mm/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswap-mm/type.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswap-mm/type.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,10 +35,11 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/tools" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/applications/bnswap-mm" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/applications/bnswap-mm" />
       <recent name="$PROJECT_DIR$/tools" />
       <recent name="$PROJECT_DIR$/applications" />
     </key>

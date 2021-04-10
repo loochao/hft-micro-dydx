@@ -54,6 +54,12 @@ orderCancelSilent: 5s
 orderMaxCancelCount: 5
 orderInterval: 1m
 
+pullBarsInterval: 30m
+pullBarsRetryInterval: 3s
+barsLookback: 720
+openQuantile: 0.95
+closeQuantile: 0.05
+
 symbols:
   - CELRUSDT
   #  - BTCUSDT

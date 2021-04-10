@@ -151,11 +151,30 @@ func main() {
 		if end > len(bnSymbols) {
 			end = len(bnSymbols)
 		}
+		barsMapCh := make(chan common.KLinesMap)
+		quantilesCh := make(chan map[string]Quantile)
+		go watchSwapBars(
+			bnGlobalCtx,
+			bnswapAPI,
+			bnSymbols[start:end],
+			*bnConfig.BarsLookback,
+			*bnConfig.PullBarsInterval,
+			*bnConfig.PullBarsRetryInterval,
+			barsMapCh,
+		)
+		go watchDeltaQuantile(
+			bnGlobalCtx,
+			*bnConfig.OpenQuantile,
+			*bnConfig.CloseQuantile,
+			barsMapCh,
+			quantilesCh,
+		)
 		go watchSwapWalkedOrderBooks(
 			bnGlobalCtx, *bnConfig.ProxyAddress,
 			*bnConfig.OrderBookSmallImpact,
 			*bnConfig.OrderBookLargeImpact,
 			bnSymbols[start:end],
+			quantilesCh,
 			walkedOrderBookCh,
 		)
 		go watchMarkPrice(

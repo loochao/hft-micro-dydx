@@ -18,21 +18,11 @@ type SpotOrderNewError struct {
 }
 
 type Quantile struct {
-	Symbol       string
-	Mid          float64
-	Top          float64
-	Bot          float64
-	FarBot       float64
-	FarTop       float64
-	TopBandScale float64
-	BotBandScale float64
-	MaClose      float64
+	Symbol string
+	Open   float64
+	Close  float64
 }
 
-const (
-	WalkedOrderBookTypeSwap = "SWAP"
-	WalkedOrderBookTypeSpot = "Spot"
-)
 
 type WalkedOrderBook struct {
 	Symbol           string

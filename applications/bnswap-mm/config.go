@@ -49,19 +49,25 @@ type Config struct {
 	SpreadLookbackDuration      *time.Duration `yaml:"spreadLookbackDuration,omitempty"`
 	SpreadLookbackMinimalWindow *int           `yaml:"spreadLookbackMinimalWindow,omitempty"`
 
-	StartValue                  *float64       `yaml:"startValue,omitempty"`
-	EnterFreePct                *float64       `yaml:"enterFreePct,omitempty"`
-	EnterMinimalStep            *float64       `yaml:"enterMinimalStep,omitempty"`
-	EnterMinimalSpread          *float64       `yaml:"enterMinimalSpread,omitempty"`
-	EnterMaximalSpread          *float64       `yaml:"enterMaximalSpread,omitempty"`
-	MinimalLongFundingRate      *float64       `yaml:"minimalLongFundingRate,omitempty"`
-	MaximalShortFundingRate     *float64       `yaml:"maximalShortFundingRate,omitempty"`
+	StartValue              *float64 `yaml:"startValue,omitempty"`
+	EnterFreePct            *float64 `yaml:"enterFreePct,omitempty"`
+	EnterMinimalStep        *float64 `yaml:"enterMinimalStep,omitempty"`
+	EnterMinimalSpread      *float64 `yaml:"enterMinimalSpread,omitempty"`
+	EnterMaximalSpread      *float64 `yaml:"enterMaximalSpread,omitempty"`
+	MinimalLongFundingRate  *float64 `yaml:"minimalLongFundingRate,omitempty"`
+	MaximalShortFundingRate *float64 `yaml:"maximalShortFundingRate,omitempty"`
 
 	OrderInterval       *time.Duration `yaml:"orderInterval,omitempty"`
 	OrderTimeout        *time.Duration `yaml:"orderTimeout,omitempty"`
 	OrderSilent         *time.Duration `yaml:"orderSilent,omitempty"`
 	OrderCancelSilent   *time.Duration `yaml:"orderCancelSilent,omitempty"`
 	OrderMaxCancelCount *int           `yaml:"orderMaxCancelCount,omitempty"`
+
+	PullBarsInterval      *time.Duration `yaml:"pullBarsInterval,omitempty"`
+	PullBarsRetryInterval *time.Duration `yaml:"pullBarsRetryInterval,omitempty"`
+	BarsLookback          *int           `yaml:"barsLookback,omitempty"`
+	OpenQuantile          *float64       `yaml:"openQuantile,omitempty"`
+	CloseQuantile         *float64       `yaml:"closeQuantile,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

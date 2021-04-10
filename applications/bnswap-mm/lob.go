@@ -10,6 +10,7 @@ import (
 func watchSwapWalkedOrderBooks(
 	ctx context.Context, proxyAddress string,
 	takerImpact, makerImpact float64, symbols []string,
+	quantilesCh chan map[string]Quantile,
 	outputWLob chan WalkedOrderBook,
 ) {
 	lastUpdatedIds := make(map[string]int64)
@@ -20,9 +21,12 @@ func watchSwapWalkedOrderBooks(
 		proxyAddress,
 	)
 	defer ws.Stop()
-
+	var quantiles map[string]Quantile
 	for {
 		select {
+		case quantiles = <- quantilesCh:
+			logger.Debugf("QUANTILES %v", quantiles)
+			break
 		case <-ws.Done():
 			logger.Fatal("DEPTH20 WS CONTEXT DONE %s", symbols)
 		case <-ctx.Done():
@@ -30,14 +34,18 @@ func watchSwapWalkedOrderBooks(
 		case lob := <-ws.DataCh:
 			if lastUpdatedIds[lob.Symbol] < lob.LastUpdateId {
 				lastUpdatedIds[lob.Symbol] = lob.LastUpdateId
-				outputWLob <- walkSwapOrderBook(lob, takerImpact, makerImpact)
+				if quantiles != nil {
+					if q, ok := quantiles[lob.Symbol]; ok {
+						outputWLob <- walkSwapOrderBook(lob, q.Open, q.Close)
+					}
+				}
 			}
 			break
 		}
 	}
 }
 
-func walkSwapOrderBook(orderBook *bnswap.Depth, takerImpact, makerImpact float64) WalkedOrderBook {
+func walkSwapOrderBook(orderBook *bnswap.Depth, openImpact, closeImpact float64) WalkedOrderBook {
 	wLob := WalkedOrderBook{
 		Symbol:      orderBook.Symbol,
 		ArrivalTime: orderBook.ArrivalTime,
@@ -53,9 +61,9 @@ func walkSwapOrderBook(orderBook *bnswap.Depth, takerImpact, makerImpact float64
 		value := bid[0] * bid[1]
 		if !hasMakerData {
 			wLob.OpenBidFarPrice = bid[0]
-			if totalMakerValue+value >= makerImpact {
-				totalMakerQty += (makerImpact - totalMakerValue) / bid[0]
-				totalMakerValue = makerImpact
+			if totalMakerValue+value >= closeImpact {
+				totalMakerQty += (closeImpact - totalMakerValue) / bid[0]
+				totalMakerValue = closeImpact
 				hasMakerData = true
 			} else {
 				totalMakerQty += bid[1]
@@ -64,9 +72,9 @@ func walkSwapOrderBook(orderBook *bnswap.Depth, takerImpact, makerImpact float64
 		}
 		if !hasTakerData {
 			wLob.CloseBidFarPrice = bid[0]
-			if totalTakerValue+value >= takerImpact {
-				totalTakerQty += (takerImpact - totalTakerValue) / bid[0]
-				totalTakerValue = takerImpact
+			if totalTakerValue+value >= openImpact {
+				totalTakerQty += (openImpact - totalTakerValue) / bid[0]
+				totalTakerValue = openImpact
 				hasTakerData = true
 			} else {
 				totalTakerQty += bid[1]
@@ -90,9 +98,9 @@ func walkSwapOrderBook(orderBook *bnswap.Depth, takerImpact, makerImpact float64
 		value := ask[0] * ask[1]
 		if !hasMakerData {
 			wLob.OpenAskFarPrice = ask[0]
-			if totalMakerValue+value >= makerImpact {
-				totalMakerQty += (makerImpact - totalMakerValue) / ask[0]
-				totalMakerValue = makerImpact
+			if totalMakerValue+value >= closeImpact {
+				totalMakerQty += (closeImpact - totalMakerValue) / ask[0]
+				totalMakerValue = closeImpact
 				hasMakerData = true
 			} else {
 				totalMakerQty += ask[1]
@@ -101,9 +109,9 @@ func walkSwapOrderBook(orderBook *bnswap.Depth, takerImpact, makerImpact float64
 		}
 		if !hasTakerData {
 			wLob.CloseAskFarPrice = ask[0]
-			if totalTakerValue+value >= takerImpact {
-				totalTakerQty += (takerImpact - totalTakerValue) / ask[0]
-				totalTakerValue = takerImpact
+			if totalTakerValue+value >= openImpact {
+				totalTakerQty += (openImpact - totalTakerValue) / ask[0]
+				totalTakerValue = openImpact
 				hasTakerData = true
 			} else {
 				totalTakerQty += ask[1]
