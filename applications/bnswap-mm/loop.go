@@ -126,13 +126,13 @@ func updateSwapNewOrders() {
 				}
 				continue
 			}
-			logger.Debugf(
-				"%s LONG OPEN %f  %f SIZE %f",
-				symbol,
-				spread.LastLong,
-				spread.MedianLong,
-				quantity,
-			)
+			//logger.Debugf(
+			//	"%s LONG OPEN %f  %f SIZE %f",
+			//	symbol,
+			//	spread.LastLong,
+			//	spread.MedianLong,
+			//	quantity,
+			//)
 			id, _ := common.GenerateShortId()
 			clOrdID := fmt.Sprintf(
 				"%sLL%dML%d",
@@ -206,13 +206,13 @@ func updateSwapNewOrders() {
 				}
 				continue
 			}
-			logger.Debugf(
-				"%s LONG OPEN %f  %f SIZE %f",
-				symbol,
-				spread.LastLong,
-				spread.MedianLong,
-				quantity,
-			)
+			//logger.Debugf(
+			//	"%s LONG OPEN %f  %f SIZE %f",
+			//	symbol,
+			//	spread.LastLong,
+			//	spread.MedianLong,
+			//	quantity,
+			//)
 			id, _ := common.GenerateShortId()
 			clOrdID := fmt.Sprintf(
 				"%sLL%dML%d",

@@ -316,7 +316,7 @@ func main() {
 			break
 
 		case o := <-bnswapCancelOrderResponsesCh:
-			logger.Debugf("CANCEL ALL %v", o)
+			//logger.Debugf("CANCEL ALL %v", o)
 			bnswapCancelSilentTimes[o.Symbol] = time.Now()
 			delete(bnswapOpenOrders, o.Symbol)
 		case order := <-bnswapNewOrderResponseCh:
