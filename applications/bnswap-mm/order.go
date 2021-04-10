@@ -66,7 +66,7 @@ func updateSwapOldOrders() {
 			continue
 		}
 		if !order.ReduceOnly && !isOrderProfitable(order) {
-			bnswapOrderSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderSilent)
+			bnswapOrderSilentTimes[order.Symbol] = bnswapLastOrderTimes[symbol].Add(*bnConfig.OrderInterval)
 			bnswapCancelSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent)
 			bnswapOrderCancelCounts[order.Symbol] += 1
 			bnswapOrderRequestChs[order.Symbol] <- SwapOrderRequest{
