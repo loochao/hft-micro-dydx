@@ -104,7 +104,7 @@ func updateSwapPosition() {
 			}else if size*price < swapMinNotional {
 				continue
 			}
-			if position.PositionAmt <= 0 {
+			if position.PositionAmt >= 0 {
 				bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
 				bnswapOrderNewChs[symbol] <- order
 			}
