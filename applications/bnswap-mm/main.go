@@ -123,14 +123,7 @@ func main() {
 			*bnConfig.InternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
-	externalInfluxSaveTimer := time.NewTimer(
-		time.Now().Truncate(
-			*bnConfig.ExternalInflux.SaveInterval,
-		).Add(
-			*bnConfig.ExternalInflux.SaveInterval * 3,
-		).Sub(time.Now()),
-	)
-	loopTimer := time.NewTimer(time.Second) //先等1分钟
+	loopTimer := time.NewTimer(time.Second)
 
 	defer influxSaveTimer.Stop()
 	defer loopTimer.Stop()
@@ -288,6 +281,7 @@ func main() {
 			break
 		case <-influxSaveTimer.C:
 			handleSave()
+			handleExternalInfluxSave()
 			influxSaveTimer.Reset(
 				time.Now().Truncate(
 					*bnConfig.InternalInflux.SaveInterval,
@@ -296,17 +290,6 @@ func main() {
 				).Sub(time.Now()),
 			)
 			break
-		case <-externalInfluxSaveTimer.C:
-			handleExternalInfluxSave()
-			externalInfluxSaveTimer.Reset(
-				time.Now().Truncate(
-					*bnConfig.ExternalInflux.SaveInterval,
-				).Add(
-					*bnConfig.ExternalInflux.SaveInterval,
-				).Sub(time.Now()),
-			)
-			break
-
 		case newError := <-bnswapOrderNewErrorCh:
 			bnswapOrderSilentTimes[newError.Params.Symbol] = time.Now().Add(time.Second * 15)
 			break
