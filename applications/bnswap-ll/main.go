@@ -159,7 +159,6 @@ func main() {
 		signalCh,
 	)
 
-
 	bnswapNewOrderResponseCh = make(chan bnswap.Order, len(bnSymbols)*2)
 	bnswapNewOrderErrorCh = make(chan SwapOrderNewError, len(bnSymbols)*2)
 	for _, symbol := range bnSymbols {
@@ -235,6 +234,7 @@ func main() {
 				order.Status == common.OrderStatusExpired ||
 				order.Status == common.OrderStatusCancelled {
 				bnswapOrderSilentTimes[order.Symbol] = time.Now()
+				bnswapPositionsUpdateTimes[order.Symbol] = time.Unix(0, 0)
 			} else if order.Status == common.OrderStatusFilled {
 			}
 		case order := <-bnswapNewOrderErrorCh:
