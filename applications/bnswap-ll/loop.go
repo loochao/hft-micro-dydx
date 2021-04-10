@@ -68,10 +68,15 @@ func updateSwapPosition() {
 				NewClientOrderId: clOrdID,
 			}
 			if position.PositionAmt < 0 {
-				order.ReduceOnly = true
-				order.Quantity = -position.PositionAmt
-			} else if price*size < swapMinNotional {
-				continue
+				order.Quantity -= position.PositionAmt
+			}
+			if price*size < swapMinNotional {
+				if position.PositionAmt < 0 {
+					order.ReduceOnly = true
+					order.Quantity = -position.PositionAmt
+				}else{
+					continue
+				}
 			}
 			if position.PositionAmt <= 0 {
 				bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
@@ -99,10 +104,15 @@ func updateSwapPosition() {
 				NewClientOrderId: clOrdID,
 			}
 			if position.PositionAmt > 0 {
-				order.ReduceOnly = true
-				order.Quantity = position.PositionAmt
-			} else if size*price < swapMinNotional {
-				continue
+				order.Quantity += position.PositionAmt
+			}
+			if price*size < swapMinNotional {
+				if position.PositionAmt > 0 {
+					order.ReduceOnly = true
+					order.Quantity = position.PositionAmt
+				}else{
+					continue
+				}
 			}
 			if position.PositionAmt >= 0 {
 				bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
