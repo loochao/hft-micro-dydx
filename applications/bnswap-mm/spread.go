@@ -34,8 +34,8 @@ func watchSpread(
 
 			symbol := lob.Symbol
 
-			lastLongSpread := (lob.CloseAskVWAP - lob.OpenBidVWAP) / lob.OpenBidVWAP
-			lastShortSpread := (lob.OpenAskVWAP - lob.CloseBidVWAP) / lob.OpenAskVWAP
+			lastLongSpread := (lob.CloseAskVWAP - lob.CloseBidVWAP) / lob.CloseBidVWAP
+			lastShortSpread := (lob.CloseAskVWAP - lob.CloseBidVWAP) / lob.CloseAskVWAP
 
 			arrivalTimes[symbol] = append(arrivalTimes[symbol], lob.ArrivalTime)
 			longSpreadWindows[symbol] = append(longSpreadWindows[symbol], lastLongSpread)
