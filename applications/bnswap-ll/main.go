@@ -193,7 +193,7 @@ func main() {
 			return
 		case s := <-signalCh:
 			bnSignal = &s
-			logger.Debugf("%s", bnSignal.ToString())
+			//logger.Debugf("%s", bnSignal.ToString())
 		case p := <-bnswapPositionCh:
 			handleSwapHttpPositions(p)
 			break

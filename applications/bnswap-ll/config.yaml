@@ -32,7 +32,6 @@ positionMaxAge: 3m
 startValue: 897
 enterFreePct: 0.025
 enterSlippage: 0.05
-symbolsBatchSize: 50
 enterMinimalStep: 12
 
 orderTimeout: 5s
@@ -44,6 +43,7 @@ orderInterval: 1m
 leadSymbol: BTCUSDT
 fastLeadLookBack: 10s
 slowLeadLookBack: 100s
+symbolsBatchSize: 50
 
 symbols:
   - CELRUSDT

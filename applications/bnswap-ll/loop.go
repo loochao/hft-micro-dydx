@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"strings"
 	"time"
@@ -48,7 +49,8 @@ func updateSwapPosition() {
 		swapMinNotional := bnswapMinNotional[symbol]
 
 		if entryValue > 0 {
-			price := markPrice.IndexPrice * (1 + *bnConfig.EnterSlippage)
+			logger.Debugf("%s MarkPrice %f", symbol,markPrice.MarkPrice)
+			price := markPrice.MarkPrice * (1 + *bnConfig.EnterSlippage)
 			price = math.Ceil(price/swapTickSize) * swapTickSize
 			size := math.Round(entryValue/swapStepSize) * swapStepSize
 			id, _ := common.GenerateShortId()
@@ -77,8 +79,9 @@ func updateSwapPosition() {
 				bnswapOrderNewChs[symbol] <- order
 			}
 		} else {
-			price := markPrice.IndexPrice * (1 - *bnConfig.EnterSlippage)
-			price = math.Ceil(price/swapTickSize) * swapTickSize
+			logger.Debugf("%s MarkPrice %f", symbol,markPrice.MarkPrice)
+			price := markPrice.MarkPrice * (1.0 - *bnConfig.EnterSlippage)
+			price = math.Floor(price/swapTickSize) * swapTickSize
 			size := math.Round(-entryValue/swapStepSize) * swapStepSize
 			id, _ := common.GenerateShortId()
 			clOrdID := fmt.Sprintf(
