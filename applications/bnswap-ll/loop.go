@@ -49,7 +49,7 @@ func updateSwapPosition() {
 		swapMinNotional := bnswapMinNotional[symbol]
 
 		if entryValue > 0 {
-			logger.Debugf("%s MarkPrice %f", symbol,markPrice.MarkPrice)
+			logger.Debugf("%s MarkPrice %f", symbol, markPrice.MarkPrice)
 			price := markPrice.MarkPrice * (1 + *bnConfig.EnterSlippage)
 			price = math.Ceil(price/swapTickSize) * swapTickSize
 			size := math.Round(entryValue/swapStepSize) * swapStepSize
@@ -61,6 +61,7 @@ func updateSwapPosition() {
 			clOrdID = strings.ReplaceAll(clOrdID, ".", "_")
 			order := bnswap.NewOrderParams{
 				Symbol:           symbol,
+				Price:            price,
 				ReduceOnly:       false,
 				Side:             common.OrderSideBuy,
 				Quantity:         size,
@@ -79,7 +80,7 @@ func updateSwapPosition() {
 				bnswapOrderNewChs[symbol] <- order
 			}
 		} else {
-			logger.Debugf("%s MarkPrice %f", symbol,markPrice.MarkPrice)
+			logger.Debugf("%s MarkPrice %f", symbol, markPrice.MarkPrice)
 			price := markPrice.MarkPrice * (1.0 - *bnConfig.EnterSlippage)
 			price = math.Floor(price/swapTickSize) * swapTickSize
 			size := math.Round(-entryValue/swapStepSize) * swapStepSize
@@ -92,6 +93,7 @@ func updateSwapPosition() {
 			order := bnswap.NewOrderParams{
 				Symbol:           symbol,
 				ReduceOnly:       false,
+				Price:            price,
 				Side:             common.OrderSideSell,
 				Quantity:         size,
 				TimeInForce:      common.OrderTimeInForceFOK,
@@ -101,7 +103,7 @@ func updateSwapPosition() {
 			if position.PositionAmt > 0 {
 				order.ReduceOnly = true
 				order.Quantity = position.PositionAmt
-			}else if size*price < swapMinNotional {
+			} else if size*price < swapMinNotional {
 				continue
 			}
 			if position.PositionAmt >= 0 {
