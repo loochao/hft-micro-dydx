@@ -49,6 +49,7 @@ var bnswapNewOrderResponseCh chan bnswap.Order
 var bnswapLastFilledOrders = make(map[string]bnswap.Order)
 var bnswapCancelOrderResponsesCh chan bnswap.CancelAllOrderResponse
 var bnswapNewOrderErrorCh chan SwapOrderNewError
+var bnSignal Signal
 
 var bnswapOpenOrders = make(map[string]bnswap.NewOrderParams)
 var bnswapOrderCancelCounts = make(map[string]int)

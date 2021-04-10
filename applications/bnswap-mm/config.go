@@ -39,7 +39,11 @@ type Config struct {
 
 	Symbols []string `yaml:"symbols,omitempty"`
 
-	OrderBookBatchSize   *int     `yaml:"orderBookBatchSize,omitempty"`
+	OrderBookBatchSize *int `yaml:"orderBookBatchSize,omitempty"`
+
+	FastLeadLookback *time.Duration `yaml:"fastLeadLookBack,omitempty"`
+	SlowLeadLookback *time.Duration `yaml:"slowLeadLookBack,omitempty"`
+	LeadSymbol       *string        `yaml:"leadSymbol,omitempty"`
 
 	OrderBookMaxAgeDiff         *time.Duration `yaml:"orderBookMaxAgeDiff,omitempty"`
 	OrderBookMaxAge             *time.Duration `yaml:"orderBookMaxAge,omitempty"`

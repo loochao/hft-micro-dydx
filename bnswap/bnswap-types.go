@@ -456,7 +456,7 @@ func (no NewOrderParams) ToString() string {
 
 type Trade struct {
 	//EventType                string  `json:"e,omitempty"`
-	EventTime int64  `json:"E,omitempty"`
+	EventTime time.Time  `json:"-"`
 	Symbol    string `json:"s,omitempty"`
 	//AggregateTradeID         int64   `json:"a,omitempty"`
 	Price    float64 `json:"p,string,omitempty"`

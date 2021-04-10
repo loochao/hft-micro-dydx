@@ -185,6 +185,16 @@ func main() {
 		spreadCh,
 	)
 
+	signalCh := make(chan Signal, 10)
+	go watchTrade(
+		bnGlobalCtx,
+		*bnConfig.ProxyAddress,
+		*bnConfig.LeadSymbol,
+		*bnConfig.FastLeadLookback,
+		*bnConfig.SlowLeadLookback,
+		signalCh,
+	)
+
 	bnswapCancelOrderResponsesCh = make(chan bnswap.CancelAllOrderResponse, len(bnSymbols)*2)
 	bnswapNewOrderResponseCh = make(chan bnswap.Order, len(bnSymbols)*2)
 	bnswapNewOrderErrorCh = make(chan SwapOrderNewError, len(bnSymbols)*2)
@@ -221,6 +231,8 @@ func main() {
 		case <-done:
 			logger.Debugf("Exit")
 			return
+		case bnSignal = <-signalCh:
+			logger.Debugf("%s", bnSignal.ToString())
 		//case <-reBalanceTimer.C:
 		//	if bnspotUSDTBalance != nil && bnswapUSDTAsset != nil && bnswapUSDTAsset.AvailableBalance != nil {
 		//		//SWAP WS ACCOUNT 没有AvailableBalance, 为0 HTTP GET无数据
@@ -292,7 +304,7 @@ func main() {
 		case newError := <-bnswapOrderNewErrorCh:
 			order := newError.Params
 			bnswapOrderSilentTimes[order.Symbol] = time.Now()
-			bnswapCancelSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent*3)
+			bnswapCancelSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent * 3)
 			bnswapOrderCancelCounts[order.Symbol] += 1
 			bnswapOrderRequestChs[order.Symbol] <- SwapOrderRequest{
 				Cancel: &bnswap.CancelAllOrderParams{Symbol: order.Symbol},

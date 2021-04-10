@@ -23,6 +23,24 @@ type Quantile struct {
 	Close  float64
 }
 
+type Signal struct {
+	FastBuyPrice  float64
+	SlowBuyPrice  float64
+	FastSellPrice float64
+	SlowSellPrice float64
+	Direction     float64
+}
+
+func (wo *Signal) ToString() string {
+	return fmt.Sprintf(
+		"SIGNAL %f FastBuy %f SlowBuy %f FastSell %f SlowSell %f",
+		wo.Direction,
+		wo.FastBuyPrice,
+		wo.SlowBuyPrice,
+		wo.FastSellPrice,
+		wo.SlowSellPrice,
+	)
+}
 
 type WalkedOrderBook struct {
 	Symbol           string

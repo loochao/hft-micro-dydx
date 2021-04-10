@@ -53,10 +53,11 @@ func ParseTrade(bytes []byte) (*Trade, error) {
 			break
 		case common.JsonKeyUnknown:
 			if bytes[offset] == 'E' && bytes[offset-1] == '"' && bytes[offset+1] == '"' && offset+13 < bytesLen {
-				trade.EventTime, err = common.ParseBinanceInt(bytes[offset+3 : offset+16])
+				eventTime, err := common.ParseBinanceInt(bytes[offset+3 : offset+16])
 				if err != nil {
 					return nil, err
 				}
+				trade.EventTime = time.Unix(0, eventTime*1000000)
 				offset += 21
 				continue
 			} else if bytes[offset] == 's' && bytes[offset-1] == '"' && bytes[offset+1] == '"' {

@@ -1,5 +1,5 @@
 name: bnswap-mm-ff01
-dryRun: false
+dryRun: true
 proxyAddress: socks5://127.0.0.1:1081
 cpuProfile: #/Users/chenjilin/Downloads/bnswap-mm.prof
 internalInflux:
@@ -59,6 +59,10 @@ pullBarsRetryInterval: 3s
 barsLookback: 720
 openQuantile: 0.25
 closeQuantile: 0.05
+
+leadSymbol: BTCUSDT
+fastLeadLookBack: 10s
+slowLeadLookBack: 100s
 
 symbols:
   - CELRUSDT
