@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
@@ -311,14 +310,11 @@ func main() {
 			break
 
 		case order := <-bnswapOrderFinishCh:
-			logStr := fmt.Sprintf("SWAP ORDER %s", order.ToString())
 			if order.Status == common.OrderStatusReject || order.Status == common.OrderStatusExpired {
-				logStr = fmt.Sprintf("%s RESET TIMEOUT", logStr)
 				bnswapOrderSilentTimes[order.Symbol] = time.Now().Add(time.Second)
 				bnswapPositionsUpdateTimes[order.Symbol] = time.Unix(0, 0)
 			}
 			delete(bnswapOpenOrders, order.Symbol)
-			logger.Debug(logStr)
 			break
 
 		case o := <-bnswapCancelOrderResponsesCh:
@@ -326,11 +322,9 @@ func main() {
 			bnswapCancelSilentTimes[o.Symbol] = time.Now()
 			delete(bnswapOpenOrders, o.Symbol)
 		case order := <-bnswapNewOrderResponseCh:
-			logStr := fmt.Sprintf("SWAP ORDER %v", order)
 			if order.Status == common.OrderStatusReject ||
 				order.Status == common.OrderStatusExpired ||
 				order.Status == common.OrderStatusCancelled {
-				logStr = fmt.Sprintf("%s RESET TIMEOUT", logStr)
 				bnswapOrderSilentTimes[order.Symbol] = time.Now()
 				if openOrder, ok := bnswapOpenOrders[order.Symbol]; ok && openOrder.NewClientOrderId == order.ClientOrderId {
 					delete(bnswapOpenOrders, order.Symbol)
@@ -340,7 +334,6 @@ func main() {
 					delete(bnswapOpenOrders, order.Symbol)
 				}
 			}
-			logger.Debug(logStr)
 		case order := <-bnswapNewOrderErrorCh:
 			if openOrder, ok := bnswapOpenOrders[order.Params.Symbol]; ok && openOrder.NewClientOrderId == order.Params.NewClientOrderId {
 				delete(bnswapOpenOrders, order.Params.Symbol)

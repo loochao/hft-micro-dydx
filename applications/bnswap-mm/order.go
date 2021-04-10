@@ -37,7 +37,7 @@ func watchSwapOrderRequest(
 				}
 			} else if request.New != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				logger.Debugf("SWAP SUBMIT %s", request.New.ToUrlValues().Encode())
+				//logger.Debugf("SWAP SUBMIT %s", request.New.ToUrlValues().Encode())
 				order, err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
 					logger.Debugf("SWAP SUBMIT ERROR %v", err)
