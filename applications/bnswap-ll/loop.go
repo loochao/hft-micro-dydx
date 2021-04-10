@@ -50,7 +50,7 @@ func updateSwapPosition() {
 		if entryValue > 0 {
 			price := markPrice.MarkPrice * (1 + *bnConfig.EnterSlippage)
 			price = math.Ceil(price/swapTickSize) * swapTickSize
-			size := math.Round(entryValue/swapStepSize) * swapStepSize
+			size := math.Round(entryValue/price/swapStepSize) * swapStepSize
 			id, _ := common.GenerateShortId()
 			clOrdID := fmt.Sprintf(
 				"%sOPEN",
@@ -86,7 +86,7 @@ func updateSwapPosition() {
 		} else {
 			price := markPrice.MarkPrice * (1.0 - *bnConfig.EnterSlippage)
 			price = math.Floor(price/swapTickSize) * swapTickSize
-			size := math.Round(-entryValue/swapStepSize) * swapStepSize
+			size := math.Round(-entryValue/price/swapStepSize) * swapStepSize
 			id, _ := common.GenerateShortId()
 			clOrdID := fmt.Sprintf(
 				"%sOPEN",
