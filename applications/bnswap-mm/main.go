@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
@@ -161,6 +162,7 @@ func main() {
 			*bnConfig.PullBarsRetryInterval,
 			barsMapCh,
 		)
+
 		go watchDeltaQuantile(
 			bnGlobalCtx,
 			*bnConfig.OpenQuantile,
@@ -310,11 +312,28 @@ func main() {
 			break
 
 		case order := <-bnswapOrderFinishCh:
+			logStr := fmt.Sprintf("SWAP ORDER %s", order.ToString())
 			if order.Status == common.OrderStatusReject || order.Status == common.OrderStatusExpired {
+				logStr = fmt.Sprintf("%s RESET TIMEOUT", logStr)
 				bnswapOrderSilentTimes[order.Symbol] = time.Now().Add(time.Second)
 				bnswapPositionsUpdateTimes[order.Symbol] = time.Unix(0, 0)
 			}
+			if order.Status == common.OrderStatusFilled {
+				if order.Side == common.OrderSideSell {
+					if lastOrder, ok := bnswapLastFilledOrders[order.Symbol]; ok && lastOrder.Side == common.OrderSideBuy && !lastOrder.ReduceOnly {
+						bnRealisedPnl[order.Symbol] = (order.CumQuote - lastOrder.CumQuote) / lastOrder.CumQuote
+						logger.Debugf("%s REALISED LONG PNL %f", order.Symbol, bnRealisedPnl[order.Symbol])
+					}
+				} else if order.Side == common.OrderSideBuy {
+					if lastOrder, ok := bnswapLastFilledOrders[order.Symbol]; ok && lastOrder.Side == common.OrderSideSell && !lastOrder.ReduceOnly {
+						bnRealisedPnl[order.Symbol] = (lastOrder.CumQuote - order.CumQuote) / lastOrder.CumQuote
+						logger.Debugf("%s REALISED SHORT PNL %f", order.Symbol, bnRealisedPnl[order.Symbol])
+					}
+				}
+				bnswapLastFilledOrders[order.Symbol] = order
+			}
 			delete(bnswapOpenOrders, order.Symbol)
+			logger.Debug(logStr)
 			break
 
 		case o := <-bnswapCancelOrderResponsesCh:
@@ -322,18 +341,33 @@ func main() {
 			bnswapCancelSilentTimes[o.Symbol] = time.Now()
 			delete(bnswapOpenOrders, o.Symbol)
 		case order := <-bnswapNewOrderResponseCh:
+			logStr := fmt.Sprintf("SWAP ORDER %v", order)
 			if order.Status == common.OrderStatusReject ||
 				order.Status == common.OrderStatusExpired ||
 				order.Status == common.OrderStatusCancelled {
+				logStr = fmt.Sprintf("%s RESET TIMEOUT", logStr)
 				bnswapOrderSilentTimes[order.Symbol] = time.Now()
 				if openOrder, ok := bnswapOpenOrders[order.Symbol]; ok && openOrder.NewClientOrderId == order.ClientOrderId {
 					delete(bnswapOpenOrders, order.Symbol)
 				}
 			} else if order.Status == common.OrderStatusFilled {
+				if order.Side == common.OrderSideSell {
+					if lastOrder, ok := bnswapLastFilledOrders[order.Symbol]; ok && lastOrder.Side == common.OrderSideBuy && !lastOrder.ReduceOnly {
+						bnRealisedPnl[order.Symbol] = (order.CumQuote - lastOrder.CumQuote) / lastOrder.CumQuote
+						logger.Debugf("%s REALISED LONG PNL %f", order.Symbol, bnRealisedPnl[order.Symbol])
+					}
+				} else if order.Side == common.OrderSideBuy && order.Status == "FILLED" {
+					if lastOrder, ok := bnswapLastFilledOrders[order.Symbol]; ok && lastOrder.Side == common.OrderSideSell && !lastOrder.ReduceOnly {
+						bnRealisedPnl[order.Symbol] = (lastOrder.CumQuote - order.CumQuote) / lastOrder.CumQuote
+						logger.Debugf("%s REALISED SHORT PNL %f", order.Symbol, bnRealisedPnl[order.Symbol])
+					}
+				}
+				bnswapLastFilledOrders[order.Symbol] = order
 				if openOrder, ok := bnswapOpenOrders[order.Symbol]; ok && openOrder.NewClientOrderId == order.ClientOrderId {
 					delete(bnswapOpenOrders, order.Symbol)
 				}
 			}
+			logger.Debug(logStr)
 		case order := <-bnswapNewOrderErrorCh:
 			if openOrder, ok := bnswapOpenOrders[order.Params.Symbol]; ok && openOrder.NewClientOrderId == order.Params.NewClientOrderId {
 				delete(bnswapOpenOrders, order.Params.Symbol)

@@ -30,14 +30,8 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 			//如果SWAP变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			bnswapOrderSilentTimes[nextPos.Symbol] = time.Now()
 			logger.Debugf("%s HTTP POSITION %s", nextPos.Symbol,nextPos.ToString())
-			if lastPosition != nil && bnswapPositions[nextPos.Symbol].PositionAmt == 0 {
-				if lastPosition.PositionAmt > 0 {
-					bnRealisedPnl[nextPos.Symbol] = (nextPos.EntryPrice - lastPosition.EntryPrice) / lastPosition.EntryPrice
-					logger.Debugf("%s REALISED LONG PNL %f", nextPos.Symbol, bnRealisedPnl[nextPos.Symbol])
-				} else {
-					bnRealisedPnl[nextPos.Symbol] = (lastPosition.EntryPrice - nextPos.EntryPrice) / lastPosition.EntryPrice
-					logger.Debugf("%s REALISED SHORT PNL %f", nextPos.Symbol, bnRealisedPnl[nextPos.Symbol])
-				}
+			if nextPos.PositionAmt != 0 {
+				bnswapOrderSilentTimes[nextPos.Symbol] = time.Now()
 			}
 		}
 	}

@@ -38,17 +38,10 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != bnswapPositions[pos.Symbol].PositionAmt ||
 			lastPosition.EntryPrice != bnswapPositions[pos.Symbol].EntryPrice {
-			//bnswapOrderSilentTimes[pos.Symbol] = time.Now()
-			logger.Debugf("%s WS POSITION CHANGED NEW %s", pos.Symbol, pos.ToString())
-			if lastPosition != nil && bnswapPositions[pos.Symbol].PositionAmt == 0 {
-				if lastPosition.PositionAmt > 0 {
-					bnRealisedPnl[pos.Symbol] = (pos.EntryPrice - lastPosition.EntryPrice) / lastPosition.EntryPrice
-					logger.Debugf("%s REALISED LONG PNL %f", pos.Symbol, bnRealisedPnl[pos.Symbol])
-				} else {
-					bnRealisedPnl[pos.Symbol] = (lastPosition.EntryPrice - pos.EntryPrice) / lastPosition.EntryPrice
-					logger.Debugf("%s REALISED SHORT PNL %f", pos.Symbol, bnRealisedPnl[pos.Symbol])
-				}
+			if pos.PositionAmt != 0 {
+				bnswapOrderSilentTimes[pos.Symbol] = time.Now()
 			}
+			logger.Debugf("%s WS POSITION CHANGED NEW %s", pos.Symbol, pos.ToString())
 		}
 	}
 	for _, balance := range data.Account.Balances {

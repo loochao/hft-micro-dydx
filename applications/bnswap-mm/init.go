@@ -46,6 +46,7 @@ var bnswapPositions = make(map[string]bnswap.Position)
 
 var bnswapOrderRequestChs = make(map[string]chan SwapOrderRequest)
 var bnswapNewOrderResponseCh chan bnswap.Order
+var bnswapLastFilledOrders = make(map[string]bnswap.Order)
 var bnswapCancelOrderResponsesCh chan bnswap.CancelAllOrderResponse
 var bnswapNewOrderErrorCh chan SwapOrderNewError
 
@@ -64,7 +65,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210410 12:13:06  ####")
+	logger.Debug("####  BUILD @ 20210410 12:18:52  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
