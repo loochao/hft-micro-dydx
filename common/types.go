@@ -52,6 +52,14 @@ const (
 	OrderTypeTakeProfitLimit = "TAKE_PROFIT_LIMIT"
 	OrderTypeLimitMarker     = "LIMIT_MAKER"
 
+	OrderStatusNew             = "NEW"
+	OrderStatusPartiallyFilled = "PARTIALLY_FILLED"
+	OrderStatusFilled          = "FILLED"
+	OrderStatusCancelled       = "CANCELED"
+	OrderStatusPendingCancel   = "PENDING_CANCEL"
+	OrderStatusReject          = "REJECTED"
+	OrderStatusExpired         = "EXPIRED"
+
 	TimeIntervalMinute         = "1m"
 	TimeIntervalThreeMinutes   = "3m"
 	TimeIntervalFiveMinutes    = "5m"

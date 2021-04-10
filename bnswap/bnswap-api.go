@@ -309,6 +309,22 @@ func (api *API) SubmitOrder(ctx context.Context, params NewOrderParams) (*Order,
 	return &order, nil
 }
 
+func (api *API) CancelAllOpenOrders(ctx context.Context, params CancelAllOrderParams) (*CancelAllOrderResponse, error) {
+	var order CancelAllOrderResponse
+	err := api.SendAuthenticatedHTTPRequest(
+		ctx,
+		http.MethodDelete,
+		"/fapi/v1/allOpenOrders",
+		&params,
+		&order,
+	)
+	if err != nil {
+		return nil, err
+	}
+	order.Symbol = params.Symbol
+	return &order, nil
+}
+
 func NewAPI(credentials *common.Credentials, proxy string) (*API, error) {
 	var client *http.Client
 	if proxy != "" {

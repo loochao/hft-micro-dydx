@@ -456,13 +456,34 @@ func (no NewOrderParams) ToString() string {
 
 type Trade struct {
 	//EventType                string  `json:"e,omitempty"`
-	EventTime                int64   `json:"E,omitempty"`
-	Symbol                   string  `json:"s,omitempty"`
+	EventTime int64  `json:"E,omitempty"`
+	Symbol    string `json:"s,omitempty"`
 	//AggregateTradeID         int64   `json:"a,omitempty"`
-	Price                    float64 `json:"p,string,omitempty"`
-	Quantity                 float64 `json:"q,string,omitempty"`
+	Price    float64 `json:"p,string,omitempty"`
+	Quantity float64 `json:"q,string,omitempty"`
 	//FirstTradeId             int64   `json:"f,omitempty"`
 	//LastTradeId              int64   `json:"l,omitempty"`
 	//TradeTime                int64   `json:"T,omitempty"`
-	IsTheBuyerTheMarketMaker bool    `json:"m,omitempty"`
+	IsTheBuyerTheMarketMaker bool `json:"m,omitempty"`
+}
+
+//{
+//"code": "200",
+//"msg": "The operation of cancel all open order is done."
+//}
+
+type CancelAllOrderResponse struct {
+	Code   int    `json:"code"`
+	Msg    string `json:"msg"`
+	Symbol string `json:"-"`
+}
+
+type CancelAllOrderParams struct {
+	Symbol string `json:"symbol"`
+}
+
+func (c *CancelAllOrderParams) ToUrlValues() url.Values {
+	values := url.Values{}
+	values.Set("symbol", c.Symbol)
+	return values
 }

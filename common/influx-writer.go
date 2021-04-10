@@ -20,7 +20,7 @@ type InfluxWriter struct {
 	stop  chan interface{}
 	saved chan error
 
-	pushCh chan *client.Point
+	PushCh chan *client.Point
 	saveCh chan []*client.Point
 	points []*client.Point
 }
@@ -43,7 +43,7 @@ func (iw *InfluxWriter) Push(pt *client.Point) {
 	select {
 	case <-iw.done:
 		return
-	case iw.pushCh <- pt:
+	case iw.PushCh <- pt:
 	}
 }
 func (iw *InfluxWriter) Save(pts []*client.Point) {
@@ -122,8 +122,8 @@ func (iw *InfluxWriter) watchPoints() {
 		case <-iw.done:
 			logger.Debugf("watchPoints writer is DONE, exit")
 			time.Sleep(time.Second * 3)
-			close(iw.pushCh)
-			for pt := range iw.pushCh {
+			close(iw.PushCh)
+			for pt := range iw.PushCh {
 				iw.points = append(iw.points, pt)
 			}
 			iw.saved <- iw.save()
@@ -139,7 +139,7 @@ func (iw *InfluxWriter) watchPoints() {
 			time.Sleep(time.Second * 10)
 		case <-timer.C:
 			saveSilent = false
-		case pt := <-iw.pushCh:
+		case pt := <-iw.PushCh:
 			iw.points = append(iw.points, pt)
 			if len(iw.points) > iw.batchSize && !saveSilent {
 				saveSilent = true
@@ -173,7 +173,7 @@ func NewInfluxWriter(address, username, password, database string, batchSize int
 		stop:         make(chan interface{}, 1),
 		done:         make(chan interface{}, 1),
 		saved:        make(chan error, 1),
-		pushCh:       make(chan *client.Point, 1000000),
+		PushCh:       make(chan *client.Point, 1000000),
 		saveCh:       make(chan []*client.Point, 100),
 		points:       make([]*client.Point, 0),
 	}
