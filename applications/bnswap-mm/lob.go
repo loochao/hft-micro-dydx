@@ -51,79 +51,80 @@ func walkSwapOrderBook(orderBook *bnswap.Depth, openImpact, closeImpact float64)
 		ArrivalTime: orderBook.ArrivalTime,
 		EventTime:   orderBook.EventTime,
 	}
-	totalTakerValue := 0.0
-	totalTakerQty := 0.0
-	totalMakerValue := 0.0
-	totalMakerQty := 0.0
-	hasMakerData := false
-	hasTakerData := false
+	totalCloseValue := 0.0
+	totalCloseQty := 0.0
+	totalOpenValue := 0.0
+	totalOpenQty := 0.0
+	hasOpenData := false
+	hasCloseData := false
 	for _, bid := range orderBook.Bids {
 		value := bid[0] * bid[1]
-		if !hasMakerData {
+		if !hasOpenData {
 			wLob.OpenBidFarPrice = bid[0]
-			if totalMakerValue+value >= closeImpact {
-				totalMakerQty += (closeImpact - totalMakerValue) / bid[0]
-				totalMakerValue = closeImpact
-				hasMakerData = true
+			if totalOpenValue+value >= openImpact {
+				totalOpenQty += (openImpact - totalOpenValue) / bid[0]
+				totalOpenValue = openImpact
+				hasOpenData = true
 			} else {
-				totalMakerQty += bid[1]
-				totalMakerValue += value
+				totalOpenQty += bid[1]
+				totalOpenValue += value
 			}
 		}
-		if !hasTakerData {
+		if !hasCloseData {
 			wLob.CloseBidFarPrice = bid[0]
-			if totalTakerValue+value >= openImpact {
-				totalTakerQty += (openImpact - totalTakerValue) / bid[0]
-				totalTakerValue = openImpact
-				hasTakerData = true
+			if totalCloseValue+value >= closeImpact {
+				totalCloseQty += (closeImpact - totalCloseValue) / bid[0]
+				totalCloseValue = closeImpact
+				hasCloseData = true
 			} else {
-				totalTakerQty += bid[1]
-				totalTakerValue += value
+				totalCloseQty += bid[1]
+				totalCloseValue += value
 			}
 		}
-		if hasMakerData && hasTakerData {
+		if hasOpenData && hasCloseData {
 			break
 		}
 	}
-	wLob.CloseBidVWAP = totalTakerValue / totalTakerQty
-	wLob.OpenBidVWAP = totalMakerValue / totalMakerQty
+	wLob.CloseBidVWAP = totalCloseValue / totalCloseQty
+	wLob.OpenBidVWAP = totalOpenValue / totalOpenQty
 
-	totalTakerValue = 0.0
-	totalTakerQty = 0.0
-	totalMakerValue = 0.0
-	totalMakerQty = 0.0
-	hasMakerData = false
-	hasTakerData = false
+	totalCloseValue = 0.0
+	totalCloseQty = 0.0
+	totalOpenValue = 0.0
+	totalOpenQty = 0.0
+	hasOpenData = false
+	hasCloseData = false
 	for _, ask := range orderBook.Asks {
 		value := ask[0] * ask[1]
-		if !hasMakerData {
+		if !hasOpenData {
 			wLob.OpenAskFarPrice = ask[0]
-			if totalMakerValue+value >= closeImpact {
-				totalMakerQty += (closeImpact - totalMakerValue) / ask[0]
-				totalMakerValue = closeImpact
-				hasMakerData = true
+			if totalOpenValue+value >= openImpact {
+				totalOpenQty += (openImpact - totalOpenValue) / ask[0]
+				totalOpenValue = openImpact
+				hasOpenData = true
 			} else {
-				totalMakerQty += ask[1]
-				totalMakerValue += value
+				totalOpenQty += ask[1]
+				totalOpenValue += value
 			}
 		}
-		if !hasTakerData {
+		if !hasCloseData {
 			wLob.CloseAskFarPrice = ask[0]
-			if totalTakerValue+value >= openImpact {
-				totalTakerQty += (openImpact - totalTakerValue) / ask[0]
-				totalTakerValue = openImpact
-				hasTakerData = true
+			if totalCloseValue+value >= closeImpact {
+				totalCloseQty += (closeImpact - totalCloseValue) / ask[0]
+				totalCloseValue = closeImpact
+				hasCloseData = true
 			} else {
-				totalTakerQty += ask[1]
-				totalTakerValue += value
+				totalCloseQty += ask[1]
+				totalCloseValue += value
 			}
 		}
-		if hasMakerData && hasTakerData {
+		if hasOpenData && hasCloseData {
 			break
 		}
 	}
-	wLob.CloseAskVWAP = totalTakerValue / totalTakerQty
-	wLob.OpenAskVWAP = totalMakerValue / totalMakerQty
+
+	wLob.CloseAskVWAP = totalCloseValue / totalCloseQty
+	wLob.OpenAskVWAP = totalOpenValue / totalOpenQty
 	wLob.BidPrice = orderBook.Bids[0][0]
 	wLob.BidSize = orderBook.Bids[0][1]
 	wLob.AskPrice = orderBook.Asks[0][0]
