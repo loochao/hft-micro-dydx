@@ -10,17 +10,21 @@ func handleSave() {
 
 	longValue := 0.0
 	shortValue := 0.0
+	frRet := 0.0
 	if bnRankSymbolMap != nil {
 		for rank, symbol := range bnRankSymbolMap {
 			fields := make(map[string]interface{})
 			if position, ok := bnswapPositions[symbol]; ok {
 				fields["positionAmt"] = position.PositionAmt
-				fields["positionVal"] = position.PositionAmt*position.EntryPrice
+				fields["positionVal"] = position.PositionAmt * position.EntryPrice
 				fields["positionRank"] = rank
 				if position.PositionAmt > 0 {
-					longValue += position.PositionAmt*position.EntryPrice
-				}else{
-					shortValue += position.PositionAmt*position.EntryPrice
+					longValue += position.PositionAmt * position.EntryPrice
+				} else {
+					shortValue += position.PositionAmt * position.EntryPrice
+				}
+				if markPrice, ok := bnswapMarkPrices[symbol]; ok {
+					frRet -= position.PositionAmt * position.EntryPrice * markPrice.FundingRate
 				}
 			}
 			if markPrice, ok := bnswapMarkPrices[symbol]; ok {
@@ -65,7 +69,8 @@ func handleSave() {
 		fields["startValue"] = *bnConfig.StartValue
 		if longValue > 0 {
 			fields["longValue"] = longValue
-			fields["shortValue"] = shortValue
+			fields["longValue"] = longValue
+			fields["nextFundingReturn"] = frRet
 		}
 		pt, err := client.NewPoint(
 			*bnConfig.InternalInflux.Measurement,
