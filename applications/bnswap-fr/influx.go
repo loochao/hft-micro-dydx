@@ -69,7 +69,7 @@ func handleSave() {
 		fields["startValue"] = *bnConfig.StartValue
 		if longValue > 0 {
 			fields["longValue"] = longValue
-			fields["longValue"] = longValue
+			fields["shortValue"] = shortValue
 			fields["nextFundingReturn"] = frRet
 		}
 		pt, err := client.NewPoint(
