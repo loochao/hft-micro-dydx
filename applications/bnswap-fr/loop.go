@@ -43,9 +43,9 @@ func updateSwapPosition() {
 		size := 0.0
 		price := 0.0
 		if i <= half {
-			price = -markPrice.MarkPrice * (1 - *bnConfig.EnterSlippage)
+			price = markPrice.MarkPrice * (1 - *bnConfig.EnterSlippage)
 			price = math.Floor(price/swapTickSize) * swapTickSize
-			size = math.Round(entryValue/price/swapStepSize)*swapStepSize - position.PositionAmt
+			size = -math.Round(entryValue/price/swapStepSize)*swapStepSize - position.PositionAmt
 		} else {
 			price = markPrice.MarkPrice * (1 + *bnConfig.EnterSlippage)
 			price = math.Ceil(price/swapTickSize) * swapTickSize
