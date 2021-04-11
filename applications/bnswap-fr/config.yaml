@@ -1,0 +1,134 @@
+name: bnswap-mm-ff01
+dryRun: true
+proxyAddress: socks5://127.0.0.1:1081
+cpuProfile: #/Users/chenjilin/Downloads/bnswap-mm.prof
+internalInflux:
+  address: http://jilinchen.com:18086
+  username: hft
+  password: hft
+  database: test
+  measurement: bnswap-mm-ff01
+  batchSize: 10
+  saveInterval: 1m0s
+externalInflux:
+  address: http://jilinchen.com:18086
+  username: hft
+  password: hft
+  database: test
+  measurement: accounts
+  batchSize: 0
+  saveInterval: 1m0s
+marginType: CROSSED
+apiKey: ksu8ZMYNnhIXbq0KQtEczuZxMQH5eoRAnJGDBGj6BzlMVtvGpQccIN8kmzU4bE52
+apiSecret: ZEEI4X5FJ2CoPNwjE05UoJafVl0LM0HtUWIdhxaROvi9StKyihaIZMNEh06JS004
+leverage: 10
+changeLeverage: false
+loopInterval: 1s
+pullInterval: 1m0s
+
+positionMaxAge: 3m
+
+startValue: 897
+enterFreePct: 0.025
+enterSlippage: 0.05
+enterMinimalStep: 12
+
+orderTimeout: 5s
+orderSilent: 5s
+orderCancelSilent: 5s
+orderMaxCancelCount: 5
+orderInterval: 1m
+
+leadSymbol: BTCUSDT
+fastLeadLookBack: 10s
+slowLeadLookBack: 100s
+symbolsBatchSize: 50
+
+symbols:
+  - CELRUSDT
+  #  - BTCUSDT
+#  - ETHUSDT
+#  - LTCUSDT
+#  - NEOUSDT
+#  - QTUMUSDT
+#  - EOSUSDT
+#  - ZRXUSDT
+#  - OMGUSDT
+#  - LRCUSDT
+#  - TRXUSDT
+#  - KNCUSDT
+#  - IOTAUSDT
+#  - LINKUSDT
+#  - CVCUSDT
+#  - ETCUSDT
+#  - ZECUSDT
+#  - BATUSDT
+#  - DASHUSDT
+#  - XMRUSDT
+#  - ENJUSDT
+#  - XRPUSDT
+#  - STORJUSDT
+#  - BTSUSDT
+#  - ADAUSDT
+#  - XLMUSDT
+#  - WAVESUSDT
+#  - ICXUSDT
+#  - RLCUSDT
+#  - IOSTUSDT
+#  - BLZUSDT
+#  - ONTUSDT
+#  - ZILUSDT
+#  - ZENUSDT
+#  - THETAUSDT
+#  - VETUSDT
+#  - RENUSDT
+#  - MATICUSDT
+#  - ATOMUSDT
+#  - FTMUSDT
+#  - CHZUSDT
+#  - ALGOUSDT
+#  - DOGEUSDT
+#  - ANKRUSDT
+#  - TOMOUSDT
+#  - BANDUSDT
+#  - XTZUSDT
+#  - KAVAUSDT
+#  - BCHUSDT
+#  - SOLUSDT
+#  - HNTUSDT
+#  - COMPUSDT
+#  - MKRUSDT
+#  - SXPUSDT
+#  - SNXUSDT
+#  - DOTUSDT
+#  - RUNEUSDT
+#  - BALUSDT
+#  - YFIUSDT
+#  - SRMUSDT
+#  - CRVUSDT
+#  - SANDUSDT
+#  - OCEANUSDT
+#  - LUNAUSDT
+#  - RSRUSDT
+#  - TRBUSDT
+#  - EGLDUSDT
+#  - BZRXUSDT
+#  - KSMUSDT
+#  - SUSHIUSDT
+#  - YFIIUSDT
+#  - BELUSDT
+#  - UNIUSDT
+#  - AVAXUSDT
+#  - FLMUSDT
+#  - ALPHAUSDT
+#  - NEARUSDT
+#  - AAVEUSDT
+#  - FILUSDT
+#  - CTKUSDT
+#  - AXSUSDT
+#  - AKROUSDT
+#  - SKLUSDT
+#  - GRTUSDT
+#  - 1INCHUSDT
+
+
