@@ -46,8 +46,9 @@ type Config struct {
 	EnterSlippage    *float64 `yaml:"enterSlippage,omitempty"`
 	EnterMinimalStep *float64 `yaml:"enterMinimalStep,omitempty"`
 
-	OrderTimeout        *time.Duration `yaml:"orderTimeout,omitempty"`
-	OrderSilent         *time.Duration `yaml:"orderSilent,omitempty"`
+	OrderTimeout *time.Duration `yaml:"orderTimeout,omitempty"`
+	OrderSilent  *time.Duration `yaml:"orderSilent,omitempty"`
+	FrInterval   *time.Duration `yaml:"frInterval,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

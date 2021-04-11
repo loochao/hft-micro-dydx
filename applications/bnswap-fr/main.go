@@ -214,7 +214,7 @@ func main() {
 				logger.Debugf("RankSymbols error %v", err)
 			}
 			logger.Debugf("SYMBOLS FR RANK %v", bnRankSymbolMap)
-			frRankUpdatedTimer.Reset(time.Minute)
+			frRankUpdatedTimer.Reset(time.Now().Truncate(*bnConfig.FrInterval).Add(*bnConfig.FrInterval+time.Second).Sub(time.Now()))
 		case <-influxSaveTimer.C:
 			handleSave()
 			handleExternalInfluxSave()
