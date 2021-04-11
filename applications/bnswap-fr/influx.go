@@ -8,20 +8,65 @@ import (
 
 func handleSave() {
 
+	longValue := 0.0
+	shortValue := 0.0
+	if bnRankSymbolMap != nil {
+		for rank, symbol := range bnRankSymbolMap {
+			fields := make(map[string]interface{})
+			if position, ok := bnswapPositions[symbol]; ok {
+				fields["positionAmt"] = position.PositionAmt
+				fields["positionVal"] = position.PositionAmt*position.EntryPrice
+				fields["positionRank"] = rank
+				if position.PositionAmt > 0 {
+					longValue += position.PositionAmt*position.EntryPrice
+				}else{
+					shortValue += position.PositionAmt*position.EntryPrice
+				}
+			}
+			if markPrice, ok := bnswapMarkPrices[symbol]; ok {
+				fields["nextFundingRate"] = markPrice.FundingRate
+			}
+			if realisedSpread, ok := bnRealisedPnl[symbol]; ok {
+				fields["realisedSpread"] = realisedSpread
+			}
+			pt, err := client.NewPoint(
+				*bnConfig.InternalInflux.Measurement,
+				map[string]string{
+					"symbol": symbol,
+					"type":   "symbol",
+				},
+				fields,
+				time.Now().UTC(),
+			)
+			if err != nil {
+				logger.Debugf("new position point error %v", err)
+			} else {
+				select {
+				case <-time.After(time.Millisecond):
+					logger.Debugf("PUSH TO INTERNAL INFLUX WRITER TIMEOUT IN 1MS")
+				case bnInternalInfluxWriter.PushCh <- pt:
+				}
+			}
+		}
+	}
 	if bnswapUSDTAsset != nil && bnswapUSDTAsset.MarginBalance != nil {
 		fields := make(map[string]interface{})
-		fields["swapBalance"] = *bnswapUSDTAsset.MarginBalance
-		fields["swapWalletBalance"] = *bnswapUSDTAsset.WalletBalance
-		fields["swapCrossWalletBalance"] = *bnswapUSDTAsset.CrossWalletBalance
-		fields["swapAvailableBalance"] = *bnswapUSDTAsset.AvailableBalance
-		fields["swapPositionInitialMargin"] = *bnswapUSDTAsset.PositionInitialMargin
-		fields["swapMaxWithdrawAmount"] = *bnswapUSDTAsset.MaxWithdrawAmount
-		fields["swapOpenOrderInitialMargin"] = *bnswapUSDTAsset.OpenOrderInitialMargin
-		fields["swapUnRealizedProfit"] = *bnswapUSDTAsset.UnrealizedProfit
-		fields["swapInitialMargin"] = *bnswapUSDTAsset.InitialMargin
-		fields["swapMaintMargin"] = *bnswapUSDTAsset.MaintMargin
+		fields["balance"] = *bnswapUSDTAsset.MarginBalance
+		fields["walletBalance"] = *bnswapUSDTAsset.WalletBalance
+		fields["crossWalletBalance"] = *bnswapUSDTAsset.CrossWalletBalance
+		fields["availableBalance"] = *bnswapUSDTAsset.AvailableBalance
+		fields["positionInitialMargin"] = *bnswapUSDTAsset.PositionInitialMargin
+		fields["maxWithdrawAmount"] = *bnswapUSDTAsset.MaxWithdrawAmount
+		fields["openOrderInitialMargin"] = *bnswapUSDTAsset.OpenOrderInitialMargin
+		fields["unRealizedProfit"] = *bnswapUSDTAsset.UnrealizedProfit
+		fields["initialMargin"] = *bnswapUSDTAsset.InitialMargin
+		fields["maintMargin"] = *bnswapUSDTAsset.MaintMargin
 		fields["netWorth"] = *bnswapUSDTAsset.MarginBalance / *bnConfig.StartValue
 		fields["startValue"] = *bnConfig.StartValue
+		if longValue > 0 {
+			fields["longValue"] = longValue
+			fields["shortValue"] = shortValue
+		}
 		pt, err := client.NewPoint(
 			*bnConfig.InternalInflux.Measurement,
 			map[string]string{
@@ -41,36 +86,6 @@ func handleSave() {
 		}
 	}
 
-	for _, symbol := range bnSymbols {
-		fields := make(map[string]interface{})
-		if position, ok := bnswapPositions[symbol]; ok {
-			fields["swapBalance"] = position.PositionAmt
-		}
-		if markPrice, ok := bnswapMarkPrices[symbol]; ok {
-			fields["swapNextFundingRate"] = markPrice.FundingRate
-		}
-		if realisedSpread, ok := bnRealisedPnl[symbol]; ok {
-			fields["realisedSpread"] = realisedSpread
-		}
-		pt, err := client.NewPoint(
-			*bnConfig.InternalInflux.Measurement,
-			map[string]string{
-				"symbol": symbol,
-				"type":   "symbol",
-			},
-			fields,
-			time.Now().UTC(),
-		)
-		if err != nil {
-			logger.Debugf("new position point error %v", err)
-		} else {
-			select {
-			case <-time.After(time.Millisecond):
-				logger.Debugf("PUSH TO INTERNAL INFLUX WRITER TIMEOUT IN 1MS")
-			case bnInternalInfluxWriter.PushCh <- pt:
-			}
-		}
-	}
 }
 
 func handleExternalInfluxSave() {
