@@ -16,17 +16,14 @@ func TestAPI_GetAccounts(t *testing.T) {
 	var err error
 	logger.Debugf("KCSPOT_KEY %s", os.Getenv("KCSPOT_KEY"))
 	api, err = NewAPI(NewKcSigner(
-		"6073215c5e2b070006fa35fa",
-		"29c5571b-eed3-4774-8102-c38c232fe25e",
-		"maodayemaodaye",
-		//os.Getenv("KCSPOT_KEY"),
-		//os.Getenv("KCSPOT_SECRET"),
-		//os.Getenv("KCSPOT_PASSPHRASE"),
+		os.Getenv("KCSPOT_KEY"),
+		os.Getenv("KCSPOT_SECRET"),
+		os.Getenv("KCSPOT_PASSPHRASE"),
 	), "socks5://127.0.0.1:1081")
 	if err != nil {
 		log.Fatal(err)
 	}
-	accounts, err := api.GetAccounts(ctx, AccountsParam{Currency: "USDT"})
+	accounts, err := api.GetAccounts(ctx, AccountsParam{})
 	if err != nil {
 		logger.Debugf("%v", err)
 		t.Fatal(err)

@@ -65,9 +65,6 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 		values = params.ToUrlValues()
 
 	}
-	//values.Set("recvWindow", strconv.FormatInt(common.RecvWindow(60*time.Second), 10))
-	//values.Set("timestamp", strconv.FormatInt(time.Now().Unix()*1000, 10))
-
 	path = common.EncodeURLValues(path, values)
 	headers := api.signer.Headers(fmt.Sprintf("%s%s", method, path))
 
@@ -104,6 +101,16 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	return json.Unmarshal(dataCap.Data, result)
 }
 
+func (api *API) SubmitOrder(ctx context.Context, param NewOrderParam) (OrderResponse, error) {
+	or := OrderResponse{}
+	return or, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/v1/orders", &param, &or)
+}
+
+func (api *API) CancelAllOrders(ctx context.Context, param CancelAllOrdersParam) (OrderResponse, error) {
+	or := OrderResponse{}
+	return or, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/v1/orders", &param, &or)
+}
+
 func (api *API) GetAccounts(ctx context.Context, param AccountsParam) ([]Account, error) {
 	accounts := make([]Account, 0)
 	return accounts, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/api/v1/accounts", &param, &accounts)
@@ -121,7 +128,7 @@ func (api *API) GetPublicConnectToken(ctx context.Context) (*ConnectToken, error
 
 func (api *API) GetPrivateConnectToken(ctx context.Context) (*ConnectToken, error) {
 	pct := &ConnectToken{}
-	return pct, api.SendHTTPRequest(ctx, http.MethodPost, "/api/v1/bullet-private", nil, pct)
+	return pct, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/v1/bullet-private", nil, pct)
 }
 
 func (api *API) GetCandles(ctx context.Context, param CandlesParam) ([]common.KLine, error) {

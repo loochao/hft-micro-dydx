@@ -74,10 +74,10 @@ type Config struct {
 	EnterMinimalStep            *float64       `yaml:"enterMinimalStep,omitempty"`
 	EnterTargetFactor           *float64       `yaml:"enterTargetFactor,omitempty"`
 
-	InsuranceFundingRatio    *float64       `yaml:"insuranceFundingRatio,omitempty"`
-	ReBalanceInterval        *time.Duration `yaml:"reBalanceInterval,omitempty"`
-	ReBalanceMinimalNotional *float64       `yaml:"reBalanceMinimalNotional,omitempty"`
-
+	StartValues              map[string]float64 `yaml:"startValues,omitempty"`
+	InsuranceFundingRatio    *float64           `yaml:"insuranceFundingRatio,omitempty"`
+	ReBalanceInterval        *time.Duration     `yaml:"reBalanceInterval,omitempty"`
+	ReBalanceMinimalNotional *float64           `yaml:"reBalanceMinimalNotional,omitempty"`
 
 	OrderTimeout        *time.Duration `yaml:"orderTimeout,omitempty"`
 	OrderSilent         *time.Duration `yaml:"orderSilent,omitempty"`

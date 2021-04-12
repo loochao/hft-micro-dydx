@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
+	"strings"
 	"time"
 )
 
@@ -214,7 +215,7 @@ func handleExternalInfluxSave() {
 
 	if bnswapBNBAsset != nil && bnswapBNBAsset.MarginBalance != nil {
 		if spread, ok := bnSpreads[bnBNBSymbol]; ok {
-			balance := *bnswapBNBAsset.MarginBalance * (spread.SpotOrderBook.BidPrice + spread.SpotOrderBook.AskPrice ) * 0.5
+			balance := *bnswapBNBAsset.MarginBalance * (spread.SpotOrderBook.BidPrice + spread.SpotOrderBook.AskPrice) * 0.5
 			totalSwapBnBBalance = &balance
 		}
 	}
@@ -224,8 +225,13 @@ func handleExternalInfluxSave() {
 	}
 
 	if totalSpotBalance != nil && totalSwapUSDTBalance != nil && totalSwapBnBBalance != nil {
+		netWorth := (*totalSpotBalance + *totalSwapUSDTBalance + *totalSwapBnBBalance) / *bnConfig.StartValue
 		fields := make(map[string]interface{})
-		fields["netWorth"] = (*totalSpotBalance + *totalSwapUSDTBalance + *totalSwapBnBBalance) / *bnConfig.StartValue
+		fields["netWorth"] = netWorth
+		for name, start := range bnConfig.StartValues {
+			fields["refStartValue_"+strings.ToLower(name)] = start
+			fields["currentValue_"+strings.ToLower(name)] = netWorth * start
+		}
 		if len(fields) > 0 {
 			pt, err := client.NewPoint(
 				*bnConfig.ExternalInflux.Measurement,

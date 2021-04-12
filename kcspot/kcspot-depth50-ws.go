@@ -372,7 +372,6 @@ func NewDepth50Websocket(
 	ctx context.Context,
 	api *API,
 	symbols []string,
-	timeout time.Duration,
 	proxy string,
 ) *Depth50Websocket {
 	ws := Depth50Websocket{

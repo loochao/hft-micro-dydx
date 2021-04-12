@@ -25,6 +25,12 @@ const (
 	CandleType12Hour = "12hour"
 	CandleType1Day   = "1day"
 	CandleType1Week  = "1week"
+
+	OrderStatusOpen     = "open"
+	OrderStatusMatch    = "match"
+	OrderStatusFilled   = "filled"
+	OrderStatusCanceled = "canceled"
+	OrderStatusUpdate   = "update"
 )
 
 var CandleTypeDurations = map[string]time.Duration{
@@ -145,7 +151,6 @@ type Account struct {
 	Holds     float64 `json:"holds,string"`
 }
 
-
 // Signer interface contains Sign() method.
 type Signer interface {
 	Sign(plain []byte) []byte
@@ -180,7 +185,7 @@ func (ks *KcSigner) Sign(plain []byte) []byte {
 
 // Headers returns a map of signature header.
 func (ks *KcSigner) Headers(plain string) map[string]string {
-	t := fmt.Sprintf("%d", time.Now().UnixNano() / 1000000)
+	t := fmt.Sprintf("%d", time.Now().UnixNano()/1000000)
 	p := []byte(t + plain)
 	s := string(ks.Sign(p))
 	ksHeaders := map[string]string{
@@ -213,4 +218,92 @@ func passPhraseEncrypt(key, plain []byte) string {
 	hm := hmac.New(sha256.New, key)
 	hm.Write(plain)
 	return base64.StdEncoding.EncodeToString(hm.Sum(nil))
+}
+
+type OrderResponse struct {
+	OrderId string `json:"orderId"`
+}
+
+type CancelAllOrdersResponse struct {
+	CancelledOrderIds []string `json:"cancelledOrderIds"`
+}
+
+type WsCap struct {
+	Type        string          `json:"type"`
+	Topic       string          `json:"topic"`
+	Subject     string          `json:"subject"`
+	ChannelType string          `json:"channelType"`
+	Data        json.RawMessage `json:"data"`
+}
+
+type WsBalance struct {
+	Total           float64 `json:"total,string"`
+	Available       float64 `json:"available,string"`
+	AvailableChange float64 `json:"availableChange,string"`
+	Currency        float64 `json:"currency,string"`
+	Hold            float64 `json:"hold,string"`
+	HoldChange      float64 `json:"holdChange,string"`
+	RelationEvent   string  `json:"relationEvent"`
+	RelationEventId string  `json:"relationEventId"`
+	RelationContext struct {
+		TradeId string `json:"tradeId"`
+		OrderId string `json:"orderId"`
+		Symbol  string `json:"symbol"`
+	} `json:"relationContext"`
+	EventTime  time.Time `json:"-"`
+	ParseTime  time.Time `json:"-"`
+}
+
+func (wsCap *WsBalance) UnmarshalJSON(data []byte) error {
+	type Alias WsBalance
+	aux := struct {
+		EventTime int64 `json:"time,string"`
+		*Alias
+	}{
+		Alias: (*Alias)(wsCap),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("UnmarshalJSON WsOrder error %v", err)
+		return err
+	}
+	wsCap.EventTime = time.Unix(0, aux.EventTime)
+	wsCap.ParseTime = time.Now()
+	return nil
+}
+
+type WSOrder struct {
+	Symbol     string    `json:"symbol"`
+	OrderType  string    `json:"orderType"`
+	Side       string    `json:"side"`
+	OrderId    string    `json:"orderId"`
+	Type       string    `json:"type"`
+	OldSize    float64   `json:"oldSize,string"`
+	OrderTime  time.Time `json:"-`
+	Size       float64   `json:"size,string"`
+	FilledSize float64   `json:"filledSize,string"`
+	Price      float64   `json:"price,string"`
+	ClientOid  string    `json:"clientOid"`
+	RemainSize float64   `json:"remainSize,string"`
+	Status     string    `json:"status"`
+	EventTime  time.Time `json:"-"`
+	ParseTime  time.Time `json:"-"`
+}
+
+func (wsCap *WSOrder) UnmarshalJSON(data []byte) error {
+	type Alias WSOrder
+	aux := struct {
+		OrderTime int64 `json:"orderTime,omitempty"`
+		EventTime int64 `json:"ts,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(wsCap),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("UnmarshalJSON WsOrder error %v", err)
+		return err
+	}
+	wsCap.EventTime = time.Unix(0, aux.EventTime)
+	wsCap.ParseTime = time.Now()
+	wsCap.OrderTime = time.Unix(0, aux.OrderTime)
+	return nil
 }
