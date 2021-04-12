@@ -229,8 +229,10 @@ func handleExternalInfluxSave() {
 		fields := make(map[string]interface{})
 		fields["netWorth"] = netWorth
 		for name, start := range bnConfig.StartValues {
-			fields["refStartValue_"+strings.ToLower(name)] = start
-			fields["currentValue_"+strings.ToLower(name)] = netWorth * start
+			if start > 0 {
+				fields["refStartValue_"+strings.ToLower(name)] = start
+				fields["currentValue_"+strings.ToLower(name)] = netWorth * start
+			}
 		}
 		if len(fields) > 0 {
 			pt, err := client.NewPoint(
