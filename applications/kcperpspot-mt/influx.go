@@ -92,7 +92,7 @@ func handleSave() {
 		if fr, ok := kcperpFundingRates[perpSymbol]; ok {
 			fields["swapNextFundingRate"] = fr.FundingRate
 		}
-		if spread, ok := kcSpreads[perpSymbol]; ok {
+		if spread, ok := kcSpreads[spotSymbol]; ok {
 			fields["lastEnterSpread"] = spread.LastEnter
 			fields["lastExitSpread"] = spread.LastExit
 			fields["medianEnterSpread"] = spread.MedianEnter
@@ -106,7 +106,7 @@ func handleSave() {
 			fields["spotTakerBidFarPrice"] = spread.SpotOrderBook.TakerBidFarPrice
 			fields["spotTakerAskFarPrice5"] = (1.0 + *kcConfig.MakerBandOffset) * spread.SpotOrderBook.AskPrice
 			fields["spotTakerBidFarPrice5"] = (1.0 - *kcConfig.MakerBandOffset) * spread.SpotOrderBook.BidPrice
-			if order, ok := kcspotOpenOrders[perpSymbol]; ok {
+			if order, ok := kcspotOpenOrders[spotSymbol]; ok {
 				fields["spotOpenOrderPrice"] = order.Price
 			}
 
@@ -118,10 +118,10 @@ func handleSave() {
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
 		}
-		if realisedSpread, ok := kcRealisedSpread[perpSymbol]; ok {
+		if realisedSpread, ok := kcRealisedSpread[spotSymbol]; ok {
 			fields["realisedSpread"] = realisedSpread
 		}
-		if quantile, ok := kcQuantiles[perpSymbol]; ok {
+		if quantile, ok := kcQuantiles[spotSymbol]; ok {
 			fields["quantileBot"] = quantile.Bot
 			fields["quantileTop"] = quantile.Top
 			fields["quantileMid"] = quantile.Mid
