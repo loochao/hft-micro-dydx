@@ -26,7 +26,6 @@ type Config struct {
 
 	InternalInflux *InfluxConfig `yaml:"internalInflux"`
 	ExternalInflux *InfluxConfig `yaml:"externalInflux"`
-	MarginType     *string       `yaml:"marginType,omitempty"`
 
 	SpotApiKey        *string `yaml:"spotApiKey,omitempty"`
 	SpotApiSecret     *string `yaml:"spotApiSecret,omitempty"`
