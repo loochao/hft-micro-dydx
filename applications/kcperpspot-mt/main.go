@@ -511,7 +511,6 @@ func main() {
 					*kcConfig.LoopInterval,
 				).Sub(time.Now()),
 			)
-			logger.Debugf("%v", kcSpreads)
 			break
 		}
 	}
