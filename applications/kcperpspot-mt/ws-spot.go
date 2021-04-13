@@ -23,7 +23,7 @@ func handleSpotWSBalance(balance *kcspot.WsBalance) {
 		kcspotBalanceUpdatedForInflux = true
 		kcspotBalanceUpdatedForExternalInflux = true
 		kcspotBalanceUpdatedForReBalance = true
-		logger.Debugf("SPOT WS USDT BALANCE %v", *kcspotUSDTBalance)
+		//logger.Debugf("SPOT WS USDT BALANCE %v", *kcspotUSDTBalance)
 		return
 	}
 	symbol := balance.Currency + "-USDT"

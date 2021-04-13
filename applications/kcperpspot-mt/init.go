@@ -103,7 +103,7 @@ var kcConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210413 22:45:18  ####")
+	logger.Debug("####  BUILD @ 20210413 22:55:28  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
