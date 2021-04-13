@@ -93,7 +93,7 @@ func (w *UserWebsocket) startRead(conn *websocket.Conn) {
 		}
 		select {
 		case <-time.After(time.Millisecond):
-			logger.Debug("BCSPOT DEPTH20 MSG TO MESSAGE CH TIMEOUT IN 1MS")
+			logger.Debug("KCSPOT DEPTH20 MSG TO MESSAGE CH TIMEOUT IN 1MS")
 		case w.messageCh <- msg:
 		}
 	}
@@ -126,13 +126,18 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
+			//logger.Debugf("MSG %s", msg)
 			var wsCap WsCap
 			err := json.Unmarshal(msg, &wsCap)
 			if err != nil {
 				logger.Debugf("Unmarshal error %v %s", err, msg)
 				continue
 			}
-			switch wsCap.Topic {
+			splits := strings.Split(wsCap.Topic, ":")
+			if len(splits) == 0 {
+				continue
+			}
+			switch splits[0] {
 			case "/spotMarket/tradeOrders":
 				order := WSOrder{}
 				err = json.Unmarshal(wsCap.Data, &order)
@@ -146,11 +151,11 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 				case <-w.done:
 					return
 				case <-time.After(time.Millisecond):
-					logger.Warn("BCSPOT WS ORDER TO OUTPUT CH TIME OUT IN 1MS")
+					logger.Warn("KCSPOT WS ORDER TO OUTPUT CH TIME OUT IN 1MS")
 				case w.OrderCh <- &order:
 				}
 				select {
-				case w.topicCh <- wsCap.Topic:
+				case w.topicCh <- strings.Split(wsCap.Topic, ":")[0]:
 				default:
 				}
 				break
@@ -167,7 +172,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 				case <-w.done:
 					return
 				case <-time.After(time.Millisecond):
-					logger.Warn("BCSPOT WS BALANCE TO OUTPUT CH TIME OUT IN 1MS")
+					logger.Warn("KCSPOT WS BALANCE TO OUTPUT CH TIME OUT IN 1MS")
 				case w.BalanceCh <- &balance:
 				}
 				select {
@@ -176,7 +181,13 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 				}
 				break
 			default:
-				logger.Debugf("OTHER MSG %s", msg)
+				if wsCap.Type == "welcome" {
+					//logger.Debugf("WELCOME %s", wsCap.ID)
+				} else if wsCap.Type == "pong" {
+					//logger.Debugf("PONG %s", wsCap.ID)
+				}else{
+					logger.Debugf("KCSPOT OTHER MSG %s", msg)
+				}
 			}
 		}
 	}
@@ -253,12 +264,11 @@ func (w *UserWebsocket) start(ctx context.Context, api *API, topics []string, pr
 				internalCancel()
 			}
 			internalCtx, internalCancel = context.WithCancel(ctx)
-			connectToken, err := api.GetPublicConnectToken(internalCtx)
+			connectToken, err := api.GetPrivateConnectToken(internalCtx)
 			if err != nil {
 				logger.Fatalf("GetPublicConnectToken error %v", err)
 				return
 			}
-			logger.Debugf("%v", connectToken.InstanceServers[0].PingInterval)
 			if len(connectToken.InstanceServers) == 0 {
 				if err != nil {
 					logger.Fatalf("No InstanceServers %v", connectToken)
@@ -266,7 +276,7 @@ func (w *UserWebsocket) start(ctx context.Context, api *API, topics []string, pr
 				}
 			}
 			urlStr := connectToken.InstanceServers[0].Endpoint + "?token=" + connectToken.Token
-			logger.Debugf("BCSPOT DEPTH50 WS %s", urlStr)
+			//logger.Debugf("KCSPOT DEPTH50 WS %s", urlStr)
 
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
@@ -275,7 +285,7 @@ func (w *UserWebsocket) start(ctx context.Context, api *API, topics []string, pr
 			}
 			go w.startRead(conn)
 			go w.startWrite(ctx, conn)
-			go w.maintainHeartbeat(internalCtx, conn, topics, time.Unix(0, connectToken.InstanceServers[0].PingInterval*1000000))
+			go w.maintainHeartbeat(internalCtx, conn, topics, time.Duration(connectToken.InstanceServers[0].PingInterval)*time.Millisecond)
 
 			go w.startDataHandler(internalCtx)
 			go w.startDataHandler(internalCtx)
@@ -300,7 +310,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 	}()
 
 	conn.SetPingHandler(func(msg string) error {
-		logger.Debugf("BCSPOT DEPTH20 WS PingHandler %s", msg)
+		logger.Debugf("KCSPOT DEPTH20 WS PingHandler %s", msg)
 		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
 			go w.restart()
@@ -324,7 +334,9 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 		case <-ctx.Done():
 			return
 		case topic := <-w.topicCh:
-			topicUpdatedTimes[topic] = time.Now()
+			if _, ok := topicUpdatedTimes[topic]; ok {
+				topicUpdatedTimes[topic] = time.Now()
+			}
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)
 			select {
@@ -344,25 +356,21 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 			ts := make([]string, 0)
 			for topic, updateTime := range topicUpdatedTimes {
 				if time.Now().Sub(updateTime) > topicTimeout {
-					ts = append(ts, topic)
-				}
-			}
-			if len(ts) > 0 {
-				logger.Debugf("SUBSCRIBE %s", ts)
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(time.Millisecond):
-					logger.Debugf("SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", ts)
-					break
-				case w.writeCh <- SubscribeMsg{
-					ID:             strings.Join(ts, ","),
-					Type:           "subscribe",
-					Topic:          strings.Join(ts, ","),
-					PrivateChannel: true,
-					Response:       false,
-				}:
-					break
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(time.Millisecond):
+						logger.Debugf("SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", ts)
+						break
+					case w.writeCh <- SubscribeMsg{
+						ID:             strings.Join(ts, ","),
+						Type:           "subscribe",
+						Topic:          topic,
+						PrivateChannel: true,
+						Response:       false,
+					}:
+						break
+					}
 				}
 			}
 			topicCheckTimer.Reset(topicCheckInterval)

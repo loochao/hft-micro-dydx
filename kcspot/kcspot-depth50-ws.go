@@ -92,7 +92,7 @@ func (w *Depth50Websocket) startRead(conn *websocket.Conn) {
 		}
 		select {
 		case <-time.After(time.Millisecond):
-			logger.Debug("BCSPOT DEPTH20 MSG TO MESSAGE CH TIMEOUT IN 1MS")
+			logger.Debug("KCSPOT DEPTH50 MSG TO MESSAGE CH TIMEOUT IN 1MS")
 		case w.messageCh <- msg:
 		}
 	}
@@ -137,7 +137,7 @@ func (w *Depth50Websocket) startDataHandler(ctx context.Context) {
 				case <-w.done:
 					return
 				case <-time.After(time.Millisecond):
-					logger.Warn("BCSPOT DEPTH20 TO OUTPUT CH TIME OUT IN 1MS")
+					logger.Warn("KCSPOT DEPTH50 TO OUTPUT CH TIME OUT IN 1MS")
 				case w.DataCh <- depth20:
 				}
 				select {
@@ -232,7 +232,7 @@ func (w *Depth50Websocket) start(ctx context.Context, api *API, symbols []string
 				}
 			}
 			urlStr := connectToken.InstanceServers[0].Endpoint + "?token=" + connectToken.Token
-			logger.Debugf("BCSPOT DEPTH50 WS %s", urlStr)
+			//logger.Debugf("KCSPOT DEPTH50 WS %s", urlStr)
 
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
@@ -266,7 +266,7 @@ func (w *Depth50Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 	}()
 
 	conn.SetPingHandler(func(msg string) error {
-		logger.Debugf("BCSPOT DEPTH20 WS PingHandler %s", msg)
+		logger.Debugf("KCSPOT DEPTH50 WS PingHandler %s", msg)
 		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
 			go w.restart()
@@ -314,7 +314,7 @@ func (w *Depth50Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 				}
 			}
 			if len(topics) > 0 {
-				logger.Debugf("SUBSCRIBE %s", topics)
+				logger.Debugf("KCSPOT SUBSCRIBE %s", topics)
 				select {
 				case <-ctx.Done():
 					return
@@ -377,10 +377,10 @@ func NewDepth50Websocket(
 	ws := Depth50Websocket{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		DataCh:      make(chan *Depth50, len(symbols)),
-		messageCh:   make(chan []byte, 10*len(symbols)),
-		writeCh:     make(chan interface{}, 10*len(symbols)),
-		symbolCh:    make(chan string, 10*len(symbols)),
+		DataCh:      make(chan *Depth50, 100*len(symbols)),
+		messageCh:   make(chan []byte, 100*len(symbols)),
+		writeCh:     make(chan interface{}, 100*len(symbols)),
+		symbolCh:    make(chan string, 100*len(symbols)),
 	}
 	go ws.start(ctx, api, symbols, proxy)
 	ws.reconnectCh <- nil

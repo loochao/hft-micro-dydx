@@ -1,0 +1,22 @@
+{
+  "data": {
+    "symbol": "BNB-USDT",
+    "orderType": "limit",
+    "side": "buy",
+    "orderId": "60744533d0844b0006bb42a7",
+    "type": "canceled",
+    "orderTime": 1618232627610402774,
+    "size": "0.001",
+    "filledSize": "0",
+    "price": "550",
+    "clientOid": "PouMX7uGg",
+    "remainSize": "0",
+    "status": "done",
+    "ts": 1618232737743547831
+  },
+  "subject": "orderChange",
+  "topic": "/spotMarket/tradeOrders",
+  "channelType": "private",
+  "type": "message",
+  "userId": "6072bd6950d6480006756fa7"
+}

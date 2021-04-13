@@ -3,7 +3,6 @@ package kcspot
 import (
 	"fmt"
 	"net/url"
-	"strconv"
 )
 
 const (
@@ -75,45 +74,20 @@ func (cp *AccountParam) ToUrlValues() url.Values {
 }
 
 type NewOrderParam struct {
-	ClientOid   string
-	Side        string
-	Symbol      string
-	Type        string
-	Remark      string
-	Price       float64
-	Size        float64
-	TimeInForce string
-	CancelAfter int
-	PostOnly    bool
-}
-
-func (cp *NewOrderParam) ToUrlValues() url.Values {
-	values := url.Values{}
-	values.Set("clientOid", cp.ClientOid)
-	values.Set("side", cp.Side)
-	values.Set("symbol", cp.Symbol)
-	values.Set("type", cp.Type)
-	if cp.Remark != "" {
-		values.Set("remark", cp.Remark)
-	}
-	values.Set("size", strconv.FormatFloat(cp.Size, 'f', 8, 64))
-	if cp.Type == OrderTypeLimit {
-		values.Set("quantity", strconv.FormatFloat(cp.Price, 'f', 8, 64))
-	}
-	if cp.TimeInForce != "" {
-		values.Set("timeInForce", cp.TimeInForce)
-	}
-	if cp.TimeInForce == OrderTimeInForceGTT {
-		values.Set("cancelAfter", fmt.Sprintf("%d", cp.CancelAfter))
-	}
-	if cp.PostOnly && cp.TimeInForce != OrderTimeInForceFOK && cp.TimeInForce != OrderTimeInForceIOC {
-		values.Set("postOnly", strconv.FormatBool(cp.PostOnly))
-	}
-	return values
+	ClientOid   string  `json:"clientOid,omitempty"`
+	Side        string  `json:"side,omitempty"`
+	Symbol      string  `json:"symbol,omitempty"`
+	Type        string  `json:"type,omitempty"`
+	Remark      string  `json:"remark,omitempty"`
+	Price       float64 `json:"price,omitempty"`
+	Size        float64 `json:"size,omitempty"`
+	TimeInForce string  `json:"timeInForce,omitempty"`
+	CancelAfter int     `json:"cancelAfter,omitempty"`
+	PostOnly    bool    `json:"postOnly,omitempty"`
 }
 
 type CancelAllOrdersParam struct {
-	Symbol      string
+	Symbol string
 }
 
 func (cp *CancelAllOrdersParam) ToUrlValues() url.Values {

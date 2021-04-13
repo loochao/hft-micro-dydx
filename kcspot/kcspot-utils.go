@@ -1,8 +1,10 @@
 package kcspot
 
 import (
+	"context"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"time"
 	"unsafe"
 )
@@ -10,9 +12,9 @@ import (
 func ParseDepth50(bytes []byte) (*Depth50, error) {
 	var err error
 	orderBook := Depth50{
-		Bids:        [50][2]float64{},
-		Asks:        [50][2]float64{},
-		ArrivalTime: time.Now(),
+		Bids:      [50][2]float64{},
+		Asks:      [50][2]float64{},
+		ParseTime: time.Now(),
 	}
 	offset := 12
 	collectStart := offset
@@ -93,4 +95,65 @@ func ParseDepth50(bytes []byte) (*Depth50, error) {
 		offset += 1
 	}
 	return &orderBook, nil
+}
+
+func WatchAccountFromHttp(
+	ctx context.Context, api *API, param AccountsParam, interval time.Duration,
+	output chan []Account,
+) {
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			account, err := api.GetAccounts(subCtx, param)
+			if err != nil {
+				logger.Debugf("WatchAccountFromHttp GetAccounts error %v", err)
+			} else {
+				output <- account
+			}
+			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
+		}
+	}
+}
+
+func GetOrderLimits(
+	ctx context.Context,
+	api *API,
+	symbols []string,
+) (minSizes, stepSizes, tickSizes, minNotional map[string]float64, err error) {
+	var ss []Symbol
+	ss, err = api.GetSymbols(ctx)
+	if err != nil {
+		return
+	}
+	stepSizes = make(map[string]float64)
+	minSizes = make(map[string]float64)
+	tickSizes = make(map[string]float64)
+	minNotional = make(map[string]float64)
+	symbolsMap := make(map[string]string)
+	for _, symbol := range symbols {
+		symbolsMap[symbol] = symbol
+	}
+	for _, s := range ss {
+		if _, ok := symbolsMap[s.Symbol]; ok {
+			delete(symbolsMap, s.Symbol)
+			stepSizes[s.Symbol] = s.BaseIncrement
+			minSizes[s.Symbol] = s.BaseMinSize
+			tickSizes[s.Symbol] = s.QuoteIncrement
+			minNotional[s.Symbol] = s.QuoteMinSize
+		}
+	}
+	if len(symbolsMap) != 0 {
+		err = fmt.Errorf("NO ORDER LIMITS FOR %v", symbolsMap)
+	} else {
+		logger.Debugf("STEP SIZES %v", minSizes)
+		logger.Debugf("MIN SIZES %v", minSizes)
+		logger.Debugf("TICK SIZES %v", tickSizes)
+		logger.Debugf("MIN NOTIONAL %v", minNotional)
+	}
+	return
 }

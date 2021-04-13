@@ -2,6 +2,7 @@ package kcspot
 
 import (
 	"context"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
 	"log"
@@ -15,11 +16,11 @@ func TestAPI_GetAccounts(t *testing.T) {
 	var ctx = context.Background()
 	var err error
 	logger.Debugf("KCSPOT_KEY %s", os.Getenv("KCSPOT_KEY"))
-	api, err = NewAPI(NewKcSigner(
+	api, err = NewAPI(
 		os.Getenv("KCSPOT_KEY"),
 		os.Getenv("KCSPOT_SECRET"),
 		os.Getenv("KCSPOT_PASSPHRASE"),
-	), "socks5://127.0.0.1:1081")
+		"socks5://127.0.0.1:1081")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -28,21 +29,21 @@ func TestAPI_GetAccounts(t *testing.T) {
 		logger.Debugf("%v", err)
 		t.Fatal(err)
 	}
-	logger.Debugf("%d", len(accounts))
+	logger.Debugf("%v", accounts)
 }
 
 func TestAPI_GetSymbols(t *testing.T) {
 	var api *API
 	var ctx = context.Background()
 	var err error
-	api, err = NewAPI(NewKcSigner(
+	api, err = NewAPI(
 		"60731ffcd260170006f6d51f",
 		"da7dcb64-a777-432f-8dc2-bc96d6ff4288",
 		"bitcoin",
 		//os.Getenv("KCSPOT_KEY"),
 		//os.Getenv("KCSPOT_SECRET"),
 		//os.Getenv("KCSPOT_PASSPHRASE"),
-	), "socks5://127.0.0.1:1081")
+		"socks5://127.0.0.1:1081")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,11 +66,11 @@ func TestAPI_GetCandles(t *testing.T) {
 	var api *API
 	var ctx = context.Background()
 	var err error
-	api, err = NewAPI(NewKcSigner(
+	api, err = NewAPI(
 		os.Getenv("KCSPOT_KEY"),
 		os.Getenv("KCSPOT_SECRET"),
 		os.Getenv("KCSPOT_PASSPHRASE"),
-	), "socks5://127.0.0.1:1081")
+		"socks5://127.0.0.1:1081")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -87,11 +88,11 @@ func TestAPI_GetPublicConnectToken(t *testing.T) {
 	var api *API
 	var ctx = context.Background()
 	var err error
-	api, err = NewAPI(NewKcSigner(
+	api, err = NewAPI(
 		os.Getenv("KCSPOT_KEY"),
 		os.Getenv("KCSPOT_SECRET"),
 		os.Getenv("KCSPOT_PASSPHRASE"),
-	), "socks5://127.0.0.1:1081")
+		"socks5://127.0.0.1:1081")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,11 +107,11 @@ func TestAPI_GetPrivateConnectToken(t *testing.T) {
 	var api *API
 	var ctx = context.Background()
 	var err error
-	api, err = NewAPI(NewKcSigner(
+	api, err = NewAPI(
 		os.Getenv("KCSPOT_KEY"),
 		os.Getenv("KCSPOT_SECRET"),
 		os.Getenv("KCSPOT_PASSPHRASE"),
-	), "socks5://127.0.0.1:1081")
+		"socks5://127.0.0.1:1081")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -119,4 +120,52 @@ func TestAPI_GetPrivateConnectToken(t *testing.T) {
 		t.Fatal(err)
 	}
 	logger.Debugf("%v", pct)
+}
+
+func TestAPI_SubmitOrder(t *testing.T) {
+	var api *API
+	var ctx = context.Background()
+	var err error
+	api, err = NewAPI(
+		os.Getenv("KCSPOT_KEY"),
+		os.Getenv("KCSPOT_SECRET"),
+		os.Getenv("KCSPOT_PASSPHRASE"),
+		"socks5://127.0.0.1:1081")
+	if err != nil {
+		t.Fatal(err)
+	}
+	oid, _ := common.GenerateShortId()
+	res, err := api.SubmitOrder(ctx, NewOrderParam{
+		ClientOid: oid,
+		Symbol:    "BNB-USDT",
+		Side:      OrderSideBuy,
+		Type:      OrderTypeLimit,
+		Price:     550,
+		Size:      0.001,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%v", res)
+}
+
+func TestAPI_CancelAllOrders(t *testing.T) {
+	var api *API
+	var ctx = context.Background()
+	var err error
+	api, err = NewAPI(
+		os.Getenv("KCSPOT_KEY"),
+		os.Getenv("KCSPOT_SECRET"),
+		os.Getenv("KCSPOT_PASSPHRASE"),
+		"socks5://127.0.0.1:1081")
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := api.CancelAllOrders(ctx, CancelAllOrdersParam{
+		Symbol: "BNB-USDT",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%v", res)
 }

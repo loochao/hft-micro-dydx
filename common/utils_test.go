@@ -71,31 +71,23 @@ func BenchmarkStdLibParseFloat64(t *testing.B) {
 
 func BenchmarkParseBinanceFloat(t *testing.B) {
 	b := []byte("3.14159265")
+	t.ReportAllocs()
 	for n := 0; n < t.N; n++ {
-		_, err := ParseBinanceFloat(b)
-		if err != nil {
-			t.Fatal(err)
-		}
+		_, _ = ParseBinanceFloat(b)
 	}
 }
 
 func BenchmarkParseInt(t *testing.B) {
 	b := []byte("314159265")
 	for n := 0; n < t.N; n++ {
-		_, err := strconv.ParseInt(*(*string)(unsafe.Pointer(&b)), 10, 64)
-		if err != nil {
-			t.Fatal(err)
-		}
+		_, _ = strconv.ParseInt(*(*string)(unsafe.Pointer(&b)), 10, 64)
 	}
 }
 
 func BenchmarkParseBinanceInt(t *testing.B) {
 	b := []byte("314159265")
 	for n := 0; n < t.N; n++ {
-		_, err := ParseBinanceInt(b)
-		if err != nil {
-			t.Fatal(err)
-		}
+		_, _ = ParseBinanceInt(b)
 	}
 }
 

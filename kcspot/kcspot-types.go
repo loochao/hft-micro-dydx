@@ -26,11 +26,15 @@ const (
 	CandleType1Day   = "1day"
 	CandleType1Week  = "1week"
 
-	OrderStatusOpen     = "open"
-	OrderStatusMatch    = "match"
-	OrderStatusFilled   = "filled"
-	OrderStatusCanceled = "canceled"
-	OrderStatusUpdate   = "update"
+	OrderStatusOpen  = "open"
+	OrderStatusMatch = "match"
+	OrderStatusDone  = "done"
+
+	OrderTypeOpen     = "open"
+	OrderTypeMatch    = "match"
+	OrderTypeFilled   = "filled"
+	OrderTypeCanceled = "canceled"
+	OrderTypeUpdate   = "update"
 )
 
 var CandleTypeDurations = map[string]time.Duration{
@@ -87,11 +91,11 @@ type InstanceServer struct {
 }
 
 type Depth50 struct {
-	Symbol      string         `json:"-"`
-	Bids        [50][2]float64 `json:"-"`
-	Asks        [50][2]float64 `json:"_"`
-	ArrivalTime time.Time      `json:"-"`
-	EventTime   time.Time      `json:"-"`
+	Symbol    string         `json:"-"`
+	Bids      [50][2]float64 `json:"-"`
+	Asks      [50][2]float64 `json:"_"`
+	ParseTime time.Time      `json:"-"`
+	EventTime time.Time      `json:"-"`
 }
 
 func (depth *Depth50) UnmarshalJSON(data []byte) error {
@@ -123,7 +127,7 @@ func (depth *Depth50) UnmarshalJSON(data []byte) error {
 		depth.Asks[i][1] = size
 	}
 	depth.EventTime = time.Unix(0, aux.Data.EventTime*1000000)
-	depth.ArrivalTime = time.Now()
+	depth.ParseTime = time.Now()
 	segs := strings.Split(aux.Topic, ":")
 	if len(segs) == 2 {
 		depth.Symbol = segs[1]
@@ -143,12 +147,13 @@ type Credentials struct {
 }
 
 type Account struct {
-	ID        string  `json:"id"`
-	Currency  string  `json:"currency"`
-	Type      string  `json:"type"`
-	Balance   float64 `json:"balance,string"`
-	Available float64 `json:"available,string"`
-	Holds     float64 `json:"holds,string"`
+	ID        string    `json:"id"`
+	Currency  string    `json:"currency"`
+	Type      string    `json:"type"`
+	Balance   float64   `json:"balance,string"`
+	Available float64   `json:"available,string"`
+	Holds     float64   `json:"holds,string"`
+	EventTime time.Time `json:"-"`
 }
 
 // Signer interface contains Sign() method.
@@ -229,6 +234,7 @@ type CancelAllOrdersResponse struct {
 }
 
 type WsCap struct {
+	ID          string          `json:"id"`
 	Type        string          `json:"type"`
 	Topic       string          `json:"topic"`
 	Subject     string          `json:"subject"`
@@ -237,10 +243,11 @@ type WsCap struct {
 }
 
 type WsBalance struct {
+	AccountId       string  `json:"accountId"`
 	Total           float64 `json:"total,string"`
 	Available       float64 `json:"available,string"`
 	AvailableChange float64 `json:"availableChange,string"`
-	Currency        float64 `json:"currency,string"`
+	Currency        string  `json:"currency"`
 	Hold            float64 `json:"hold,string"`
 	HoldChange      float64 `json:"holdChange,string"`
 	RelationEvent   string  `json:"relationEvent"`
@@ -250,8 +257,8 @@ type WsBalance struct {
 		OrderId string `json:"orderId"`
 		Symbol  string `json:"symbol"`
 	} `json:"relationContext"`
-	EventTime  time.Time `json:"-"`
-	ParseTime  time.Time `json:"-"`
+	EventTime time.Time `json:"-"`
+	ParseTime time.Time `json:"-"`
 }
 
 func (wsCap *WsBalance) UnmarshalJSON(data []byte) error {
@@ -266,7 +273,7 @@ func (wsCap *WsBalance) UnmarshalJSON(data []byte) error {
 		logger.Debugf("UnmarshalJSON WsOrder error %v", err)
 		return err
 	}
-	wsCap.EventTime = time.Unix(0, aux.EventTime)
+	wsCap.EventTime = time.Unix(0, aux.EventTime*1000000)
 	wsCap.ParseTime = time.Now()
 	return nil
 }

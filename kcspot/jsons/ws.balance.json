@@ -1,0 +1,22 @@
+{
+  "data": {
+    "accountId": "607443bfe88f360006df1a87",
+    "total": "50",
+    "holdChange": "-0.55055",
+    "relationEvent": "trade.setted",
+    "available": "50",
+    "currency": "USDT",
+    "relationContext": {
+      "symbol": "BNB-USDT",
+      "orderId": "60744533d0844b0006bb42a7"
+    },
+    "availableChange": "0.55055",
+    "time": "1618232737865",
+    "hold": "0",
+    "relationEventId": "60744533d0844b0006bb42b6"
+  },
+  "subject": "account.balance",
+  "topic": "/account/balance:privateChannel:6072bd6950d6480006756fa7",
+  "id": "60744533d0844b0006bb42b6",
+  "type": "message"
+}

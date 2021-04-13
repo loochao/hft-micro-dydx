@@ -1,12 +1,13 @@
 package kcspot
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -58,7 +59,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, method, path string, params
 	return json.Unmarshal(dataCap.Data, result)
 }
 
-func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path string, params common.Params, result interface{}) error {
+func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path string, params common.Params, body, result interface{}) error {
 
 	values := url.Values{}
 	if params != nil {
@@ -66,18 +67,28 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 
 	}
 	path = common.EncodeURLValues(path, values)
-	headers := api.signer.Headers(fmt.Sprintf("%s%s", method, path))
+	var rBody io.Reader
+	var bodyStr []byte
+	var err error
+	if body != nil {
+		bodyStr, err = json.Marshal(body)
+		if err != nil {
+			return err
+		}
+		rBody = bytes.NewReader(bodyStr)
+	}
+	headers := api.signer.Headers(fmt.Sprintf("%s%s%s", method, path, bodyStr))
 
 	path = "https://api.kucoin.com" + path
-	req, err := http.NewRequest(method, path, nil)
+	req, err := http.NewRequest(method, path, rBody)
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%v", headers)
 	for key, value := range headers {
-		req.Header.Add(key, value)
+		req.Header.Set(key, value)
 	}
-	logger.Debugf("%v", req.Header)
+	req.Header.Set("Content-Type", "application/json")
+
 	resp, err := api.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
@@ -87,7 +98,6 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
@@ -103,17 +113,17 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 
 func (api *API) SubmitOrder(ctx context.Context, param NewOrderParam) (OrderResponse, error) {
 	or := OrderResponse{}
-	return or, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/v1/orders", &param, &or)
+	return or, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/v1/orders", nil, param, &or)
 }
 
-func (api *API) CancelAllOrders(ctx context.Context, param CancelAllOrdersParam) (OrderResponse, error) {
-	or := OrderResponse{}
-	return or, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/v1/orders", &param, &or)
+func (api *API) CancelAllOrders(ctx context.Context, param CancelAllOrdersParam) (CancelAllOrdersResponse, error) {
+	or := CancelAllOrdersResponse{}
+	return or, api.SendAuthenticatedHTTPRequest(ctx, http.MethodDelete, "/api/v1/orders", &param, nil, &or)
 }
 
 func (api *API) GetAccounts(ctx context.Context, param AccountsParam) ([]Account, error) {
 	accounts := make([]Account, 0)
-	return accounts, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/api/v1/accounts", &param, &accounts)
+	return accounts, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/api/v1/accounts", &param, nil, &accounts)
 }
 
 func (api *API) GetSymbols(ctx context.Context) ([]Symbol, error) {
@@ -128,7 +138,7 @@ func (api *API) GetPublicConnectToken(ctx context.Context) (*ConnectToken, error
 
 func (api *API) GetPrivateConnectToken(ctx context.Context) (*ConnectToken, error) {
 	pct := &ConnectToken{}
-	return pct, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/v1/bullet-private", nil, pct)
+	return pct, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/v1/bullet-private", nil, nil, pct)
 }
 
 func (api *API) GetCandles(ctx context.Context, param CandlesParam) ([]common.KLine, error) {
@@ -172,7 +182,7 @@ func (api *API) GetCandles(ctx context.Context, param CandlesParam) ([]common.KL
 	return klines, nil
 }
 
-func NewAPI(signer *KcSigner, proxy string) (*API, error) {
+func NewAPI(key, secret, passphrase, proxy string) (*API, error) {
 	var client http.Client
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
@@ -210,7 +220,7 @@ func NewAPI(signer *KcSigner, proxy string) (*API, error) {
 	}
 	api := API{
 		client: client,
-		signer: signer,
+		signer: NewKcSigner(key, secret, passphrase),
 		mu:     sync.Mutex{},
 	}
 	return &api, nil

@@ -162,11 +162,18 @@ func handleSave() {
 	}
 
 	if totalSpotBalance != nil && totalSwapUSDTBalance != nil && totalSwapBnBBalance != nil {
+		netWorth := (*totalSpotBalance + *totalSwapUSDTBalance + *totalSwapBnBBalance) / *bnConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalBalance"] = *totalSpotBalance + *totalSwapUSDTBalance + *totalSwapBnBBalance
 		fields["swapBalance"] = *totalSwapUSDTBalance + *totalSwapBnBBalance
 		fields["spotBalance"] = *totalSpotBalance
-		fields["netWorth"] = (*totalSpotBalance + *totalSwapUSDTBalance + *totalSwapBnBBalance) / *bnConfig.StartValue
+		fields["netWorth"] = netWorth
+		for name, start := range bnConfig.StartValues {
+			if start > 0 {
+				fields["refStartValue_"+strings.ToLower(name)] = start
+				fields["currentValue_"+strings.ToLower(name)] = netWorth * start
+			}
+		}
 		fields["startValue"] = *bnConfig.StartValue
 		pt, err := client.NewPoint(
 			*bnConfig.InternalInflux.Measurement,
@@ -230,7 +237,6 @@ func handleExternalInfluxSave() {
 		fields["netWorth"] = netWorth
 		for name, start := range bnConfig.StartValues {
 			if start > 0 {
-				fields["refStartValue_"+strings.ToLower(name)] = start
 				fields["currentValue_"+strings.ToLower(name)] = netWorth * start
 			}
 		}

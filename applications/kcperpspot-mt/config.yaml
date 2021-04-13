@@ -1,0 +1,89 @@
+name: kcperpspot-mt-pd02
+dryRun: false
+proxyAddress: socks5://127.0.0.1:1080
+cpuProfile: /Users/chenjilin/Downloads/kcperpspot-mt.prof
+internalInflux:
+  address: http://jilinchen.com:18086
+  username: hft
+  password: hft
+  database: test
+  measurement: kcperpspot-mt-pd02
+  batchSize: 10
+  saveInterval: 1m0s
+externalInflux:
+  address: http://jilinchen.com:18086
+  username: hft
+  password: hft
+  database: test
+  measurement: accounts
+  batchSize: 0
+  saveInterval: 1m0s
+marginType: CROSSED
+spotApiKey: 6073215c5e2b070006fa35fa
+spotApiSecret: 29c5571b-eed3-4774-8102-c38c232fe25e
+spotApiPassphrase: maodayemaodaye
+perpApiKey: 60730c0064ba640006d50c9c
+perpApiSecret: 7383035d-36c2-4bea-a135-55fffa1d4b07
+perpApiPassphrase: maodaye
+leverage: 10
+changeAutoDepositStatus: false
+loopInterval: 5s
+pullInterval: 1m0s
+
+resetUnrealisedPnlInterval: 15m
+resetUnrealisedTriggerPct: -0.5
+resetCount: 5
+
+balancePositionMaxAge: 3m
+
+pullBarsInterval: 30m
+pullBarsRetryInterval: 3s
+barsLookback: 180
+topQuantile: 0.95
+botQuantile: 0.05
+tradeCount: 40
+makerBandOffset: 0.00111
+minimalBandOffset: 0.0001 #0.00222
+minimalEnterDelta: 0.000555 #0.00444
+maximalExitDelta:  -0.000555
+topBandScale: 0.618
+botBandScale: 0.618
+
+minimalEnterFundingRate: 0.0001
+minimalKeepFundingRate: 0.005
+
+orderBookTakerImpact: 500
+orderBookMakerImpact: 100
+orderBookType: depth5@100ms
+orderBookMaxAgeDiff: 250ms
+orderBookMaxAge: 500ms
+orderBookBatchSize: 30
+
+spreadTimeToLive: 500ms
+spreadLookbackMinimalWindow: 3
+spreadLookbackDuration: 1s
+
+reBalanceInterval: 1m
+insuranceFundingRatio: 0.25
+reBalanceMinimalNotional: 20
+
+enterSlippage: 0.03
+startValue: 897
+enterFreePct: 0.025
+enterMinimalStep: 20
+enterTargetFactor: 4
+maxUnHedgeValue: 10
+
+orderTimeout: 5s
+orderSilent: 5s
+orderCancelSilent: 5s
+orderMaxCancelCount: 5
+enterSilent: 1m
+
+bnbMinSize: 0.1
+bnbCheckInterval: 1m
+
+startValues:
+  root: 0
+spotPerpPairs:
+  BNB-USDT: BNBUSDTM
