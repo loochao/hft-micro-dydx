@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 )
 
@@ -307,28 +306,24 @@ func (w *Depth50Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 			}
 			break
 		case <-symbolCheckTimer.C:
-			topics := make([]string, 0)
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
-					topics = append(topics, fmt.Sprintf("/spotMarket/level2Depth50:%s", symbol))
-				}
-			}
-			if len(topics) > 0 {
-				logger.Debugf("KCSPOT SUBSCRIBE %s", topics)
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(time.Millisecond):
-					logger.Debugf("SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", topics)
-					break
-				case w.writeCh <- SubscribeMsg{
-					ID:             strings.Join(topics, ","),
-					Type:           "subscribe",
-					Topic:          strings.Join(topics, ","),
-					PrivateChannel: false,
-					Response:       false,
-				}:
-					break
+					logger.Debugf("KCPERP SUBSCRIBE %s", fmt.Sprintf("/spotMarket/level2Depth50:%s", symbol))
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(time.Millisecond):
+						logger.Debugf("SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", fmt.Sprintf("/spotMarket/level2Depth50:%s", symbol))
+						break
+					case w.writeCh <- SubscribeMsg{
+						ID:             fmt.Sprintf("/spotMarket/level2Depth50:%s", symbol),
+						Type:           "subscribe",
+						Topic:          fmt.Sprintf("/spotMarket/level2Depth50:%s", symbol),
+						PrivateChannel: false,
+						Response:       false,
+					}:
+						break
+					}
 				}
 			}
 			symbolCheckTimer.Reset(symbolCheckInterval)

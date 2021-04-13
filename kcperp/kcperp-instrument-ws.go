@@ -313,7 +313,7 @@ func (w *InstrumentWebsocket) maintainHeartbeat(ctx context.Context, conn *webso
 		return nil
 	})
 
-	symbolTimeout := time.Minute
+	topicTimeout := time.Minute
 	symbolCheckInterval := time.Second * 15
 	pingTimer := time.NewTimer(time.Second)
 	symbolCheckTimer := time.NewTimer(time.Second)
@@ -345,28 +345,24 @@ func (w *InstrumentWebsocket) maintainHeartbeat(ctx context.Context, conn *webso
 			}
 			break
 		case <-symbolCheckTimer.C:
-			topics := make([]string, 0)
 			for topic, updateTime := range topicsUpdatedTimes {
-				if time.Now().Sub(updateTime) > symbolTimeout {
-					topics = append(topics, topic)
-				}
-			}
-			if len(topics) > 0 {
-				logger.Debugf("KCPERP SUBSCRIBE %s", topics)
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(time.Millisecond):
-					logger.Debugf("KCPERP SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", topics)
-					break
-				case w.writeCh <- SubscribeMsg{
-					ID:             strings.Join(topics, ","),
-					Type:           "subscribe",
-					Topic:          strings.Join(topics, ","),
-					PrivateChannel: false,
-					Response:       false,
-				}:
-					break
+				if time.Now().Sub(updateTime) > topicTimeout {
+					logger.Debugf("KCPERP SUBSCRIBE %s", topic)
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(time.Millisecond):
+						logger.Debugf("SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", topic)
+						break
+					case w.writeCh <- SubscribeMsg{
+						ID:             topic,
+						Type:           "subscribe",
+						Topic:          topic,
+						PrivateChannel: false,
+						Response:       false,
+					}:
+						break
+					}
 				}
 			}
 			symbolCheckTimer.Reset(symbolCheckInterval)

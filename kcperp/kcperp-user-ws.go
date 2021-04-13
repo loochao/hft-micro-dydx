@@ -382,17 +382,16 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 			}
 			break
 		case <-topicCheckTimer.C:
-			ts := make([]string, 0)
 			for topic, updateTime := range topicUpdatedTimes {
 				if time.Now().Sub(updateTime) > topicTimeout {
 					select {
 					case <-ctx.Done():
 						return
 					case <-time.After(time.Millisecond):
-						logger.Debugf("SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", ts)
+						logger.Debugf("SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", topic)
 						break
 					case w.writeCh <- SubscribeMsg{
-						ID:             strings.Join(ts, ","),
+						ID:             topic,
 						Type:           "subscribe",
 						Topic:          topic,
 						PrivateChannel: true,

@@ -86,4 +86,6 @@ bnbCheckInterval: 1m
 startValues:
   root: 0
 spotPerpPairs:
+  BTC-USDT: XBTUSDTM
+  ETH-USDT: ETHUSDTM
   BNB-USDT: BNBUSDTM

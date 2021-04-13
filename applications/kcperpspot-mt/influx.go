@@ -131,6 +131,7 @@ func handleSave() {
 			*kcConfig.InternalInflux.Measurement,
 			map[string]string{
 				"perpSymbol": perpSymbol,
+				"spotSymbol": spotSymbol,
 				"type":       "singleBalance",
 			},
 			fields,
