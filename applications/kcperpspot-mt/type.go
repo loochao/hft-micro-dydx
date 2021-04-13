@@ -19,11 +19,9 @@ type SpotOrderNewError struct {
 
 type Quantile struct {
 	Symbol       string
-	FarTop       float64
 	Top          float64
 	Mid          float64
 	Bot          float64
-	FarBot       float64
 	TopBandScale float64
 	BotBandScale float64
 	MaClose      float64

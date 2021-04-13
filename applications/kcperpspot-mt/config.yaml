@@ -42,12 +42,12 @@ barsLookback: 180
 topQuantile: 0.95
 botQuantile: 0.05
 tradeCount: 40
-makerBandOffset: 0.00111
-minimalBandOffset: 0.0001 #0.00222
-minimalEnterDelta: 0.000555 #0.00444
-maximalExitDelta:  -0.000555
-topBandScale: 0.618
-botBandScale: 0.618
+makerBandOffset: 0.00222
+minimalBandOffset: 0.00222 #0.00222
+minimalEnterDelta: 0.00666 #0.00444
+maximalExitDelta:  -0.00111
+topBandScale: 1.0
+botBandScale: 1.0
 
 minimalEnterFundingRate: 0.0001
 minimalKeepFundingRate: 0.005

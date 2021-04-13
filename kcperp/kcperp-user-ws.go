@@ -127,6 +127,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
+			//logger.Debugf("PERP %s", msg)
 			var wsCap WsCap
 			err := json.Unmarshal(msg, &wsCap)
 			if err != nil {

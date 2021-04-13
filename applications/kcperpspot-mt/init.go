@@ -15,8 +15,8 @@ import (
 	"time"
 )
 
-var bnInfluxWriter *common.InfluxWriter
-var bnExternalInfluxWriter *common.InfluxWriter
+var kcInfluxWriter *common.InfluxWriter
+var kcExternalInfluxWriter *common.InfluxWriter
 
 var kcperpAPI *kcperp.API
 var kcspotAPI *kcspot.API
@@ -44,7 +44,7 @@ var kcperpSymbols = make([]string, 0)
 var kcspSymbolsMap = make(map[string]string, 0)
 var kcpsSymbolsMap = make(map[string]string, 0)
 
-var bnOpenLogSilentTimes = make(map[string]time.Time)
+var kcOpenLogSilentTimes = make(map[string]time.Time)
 
 var kcperpAccountCh = make(chan kcperp.Account, 10)
 
@@ -71,7 +71,7 @@ var kcperpAssetUpdatedForInflux = false
 var kcspotBalanceUpdatedForInflux = false
 var kcperpAssetUpdatedForExternalInflux = false
 var kcspotBalanceUpdatedForExternalInflux = false
-var bnSaveSilentTime = time.Now()
+var kcSaveSilentTime = time.Now()
 
 var kcspotAccountCh = make(chan []kcspot.Account, 10)
 
@@ -83,27 +83,27 @@ var kcspotOrderCancelCounts = make(map[string]int)
 
 var kcperpMarkPrices = make(map[string]*kcperp.MarkPrice)
 var kcperpFundingRates = make(map[string]*kcperp.FundingRate)
-var bnRankSymbolMap map[int]string
+var kcRankSymbolMap map[int]string
 
 var kcperpBarsMapCh = make(chan common.KLinesMap)
 var kcperpBarsMap = make(common.KLinesMap)
 var kcspotBarsMapCh = make(chan common.KLinesMap)
 var kcspotBarsMap = make(common.KLinesMap)
-var bnBarsMapUpdated = make(map[string]bool)
-var bnBarsMapCh = make(chan [2]common.KLinesMap, 10)
-var bnQuantilesCh = make(chan map[string]Quantile)
-var bnQuantiles = make(map[string]Quantile)
+var kcBarsMapUpdated = make(map[string]bool)
+var kcBarsMapCh = make(chan [2]common.KLinesMap, 10)
+var kcQuantilesCh = make(chan map[string]Quantile)
+var kcQuantiles = make(map[string]Quantile)
 var kcspotLastFilledBuyPrices = make(map[string]float64)
 var kcspotLastFilledSellPrices = make(map[string]float64)
-var bnRealisedSpread = make(map[string]float64)
-var bnSpreads = make(map[string]Spread)
+var kcRealisedSpread = make(map[string]float64)
+var kcSpreads = make(map[string]Spread)
 var kcUnHedgeValue float64
 
 var kcConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210413 15:59:08  ####")
+	logger.Debug("####  BUILD @ 20210413 22:17:09  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -147,7 +147,7 @@ func init() {
 
 		kcspotOrderCancelCounts[spotSymbol] = 0
 
-		bnOpenLogSilentTimes[spotSymbol] = time.Now()
+		kcOpenLogSilentTimes[spotSymbol] = time.Now()
 		kcspotSilentTimes[spotSymbol] = time.Now().Add(time.Minute)
 		kcspotHttpBalanceUpdateSilentTimes[spotSymbol] = time.Now()
 
@@ -155,8 +155,8 @@ func init() {
 		kcspotLastOrderTimes[spotSymbol] = time.Unix(0, 0)
 	}
 
-	bnBarsMapUpdated["swap"] = false
-	bnBarsMapUpdated["spot"] = false
+	kcBarsMapUpdated["swap"] = false
+	kcBarsMapUpdated["spot"] = false
 
 	err = raven.SetDSN("https://5c318e0f10a349308d2ff86f51de31d8:fa0a8f90a8244c6ea762130cdd6d1bb9@sentry.jilinchen.com/12")
 

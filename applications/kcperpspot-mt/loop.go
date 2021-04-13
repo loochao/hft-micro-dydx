@@ -29,7 +29,7 @@ func updatePerpPositions() {
 
 		perpPosition, okPerpPosition := kcperpPositions[perpSymbol]
 		spotBalance, okSpotBalance := kcspotBalances[spotSymbol]
-		spread, okSpread := bnSpreads[spotSymbol]
+		spread, okSpread := kcSpreads[spotSymbol]
 		if !okPerpPosition || !okSpotBalance || !okSpread {
 			continue
 		}
@@ -109,7 +109,7 @@ func updateSpotNewOrders() {
 		return
 	}
 
-	if len(bnRankSymbolMap) == 0 {
+	if len(kcRankSymbolMap) == 0 {
 		return
 	}
 
@@ -127,7 +127,7 @@ func updateSpotNewOrders() {
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单
 	for rank := len(kcperpSymbols) - 1; rank >= 0; rank-- {
 
-		perpSymbol := bnRankSymbolMap[rank]
+		perpSymbol := kcRankSymbolMap[rank]
 		spotSymbol := kcpsSymbolsMap[perpSymbol]
 		//需要保证期货和现货都有仓位更新，才调整现货仓位
 		if time.Now().Sub(kcspotBalancesUpdateTimes[spotSymbol]) > *kcConfig.BalancePositionMaxAge {
@@ -146,8 +146,8 @@ func updateSpotNewOrders() {
 		if time.Now().Sub(kcspotSilentTimes[spotSymbol]) < 0 {
 			continue
 		}
-		quantile, okQuantile := bnQuantiles[spotSymbol]
-		spread, okSpread := bnSpreads[spotSymbol]
+		quantile, okQuantile := kcQuantiles[spotSymbol]
+		spread, okSpread := kcSpreads[spotSymbol]
 		spotBalance, okSpotBalance := kcspotBalances[spotSymbol]
 		fundingRate, okFundingRate := kcperpFundingRates[perpSymbol]
 		if !okSpread || !okQuantile || !okSpotBalance || !okFundingRate {
@@ -186,7 +186,7 @@ func updateSpotNewOrders() {
 
 			//不及一个0.8*EntryStep, 不操作
 			if entryValue < entryStep*0.8 {
-				if time.Now().Sub(bnOpenLogSilentTimes[spotSymbol]) > 0 {
+				if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
 					logger.Debugf(
 						"FAILED TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
 						entryValue,
@@ -196,12 +196,12 @@ func updateSpotNewOrders() {
 						spread.MedianEnter, quantile.Top,
 						quantity,
 					)
-					bnOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
+					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
 				}
 				continue
 			}
 			if entryValue > kcspotUSDTBalance.Available {
-				if time.Now().Sub(bnOpenLogSilentTimes[spotSymbol]) > 0 {
+				if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
 					logger.Debugf(
 						"FAILED TOP OPEN, ENTRY VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
 						entryValue,
@@ -211,12 +211,12 @@ func updateSpotNewOrders() {
 						spread.MedianEnter, quantile.Top,
 						quantity,
 					)
-					bnOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
+					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
 				}
 				continue
 			}
 			if quantity*price > kcspotUSDTBalance.Available {
-				if time.Now().Sub(bnOpenLogSilentTimes[spotSymbol]) > 0 {
+				if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
 					logger.Debugf(
 						"FAILED TOP OPEN, ORDER VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
 						quantity*price,
@@ -226,13 +226,13 @@ func updateSpotNewOrders() {
 						spread.MedianEnter, quantile.Top,
 						quantity,
 					)
-					bnOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
+					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
 				}
 				continue
 			}
 			if quantity*price < spotMinNotional ||
 				quantity < perpStepSize {
-				if time.Now().Sub(bnOpenLogSilentTimes[spotSymbol]) > 0 {
+				if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
 					logger.Debugf(
 						"FAILED TOP OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f",
 						quantity*price,
@@ -242,11 +242,11 @@ func updateSpotNewOrders() {
 						spread.MedianEnter, quantile.Top,
 						quantity,
 					)
-					bnOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
+					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
 				}
 				continue
 			}
-			bnOpenLogSilentTimes[spotSymbol] = time.Now()
+			kcOpenLogSilentTimes[spotSymbol] = time.Now()
 			logger.Debugf(
 				"TOP OPEN %s %f > %f, %f > %f, SIZE %f",
 				spotSymbol,

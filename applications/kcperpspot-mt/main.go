@@ -59,7 +59,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	bnInfluxWriter, err = common.NewInfluxWriter(
+	kcInfluxWriter, err = common.NewInfluxWriter(
 		*kcConfig.InternalInflux.Address,
 		*kcConfig.InternalInflux.Username,
 		*kcConfig.InternalInflux.Password,
@@ -70,7 +70,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	bnExternalInfluxWriter, err = common.NewInfluxWriter(
+	kcExternalInfluxWriter, err = common.NewInfluxWriter(
 		*kcConfig.ExternalInflux.Address,
 		*kcConfig.ExternalInflux.Username,
 		*kcConfig.ExternalInflux.Password,
@@ -82,7 +82,7 @@ func main() {
 	}
 
 	defer func() {
-		err := bnInfluxWriter.Stop()
+		err := kcInfluxWriter.Stop()
 		if err != nil {
 			logger.Warnf("stop influx writer error %v", err)
 		}
@@ -192,8 +192,8 @@ func main() {
 		*kcConfig.MinimalEnterDelta,
 		*kcConfig.MaximalExitDelta,
 		*kcConfig.MinimalBandOffset,
-		bnBarsMapCh,
-		bnQuantilesCh,
+		kcBarsMapCh,
+		kcQuantilesCh,
 	)
 
 	walkedOrderBookCh := make(chan WalkedOrderBook, len(kcspotSymbols)*10)
@@ -327,7 +327,7 @@ func main() {
 		//				kcperpAssetUpdatedForExternalInflux = false
 		//				kcspotBalanceUpdatedForInflux = false
 		//				kcperpAssetUpdatedForInflux = false
-		//				bnSaveSilentTime = time.Now().Add(*kcConfig.PullInterval * 2)
+		//				kcSaveSilentTime = time.Now().Add(*kcConfig.PullInterval * 2)
 		//				go reBalanceUSDT(
 		//					kcGlobalCtx,
 		//					kcspotAPI,
@@ -382,7 +382,7 @@ func main() {
 			break
 		case order := <-kcperpUserWebsocket.OrderCh:
 			if order.Type == kcperp.OrderTypeCanceled ||
-				order.Status == kcperp.OrderTypeFilled {
+				order.Type == kcperp.OrderTypeFilled {
 				if order.Type == kcperp.OrderTypeCanceled {
 					logger.Debugf("PERP WS ORDER CANCELED %v ", order)
 					kcperpOrderSilentTimes[order.Symbol] = time.Now().Add(time.Second)
@@ -395,15 +395,15 @@ func main() {
 					if order.Side == common.OrderSideSell {
 						if spotSymbol, ok := kcpsSymbolsMap[order.Symbol]; ok {
 							if spotPrice, ok := kcspotLastFilledBuyPrices[spotSymbol]; ok {
-								bnRealisedSpread[spotSymbol] = (order.MatchPrice - spotPrice) / spotPrice
-								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, order.Symbol, bnRealisedSpread[order.Symbol])
+								kcRealisedSpread[spotSymbol] = (order.MatchPrice - spotPrice) / spotPrice
+								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, order.Symbol, kcRealisedSpread[order.Symbol])
 							}
 						}
 					} else if order.Side == common.OrderSideBuy  {
 						if spotSymbol, ok := kcpsSymbolsMap[order.Symbol]; ok {
 							if spotPrice, ok := kcspotLastFilledSellPrices[spotSymbol]; ok {
-								bnRealisedSpread[order.Symbol] = (order.MatchPrice - spotPrice) / spotPrice
-								logger.Debugf("%s %s REALISED CLOSE SPREAD %f", spotSymbol, order.Symbol, bnRealisedSpread[order.Symbol])
+								kcRealisedSpread[order.Symbol] = (order.MatchPrice - spotPrice) / spotPrice
+								logger.Debugf("%s %s REALISED CLOSE SPREAD %f", spotSymbol, order.Symbol, kcRealisedSpread[order.Symbol])
 							}
 						}
 					}
@@ -411,7 +411,7 @@ func main() {
 			}
 			break
 		case spread := <-spreadCh:
-			bnSpreads[spread.Symbol] = spread
+			kcSpreads[spread.Symbol] = spread
 			break
 		case markPrice := <-perpMarkPriceCh:
 			kcperpMarkPrices[markPrice.Symbol] = markPrice
@@ -430,29 +430,29 @@ func main() {
 		//	)
 		//	break
 		case kcperpBarsMap = <-kcperpBarsMapCh:
-			if bnBarsMapUpdated["spot"] {
-				bnBarsMapCh <- [2]common.KLinesMap{kcspotBarsMap, kcperpBarsMap}
-				bnBarsMapUpdated["spot"] = false
-				bnBarsMapUpdated["swap"] = false
+			if kcBarsMapUpdated["spot"] {
+				kcBarsMapCh <- [2]common.KLinesMap{kcspotBarsMap, kcperpBarsMap}
+				kcBarsMapUpdated["spot"] = false
+				kcBarsMapUpdated["swap"] = false
 			} else {
-				bnBarsMapUpdated["swap"] = true
+				kcBarsMapUpdated["swap"] = true
 			}
 			break
 		case kcspotBarsMap = <-kcspotBarsMapCh:
-			if bnBarsMapUpdated["swap"] {
-				bnBarsMapCh <- [2]common.KLinesMap{kcspotBarsMap, kcperpBarsMap}
-				bnBarsMapUpdated["spot"] = false
-				bnBarsMapUpdated["swap"] = false
+			if kcBarsMapUpdated["swap"] {
+				kcBarsMapCh <- [2]common.KLinesMap{kcspotBarsMap, kcperpBarsMap}
+				kcBarsMapUpdated["spot"] = false
+				kcBarsMapUpdated["swap"] = false
 			} else {
-				bnBarsMapUpdated["spot"] = true
+				kcBarsMapUpdated["spot"] = true
 			}
 			break
-		case bnQuantiles = <-bnQuantilesCh:
-			logger.Debugf("QUANTILES %v", bnQuantiles)
+		case kcQuantiles = <-kcQuantilesCh:
+			logger.Debugf("QUANTILES %v", kcQuantiles)
 			loopTimer.Reset(time.Second)
 			break
 		case <-influxSaveTimer.C:
-			//handleSave()
+			handleSave()
 			influxSaveTimer.Reset(
 				time.Now().Truncate(
 					*kcConfig.InternalInflux.SaveInterval,
@@ -462,7 +462,7 @@ func main() {
 			)
 			break
 		case <-externalInfluxSaveTimer.C:
-			//handleExternalInfluxSave()
+			handleExternalInfluxSave()
 			externalInfluxSaveTimer.Reset(
 				time.Now().Truncate(
 					*kcConfig.ExternalInflux.SaveInterval,
@@ -491,14 +491,14 @@ func main() {
 					break
 				}
 			}
-			if len(bnRankSymbolMap) == 0 {
+			if len(kcRankSymbolMap) == 0 {
 				logger.Debugf("RANK FR...")
 			}
-			bnRankSymbolMap, err = common.RankSymbols(kcperpSymbols, frs)
+			kcRankSymbolMap, err = common.RankSymbols(kcperpSymbols, frs)
 			if err != nil {
 				logger.Debugf("RankSymbols error %v", err)
 			}
-			//logger.Debugf("SYMBOLS FR RANK %v", bnRankSymbolMap)
+			//logger.Debugf("SYMBOLS FR RANK %v", kcRankSymbolMap)
 			frRankUpdatedTimer.Reset(time.Minute)
 		case <-loopTimer.C:
 			updatePerpPositions()
@@ -511,6 +511,7 @@ func main() {
 					*kcConfig.LoopInterval,
 				).Sub(time.Now()),
 			)
+			logger.Debugf("%v", kcSpreads)
 			break
 		}
 	}

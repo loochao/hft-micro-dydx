@@ -43,11 +43,14 @@ func handleWSPosition(nextPos *kcperp.WSPosition) {
 			if nextPos.CurrentQty != nil {
 				lastPos.CurrentQty = *nextPos.CurrentQty
 				logger.Debugf("PERP WS POS NEW QTY %v", lastPos.CurrentQty)
-				if nextPos.AvgEntryPrice != nil {
-					lastPos.AvgEntryPrice = *nextPos.AvgEntryPrice
-				}
-				kcperpPositions[nextPos.Symbol] = lastPos
 			}
+			if nextPos.AvgEntryPrice != nil {
+				lastPos.AvgEntryPrice = *nextPos.AvgEntryPrice
+			}
+			if nextPos.UnrealisedPnl != nil {
+				lastPos.UnrealisedPnl = *nextPos.UnrealisedPnl
+			}
+			kcperpPositions[nextPos.Symbol] = lastPos
 			kcperpPositionsUpdateTimes[nextPos.Symbol] = time.Now()
 		}
 	}

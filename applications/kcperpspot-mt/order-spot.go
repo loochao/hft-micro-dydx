@@ -72,8 +72,8 @@ func updateSpotOldOrders() {
 }
 
 func isOrderProfitable(order kcspot.NewOrderParam) bool {
-	spread, ok1 := bnSpreads[order.Symbol]
-	quantile, ok2 := bnQuantiles[order.Symbol]
+	spread, ok1 := kcSpreads[order.Symbol]
+	quantile, ok2 := kcQuantiles[order.Symbol]
 	if !ok1 || !ok2 || time.Now().Sub(spread.PerpOrderBook.ParseTime) > *kcConfig.SpreadTimeToLive {
 		logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.PerpOrderBook.ParseTime), order.Symbol)
 		return false
