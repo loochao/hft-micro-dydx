@@ -9,28 +9,28 @@ import (
 func handleWSBalance(wsBalance *kcperp.WsBalanceEvent) {
 	if kcperpUSDTAccount != nil {
 		if wsBalance.Currency != nil && kcperpUSDTAccount.Currency == *wsBalance.Currency {
-			if wsBalance.AvailableBalance != nil {
-				logger.Debugf(
-					"PERP WS AvailableBalance %f -> %f",
-					kcperpUSDTAccount.AvailableBalance,
-					*wsBalance.AvailableBalance,
-				)
+			if wsBalance.AvailableBalance != nil && kcperpUSDTAccount.AvailableBalance != *wsBalance.AvailableBalance {
+				//logger.Debugf(
+				//	"PERP WS AvailableBalance %f -> %f",
+				//	kcperpUSDTAccount.AvailableBalance,
+				//	*wsBalance.AvailableBalance,
+				//)
 				kcperpUSDTAccount.AvailableBalance = *wsBalance.AvailableBalance
 			}
 			if wsBalance.OrderMargin != nil {
-				logger.Debugf(
-					"PERP WS AvailableBalance %f -> %f",
-					kcperpUSDTAccount.OrderMargin,
-					*wsBalance.OrderMargin,
-				)
+				//logger.Debugf(
+				//	"PERP WS OrderMargin %f -> %f",
+				//	kcperpUSDTAccount.OrderMargin,
+				//	*wsBalance.OrderMargin,
+				//)
 				kcperpUSDTAccount.OrderMargin = *wsBalance.OrderMargin
 			}
 			if wsBalance.HoldBalance != nil {
-				logger.Debugf(
-					"PERP WS AvailableBalance %f -> %f",
-					kcperpUSDTAccount.FrozenFunds,
-					*wsBalance.HoldBalance,
-				)
+				//logger.Debugf(
+				//	"PERP WS FrozenFunds %f -> %f",
+				//	kcperpUSDTAccount.FrozenFunds,
+				//	*wsBalance.HoldBalance,
+				//)
 				kcperpUSDTAccount.FrozenFunds = *wsBalance.HoldBalance
 			}
 		}
@@ -46,6 +46,7 @@ func handleWSPosition(nextPos *kcperp.WSPosition) {
 				if nextPos.AvgEntryPrice != nil {
 					lastPos.AvgEntryPrice = *nextPos.AvgEntryPrice
 				}
+				kcperpPositions[nextPos.Symbol] = lastPos
 			}
 			kcperpPositionsUpdateTimes[nextPos.Symbol] = time.Now()
 		}

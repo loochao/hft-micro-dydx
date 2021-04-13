@@ -27,7 +27,7 @@ func handlePerpHttpPositions(positions []kcperp.Position) {
 			lastPosition.AvgEntryPrice != nextPos.AvgEntryPrice {
 			//如果SPOT变仓，立刻调PERP，如果PERP变仓，等ORDER SILENT TIMEOUT
 			kcperpOrderSilentTimes[nextPos.Symbol] = time.Now()
-			logger.Debugf("PERP HTTP POSITION %v", nextPos)
+			logger.Debugf("PERP HTTP POSITION SIZE %f PRICE %f", nextPos.CurrentQty, nextPos.AvgEntryPrice)
 		}
 	}
 }
@@ -36,7 +36,7 @@ func handlePerpHttpAccount(account kcperp.Account) {
 	if account.Currency == "USDT" {
 		if kcperpUSDTAccount == nil ||
 			kcperpUSDTAccount.AvailableBalance != account.AvailableBalance {
-			logger.Debugf("PERP HTTP USDT ACCOUNT %v", account)
+			logger.Debugf("PERP HTTP USDT ACCOUNT AvailableBalance %f MarginBalance %f", account.AvailableBalance, account.MarginBalance)
 		}
 		kcperpUSDTAccount = &account
 		kcperpAssetUpdatedForReBalance = true

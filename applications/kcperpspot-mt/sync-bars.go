@@ -22,8 +22,8 @@ func watchPerpBars(
 	loopTimer := time.NewTimer(time.Second)
 	defer loopTimer.Stop()
 	barsMap := make(common.KLinesMap)
-	klineDuration := kcperp.GranularityDurations[kcperp.Granularity5Min]
-	klineGranularity := kcperp.Granularity5Min
+	klineDuration := kcperp.GranularityDurations[kcperp.Granularity30Min]
+	klineGranularity := kcperp.Granularity30Min
 	for {
 		select {
 		case <-ctx.Done():
@@ -149,8 +149,8 @@ func watchSpotBars(
 	loopTimer := time.NewTimer(time.Second)
 	defer loopTimer.Stop()
 	barsMap := make(common.KLinesMap)
-	candleDuration := kcspot.CandleTypeDurations[kcspot.CandleType5Min]
-	candleType := kcspot.CandleType5Min
+	candleDuration := kcspot.CandleTypeDurations[kcspot.CandleType30Min]
+	candleType := kcspot.CandleType30Min
 	for {
 		select {
 		case <-ctx.Done():

@@ -9,6 +9,7 @@ import (
 
 func watchPerpWalkedOrderBooks(
 	ctx context.Context, api *kcperp.API, proxyAddress string,
+	multipliers map[string]float64,
 	takerImpact, makerImpact float64, symbols []string,
 	outputWLob chan WalkedOrderBook,
 ) {
@@ -32,14 +33,16 @@ func watchPerpWalkedOrderBooks(
 		case lob := <-ws.DataCh:
 			if lastEventTimes[lob.Symbol].Sub(lob.EventTime) < 0 {
 				lastEventTimes[lob.Symbol] = lob.EventTime
-				outputWLob <- walkPerpOrderBook(lob, takerImpact, makerImpact)
+				if m, ok := multipliers[lob.Symbol]; ok {
+					outputWLob <- walkPerpOrderBook(lob, takerImpact, makerImpact, m)
+				}
 			}
 			break
 		}
 	}
 }
 
-func walkPerpOrderBook(orderBook *kcperp.Depth50, takerImpact, makerImpact float64) WalkedOrderBook {
+func walkPerpOrderBook(orderBook *kcperp.Depth50, takerImpact, makerImpact, multiplier float64) WalkedOrderBook {
 	wLob := WalkedOrderBook{
 		Symbol:    orderBook.Symbol,
 		Type:      WalkedOrderBookTypePerp,
@@ -53,7 +56,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth50, takerImpact, makerImpact float
 	hasMakerData := false
 	hasTakerData := false
 	for _, bid := range orderBook.Bids {
-		value := bid[0] * bid[1]
+		value := bid[0] * bid[1]*multiplier
 		if !hasMakerData {
 			wLob.MakerBidFarPrice = bid[0]
 			if totalMakerValue+value >= makerImpact {
@@ -61,7 +64,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth50, takerImpact, makerImpact float
 				totalMakerValue = makerImpact
 				hasMakerData = true
 			} else {
-				totalMakerQty += bid[1]
+				totalMakerQty += bid[1]*multiplier
 				totalMakerValue += value
 			}
 		}
@@ -72,7 +75,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth50, takerImpact, makerImpact float
 				totalTakerValue = takerImpact
 				hasTakerData = true
 			} else {
-				totalTakerQty += bid[1]
+				totalTakerQty += bid[1]*multiplier
 				totalTakerValue += value
 			}
 		}
@@ -90,7 +93,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth50, takerImpact, makerImpact float
 	hasMakerData = false
 	hasTakerData = false
 	for _, ask := range orderBook.Asks {
-		value := ask[0] * ask[1]
+		value := ask[0] * ask[1]*multiplier
 		if !hasMakerData {
 			wLob.MakerAskFarPrice = ask[0]
 			if totalMakerValue+value >= makerImpact {
@@ -98,7 +101,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth50, takerImpact, makerImpact float
 				totalMakerValue = makerImpact
 				hasMakerData = true
 			} else {
-				totalMakerQty += ask[1]
+				totalMakerQty += ask[1]*multiplier
 				totalMakerValue += value
 			}
 		}
@@ -109,7 +112,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth50, takerImpact, makerImpact float
 				totalTakerValue = takerImpact
 				hasTakerData = true
 			} else {
-				totalTakerQty += ask[1]
+				totalTakerQty += ask[1]*multiplier
 				totalTakerValue += value
 			}
 		}
@@ -121,9 +124,9 @@ func walkPerpOrderBook(orderBook *kcperp.Depth50, takerImpact, makerImpact float
 	wLob.MakerAskVWAP = totalMakerValue / totalMakerQty
 	wLob.ImpactValue = takerImpact
 	wLob.BidPrice = orderBook.Bids[0][0]
-	wLob.BidSize = orderBook.Bids[0][1]
+	wLob.BidSize = orderBook.Bids[0][1]*multiplier
 	wLob.AskPrice = orderBook.Asks[0][0]
-	wLob.AskSize = orderBook.Asks[0][1]
+	wLob.AskSize = orderBook.Asks[0][1]*multiplier
 	return wLob
 }
 

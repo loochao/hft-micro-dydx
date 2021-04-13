@@ -224,6 +224,7 @@ func main() {
 			kcGlobalCtx,
 			kcperpAPI,
 			*kcConfig.ProxyAddress,
+			kcperpMultipliers,
 			*kcConfig.OrderBookTakerImpact,
 			*kcConfig.OrderBookMakerImpact,
 			kcperpSymbols[start:end],
@@ -351,7 +352,6 @@ func main() {
 			handleSpotWSBalance(msg)
 			break
 		case spotOrder := <-kcspotUserWebsocket.OrderCh:
-			logger.Debugf("spot order %v", spotOrder)
 			if spotOrder.Type == kcspot.OrderTypeFilled {
 				if spotOrder.FilledSize > 0 {
 					if spotOrder.Side == kcspot.OrderSideBuy {
@@ -483,7 +483,6 @@ func main() {
 			kcspotOrderSilentTimes[order.Params.Symbol] = time.Now().Add(*kcConfig.OrderSilent * 3)
 		case <-frRankUpdatedTimer.C:
 			frs := make([]float64, len(kcperpSymbols))
-			logger.Debugf("%v", kcperpFundingRates)
 			for i, symbol := range kcperpSymbols {
 				if markPrice, ok := kcperpFundingRates[symbol]; ok {
 					frs[i] = markPrice.FundingRate
@@ -492,11 +491,14 @@ func main() {
 					break
 				}
 			}
+			if len(bnRankSymbolMap) == 0 {
+				logger.Debugf("RANK FR...")
+			}
 			bnRankSymbolMap, err = common.RankSymbols(kcperpSymbols, frs)
 			if err != nil {
 				logger.Debugf("RankSymbols error %v", err)
 			}
-			logger.Debugf("SYMBOLS FR RANK %v", bnRankSymbolMap)
+			//logger.Debugf("SYMBOLS FR RANK %v", bnRankSymbolMap)
 			frRankUpdatedTimer.Reset(time.Minute)
 		case <-loopTimer.C:
 			updatePerpPositions()
