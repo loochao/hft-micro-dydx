@@ -389,8 +389,8 @@ func main() {
 					kcperpPositionsUpdateTimes[order.Symbol] = time.Unix(0, 0)
 				} else {
 					logger.Debugf(
-						"PERP WS ORDER MATCHED %s SIZE %s PRICE %f MATCHED SIZE %v MATCHED PRICE %f",
-						order.Symbol, order.Side, order.Size, order.Price, order.MatchSize, order.MatchPrice,
+						"PERP WS ORDER MATCHED %s SIDE %s MATCHED SIZE %v MATCHED PRICE %f",
+						order.Symbol, order.Side, order.MatchSize, order.MatchPrice,
 					)
 					if order.Side == common.OrderSideSell {
 						if spotSymbol, ok := kcpsSymbolsMap[order.Symbol]; ok {
