@@ -57,7 +57,7 @@ func updatePerpPositions() {
 			perpSize = -perpPosition.CurrentQty
 		}
 
-		logger.Debugf("updatePerpPositions %s SIZE %f POS %f -> %f", spotSymbol, perpSize, perpPosition.CurrentQty, perpPosition.CurrentQty+perpSize)
+		logger.Debugf("updatePerpPositions %s SIZE %f POS %f -> %f", perpSymbol, perpSize, perpPosition.CurrentQty, perpPosition.CurrentQty+perpSize)
 
 		reduceOnly := false
 		if perpSize*perpPosition.CurrentQty < 0 && math.Abs(perpSize) <= math.Abs(perpPosition.CurrentQty) {
