@@ -18,7 +18,7 @@ func TestAPI_GetContracts(t *testing.T) {
 		os.Getenv("KCPERP_KEY"),
 		os.Getenv("KCPERP_SECRET"),
 		os.Getenv("KCPERP_PASSPHRASE"),
-		"socks5://127.0.0.1:1081")
+		"socks5://127.0.0.1:1080")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func TestAPI_GetContracts(t *testing.T) {
 	usdSymbols := make([]string, 0)
 	for _, s := range symbols {
 		if s.QuoteCurrency == "USDT" && s.Status == "Open" && s.FairMethod == "FundingRate" {
-			logger.Debugf("%s %s %s %s %s", s.FairMethod, s.Symbol, s.BaseCurrency, s.QuoteCurrency, s.RootSymbol)
+			logger.Debugf("%s %s-%s:%s", s.FairMethod, s.BaseCurrency, s.QuoteCurrency, s.Symbol)
 			usdSymbols = append(usdSymbols, s.Symbol)
 		}
 	}
