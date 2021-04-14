@@ -3,7 +3,9 @@ package common
 import (
 	"compress/gzip"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"sort"
@@ -186,4 +188,13 @@ func (f SortedFloatSlice) Median() float64 {
 		return f[len(f)/2]
 	}
 	return (f[len(f)/2] + f[len(f)/2-1]) / 2
+}
+
+type Float64 float64
+
+func (f Float64) MarshalJSON() ([]byte, error) {
+	if float64(f) == math.Trunc(float64(f)) {
+		return []byte(fmt.Sprintf("%.8f", f)), nil
+	}
+	return json.Marshal(float64(f))
 }

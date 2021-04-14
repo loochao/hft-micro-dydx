@@ -2,6 +2,7 @@ package kcspot
 
 import (
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"net/url"
 )
 
@@ -74,16 +75,16 @@ func (cp *AccountParam) ToUrlValues() url.Values {
 }
 
 type NewOrderParam struct {
-	ClientOid   string  `json:"clientOid,omitempty"`
-	Side        string  `json:"side,omitempty"`
-	Symbol      string  `json:"symbol,omitempty"`
-	Type        string  `json:"type,omitempty"`
-	Remark      string  `json:"remark,omitempty"`
-	Price       float64 `json:"price,omitempty"`
-	Size        float64 `json:"size,omitempty"`
-	TimeInForce string  `json:"timeInForce,omitempty"`
-	CancelAfter int     `json:"cancelAfter,omitempty"`
-	PostOnly    bool    `json:"postOnly,omitempty"`
+	ClientOid   string         `json:"clientOid,omitempty"`
+	Side        string         `json:"side,omitempty"`
+	Symbol      string         `json:"symbol,omitempty"`
+	Type        string         `json:"type,omitempty"`
+	Remark      string         `json:"remark,omitempty"`
+	Price       common.Float64 `json:"price,omitempty"`
+	Size        common.Float64 `json:"size,omitempty"`
+	TimeInForce string         `json:"timeInForce,omitempty"`
+	CancelAfter int            `json:"cancelAfter,omitempty"`
+	PostOnly    bool           `json:"postOnly,omitempty"`
 }
 
 type CancelAllOrdersParam struct {

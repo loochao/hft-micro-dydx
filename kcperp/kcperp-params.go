@@ -2,6 +2,7 @@ package kcperp
 
 import (
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"net/url"
 )
 
@@ -74,18 +75,18 @@ func (cp *AccountOverviewParam) ToUrlValues() url.Values {
 }
 
 type NewOrderParam struct {
-	ClientOid   string  `json:"clientOid,omitempty"`
-	Side        string  `json:"side,omitempty"`
-	Symbol      string  `json:"symbol,omitempty"`
-	Type        string  `json:"type,omitempty"`
-	Leverage    int     `json:"leverage,omitempty"`
-	Remark      string  `json:"remark,omitempty"`
-	Price       float64 `json:"price,omitempty"`
-	Size        int64   `json:"size,omitempty"`
-	ReduceOnly  bool    `json:"reduceOnly,omitempty"`
-	CloseOrder  bool    `json:"closeOrder,omitempty"`
-	PostOnly    bool    `json:"postOnly,omitempty"`
-	TimeInForce string  `json:"timeInForce,omitempty"`
+	ClientOid   string         `json:"clientOid,omitempty"`
+	Side        string         `json:"side,omitempty"`
+	Symbol      string         `json:"symbol,omitempty"`
+	Type        string         `json:"type,omitempty"`
+	Leverage    int            `json:"leverage,omitempty"`
+	Remark      string         `json:"remark,omitempty"`
+	Price       common.Float64 `json:"price,omitempty"`
+	Size        int64          `json:"size,omitempty"`
+	ReduceOnly  bool           `json:"reduceOnly,omitempty"`
+	CloseOrder  bool           `json:"closeOrder,omitempty"`
+	PostOnly    bool           `json:"postOnly,omitempty"`
+	TimeInForce string         `json:"timeInForce,omitempty"`
 }
 
 type CancelAllOrdersParam struct {
