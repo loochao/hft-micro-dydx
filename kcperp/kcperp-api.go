@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"io"
 	"io/ioutil"
 	"net"
@@ -73,6 +74,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 		if err != nil {
 			return err
 		}
+		logger.Debugf("%s", bodyStr)
 		rBody = bytes.NewReader(bodyStr)
 	}
 	headers := api.signer.Headers(fmt.Sprintf("%s%s%s", method, path, bodyStr))
