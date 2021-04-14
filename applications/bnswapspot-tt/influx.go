@@ -23,11 +23,11 @@ func handleSave() {
 		getAllBalances := true
 		for _, symbol := range bnSymbols {
 			balance, okBalance := bnspotBalances[symbol]
-			markPrice, okMarkPrice := bnswapMarkPrices[symbol]
-			if okBalance && okMarkPrice {
-				spotBalance += markPrice.IndexPrice * (balance.Free + balance.Locked)
+			spread, okSpread := bnSpreads[symbol]
+			if okBalance && okSpread {
+				spotBalance += spread.SpotOrderBook.TakerBidVWAP * (balance.Free + balance.Locked)
 			} else {
-				logger.Debugf("%s MISS BALANCE %v OR VWAP %v", symbol, okBalance, okMarkPrice)
+				logger.Debugf("%s MISS BALANCE %v OR VWAP %v", symbol, okBalance, spread.SpotOrderBook.TakerBidVWAP)
 				getAllBalances = false
 				break
 			}
@@ -207,10 +207,11 @@ func handleExternalInfluxSave() {
 		getAllBalances := true
 		for _, symbol := range bnSymbols {
 			balance, okBalance := bnspotBalances[symbol]
-			markPrice, okMP := bnswapMarkPrices[symbol]
-			if okBalance && okMP {
-				spotBalance += markPrice.IndexPrice * (balance.Free + balance.Locked)
+			spread, okSpread := bnSpreads[symbol]
+			if okBalance && okSpread {
+				spotBalance += spread.SpotOrderBook.TakerBidVWAP * (balance.Free + balance.Locked)
 			} else {
+				logger.Debugf("%s MISS BALANCE %v OR VWAP %v", symbol, okBalance, spread.SpotOrderBook.TakerBidVWAP)
 				getAllBalances = false
 				break
 			}
