@@ -114,6 +114,108 @@ func ParseDepth50(bytes []byte) (*Depth50, error) {
 	return &orderBook, nil
 }
 
+
+func ParseDepth5(bytes []byte) (*Depth5, error) {
+	var err error
+	orderBook := Depth5{
+		Bids:      [5][2]float64{},
+		Asks:      [5][2]float64{},
+		ParseTime: time.Now(),
+	}
+	offset := 16
+	if bytes[offset] != 'c' && bytes[offset+1] != 'e' && bytes[offset+2] != '"' {
+		return nil, fmt.Errorf("bad bytes %s", bytes)
+	}
+	offset = 20
+	collectStart := offset
+	bytesLen := len(bytes)
+	counter := 0
+	currentKey := common.JsonKeyLastUpdateId
+	for offset < bytesLen-6 {
+		switch currentKey {
+		case common.JsonKeyLastUpdateId:
+			if bytes[offset] == ',' {
+				orderBook.Sequence, err = common.ParseBinanceInt(bytes[collectStart:offset])
+				if err != nil {
+					return nil, err
+				}
+				if bytes[offset+4] != 'k' && bytes[offset+5] != 's' && bytes[offset+6] != '"' {
+					return nil, fmt.Errorf("bad bytes %s", bytes)
+				}
+				currentKey = common.JsonKeyAsks
+				offset += 10
+				collectStart = offset
+			}
+		case common.JsonKeyBids:
+			if bytes[offset] == ',' || bytes[offset] == ']' {
+				orderBook.Bids[counter/2][counter%2], err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				if err != nil {
+					return nil, err
+				}
+				counter += 1
+				if counter >= 10 {
+					currentKey = common.JsonKeyEventTime
+					offset += 8
+					collectStart = offset
+				} else if counter%2 == 0 {
+					offset += 3
+					collectStart = offset
+				} else {
+					offset += 1
+					collectStart = offset
+				}
+				continue
+			}
+			break
+		case common.JsonKeyAsks:
+			if bytes[offset] == ',' || bytes[offset] == ']' {
+				orderBook.Asks[counter/2][counter%2], err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				if err != nil {
+					return nil, err
+				}
+				counter += 1
+				if counter >= 10 {
+					currentKey = common.JsonKeyBids
+					offset += 12
+					collectStart = offset
+					counter = 0
+				} else if counter%2 == 0 {
+					offset += 3
+					collectStart = offset
+				} else {
+					offset += 1
+					collectStart = offset
+				}
+				continue
+			}
+			break
+		case common.JsonKeyEventTime:
+			offset += 13
+			timestamp, err := common.ParseBinanceInt(bytes[collectStart:offset])
+			if err != nil {
+				return nil, err
+			}
+			orderBook.EventTime = time.Unix(0, timestamp*1000000)
+			offset += 85
+			collectStart = offset
+			offset += 6
+			currentKey = common.JsonKeySymbol
+			continue
+		case common.JsonKeySymbol:
+			if bytes[offset] == '"' {
+				symbol := bytes[collectStart:offset]
+				orderBook.Symbol = *(*string)(unsafe.Pointer(&symbol))
+				offset = bytesLen
+				//在此退出
+				continue
+			}
+			break
+		}
+		offset += 1
+	}
+	return &orderBook, nil
+}
+
 func passPhraseEncrypt(key, plain []byte) string {
 	hm := hmac.New(sha256.New, key)
 	hm.Write(plain)

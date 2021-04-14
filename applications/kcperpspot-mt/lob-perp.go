@@ -17,7 +17,7 @@ func watchPerpWalkedOrderBooks(
 	for _, symbol := range symbols {
 		lastEventTimes[symbol] = time.Unix(0, 0)
 	}
-	ws := kcperp.NewDepth50Websocket(
+	ws := kcperp.NewDepth5Websocket(
 		ctx,
 		api,
 		symbols,
@@ -42,7 +42,7 @@ func watchPerpWalkedOrderBooks(
 	}
 }
 
-func walkPerpOrderBook(orderBook *kcperp.Depth50, takerImpact, makerImpact, multiplier float64) WalkedOrderBook {
+func walkPerpOrderBook(orderBook *kcperp.Depth5, takerImpact, makerImpact, multiplier float64) WalkedOrderBook {
 	wLob := WalkedOrderBook{
 		Symbol:    orderBook.Symbol,
 		Type:      WalkedOrderBookTypePerp,

@@ -15,7 +15,7 @@ func watchSpotWalkedOrderBooks(
 		lastEventTimes[s] = time.Unix(0, 0)
 	}
 
-	ws := kcspot.NewDepth50Websocket(ctx, api, symbols, proxyAddress)
+	ws := kcspot.NewDepth5Websocket(ctx, api, symbols, proxyAddress)
 	defer ws.Stop()
 
 	for {
@@ -34,7 +34,7 @@ func watchSpotWalkedOrderBooks(
 	}
 }
 
-func walkSpotOrderBook(orderBook *kcspot.Depth50, takerImpact, makerImpact float64) WalkedOrderBook {
+func walkSpotOrderBook(orderBook *kcspot.Depth5, takerImpact, makerImpact float64) WalkedOrderBook {
 	wLob := WalkedOrderBook{
 		Symbol:      orderBook.Symbol,
 		Type:        WalkedOrderBookTypeSpot,

@@ -57,14 +57,14 @@ func handleSave() {
 
 	if kcperpUSDTAccount != nil {
 		fields := make(map[string]interface{})
-		fields["swapMarginBalance"] = kcperpUSDTAccount.MarginBalance
-		fields["swapAvailableBalance"] = kcperpUSDTAccount.AvailableBalance
-		fields["swapUnrealisedPNL"] = kcperpUSDTAccount.UnrealisedPNL
-		fields["swapPositionMargin"] = kcperpUSDTAccount.PositionMargin
+		fields["perpMarginBalance"] = kcperpUSDTAccount.MarginBalance
+		fields["perpAvailableBalance"] = kcperpUSDTAccount.AvailableBalance
+		fields["perpUnrealisedPNL"] = kcperpUSDTAccount.UnrealisedPNL
+		fields["perpPositionMargin"] = kcperpUSDTAccount.PositionMargin
 		pt, err := client.NewPoint(
 			*kcConfig.InternalInflux.Measurement,
 			map[string]string{
-				"type": "swapBalance",
+				"type": "perpBalance",
 			},
 			fields,
 			time.Now().UTC(),
@@ -81,7 +81,7 @@ func handleSave() {
 		spotSymbol := kcpsSymbolsMap[perpSymbol]
 		fields := make(map[string]interface{})
 		if position, ok := kcperpPositions[perpSymbol]; ok {
-			fields["swapCurrentQty"] = position.CurrentQty
+			fields["perpCurrentQty"] = position.CurrentQty
 		}
 		if spotBalance, ok := kcspotBalances[spotSymbol]; ok {
 			fields["spotBalance"] = spotBalance.Available + spotBalance.Holds
@@ -90,7 +90,7 @@ func handleSave() {
 			}
 		}
 		if fr, ok := kcperpFundingRates[perpSymbol]; ok {
-			fields["swapNextFundingRate"] = fr.FundingRate
+			fields["perpNextFundingRate"] = fr.FundingRate
 		}
 		if spread, ok := kcSpreads[spotSymbol]; ok {
 			fields["lastEnterSpread"] = spread.LastEnter
@@ -110,10 +110,10 @@ func handleSave() {
 				fields["spotOpenOrderPrice"] = order.Price
 			}
 
-			fields["swapTakerBidVWAP"] = spread.PerpOrderBook.TakerBidVWAP
-			fields["swapMakerBidVWAP"] = spread.PerpOrderBook.MakerBidVWAP
-			fields["swapTakerAskVWAP"] = spread.PerpOrderBook.TakerAskVWAP
-			fields["swapMakerAskVWAP"] = spread.PerpOrderBook.MakerAskVWAP
+			fields["perpTakerBidVWAP"] = spread.PerpOrderBook.TakerBidVWAP
+			fields["perpMakerBidVWAP"] = spread.PerpOrderBook.MakerBidVWAP
+			fields["perpTakerAskVWAP"] = spread.PerpOrderBook.TakerAskVWAP
+			fields["perpMakerAskVWAP"] = spread.PerpOrderBook.MakerAskVWAP
 
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
@@ -148,7 +148,7 @@ func handleSave() {
 		netWorth := (*totalSpotBalance + *totalPerpUSDTBalance) / *kcConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalBalance"] = *totalSpotBalance + *totalPerpUSDTBalance
-		fields["swapBalance"] = *totalPerpUSDTBalance
+		fields["perpBalance"] = *totalPerpUSDTBalance
 		fields["spotBalance"] = *totalSpotBalance
 		fields["netWorth"] = (*totalSpotBalance + *totalPerpUSDTBalance) / *kcConfig.StartValue
 		fields["startValue"] = *kcConfig.StartValue

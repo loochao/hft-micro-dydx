@@ -130,6 +130,30 @@ func (depth *Depth50) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type Depth5 struct {
+	Symbol    string         `json:"-"`
+	Bids      [5][2]float64 `json:"bids,omitempty"`
+	Asks      [5][2]float64 `json:"asks,omitempty"`
+	Sequence  int64          `json:"sequence"`
+	ParseTime time.Time      `json:"-"`
+	EventTime time.Time      `json:"-"`
+}
+
+func (depth *Depth5) UnmarshalJSON(data []byte) error {
+	type Alias Depth5
+	aux := struct {
+		EventTime int64 `json:"timestamp,omitempty"`
+		*Alias
+	}{Alias: (*Alias)(depth)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("ERR %v", err)
+		return err
+	}
+	depth.EventTime = time.Unix(0, aux.EventTime*1000000)
+	depth.ParseTime = time.Now()
+	return nil
+}
+
 type Position struct {
 	ID                string    `json:"id"`
 	Symbol            string    `json:"symbol"`
