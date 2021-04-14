@@ -99,7 +99,7 @@ func (w *Depth5Websocket) startRead(conn *websocket.Conn) {
 }
 
 func (w *Depth5Websocket) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 1024)
+	b := make([]byte, 0, 512)
 	for {
 		if len(b) == cap(b) {
 			// Add more capacity (let append pick how much).
