@@ -193,11 +193,10 @@ func handleExternalInfluxSave() {
 		spotBalance := kcspotUSDTBalance.Available + kcspotUSDTBalance.Holds
 		getAllBalances := true
 		for _, spotSymbol := range kcspotSymbols {
-			perpSymbol := kcspSymbolsMap[spotSymbol]
 			balance, okBalance := kcspotBalances[spotSymbol]
-			markPrice, okMP := kcperpMarkPrices[perpSymbol]
-			if okBalance && okMP {
-				spotBalance += markPrice.IndexPrice * (balance.Available + balance.Holds)
+			spread, okSpread := kcSpreads[spotSymbol]
+			if okBalance && okSpread {
+				spotBalance += spread.SpotOrderBook.TakerBidVWAP * (balance.Available + balance.Holds)
 			} else {
 				getAllBalances = false
 				break
