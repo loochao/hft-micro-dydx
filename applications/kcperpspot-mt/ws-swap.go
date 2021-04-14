@@ -42,7 +42,7 @@ func handleWSPosition(nextPos *kcperp.WSPosition) {
 		if lastPos, ok := kcperpPositions[nextPos.Symbol]; ok && nextPos.EventTime.Sub(lastPos.EventTime) > 0 {
 			if nextPos.CurrentQty != nil {
 				lastPos.CurrentQty = *nextPos.CurrentQty
-				logger.Debugf("PERP WS POS NEW QTY %v", lastPos.CurrentQty)
+				logger.Debugf("PERP WS POS %s NEW QTY %v", nextPos.Symbol, lastPos.CurrentQty)
 			}
 			if nextPos.AvgEntryPrice != nil {
 				lastPos.AvgEntryPrice = *nextPos.AvgEntryPrice

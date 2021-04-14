@@ -392,14 +392,14 @@ func main() {
 						"PERP WS ORDER MATCHED %s SIDE %s MATCHED SIZE %v MATCHED PRICE %f",
 						order.Symbol, order.Side, order.MatchSize, order.MatchPrice,
 					)
-					if order.Side == common.OrderSideSell {
+					if order.Side == kcperp.OrderSideSell {
 						if spotSymbol, ok := kcpsSymbolsMap[order.Symbol]; ok {
 							if spotPrice, ok := kcspotLastFilledBuyPrices[spotSymbol]; ok {
 								kcRealisedSpread[spotSymbol] = (order.MatchPrice - spotPrice) / spotPrice
 								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, order.Symbol, kcRealisedSpread[order.Symbol])
 							}
 						}
-					} else if order.Side == common.OrderSideBuy  {
+					} else if order.Side == kcperp.OrderSideBuy  {
 						if spotSymbol, ok := kcpsSymbolsMap[order.Symbol]; ok {
 							if spotPrice, ok := kcspotLastFilledSellPrices[spotSymbol]; ok {
 								kcRealisedSpread[order.Symbol] = (order.MatchPrice - spotPrice) / spotPrice

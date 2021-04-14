@@ -31,7 +31,7 @@ func watchSpotOrderRequest(
 				}
 			} else if request.New != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				logger.Debugf("SPOT SUBMIT %v", request.New)
+				logger.Debugf("SPOT SUBMIT %s %s %.8f %.8f", request.New.Symbol, request.New.Side, request.New.Price, request.New.Size)
 				_,  err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
 					logger.Debugf("SPOT SUBMIT ERROR %v", err)
