@@ -81,6 +81,9 @@ func handleSave() {
 		fields := make(map[string]interface{})
 		if position, ok := kcperpPositions[perpSymbol]; ok {
 			fields["perpCurrentQty"] = position.CurrentQty
+			if markPrice, ok := kcperpMarkPrices[perpSymbol]; ok {
+				fields["perpValue"] = position.CurrentQty * kcperpMultipliers[perpSymbol] * markPrice.IndexPrice
+			}
 		}
 		if spotBalance, ok := kcspotBalances[spotSymbol]; ok {
 			fields["spotBalance"] = spotBalance.Available + spotBalance.Holds
