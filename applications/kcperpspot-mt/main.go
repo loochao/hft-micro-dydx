@@ -396,14 +396,14 @@ func main() {
 						if spotSymbol, ok := kcpsSymbolsMap[order.Symbol]; ok {
 							if spotPrice, ok := kcspotLastFilledBuyPrices[spotSymbol]; ok {
 								kcRealisedSpread[spotSymbol] = (order.MatchPrice - spotPrice) / spotPrice
-								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, order.Symbol, kcRealisedSpread[order.Symbol])
+								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, order.Symbol, kcRealisedSpread[spotSymbol])
 							}
 						}
 					} else if order.Side == kcperp.OrderSideBuy  {
 						if spotSymbol, ok := kcpsSymbolsMap[order.Symbol]; ok {
 							if spotPrice, ok := kcspotLastFilledSellPrices[spotSymbol]; ok {
-								kcRealisedSpread[order.Symbol] = (order.MatchPrice - spotPrice) / spotPrice
-								logger.Debugf("%s %s REALISED CLOSE SPREAD %f", spotSymbol, order.Symbol, kcRealisedSpread[order.Symbol])
+								kcRealisedSpread[spotSymbol] = (order.MatchPrice - spotPrice) / spotPrice
+								logger.Debugf("%s %s REALISED CLOSE SPREAD %f", spotSymbol, order.Symbol, kcRealisedSpread[spotSymbol])
 							}
 						}
 					}
