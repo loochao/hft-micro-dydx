@@ -90,7 +90,8 @@ func handleSave() {
 			}
 		}
 		if fr, ok := kcperpFundingRates[perpSymbol]; ok {
-			fields["perpNextFundingRate"] = fr.FundingRate
+			fields["perpNextFundingRate"] = fr.Value
+			fields["perpPredictedFundingRate"] = fr.PredictedValue
 		}
 		if spread, ok := kcSpreads[spotSymbol]; ok {
 			fields["lastEnterSpread"] = spread.LastEnter

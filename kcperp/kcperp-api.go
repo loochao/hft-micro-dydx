@@ -150,6 +150,16 @@ func (api *API) GetPrivateConnectToken(ctx context.Context) (*ConnectToken, erro
 	return pct, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/v1/bullet-private", nil, nil, pct)
 }
 
+func (api *API) GetCurrentFundingRate(ctx context.Context, symbol string) (*CurrentFundingRate, error) {
+	pct := &CurrentFundingRate{}
+	err := api.SendHTTPRequest(ctx, http.MethodGet, fmt.Sprintf("/api/v1/funding-rate/%s/current", symbol), nil, pct)
+	if err != nil {
+		return nil, err
+	}
+	pct.Symbol = symbol
+	return pct, nil
+}
+
 func (api *API) GetKlines(ctx context.Context, param KlinesParam) ([]common.KLine, error) {
 	candlesRaw := make([][7]float64, 0)
 	err := api.SendHTTPRequest(ctx, http.MethodGet, "/api/v1/kline/query", &param, &candlesRaw)

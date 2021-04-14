@@ -164,7 +164,7 @@ func updateSpotNewOrders() {
 		currentSpotSize := spotBalance.Available + spotBalance.Holds
 		if spread.LastEnter > quantile.Top &&
 			spread.MedianEnter > quantile.Top &&
-			fundingRate.FundingRate > *kcConfig.MinimalEnterFundingRate &&
+			fundingRate.Value > *kcConfig.MinimalEnterFundingRate &&
 			rank >= len(kcspotSymbols)-*kcConfig.TradeCount {
 			price := spread.SpotOrderBook.MakerBidVWAP
 			price = math.Floor(price/spotTickSize) * spotTickSize
@@ -276,12 +276,12 @@ func updateSpotNewOrders() {
 			return
 		} else if spread.LastExit < quantile.Bot &&
 			spread.MedianExit < quantile.Bot &&
-			fundingRate.FundingRate < *kcConfig.MinimalKeepFundingRate {
+			fundingRate.Value < *kcConfig.MinimalKeepFundingRate {
 			price := spread.SpotOrderBook.MakerAskVWAP
 			price = math.Ceil(price/spotTickSize) * spotTickSize
 			if spotBalance.Available*price > spotMinNotional {
 				entryValue := math.Min(-4*entryStep, -spotBalance.Available*price*0.5)
-				if fundingRate.FundingRate > *kcConfig.MinimalKeepFundingRate/2 {
+				if fundingRate.Value > *kcConfig.MinimalKeepFundingRate/2 {
 					entryValue = math.Min(-2*entryStep, -spotBalance.Available*price*0.5)
 				}
 				quantity := entryValue / price

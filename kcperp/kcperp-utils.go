@@ -323,3 +323,29 @@ func GetOrderLimits(
 	}
 	return
 }
+
+
+func WatchCurrentFundingRate(
+	ctx context.Context, api *API, symbols []string, interval time.Duration,
+	output chan CurrentFundingRate,
+) {
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			for _, symbol := range symbols {
+				subCtx, _ := context.WithTimeout(ctx, time.Minute)
+				fr, err := api.GetCurrentFundingRate(subCtx, symbol)
+				if err != nil {
+					logger.Debugf("WatchCurrentFundingRate GetAccountOverView error %v", err)
+				} else {
+					output <- *fr
+				}
+			}
+			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
+		}
+	}
+}

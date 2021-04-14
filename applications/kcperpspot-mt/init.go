@@ -82,7 +82,8 @@ var kcspotOpenOrders = make(map[string]kcspot.NewOrderParam)
 var kcspotOrderCancelCounts = make(map[string]int)
 
 var kcperpMarkPrices = make(map[string]*kcperp.MarkPrice)
-var kcperpFundingRates = make(map[string]*kcperp.FundingRate)
+var kcperpFundingRates = make(map[string]kcperp.CurrentFundingRate)
+var kcperpFundingRatesCh = make(chan kcperp.CurrentFundingRate, 1000)
 var kcRankSymbolMap map[int]string
 
 var kcperpBarsMapCh = make(chan common.KLinesMap)
@@ -103,7 +104,7 @@ var kcConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210414 04:16:40  ####")
+	logger.Debug("####  BUILD @ 20210414 05:08:37  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

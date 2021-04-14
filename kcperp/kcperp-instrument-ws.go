@@ -16,7 +16,6 @@ import (
 type InstrumentWebsocket struct {
 	messageCh     chan []byte
 	MarkPriceCh   chan *MarkPrice
-	FundingRateCh chan *FundingRate
 	writeCh       chan interface{}
 	done          chan interface{}
 	reconnectCh   chan interface{}
@@ -160,27 +159,6 @@ func (w *InstrumentWebsocket) startDataHandler(ctx context.Context) {
 				default:
 				}
 				break
-			case "funding.rate":
-				fr := FundingRate{}
-				err = json.Unmarshal(wsCap.Data, &fr)
-				if err != nil {
-					logger.Debugf("Unmarshal wsOrder error %v %s", err, msg)
-					continue
-				}
-				fr.Symbol = splits[1]
-				select {
-				case <-ctx.Done():
-					return
-				case <-w.done:
-					return
-				case <-time.After(time.Millisecond):
-					logger.Warn("KCPERP WS FUNDING RATE TO OUTPUT CH TIME OUT IN 1MS")
-				case w.FundingRateCh <- &fr:
-				}
-				select {
-				case w.topicCh <- wsCap.Topic:
-				default:
-				}
 			default:
 			}
 		}
@@ -408,19 +386,14 @@ func NewInstrumentWebsocket(
 	symbols []string,
 	proxy string,
 	markPriceCh chan *MarkPrice,
-	fundingRateCh chan *FundingRate,
 ) *InstrumentWebsocket {
 	if markPriceCh == nil {
 		markPriceCh = make(chan *MarkPrice, 100*len(symbols))
-	}
-	if fundingRateCh == nil {
-		fundingRateCh = make(chan *FundingRate, 100*len(symbols))
 	}
 	ws := InstrumentWebsocket{
 		done:          make(chan interface{}),
 		reconnectCh:   make(chan interface{}),
 		MarkPriceCh:   markPriceCh,
-		FundingRateCh: fundingRateCh,
 		messageCh:     make(chan []byte, 100*len(symbols)),
 		writeCh:       make(chan interface{}, 100*len(symbols)),
 		topicCh:       make(chan string, 100*len(symbols)),

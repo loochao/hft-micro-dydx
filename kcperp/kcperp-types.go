@@ -131,12 +131,12 @@ func (depth *Depth50) UnmarshalJSON(data []byte) error {
 }
 
 type Depth5 struct {
-	Symbol    string         `json:"-"`
+	Symbol    string        `json:"-"`
 	Bids      [5][2]float64 `json:"bids,omitempty"`
 	Asks      [5][2]float64 `json:"asks,omitempty"`
-	Sequence  int64          `json:"sequence"`
-	ParseTime time.Time      `json:"-"`
-	EventTime time.Time      `json:"-"`
+	Sequence  int64         `json:"sequence"`
+	ParseTime time.Time     `json:"-"`
+	EventTime time.Time     `json:"-"`
 }
 
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
@@ -216,11 +216,11 @@ func (wsCap *Position) UnmarshalJSON(data []byte) error {
 type WSPosition struct {
 	ID                string    `json:"id"`
 	Symbol            string    `json:"-"`
-	CurrentQty        *float64   `json:"currentQty"`
-	AvgEntryPrice     *float64   `json:"avgEntryPrice"`
-	UnrealisedPnl     *float64   `json:"unrealisedPnl"`
-	UnrealisedPnlPcnt *float64   `json:"unrealisedPnlPcnt"`
-	UnrealisedRoePcnt *float64   `json:"unrealisedRoePcnt"`
+	CurrentQty        *float64  `json:"currentQty"`
+	AvgEntryPrice     *float64  `json:"avgEntryPrice"`
+	UnrealisedPnl     *float64  `json:"unrealisedPnl"`
+	UnrealisedPnlPcnt *float64  `json:"unrealisedPnlPcnt"`
+	UnrealisedRoePcnt *float64  `json:"unrealisedRoePcnt"`
 	EventTime         time.Time `json:"-"`
 	ParseTime         time.Time `json:"-"`
 }
@@ -243,7 +243,6 @@ func (wsCap *WSPosition) UnmarshalJSON(data []byte) error {
 	wsCap.ParseTime = time.Now()
 	return nil
 }
-
 
 // Signer interface contains Sign() method.
 type Signer interface {
@@ -385,15 +384,14 @@ type WsCap struct {
 	Data        json.RawMessage `json:"data"`
 }
 
-
 //{"data":{"currency":"USDT","orderMargin":"0.5907469921","timestamp":"1618323715531"},"subject":"orderMargin.change","topic":"/contractAccount/wallet","channelType":"private","id":"6075a90346259d00062dde01","type":"message","userId":"6072bd6950d6480006756fa7"}
 
 type WsBalanceEvent struct {
 	Currency         *string   `json:"currency,omitempty"`
 	OrderMargin      *float64  `json:"orderMargin,string,omitempty"`
-	AvailableBalance *float64   `json:"availableBalance,string,omitempty"`
-	HoldBalance      *float64   `json:"holdBalance,string,omitempty"`
-	WithdrawHold     *float64   `json:"withdrawHold,string,omitempty"`
+	AvailableBalance *float64  `json:"availableBalance,string,omitempty"`
+	HoldBalance      *float64  `json:"holdBalance,string,omitempty"`
+	WithdrawHold     *float64  `json:"withdrawHold,string,omitempty"`
 	EventTime        time.Time `json:"-"`
 	Subject          string    `json:"-"`
 }
@@ -456,6 +454,40 @@ func (wsCap *FundingRate) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	wsCap.EventTime = time.Unix(0, aux.Timestamp*1000000)
+	wsCap.ParseTime = time.Now()
+	return nil
+}
+
+//{
+//"symbol": ".XBTUSDMFPI8H",              //资金费率symbol
+//"granularity": 28800000,               //粒度(毫秒)
+//"timePoint": 1558000800000,            //时间点(毫秒)
+//"value": 0.00375,                      //资金费率
+//"predictedValue": 0.00375              //预测资金费率
+//}
+
+type CurrentFundingRate struct {
+	Symbol         string    `json:"-"`
+	Granularity    int       `json:"granularity"`
+	Value          float64   `json:"value"`
+	PredictedValue float64   `json:"predictedValue"`
+	EventTime      time.Time `json:"-"`
+	ParseTime      time.Time `json:"-"`
+}
+
+func (wsCap *CurrentFundingRate) UnmarshalJSON(data []byte) error {
+	type Alias CurrentFundingRate
+	aux := struct {
+		TimePoint int64 `json:"timePoint,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(wsCap),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("UnmarshalJSON CurrentFundingRate error %v", err)
+		return err
+	}
+	wsCap.EventTime = time.Unix(0, aux.TimePoint*1000000)
 	wsCap.ParseTime = time.Now()
 	return nil
 }

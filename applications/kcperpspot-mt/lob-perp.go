@@ -134,7 +134,6 @@ func watchInstrument(
 	ctx context.Context, api *kcperp.API, proxyAddress string,
 	symbols []string,
 	mpCh chan *kcperp.MarkPrice,
-	frCh chan *kcperp.FundingRate,
 ) {
 	ws := kcperp.NewInstrumentWebsocket(
 		ctx,
@@ -142,7 +141,6 @@ func watchInstrument(
 		symbols,
 		proxyAddress,
 		mpCh,
-		frCh,
 	)
 	defer ws.Stop()
 	for {

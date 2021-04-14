@@ -160,6 +160,11 @@ func main() {
 		kcspot.AccountsParam{},
 		*kcConfig.PullInterval, kcspotAccountCh,
 	)
+	go kcperp.WatchCurrentFundingRate(
+		kcGlobalCtx, kcperpAPI,
+		kcperpSymbols,
+		*kcConfig.PullInterval, kcperpFundingRatesCh,
+	)
 
 	go watchPerpBars(
 		kcGlobalCtx,
@@ -214,7 +219,6 @@ func main() {
 	}
 
 	perpMarkPriceCh := make(chan *kcperp.MarkPrice, len(kcperpSymbols)*100)
-	perpFundingRateCh := make(chan *kcperp.FundingRate, len(kcperpSymbols)*100)
 	for start := 0; start < len(kcperpSymbols); start += *kcConfig.OrderBookBatchSize {
 		end := start + *kcConfig.OrderBookBatchSize
 		if end > len(kcspotSymbols) {
@@ -236,7 +240,6 @@ func main() {
 			*kcConfig.ProxyAddress,
 			kcperpSymbols[start:end],
 			perpMarkPriceCh,
-			perpFundingRateCh,
 		)
 	}
 
@@ -399,7 +402,7 @@ func main() {
 								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, order.Symbol, kcRealisedSpread[spotSymbol])
 							}
 						}
-					} else if order.Side == kcperp.OrderSideBuy  {
+					} else if order.Side == kcperp.OrderSideBuy {
 						if spotSymbol, ok := kcpsSymbolsMap[order.Symbol]; ok {
 							if spotPrice, ok := kcspotLastFilledSellPrices[spotSymbol]; ok {
 								kcRealisedSpread[spotSymbol] = (order.MatchPrice - spotPrice) / spotPrice
@@ -416,7 +419,7 @@ func main() {
 		case markPrice := <-perpMarkPriceCh:
 			kcperpMarkPrices[markPrice.Symbol] = markPrice
 			break
-		case fr := <-perpFundingRateCh:
+		case fr := <-kcperpFundingRatesCh:
 			kcperpFundingRates[fr.Symbol] = fr
 			break
 		//case <-resetUnrealisedPnlTimer.C:
@@ -485,7 +488,7 @@ func main() {
 			frs := make([]float64, len(kcperpSymbols))
 			for i, symbol := range kcperpSymbols {
 				if markPrice, ok := kcperpFundingRates[symbol]; ok {
-					frs[i] = markPrice.FundingRate
+					frs[i] = markPrice.Value
 				} else {
 					logger.Debugf("MISS FUNDING RATE %s", symbol)
 					break
