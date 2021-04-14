@@ -163,7 +163,7 @@ func main() {
 	go kcperp.WatchCurrentFundingRate(
 		kcGlobalCtx, kcperpAPI,
 		kcperpSymbols,
-		*kcConfig.PullInterval, kcperpFundingRatesCh,
+		*kcConfig.PullInterval*10, kcperpFundingRatesCh,
 	)
 
 	go watchPerpBars(
