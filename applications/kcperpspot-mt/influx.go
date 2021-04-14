@@ -74,6 +74,7 @@ func handleSave() {
 			go kcInfluxWriter.Push(pt)
 		}
 		totalPerpUSDTBalance = &kcperpUSDTAccount.MarginBalance
+		*totalPerpUSDTBalance += kcperpUSDTAccount.UnrealisedPNL
 	}
 
 	for _, perpSymbol := range kcperpSymbols {
@@ -209,6 +210,7 @@ func handleExternalInfluxSave() {
 
 	if kcperpUSDTAccount != nil {
 		totalPerpUSDTBalance = &kcperpUSDTAccount.MarginBalance
+		*totalPerpUSDTBalance += kcperpUSDTAccount.UnrealisedPNL
 	}
 
 	if totalSpotBalance != nil && totalPerpUSDTBalance != nil {
