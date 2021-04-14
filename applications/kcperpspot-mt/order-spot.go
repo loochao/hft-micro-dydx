@@ -79,7 +79,7 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 		return false
 	}
 	if order.Side == kcspot.OrderSideBuy &&
-		order.Price < (1.0-2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.BidPrice-kcspotTickSizes[order.Symbol] {
+		float64(order.Price) < (1.0-2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.BidPrice-kcspotTickSizes[order.Symbol] {
 		logger.Debugf("%s BUY PRICE %f < MAKER BAND OFFSET BID PRICE %f",
 			order.Symbol,
 			order.Price,
@@ -87,7 +87,7 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 		)
 		return false
 	} else if order.Side == kcspot.OrderSideSell &&
-		order.Price > (1.0+2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.AskPrice+kcspotTickSizes[order.Symbol] {
+		float64(order.Price) > (1.0+2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.AskPrice+kcspotTickSizes[order.Symbol] {
 		logger.Debugf("%s SELL PRICE %f > MAKER BAND OFFSEF ASK PRICE %f",
 			order.Symbol,
 			order.Price,
@@ -97,10 +97,10 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 	}
 
 	if order.Side == kcspot.OrderSideBuy &&
-		(spread.PerpOrderBook.TakerBidVWAP-order.Price)/order.Price > quantile.Top-*kcConfig.MakerBandOffset {
+		(spread.PerpOrderBook.TakerBidVWAP-float64(order.Price))/float64(order.Price) > quantile.Top-*kcConfig.MakerBandOffset {
 		return true
 	} else if order.Side == kcspot.OrderSideSell &&
-		(spread.PerpOrderBook.TakerAskVWAP-order.Price)/order.Price < quantile.Bot+*kcConfig.MakerBandOffset {
+		(spread.PerpOrderBook.TakerAskVWAP-float64(order.Price))/float64(order.Price) < quantile.Bot+*kcConfig.MakerBandOffset {
 		return true
 	}
 	if order.Side == kcspot.OrderSideBuy {
@@ -109,7 +109,7 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 			order.Symbol,
 			spread.PerpOrderBook.TakerBidVWAP,
 			order.Price,
-			(spread.PerpOrderBook.TakerBidVWAP-order.Price)/order.Price,
+			(spread.PerpOrderBook.TakerBidVWAP-float64(order.Price))/float64(order.Price),
 			quantile.Top,
 			*kcConfig.MakerBandOffset,
 		)
@@ -119,7 +119,7 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 			order.Symbol,
 			spread.PerpOrderBook.TakerAskVWAP,
 			order.Price,
-			(spread.PerpOrderBook.TakerAskVWAP-order.Price)/order.Price,
+			(spread.PerpOrderBook.TakerAskVWAP-float64(order.Price))/float64(order.Price),
 			quantile.Bot,
 			*kcConfig.MakerBandOffset,
 		)

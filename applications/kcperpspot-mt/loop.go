@@ -81,7 +81,7 @@ func updatePerpPositions() {
 			Symbol:      perpSymbol,
 			Side:        side,
 			Type:        kcperp.OrderTypeLimit,
-			Price:       price,
+			Price:       common.Float64(price),
 			TimeInForce: kcperp.OrderTimeInForceIOC,
 			Size:        int64(perpSize),
 			ReduceOnly:  reduceOnly,
@@ -262,8 +262,8 @@ func updateSpotNewOrders() {
 			)
 			order := kcspot.NewOrderParam{
 				Symbol:      spotSymbol,
-				Price:       price,
-				Size:        quantity,
+				Price:       common.Float64(price),
+				Size:        common.Float64(quantity),
 				TimeInForce: kcspot.OrderTimeInForceGTC,
 				Side:        kcspot.OrderSideBuy,
 				Type:        kcspot.OrderTypeLimit,
@@ -307,8 +307,8 @@ func updateSpotNewOrders() {
 					)
 					order := kcspot.NewOrderParam{
 						Symbol:      spotSymbol,
-						Price:       price,
-						Size:        -quantity,
+						Price:       common.Float64(price),
+						Size:        common.Float64(-quantity),
 						TimeInForce: kcspot.OrderTimeInForceGTC,
 						Side:        kcspot.OrderSideSell,
 						Type:        kcspot.OrderTypeLimit,
