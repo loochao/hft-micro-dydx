@@ -451,7 +451,7 @@ func main() {
 			}
 			break
 		case kcQuantiles = <-kcQuantilesCh:
-			logger.Debugf("QUANTILES %v", kcQuantiles)
+			//logger.Debugf("QUANTILES %v", kcQuantiles)
 			loopTimer.Reset(time.Second)
 			break
 		case <-influxSaveTimer.C:
