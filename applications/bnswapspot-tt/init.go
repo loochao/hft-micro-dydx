@@ -28,8 +28,8 @@ var bnswapOrderSilentTimes = make(map[string]time.Time)
 var bnswapPositionsUpdateTimes = make(map[string]time.Time)
 
 var bnspotOrderSilentTimes = make(map[string]time.Time)
-var bnspotCancelSilentTimes = make(map[string]time.Time)
 var bnspotSilentTimes = make(map[string]time.Time)
+var bnUnHedgeValue = 0.0
 
 var bnspotBalancesUpdateTimes = make(map[string]time.Time)
 var bnswapOrderNewErrorCh = make(chan SwapOrderNewError, 10)

@@ -140,7 +140,6 @@ func main() {
 		).Sub(time.Now()),
 	)
 	loopTimer := time.NewTimer(time.Hour * 24) //先等1分钟
-	targetValueUpdateTimer := time.NewTimer(time.Hour * 24)
 	resetUnrealisedPnlTimer := time.NewTimer(time.Minute)
 	reBalanceTimer := time.NewTimer(time.Second)
 	frRankUpdatedTimer := time.NewTimer(time.Second * 60)
@@ -149,7 +148,6 @@ func main() {
 	defer bnbReBalanceTimer.Stop()
 	defer influxSaveTimer.Stop()
 	defer loopTimer.Stop()
-	defer targetValueUpdateTimer.Stop()
 	defer resetUnrealisedPnlTimer.Stop()
 	defer reBalanceTimer.Stop()
 	defer frRankUpdatedTimer.Stop()

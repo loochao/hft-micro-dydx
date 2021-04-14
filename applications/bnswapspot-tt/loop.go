@@ -12,6 +12,7 @@ import (
 )
 
 func updateSwapPositions() {
+	unHedgeValue := 0.0
 	for _, symbol := range bnSymbols {
 		if symbol == bnBNBSymbol {
 			hedgeBnb()
@@ -43,6 +44,7 @@ func updateSwapPositions() {
 		swapMinNotional := bnswapMinNotional[symbol]
 
 		swapSize := -(spotBalance.Locked + spotBalance.Free) - swapPosition.PositionAmt
+		unHedgeValue += math.Abs(swapSize*(swapOrderBook.AskPrice+swapOrderBook.BidPrice)*0.5)
 		swapSize = math.Round(swapSize/swapStepSize) * swapStepSize
 
 		//只做空SWAP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
@@ -94,6 +96,7 @@ func updateSwapPositions() {
 			go swapCreateOrder(bnGlobalCtx, bnswapAPI, *bnConfig.OrderTimeout, order)
 		}
 	}
+	bnUnHedgeValue = unHedgeValue
 }
 
 func updateSpotPositions() {
@@ -107,6 +110,10 @@ func updateSpotPositions() {
 	}
 
 	if len(bnRankSymbolMap) == 0 {
+		return
+	}
+
+	if bnUnHedgeValue > *bnConfig.MaxUnHedgeValue {
 		return
 	}
 

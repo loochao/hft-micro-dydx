@@ -29,6 +29,9 @@ const (
 	JsonKeyQuantity
 	JsonKeySide
 	JsonKeyTradeTime
+	JsonKeyMRID
+	JsonKeyID
+	JsonKeyVersion
 )
 
 const (
