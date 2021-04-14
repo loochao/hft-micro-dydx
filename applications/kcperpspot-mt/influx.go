@@ -22,13 +22,12 @@ func handleSave() {
 		spotBalance := kcspotUSDTBalance.Available + kcspotUSDTBalance.Holds
 		getAllBalances := true
 		for _, spotSymbol := range kcspotSymbols {
-			perpSymbol := kcspSymbolsMap[spotSymbol]
 			balance, okBalance := kcspotBalances[spotSymbol]
-			markPrice, okMarkPrice := kcperpMarkPrices[perpSymbol]
-			if okBalance && okMarkPrice {
-				spotBalance += markPrice.IndexPrice * (balance.Available + balance.Holds)
+			spread, okSpread := kcSpreads[spotSymbol]
+			if okBalance && okSpread {
+				spotBalance += spread.SpotOrderBook.TakerBidVWAP * (balance.Available + balance.Holds)
 			} else {
-				logger.Debugf("%s MISS BALANCE %v OR MarkPrice %v", spotSymbol, okBalance, okMarkPrice)
+				logger.Debugf("%s MISS BALANCE %v OR TAKER VWAP %v", spotSymbol, okBalance, spread.SpotOrderBook.TakerBidVWAP)
 				getAllBalances = false
 				break
 			}
