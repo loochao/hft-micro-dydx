@@ -24,9 +24,7 @@ func handleSwapHttpPositions(positions []hbcrossswap.Position) {
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			hbcrossswapOrderSilentTimes[nextPos.Symbol] = time.Now()
 			logger.Debugf("SWAP HTTP POSITION %s DIRECTION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Direction, nextPos.Volume, nextPos.CostOpen)
-		}
-		if lastPosition == nil ||
-			nextPos.Volume != 0 ||
+		} else if nextPos.Volume != 0 ||
 			lastPosition.Direction != nextPos.Direction {
 			logger.Debugf("SWAP HTTP POSITION %s DIRECTION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Direction, nextPos.Volume, nextPos.CostOpen)
 		}
