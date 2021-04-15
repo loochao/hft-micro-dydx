@@ -368,7 +368,7 @@ func main() {
 			}
 			break
 		case spread := <-spreadCh:
-			logger.Debugf("SPREAD %v", spread)
+			//logger.Debugf("SPREAD %v", spread)
 			hbSpreads[spread.Symbol] = spread
 			break
 		case hbcrossswapFundingRates = <-hbcrossswapFundingRatesCh:
