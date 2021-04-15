@@ -143,7 +143,7 @@ func WatchPositionsFromHttp(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			subCtx, _ := context.WithTimeout(ctx, time.Minute*10)
 			positions, err := api.GetPositions(subCtx)
 			if err != nil {
 				logger.Debugf("WatchPositionsFromHttp GetPositions error %v", err)
@@ -181,8 +181,8 @@ func WatchAccountFromHttp(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			accounts, err := api.GetAccounts(subCtx)
+			subCtx, _ := context.WithTimeout(ctx, time.Minute*10)
+			accounts, err := api.GetAccounts(subCtx))
 			if err != nil {
 				logger.Debugf("WatchAccountFromHttp GetAccountOverView error %v", err)
 			} else {

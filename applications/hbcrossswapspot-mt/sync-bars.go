@@ -61,8 +61,8 @@ func watchSwapBars(
 							Size:   barsLookback,
 							Period: klinePeriod,
 						})
+					logger.Debugf("TAKE %v", time.Now().Sub(start))
 					if err != nil {
-						logger.Debugf("TAKE %v", time.Now().Sub(start))
 						logger.Debugf("SWAP GetKlines for %s error %v", symbol, err)
 						retryCount--
 						time.Sleep(pullRetryInterval)
@@ -186,8 +186,8 @@ func watchSpotBars(
 						Size:   barsLookback,
 						Period: klinePeriod,
 					})
+					logger.Debugf("TAKE %v", time.Now().Sub(start))
 					if err != nil {
-						logger.Debugf("TAKE %v", time.Now().Sub(start))
 						logger.Debugf("SPOT GetHistoryKlines for %s error %v", symbol, err)
 						retryCount--
 						time.Sleep(pullRetryInterval)
