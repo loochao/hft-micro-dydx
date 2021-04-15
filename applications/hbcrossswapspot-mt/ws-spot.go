@@ -27,14 +27,17 @@ func handleSpotWSBalance(balance *hbspot.WSBalance) {
 	if _, ok := kcspSymbolsMap[symbol]; !ok {
 		return
 	}
+	if _, ok :=  hbspotBalances[symbol]; !ok {
+		hbspotBalances[symbol] = &hbspot.Balance{}
+	}
 	if balance.Available != nil && *balance.Available != hbspotBalances[symbol].Available {
-		logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> ", symbol, hbspotBalances[symbol].Available, *balance.Available)
+		logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> %f", symbol, hbspotBalances[symbol].Available, *balance.Available)
 		nb := hbspotBalances[symbol]
 		nb.Available = *balance.Available
 		hbspotBalances[symbol] = nb
 	}
 	if balance.Balance != nil && *balance.Balance != hbspotBalances[symbol].Balance {
-		logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> ", symbol, hbspotBalances[symbol].Balance, *balance.Balance)
+		logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> %f", symbol, hbspotBalances[symbol].Balance, *balance.Balance)
 		nb := hbspotBalances[symbol]
 		nb.Balance = *balance.Balance
 		hbspotBalances[symbol] = nb
