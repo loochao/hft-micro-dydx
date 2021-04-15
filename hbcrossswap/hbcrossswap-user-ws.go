@@ -156,8 +156,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 				subResp := SubResp{}
 				err = json.Unmarshal(msg, &subResp)
 				if err != nil {
-					logger.Debugf("Unmarshal subResp error %v", err)
-					logger.Debugf("msg %s", msg)
+					logger.Debugf("Unmarshal subResp error %v %s", err, msg)
 					break
 				}
 				if subResp.ErrCode == 0 || subResp.ErrCode == 2014 {
