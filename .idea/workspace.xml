@@ -2,58 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/config.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/config.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/http-perp.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/http-spot.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/influx.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/init.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/lob-perp.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/lob-spot.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/loop.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/main.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/order-perp.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/order-spot.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/quantile.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/spread.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/sync-bars.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/type.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/ws-spot.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/ws-swap.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-api_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-params.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-user-ws.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-user-ws_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbcrossswap/json/accounts.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbcrossswap/json/wsorder.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbcrossswap/json/wspositions.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/hbspot-api.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/hbspot-api_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/hbspot-depth20-ws.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/hbspot-depth20-ws_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/hbspot-params.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/hbspot-types.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/hbspot-types_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/hbspot-user-ws.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/hbspot-user-ws_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/hbspot-utils.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/hbspot-utils_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hbspot/json/depth20.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tools/hbcrossswapspot-mt.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/types.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/types.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/common/utils_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/utils_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbswap/hbswap-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-api.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbswap/hbswap-api_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbswap/hbswap-depth20-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-depth20-ws.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbswap/hbswap-depth20-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-depth20-ws_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbswap/hbswap-params.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbswap/hbswap-types.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-types.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbswap/hbswap-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbswap/hbswap-utils_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-utils_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kcspot/kcspot-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/kcspot/kcspot-utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hbspot/hbspot-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbspot/hbspot-api.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

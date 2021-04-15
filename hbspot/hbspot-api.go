@@ -195,7 +195,7 @@ func NewAPI(key, secret, proxy string) (*API, error) {
 				MaxIdleConns:          100,
 				IdleConnTimeout:       90 * time.Second,
 				TLSHandshakeTimeout:   10 * time.Second,
-				ExpectContinueTimeout: 1 * time.Second,
+				ExpectContinueTimeout: 10 * time.Second,
 				DialContext: (&net.Dialer{
 					Timeout:   10 * time.Second,
 					KeepAlive: 90 * time.Second,
