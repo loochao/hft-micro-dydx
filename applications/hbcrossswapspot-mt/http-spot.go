@@ -41,9 +41,9 @@ func handleSpotHttpAccount(account hbspot.Account) {
 			continue
 		}
 		hasBalances[symbol] = true
-		if hbspotHttpBalanceUpdateSilentTimes[symbol].Sub(time.Now()) > 0 {
-			continue
-		}
+		//if hbspotHttpBalanceUpdateSilentTimes[symbol].Sub(time.Now()) > 0 {
+		//	continue
+		//}
 		if _, ok := hbspotBalances[symbol]; !ok {
 			hbspotBalances[symbol] = &hbspot.Balance{
 				Currency: accountBalance.Currency,
@@ -67,6 +67,7 @@ func handleSpotHttpAccount(account hbspot.Account) {
 		hbspotBalances[symbol] = nb
 		hbspotBalancesUpdateTimes[symbol] = time.Now()
 	}
+
 	if !hasUSDT {
 		hbspotUSDTBalance = &hbspot.Balance{
 			Symbol:   "usdtusdt",
@@ -96,6 +97,9 @@ func handleSpotHttpAccount(account hbspot.Account) {
 		}
 	}
 	for _, symbol := range hbspotSymbols {
+		if hbspotHttpBalanceUpdateSilentTimes[symbol].Sub(time.Now()) > 0 {
+			continue
+		}
 		nb := hbspotBalances[symbol]
 		if nb.Available != nb.Trade {
 			logger.Debugf("SPOT HTTP %s Available %f -> %f", symbol, nb.Available, nb.Trade)
