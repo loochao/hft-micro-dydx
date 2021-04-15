@@ -185,7 +185,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 						orderEvent := WSOrderEvent{}
 						err := json.Unmarshal(msg, &orderEvent)
 						if err != nil {
-							logger.Debugf("Unmarshal WSOrderEvent error %v", err)
+							logger.Debugf("Unmarshal WSOrderEvent error %v %s", err, msg)
 							continue
 						}
 						select {

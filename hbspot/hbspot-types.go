@@ -251,7 +251,7 @@ type WSOrder struct {
 
 	TradePrice  *float64   `json:"tradePrice,string,omitempty"`
 	TradeVolume *float64   `json:"tradeVolume,string,omitempty"`
-	TradeId     *int64     `json:"tradeId,string,omitempty"`
+	TradeId     *int64     `json:"tradeId,omitempty"`
 	TradeTime   *time.Time `json:"-"`
 	Aggressor   *bool      `json:"aggressor,omitempty"`
 	RemainAmt   *float64   `json:"remainAmt,string,omitempty"`
