@@ -91,7 +91,7 @@ func handleSave() {
 				if position.Direction == hbcrossswap.OrderDirectionBuy {
 					fields["swapValue"] = position.Volume*hbcrossswapContractSizes[swapSymbol]*spread.PerpOrderBook.TakerBidVWAP
 				}else{
-					fields["swapSize"] = -position.Volume*hbcrossswapContractSizes[swapSymbol]*spread.PerpOrderBook.TakerAskVWAP
+					fields["swapValue"] = -position.Volume*hbcrossswapContractSizes[swapSymbol]*spread.PerpOrderBook.TakerAskVWAP
 				}
 			}
 		}
