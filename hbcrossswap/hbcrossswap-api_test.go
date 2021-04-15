@@ -61,7 +61,7 @@ func TestAPI_GetKlines(t *testing.T) {
 	api, err = NewAPI(
 		os.Getenv("HBSWAP_KEY"),
 		os.Getenv("HBSWAP_SECRET"),
-		"socks5://127.0.0.1:1080",
+		"socks5://127.0.0.1:1082",
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +69,7 @@ func TestAPI_GetKlines(t *testing.T) {
 	hb, err := api.GetKlines(ctx, KlinesParam{
 		Symbol: "BTC-USDT",
 		Period: KlinePeriod60min,
-		Size: 100,
+		Size: 1000,
 	})
 	if err != nil {
 		t.Fatal(err)

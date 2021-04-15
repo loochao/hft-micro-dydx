@@ -54,8 +54,9 @@ func watchSwapBars(
 					}
 					time.Sleep(requestInterval)
 					start := time.Now()
+					subCtx, _ := context.WithTimeout(ctx, time.Minute)
 					history, err = api.GetKlines(
-						ctx, hbcrossswap.KlinesParam{
+						subCtx, hbcrossswap.KlinesParam{
 							Symbol: symbol,
 							Size:   barsLookback,
 							Period: klinePeriod,
@@ -179,7 +180,8 @@ func watchSpotBars(
 					}
 					time.Sleep(requestInterval)
 					start := time.Now()
-					history, err = api.GetKlines(ctx, hbspot.KlinesParam{
+					subCtx, _ := context.WithTimeout(ctx, time.Minute)
+					history, err = api.GetKlines(subCtx, hbspot.KlinesParam{
 						Symbol: symbol,
 						Size:   barsLookback,
 						Period: klinePeriod,

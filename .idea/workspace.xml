@@ -61,7 +61,7 @@
       <recent name="$PROJECT_DIR$/kcperp/jsons" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapspot-mt">
+  <component name="RunManager" selected="Go Test.TestAPI_GetKlines in github.com/geometrybase/hft-micro/hbcrossswap">
     <configuration name="go build github.com/geometrybase/hft-micro/applications/hbcrossswapspot-mt" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
       <working_directory value="$PROJECT_DIR$" />
@@ -104,31 +104,31 @@
       <pattern value="^\QTestAPI_GetFundingRates\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestNewUserWebsocket in github.com/geometrybase/hft-micro/hbspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestAPI_GetKlines in github.com/geometrybase/hft-micro/hbcrossswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/hbspot" />
+      <working_directory value="$PROJECT_DIR$/hbcrossswap" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/hbspot" />
+      <package value="github.com/geometrybase/hft-micro/hbcrossswap" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestNewUserWebsocket\E$" />
+      <pattern value="^\QTestAPI_GetKlines\E$" />
       <method v="2" />
     </configuration>
     <list>
       <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapspot-mt" />
-      <item itemvalue="Go Test.TestNewUserWebsocket in github.com/geometrybase/hft-micro/hbspot" />
       <item itemvalue="Go Test.TestAPI_GetFundingRates in github.com/geometrybase/hft-micro/hbcrossswap" />
       <item itemvalue="Go Test.TestAPI_GetContracts in github.com/geometrybase/hft-micro/hbcrossswap" />
       <item itemvalue="Go Test.TestAPI_GetAccount in github.com/geometrybase/hft-micro/hbspot" />
+      <item itemvalue="Go Test.TestAPI_GetKlines in github.com/geometrybase/hft-micro/hbcrossswap" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.TestAPI_GetKlines in github.com/geometrybase/hft-micro/hbcrossswap" />
         <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapspot-mt" />
         <item itemvalue="Go Test.TestAPI_GetAccount in github.com/geometrybase/hft-micro/hbspot" />
         <item itemvalue="Go Test.TestAPI_GetContracts in github.com/geometrybase/hft-micro/hbcrossswap" />
         <item itemvalue="Go Test.TestAPI_GetFundingRates in github.com/geometrybase/hft-micro/hbcrossswap" />
-        <item itemvalue="Go Test.TestNewUserWebsocket in github.com/geometrybase/hft-micro/hbspot" />
       </list>
     </recent_temporary>
   </component>
