@@ -263,7 +263,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					logger.Debugf("OTHER NOTIFY %s", msg)
 				}
 			default:
-				logger.Debugf("OTHER MSG %s", msg)
+				//logger.Debugf("OTHER MSG %s", msg)
 			}
 		}
 	}

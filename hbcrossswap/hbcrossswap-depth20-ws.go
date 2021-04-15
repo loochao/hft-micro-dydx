@@ -164,7 +164,7 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context) {
 				default:
 				}
 			} else {
-				logger.Debugf("OTHER MSG %s", msg)
+				//logger.Debugf("OTHER MSG %s", msg)
 			}
 		}
 	}
