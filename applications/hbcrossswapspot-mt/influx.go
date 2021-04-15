@@ -60,7 +60,7 @@ func handleSave() {
 		fields["swapMarginBalance"] = hbcrossswapAccount.MarginBalance
 		fields["swapWithdrawAvailable"] = hbcrossswapAccount.WithdrawAvailable
 		fields["swapProfitUnreal"] = hbcrossswapAccount.ProfitUnreal
-		fields["swapProfitUnreal"] = hbcrossswapAccount.MarginPosition
+		fields["swapMarginPosition"] = hbcrossswapAccount.MarginPosition
 		pt, err := client.NewPoint(
 			*hbConfig.InternalInflux.Measurement,
 			map[string]string{
