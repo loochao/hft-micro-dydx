@@ -150,7 +150,7 @@ func updateSpotNewOrders() {
 		spread, okSpread := hbSpreads[spotSymbol]
 		spotBalance, okSpotBalance := hbspotBalances[spotSymbol]
 		fundingRate, okFundingRate := hbcrossswapFundingRates[swapSymbol]
-		logger.Debugf("%v %v %v %v %v", okSpread, okQuantile, okSpotBalance, okFundingRate, time.Now().Sub(spread.LastUpdateTime))
+		//logger.Debugf("%v %v %v %v %v", okSpread, okQuantile, okSpotBalance, okFundingRate, time.Now().Sub(spread.LastUpdateTime))
 		if !okSpread || !okQuantile || !okSpotBalance || !okFundingRate {
 			continue
 		}
