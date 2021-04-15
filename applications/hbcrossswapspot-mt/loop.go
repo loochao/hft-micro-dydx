@@ -39,11 +39,12 @@ func updatePerpPositions() {
 		contractSize := hbcrossswapContractSizes[swapSymbol]
 		swapTickSize := hbcrossswapTickSizes[swapSymbol]
 
-		positionSize := swapPosition.Volume * contractSize
 		positionVolume := swapPosition.Volume
 		if swapPosition.Direction == hbcrossswap.OrderDirectionSell {
-			positionSize = -positionSize
+			positionVolume = -positionVolume
 		}
+		positionSize := positionVolume * contractSize
+
 
 		swapSize := -(spotBalance.Balance) - positionSize
 		unHedgedValue += math.Abs(swapSize * spread.PerpOrderBook.AskPrice)
