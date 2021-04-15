@@ -203,10 +203,10 @@ func NewAPI(key, secret, proxy string) (*API, error) {
 			Transport: &http.Transport{
 				MaxIdleConns:          100,
 				IdleConnTimeout:       90 * time.Second,
-				TLSHandshakeTimeout:   10 * time.Second,
-				ExpectContinueTimeout: 1 * time.Second,
+				TLSHandshakeTimeout:   60 * time.Second,
+				ExpectContinueTimeout: 10 * time.Second,
 				DialContext: (&net.Dialer{
-					Timeout:   10 * time.Second,
+					Timeout:   60 * time.Second,
 					KeepAlive: 90 * time.Second,
 				}).DialContext,
 			},
