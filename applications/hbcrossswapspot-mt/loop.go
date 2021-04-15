@@ -45,7 +45,6 @@ func updatePerpPositions() {
 		}
 		positionSize := positionVolume * contractSize
 
-
 		swapSize := -(spotBalance.Balance) - positionSize
 		unHedgedValue += math.Abs(swapSize * spread.PerpOrderBook.AskPrice)
 		swapSize = math.Round(swapSize / contractSize)
@@ -260,12 +259,13 @@ func updateSpotNewOrders() {
 			)
 			order := hbspot.NewOrderParam{
 				Symbol:        spotSymbol,
+				AccountId:     hbspotAccountID,
 				ClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
-				Price:        common.FormatByPrecision(price, pricePrecision),
-				Amount:       common.FormatByPrecision(amount, amountPrecision),
-				OriginPrice:  price,
-				OriginAmount: amount,
-				Type:         hbspot.OrderTypeBuyLimit,
+				Price:         common.FormatByPrecision(price, pricePrecision),
+				Amount:        common.FormatByPrecision(amount, amountPrecision),
+				OriginPrice:   price,
+				OriginAmount:  amount,
+				Type:          hbspot.OrderTypeBuyLimit,
 			}
 
 			hbspotOrderSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.OrderSilent)
@@ -299,13 +299,14 @@ func updateSpotNewOrders() {
 				)
 				if amount < 0 {
 					order := hbspot.NewOrderParam{
-						Symbol:      spotSymbol,
+						Symbol:        spotSymbol,
+						AccountId:     hbspotAccountID,
 						ClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
-						Price:        common.FormatByPrecision(price, pricePrecision),
-						Amount:       common.FormatByPrecision(-amount, amountPrecision),
-						OriginPrice:  price,
-						OriginAmount: amount,
-						Type:         hbspot.OrderSideSell,
+						Price:         common.FormatByPrecision(price, pricePrecision),
+						Amount:        common.FormatByPrecision(-amount, amountPrecision),
+						OriginPrice:   price,
+						OriginAmount:  amount,
+						Type:          hbspot.OrderSideSell,
 					}
 					hbspotOrderSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.OrderSilent)
 					hbspotOrderCancelCounts[spotSymbol] = 0
