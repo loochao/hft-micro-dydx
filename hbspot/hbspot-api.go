@@ -74,7 +74,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	hmac := common.GetHMAC(common.HashSHA256, []byte(payload), []byte(api.secretKey))
 	values.Set("Signature", common.Base64Encode(hmac))
 	path = common.EncodeURLValues("https://api-aws.huobi.pro"+path, values)
-	logger.Debugf("%s", path)
+	//logger.Debugf("%s", path)
 	var rBody io.Reader
 	if postBody != nil {
 		bodyStr, err := json.Marshal(postBody)

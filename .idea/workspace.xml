@@ -3,7 +3,14 @@
   <component name="ChangeListManager">
     <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/http-perp.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/http-perp.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/lob-perp.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/lob-swap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/lob-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/lob-spot.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/spread.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/spread.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hbspot/hbspot-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbspot/hbspot-api.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hbspot/hbspot-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbspot/hbspot-utils.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,7 +69,7 @@
       <recent name="$PROJECT_DIR$/kcperp/jsons" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestAPI_GetKlines in github.com/geometrybase/hft-micro/hbcrossswap">
+  <component name="RunManager" selected="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapspot-mt">
     <configuration name="go build github.com/geometrybase/hft-micro/applications/hbcrossswapspot-mt" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
       <working_directory value="$PROJECT_DIR$" />
@@ -125,8 +132,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.TestAPI_GetKlines in github.com/geometrybase/hft-micro/hbcrossswap" />
         <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapspot-mt" />
+        <item itemvalue="Go Test.TestAPI_GetKlines in github.com/geometrybase/hft-micro/hbcrossswap" />
         <item itemvalue="Go Test.TestAPI_GetAccount in github.com/geometrybase/hft-micro/hbspot" />
         <item itemvalue="Go Test.TestAPI_GetContracts in github.com/geometrybase/hft-micro/hbcrossswap" />
         <item itemvalue="Go Test.TestAPI_GetFundingRates in github.com/geometrybase/hft-micro/hbcrossswap" />

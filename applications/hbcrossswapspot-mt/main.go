@@ -138,7 +138,8 @@ func main() {
 	defer influxSaveTimer.Stop()
 	defer loopTimer.Stop()
 	defer frRankUpdatedTimer.Stop()
-	//
+	defer externalInfluxSaveTimer.Stop()
+
 	go hbcrossswap.WatchPositionsFromHttp(
 		hbGlobalCtx, hbcrossswapAPI,
 		hbcrossswapSymbols, *hbConfig.PullInterval,
@@ -301,6 +302,7 @@ func main() {
 			handleSpotWSBalance(msg)
 			break
 		case spotOrder := <-hbspotUserWebsocket.OrderCh:
+			logger.Debugf("hbspotUserWebsocket.OrderCh %v", spotOrder)
 			if spotOrder.OrderStatus != nil {
 				if *spotOrder.OrderStatus == hbspot.OrderStatusFilled {
 					if spotOrder.TradeVolume != nil && spotOrder.TradePrice != nil && spotOrder.Type != nil {
@@ -326,12 +328,15 @@ func main() {
 			}
 			break
 		case msg := <-hbcrossswapUserWebsocket.PositionCh:
+			logger.Debugf("hbcrossswapUserWebsocket.PositionCh %v", msg)
 			handleWSPosition(msg)
 			break
 		case msg := <-hbcrossswapUserWebsocket.AccountCh:
+			logger.Debugf("hbcrossswapUserWebsocket.AccountCh %v", msg)
 			handleWSAccount(msg)
 			break
 		case swapOrder := <-hbcrossswapUserWebsocket.OrderCh:
+			logger.Debugf("hbcrossswapUserWebsocket.OrderCh %v", swapOrder)
 			if swapOrder.Status == hbcrossswap.OrderStatusFilled ||
 				swapOrder.Status == hbcrossswap.OrderStatusCancelled ||
 				swapOrder.Status == hbcrossswap.OrderStatusPartiallyFilledButCancelledByClient {
@@ -438,8 +443,9 @@ func main() {
 			if err != nil {
 				logger.Debugf("RankSymbols error %v", err)
 			}
-			//logger.Debugf("SYMBOLS FR RANK %v", kcRankSymbolMap)
+			logger.Debugf("SYMBOLS FR RANK %v", kcRankSymbolMap)
 			frRankUpdatedTimer.Reset(time.Minute)
+			break
 		case <-loopTimer.C:
 			updatePerpPositions()
 			updateSpotOldOrders()

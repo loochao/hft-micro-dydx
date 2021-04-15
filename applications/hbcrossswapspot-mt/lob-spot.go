@@ -25,6 +25,7 @@ func watchSpotWalkedOrderBooks(
 		case <-ctx.Done():
 			return
 		case data := <-ws.DataCh:
+			logger.Debugf("SPOT OUTWLOB LEN %d", len(output))
 			if lastEventTimes[data.Symbol].Sub(data.EventTime) < 0 {
 				lastEventTimes[data.Symbol] = data.EventTime
 				output <- walkSpotOrderBook(data, takerImpact, makerImpact)

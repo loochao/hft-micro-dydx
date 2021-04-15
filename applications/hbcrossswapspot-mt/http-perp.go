@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
@@ -31,36 +30,13 @@ func handlePerpHttpPositions(positions []hbcrossswap.Position) {
 }
 
 func handleSwapHttpAccount(account hbcrossswap.Account) {
-	if hbcrossswapAccount == nil ||
-		hbcrossswapAccount.MarginBalance != account.MarginBalance {
+	if hbcrossswapAccount == nil {
+		logger.Debugf("SWAP HTTP USDT ACCOUNT MarginBalance nil -> %f", account.MarginBalance)
+	} else {
 		logger.Debugf("SWAP HTTP USDT ACCOUNT MarginBalance %f -> %f", hbcrossswapAccount.MarginBalance, account.MarginBalance)
 	}
 	hbcrossswapAccount = &account
 	hbcrossswapAssetUpdatedForReBalance = true
 	hbcrossswapAssetUpdatedForInflux = true
 	hbcrossswapAssetUpdatedForExternalInflux = true
-}
-
-func swapCreateOrder(
-	ctx context.Context,
-	api *hbcrossswap.API,
-	timeout time.Duration,
-	params hbcrossswap.NewOrderParam,
-) {
-	childCtx, _ := context.WithTimeout(ctx, timeout)
-	_, err := api.SubmitOrder(childCtx, params)
-	if err != nil {
-		select {
-		case <-ctx.Done():
-		case hbcrossswapNewOrderErrorCh <- SwapOrderNewError{
-			Error:  err,
-			Params: params,
-		}:
-		}
-		//} else if order.Status == "FILLED" ||
-		//	order.Status == "CANCELED" ||
-		//	order.Status == "REJECTED" ||
-		//	order.Status == "EXPIRED" {
-		//	hbcrossswapOrderFinishCh <- *order
-	}
 }

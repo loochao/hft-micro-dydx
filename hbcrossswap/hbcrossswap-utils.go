@@ -143,7 +143,7 @@ func WatchPositionsFromHttp(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute*10)
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			positions, err := api.GetPositions(subCtx)
 			if err != nil {
 				logger.Debugf("WatchPositionsFromHttp GetPositions error %v", err)
@@ -181,7 +181,7 @@ func WatchAccountFromHttp(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute*10)
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			accounts, err := api.GetAccounts(subCtx)
 			if err != nil {
 				logger.Debugf("WatchAccountFromHttp GetAccountOverView error %v", err)
@@ -203,7 +203,8 @@ func GetOrderLimits(
 	symbols []string,
 ) (tickSizes, contractSizes map[string]float64, err error) {
 	var contracts []Contract
-	contracts, err = api.GetContracts(ctx)
+	subCtx, _ := context.WithTimeout(ctx, time.Minute)
+	contracts, err = api.GetContracts(subCtx)
 	if err != nil {
 		return
 	}
@@ -245,7 +246,8 @@ func WatchFundingRate(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			frs, err := api.GetFundingRates(ctx)
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			frs, err := api.GetFundingRates(subCtx)
 			if err != nil {
 				logger.Debugf("GetFundingRates error %v", err)
 			} else {

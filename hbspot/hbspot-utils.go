@@ -118,7 +118,8 @@ func WatchBalancesFromHttp(
 ) {
 	timer := time.NewTimer(time.Second*30)
 	defer timer.Stop()
-	accounts, err := api.GetAccounts(ctx)
+	subCtx, _ := context.WithTimeout(ctx, time.Minute)
+	accounts, err := api.GetAccounts(subCtx)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -211,7 +212,8 @@ func GetOrderLimits(
 	symbols []string,
 ) (tickSizes, stepSizes, minSizes, minNotional map[string]float64, pricePrecisions, amountPrecisions map[string]int, err error) {
 	var allSymbols []Symbol
-	allSymbols, err = api.GetSymbols(ctx)
+	subCtx, _ := context.WithTimeout(ctx, time.Minute)
+	allSymbols, err = api.GetSymbols(subCtx)
 	if err != nil {
 		return
 	}
