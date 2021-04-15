@@ -132,7 +132,7 @@ func main() {
 			*hbConfig.ExternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
-	loopTimer := time.NewTimer(time.Hour * 24) //先等1分钟
+	loopTimer := time.NewTimer(time.Second) //先等1分钟
 	frRankUpdatedTimer := time.NewTimer(time.Second * 180)
 
 	defer influxSaveTimer.Stop()
@@ -389,7 +389,7 @@ func main() {
 			break
 		case kcQuantiles = <-kcQuantilesCh:
 			logger.Debugf("QUANTILES %v", kcQuantiles)
-			loopTimer.Reset(time.Second)
+			loopTimer.Reset(time.Millisecond)
 			break
 		case <-influxSaveTimer.C:
 			handleSave()

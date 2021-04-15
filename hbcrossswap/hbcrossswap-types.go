@@ -257,7 +257,7 @@ type WSOrder struct {
 	Op             string    `json:"op"`
 	Topic          string    `json:"topic"`
 	EventTime      time.Time `json:"-"`
-	BaseSymbol     string   `json:"symbol"`
+	BaseSymbol     string    `json:"symbol"`
 	Symbol         string    `json:"contract_code"`
 	Volume         int64     `json:"volume"`
 	Price          float64   `json:"price"`
@@ -268,7 +268,7 @@ type WSOrder struct {
 	LeverRate      int       `json:"lever_rate"`
 	OrderID        int64     `json:"order_id"`
 	OrderIDStr     string    `json:"order_id_str"`
-	ClientOrderID  string    `json:"client_order_id"`
+	ClientOrderID  int64     `json:"client_order_id"`
 	OrderSource    string    `json:"order_source"`
 	OrderType      int       `json:"order_type"`
 	CreatedAt      time.Time `json:"created_at"`

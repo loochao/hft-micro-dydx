@@ -81,7 +81,7 @@ func updatePerpPositions() {
 		}
 		order := hbcrossswap.NewOrderParam{
 			Symbol:         swapSymbol,
-			ClientOrderID:  fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+			ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
 			Price:          common.Float64(price),
 			Volume:         int64(swapSize),
 			Direction:      direction,

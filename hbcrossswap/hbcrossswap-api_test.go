@@ -2,7 +2,6 @@ package hbcrossswap
 
 import (
 	"context"
-	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math/rand"
@@ -49,7 +48,7 @@ func TestAPI_GetContracts(t *testing.T) {
 	}
 	for _, c := range cs {
 		if c.SupportMarginMode == "all" {
-			logger.Debugf("%s: %s", strings.Replace(strings.ToLower(c.Symbol), "-","", -1), c.Symbol)
+			logger.Debugf("%s: %s", strings.Replace(strings.ToLower(c.Symbol), "-", "", -1), c.Symbol)
 		}
 	}
 }
@@ -69,7 +68,7 @@ func TestAPI_GetKlines(t *testing.T) {
 	hb, err := api.GetKlines(ctx, KlinesParam{
 		Symbol: "BTC-USDT",
 		Period: KlinePeriod60min,
-		Size: 1000,
+		Size:   1000,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -147,15 +146,14 @@ func TestAPI_SubmitOrder(t *testing.T) {
 		t.Fatal(err)
 	}
 	frs, err := api.SubmitOrder(ctx, NewOrderParam{
-		Symbol: "FIL-USDT",
-		ClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
-		Price: common.Float64(173),
-		Volume: 1,
-		Direction: OrderDirectionSell,
-		Offset: OrderOffsetOpen,
-		LeverRate: 3,
+		Symbol:         "FIL-USDT",
+		ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
+		Price:          common.Float64(173),
+		Volume:         1,
+		Direction:      OrderDirectionSell,
+		Offset:         OrderOffsetOpen,
+		LeverRate:      3,
 		OrderPriceType: OrderPriceTypeLimit,
-
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -176,15 +174,14 @@ func TestAPI_CancelAllOrder(t *testing.T) {
 		t.Fatal(err)
 	}
 	order, err := api.SubmitOrder(ctx, NewOrderParam{
-		Symbol: "FIL-USDT",
-		ClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
-		Price: common.Float64(180),
-		Volume: 1,
-		Direction: OrderDirectionSell,
-		Offset: OrderOffsetOpen,
-		LeverRate: 3,
+		Symbol:         "FIL-USDT",
+		ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
+		Price:          common.Float64(180),
+		Volume:         1,
+		Direction:      OrderDirectionSell,
+		Offset:         OrderOffsetOpen,
+		LeverRate:      3,
 		OrderPriceType: OrderPriceTypeLimit,
-
 	})
 	if err != nil {
 		t.Fatal(err)

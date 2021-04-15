@@ -91,7 +91,7 @@ type SubParam struct {
 
 type NewOrderParam struct {
 	Symbol         string         `json:"contract_code"`
-	ClientOrderID  string         `json:"client_order_id"`
+	ClientOrderID  int64          `json:"client_order_id"`
 	Price          common.Float64 `json:"price"`
 	Volume         int64          `json:"volume"`
 	Direction      string         `json:"direction"`

@@ -10,11 +10,11 @@ func handleSpotWSBalance(balance *hbspot.WSBalance) {
 	if balance.Currency == "usdt" {
 		if hbspotUSDTBalance != nil {
 			if balance.Available != nil && *balance.Available != hbspotUSDTBalance.Available {
-				logger.Debugf("SPOT WS USDT AVAILABLE CHANGED %f -> ", hbspotUSDTBalance.Available, *balance.Available)
+				logger.Debugf("SPOT WS USDT AVAILABLE CHANGED %f -> %f", hbspotUSDTBalance.Available, *balance.Available)
 				hbspotUSDTBalance.Available = *balance.Available
 			}
 			if balance.Balance != nil && *balance.Balance != hbspotUSDTBalance.Balance {
-				logger.Debugf("SPOT WS USDT BALANCE CHANGED %f -> ", hbspotUSDTBalance.Balance, *balance.Balance)
+				logger.Debugf("SPOT WS USDT BALANCE CHANGED %f -> %f", hbspotUSDTBalance.Balance, *balance.Balance)
 				hbspotUSDTBalance.Balance = *balance.Balance
 			}
 		}
@@ -28,11 +28,11 @@ func handleSpotWSBalance(balance *hbspot.WSBalance) {
 		return
 	}
 	if balance.Available != nil && *balance.Available != hbspotBalances[symbol].Available {
-		logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> ", symbol, hbspotUSDTBalance.Available, *balance.Available)
+		logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> ", symbol, hbspotBalances[symbol].Available, *balance.Available)
 		hbspotBalances[symbol].Available = *balance.Available
 	}
 	if balance.Balance != nil && *balance.Balance != hbspotBalances[symbol].Balance {
-		logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> ", symbol, hbspotUSDTBalance.Balance, *balance.Balance)
+		logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> ", symbol, hbspotBalances[symbol].Balance, *balance.Balance)
 		hbspotBalances[symbol].Balance = *balance.Balance
 		hbcrossswapOrderSilentTimes[symbol] = time.Now()
 	}
