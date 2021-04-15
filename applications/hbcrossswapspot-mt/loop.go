@@ -50,8 +50,7 @@ func updatePerpPositions() {
 		unHedgedValue += math.Abs(swapSize * spread.PerpOrderBook.AskPrice)
 		swapSize = math.Round(swapSize / contractSize)
 
-		//只做空SWAP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
-		if swapSize <= 0 && -swapSize < 0 {
+		if math.Abs(swapSize) < 1 {
 			continue
 		}
 		if swapSize > 0 && swapPosition.Direction == hbcrossswap.OrderDirectionBuy {

@@ -257,7 +257,7 @@ type WSOrder struct {
 	Op             string    `json:"op"`
 	Topic          string    `json:"topic"`
 	EventTime      time.Time `json:"-"`
-	BaseSymbol     float64   `json:"symbol"`
+	BaseSymbol     string   `json:"symbol"`
 	Symbol         string    `json:"contract_code"`
 	Volume         int64     `json:"volume"`
 	Price          float64   `json:"price"`

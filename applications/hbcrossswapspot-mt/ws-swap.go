@@ -26,9 +26,10 @@ func handleWSPosition(wsPositions *hbcrossswap.WSPositions) {
 		if _, ok := kcpsSymbolsMap[nextPos.Symbol]; ok {
 			if lastPos, ok := hbcrossswapPositions[nextPos.Symbol]; ok {
 				if nextPos.Volume != lastPos.Volume || nextPos.Direction != lastPos.Direction {
-					logger.Debugf("SWAP WS POS %s %s %d -> %s %d", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
+					logger.Debugf("SWAP WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
 				}
-				hbcrossswapPositions[nextPos.Symbol] = lastPos
+				nextPos := nextPos
+				hbcrossswapPositions[nextPos.Symbol] = nextPos
 				hbcrossswapPositionsUpdateTimes[nextPos.Symbol] = time.Now()
 			}
 		}

@@ -152,7 +152,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 			}
 			switch msg[7] {
 			case 's':
-				logger.Debugf("SUB RESP")
+				//logger.Debugf("SUB RESP")
 				subResp := SubResp{}
 				err = json.Unmarshal(msg, &subResp)
 				if err != nil {
