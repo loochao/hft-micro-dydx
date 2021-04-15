@@ -37,7 +37,7 @@ func handleSpotWSBalance(balance *hbspot.WSBalance) {
 		hbspotBalances[symbol] = nb
 	}
 	if balance.Balance != nil && *balance.Balance != hbspotBalances[symbol].Balance {
-		logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> %f", symbol, hbspotBalances[symbol].Balance, *balance.Balance)
+		logger.Debugf("SPOT WS %s BALANCE CHANGED %f -> %f", symbol, hbspotBalances[symbol].Balance, *balance.Balance)
 		nb := hbspotBalances[symbol]
 		nb.Balance = *balance.Balance
 		hbspotBalances[symbol] = nb
