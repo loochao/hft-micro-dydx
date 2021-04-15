@@ -116,7 +116,7 @@ func WatchBalancesFromHttp(
 	symbols []string, interval time.Duration,
 	output chan map[string]Balance,
 ) {
-	timer := time.NewTimer(time.Second*30)
+	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	subCtx, _ := context.WithTimeout(ctx, time.Minute)
 	accounts, err := api.GetAccounts(subCtx)
@@ -187,7 +187,7 @@ func WatchAccountFromHttp(
 	ctx context.Context, api *API, accountID int64, interval time.Duration,
 	output chan Account,
 ) {
-	timer := time.NewTimer(time.Minute)
+	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
 		select {

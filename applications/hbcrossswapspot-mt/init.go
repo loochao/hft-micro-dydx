@@ -106,7 +106,7 @@ var hbConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210415 16:52:34  ####")
+	logger.Debug("####  BUILD @ 20210415 16:55:07  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
