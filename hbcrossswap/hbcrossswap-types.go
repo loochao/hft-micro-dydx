@@ -273,7 +273,7 @@ type WSOrder struct {
 	OrderType      int       `json:"order_type"`
 	CreatedAt      time.Time `json:"created_at"`
 	TradeVolume    int64     `json:"trade_volume"`
-	TradeTurnover  int64     `json:"trade_turnover"`
+	TradeTurnover  float64     `json:"trade_turnover"`
 	Fee            float64   `json:"fee"`
 	TradeAvgPrice  float64   `json:"trade_avg_price"`
 	MarginFrozen   float64   `json:"margin_frozen"`
