@@ -290,7 +290,7 @@ func main() {
 			logger.Debugf("Exit")
 			return
 		case p := <-hbcrossswapPositionCh:
-			handlePerpHttpPositions(p)
+			handleSwapHttpPositions(p)
 			break
 		case account := <-hbcrossswapAccountCh:
 			handleSwapHttpAccount(account)

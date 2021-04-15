@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func handlePerpHttpPositions(positions []hbcrossswap.Position) {
+func handleSwapHttpPositions(positions []hbcrossswap.Position) {
 	for _, nextPos := range positions {
 		if _, ok := kcpsSymbolsMap[nextPos.Symbol]; !ok {
 			continue
@@ -32,8 +32,8 @@ func handlePerpHttpPositions(positions []hbcrossswap.Position) {
 func handleSwapHttpAccount(account hbcrossswap.Account) {
 	if hbcrossswapAccount == nil {
 		logger.Debugf("SWAP HTTP USDT ACCOUNT MarginBalance nil -> %f", account.MarginBalance)
-	} else {
-		logger.Debugf("SWAP HTTP USDT ACCOUNT MarginBalance %f -> %f", hbcrossswapAccount.MarginBalance, account.MarginBalance)
+	//} else if hbcrossswapAccount.MarginBalance != account.MarginBalance{
+	//	logger.Debugf("SWAP HTTP USDT ACCOUNT MarginBalance %f -> %f", hbcrossswapAccount.MarginBalance, account.MarginBalance)
 	}
 	hbcrossswapAccount = &account
 	hbcrossswapAssetUpdatedForReBalance = true
