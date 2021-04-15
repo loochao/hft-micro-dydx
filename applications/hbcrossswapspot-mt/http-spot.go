@@ -116,10 +116,20 @@ func handleSpotHttpAccount(account hbspot.Account) {
 		hbspotBalanceUpdatedForReBalance = true
 	}
 
-	hbspotUSDTBalance.Available = hbspotUSDTBalance.Trade
-	hbspotUSDTBalance.Balance = hbspotUSDTBalance.Trade + hbspotUSDTBalance.Frozen +
-		hbspotUSDTBalance.Lock + hbspotUSDTBalance.Lock + hbspotUSDTBalance.Interest +
-		hbspotUSDTBalance.Bank
+	if hbspotUSDTBalance.Available != hbspotUSDTBalance.Trade {
+		logger.Debugf("SPOT HTTP USDT Available %f -> %f", hbspotUSDTBalance.Available, hbspotUSDTBalance.Trade)
+		hbspotUSDTBalance.Available = hbspotUSDTBalance.Trade
+	}
+	if hbspotUSDTBalance.Balance != hbspotUSDTBalance.Trade+hbspotUSDTBalance.Frozen+
+		hbspotUSDTBalance.Lock+hbspotUSDTBalance.Lock+hbspotUSDTBalance.Interest+
+		hbspotUSDTBalance.Bank {
+		logger.Debugf("SPOT HTTP USDT Balance %f -> %f", hbspotUSDTBalance.Balance, hbspotUSDTBalance.Trade+hbspotUSDTBalance.Frozen+
+			hbspotUSDTBalance.Lock+hbspotUSDTBalance.Lock+hbspotUSDTBalance.Interest+
+			hbspotUSDTBalance.Bank)
+		hbspotUSDTBalance.Balance = hbspotUSDTBalance.Trade + hbspotUSDTBalance.Frozen +
+			hbspotUSDTBalance.Lock + hbspotUSDTBalance.Lock + hbspotUSDTBalance.Interest +
+			hbspotUSDTBalance.Bank
+	}
 
 	for _, symbol := range hbspotSymbols {
 		if _, ok := hasBalances[symbol]; !ok {
@@ -132,8 +142,14 @@ func handleSpotHttpAccount(account hbspot.Account) {
 	}
 	for _, symbol := range hbspotSymbols {
 		nb := hbspotBalances[symbol]
-		nb.Available = nb.Trade
-		nb.Balance = nb.Trade + nb.Frozen + nb.Lock + nb.Lock + nb.Interest + nb.Bank
+		if nb.Available != nb.Trade {
+			logger.Debugf("SPOT HTTP %s Available %f -> %f", symbol, nb.Available, nb.Trade)
+			nb.Available = nb.Trade
+		}
+		if nb.Balance != nb.Trade+nb.Frozen+nb.Lock+nb.Lock+nb.Interest+nb.Bank {
+			logger.Debugf("SPOT HTTP %s Balance %f -> %f", symbol, nb.Available, nb.Trade+nb.Frozen+nb.Lock+nb.Lock+nb.Interest+nb.Bank)
+			nb.Balance = nb.Trade + nb.Frozen + nb.Lock + nb.Lock + nb.Interest + nb.Bank
+		}
 		hbspotBalances[symbol] = nb
 	}
 
