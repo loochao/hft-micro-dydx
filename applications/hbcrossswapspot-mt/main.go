@@ -133,7 +133,7 @@ func main() {
 		).Sub(time.Now()),
 	)
 	loopTimer := time.NewTimer(time.Second) //先等1分钟
-	frRankUpdatedTimer := time.NewTimer(time.Second * 180)
+	frRankUpdatedTimer := time.NewTimer(time.Second * 15)
 
 	defer influxSaveTimer.Stop()
 	defer loopTimer.Stop()
