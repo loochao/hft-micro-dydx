@@ -302,7 +302,6 @@ func main() {
 			handleSpotWSBalance(msg)
 			break
 		case spotOrder := <-hbspotUserWebsocket.OrderCh:
-			logger.Debugf("hbspotUserWebsocket.OrderCh %v", spotOrder)
 			if spotOrder.OrderStatus != nil {
 				if *spotOrder.OrderStatus == hbspot.OrderStatusFilled {
 					if spotOrder.TradeVolume != nil && spotOrder.TradePrice != nil && spotOrder.Type != nil {
@@ -328,15 +327,12 @@ func main() {
 			}
 			break
 		case msg := <-hbcrossswapUserWebsocket.PositionCh:
-			logger.Debugf("hbcrossswapUserWebsocket.PositionCh %v", msg)
 			handleWSPosition(msg)
 			break
 		case msg := <-hbcrossswapUserWebsocket.AccountCh:
-			logger.Debugf("hbcrossswapUserWebsocket.AccountCh %v", msg)
 			handleWSAccount(msg)
 			break
 		case swapOrder := <-hbcrossswapUserWebsocket.OrderCh:
-			logger.Debugf("hbcrossswapUserWebsocket.OrderCh %v", swapOrder)
 			if swapOrder.Status == hbcrossswap.OrderStatusFilled ||
 				swapOrder.Status == hbcrossswap.OrderStatusCancelled ||
 				swapOrder.Status == hbcrossswap.OrderStatusPartiallyFilledButCancelledByClient {
@@ -368,7 +364,6 @@ func main() {
 			}
 			break
 		case spread := <-spreadCh:
-			//logger.Debugf("SPREAD %v", spread)
 			hbSpreads[spread.Symbol] = spread
 			break
 		case hbcrossswapFundingRates = <-hbcrossswapFundingRatesCh:
