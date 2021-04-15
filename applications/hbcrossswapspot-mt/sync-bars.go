@@ -53,7 +53,6 @@ func watchSwapBars(
 						symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
 					}
 					time.Sleep(requestInterval)
-					start := time.Now()
 					subCtx, _ := context.WithTimeout(ctx, time.Minute)
 					history, err = api.GetKlines(
 						subCtx, hbcrossswap.KlinesParam{
@@ -61,7 +60,6 @@ func watchSwapBars(
 							Size:   barsLookback,
 							Period: klinePeriod,
 						})
-					logger.Debugf("TAKE %v", time.Now().Sub(start))
 					if err != nil {
 						logger.Debugf("SWAP GetKlines for %s error %v", symbol, err)
 						retryCount--
@@ -75,7 +73,7 @@ func watchSwapBars(
 						retryCount--
 						continue
 					}
-					logger.Debugf("SWAP GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
+					//logger.Debugf("SWAP GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
 					if _, ok := barsMap[symbol]; !ok {
 						barsMap[symbol] = history
 					}
@@ -93,14 +91,14 @@ func watchSwapBars(
 					if len(barsMap[symbol]) > barsLookback {
 						barsMap[symbol] = barsMap[symbol][len(barsMap[symbol])-barsLookback:]
 					}
-					logger.Debugf(
-						"SWAP %s FIRST TIME %v CLOSE %f LAST TIME %v CLOSE %f",
-						symbol,
-						barsMap[symbol][0].Timestamp,
-						barsMap[symbol][0].Close,
-						barsMap[symbol][len(barsMap[symbol])-1].Timestamp,
-						barsMap[symbol][len(barsMap[symbol])-1].Close,
-					)
+					//logger.Debugf(
+					//	"SWAP %s FIRST TIME %v CLOSE %f LAST TIME %v CLOSE %f",
+					//	symbol,
+					//	barsMap[symbol][0].Timestamp,
+					//	barsMap[symbol][0].Close,
+					//	barsMap[symbol][len(barsMap[symbol])-1].Timestamp,
+					//	barsMap[symbol][len(barsMap[symbol])-1].Close,
+					//)
 					break
 				}
 				if retryCount == 0 {
@@ -124,10 +122,10 @@ func watchSwapBars(
 					output <- outputMap
 				}
 			}
-			logger.Debugf(
-				"PULL SWAP BARS IN %v",
-				time.Now().Add(pullInterval/2).Truncate(pullInterval).Add(pullInterval).Sub(time.Now()),
-			)
+			//logger.Debugf(
+			//	"PULL SWAP BARS IN %v",
+			//	time.Now().Add(pullInterval/2).Truncate(pullInterval).Add(pullInterval).Sub(time.Now()),
+			//)
 
 			loopTimer.Reset(
 				time.Now().Add(pullInterval / 2).Truncate(pullInterval).Add(pullInterval).Sub(time.Now()),
@@ -179,14 +177,12 @@ func watchSpotBars(
 						symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
 					}
 					time.Sleep(requestInterval)
-					start := time.Now()
 					subCtx, _ := context.WithTimeout(ctx, time.Minute)
 					history, err = api.GetKlines(subCtx, hbspot.KlinesParam{
 						Symbol: symbol,
 						Size:   barsLookback,
 						Period: klinePeriod,
 					})
-					logger.Debugf("TAKE %v", time.Now().Sub(start))
 					if err != nil {
 						logger.Debugf("SPOT GetHistoryKlines for %s error %v", symbol, err)
 						retryCount--
@@ -199,7 +195,7 @@ func watchSpotBars(
 						retryCount--
 						continue
 					}
-					logger.Debugf("SPOT GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
+					//logger.Debugf("SPOT GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
 					if _, ok := barsMap[symbol]; !ok {
 						barsMap[symbol] = history
 					}
@@ -217,14 +213,14 @@ func watchSpotBars(
 					if len(barsMap[symbol]) > barsLookback {
 						barsMap[symbol] = barsMap[symbol][len(barsMap[symbol])-barsLookback:]
 					}
-					logger.Debugf(
-						"SPOT %s FIRST TIME %v CLOSE %f LAST TIME %v CLOSE %f",
-						symbol,
-						barsMap[symbol][0].Timestamp,
-						barsMap[symbol][0].Close,
-						barsMap[symbol][len(barsMap[symbol])-1].Timestamp,
-						barsMap[symbol][len(barsMap[symbol])-1].Close,
-					)
+					//logger.Debugf(
+					//	"SPOT %s FIRST TIME %v CLOSE %f LAST TIME %v CLOSE %f",
+					//	symbol,
+					//	barsMap[symbol][0].Timestamp,
+					//	barsMap[symbol][0].Close,
+					//	barsMap[symbol][len(barsMap[symbol])-1].Timestamp,
+					//	barsMap[symbol][len(barsMap[symbol])-1].Close,
+					//)
 					break
 				}
 				if retryCount == 0 {
