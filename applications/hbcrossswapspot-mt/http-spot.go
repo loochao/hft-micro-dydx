@@ -21,33 +21,33 @@ func handleSpotHttpAccount(account hbspot.Account) {
 			hasUSDT = true
 			switch accountBalance.Type {
 			case "trade":
-				if  hbspotUSDTBalance.Trade != accountBalance.Balance {
-					logger.Debugf("SPOT HTTP USDT TRADE CHANGE %f -> %f",hbspotUSDTBalance.Trade, accountBalance.Balance )
+				if hbspotUSDTBalance.Trade != accountBalance.Balance {
+					logger.Debugf("SPOT HTTP USDT TRADE CHANGE %f -> %f", hbspotUSDTBalance.Trade, accountBalance.Balance)
 					hbspotUSDTBalance.Trade = accountBalance.Balance
 				}
 			case "frozen":
-				if  hbspotUSDTBalance.Frozen != accountBalance.Balance {
-					logger.Debugf("SPOT HTTP USDT FROZEN CHANGE %f -> %f",hbspotUSDTBalance.Frozen, accountBalance.Balance )
+				if hbspotUSDTBalance.Frozen != accountBalance.Balance {
+					logger.Debugf("SPOT HTTP USDT FROZEN CHANGE %f -> %f", hbspotUSDTBalance.Frozen, accountBalance.Balance)
 					hbspotUSDTBalance.Frozen = accountBalance.Balance
 				}
 			case "loan":
-				if  hbspotUSDTBalance.Loan != accountBalance.Balance {
-					logger.Debugf("SPOT HTTP USDT LOAN CHANGE %f -> %f",hbspotUSDTBalance.Loan, accountBalance.Balance )
+				if hbspotUSDTBalance.Loan != accountBalance.Balance {
+					logger.Debugf("SPOT HTTP USDT LOAN CHANGE %f -> %f", hbspotUSDTBalance.Loan, accountBalance.Balance)
 					hbspotUSDTBalance.Loan = accountBalance.Balance
 				}
 			case "interest":
-				if  hbspotUSDTBalance.Interest != accountBalance.Balance {
-					logger.Debugf("SPOT HTTP USDT INTEREST CHANGE %f -> %f",hbspotUSDTBalance.Interest, accountBalance.Balance )
+				if hbspotUSDTBalance.Interest != accountBalance.Balance {
+					logger.Debugf("SPOT HTTP USDT INTEREST CHANGE %f -> %f", hbspotUSDTBalance.Interest, accountBalance.Balance)
 					hbspotUSDTBalance.Interest = accountBalance.Balance
 				}
 			case "lock":
-				if  hbspotUSDTBalance.Lock != accountBalance.Balance {
-					logger.Debugf("SPOT HTTP USDT LOCK CHANGE %f -> %f",hbspotUSDTBalance.Lock, accountBalance.Balance )
+				if hbspotUSDTBalance.Lock != accountBalance.Balance {
+					logger.Debugf("SPOT HTTP USDT LOCK CHANGE %f -> %f", hbspotUSDTBalance.Lock, accountBalance.Balance)
 					hbspotUSDTBalance.Lock = accountBalance.Balance
 				}
 			case "bank":
-				if  hbspotUSDTBalance.Bank != accountBalance.Balance {
-					logger.Debugf("SPOT HTTP USDT BANK CHANGE %f -> %f",hbspotUSDTBalance.Bank, accountBalance.Balance )
+				if hbspotUSDTBalance.Bank != accountBalance.Balance {
+					logger.Debugf("SPOT HTTP USDT BANK CHANGE %f -> %f", hbspotUSDTBalance.Bank, accountBalance.Balance)
 					hbspotUSDTBalance.Bank = accountBalance.Balance
 				}
 			}
@@ -67,46 +67,48 @@ func handleSpotHttpAccount(account hbspot.Account) {
 		if _, ok := hbspotBalances[symbol]; !ok {
 			hbspotBalances[symbol] = &hbspot.Balance{
 				Currency: accountBalance.Currency,
-				Symbol: symbol,
+				Symbol:   symbol,
 			}
 		}
+		nb := hbspotBalances[symbol]
 		switch accountBalance.Type {
 		case "trade":
-			if  hbspotBalances[symbol].Trade != accountBalance.Balance {
-				logger.Debugf("SPOT HTTP %s TRADE CHANGE %f -> %f",symbol,hbspotBalances[symbol].Trade, accountBalance.Balance )
-				hbspotBalances[symbol].Trade = accountBalance.Balance
+			if nb.Trade != accountBalance.Balance {
+				logger.Debugf("SPOT HTTP %s TRADE CHANGE %f -> %f", symbol, nb.Trade, accountBalance.Balance)
+				nb.Trade = accountBalance.Balance
 			}
 		case "frozen":
-			if  hbspotBalances[symbol].Frozen != accountBalance.Balance {
-				logger.Debugf("SPOT HTTP %s FROZEN CHANGE %f -> %f",symbol,hbspotBalances[symbol].Trade, accountBalance.Balance )
-				hbspotBalances[symbol].Frozen = accountBalance.Balance
+			if nb.Frozen != accountBalance.Balance {
+				logger.Debugf("SPOT HTTP %s FROZEN CHANGE %f -> %f", symbol, nb.Trade, accountBalance.Balance)
+				nb.Frozen = accountBalance.Balance
 			}
 		case "loan":
-			if  hbspotBalances[symbol].Loan != accountBalance.Balance {
-				logger.Debugf("SPOT HTTP %s LOAN CHANGE %f -> %f",symbol,hbspotBalances[symbol].Trade, accountBalance.Balance )
-				hbspotBalances[symbol].Loan = accountBalance.Balance
+			if nb.Loan != accountBalance.Balance {
+				logger.Debugf("SPOT HTTP %s LOAN CHANGE %f -> %f", symbol, nb.Trade, accountBalance.Balance)
+				nb.Loan = accountBalance.Balance
 			}
 		case "interest":
-			if  hbspotBalances[symbol].Interest != accountBalance.Balance {
-				logger.Debugf("SPOT HTTP %s INTEREST CHANGE %f -> %f",symbol,hbspotBalances[symbol].Trade, accountBalance.Balance )
-				hbspotBalances[symbol].Interest = accountBalance.Balance
+			if nb.Interest != accountBalance.Balance {
+				logger.Debugf("SPOT HTTP %s INTEREST CHANGE %f -> %f", symbol, nb.Trade, accountBalance.Balance)
+				nb.Interest = accountBalance.Balance
 			}
 		case "lock":
-			if  hbspotBalances[symbol].Lock != accountBalance.Balance {
-				logger.Debugf("SPOT HTTP %s LOCK CHANGE %f -> %f",symbol,hbspotBalances[symbol].Trade, accountBalance.Balance )
-				hbspotBalances[symbol].Lock = accountBalance.Balance
+			if nb.Lock != accountBalance.Balance {
+				logger.Debugf("SPOT HTTP %s LOCK CHANGE %f -> %f", symbol, nb.Trade, accountBalance.Balance)
+				nb.Lock = accountBalance.Balance
 			}
 		case "bank":
-			if  hbspotBalances[symbol].Bank != accountBalance.Balance {
-				logger.Debugf("SPOT HTTP %s BANK CHANGE %f -> %f",symbol,hbspotBalances[symbol].Trade, accountBalance.Balance )
-				hbspotBalances[symbol].Bank = accountBalance.Balance
+			if nb.Bank != accountBalance.Balance {
+				logger.Debugf("SPOT HTTP %s BANK CHANGE %f -> %f", symbol, nb.Trade, accountBalance.Balance)
+				nb.Bank = accountBalance.Balance
 			}
 		}
+		hbspotBalances[symbol] = nb
 		hbspotBalancesUpdateTimes[symbol] = time.Now()
 	}
 	if !hasUSDT {
 		hbspotUSDTBalance = &hbspot.Balance{
-			Symbol: "usdtusdt",
+			Symbol:   "usdtusdt",
 			Currency: "usdt",
 		}
 		hbspotBalanceUpdatedForInflux = true
@@ -119,21 +121,20 @@ func handleSpotHttpAccount(account hbspot.Account) {
 		hbspotUSDTBalance.Lock + hbspotUSDTBalance.Lock + hbspotUSDTBalance.Interest +
 		hbspotUSDTBalance.Bank
 
-
 	for _, symbol := range hbspotSymbols {
 		if _, ok := hasBalances[symbol]; !ok {
 			hbspotBalances[symbol] = &hbspot.Balance{
-				Symbol: symbol,
+				Symbol:   symbol,
 				Currency: strings.Replace(symbol, "usdt", "", -1),
 			}
 			hbspotBalancesUpdateTimes[symbol] = time.Now()
 		}
 	}
 	for _, symbol := range hbspotSymbols {
-		hbspotBalances[symbol].Available = hbspotBalances[symbol].Trade
-		hbspotBalances[symbol].Balance = hbspotBalances[symbol].Trade + hbspotBalances[symbol].Frozen +
-			hbspotBalances[symbol].Lock + hbspotBalances[symbol].Lock + hbspotBalances[symbol].Interest +
-			hbspotBalances[symbol].Bank
+		nb := hbspotBalances[symbol]
+		nb.Available = nb.Trade
+		nb.Balance = nb.Trade + nb.Frozen + nb.Lock + nb.Lock + nb.Interest + nb.Bank
+		hbspotBalances[symbol] = nb
 	}
 
 }

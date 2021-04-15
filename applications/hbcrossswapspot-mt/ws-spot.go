@@ -29,11 +29,15 @@ func handleSpotWSBalance(balance *hbspot.WSBalance) {
 	}
 	if balance.Available != nil && *balance.Available != hbspotBalances[symbol].Available {
 		logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> ", symbol, hbspotBalances[symbol].Available, *balance.Available)
-		hbspotBalances[symbol].Available = *balance.Available
+		nb := hbspotBalances[symbol]
+		nb.Available = *balance.Available
+		hbspotBalances[symbol] = nb
 	}
 	if balance.Balance != nil && *balance.Balance != hbspotBalances[symbol].Balance {
 		logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> ", symbol, hbspotBalances[symbol].Balance, *balance.Balance)
-		hbspotBalances[symbol].Balance = *balance.Balance
+		nb := hbspotBalances[symbol]
+		nb.Balance = *balance.Balance
+		hbspotBalances[symbol] = nb
 		hbcrossswapOrderSilentTimes[symbol] = time.Now()
 	}
 	hbspotBalancesUpdateTimes[symbol] = time.Now()
