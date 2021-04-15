@@ -182,7 +182,7 @@ func WatchAccountFromHttp(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute*10)
-			accounts, err := api.GetAccounts(subCtx))
+			accounts, err := api.GetAccounts(subCtx)
 			if err != nil {
 				logger.Debugf("WatchAccountFromHttp GetAccountOverView error %v", err)
 			} else {
