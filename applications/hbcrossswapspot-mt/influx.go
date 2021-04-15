@@ -74,7 +74,7 @@ func handleSave() {
 		} else {
 			go hbInfluxWriter.Push(pt)
 		}
-		tp := hbcrossswapAccount.MarginBalance + hbcrossswapAccount.ProfitUnreal
+		tp := hbcrossswapAccount.MarginBalance
 		totalPerpUSDTBalance = &tp
 	}
 
@@ -218,7 +218,7 @@ func handleExternalInfluxSave() {
 	}
 
 	if hbcrossswapAccount != nil {
-		tp := hbcrossswapAccount.MarginBalance + hbcrossswapAccount.ProfitUnreal
+		tp := hbcrossswapAccount.MarginBalance
 		totalPerpUSDTBalance = &tp
 	}
 
