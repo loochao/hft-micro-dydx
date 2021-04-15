@@ -263,7 +263,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					logger.Debugf("OTHER NOTIFY %s", msg)
 				}
 			default:
-				//logger.Debugf("OTHER MSG %s", msg)
+				logger.Debugf("OTHER MSG %s", msg)
 			}
 		}
 	}
@@ -371,7 +371,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 		}
 	}()
 
-	topicTimeout := time.Hour
+	topicTimeout := time.Minute*5
 	topicCheckInterval := time.Second * 15
 	topicCheckTimer := time.NewTimer(time.Second)
 	defer topicCheckTimer.Stop()
