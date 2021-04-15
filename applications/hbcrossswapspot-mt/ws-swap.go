@@ -12,8 +12,8 @@ func handleWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 			account := account
 			if hbcrossswapAccount == nil {
 				logger.Debugf("SWAP WS USDT CHANGE MARGIN BALANCE %f", account.MarginBalance)
-			} else if account.MarginBalance != hbcrossswapAccount.MarginBalance {
-				logger.Debugf("SWAP WS USDT CHANGE MARGIN BALANCE %f -> %f", hbcrossswapAccount.MarginBalance, account.MarginBalance)
+			} else if account.WithdrawAvailable != hbcrossswapAccount.WithdrawAvailable {
+				logger.Debugf("SWAP WS USDT CHANGE WithdrawAvailable %f -> %f", hbcrossswapAccount.WithdrawAvailable, account.WithdrawAvailable)
 			}
 			hbcrossswapAccount = &account
 			return
