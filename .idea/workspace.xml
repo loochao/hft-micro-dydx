@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/config.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/main.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -62,7 +62,7 @@
       <recent name="$PROJECT_DIR$/kcperp/jsons" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestAPI_GetAccount in github.com/geometrybase/hft-micro/hbspot">
+  <component name="RunManager" selected="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapspot-mt">
     <configuration name="go build github.com/geometrybase/hft-micro/applications/hbcrossswapspot-mt" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
       <working_directory value="$PROJECT_DIR$" />
@@ -125,8 +125,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.TestAPI_GetAccount in github.com/geometrybase/hft-micro/hbspot" />
         <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapspot-mt" />
+        <item itemvalue="Go Test.TestAPI_GetAccount in github.com/geometrybase/hft-micro/hbspot" />
         <item itemvalue="Go Test.TestAPI_GetKlines in github.com/geometrybase/hft-micro/hbcrossswap" />
         <item itemvalue="Go Test.TestAPI_GetContracts in github.com/geometrybase/hft-micro/hbcrossswap" />
         <item itemvalue="Go Test.TestAPI_GetFundingRates in github.com/geometrybase/hft-micro/hbcrossswap" />

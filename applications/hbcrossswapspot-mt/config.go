@@ -37,9 +37,9 @@ type Config struct {
 	RequestInterval       *time.Duration `yaml:"requestInterval,omitempty"`
 	BalancePositionMaxAge *time.Duration `yaml:"balancePositionMaxAge,omitempty"`
 
-	ResetUnrealisedPnlInterval *time.Duration `yaml:"resetUnrealisedPnlInterval,omitempty"`
-	ResetUnrealisedTriggerPct  *float64       `yaml:"resetUnrealisedTriggerPct,omitempty"`
-	ResetCount                 *int           `yaml:"resetCount,omitempty"`
+	//ResetUnrealisedPnlInterval *time.Duration `yaml:"resetUnrealisedPnlInterval,omitempty"`
+	//ResetUnrealisedTriggerPct  *float64       `yaml:"resetUnrealisedTriggerPct,omitempty"`
+	//ResetCount                 *int           `yaml:"resetCount,omitempty"`
 
 	SpotSwapPairs map[string]string `yaml:"spotSwapPairs,omitempty"`
 
@@ -68,8 +68,8 @@ type Config struct {
 	SpreadTimeToLive            *time.Duration     `yaml:"spreadTimeToLive,omitempty"`
 	SpreadLookbackDuration      *time.Duration     `yaml:"spreadLookbackDuration,omitempty"`
 	SpreadLookbackMinimalWindow *int               `yaml:"spreadLookbackMinimalWindow,omitempty"`
-	BnbMinSize                  *float64           `yaml:"bnbMinSize,omitempty"`
-	BnbCheckInterval            *time.Duration     `yaml:"bnbCheckInterval,omitempty"`
+	//BnbMinSize                  *float64           `yaml:"bnbMinSize,omitempty"`
+	//BnbCheckInterval            *time.Duration     `yaml:"bnbCheckInterval,omitempty"`
 	StartValue                  *float64           `yaml:"startValue,omitempty"`
 	EnterFreePct                *float64           `yaml:"enterFreePct,omitempty"`
 	EnterMinimalStep            *float64           `yaml:"enterMinimalStep,omitempty"`
@@ -77,9 +77,9 @@ type Config struct {
 	MaxUnHedgeValue             *float64           `yaml:"maxUnHedgeValue,omitempty"`
 	StartValues                 map[string]float64 `yaml:"startValues,omitempty"`
 
-	InsuranceFundingRatio    *float64       `yaml:"insuranceFundingRatio,omitempty"`
-	ReBalanceInterval        *time.Duration `yaml:"reBalanceInterval,omitempty"`
-	ReBalanceMinimalNotional *float64       `yaml:"reBalanceMinimalNotional,omitempty"`
+	//InsuranceFundingRatio    *float64       `yaml:"insuranceFundingRatio,omitempty"`
+	//ReBalanceInterval        *time.Duration `yaml:"reBalanceInterval,omitempty"`
+	//ReBalanceMinimalNotional *float64       `yaml:"reBalanceMinimalNotional,omitempty"`
 
 	OrderTimeout        *time.Duration `yaml:"orderTimeout,omitempty"`
 	OrderSilent         *time.Duration `yaml:"orderSilent,omitempty"`

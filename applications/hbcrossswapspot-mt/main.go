@@ -167,7 +167,7 @@ func main() {
 		*hbConfig.BarsLookback,
 		*hbConfig.PullBarsInterval,
 		*hbConfig.PullBarsRetryInterval,
-		*hbConfig.ReBalanceInterval,
+		*hbConfig.RequestInterval,
 		hbcrossswapBarsMapCh,
 	)
 
@@ -178,7 +178,7 @@ func main() {
 		*hbConfig.BarsLookback,
 		*hbConfig.PullBarsInterval,
 		*hbConfig.PullBarsRetryInterval,
-		*hbConfig.ReBalanceInterval,
+		*hbConfig.RequestInterval,
 		hbspotBarsMapCh,
 	)
 
