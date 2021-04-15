@@ -6,13 +6,16 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"hash"
 	"net/url"
 	"sort"
+	"strconv"
 	"time"
+	"unsafe"
 )
 
 //go:generate go run symbols_gen.go
@@ -129,10 +132,20 @@ loop:
 			mantissa += uint64(c - '0')
 			continue
 		}
-		return 0, fmt.Errorf("ParseBinanceFloat error bad byte %v @ %d in %s", s[i], i, s)
+		v, err :=  strconv.ParseFloat(*(*string)(unsafe.Pointer(&s)), 64)
+		if err != nil {
+			return 0, fmt.Errorf("ParseBinanceFloat error bad byte %v @ %d in %s", s[i], i, s)
+		}else{
+			return v, nil
+		}
 	}
 	if !sawDigits {
-		return 0, errors.New("ParseBinanceFloat error no digits")
+		v, err :=  strconv.ParseFloat(*(*string)(unsafe.Pointer(&s)), 64)
+		if err != nil {
+			return 0, errors.New("ParseBinanceFloat error no digits")
+		}else{
+			return v, nil
+		}
 	}
 	if !sawDot {
 		dp = nd
@@ -162,7 +175,12 @@ func ParseBinanceInt(s []byte) (int64, error) {
 			n += int64(c - '0')
 			continue
 		}
-		return 0, fmt.Errorf("ParseBinanceInt error bad byte %v @ %d in %s", s[i], i, s)
+		v, err :=  strconv.ParseInt(*(*string)(unsafe.Pointer(&s)), 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("ParseBinanceInt error bad byte %v @ %d in %s", s[i], i, s)
+		}else{
+			return v, nil
+		}
 	}
 	if negative {
 		return -n, nil
@@ -212,3 +230,11 @@ func RankSymbols(symbols []string, values []float64) (map[int]string, error) {
 	return out, nil
 }
 
+
+func Base64Encode(input []byte) string {
+	return base64.StdEncoding.EncodeToString(input)
+}
+
+func FormatByPrecision(f float64, p int) StringFloat{
+	return StringFloat(fmt.Sprintf("%."+fmt.Sprintf("%d",p)+"f", f))
+}

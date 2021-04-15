@@ -202,3 +202,4 @@ func GetOrderLimits(ctx context.Context, api *API, symbols []string) (
 	return tickSizes, stepSizes, minSizes, minNotional, nil
 }
 
+

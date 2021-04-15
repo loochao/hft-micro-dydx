@@ -196,3 +196,8 @@ type Float64 float64
 func (f Float64) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("%.8f", f)), nil
 }
+
+type StringFloat string
+func (f StringFloat) MarshalJSON() ([]byte, error) {
+	return []byte(f), nil
+}

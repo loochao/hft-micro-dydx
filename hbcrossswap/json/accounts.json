@@ -1,0 +1,35 @@
+{
+  "op": "notify",
+  "topic": "accounts_cross.usdt",
+  "ts": 1618465548105,
+  "event": "order.open",
+  "data": [
+    {
+      "margin_mode": "cross",
+      "margin_account": "USDT",
+      "margin_asset": "USDT",
+      "margin_balance": 499.973379160000000000,
+      "margin_static": 499.993079160000000000,
+      "margin_position": 5.773933333333333333,
+      "margin_frozen": 58.333333333333333333,
+      "profit_real": -0.006920840000000000,
+      "profit_unreal": -0.019700000000000000,
+      "withdraw_available": 435.866112493333333334,
+      "risk_rate": 128.983542988886335299,
+      "contract_detail": [
+        {
+          "symbol": "FIL",
+          "contract_code": "FIL-USDT",
+          "margin_position": 5.773933333333333333,
+          "margin_frozen": 58.333333333333333333,
+          "margin_available": 435.866112493333333334,
+          "profit_unreal": -0.019700000000000000,
+          "liquidation_price": 5071.521364313725490196,
+          "lever_rate": 3,
+          "adjust_factor": 0.060000000000000000
+        }
+      ]
+    }
+  ],
+  "uid": "211055476"
+}

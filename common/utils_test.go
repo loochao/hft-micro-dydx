@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/logger"
+	"github.com/stretchr/testify/assert"
 	"sort"
 	"strconv"
 	"sync"
@@ -194,4 +195,19 @@ func BenchmarkChanAdd(t *testing.B) {
 		}
 		wg.Wait()
 	}
+}
+
+func TestFormatByPrecision(t *testing.T) {
+	f := FormatByPrecision(0.0123123123, 0)
+	assert.Equal(t, "0", f)
+	f = FormatByPrecision(0.0123123123, 1)
+	assert.Equal(t, "0.0", f)
+	f = FormatByPrecision(0.0123123123, 2)
+	assert.Equal(t, "0.01", f)
+	f = FormatByPrecision(0.0123123123, 3)
+	assert.Equal(t, "0.012", f)
+	f = FormatByPrecision(0.0123123123, 4)
+	assert.Equal(t, "0.0123", f)
+	f = FormatByPrecision(0.0123123123, 5)
+	assert.Equal(t, "0.01231", f)
 }

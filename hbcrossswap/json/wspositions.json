@@ -1,0 +1,28 @@
+{
+  "op": "notify",
+  "topic": "positions_cross",
+  "ts": 1618465560205,
+  "event": "snapshot",
+  "data": [
+    {
+      "symbol": "FIL",
+      "contract_code": "FIL-USDT",
+      "volume": 1.000000000000000000,
+      "available": 1.000000000000000000,
+      "frozen": 0E-18,
+      "cost_open": 173.021000000000000000,
+      "cost_hold": 173.021000000000000000,
+      "profit_unreal": 0.011300000000000000,
+      "profit_rate": 0.001959299738182071,
+      "profit": 0.011300000000000000,
+      "margin_asset": "USDT",
+      "position_margin": 5.763600000000000000,
+      "lever_rate": 3,
+      "direction": "sell",
+      "last_price": 172.908,
+      "margin_mode": "cross",
+      "margin_account": "USDT"
+    }
+  ],
+  "uid": "211055476"
+}
