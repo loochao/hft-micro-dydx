@@ -22,12 +22,12 @@ func handleSpotHttpAccount(account hbspot.Account) {
 			switch accountBalance.Type {
 			case "trade":
 				if hbspotUSDTBalance.Trade != accountBalance.Balance {
-					logger.Debugf("SPOT HTTP USDT TRADE CHANGE %f -> %f", hbspotUSDTBalance.Trade, accountBalance.Balance)
+					//logger.Debugf("SPOT HTTP USDT TRADE CHANGE %f -> %f", hbspotUSDTBalance.Trade, accountBalance.Balance)
 					hbspotUSDTBalance.Trade = accountBalance.Balance
 				}
 			case "frozen":
 				if hbspotUSDTBalance.Frozen != accountBalance.Balance {
-					logger.Debugf("SPOT HTTP USDT FROZEN CHANGE %f -> %f", hbspotUSDTBalance.Frozen, accountBalance.Balance)
+					//logger.Debugf("SPOT HTTP USDT FROZEN CHANGE %f -> %f", hbspotUSDTBalance.Frozen, accountBalance.Balance)
 					hbspotUSDTBalance.Frozen = accountBalance.Balance
 				}
 			}
@@ -54,12 +54,12 @@ func handleSpotHttpAccount(account hbspot.Account) {
 		switch accountBalance.Type {
 		case "trade":
 			if nb.Trade != accountBalance.Balance {
-				logger.Debugf("SPOT HTTP %s TRADE CHANGE %f -> %f", symbol, nb.Trade, accountBalance.Balance)
+				//logger.Debugf("SPOT HTTP %s TRADE CHANGE %f -> %f", symbol, nb.Trade, accountBalance.Balance)
 				nb.Trade = accountBalance.Balance
 			}
 		case "frozen":
 			if nb.Frozen != accountBalance.Balance {
-				logger.Debugf("SPOT HTTP %s FROZEN CHANGE %f -> %f", symbol, nb.Trade, accountBalance.Balance)
+				//logger.Debugf("SPOT HTTP %s FROZEN CHANGE %f -> %f", symbol, nb.Trade, accountBalance.Balance)
 				nb.Frozen = accountBalance.Balance
 			}
 		default:
@@ -79,7 +79,7 @@ func handleSpotHttpAccount(account hbspot.Account) {
 	}
 
 	if hbspotUSDTBalance.Available != hbspotUSDTBalance.Trade {
-		logger.Debugf("SPOT HTTP USDT Available %f -> %f", hbspotUSDTBalance.Available, hbspotUSDTBalance.Trade)
+		//logger.Debugf("SPOT HTTP USDT Available %f -> %f", hbspotUSDTBalance.Available, hbspotUSDTBalance.Trade)
 		hbspotUSDTBalance.Available = hbspotUSDTBalance.Trade
 	}
 	if hbspotUSDTBalance.Balance != hbspotUSDTBalance.Trade + hbspotUSDTBalance.Frozen{
@@ -102,7 +102,7 @@ func handleSpotHttpAccount(account hbspot.Account) {
 		}
 		nb := hbspotBalances[symbol]
 		if nb.Available != nb.Trade {
-			logger.Debugf("SPOT HTTP %s Available %f -> %f", symbol, nb.Available, nb.Trade)
+			//logger.Debugf("SPOT HTTP %s Available %f -> %f", symbol, nb.Available, nb.Trade)
 			nb.Available = nb.Trade
 		}
 		if nb.Balance != nb.Trade+nb.Frozen {
