@@ -12,8 +12,8 @@ func handleWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 			account := account
 			if hbcrossswapAccount == nil {
 				logger.Debugf("SWAP WS USDT CHANGE MARGIN BALANCE %f", account.MarginBalance)
-			//} else if account.WithdrawAvailable != hbcrossswapAccount.WithdrawAvailable {
-			//	logger.Debugf("SWAP WS USDT CHANGE WithdrawAvailable %f -> %f", hbcrossswapAccount.WithdrawAvailable, account.WithdrawAvailable)
+				//} else if account.WithdrawAvailable != hbcrossswapAccount.WithdrawAvailable {
+				//	logger.Debugf("SWAP WS USDT CHANGE WithdrawAvailable %f -> %f", hbcrossswapAccount.WithdrawAvailable, account.WithdrawAvailable)
 			}
 			hbcrossswapAccount = &account
 			return
@@ -25,7 +25,9 @@ func handleWSPosition(wsPositions *hbcrossswap.WSPositions) {
 	for _, nextPos := range wsPositions.Positions {
 		if _, ok := kcpsSymbolsMap[nextPos.Symbol]; ok {
 			if lastPos, ok := hbcrossswapPositions[nextPos.Symbol]; ok {
-				if nextPos.Volume != lastPos.Volume || nextPos.Direction != lastPos.Direction {
+				if nextPos.Volume != lastPos.Volume {
+					logger.Debugf("SWAP WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
+				} else if nextPos.Volume != 0 && nextPos.Direction != lastPos.Direction {
 					logger.Debugf("SWAP WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
 				}
 				nextPos := nextPos
