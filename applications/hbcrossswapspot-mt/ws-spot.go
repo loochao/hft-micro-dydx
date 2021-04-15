@@ -27,7 +27,9 @@ func handleSpotWSBalance(balance *hbspot.WSBalance) {
 	if _, ok := kcspSymbolsMap[symbol]; !ok {
 		return
 	}
+	hasLast := true
 	if _, ok :=  hbspotBalances[symbol]; !ok {
+		hasLast = false
 		hbspotBalances[symbol] = &hbspot.Balance{}
 	}
 	if balance.Available != nil && *balance.Available != hbspotBalances[symbol].Available {
@@ -42,7 +44,10 @@ func handleSpotWSBalance(balance *hbspot.WSBalance) {
 		nb.Balance = *balance.Balance
 		hbspotBalances[symbol] = nb
 		hbcrossswapOrderSilentTimes[symbol] = time.Now().Add(time.Millisecond*10)
+		hbspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(time.Minute * 5)
+		if hasLast {
+			hbspotSilentTimes[symbol] = time.Now().Add(*hbConfig.EnterSilent)
+		}
 	}
 	hbspotBalancesUpdateTimes[symbol] = time.Now()
-	hbspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(time.Minute * 5)
 }

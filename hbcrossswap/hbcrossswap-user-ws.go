@@ -406,7 +406,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 				values.Set("Timestamp", timestamp)
 				payload := fmt.Sprintf("%s\napi.hbdm.vn\n%s\n%s", "GET", "/linear-swap-notification", values.Encode())
 				hmac := common.GetHMAC(common.HashSHA256, []byte(payload), []byte(w.Secret))
-				logger.Debugf("LOGIN")
+				//logger.Debugf("LOGIN")
 				select {
 				case <-ctx.Done():
 					return
