@@ -281,7 +281,7 @@ func main() {
 		}()
 	}
 
-	defer hbGlobalCancel()
+	logger.Debugf("START")
 
 	for {
 		select {
