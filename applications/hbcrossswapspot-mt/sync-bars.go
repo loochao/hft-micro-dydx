@@ -53,6 +53,7 @@ func watchSwapBars(
 						symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
 					}
 					time.Sleep(requestInterval)
+					start := time.Now()
 					history, err = api.GetKlines(
 						ctx, hbcrossswap.KlinesParam{
 							Symbol: symbol,
@@ -60,6 +61,7 @@ func watchSwapBars(
 							Period: klinePeriod,
 						})
 					if err != nil {
+						logger.Debugf("TAKE %v", time.Now().Sub(start))
 						logger.Debugf("SWAP GetKlines for %s error %v", symbol, err)
 						retryCount--
 						time.Sleep(pullRetryInterval)
@@ -176,12 +178,14 @@ func watchSpotBars(
 						symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
 					}
 					time.Sleep(requestInterval)
+					start := time.Now()
 					history, err = api.GetKlines(ctx, hbspot.KlinesParam{
 						Symbol: symbol,
 						Size:   barsLookback,
 						Period: klinePeriod,
 					})
 					if err != nil {
+						logger.Debugf("TAKE %v", time.Now().Sub(start))
 						logger.Debugf("SPOT GetHistoryKlines for %s error %v", symbol, err)
 						retryCount--
 						time.Sleep(pullRetryInterval)
