@@ -368,7 +368,7 @@ func main() {
 			loopTimer.Reset(time.Nanosecond)
 			break
 		case hbcrossswapFundingRates = <-hbcrossswapFundingRatesCh:
-			logger.Debugf("FRS %v", hbcrossswapFundingRates)
+			//logger.Debugf("FRS %v", hbcrossswapFundingRates)
 			break
 		case hbcrossswapBarsMap = <-hbcrossswapBarsMapCh:
 			if kcBarsMapUpdated["spot"] {
@@ -388,8 +388,11 @@ func main() {
 				kcBarsMapUpdated["spot"] = true
 			}
 			break
-		case kcQuantiles = <-kcQuantilesCh:
-			logger.Debugf("QUANTILES %v", kcQuantiles)
+		case qs := <-kcQuantilesCh:
+			if kcQuantiles == nil {
+				logger.Debugf("QUANTILES %v", qs)
+			}
+			kcQuantiles = qs
 			loopTimer.Reset(time.Millisecond)
 			break
 		case <-influxSaveTimer.C:
@@ -439,7 +442,7 @@ func main() {
 			if err != nil {
 				logger.Debugf("RankSymbols error %v", err)
 			}
-			logger.Debugf("SYMBOLS FR RANK %v", kcRankSymbolMap)
+			//logger.Debugf("SYMBOLS FR RANK %v", kcRankSymbolMap)
 			frRankUpdatedTimer.Reset(time.Minute)
 			break
 		case <-loopTimer.C:
