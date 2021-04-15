@@ -76,7 +76,7 @@ var hbcrossswapAssetUpdatedForExternalInflux = false
 var hbspotBalanceUpdatedForExternalInflux = false
 var kcSaveSilentTime = time.Now()
 
-//var hbspotAccountCh = make(chan hbspot.Account, 10)
+var hbspotAccountCh = make(chan hbspot.Account, 10)
 
 var hbspotOrderRequestChs = make(map[string]chan SpotOrderRequest)
 var hbspotNewOrderErrorCh chan SpotOrderNewError
@@ -106,7 +106,7 @@ var hbConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210415 17:43:04  ####")
+	logger.Debug("####  BUILD @ 20210415 17:58:30  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

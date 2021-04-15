@@ -177,10 +177,6 @@ type Balance struct {
 	Available float64 `json:"-"`
 	Trade     float64 `json:"-"`
 	Frozen    float64 `json:"-"`
-	Loan      float64 `json:"-"`
-	Interest  float64 `json:"-"`
-	Lock      float64 `json:"-"`
-	Bank      float64 `json:"-"`
 }
 
 type NewOrderResponse struct {

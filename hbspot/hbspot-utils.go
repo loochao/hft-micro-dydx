@@ -163,16 +163,10 @@ func WatchBalancesFromHttp(
 							balance.Trade = wsBalance.Balance
 						case "frozen":
 							balance.Frozen = wsBalance.Balance
-						case "loan":
-							balance.Lock = wsBalance.Balance
-						case "interest":
-							balance.Interest = wsBalance.Balance
-						case "lock":
-							balance.Lock = wsBalance.Balance
-						case "bank":
-							balance.Bank = wsBalance.Balance
 						default:
 						}
+						balance.Available = balance.Trade
+						balance.Balance = balance.Trade + balance.Frozen
 						balanceBySymbol[symbol] = balance
 					}
 				}

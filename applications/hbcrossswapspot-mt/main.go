@@ -149,10 +149,10 @@ func main() {
 		hbGlobalCtx, hbcrossswapAPI,
 		*hbConfig.PullInterval, hbcrossswapAccountCh,
 	)
-	//go hbspot.WatchAccountFromHttp(
-	//	hbGlobalCtx, hbspotAPI, hbspotAccountID,
-	//	*hbConfig.PullInterval, hbspotAccountCh,
-	//)
+	go hbspot.WatchAccountFromHttp(
+		hbGlobalCtx, hbspotAPI, hbspotAccountID,
+		*hbConfig.PullInterval, hbspotAccountCh,
+	)
 	go hbcrossswap.WatchFundingRate(
 		hbGlobalCtx, hbcrossswapAPI,
 		hbcrossswapSymbols,
@@ -295,9 +295,9 @@ func main() {
 		case account := <-hbcrossswapAccountCh:
 			handleSwapHttpAccount(account)
 			break
-		//case account := <-hbspotAccountCh:
-		//	handleSpotHttpAccount(account)
-		//	break
+		case account := <-hbspotAccountCh:
+			handleSpotHttpAccount(account)
+			break
 		case msg := <-hbspotUserWebsocket.BalanceCh:
 			handleSpotWSBalance(msg)
 			break
