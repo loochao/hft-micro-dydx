@@ -467,7 +467,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 							Topic: topic,
 						}:
 							topicUpdatedTimes[strings.ToLower(topic)] = time.Now().Add(topicCheckInterval*time.Duration(len(symbols)*2))
-							continue
+							break
 						}
 					}
 				}

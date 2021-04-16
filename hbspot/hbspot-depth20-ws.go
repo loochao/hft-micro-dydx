@@ -311,7 +311,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 						Sub: fmt.Sprintf("market.%s.depth.step1", symbol),
 					}:
 						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval*time.Duration(len(symbols)*2))
-						continue
+					 	break
 					}
 				}
 			}
