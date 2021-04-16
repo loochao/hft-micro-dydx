@@ -20,11 +20,13 @@ type API struct {
 	client    http.Client
 	accessKey string
 	secretKey string
-	mu sync.Mutex
+	mu        sync.Mutex
 }
 
+const apiHost = "api-aws.huobi.pro"
+
 func (api *API) SendHTTPRequest(ctx context.Context, method, path string, params common.Params, result interface{}) error {
-	path = "https://api-aws.huobi.pro" + path
+	path = "https://" + apiHost + path
 	values := url.Values{}
 	var err error
 	if params != nil {
@@ -69,10 +71,10 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	values.Set("SignatureMethod", "HmacSHA256")
 	values.Set("SignatureVersion", "2")
 	values.Set("Timestamp", time.Now().UTC().Format("2006-01-02T15:04:05"))
-	payload := fmt.Sprintf("%s\napi-aws.huobi.pro\n%s\n%s", method, path, values.Encode())
+	payload := fmt.Sprintf("%s\n%s\n%s\n%s", method, apiHost, path, values.Encode())
 	hmac := common.GetHMAC(common.HashSHA256, []byte(payload), []byte(api.secretKey))
 	values.Set("Signature", common.Base64Encode(hmac))
-	path = common.EncodeURLValues("https://api-aws.huobi.pro"+path, values)
+	path = common.EncodeURLValues("https://"+apiHost+path, values)
 	//logger.Debugf("%s", path)
 	var rBody io.Reader
 	if postBody != nil {
@@ -116,7 +118,6 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	return json.Unmarshal(dataCap.Data, result)
 }
 
-
 func (api *API) GetSymbols(ctx context.Context) ([]Symbol, error) {
 	data := make([]Symbol, 0)
 	return data, api.SendHTTPRequest(ctx, http.MethodGet, "/v1/common/symbols", nil, &data)
@@ -144,7 +145,6 @@ func (api *API) GetKlines(ctx context.Context, param KlinesParam) ([]common.KLin
 	return bars, nil
 }
 
-
 func (api *API) GetAccounts(ctx context.Context) ([]Account, error) {
 	accounts := make([]Account, 0)
 	return accounts, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/v1/account/accounts", nil, nil, &accounts)
@@ -152,7 +152,7 @@ func (api *API) GetAccounts(ctx context.Context) ([]Account, error) {
 
 func (api *API) GetAccount(ctx context.Context, accountID int64) (*Account, error) {
 	account := &Account{}
-	return account, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, fmt.Sprintf( "/v1/account/accounts/%d/balance", accountID), nil, nil, account)
+	return account, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, fmt.Sprintf("/v1/account/accounts/%d/balance", accountID), nil, nil, account)
 }
 
 func (api *API) SubmitOrder(ctx context.Context, order NewOrderParam) (*string, error) {
@@ -164,7 +164,6 @@ func (api *API) CancelAllOrders(ctx context.Context, param CancelAllParam) (*Can
 	nor := &CancelAllResponse{}
 	return nor, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/v1/order/orders/batchCancelOpenOrders", nil, param, &nor)
 }
-
 
 func NewAPI(key, secret, proxy string) (*API, error) {
 	var client http.Client
