@@ -303,6 +303,12 @@ func main() {
 		case <-done:
 			logger.Debugf("Exit")
 			return
+		case <-kcspotUserWebsocket.RestartCh:
+			logger.Debugf("kcspotUserWebsocket restart silent %v", *kcConfig.RestartSilent)
+			break
+		case <-kcperpUserWebsocket.RestartCh:
+			logger.Debugf("kcperpUserWebsocket restart silent %v", *kcConfig.RestartSilent)
+			break
 		//case <-reBalanceTimer.C:
 		//	if kcspotUSDTBalance != nil && kcperpUSDTAccount != nil && kcperpUSDTAccount.AvailableBalance != nil {
 		//		//PERP WS ACCOUNT 没有AvailableBalance, 为0 HTTP GET无数据

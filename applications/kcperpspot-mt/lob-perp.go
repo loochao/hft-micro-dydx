@@ -38,6 +38,8 @@ func watchPerpWalkedOrderBooks(
 				}
 			}
 			break
+		case <-ws.RestartCh:
+			break
 		}
 	}
 }
@@ -56,7 +58,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth5, takerImpact, makerImpact, multi
 	hasMakerData := false
 	hasTakerData := false
 	for _, bid := range orderBook.Bids {
-		value := bid[0] * bid[1]*multiplier
+		value := bid[0] * bid[1] * multiplier
 		if !hasMakerData {
 			wLob.MakerBidFarPrice = bid[0]
 			if totalMakerValue+value >= makerImpact {
@@ -64,7 +66,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth5, takerImpact, makerImpact, multi
 				totalMakerValue = makerImpact
 				hasMakerData = true
 			} else {
-				totalMakerQty += bid[1]*multiplier
+				totalMakerQty += bid[1] * multiplier
 				totalMakerValue += value
 			}
 		}
@@ -75,7 +77,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth5, takerImpact, makerImpact, multi
 				totalTakerValue = takerImpact
 				hasTakerData = true
 			} else {
-				totalTakerQty += bid[1]*multiplier
+				totalTakerQty += bid[1] * multiplier
 				totalTakerValue += value
 			}
 		}
@@ -93,7 +95,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth5, takerImpact, makerImpact, multi
 	hasMakerData = false
 	hasTakerData = false
 	for _, ask := range orderBook.Asks {
-		value := ask[0] * ask[1]*multiplier
+		value := ask[0] * ask[1] * multiplier
 		if !hasMakerData {
 			wLob.MakerAskFarPrice = ask[0]
 			if totalMakerValue+value >= makerImpact {
@@ -101,7 +103,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth5, takerImpact, makerImpact, multi
 				totalMakerValue = makerImpact
 				hasMakerData = true
 			} else {
-				totalMakerQty += ask[1]*multiplier
+				totalMakerQty += ask[1] * multiplier
 				totalMakerValue += value
 			}
 		}
@@ -112,7 +114,7 @@ func walkPerpOrderBook(orderBook *kcperp.Depth5, takerImpact, makerImpact, multi
 				totalTakerValue = takerImpact
 				hasTakerData = true
 			} else {
-				totalTakerQty += ask[1]*multiplier
+				totalTakerQty += ask[1] * multiplier
 				totalTakerValue += value
 			}
 		}
@@ -124,9 +126,9 @@ func walkPerpOrderBook(orderBook *kcperp.Depth5, takerImpact, makerImpact, multi
 	wLob.MakerAskVWAP = totalMakerValue / totalMakerQty
 	wLob.ImpactValue = takerImpact
 	wLob.BidPrice = orderBook.Bids[0][0]
-	wLob.BidSize = orderBook.Bids[0][1]*multiplier
+	wLob.BidSize = orderBook.Bids[0][1] * multiplier
 	wLob.AskPrice = orderBook.Asks[0][0]
-	wLob.AskSize = orderBook.Asks[0][1]*multiplier
+	wLob.AskSize = orderBook.Asks[0][1] * multiplier
 	return wLob
 }
 

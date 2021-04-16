@@ -92,6 +92,7 @@ type Config struct {
 	OrderMaxCancelCount *int           `yaml:"orderMaxCancelCount,omitempty"`
 	EnterSlippage       *float64       `yaml:"enterSlippage,omitempty"`
 	EnterSilent         *time.Duration `yaml:"enterSilent,omitempty"`
+	RestartSilent       *time.Duration `yaml:"restartSilent,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

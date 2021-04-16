@@ -15,6 +15,7 @@ import (
 type Depth5Websocket struct {
 	messageCh   chan []byte
 	DataCh      chan *Depth5
+	RestartCh   chan interface{}
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
@@ -347,10 +348,13 @@ func (w *Depth5Websocket) restart() {
 		return
 	default:
 	}
-	timer := time.NewTimer(time.Millisecond)
-	defer timer.Stop()
 	select {
-	case <-timer.C:
+	case <-time.After(time.Millisecond):
+		logger.Fatal("NIL TO RESTART CH TIMEOUT IN 1MS, EXIT")
+	case w.RestartCh <- nil:
+	}
+	select {
+	case <-time.After(time.Millisecond):
 		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
 	case w.reconnectCh <- nil:
 		return
@@ -371,6 +375,7 @@ func NewDepth5Websocket(
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
 		DataCh:      make(chan *Depth5, 100*len(symbols)),
+		RestartCh:     make(chan interface{}, 100),
 		messageCh:   make(chan []byte, 100*len(symbols)),
 		writeCh:     make(chan interface{}, 100*len(symbols)),
 		symbolCh:    make(chan string, 100*len(symbols)),

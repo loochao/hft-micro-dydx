@@ -30,14 +30,16 @@ func watchSpotWalkedOrderBooks(
 				output <- walkSpotOrderBook(data, takerImpact, makerImpact)
 			}
 			break
+		case <-ws.RestartCh:
+			break
 		}
 	}
 }
 
 func walkSpotOrderBook(orderBook *kcspot.Depth5, takerImpact, makerImpact float64) WalkedOrderBook {
 	wLob := WalkedOrderBook{
-		Symbol:      orderBook.Symbol,
-		Type:        WalkedOrderBookTypeSpot,
+		Symbol:    orderBook.Symbol,
+		Type:      WalkedOrderBookTypeSpot,
 		ParseTime: orderBook.ParseTime,
 	}
 	totalTakerValue := 0.0
