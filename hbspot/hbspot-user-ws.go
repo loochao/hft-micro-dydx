@@ -86,12 +86,6 @@ func (w *UserWebsocket) startRead(conn *websocket.Conn) {
 			go w.restart()
 			return
 		}
-		//gr, err := gzip.NewReader(r)
-		//if err != nil {
-		//	logger.Warnf("NewReader error %v", err)
-		//	go w.restart()
-		//	return
-		//}
 		msg, err := w.readAll(r)
 		if err != nil {
 			logger.Warnf("readAll error %v", err)
