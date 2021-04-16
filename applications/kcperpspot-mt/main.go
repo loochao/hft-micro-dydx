@@ -305,49 +305,12 @@ func main() {
 			return
 		case <-kcspotUserWebsocket.RestartCh:
 			logger.Debugf("kcspotUserWebsocket restart silent %v", *kcConfig.RestartSilent)
+			handleWebsocketRestart()
 			break
 		case <-kcperpUserWebsocket.RestartCh:
 			logger.Debugf("kcperpUserWebsocket restart silent %v", *kcConfig.RestartSilent)
+			handleWebsocketRestart()
 			break
-		//case <-reBalanceTimer.C:
-		//	if kcspotUSDTBalance != nil && kcperpUSDTAccount != nil && kcperpUSDTAccount.AvailableBalance != nil {
-		//		//PERP WS ACCOUNT 没有AvailableBalance, 为0 HTTP GET无数据
-		//		//PERP的MarginBalance AvailableBalance WS推送缺失，会造成错误判断
-		//		if kcperpAssetUpdatedForReBalance && kcspotBalanceUpdatedForReBalance {
-		//			kcperpAssetUpdatedForReBalance = false
-		//			kcspotBalanceUpdatedForReBalance = false
-		//
-		//			expectedInsuranceFund := *kcConfig.StartValue * (1 - *kcConfig.InsuranceFundingRatio) * *kcConfig.Leverage / (*kcConfig.Leverage + 1) * *kcConfig.InsuranceFundingRatio
-		//			totalFree := (kcspotUSDTBalance.Free + *kcperpUSDTAccount.AvailableBalance) - expectedInsuranceFund
-		//			targetPerp := totalFree/(*kcConfig.Leverage+1) + expectedInsuranceFund
-		//			change := targetPerp - *kcperpUSDTAccount.AvailableBalance
-		//			if change > 0 && change > kcspotUSDTBalance.Free {
-		//				change = kcspotUSDTBalance.Free
-		//			}
-		//			if change < 0 && -change > *kcperpUSDTAccount.AvailableBalance-expectedInsuranceFund {
-		//				change = 0
-		//				if *kcperpUSDTAccount.AvailableBalance-expectedInsuranceFund > 0 {
-		//					change = -(*kcperpUSDTAccount.AvailableBalance - expectedInsuranceFund)
-		//				}
-		//			}
-		//			if math.Abs(change) > *kcConfig.ReBalanceMinimalNotional {
-		//				// 如果有转帐发生最好不要让influx统计数据，转帐在中间过程中会有盈利计算误差
-		//				kcspotBalanceUpdatedForExternalInflux = false
-		//				kcperpAssetUpdatedForExternalInflux = false
-		//				kcspotBalanceUpdatedForInflux = false
-		//				kcperpAssetUpdatedForInflux = false
-		//				kcSaveSilentTime = time.Now().Add(*kcConfig.PullInterval * 2)
-		//				go reBalanceUSDT(
-		//					kcGlobalCtx,
-		//					kcspotAPI,
-		//					*kcConfig.OrderTimeout,
-		//					change,
-		//				)
-		//			}
-		//		}
-		//	}
-		//	reBalanceTimer.Reset(*kcConfig.ReBalanceInterval)
-		//	break
 		case p := <-kcperpPositionCh:
 			handlePerpHttpPositions(p)
 			break

@@ -324,3 +324,9 @@ func updateSpotNewOrders() {
 		}
 	}
 }
+
+func handleWebsocketRestart(){
+	for _, spotSymbol := range kcspotSymbols {
+		kcspotSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.RestartSilent)
+	}
+}
