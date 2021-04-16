@@ -132,11 +132,11 @@ func main() {
 			*hbConfig.ExternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
-	loopTimer := time.NewTimer(time.Second) //先等1分钟
+	bnLoopTimer = time.NewTimer(time.Second) //先等1分钟
 	frRankUpdatedTimer := time.NewTimer(time.Second * 15)
 
 	defer influxSaveTimer.Stop()
-	defer loopTimer.Stop()
+	defer bnLoopTimer.Stop()
 	defer frRankUpdatedTimer.Stop()
 	defer externalInfluxSaveTimer.Stop()
 
@@ -365,7 +365,7 @@ func main() {
 			break
 		case spread := <-spreadCh:
 			hbSpreads[spread.Symbol] = spread
-			loopTimer.Reset(time.Nanosecond)
+			bnLoopTimer.Reset(time.Nanosecond)
 			break
 		case hbcrossswapFundingRates = <-hbcrossswapFundingRatesCh:
 			//logger.Debugf("FRS %v", hbcrossswapFundingRates)
@@ -393,7 +393,7 @@ func main() {
 				logger.Debugf("QUANTILES %v", qs)
 			}
 			kcQuantiles = qs
-			loopTimer.Reset(time.Millisecond)
+			bnLoopTimer.Reset(time.Millisecond)
 			break
 		case <-influxSaveTimer.C:
 			handleSave()
@@ -445,11 +445,11 @@ func main() {
 			//logger.Debugf("SYMBOLS FR RANK %v", kcRankSymbolMap)
 			frRankUpdatedTimer.Reset(time.Minute)
 			break
-		case <-loopTimer.C:
+		case <-bnLoopTimer.C:
 			updatePerpPositions()
 			updateSpotOldOrders()
 			updateSpotNewOrders()
-			loopTimer.Reset(
+			bnLoopTimer.Reset(
 				time.Now().Truncate(
 					*hbConfig.LoopInterval,
 				).Add(

@@ -152,7 +152,6 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 			}
 			switch msg[7] {
 			case 's':
-				//logger.Debugf("SUB RESP")
 				subResp := SubResp{}
 				err = json.Unmarshal(msg, &subResp)
 				if err != nil {
@@ -371,7 +370,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 		}
 	}()
 
-	topicTimeout := time.Minute*5
+	topicTimeout := time.Minute
 	topicCheckInterval := time.Second * 15
 	topicCheckTimer := time.NewTimer(time.Second)
 	defer topicCheckTimer.Stop()
@@ -428,8 +427,12 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 			loginTimer.Reset(time.Minute)
 		case topic := <-w.topicCh:
 			topic = strings.ToLower(topic)
+			if topic == "accounts_cross" {
+				topic = "accounts_cross.usdt"
+			}
 			if _, ok := topicUpdatedTimes[topic]; ok {
-				topicUpdatedTimes[topic] = time.Now()
+				topicUpdatedTimes[topic] = time.Now().Add(time.Hour*8)
+				//logger.Debugf("topic update %s %v", topic, time.Now().Add(time.Hour*8))
 			}
 		case msg := <-w.pingCh:
 			select {

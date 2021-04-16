@@ -31,6 +31,7 @@ var hbcrossswapPositionsUpdateTimes = make(map[string]time.Time)
 var hbspotOrderSilentTimes = make(map[string]time.Time)
 var hbspotCancelSilentTimes = make(map[string]time.Time)
 var hbspotSilentTimes = make(map[string]time.Time)
+var bnLoopTimer *time.Timer
 
 var hbspotBalancesUpdateTimes = make(map[string]time.Time)
 var hbcrossswapNewOrderErrorCh = make(chan SwapOrderNewError, 10)
@@ -106,7 +107,7 @@ var hbConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210416 01:25:44  ####")
+	logger.Debug("####  BUILD @ 20210416 01:54:23  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
