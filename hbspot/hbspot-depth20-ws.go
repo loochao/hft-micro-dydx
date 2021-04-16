@@ -297,6 +297,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 			}
 			break
 		case <-symbolCheckTimer.C:
+		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
 					logger.Debugf("HBSPOT SUBSCRIBE %s", fmt.Sprintf("market.%s.depth.step1", symbol))
@@ -310,8 +311,8 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 						ID:  fmt.Sprintf("market.%s.depth.step1", symbol),
 						Sub: fmt.Sprintf("market.%s.depth.step1", symbol),
 					}:
-						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval*time.Duration(len(symbols)*2))
-					 	break
+						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval * time.Duration(len(symbols)*2))
+						break loop
 					}
 				}
 			}

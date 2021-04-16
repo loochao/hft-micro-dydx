@@ -418,6 +418,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 			break
 		case <-topicCheckTimer.C:
 			if login {
+			loop:
 				for _, topic := range topics {
 					if time.Now().Sub(topicUpdatedTimes[topic]) > topicTimeout {
 						logger.Debugf("HBSPOT SUBSCRIBE %s", topic)
@@ -432,7 +433,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 							Ch:     topic,
 						}:
 							topicUpdatedTimes[topic] = time.Now().Add(topicCheckInterval * time.Duration(len(symbols)*2))
-							break
+							break loop
 						}
 					}
 				}

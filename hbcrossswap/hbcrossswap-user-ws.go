@@ -164,7 +164,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					default:
 					}
 					logger.Debugf("SUB SUCCESS %s", msg)
-				}else {
+				} else {
 					logger.Debugf("SUB FAILURE %s", msg)
 				}
 			case 'p':
@@ -452,6 +452,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 			break
 		case <-topicCheckTimer.C:
 			if login {
+			loop:
 				for _, topic := range topics {
 					updateTime := topicUpdatedTimes[strings.ToLower(topic)]
 					if time.Now().Sub(updateTime) > topicTimeout {
@@ -466,8 +467,8 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 							Op:    "sub",
 							Topic: topic,
 						}:
-							topicUpdatedTimes[strings.ToLower(topic)] = time.Now().Add(topicCheckInterval*time.Duration(len(symbols)*2))
-							break
+							topicUpdatedTimes[strings.ToLower(topic)] = time.Now().Add(topicCheckInterval * time.Duration(len(symbols)*2))
+							break loop
 						}
 					}
 				}
