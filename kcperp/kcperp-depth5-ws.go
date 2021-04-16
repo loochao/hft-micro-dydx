@@ -143,7 +143,7 @@ func (w *Depth5Websocket) startDataHandler(ctx context.Context) {
 				case w.symbolCh <- depth50.Symbol:
 				default:
 				}
-			}else {
+			} else {
 				//logger.Debugf("OTHER MSG %s", msg)
 			}
 		}
@@ -266,18 +266,8 @@ func (w *Depth5Websocket) maintainHeartbeat(ctx context.Context, conn *websocket
 		}
 	}()
 
-	conn.SetPingHandler(func(msg string) error {
-		logger.Debugf("KCPERP DEPTH20 WS PingHandler %s", msg)
-		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
-		if err != nil {
-			go w.restart()
-			return nil
-		}
-		return nil
-	})
-
 	symbolTimeout := time.Minute
-	symbolCheckInterval := time.Second * 15
+	symbolCheckInterval := time.Second
 	pingTimer := time.NewTimer(time.Second)
 	symbolCheckTimer := time.NewTimer(time.Second)
 	defer symbolCheckTimer.Stop()
@@ -308,6 +298,7 @@ func (w *Depth5Websocket) maintainHeartbeat(ctx context.Context, conn *websocket
 			}
 			break
 		case <-symbolCheckTimer.C:
+		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
 					logger.Debugf("KCPERP SUBSCRIBE %s", fmt.Sprintf("/contractMarket/level2Depth5:%s", symbol))
@@ -324,7 +315,8 @@ func (w *Depth5Websocket) maintainHeartbeat(ctx context.Context, conn *websocket
 						PrivateChannel: false,
 						Response:       false,
 					}:
-						break
+						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval * time.Duration(len(symbols)*2))
+						break loop
 					}
 				}
 			}

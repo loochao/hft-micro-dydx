@@ -185,7 +185,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					//logger.Debugf("WELCOME %s", wsCap.ID)
 				} else if wsCap.Type == "pong" {
 					//logger.Debugf("PONG %s", wsCap.ID)
-				}else{
+				} else {
 					logger.Debugf("KCSPOT OTHER MSG %s", msg)
 				}
 			}
@@ -309,18 +309,8 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 		}
 	}()
 
-	conn.SetPingHandler(func(msg string) error {
-		logger.Debugf("KCSPOT DEPTH20 WS PingHandler %s", msg)
-		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
-		if err != nil {
-			go w.restart()
-			return nil
-		}
-		return nil
-	})
-
 	topicTimeout := time.Minute
-	topicCheckInterval := time.Minute * 5
+	topicCheckInterval := time.Second
 	pingTimer := time.NewTimer(time.Second)
 	topicCheckTimer := time.NewTimer(time.Second)
 	defer topicCheckTimer.Stop()
@@ -335,7 +325,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 			return
 		case topic := <-w.topicCh:
 			if _, ok := topicUpdatedTimes[topic]; ok {
-				topicUpdatedTimes[topic] = time.Now()
+				topicUpdatedTimes[topic] = time.Now().Add(time.Hour*4)
 			}
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)
@@ -354,6 +344,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 			break
 		case <-topicCheckTimer.C:
 			ts := make([]string, 0)
+		loop:
 			for topic, updateTime := range topicUpdatedTimes {
 				if time.Now().Sub(updateTime) > topicTimeout {
 					select {
@@ -369,7 +360,8 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 						PrivateChannel: true,
 						Response:       false,
 					}:
-						break
+						topicUpdatedTimes[topic] = time.Now().Add(topicCheckInterval * time.Duration(len(topics)*2))
+						break loop
 					}
 				}
 			}
