@@ -291,14 +291,14 @@ func updateSpotNewOrders() {
 					quantity = math.Ceil(-spotBalance.Available/spotStepSize) * spotStepSize
 					quantity = math.Ceil(quantity/perpStepSize) * perpStepSize
 				}
-				logger.Debugf(
-					"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
-					spotSymbol,
-					spread.LastExit, quantile.Bot,
-					spread.MedianExit, quantile.Bot,
-					quantity,
-				)
 				if quantity < 0 {
+					logger.Debugf(
+						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
+						spotSymbol,
+						spread.LastExit, quantile.Bot,
+						spread.MedianExit, quantile.Bot,
+						quantity,
+					)
 					id, _ := common.GenerateShortId()
 					clOrdID := fmt.Sprintf(
 						"%s%d",
