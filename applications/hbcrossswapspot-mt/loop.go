@@ -306,7 +306,7 @@ func updateSpotNewOrders() {
 						Amount:        common.FormatByPrecision(-amount, amountPrecision),
 						OriginPrice:   price,
 						OriginAmount:  amount,
-						Type:          hbspot.OrderSideSell,
+						Type:          hbspot.OrderTypeSellLimit,
 					}
 					hbspotOrderSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.OrderSilent)
 					hbspotOrderCancelCounts[spotSymbol] = 0
