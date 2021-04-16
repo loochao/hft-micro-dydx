@@ -382,13 +382,13 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 	topics := make([]string, 0)
 	topics = append(topics, "accounts_cross.USDT")
 	for _, symbol := range symbols {
-		topics = append(topics, fmt.Sprintf("positions_cross.%s", symbol))
-		topics = append(topics, fmt.Sprintf("orders_cross.%s", symbol))
+		topics = append(topics, strings.ToLower(fmt.Sprintf("positions_cross.%s", symbol)))
+		topics = append(topics, strings.ToLower(fmt.Sprintf("orders_cross.%s", symbol)))
 	}
 
 	topicUpdatedTimes := make(map[string]time.Time)
 	for _, topic := range topics {
-		topicUpdatedTimes[strings.ToLower(topic)] = time.Unix(0, 0)
+		topicUpdatedTimes[topic] = time.Unix(0, 0)
 	}
 
 	for {
