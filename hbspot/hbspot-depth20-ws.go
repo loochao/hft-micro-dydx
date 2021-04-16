@@ -16,6 +16,7 @@ import (
 type Depth20Websocket struct {
 	messageCh   chan []byte
 	DataCh      chan *Depth20
+	RestartCh   chan interface{}
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
@@ -339,13 +340,15 @@ func (w *Depth20Websocket) restart() {
 		return
 	default:
 	}
-	timer := time.NewTimer(time.Millisecond)
-	defer timer.Stop()
 	select {
-	case <-timer.C:
-		logger.Fatal("HBSPOT DEPTH20 NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
+	case <-time.After(time.Millisecond):
+		logger.Fatal("NIL TO RESTART CH TIMEOUT IN 1MS, EXIT")
+	case w.RestartCh <- nil:
+	}
+	select {
+	case <-time.After(time.Millisecond):
+		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
 	case w.reconnectCh <- nil:
-		return
 	}
 }
 
@@ -362,6 +365,7 @@ func NewDepth20Websocket(
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
 		DataCh:      make(chan *Depth20, 100*len(symbols)),
+		RestartCh:   make(chan interface{}, 100),
 		messageCh:   make(chan []byte, 100*len(symbols)),
 		writeCh:     make(chan interface{}, 100*len(symbols)),
 		symbolCh:    make(chan string, 100*len(symbols)),

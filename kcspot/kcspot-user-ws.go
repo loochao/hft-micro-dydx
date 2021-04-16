@@ -17,6 +17,7 @@ type UserWebsocket struct {
 	messageCh   chan []byte
 	OrderCh     chan *WSOrder
 	BalanceCh   chan *WsBalance
+	RestartCh   chan interface{}
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
@@ -325,7 +326,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 			return
 		case topic := <-w.topicCh:
 			if _, ok := topicUpdatedTimes[topic]; ok {
-				topicUpdatedTimes[topic] = time.Now().Add(time.Hour*4)
+				topicUpdatedTimes[topic] = time.Now().Add(time.Hour * 4)
 			}
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)
@@ -388,13 +389,15 @@ func (w *UserWebsocket) restart() {
 		return
 	default:
 	}
-	timer := time.NewTimer(time.Millisecond)
-	defer timer.Stop()
 	select {
-	case <-timer.C:
+	case <-time.After(time.Millisecond):
+		logger.Fatal("NIL TO RESTART CH TIMEOUT IN 1MS, EXIT")
+	case w.RestartCh <- nil:
+	}
+	select {
+	case <-time.After(time.Millisecond):
 		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
 	case w.reconnectCh <- nil:
-		return
 	}
 }
 
@@ -413,6 +416,7 @@ func NewUserWebsocket(
 		OrderCh:     make(chan *WSOrder, 100),
 		BalanceCh:   make(chan *WsBalance, 100),
 		messageCh:   make(chan []byte, 10000),
+		RestartCh:   make(chan interface{}, 100),
 		writeCh:     make(chan interface{}, 100),
 		topicCh:     make(chan string, 100),
 	}

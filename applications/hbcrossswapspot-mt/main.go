@@ -132,11 +132,11 @@ func main() {
 			*hbConfig.ExternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
-	bnLoopTimer = time.NewTimer(time.Second) //先等1分钟
+	hbLoopTimer = time.NewTimer(time.Second) //先等1分钟
 	frRankUpdatedTimer := time.NewTimer(time.Second * 15)
 
 	defer influxSaveTimer.Stop()
-	defer bnLoopTimer.Stop()
+	defer hbLoopTimer.Stop()
 	defer frRankUpdatedTimer.Stop()
 	defer externalInfluxSaveTimer.Stop()
 
@@ -289,6 +289,12 @@ func main() {
 		case <-done:
 			logger.Debugf("Exit")
 			return
+		case <-hbspotUserWebsocket.RestartCh:
+			logger.Debugf("hbspotUserWebsocket restart silent %v", *hbConfig.RestartSilent)
+			handleRestartSilent()
+		case <-hbcrossswapUserWebsocket.RestartCh:
+			logger.Debugf("hbcrossswapUserWebsocket restart silent %v", *hbConfig.RestartSilent)
+			handleRestartSilent()
 		case p := <-hbcrossswapPositionCh:
 			handleSwapHttpPositions(p)
 			break
@@ -365,7 +371,7 @@ func main() {
 			break
 		case spread := <-spreadCh:
 			hbSpreads[spread.Symbol] = spread
-			bnLoopTimer.Reset(time.Nanosecond)
+			hbLoopTimer.Reset(time.Nanosecond)
 			break
 		case hbcrossswapFundingRates = <-hbcrossswapFundingRatesCh:
 			//logger.Debugf("FRS %v", hbcrossswapFundingRates)
@@ -393,7 +399,7 @@ func main() {
 				logger.Debugf("QUANTILES %v", qs)
 			}
 			kcQuantiles = qs
-			bnLoopTimer.Reset(time.Millisecond)
+			hbLoopTimer.Reset(time.Millisecond)
 			break
 		case <-influxSaveTimer.C:
 			handleSave()
@@ -445,11 +451,11 @@ func main() {
 			//logger.Debugf("SYMBOLS FR RANK %v", kcRankSymbolMap)
 			frRankUpdatedTimer.Reset(time.Minute)
 			break
-		case <-bnLoopTimer.C:
+		case <-hbLoopTimer.C:
 			updatePerpPositions()
 			updateSpotOldOrders()
 			updateSpotNewOrders()
-			bnLoopTimer.Reset(
+			hbLoopTimer.Reset(
 				time.Now().Truncate(
 					*hbConfig.LoopInterval,
 				).Add(

@@ -318,3 +318,9 @@ func updateSpotNewOrders() {
 		}
 	}
 }
+
+func handleRestartSilent() {
+	for _, spotSymbol := range hbspotSymbols {
+		hbspotSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.RestartSilent)
+	}
+}

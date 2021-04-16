@@ -37,6 +37,8 @@ func watchSwapWalkedOrderBooks(
 				}
 			}
 			break
+		case <-ws.RestartCh:
+			break
 		}
 	}
 }
@@ -128,4 +130,3 @@ func walkPerpOrderBook(orderBook *hbcrossswap.Depth20, takerImpact, makerImpact,
 	wLob.AskSize = orderBook.Asks[0][1] * contractSize
 	return wLob
 }
-

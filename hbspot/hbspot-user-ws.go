@@ -20,6 +20,7 @@ type UserWebsocket struct {
 	messageCh   chan []byte
 	OrderCh     chan *WSOrder
 	BalanceCh   chan *WSBalance
+	RestartCh   chan interface{}
 	Key         string
 	Secret      string
 	writeCh     chan interface{}
@@ -462,10 +463,14 @@ func (w *UserWebsocket) restart() {
 	default:
 	}
 	select {
-	case <-time.After(time.Second):
-		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1S, EXIT")
+	case <-time.After(time.Millisecond):
+		logger.Fatal("NIL TO RESTART CH TIMEOUT IN 1MS, EXIT")
+	case w.RestartCh <- nil:
+	}
+	select {
+	case <-time.After(time.Millisecond):
+		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
 	case w.reconnectCh <- nil:
-		return
 	}
 }
 
@@ -486,6 +491,7 @@ func NewUserWebsocket(
 		reconnectCh: make(chan interface{}, 100),
 		OrderCh:     make(chan *WSOrder, 100*len(symbols)),
 		BalanceCh:   make(chan *WSBalance, 100*len(symbols)),
+		RestartCh:   make(chan interface{}, 100),
 		messageCh:   make(chan []byte, 100*len(symbols)),
 		writeCh:     make(chan interface{}, 100*len(symbols)),
 		topicCh:     make(chan string, 100*len(symbols)),

@@ -30,6 +30,8 @@ func watchSpotWalkedOrderBooks(
 				output <- walkSpotOrderBook(data, takerImpact, makerImpact)
 			}
 			break
+		case <-ws.RestartCh:
+			break
 		}
 	}
 }

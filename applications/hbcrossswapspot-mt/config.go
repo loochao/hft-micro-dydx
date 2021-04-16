@@ -60,22 +60,22 @@ type Config struct {
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`
 
-	OrderBookTakerImpact        *float64           `yaml:"orderBookTakerImpact,omitempty"`
-	OrderBookMakerImpact        *float64           `yaml:"orderBookMakerImpact,omitempty"`
-	OrderBookBatchSize          *int               `yaml:"orderBookBatchSize,omitempty"`
-	OrderBookMaxAgeDiff         *time.Duration     `yaml:"orderBookMaxAgeDiff,omitempty"`
-	OrderBookMaxAge             *time.Duration     `yaml:"orderBookMaxAge,omitempty"`
-	SpreadTimeToLive            *time.Duration     `yaml:"spreadTimeToLive,omitempty"`
-	SpreadLookbackDuration      *time.Duration     `yaml:"spreadLookbackDuration,omitempty"`
-	SpreadLookbackMinimalWindow *int               `yaml:"spreadLookbackMinimalWindow,omitempty"`
+	OrderBookTakerImpact        *float64       `yaml:"orderBookTakerImpact,omitempty"`
+	OrderBookMakerImpact        *float64       `yaml:"orderBookMakerImpact,omitempty"`
+	OrderBookBatchSize          *int           `yaml:"orderBookBatchSize,omitempty"`
+	OrderBookMaxAgeDiff         *time.Duration `yaml:"orderBookMaxAgeDiff,omitempty"`
+	OrderBookMaxAge             *time.Duration `yaml:"orderBookMaxAge,omitempty"`
+	SpreadTimeToLive            *time.Duration `yaml:"spreadTimeToLive,omitempty"`
+	SpreadLookbackDuration      *time.Duration `yaml:"spreadLookbackDuration,omitempty"`
+	SpreadLookbackMinimalWindow *int           `yaml:"spreadLookbackMinimalWindow,omitempty"`
 	//BnbMinSize                  *float64           `yaml:"bnbMinSize,omitempty"`
 	//BnbCheckInterval            *time.Duration     `yaml:"bnbCheckInterval,omitempty"`
-	StartValue                  *float64           `yaml:"startValue,omitempty"`
-	EnterFreePct                *float64           `yaml:"enterFreePct,omitempty"`
-	EnterMinimalStep            *float64           `yaml:"enterMinimalStep,omitempty"`
-	EnterTargetFactor           *float64           `yaml:"enterTargetFactor,omitempty"`
-	MaxUnHedgeValue             *float64           `yaml:"maxUnHedgeValue,omitempty"`
-	StartValues                 map[string]float64 `yaml:"startValues,omitempty"`
+	StartValue        *float64           `yaml:"startValue,omitempty"`
+	EnterFreePct      *float64           `yaml:"enterFreePct,omitempty"`
+	EnterMinimalStep  *float64           `yaml:"enterMinimalStep,omitempty"`
+	EnterTargetFactor *float64           `yaml:"enterTargetFactor,omitempty"`
+	MaxUnHedgeValue   *float64           `yaml:"maxUnHedgeValue,omitempty"`
+	StartValues       map[string]float64 `yaml:"startValues,omitempty"`
 
 	//InsuranceFundingRatio    *float64       `yaml:"insuranceFundingRatio,omitempty"`
 	//ReBalanceInterval        *time.Duration `yaml:"reBalanceInterval,omitempty"`
@@ -87,6 +87,7 @@ type Config struct {
 	OrderMaxCancelCount *int           `yaml:"orderMaxCancelCount,omitempty"`
 	EnterSlippage       *float64       `yaml:"enterSlippage,omitempty"`
 	EnterSilent         *time.Duration `yaml:"enterSilent,omitempty"`
+	RestartSilent       *time.Duration `yaml:"restartSilent,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
