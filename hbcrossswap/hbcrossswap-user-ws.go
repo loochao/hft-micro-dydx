@@ -163,6 +163,9 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					case w.topicCh <- subResp.Topic:
 					default:
 					}
+					logger.Debugf("SUB SUCCESS %s", msg)
+				}else {
+					logger.Debugf("SUB FAILURE %s", msg)
 				}
 			case 'p':
 				msg[8] = 'o'
@@ -371,7 +374,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 	}()
 
 	topicTimeout := time.Minute
-	topicCheckInterval := time.Second * 15
+	topicCheckInterval := time.Second
 	topicCheckTimer := time.NewTimer(time.Second)
 	defer topicCheckTimer.Stop()
 
@@ -431,7 +434,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 				topic = "accounts_cross.usdt"
 			}
 			if _, ok := topicUpdatedTimes[topic]; ok {
-				topicUpdatedTimes[topic] = time.Now().Add(time.Hour*8)
+				topicUpdatedTimes[topic] = time.Now().Add(time.Hour * 8)
 				//logger.Debugf("topic update %s %v", topic, time.Now().Add(time.Hour*8))
 			}
 		case msg := <-w.pingCh:
@@ -449,7 +452,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 			break
 		case <-topicCheckTimer.C:
 			if login {
-				for _, topic := range topics{
+				for _, topic := range topics {
 					updateTime := topicUpdatedTimes[strings.ToLower(topic)]
 					if time.Now().Sub(updateTime) > topicTimeout {
 						logger.Debugf("HBSWAP CROSS SUBSCRIBE %s", topic)
@@ -463,14 +466,13 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 							Op:    "sub",
 							Topic: topic,
 						}:
-							break
+							topicUpdatedTimes[strings.ToLower(topic)] = time.Now().Add(topicCheckInterval*time.Duration(len(symbols)*2))
+							continue
 						}
 					}
 				}
-				topicCheckTimer.Reset(topicCheckInterval)
-			} else {
-				topicCheckTimer.Reset(time.Second * 15)
 			}
+			topicCheckTimer.Reset(topicCheckInterval)
 			break
 		case <-w.done:
 			return

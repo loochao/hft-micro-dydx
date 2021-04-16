@@ -162,7 +162,7 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context) {
 				default:
 				}
 			} else {
-				//logger.Debugf("OTHER MSG %s", msg)
+				logger.Debugf("OTHER MSG %s", msg)
 			}
 		}
 	}
@@ -271,7 +271,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 	}()
 
 	symbolTimeout := time.Minute
-	symbolCheckInterval := time.Second * 15
+	symbolCheckInterval := time.Second
 	symbolCheckTimer := time.NewTimer(time.Second)
 	defer symbolCheckTimer.Stop()
 	symbolUpdatedTimes := make(map[string]time.Time)
@@ -310,7 +310,8 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 						ID:  fmt.Sprintf("market.%s.depth.step1", symbol),
 						Sub: fmt.Sprintf("market.%s.depth.step1", symbol),
 					}:
-						break
+						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval*time.Duration(len(symbols)*2))
+						continue
 					}
 				}
 			}

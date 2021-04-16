@@ -273,7 +273,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 	}()
 
 	symbolTimeout := time.Minute
-	symbolCheckInterval := time.Second * 15
+	symbolCheckInterval := time.Second
 	symbolCheckTimer := time.NewTimer(time.Second)
 	defer symbolCheckTimer.Stop()
 	symbolUpdatedTimes := make(map[string]time.Time)
@@ -312,6 +312,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 						ID:  fmt.Sprintf("%d", time.Now().UnixNano()),
 						Sub: fmt.Sprintf("market.%s.depth.step6", symbol),
 					}:
+						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval*time.Duration(len(symbols)*2))
 						break
 					}
 				}

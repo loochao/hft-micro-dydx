@@ -73,7 +73,7 @@ func (w *UserWebsocket) startRead(conn *websocket.Conn) {
 	totalCount := 0
 	totalLen := 0
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(time.Hour*24))
+		err := conn.SetReadDeadline(time.Now().Add(time.Hour * 24))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
 			go w.restart()
@@ -228,6 +228,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					logger.Debugf("msg %s", msg)
 					break
 				}
+				logger.Debugf("SUB %s", msg)
 				select {
 				case w.topicCh <- subResp.Ch:
 				default:
@@ -342,7 +343,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 	}()
 
 	topicTimeout := time.Minute
-	topicCheckInterval := time.Second * 15
+	topicCheckInterval := time.Second
 	topicCheckTimer := time.NewTimer(time.Second)
 	defer topicCheckTimer.Stop()
 
@@ -400,7 +401,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 		case topic := <-w.topicCh:
 			topic = strings.ToLower(topic)
 			if _, ok := topicUpdatedTimes[topic]; ok {
-				topicUpdatedTimes[topic] = time.Now().Add(time.Hour*8)
+				topicUpdatedTimes[topic] = time.Now().Add(time.Hour * 8)
 			}
 		case msg := <-w.pingCh:
 			select {
@@ -430,14 +431,13 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 							Action: "sub",
 							Ch:     topic,
 						}:
-							break
+							topicUpdatedTimes[topic] = time.Now().Add(topicCheckInterval * time.Duration(len(symbols)*2))
+							continue
 						}
 					}
 				}
-				topicCheckTimer.Reset(topicCheckInterval)
-			} else {
-				topicCheckTimer.Reset(time.Second * 15)
 			}
+			topicCheckTimer.Reset(topicCheckInterval)
 			break
 		case <-w.done:
 			return
