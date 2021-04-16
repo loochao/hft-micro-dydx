@@ -236,6 +236,10 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 		case <-ctx.Done():
 			return
 		case <-w.reconnectCh:
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
 			reconnectTimer.Reset(time.Second * 15)
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
@@ -248,7 +252,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 				return
 			}
 			go w.startRead(conn)
-			go w.startWrite(ctx, conn)
+			go w.startWrite(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn, symbols)
 
 			go w.startDataHandler(internalCtx)

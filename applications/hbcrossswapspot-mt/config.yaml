@@ -73,7 +73,9 @@ orderTimeout: 5s
 orderSilent: 5s
 orderCancelSilent: 5s
 orderMaxCancelCount: 5
-enterSilent: 1m
+
+enterSilent: 10m
+restartSlient: 10m
 
 bnbMinSize: 0.1
 bnbCheckInterval: 1m

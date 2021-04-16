@@ -197,7 +197,10 @@ func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) 
 		case <-ctx.Done():
 			return
 		case <-w.reconnectCh:
-			//15秒重连
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
 			reconnectTimer.Reset(time.Second * 15)
 		case <-reconnectTimer.C:
 			if internalCancel != nil {

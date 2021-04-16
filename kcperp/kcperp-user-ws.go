@@ -289,6 +289,10 @@ func (w *UserWebsocket) start(ctx context.Context, api *API, symbols []string, p
 		case <-ctx.Done():
 			return
 		case <-w.reconnectCh:
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
 			reconnectTimer.Reset(time.Second * 15)
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
@@ -315,7 +319,7 @@ func (w *UserWebsocket) start(ctx context.Context, api *API, symbols []string, p
 				return
 			}
 			go w.startRead(conn)
-			go w.startWrite(ctx, conn)
+			go w.startWrite(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn, topics, time.Duration(connectToken.InstanceServers[0].PingInterval)*time.Millisecond)
 
 			go w.startDataHandler(internalCtx)

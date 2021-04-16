@@ -170,6 +170,10 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, timeout 
 		case <-ctx.Done():
 			return
 		case <-w.reconnectCh:
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
 			reconnectTimer.Reset(time.Second * 15)
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
