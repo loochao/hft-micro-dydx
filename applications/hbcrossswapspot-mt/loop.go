@@ -114,7 +114,10 @@ func updateSpotNewOrders() {
 	}
 
 	if kcUnHedgeValue > *hbConfig.MaxUnHedgeValue {
-		logger.Debugf("UN HEDGE VALUE %f > %f", kcUnHedgeValue, *hbConfig.MaxUnHedgeValue)
+		if time.Now().Sub(hbUnHedgeLogSilentTime) > 0 {
+			logger.Debugf("UN HEDGE VALUE %f > %f", kcUnHedgeValue, *hbConfig.MaxUnHedgeValue)
+			hbUnHedgeLogSilentTime = time.Now().Add(time.Minute)
+		}
 		return
 	}
 

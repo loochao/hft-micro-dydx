@@ -264,6 +264,16 @@ func (api *API) GetExchangeInfo(ctx context.Context) (*ExchangeInfo, error) {
 	return &resp, nil
 }
 
+func (api *API) GetPremiumIndex(ctx context.Context) ([]PremiumIndex, error) {
+	resp := make([]PremiumIndex, 0)
+	return resp, api.SendHTTPRequest(
+		ctx,
+		"/fapi/v1/premiumIndex",
+		nil,
+		&resp,
+	)
+}
+
 func (api *API) GetHistoryKLines(ctx context.Context, symbol, interval string, startTime time.Time) ([]common.KLine, error) {
 	kLines := make([]common.KLine, 0)
 	retryCount := 10

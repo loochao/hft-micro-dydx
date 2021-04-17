@@ -96,7 +96,7 @@ func updatePerpPositions() {
 		bLastOrderTimes[swapSymbol] = time.Now()
 		hOrderRequestChs[swapSymbol] <- order
 	}
-	kcUnHedgeValue = unHedgedValue
+	hbUnHedgeValue = unHedgedValue
 }
 
 func updateSpotNewOrders() {
@@ -109,12 +109,12 @@ func updateSpotNewOrders() {
 		return
 	}
 
-	if len(kcRankSymbolMap) == 0 {
+	if len(hbRankSymbolMap) == 0 {
 		return
 	}
 
-	if kcUnHedgeValue > *hbConfig.MaxUnHedgeValue {
-		logger.Debugf("UN HEDGE VALUE %f > %f", kcUnHedgeValue, *hbConfig.MaxUnHedgeValue)
+	if hbUnHedgeValue > *hbConfig.MaxUnHedgeValue {
+		logger.Debugf("UN HEDGE VALUE %f > %f", hbUnHedgeValue, *hbConfig.MaxUnHedgeValue)
 		return
 	}
 
@@ -127,7 +127,7 @@ func updateSpotNewOrders() {
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单
 	for rank := len(bSymbols) - 1; rank >= 0; rank-- {
 
-		swapSymbol := kcRankSymbolMap[rank]
+		swapSymbol := hbRankSymbolMap[rank]
 		spotSymbol := hbSymbolsMap[swapSymbol]
 		//需要保证期货和现货都有仓位更新，才调整现货仓位
 		if time.Now().Sub(bPositionsUpdateTimes[spotSymbol]) > *hbConfig.BalancePositionMaxAge {
@@ -136,7 +136,7 @@ func updateSpotNewOrders() {
 		if time.Now().Sub(hPositionsUpdateTimes[swapSymbol]) > *hbConfig.BalancePositionMaxAge {
 			continue
 		}
-		if _, ok := hbspotOpenOrders[spotSymbol]; ok {
+		if _, ok := hOpenOrders[spotSymbol]; ok {
 			//如果还有订单不操作
 			continue
 		}
@@ -146,10 +146,10 @@ func updateSpotNewOrders() {
 		if time.Now().Sub(hSilentTimes[spotSymbol]) < 0 {
 			continue
 		}
-		quantile, okQuantile := kcQuantiles[spotSymbol]
+		quantile, okQuantile := hbQuantiles[spotSymbol]
 		spread, okSpread := hbSpreads[spotSymbol]
 		spotBalance, okSpotBalance := hbspotBalances[spotSymbol]
-		fundingRate, okFundingRate := hbcrossswapFundingRates[swapSymbol]
+		fundingRate, okFundingRate := hFundingRates[swapSymbol]
 		//logger.Debugf("%v %v %v %v %v", okSpread, okQuantile, okSpotBalance, okFundingRate, time.Now().Sub(spread.LastUpdateTime))
 		if !okSpread || !okQuantile || !okSpotBalance || !okFundingRate {
 			continue
@@ -270,7 +270,7 @@ func updateSpotNewOrders() {
 
 			bOrderSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.OrderSilent)
 			hOrderCancelCounts[spotSymbol] = 0
-			hbspotOpenOrders[spotSymbol] = order
+			hOpenOrders[spotSymbol] = order
 			hbspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{New: &order}
 			return
 		} else if spread.LastExit < quantile.Bot &&
@@ -310,7 +310,7 @@ func updateSpotNewOrders() {
 					}
 					bOrderSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.OrderSilent)
 					hOrderCancelCounts[spotSymbol] = 0
-					hbspotOpenOrders[spotSymbol] = order
+					hOpenOrders[spotSymbol] = order
 					hbspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{New: &order}
 					return
 				}

@@ -473,3 +473,37 @@ func UpdateLeverageAndMarginType(ctx context.Context, api *API, symbols []string
 		time.Sleep(time.Second)
 	}
 }
+
+func WatchPremiumIndexesFromHttp(
+	ctx context.Context, api *API, symbols []string, interval time.Duration,
+	output chan map[string]PremiumIndex,
+) {
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			indexes, err := api.GetPremiumIndex(subCtx)
+			if err != nil {
+				logger.Debugf("WatchPositionsFromHttp GetPositions error %v", err)
+			} else {
+				indexMap := make(map[string]PremiumIndex)
+				for _, symbol := range symbols {
+					indexMap[symbol] = PremiumIndex{
+						Symbol: symbol,
+					}
+				}
+				for _, i := range indexes {
+					if _, ok := indexMap[i.Symbol]; ok {
+						indexMap[i.Symbol] = i
+					}
+				}
+				output <- indexMap
+			}
+			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
+		}
+	}
+}

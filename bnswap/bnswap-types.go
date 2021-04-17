@@ -487,3 +487,45 @@ func (c *CancelAllOrderParams) ToUrlValues() url.Values {
 	values.Set("symbol", c.Symbol)
 	return values
 }
+
+type PremiumIndex struct {
+	EventTime            time.Time `json:"-"`
+	Symbol               string    `json:"s,omitempty"`
+	MarkPrice            float64   `json:"p,string,omitempty"`
+	IndexPrice           float64   `json:"i,string,omitempty"`
+	EstimatedSettlePrice float64   `json:"P,string,omitempty"`
+	FundingRate          float64   `json:"r,string,omitempty"`
+	NextFundingTime      time.Time `json:"-"`
+	ParseTime            time.Time `json:"-"`
+}
+
+func (mpu *PremiumIndex) ToString() string {
+	return fmt.Sprintf(
+		"S=%s, FR=%v, MP=%f, IP=%f, ESP=%f, AT=%v, ET=%v, NFT=%v",
+		mpu.Symbol, mpu.FundingRate,
+		mpu.MarkPrice,
+		mpu.IndexPrice,
+		mpu.EstimatedSettlePrice,
+		mpu.ParseTime,
+		mpu.EventTime,
+		mpu.NextFundingTime,
+	)
+}
+
+func (mpu *PremiumIndex) UnmarshalJSON(data []byte) error {
+	type Alias PremiumIndex
+	aux := &struct {
+		NextFundingTime int64  `json:"nextFundingTime,omitempty"`
+		EventTime       int64  `json:"time,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(mpu),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	mpu.NextFundingTime = time.Unix(0, aux.NextFundingTime*1000000)
+	mpu.EventTime = time.Unix(0,aux.EventTime*1000000)
+	mpu.ParseTime = time.Now()
+	return nil
+}

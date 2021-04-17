@@ -31,6 +31,7 @@ var hbcrossswapPositionsUpdateTimes = make(map[string]time.Time)
 var hbspotOrderSilentTimes = make(map[string]time.Time)
 var hbspotCancelSilentTimes = make(map[string]time.Time)
 var hbspotSilentTimes = make(map[string]time.Time)
+var hbUnHedgeLogSilentTime = time.Now()
 var hbLoopTimer *time.Timer
 
 var hbspotBalancesUpdateTimes = make(map[string]time.Time)
@@ -107,7 +108,7 @@ var hbConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210416 16:57:18  ####")
+	logger.Debug("####  BUILD @ 20210417 02:15:50  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

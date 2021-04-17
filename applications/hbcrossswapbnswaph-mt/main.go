@@ -157,7 +157,7 @@ func main() {
 		hbGlobalCtx, hAPI,
 		bSymbols,
 		*hbConfig.PullInterval*10,
-		hbcrossswapFundingRatesCh,
+		hFundingRatesCh,
 	)
 
 	go watchSwapBars(
@@ -193,8 +193,8 @@ func main() {
 		*hbConfig.MinimalEnterDelta,
 		*hbConfig.MaximalExitDelta,
 		*hbConfig.MinimalBandOffset,
-		kcBarsMapCh,
-		kcQuantilesCh,
+		hbBarsMapCh,
+		hbQuantilesCh,
 	)
 
 	walkedOrderBookCh := make(chan WalkedOrderBook, len(hSymbols)*10)
@@ -306,22 +306,22 @@ func main() {
 				if *spotOrder.OrderStatus == hbspot.OrderStatusFilled {
 					if spotOrder.TradeVolume != nil && spotOrder.TradePrice != nil && spotOrder.Type != nil {
 						if strings.Contains(*spotOrder.Type, "buy") {
-							hbspotLastFilledBuyPrices[spotOrder.Symbol] = *spotOrder.TradePrice
+							hLastFilledBuyPrices[spotOrder.Symbol] = *spotOrder.TradePrice
 						} else {
-							hbspotLastFilledSellPrices[spotOrder.Symbol] = *spotOrder.TradePrice
+							hLastFilledSellPrices[spotOrder.Symbol] = *spotOrder.TradePrice
 						}
 						logger.Debugf("SPOT WS ORDER FILLED %s %s SIZE %f PRICE %f", spotOrder.Symbol, *spotOrder.Type, *spotOrder.TradeVolume, *spotOrder.TradePrice)
 					}
-					if openOrder, ok := hbspotOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOrderID == spotOrder.ClientOrderID {
-						delete(hbspotOpenOrders, spotOrder.Symbol)
+					if openOrder, ok := hOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOrderID == spotOrder.ClientOrderID {
+						delete(hOpenOrders, spotOrder.Symbol)
 					}
 				} else if *spotOrder.OrderStatus == hbspot.OrderStatusCanceled {
-					if openOrder, ok := hbspotOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOrderID == spotOrder.ClientOrderID {
-						delete(hbspotOpenOrders, spotOrder.Symbol)
+					if openOrder, ok := hOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOrderID == spotOrder.ClientOrderID {
+						delete(hOpenOrders, spotOrder.Symbol)
 					}
 				} else if *spotOrder.OrderStatus == hbspot.OrderStatusRejected {
-					if openOrder, ok := hbspotOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOrderID == spotOrder.ClientOrderID {
-						delete(hbspotOpenOrders, spotOrder.Symbol)
+					if openOrder, ok := hOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOrderID == spotOrder.ClientOrderID {
+						delete(hOpenOrders, spotOrder.Symbol)
 					}
 				}
 			}
@@ -347,16 +347,16 @@ func main() {
 					)
 					if swapOrder.Direction == hbcrossswap.OrderDirectionSell {
 						if spotSymbol, ok := hbSymbolsMap[swapOrder.Symbol]; ok {
-							if spotPrice, ok := hbspotLastFilledBuyPrices[spotSymbol]; ok {
-								kcRealisedSpread[spotSymbol] = (swapOrder.TradeAvgPrice - spotPrice) / spotPrice
-								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, swapOrder.Symbol, kcRealisedSpread[spotSymbol])
+							if spotPrice, ok := hLastFilledBuyPrices[spotSymbol]; ok {
+								hbRealisedSpread[spotSymbol] = (swapOrder.TradeAvgPrice - spotPrice) / spotPrice
+								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, swapOrder.Symbol, hbRealisedSpread[spotSymbol])
 							}
 						}
 					} else if swapOrder.Direction == hbcrossswap.OrderDirectionBuy {
 						if spotSymbol, ok := hbSymbolsMap[swapOrder.Symbol]; ok {
-							if spotPrice, ok := hbspotLastFilledSellPrices[spotSymbol]; ok {
-								kcRealisedSpread[spotSymbol] = (swapOrder.TradeAvgPrice - spotPrice) / spotPrice
-								logger.Debugf("%s %s REALISED CLOSE SPREAD %f", spotSymbol, swapOrder.Symbol, kcRealisedSpread[spotSymbol])
+							if spotPrice, ok := hLastFilledSellPrices[spotSymbol]; ok {
+								hbRealisedSpread[spotSymbol] = (swapOrder.TradeAvgPrice - spotPrice) / spotPrice
+								logger.Debugf("%s %s REALISED CLOSE SPREAD %f", spotSymbol, swapOrder.Symbol, hbRealisedSpread[spotSymbol])
 							}
 						}
 					}
@@ -367,12 +367,12 @@ func main() {
 			hbSpreads[spread.Symbol] = spread
 			hbLoopTimer.Reset(time.Nanosecond)
 			break
-		case hbcrossswapFundingRates = <-hbcrossswapFundingRatesCh:
-			//logger.Debugf("FRS %v", hbcrossswapFundingRates)
+		case hFundingRates = <-hFundingRatesCh:
+			//logger.Debugf("FRS %v", hFundingRates)
 			break
 		case hbcrossswapBarsMap = <-hbcrossswapBarsMapCh:
 			if hBarsMapUpdated["spot"] {
-				kcBarsMapCh <- [2]common.KLinesMap{hbspotBarsMap, hbcrossswapBarsMap}
+				hbBarsMapCh <- [2]common.KLinesMap{hbspotBarsMap, hbcrossswapBarsMap}
 				hBarsMapUpdated["spot"] = false
 				hBarsMapUpdated["swap"] = false
 			} else {
@@ -381,18 +381,18 @@ func main() {
 			break
 		case hbspotBarsMap = <-hbspotBarsMapCh:
 			if hBarsMapUpdated["swap"] {
-				kcBarsMapCh <- [2]common.KLinesMap{hbspotBarsMap, hbcrossswapBarsMap}
+				hbBarsMapCh <- [2]common.KLinesMap{hbspotBarsMap, hbcrossswapBarsMap}
 				hBarsMapUpdated["spot"] = false
 				hBarsMapUpdated["swap"] = false
 			} else {
 				hBarsMapUpdated["spot"] = true
 			}
 			break
-		case qs := <-kcQuantilesCh:
-			if kcQuantiles == nil {
+		case qs := <-hbQuantilesCh:
+			if hbQuantiles == nil {
 				logger.Debugf("QUANTILES %v", qs)
 			}
-			kcQuantiles = qs
+			hbQuantiles = qs
 			hbLoopTimer.Reset(time.Millisecond)
 			break
 		case <-influxSaveTimer.C:
@@ -421,28 +421,28 @@ func main() {
 			break
 
 		case order := <-hbspotNewOrderErrorCh:
-			if openOrder, ok := hbspotOpenOrders[order.Params.Symbol]; ok && openOrder.ClientOrderID == order.Params.ClientOrderID {
-				delete(hbspotOpenOrders, order.Params.Symbol)
+			if openOrder, ok := hOpenOrders[order.Params.Symbol]; ok && openOrder.ClientOrderID == order.Params.ClientOrderID {
+				delete(hOpenOrders, order.Params.Symbol)
 			}
 			bOrderSilentTimes[order.Params.Symbol] = time.Now().Add(*hbConfig.OrderSilent * 3)
 		case <-frRankUpdatedTimer.C:
 			frs := make([]float64, len(bSymbols))
 			for i, symbol := range bSymbols {
-				if fr, ok := hbcrossswapFundingRates[symbol]; ok {
+				if fr, ok := hFundingRates[symbol]; ok {
 					frs[i] = fr.FundingRate
 				} else {
 					logger.Debugf("MISS FUNDING RATE %s", symbol)
 					break
 				}
 			}
-			if len(kcRankSymbolMap) == 0 {
+			if len(hbRankSymbolMap) == 0 {
 				logger.Debugf("RANK FR...")
 			}
-			kcRankSymbolMap, err = common.RankSymbols(bSymbols, frs)
+			hbRankSymbolMap, err = common.RankSymbols(bSymbols, frs)
 			if err != nil {
 				logger.Debugf("RankSymbols error %v", err)
 			}
-			//logger.Debugf("SYMBOLS FR RANK %v", kcRankSymbolMap)
+			//logger.Debugf("SYMBOLS FR RANK %v", hbRankSymbolMap)
 			frRankUpdatedTimer.Reset(time.Minute)
 			break
 		case <-hbLoopTimer.C:

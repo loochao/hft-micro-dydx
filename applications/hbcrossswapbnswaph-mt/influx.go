@@ -11,7 +11,7 @@ import (
 func handleSave() {
 
 	if !hbcrossswapAssetUpdatedForInflux || !hbspotBalanceUpdatedForInflux ||
-		time.Now().Sub(kcSaveSilentTime).Seconds() < 0 {
+		time.Now().Sub(hbSaveSilentTime).Seconds() < 0 {
 		return
 	}
 	hbcrossswapAssetUpdatedForInflux = false
@@ -101,7 +101,7 @@ func handleSave() {
 				fields["spotValue"] = spread.SpotOrderBook.TakerBidVWAP * spotBalance.Balance
 			}
 		}
-		if fr, ok := hbcrossswapFundingRates[swapSymbol]; ok {
+		if fr, ok := hFundingRates[swapSymbol]; ok {
 			fields["swapNextFundingRate"] = fr.FundingRate
 			fields["swapEstimatedRate"] = fr.EstimatedRate
 		}
@@ -119,7 +119,7 @@ func handleSave() {
 			fields["spotTakerBidFarPrice"] = spread.SpotOrderBook.TakerBidFarPrice
 			fields["spotTakerAskFarPrice5"] = (1.0 + *hbConfig.MakerBandOffset) * spread.SpotOrderBook.AskPrice
 			fields["spotTakerBidFarPrice5"] = (1.0 - *hbConfig.MakerBandOffset) * spread.SpotOrderBook.BidPrice
-			if order, ok := hbspotOpenOrders[spotSymbol]; ok {
+			if order, ok := hOpenOrders[spotSymbol]; ok {
 				fields["spotOpenOrderPrice"] = order.Price
 			}
 
@@ -131,10 +131,10 @@ func handleSave() {
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
 		}
-		if realisedSpread, ok := kcRealisedSpread[spotSymbol]; ok {
+		if realisedSpread, ok := hbRealisedSpread[spotSymbol]; ok {
 			fields["realisedSpread"] = realisedSpread
 		}
-		if quantile, ok := kcQuantiles[spotSymbol]; ok {
+		if quantile, ok := hbQuantiles[spotSymbol]; ok {
 			fields["quantileBot"] = quantile.Bot
 			fields["quantileTop"] = quantile.Top
 			fields["quantileMid"] = quantile.Mid
@@ -191,7 +191,7 @@ func handleSave() {
 func handleExternalInfluxSave() {
 	if !hbcrossswapAssetUpdatedForExternalInflux ||
 		!hbspotBalanceUpdatedForExternalInflux ||
-		time.Now().Sub(kcSaveSilentTime).Seconds() < 0 {
+		time.Now().Sub(hbSaveSilentTime).Seconds() < 0 {
 		return
 	}
 	hbcrossswapAssetUpdatedForExternalInflux = false

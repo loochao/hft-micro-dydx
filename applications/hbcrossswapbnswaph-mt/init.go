@@ -77,33 +77,37 @@ var hbcrossswapAssetUpdatedForInflux = false
 var hbspotBalanceUpdatedForInflux = false
 var hbcrossswapAssetUpdatedForExternalInflux = false
 var hbspotBalanceUpdatedForExternalInflux = false
-var kcSaveSilentTime = time.Now()
+var hbSaveSilentTime = time.Now()
 
 var hbspotAccountCh = make(chan hbspot.Account, 10)
 
 var hbspotOrderRequestChs = make(map[string]chan SpotOrderRequest)
 var hbspotNewOrderErrorCh chan SpotOrderNewError
 
-var hbspotOpenOrders = make(map[string]hbspot.NewOrderParam)
+var hOpenOrders = make(map[string]hbcrossswap.NewOrderParam)
 var hOrderCancelCounts = make(map[string]int)
 
-var hbcrossswapFundingRates = make(map[string]hbcrossswap.FundingRate)
-var hbcrossswapFundingRatesCh = make(chan map[string]hbcrossswap.FundingRate, 10)
-var kcRankSymbolMap map[int]string
+var hFundingRates = make(map[string]hbcrossswap.FundingRate)
+var hFundingRatesCh = make(chan map[string]hbcrossswap.FundingRate, 10)
+
+var hFundingRates = make(map[string]hbcrossswap.FundingRate)
+var hFundingRatesCh = make(chan map[string]hbcrossswap.FundingRate, 10)
+
+var hbRankSymbolMap map[int]string
 
 var hbcrossswapBarsMapCh = make(chan common.KLinesMap)
 var hbcrossswapBarsMap = make(common.KLinesMap)
 var hbspotBarsMapCh = make(chan common.KLinesMap)
 var hbspotBarsMap = make(common.KLinesMap)
 var hBarsMapUpdated = make(map[string]bool)
-var kcBarsMapCh = make(chan [2]common.KLinesMap, 10)
-var kcQuantilesCh = make(chan map[string]Quantile)
-var kcQuantiles = make(map[string]Quantile)
-var hbspotLastFilledBuyPrices = make(map[string]float64)
-var hbspotLastFilledSellPrices = make(map[string]float64)
-var kcRealisedSpread = make(map[string]float64)
+var hbBarsMapCh = make(chan [2]common.KLinesMap, 10)
+var hbQuantilesCh = make(chan map[string]Quantile)
+var hbQuantiles = make(map[string]Quantile)
+var hLastFilledBuyPrices = make(map[string]float64)
+var hLastFilledSellPrices = make(map[string]float64)
+var hbRealisedSpread = make(map[string]float64)
 var hbSpreads = make(map[string]Spread)
-var kcUnHedgeValue float64
+var hbUnHedgeValue float64
 
 var hbConfig *Config
 

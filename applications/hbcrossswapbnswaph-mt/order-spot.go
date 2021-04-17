@@ -47,9 +47,9 @@ func watchSpotOrderRequest(
 }
 
 func updateSpotOldOrders() {
-	for symbol, order := range hbspotOpenOrders {
+	for symbol, order := range hOpenOrders {
 		if hOrderCancelCounts[symbol] > *hbConfig.OrderMaxCancelCount {
-			delete(hbspotOpenOrders, symbol)
+			delete(hOpenOrders, symbol)
 			continue
 		}
 		if time.Now().Sub(hbspotCancelSilentTimes[symbol]) < 0 {
@@ -69,7 +69,7 @@ func updateSpotOldOrders() {
 
 func isOrderProfitable(order hbspot.NewOrderParam) bool {
 	spread, ok1 := hbSpreads[order.Symbol]
-	quantile, ok2 := kcQuantiles[order.Symbol]
+	quantile, ok2 := hbQuantiles[order.Symbol]
 	if !ok1 || !ok2 || time.Now().Sub(spread.PerpOrderBook.ParseTime) > *hbConfig.SpreadTimeToLive {
 		logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.PerpOrderBook.ParseTime), order.Symbol)
 		return false
