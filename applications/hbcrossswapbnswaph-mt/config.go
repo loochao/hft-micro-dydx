@@ -36,6 +36,7 @@ type Config struct {
 	ChangeLeverage *bool `yaml:"changeLeverage,omitempty"`
 
 	LoopInterval          *time.Duration `yaml:"loopInterval,omitempty"`
+	LogInterval           *time.Duration `yaml:"logInterval,omitempty"`
 	PullInterval          *time.Duration `yaml:"pullInterval,omitempty"`
 	RequestInterval       *time.Duration `yaml:"requestInterval,omitempty"`
 	BalancePositionMaxAge *time.Duration `yaml:"balancePositionMaxAge,omitempty"`
@@ -52,7 +53,6 @@ type Config struct {
 
 	TopQuantile       *float64 `yaml:"topQuantile,omitempty"`
 	BotQuantile       *float64 `yaml:"botQuantile,omitempty"`
-	TradeCount        *int     `yaml:"tradeCount,omitempty"`
 	MinimalBandOffset *float64 `yaml:"minimalBandOffset,omitempty"`
 	MinimalEnterDelta *float64 `yaml:"minimalEnterDelta,omitempty"`
 	MaximalExitDelta  *float64 `yaml:"maximalExitDelta,omitempty"`
@@ -90,6 +90,7 @@ type Config struct {
 	OrderMaxCancelCount *int           `yaml:"orderMaxCancelCount,omitempty"`
 	EnterSlippage       *float64       `yaml:"enterSlippage,omitempty"`
 	EnterSilent         *time.Duration `yaml:"enterSilent,omitempty"`
+	RestartSilent       *time.Duration `yaml:"restartSilent,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

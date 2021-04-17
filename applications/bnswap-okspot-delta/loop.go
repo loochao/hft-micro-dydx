@@ -46,7 +46,7 @@ import (
 //		if math.Abs(position.PositionAmt*position.EntryPrice)-position.UnRealizedProfit > 1.2*okspotMinSizes[symbol] {
 //			if exitDelta, ok := boMedianExitDeltas[symbol]; ok {
 //				if quantile, ok := bnQuantiles[symbol]; ok {
-//					deltas = append(deltas, quantile.Bot-exitDelta)
+//					deltas = append(deltas, quantile.ShortBot-exitDelta)
 //					closableSymbols = append(closableSymbols, symbol)
 //				}
 //			} else {

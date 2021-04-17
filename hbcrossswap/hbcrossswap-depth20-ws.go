@@ -100,7 +100,7 @@ func (w *Depth20Websocket) startRead(conn *websocket.Conn) {
 		}
 		select {
 		case <-time.After(time.Millisecond):
-			logger.Debug("HBSWAP DEPTH20 MSG TO MESSAGE CH TIMEOUT IN 1MS")
+			logger.Debug("SWAP DEPTH20 MSG TO MESSAGE CH TIMEOUT IN 1MS")
 		case w.messageCh <- msg:
 		}
 		err = gr.Close()
@@ -151,7 +151,7 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context) {
 				case <-w.done:
 					return
 				case <-time.After(time.Millisecond):
-					logger.Warn("HBSWAP DEPTH20 TO OUTPUT CH TIME OUT IN 1MS")
+					logger.Warn("SWAP DEPTH20 TO OUTPUT CH TIME OUT IN 1MS")
 				case w.DataCh <- depth20:
 				}
 				select {
@@ -307,7 +307,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
-					logger.Debugf("HBSWAP SUBSCRIBE %s", fmt.Sprintf("market.%s.depth.step6", symbol))
+					//logger.Debugf("SWAP SUBSCRIBE %s", fmt.Sprintf("market.%s.depth.step6", symbol))
 					select {
 					case <-ctx.Done():
 						return
@@ -335,12 +335,12 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 func (w *Depth20Websocket) Stop() {
 	if _, ok := <-w.done; ok {
 		close(w.done)
-		logger.Infof("HBSWAP MARK PRICE WS STOPPED")
+		logger.Infof("SWAP MARK PRICE WS STOPPED")
 	}
 }
 
 func (w *Depth20Websocket) restart() {
-	logger.Infof("HBSWAP WS RESTART")
+	logger.Infof("SWAP WS RESTART")
 	select {
 	case <-w.done:
 		return

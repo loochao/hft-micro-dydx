@@ -14,14 +14,14 @@ import (
 
 type Depth20Websocket struct {
 	messageCh   chan []byte
-	DataCh      chan *Depth
+	DataCh      chan *Depth20
 	done        chan interface{}
 	reconnectCh chan interface{}
 }
 
-func (w *Depth20Websocket) startRead(conn *websocket.Conn, readTimeout time.Duration) {
+func (w *Depth20Websocket) startRead(conn *websocket.Conn) {
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(readTimeout))
+		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
 			go w.restart()
@@ -141,7 +141,7 @@ func (w *Depth20Websocket) reconnect(ctx context.Context, wsUrl string, proxy st
 	return conn, nil
 }
 
-func (w *Depth20Websocket) start(ctx context.Context, symbols []string, timeout time.Duration, proxy string) {
+func (w *Depth20Websocket) start(ctx context.Context, symbols []string,  proxy string) {
 	urlStr := "wss://fstream.binance.com/stream?streams="
 	for _, symbol := range symbols {
 		urlStr += fmt.Sprintf(
@@ -185,8 +185,8 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, timeout 
 				logger.Fatalf("RECONNECT ERROR %v", err)
 				return
 			}
-			go w.startRead(conn, timeout)
-			go w.maintainHeartbeat(internalCtx, conn, timeout)
+			go w.startRead(conn)
+			go w.maintainHeartbeat(internalCtx, conn)
 
 			go w.startDataHandler(internalCtx)
 			go w.startDataHandler(internalCtx)
@@ -201,7 +201,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, timeout 
 	}
 }
 
-func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn, timeout time.Duration) {
+func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn) {
 
 	defer func() {
 		err := conn.Close()
@@ -211,8 +211,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 	}()
 
 	conn.SetPingHandler(func(msg string) error {
-		//logger.Debugf("BNSWAP DEPTH20 WS PingHandler %s", msg)
-		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(timeout))
+		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
 			go w.restart()
 			return nil
@@ -259,19 +258,18 @@ func (w *Depth20Websocket) Done() chan interface{} {
 	return w.done
 }
 
-func NewDepth20Ws(
+func NewDepth20Websocket(
 	ctx context.Context,
 	symbols []string,
-	timeout time.Duration,
 	proxy string,
 ) *Depth20Websocket {
 	ws := Depth20Websocket{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		DataCh:      make(chan *Depth, len(symbols)),
+		DataCh:      make(chan *Depth20, len(symbols)),
 		messageCh:   make(chan []byte, 10*len(symbols)),
 	}
-	go ws.start(ctx, symbols, timeout, proxy)
+	go ws.start(ctx, symbols,  proxy)
 	ws.reconnectCh <- nil
 	return &ws
 }

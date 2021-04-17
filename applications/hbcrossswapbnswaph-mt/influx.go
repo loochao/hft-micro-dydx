@@ -10,25 +10,25 @@ import (
 
 func handleSave() {
 
-	if !hbcrossswapAssetUpdatedForInflux || !hbspotBalanceUpdatedForInflux ||
+	if !bAssetUpdatedForInflux || !hAccountUpdatedForInflux ||
 		time.Now().Sub(hbSaveSilentTime).Seconds() < 0 {
 		return
 	}
-	hbcrossswapAssetUpdatedForInflux = false
-	hbspotBalanceUpdatedForInflux = false
+	bAssetUpdatedForInflux = false
+	hAccountUpdatedForInflux = false
 
 	var totalSpotBalance, totalPerpUSDTBalance *float64
 
 	if hbspotUSDTBalance != nil {
 		spotBalance := hbspotUSDTBalance.Balance
 		getAllBalances := true
-		for _, spotSymbol := range hSymbols {
-			balance, okBalance := hbspotBalances[spotSymbol]
-			spread, okSpread := hbSpreads[spotSymbol]
+		for _, spotSymbol := range mSymbols {
+			balance, okBalance := tPositions[spotSymbol]
+			spread, okSpread := mtSpreads[spotSymbol]
 			if okBalance && okSpread {
-				spotBalance += spread.SpotOrderBook.TakerBidVWAP *balance.Balance
+				spotBalance += spread.TakerOrderBook.TakerBidVWAP *balance.Balance
 			} else {
-				logger.Debugf("%s MISS BALANCE %v OR TAKER VWAP %v", spotSymbol, okBalance, spread.SpotOrderBook.TakerBidVWAP)
+				logger.Debugf("%s MISS BALANCE %v OR TAKER VWAP %v", spotSymbol, okBalance, spread.TakerOrderBook.TakerBidVWAP)
 				getAllBalances = false
 				break
 			}
@@ -40,7 +40,7 @@ func handleSave() {
 			fields["spotUsdtAvailable"] = hbspotUSDTBalance.Available
 			fields["spotUsdtFrozen"] = hbspotUSDTBalance.Frozen
 			pt, err := client.NewPoint(
-				*hbConfig.InternalInflux.Measurement,
+				*mtConfig.InternalInflux.Measurement,
 				map[string]string{
 					"type": "spotBalance",
 				},
@@ -50,19 +50,19 @@ func handleSave() {
 			if err != nil {
 				logger.Debugf("Spot Balance NewPoint error %v", err)
 			} else {
-				go hbInfluxWriter.Push(pt)
+				go mtInfluxWriter.Push(pt)
 			}
 		}
 	}
 
-	if hbcrossswapAccount != nil {
+	if mAccount != nil {
 		fields := make(map[string]interface{})
-		fields["swapMarginBalance"] = hbcrossswapAccount.MarginBalance
-		fields["swapWithdrawAvailable"] = hbcrossswapAccount.WithdrawAvailable
-		fields["swapProfitUnreal"] = hbcrossswapAccount.ProfitUnreal
-		fields["swapMarginPosition"] = hbcrossswapAccount.MarginPosition
+		fields["swapMarginBalance"] = mAccount.MarginBalance
+		fields["swapWithdrawAvailable"] = mAccount.WithdrawAvailable
+		fields["swapProfitUnreal"] = mAccount.ProfitUnreal
+		fields["swapMarginPosition"] = mAccount.MarginPosition
 		pt, err := client.NewPoint(
-			*hbConfig.InternalInflux.Measurement,
+			*mtConfig.InternalInflux.Measurement,
 			map[string]string{
 				"type": "swapBalance",
 			},
@@ -72,61 +72,61 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("Perp Balance NewPoint error %v", err)
 		} else {
-			go hbInfluxWriter.Push(pt)
+			go mtInfluxWriter.Push(pt)
 		}
-		tp := hbcrossswapAccount.MarginBalance
+		tp := mAccount.MarginBalance
 		totalPerpUSDTBalance = &tp
 	}
 
-	for _, swapSymbol := range bSymbols {
-		spotSymbol := hbSymbolsMap[swapSymbol]
+	for _, swapSymbol := range tSymbols {
+		spotSymbol := mtSymbolsMap[swapSymbol]
 		fields := make(map[string]interface{})
-		if position, ok := hPositions[swapSymbol]; ok {
+		if position, ok := mPositions[swapSymbol]; ok {
 			if position.Direction == hbcrossswap.OrderDirectionBuy {
-				fields["swapSize"] = position.Volume*hbcrossswapContractSizes[swapSymbol]
+				fields["swapSize"] = position.Volume* mContractSizes[swapSymbol]
 			}else{
-				fields["swapSize"] = -position.Volume*hbcrossswapContractSizes[swapSymbol]
+				fields["swapSize"] = -position.Volume* mContractSizes[swapSymbol]
 			}
-			if spread, ok := hbSpreads[spotSymbol]; ok {
+			if spread, ok := mtSpreads[spotSymbol]; ok {
 				if position.Direction == hbcrossswap.OrderDirectionBuy {
-					fields["swapValue"] = position.Volume*hbcrossswapContractSizes[swapSymbol]*spread.PerpOrderBook.TakerBidVWAP
+					fields["swapValue"] = position.Volume* mContractSizes[swapSymbol]*spread.MakerOrderBook.TakerBidVWAP
 				}else{
-					fields["swapValue"] = -position.Volume*hbcrossswapContractSizes[swapSymbol]*spread.PerpOrderBook.TakerAskVWAP
+					fields["swapValue"] = -position.Volume* mContractSizes[swapSymbol]*spread.MakerOrderBook.TakerAskVWAP
 				}
 			}
 		}
-		if spotBalance, ok := hbspotBalances[spotSymbol]; ok {
+		if spotBalance, ok := tPositions[spotSymbol]; ok {
 			fields["spotBalance"] = spotBalance.Balance
-			if spread, ok := hbSpreads[spotSymbol]; ok {
-				fields["spotValue"] = spread.SpotOrderBook.TakerBidVWAP * spotBalance.Balance
+			if spread, ok := mtSpreads[spotSymbol]; ok {
+				fields["spotValue"] = spread.TakerOrderBook.TakerBidVWAP * spotBalance.Balance
 			}
 		}
-		if fr, ok := hFundingRates[swapSymbol]; ok {
+		if fr, ok := mFundingRates[swapSymbol]; ok {
 			fields["swapNextFundingRate"] = fr.FundingRate
 			fields["swapEstimatedRate"] = fr.EstimatedRate
 		}
-		if spread, ok := hbSpreads[spotSymbol]; ok {
-			fields["lastEnterSpread"] = spread.LastEnter
-			fields["lastExitSpread"] = spread.LastExit
-			fields["medianEnterSpread"] = spread.MedianEnter
-			fields["medianExitSpread"] = spread.MedianExit
+		if spread, ok := mtSpreads[spotSymbol]; ok {
+			fields["lastEnterSpread"] = spread.ShortLastEnter
+			fields["lastExitSpread"] = spread.ShortLastExit
+			fields["medianEnterSpread"] = spread.ShortMedianEnter
+			fields["medianExitSpread"] = spread.ShortMedianExit
 
-			fields["spotTakerBidVWAP"] = spread.SpotOrderBook.TakerBidVWAP
-			fields["spotMakerBidVWAP"] = spread.SpotOrderBook.MakerBidVWAP
-			fields["spotTakerAskVWAP"] = spread.SpotOrderBook.TakerAskVWAP
-			fields["spotMakerAskVWAP"] = spread.SpotOrderBook.MakerAskVWAP
-			fields["spotTakerAskFarPrice"] = spread.SpotOrderBook.TakerAskFarPrice
-			fields["spotTakerBidFarPrice"] = spread.SpotOrderBook.TakerBidFarPrice
-			fields["spotTakerAskFarPrice5"] = (1.0 + *hbConfig.MakerBandOffset) * spread.SpotOrderBook.AskPrice
-			fields["spotTakerBidFarPrice5"] = (1.0 - *hbConfig.MakerBandOffset) * spread.SpotOrderBook.BidPrice
-			if order, ok := hOpenOrders[spotSymbol]; ok {
+			fields["spotTakerBidVWAP"] = spread.TakerOrderBook.TakerBidVWAP
+			fields["spotMakerBidVWAP"] = spread.TakerOrderBook.MakerBidVWAP
+			fields["spotTakerAskVWAP"] = spread.TakerOrderBook.TakerAskVWAP
+			fields["spotMakerAskVWAP"] = spread.TakerOrderBook.MakerAskVWAP
+			fields["spotTakerAskFarPrice"] = spread.TakerOrderBook.TakerAskFarPrice
+			fields["spotTakerBidFarPrice"] = spread.TakerOrderBook.TakerBidFarPrice
+			fields["spotTakerAskFarPrice5"] = (1.0 + *mtConfig.MakerBandOffset) * spread.TakerOrderBook.AskPrice
+			fields["spotTakerBidFarPrice5"] = (1.0 - *mtConfig.MakerBandOffset) * spread.TakerOrderBook.BidPrice
+			if order, ok := mOpenOrders[spotSymbol]; ok {
 				fields["spotOpenOrderPrice"] = order.Price
 			}
 
-			fields["swapTakerBidVWAP"] = spread.PerpOrderBook.TakerBidVWAP
-			fields["swapMakerBidVWAP"] = spread.PerpOrderBook.MakerBidVWAP
-			fields["swapTakerAskVWAP"] = spread.PerpOrderBook.TakerAskVWAP
-			fields["swapMakerAskVWAP"] = spread.PerpOrderBook.MakerAskVWAP
+			fields["swapTakerBidVWAP"] = spread.MakerOrderBook.TakerBidVWAP
+			fields["swapMakerBidVWAP"] = spread.MakerOrderBook.MakerBidVWAP
+			fields["swapTakerAskVWAP"] = spread.MakerOrderBook.TakerAskVWAP
+			fields["swapMakerAskVWAP"] = spread.MakerOrderBook.MakerAskVWAP
 
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
@@ -134,14 +134,14 @@ func handleSave() {
 		if realisedSpread, ok := hbRealisedSpread[spotSymbol]; ok {
 			fields["realisedSpread"] = realisedSpread
 		}
-		if quantile, ok := hbQuantiles[spotSymbol]; ok {
-			fields["quantileBot"] = quantile.Bot
-			fields["quantileTop"] = quantile.Top
+		if quantile, ok := mtQuantiles[spotSymbol]; ok {
+			fields["quantileBot"] = quantile.ShortBot
+			fields["quantileTop"] = quantile.ShortTop
 			fields["quantileMid"] = quantile.Mid
 			fields["quantileMaClose"] = quantile.MaClose
 		}
 		pt, err := client.NewPoint(
-			*hbConfig.InternalInflux.Measurement,
+			*mtConfig.InternalInflux.Measurement,
 			map[string]string{
 				"swapSymbol": swapSymbol,
 				"spotSymbol": spotSymbol,
@@ -153,27 +153,27 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("new position point error %v", err)
 		} else {
-			go hbInfluxWriter.Push(pt)
+			go mtInfluxWriter.Push(pt)
 		}
 	}
 
 	if totalSpotBalance != nil && totalPerpUSDTBalance != nil {
-		netWorth := (*totalSpotBalance + *totalPerpUSDTBalance) / *hbConfig.StartValue
+		netWorth := (*totalSpotBalance + *totalPerpUSDTBalance) / *mtConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalBalance"] = *totalSpotBalance + *totalPerpUSDTBalance
 		fields["swapBalance"] = *totalPerpUSDTBalance
 		fields["spotBalance"] = *totalSpotBalance
-		fields["netWorth"] = (*totalSpotBalance + *totalPerpUSDTBalance) / *hbConfig.StartValue
-		fields["startValue"] = *hbConfig.StartValue
+		fields["netWorth"] = (*totalSpotBalance + *totalPerpUSDTBalance) / *mtConfig.StartValue
+		fields["startValue"] = *mtConfig.StartValue
 		fields["netWorth"] = netWorth
-		for name, start := range hbConfig.StartValues {
+		for name, start := range mtConfig.StartValues {
 			if start > 0 {
 				fields["refStartValue_"+strings.ToLower(name)] = start
 				fields["currentValue_"+strings.ToLower(name)] = netWorth * start
 			}
 		}
 		pt, err := client.NewPoint(
-			*hbConfig.InternalInflux.Measurement,
+			*mtConfig.InternalInflux.Measurement,
 			map[string]string{
 				"type": "totalBalance",
 			},
@@ -183,7 +183,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("Total Balance NewPoint error %v", err)
 		} else {
-			go hbInfluxWriter.Push(pt)
+			go mtInfluxWriter.Push(pt)
 		}
 	}
 }
@@ -202,11 +202,11 @@ func handleExternalInfluxSave() {
 	if hbspotUSDTBalance != nil {
 		spotBalance := hbspotUSDTBalance.Balance
 		getAllBalances := true
-		for _, spotSymbol := range hSymbols {
-			balance, okBalance := hbspotBalances[spotSymbol]
-			spread, okSpread := hbSpreads[spotSymbol]
+		for _, spotSymbol := range mSymbols {
+			balance, okBalance := tPositions[spotSymbol]
+			spread, okSpread := mtSpreads[spotSymbol]
 			if okBalance && okSpread {
-				spotBalance += spread.SpotOrderBook.TakerBidVWAP * balance.Balance
+				spotBalance += spread.TakerOrderBook.TakerBidVWAP * balance.Balance
 			} else {
 				getAllBalances = false
 				break
@@ -217,25 +217,25 @@ func handleExternalInfluxSave() {
 		}
 	}
 
-	if hbcrossswapAccount != nil {
-		tp := hbcrossswapAccount.MarginBalance
+	if mAccount != nil {
+		tp := mAccount.MarginBalance
 		totalPerpUSDTBalance = &tp
 	}
 
 	if totalSpotBalance != nil && totalPerpUSDTBalance != nil {
 		fields := make(map[string]interface{})
-		netWorth := (*totalSpotBalance + *totalPerpUSDTBalance) / *hbConfig.StartValue
+		netWorth := (*totalSpotBalance + *totalPerpUSDTBalance) / *mtConfig.StartValue
 		fields["netWorth"] = netWorth
-		for name, start := range hbConfig.StartValues {
+		for name, start := range mtConfig.StartValues {
 			if start > 0 {
 				fields["currentValue_"+strings.ToLower(name)] = netWorth * start
 			}
 		}
 		if len(fields) > 0 {
 			pt, err := client.NewPoint(
-				*hbConfig.ExternalInflux.Measurement,
+				*mtConfig.ExternalInflux.Measurement,
 				map[string]string{
-					"name": *hbConfig.Name,
+					"name": *mtConfig.Name,
 				},
 				fields,
 				time.Now().UTC(),
@@ -243,7 +243,7 @@ func handleExternalInfluxSave() {
 			if err != nil {
 				logger.Debugf("Margin NewPoint error %v", err)
 			} else {
-				go hbExternalInfluxWriter.Push(pt)
+				go mtExternalInfluxWriter.Push(pt)
 			}
 		}
 	}

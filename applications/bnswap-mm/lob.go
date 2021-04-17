@@ -14,7 +14,7 @@ func watchSwapWalkedOrderBooks(
 	outputWLob chan WalkedOrderBook,
 ) {
 	lastUpdatedIds := make(map[string]int64)
-	ws := bnswap.NewDepth20Ws(
+	ws := bnswap.NewDepth20Websocket(
 		ctx,
 		symbols,
 		time.Minute,
@@ -45,10 +45,10 @@ func watchSwapWalkedOrderBooks(
 	}
 }
 
-func walkSwapOrderBook(orderBook *bnswap.Depth, openImpact, closeImpact float64) WalkedOrderBook {
+func walkSwapOrderBook(orderBook *bnswap.Depth20, openImpact, closeImpact float64) WalkedOrderBook {
 	wLob := WalkedOrderBook{
 		Symbol:      orderBook.Symbol,
-		ArrivalTime: orderBook.ArrivalTime,
+		ArrivalTime: orderBook.ParseTime,
 		EventTime:   orderBook.EventTime,
 	}
 	totalCloseValue := 0.0

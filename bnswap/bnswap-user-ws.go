@@ -177,7 +177,7 @@ func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy strin
 }
 
 func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) {
-	logger.Debugf("BNSWAP USER WS %s", urlStr)
+	//logger.Debugf("BNSWAP USER WS %s", urlStr)
 
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context

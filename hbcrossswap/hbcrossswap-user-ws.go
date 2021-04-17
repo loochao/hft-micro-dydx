@@ -164,7 +164,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					case w.topicCh <- subResp.Topic:
 					default:
 					}
-					logger.Debugf("SUB SUCCESS %s", msg)
+					//logger.Debugf("SUB SUCCESS %s", msg)
 				} else {
 					logger.Debugf("SUB FAILURE %s", msg)
 				}
@@ -457,7 +457,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 				for _, topic := range topics {
 					updateTime := topicUpdatedTimes[strings.ToLower(topic)]
 					if time.Now().Sub(updateTime) > topicTimeout {
-						logger.Debugf("HBSWAP CROSS SUBSCRIBE %s", topic)
+						//logger.Debugf("HBSWAP CROSS SUBSCRIBE %s", topic)
 						select {
 						case <-ctx.Done():
 							return

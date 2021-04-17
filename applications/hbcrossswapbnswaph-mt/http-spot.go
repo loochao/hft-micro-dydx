@@ -31,26 +31,26 @@ func handleSpotHttpAccount(account hbspot.Account) {
 					hbspotUSDTBalance.Frozen = accountBalance.Balance
 				}
 			}
-			hbspotBalanceUpdatedForInflux = true
+			hAccountUpdatedForInflux = true
 			hbspotBalanceUpdatedForExternalInflux = true
 			hbspotBalanceUpdatedForReBalance = true
 			continue
 		}
 		symbol := accountBalance.Currency + "usdt"
-		if _, ok := bhSymbolsMap[symbol]; !ok {
+		if _, ok := tmSymbolsMap[symbol]; !ok {
 			continue
 		}
 		hasBalances[symbol] = true
 		//if hHttpPositionUpdateSilentTimes[symbol].Sub(time.Now()) > 0 {
 		//	continue
 		//}
-		if _, ok := hbspotBalances[symbol]; !ok {
-			hbspotBalances[symbol] = &hbspot.Balance{
+		if _, ok := tPositions[symbol]; !ok {
+			tPositions[symbol] = &hbspot.Balance{
 				Currency: accountBalance.Currency,
 				Symbol:   symbol,
 			}
 		}
-		nb := hbspotBalances[symbol]
+		nb := tPositions[symbol]
 		switch accountBalance.Type {
 		case "trade":
 			if nb.Trade != accountBalance.Balance {
@@ -64,8 +64,8 @@ func handleSpotHttpAccount(account hbspot.Account) {
 			}
 		default:
 		}
-		hbspotBalances[symbol] = nb
-		bPositionsUpdateTimes[symbol] = time.Now()
+		tPositions[symbol] = nb
+		mPositionsUpdateTimes[symbol] = time.Now()
 	}
 
 	if !hasUSDT {
@@ -73,7 +73,7 @@ func handleSpotHttpAccount(account hbspot.Account) {
 			Symbol:   "usdtusdt",
 			Currency: "usdt",
 		}
-		hbspotBalanceUpdatedForInflux = true
+		hAccountUpdatedForInflux = true
 		hbspotBalanceUpdatedForExternalInflux = true
 		hbspotBalanceUpdatedForReBalance = true
 	}
@@ -87,20 +87,20 @@ func handleSpotHttpAccount(account hbspot.Account) {
 		hbspotUSDTBalance.Balance = hbspotUSDTBalance.Trade + hbspotUSDTBalance.Frozen
 	}
 
-	for _, symbol := range hSymbols {
+	for _, symbol := range mSymbols {
 		if _, ok := hasBalances[symbol]; !ok {
-			hbspotBalances[symbol] = &hbspot.Balance{
+			tPositions[symbol] = &hbspot.Balance{
 				Symbol:   symbol,
 				Currency: strings.Replace(symbol, "usdt", "", -1),
 			}
-			bPositionsUpdateTimes[symbol] = time.Now()
+			mPositionsUpdateTimes[symbol] = time.Now()
 		}
 	}
-	for _, symbol := range hSymbols {
+	for _, symbol := range mSymbols {
 		if hHttpPositionUpdateSilentTimes[symbol].Sub(time.Now()) > 0 {
 			continue
 		}
-		nb := hbspotBalances[symbol]
+		nb := tPositions[symbol]
 		if nb.Available != nb.Trade {
 			//logger.Debugf("SPOT HTTP %s Available %f -> %f", symbol, nb.Available, nb.Trade)
 			nb.Available = nb.Trade
@@ -109,7 +109,7 @@ func handleSpotHttpAccount(account hbspot.Account) {
 			logger.Debugf("SPOT HTTP %s Balance %f -> %f", symbol, nb.Available, nb.Trade+nb.Frozen)
 			nb.Balance = nb.Trade + nb.Frozen
 		}
-		hbspotBalances[symbol] = nb
+		tPositions[symbol] = nb
 	}
 
 }
@@ -181,23 +181,23 @@ func handleSpotHttpAccount(account hbspot.Account) {
 //}
 //
 //func handleReBalanceBnb() {
-//	if time.Now().Sub(bOrderSilentTimes[bnBNBSymbol]) < 0 {
+//	if time.Now().Sub(tOrderSilentTimes[bnBNBSymbol]) < 0 {
 //		return
 //	}
-//	if time.Now().Sub(bPositionsUpdateTimes[bnBNBSymbol]) > *hbConfig.BalancePositionMaxAge {
+//	if time.Now().Sub(mPositionsUpdateTimes[bnBNBSymbol]) > *mtConfig.BalancePositionMaxAge {
 //		return
 //	}
-//	bnbBalance, ok1 := hbspotBalances[bnBNBSymbol]
+//	bnbBalance, ok1 := tPositions[bnBNBSymbol]
 //	bnbMarkPrice, ok2 := hbcrossswapMarkPrices[bnBNBSymbol]
 //	if ok1 && ok2 && hbcrossswapBNBAsset != nil && hbcrossswapBNBAsset.MarginBalance != nil && hbspotUSDTBalance != nil {
 //		currentSize := bnbBalance.Free + *hbcrossswapBNBAsset.MarginBalance
-//		if currentSize < *hbConfig.BnbMinSize {
-//			size := *hbConfig.BnbMinSize - currentSize
-//			size = math.Ceil(size/hbspotStepSizes[bnBNBSymbol]) * hbspotStepSizes[bnBNBSymbol]
-//			price := bnbMarkPrice.IndexPrice * (1.0 + *hbConfig.EnterSlippage)
-//			price = math.Ceil(price/hbspotTickSizes[bnBNBSymbol])*hbspotTickSizes[bnBNBSymbol]
-//			if size*price < hbspotMinNotional[bnBNBSymbol] {
-//				size = math.Ceil(hbspotMinNotional[bnBNBSymbol]/price/hbspotStepSizes[bnBNBSymbol]) * hbspotStepSizes[bnBNBSymbol]
+//		if currentSize < *mtConfig.BnbMinSize {
+//			size := *mtConfig.BnbMinSize - currentSize
+//			size = math.Ceil(size/tStepSizes[bnBNBSymbol]) * tStepSizes[bnBNBSymbol]
+//			price := bnbMarkPrice.IndexPrice * (1.0 + *mtConfig.EnterSlippage)
+//			price = math.Ceil(price/tTickSizes[bnBNBSymbol])*tTickSizes[bnBNBSymbol]
+//			if size*price < tMinNotional[bnBNBSymbol] {
+//				size = math.Ceil(tMinNotional[bnBNBSymbol]/price/tStepSizes[bnBNBSymbol]) * tStepSizes[bnBNBSymbol]
 //			}
 //			if price*size < hbspotUSDTBalance.Free {
 //				logger.Debugf("CHANGE BNB SIZE %f PRICE %f", size, price)
@@ -210,10 +210,10 @@ func handleSpotHttpAccount(account hbspot.Account) {
 //				if len(clOrdID) > 36 {
 //					clOrdID = clOrdID[:36]
 //				}
-//				bOrderSilentTimes[bnBNBSymbol] = time.Now().Add(*hbConfig.OrderSilent)
-//				bPositionsUpdateTimes[bnBNBSymbol] = time.Unix(0, 0)
-//				hLastOrderTimes[bnBNBSymbol] = time.Now()
-//				hbspotOrderRequestChs[bnBNBSymbol] <- SpotOrderRequest{
+//				tOrderSilentTimes[bnBNBSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+//				mPositionsUpdateTimes[bnBNBSymbol] = time.Unix(0, 0)
+//				mLastOrderTimes[bnBNBSymbol] = time.Now()
+//				mOrderRequestChs[bnBNBSymbol] <- MakerOrderRequest{
 //					New: &hbspot.NewOrderParams{
 //						Symbol:           bnBNBSymbol,
 //						Side:             hbspot.OrderSideBuy,
@@ -226,8 +226,8 @@ func handleSpotHttpAccount(account hbspot.Account) {
 //				}
 //			}
 //		} else {
-//			bOrderSilentTimes[bnBNBSymbol] = time.Now().Add(*hbConfig.PullInterval * 3)
-//			go reBalanceBnB(hbGlobalCtx, bAPI, *hbConfig.OrderTimeout, bnbBalance.Free, *hbcrossswapBNBAsset.MarginBalance, currentSize*0.5-*hbcrossswapBNBAsset.MarginBalance)
+//			tOrderSilentTimes[bnBNBSymbol] = time.Now().Add(*mtConfig.PullInterval * 3)
+//			go reBalanceBnB(mtGlobalCtx, tAPI, *mtConfig.OrderTimeout, bnbBalance.Free, *hbcrossswapBNBAsset.MarginBalance, currentSize*0.5-*hbcrossswapBNBAsset.MarginBalance)
 //		}
 //	}
 //}

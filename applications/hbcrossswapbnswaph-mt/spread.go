@@ -8,8 +8,8 @@ import (
 
 func watchSpread(
 	ctx context.Context,
-	spotSymbols []string,
-	swapSpotSymbolMap map[string]string,
+	hSymbols []string,
+	bhSymbolsMap map[string]string,
 	maxAgeDiff,
 	maxAge,
 	lookbackDuration time.Duration,
@@ -17,65 +17,86 @@ func watchSpread(
 	walkedOrderBookCh chan WalkedOrderBook,
 	outputCh chan Spread,
 ) {
-	swapOrderBooks := make(map[string]WalkedOrderBook)
-	spotOrderBooks := make(map[string]WalkedOrderBook)
-	enterSpreadWindows := make(map[string][]float64)
-	exitSpreadWindows := make(map[string][]float64)
-	enterSpreadSortedSlices := make(map[string]common.SortedFloatSlice)
-	exitSpreadSortedSlices := make(map[string]common.SortedFloatSlice)
-	arrivalTimes := make(map[string][]time.Time)
-	for _, symbol := range spotSymbols {
-		enterSpreadWindows[symbol] = make([]float64, 0)
-		exitSpreadWindows[symbol] = make([]float64, 0)
-		arrivalTimes[symbol] = make([]time.Time, 0)
-		enterSpreadSortedSlices[symbol] = common.SortedFloatSlice{}
-		exitSpreadSortedSlices[symbol] = common.SortedFloatSlice{}
+	hOrderBooks := make(map[string]WalkedOrderBook)
+	bOrderBooks := make(map[string]WalkedOrderBook)
+	shortEnterSpreadWindows := make(map[string][]float64)
+	shortExitSpreadWindows := make(map[string][]float64)
+	shortEnterSpreadSortedSlices := make(map[string]common.SortedFloatSlice)
+	shortExitSpreadSortedSlices := make(map[string]common.SortedFloatSlice)
+
+	longEnterSpreadWindows := make(map[string][]float64)
+	longExitSpreadWindows := make(map[string][]float64)
+	longEnterSpreadSortedSlices := make(map[string]common.SortedFloatSlice)
+	longExitSpreadSortedSlices := make(map[string]common.SortedFloatSlice)
+
+	parseTimes := make(map[string][]time.Time)
+	for _, hSymbol := range hSymbols {
+
+		shortEnterSpreadWindows[hSymbol] = make([]float64, 0)
+		shortExitSpreadWindows[hSymbol] = make([]float64, 0)
+		shortEnterSpreadSortedSlices[hSymbol] = common.SortedFloatSlice{}
+		shortExitSpreadSortedSlices[hSymbol] = common.SortedFloatSlice{}
+
+		longEnterSpreadWindows[hSymbol] = make([]float64, 0)
+		longExitSpreadWindows[hSymbol] = make([]float64, 0)
+		longEnterSpreadSortedSlices[hSymbol] = common.SortedFloatSlice{}
+		longExitSpreadSortedSlices[hSymbol] = common.SortedFloatSlice{}
+
+		parseTimes[hSymbol] = make([]time.Time, 0)
 	}
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case lob := <-walkedOrderBookCh:
-			symbol := lob.Symbol
-			var spotLob, swapLob WalkedOrderBook
+			hSymbol := lob.Symbol
+			var hLob, bLob WalkedOrderBook
 			var ok bool
-			if lob.Type == WalkedOrderBookTypePerp {
-				symbol = swapSpotSymbolMap[symbol]
-				swapOrderBooks[symbol] = lob
-				swapLob = lob
-				if spotLob, ok = spotOrderBooks[symbol]; !ok {
+			if lob.Type == WalkedOrderBookTypeTaker {
+				hSymbol = bhSymbolsMap[hSymbol]
+				bOrderBooks[hSymbol] = lob
+				bLob = lob
+				if hLob, ok = hOrderBooks[hSymbol]; !ok {
 					break
 				}
-			} else if lob.Type == WalkedOrderBookTypeSpot {
-				spotOrderBooks[symbol] = lob
-				spotLob = lob
-				if swapLob, ok = swapOrderBooks[symbol]; !ok {
+			} else if lob.Type == WalkedOrderBookTypeMaker {
+				hOrderBooks[hSymbol] = lob
+				hLob = lob
+				if bLob, ok = bOrderBooks[hSymbol]; !ok {
 					break
 				}
 			} else {
 				break
 			}
 
-			ageDiff := spotLob.ParseTime.Sub(swapLob.ParseTime)
+			ageDiff := hLob.ParseTime.Sub(bLob.ParseTime)
 			if ageDiff < 0 {
 				ageDiff = -ageDiff
 			}
-			age := (time.Now().Sub(spotLob.ParseTime) + time.Now().Sub(swapLob.ParseTime)) / 2
+			age := (time.Now().Sub(hLob.ParseTime) + time.Now().Sub(bLob.ParseTime)) / 2
 			if age > maxAge ||
 				ageDiff > maxAgeDiff {
 				break
 			}
 
-			lastEnterSpread := (swapLob.TakerBidVWAP - spotLob.MakerBidVWAP) / spotLob.MakerBidVWAP
-			lastExitSpread := (swapLob.TakerAskVWAP - spotLob.MakerAskVWAP) / spotLob.MakerAskVWAP
+			shortLastEnterSpread := (bLob.TakerBidVWAP - hLob.MakerBidVWAP) / hLob.MakerBidVWAP
+			shortLastExitSpread := (bLob.TakerAskVWAP - hLob.MakerAskVWAP) / hLob.MakerAskVWAP
 
-			arrivalTimes[symbol] = append(arrivalTimes[symbol], swapLob.ParseTime)
-			enterSpreadWindows[symbol] = append(enterSpreadWindows[symbol], lastEnterSpread)
-			exitSpreadWindows[symbol] = append(exitSpreadWindows[symbol], lastExitSpread)
-			enterSpreadSortedSlices[symbol] = enterSpreadSortedSlices[symbol].Insert(lastEnterSpread)
-			exitSpreadSortedSlices[symbol] = exitSpreadSortedSlices[symbol].Insert(lastExitSpread)
+			longLastEnterSpread := (hLob.MakerAskVWAP - bLob.TakerAskVWAP ) / hLob.MakerAskVWAP
+			longLastExitSpread := (hLob.MakerBidVWAP - bLob.TakerBidVWAP) / hLob.MakerBidVWAP
+
+			parseTimes[hSymbol] = append(parseTimes[hSymbol], bLob.ParseTime)
+			shortEnterSpreadWindows[hSymbol] = append(shortEnterSpreadWindows[hSymbol], shortLastEnterSpread)
+			shortExitSpreadWindows[hSymbol] = append(shortExitSpreadWindows[hSymbol], shortLastExitSpread)
+			shortEnterSpreadSortedSlices[hSymbol] = shortEnterSpreadSortedSlices[hSymbol].Insert(shortLastEnterSpread)
+			shortExitSpreadSortedSlices[hSymbol] = shortExitSpreadSortedSlices[hSymbol].Insert(shortLastExitSpread)
+
+			longEnterSpreadWindows[hSymbol] = append(longEnterSpreadWindows[hSymbol], longLastEnterSpread)
+			longExitSpreadWindows[hSymbol] = append(longExitSpreadWindows[hSymbol], longLastExitSpread)
+			longEnterSpreadSortedSlices[hSymbol] = longEnterSpreadSortedSlices[hSymbol].Insert(longLastEnterSpread)
+			longExitSpreadSortedSlices[hSymbol] = longExitSpreadSortedSlices[hSymbol].Insert(longLastExitSpread)
 			cutIndex := 0
-			for i, arrivalTime := range arrivalTimes[symbol] {
+			for i, arrivalTime := range parseTimes[hSymbol] {
 				if lob.ParseTime.Sub(arrivalTime) > lookbackDuration {
 					cutIndex = i
 				} else {
@@ -83,41 +104,61 @@ func watchSpread(
 				}
 			}
 			if cutIndex > 0 {
-				for _, d := range enterSpreadWindows[symbol][:cutIndex] {
-					enterSpreadSortedSlices[symbol] = enterSpreadSortedSlices[symbol].Delete(d)
+				for _, d := range shortEnterSpreadWindows[hSymbol][:cutIndex] {
+					shortEnterSpreadSortedSlices[hSymbol] = shortEnterSpreadSortedSlices[hSymbol].Delete(d)
 				}
-				for _, d := range exitSpreadWindows[symbol][:cutIndex] {
-					exitSpreadSortedSlices[symbol] = exitSpreadSortedSlices[symbol].Delete(d)
+				for _, d := range shortExitSpreadWindows[hSymbol][:cutIndex] {
+					shortExitSpreadSortedSlices[hSymbol] = shortExitSpreadSortedSlices[hSymbol].Delete(d)
 				}
-				arrivalTimes[symbol] = arrivalTimes[symbol][cutIndex:]
-				enterSpreadWindows[symbol] = enterSpreadWindows[symbol][cutIndex:]
-				exitSpreadWindows[symbol] = exitSpreadWindows[symbol][cutIndex:]
+				shortEnterSpreadWindows[hSymbol] = shortEnterSpreadWindows[hSymbol][cutIndex:]
+				shortExitSpreadWindows[hSymbol] = shortExitSpreadWindows[hSymbol][cutIndex:]
+
+				for _, d := range longEnterSpreadWindows[hSymbol][:cutIndex] {
+					longEnterSpreadSortedSlices[hSymbol] = longEnterSpreadSortedSlices[hSymbol].Delete(d)
+				}
+				for _, d := range longExitSpreadWindows[hSymbol][:cutIndex] {
+					longExitSpreadSortedSlices[hSymbol] = longExitSpreadSortedSlices[hSymbol].Delete(d)
+				}
+				longEnterSpreadWindows[hSymbol] = longEnterSpreadWindows[hSymbol][cutIndex:]
+				longExitSpreadWindows[hSymbol] = longExitSpreadWindows[hSymbol][cutIndex:]
+
+				parseTimes[hSymbol] = parseTimes[hSymbol][cutIndex:]
 			}
 
-			if len(enterSpreadWindows[symbol]) < lookbackWindow ||
-				len(exitSpreadWindows[symbol]) < lookbackWindow {
+			if len(shortEnterSpreadWindows[hSymbol]) < lookbackWindow ||
+				len(shortExitSpreadWindows[hSymbol]) < lookbackWindow {
 				break
 			}
 
-			arrivalTimeDiff := lob.ParseTime.Sub(arrivalTimes[symbol][0])
+			arrivalTimeDiff := lob.ParseTime.Sub(parseTimes[hSymbol][0])
 			if arrivalTimeDiff < lookbackDuration/2 {
 				break
 			}
 
-			medianEnterSpread := enterSpreadSortedSlices[symbol].Median()
-			medianExitSpread := exitSpreadSortedSlices[symbol].Median()
+			shortMedianEnterSpread := shortEnterSpreadSortedSlices[hSymbol].Median()
+			shortMedianExitSpread := shortExitSpreadSortedSlices[hSymbol].Median()
+
+			longMedianEnterSpread := longEnterSpreadSortedSlices[hSymbol].Median()
+			longMedianExitSpread := longExitSpreadSortedSlices[hSymbol].Median()
 
 			outputCh <- Spread{
-				Symbol:         symbol,
-				PerpOrderBook:  swapLob,
-				SpotOrderBook:  spotLob,
+				HSymbol:        hSymbol,
+				MakerOrderBook: bLob,
+				TakerOrderBook: hLob,
 				LastUpdateTime: lob.ParseTime,
-				LastEnter:      lastEnterSpread,
-				LastExit:       lastExitSpread,
-				MedianEnter:    medianEnterSpread,
-				MedianExit:     medianExitSpread,
-				Age:            age,
-				AgeDiff:        ageDiff,
+
+				ShortLastEnter:   shortLastEnterSpread,
+				ShortLastExit:    shortLastExitSpread,
+				ShortMedianEnter: shortMedianEnterSpread,
+				ShortMedianExit:  shortMedianExitSpread,
+
+				LongLastEnter:   longLastEnterSpread,
+				LongLastExit:    longLastExitSpread,
+				LongMedianEnter: longMedianEnterSpread,
+				LongMedianExit:  longMedianExitSpread,
+
+				Age:              age,
+				AgeDiff:          ageDiff,
 			}
 		}
 	}

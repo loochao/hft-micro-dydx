@@ -211,3 +211,15 @@ func TestFormatByPrecision(t *testing.T) {
 	f = FormatByPrecision(0.0123123123, 5)
 	assert.Equal(t, "0.01231", f)
 }
+
+func TestMergedStepSize(t *testing.T) {
+	a := 0.1
+	b := 0.03
+	logger.Debugf("%f %f %f", a, b, MergedStepSize(a, b))
+	a = 0.1
+	b = 0.1
+	logger.Debugf("%f %f %f", a, b, MergedStepSize(a, b))
+	a = 0.1
+	b = 0.033333
+	logger.Debugf("%f %f %f", a, b, MergedStepSize(a, b))
+}

@@ -1,0 +1,162 @@
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"github.com/geometrybase/hft-micro/bnswap"
+	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/logger"
+	"github.com/getsentry/raven-go"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"os"
+	"time"
+)
+
+var mSymbols = make([]string, 0)
+var tSymbols = make([]string, 0)
+var tmSymbolsMap = make(map[string]string, 0)
+var mtSymbolsMap = make(map[string]string, 0)
+
+var mtGlobalCtx context.Context
+var mtGlobalCancel context.CancelFunc
+var mtInfluxWriter *common.InfluxWriter
+var mtExternalInfluxWriter *common.InfluxWriter
+
+var mAPI *hbcrossswap.API
+var tAPI *bnswap.API
+
+var mUserWebsocket *hbcrossswap.UserWebsocket
+var tUserWebsocket *bnswap.UserWebsocket
+
+//var mHttpPositionUpdateSilentTimes = make(map[string]time.Time)
+
+var mTickSizes = make(map[string]float64)
+var mContractSizes = make(map[string]float64)
+var tTickSizes = make(map[string]float64)
+var tStepSizes = make(map[string]float64)
+var tMinNotional = make(map[string]float64)
+var mtStepSizes = make(map[string]float64)
+
+var mAccount *hbcrossswap.Account
+var mAccountCh = make(chan hbcrossswap.Account, 10)
+var mPositionCh = make(chan []hbcrossswap.Position, 10)
+var mPositions = make(map[string]hbcrossswap.Position)
+var mPositionsUpdateTimes = make(map[string]time.Time)
+var mOrderRequestChs = make(map[string]chan hbcrossswap.NewOrderParam)
+var mNewOrderErrorCh chan MakerOrderNewError
+var mOrderSilentTimes = make(map[string]time.Time)
+var mLastOrderTimes = make(map[string]time.Time)
+var mSilentTimes = make(map[string]time.Time)
+
+var tPositionsCh = make(chan []bnswap.Position, 10)
+var tPositions = make(map[string]*bnswap.Position)
+var tPositionsUpdateTimes = make(map[string]time.Time)
+var tAccount *bnswap.Asset
+var tAccountCh = make(chan bnswap.Account, 10)
+var tNewOrderErrorCh = make(chan TakerOrderNewError, 10)
+var tOrderRequestChs = make(map[string]chan bnswap.NewOrderParams)
+var tOrderSilentTimes = make(map[string]time.Time)
+var tLastOrderTimes = make(map[string]time.Time)
+
+
+var mFundingRates map[string]hbcrossswap.FundingRate
+var mFundingRatesCh = make(chan map[string]hbcrossswap.FundingRate, 10)
+var tPremiumIndexes map[string]bnswap.PremiumIndex
+var tPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
+var mtFundingRates = make(map[string]float64)
+var mtRankSymbolMap map[int]string
+
+var mBarsMapCh = make(chan common.KLinesMap)
+var mBarsMap = make(common.KLinesMap)
+var tBarsMapCh = make(chan common.KLinesMap)
+var tBarsMap = make(common.KLinesMap)
+var mtMapUpdated = make(map[string]bool)
+var mtBarsMapCh = make(chan [2]common.KLinesMap, 10)
+var mtQuantilesCh = make(chan map[string]MakerTakerDeltaQuantile, 10)
+var mtQuantiles map[string]MakerTakerDeltaQuantile
+var mtSpreads = make(map[string]Spread)
+
+var mLastFilledBuyPrices = make(map[string]float64)
+var mLastFilledSellPrices = make(map[string]float64)
+var mtRealisedSpread = make(map[string]float64)
+
+var mtUnHedgeValue float64
+var mtSaveSilentTime = time.Now()
+var mtUnHedgeLogSilentTimes = time.Unix(0, 0)
+var mtLogSilentTimes = make(map[string]time.Time)
+var mtLoopTimer *time.Timer
+
+var mtConfig *Config
+
+func init() {
+
+	logger.Debug("####  BUILD @ 20210416 04:32:19  ####")
+
+	configPath := flag.String("config", "", "config path")
+	flag.Parse()
+
+	if *configPath == "" {
+		logger.Fatal("config is empty")
+	}
+
+	configFile, err := ioutil.ReadFile(*configPath)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	var config Config
+	err = yaml.Unmarshal(configFile, &config)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	logger.Debugf("\n\nYAML CONFIG:\n\n%s", config.ToString())
+	valid, reason := config.IsValid()
+	if !valid {
+		logger.Fatalf("CONFIG IS NOT VALID:\n%s\n", reason)
+	}
+	mtConfig = &config
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	for makerSymbol, takerSymbol := range mtConfig.MakerTakerSymbolsMap {
+		mSymbols = append(mSymbols, makerSymbol)
+		tSymbols = append(tSymbols, takerSymbol)
+		tmSymbolsMap[takerSymbol] = makerSymbol
+		mtSymbolsMap[makerSymbol] = takerSymbol
+
+		mOrderSilentTimes[makerSymbol] = time.Now()
+		mtLogSilentTimes[makerSymbol] = time.Now()
+		mSilentTimes[makerSymbol] = time.Now().Add(time.Minute)
+		//mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
+		mPositionsUpdateTimes[makerSymbol] = time.Unix(0, 0)
+		mLastOrderTimes[makerSymbol] = time.Unix(0, 0)
+
+		tOrderSilentTimes[takerSymbol] = time.Now()
+		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
+		tLastOrderTimes[takerSymbol] = time.Unix(0, 0)
+	}
+
+	mtMapUpdated[TakerName] = false
+	mtMapUpdated[MakerName] = false
+
+	err = raven.SetDSN("https://5c318e0f10a349308d2ff86f51de31d8:fa0a8f90a8244c6ea762130cdd6d1bb9@sentry.jilinchen.com/12")
+
+	raven.SetTagsContext(map[string]string{
+		"influxAddress":     *mtConfig.InternalInflux.Address,
+		"influxDatabase":    *mtConfig.InternalInflux.Address,
+		"influxMeasurement": *mtConfig.InternalInflux.Address,
+		"BnApiKey":          *mtConfig.InternalInflux.Address,
+		"symbols":           fmt.Sprintf("%s", mSymbols),
+		"hostname":          hostname,
+		"name":              *mtConfig.Name,
+	})
+
+	if err != nil {
+		logger.Fatal(err)
+	}
+}

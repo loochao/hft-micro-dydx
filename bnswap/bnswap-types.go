@@ -10,20 +10,20 @@ import (
 	"time"
 )
 
-type Depth struct {
-	EventTime    time.Time    `json:"-"`
-	Symbol       string       `json:"s,omitempty"`
-	LastUpdateId int64        `json:"u,omitempty"`
-	Bids         [][2]float64 `json:"b,omitempty"`
-	Asks         [][2]float64 `json:"a,omitempty"`
-	ArrivalTime  time.Time    `json:"-"`
+type Depth20 struct {
+	EventTime    time.Time      `json:"-"`
+	Symbol       string         `json:"s,omitempty"`
+	LastUpdateId int64          `json:"u,omitempty"`
+	Bids         [20][2]float64 `json:"b,omitempty"`
+	Asks         [20][2]float64 `json:"a,omitempty"`
+	ParseTime    time.Time      `json:"-"`
 }
 
-func (depth *Depth) UnmarshalJSON(data []byte) error {
-	type Alias Depth
+func (depth *Depth20) UnmarshalJSON(data []byte) error {
+	type Alias Depth20
 	aux := &struct {
-		Bids      [][2]string `json:"b,omitempty"`
-		Asks      [][2]string `json:"a,omitempty"`
+		Bids      [20][2]string `json:"b,omitempty"`
+		Asks      [20][2]string `json:"a,omitempty"`
 		EventName string      `json:"e,omitempty"`
 		EventTime int64       `json:"E,omitempty"`
 		*Alias
@@ -34,17 +34,19 @@ func (depth *Depth) UnmarshalJSON(data []byte) error {
 		logger.Debugf("ERR %v", err)
 		return err
 	}
-	depth.Bids = make([][2]float64, 0)
-	depth.Asks = make([][2]float64, 0)
-	for _, d := range aux.Bids {
+	depth.Bids = [20][2]float64{}
+	depth.Asks = [20][2]float64{}
+	for i, d := range aux.Bids {
 		price, _ := strconv.ParseFloat(d[0], 64)
 		size, _ := strconv.ParseFloat(d[1], 64)
-		depth.Bids = append(depth.Bids, [2]float64{price, size})
+		depth.Bids[i][0] = price
+		depth.Bids[i][1] = size
 	}
-	for _, d := range aux.Asks {
+	for i, d := range aux.Asks {
 		price, _ := strconv.ParseFloat(d[0], 64)
 		size, _ := strconv.ParseFloat(d[1], 64)
-		depth.Asks = append(depth.Asks, [2]float64{price, size})
+		depth.Asks[i][0] = price
+		depth.Asks[i][1] = size
 	}
 	depth.EventTime = time.Unix(0, aux.EventTime*1000000)
 	return nil
@@ -93,8 +95,8 @@ func (depth *DepthFast) UnmarshalJSON(data []byte) error {
 }
 
 type DepthStream struct {
-	Stream string `json:"stream"`
-	Data   Depth  `json:"data"`
+	Stream string  `json:"stream"`
+	Data   Depth20 `json:"data"`
 }
 
 type DepthFastStream struct {
@@ -490,11 +492,11 @@ func (c *CancelAllOrderParams) ToUrlValues() url.Values {
 
 type PremiumIndex struct {
 	EventTime            time.Time `json:"-"`
-	Symbol               string    `json:"s,omitempty"`
-	MarkPrice            float64   `json:"p,string,omitempty"`
-	IndexPrice           float64   `json:"i,string,omitempty"`
-	EstimatedSettlePrice float64   `json:"P,string,omitempty"`
-	FundingRate          float64   `json:"r,string,omitempty"`
+	Symbol               string    `json:"symbol,omitempty"`
+	MarkPrice            float64   `json:"markPrice,string,omitempty"`
+	IndexPrice           float64   `json:"indexPrice,string,omitempty"`
+	EstimatedSettlePrice float64   `json:"estimatedSettlePrice,string,omitempty"`
+	FundingRate          float64   `json:"lastFundingRate,string,omitempty"`
 	NextFundingTime      time.Time `json:"-"`
 	ParseTime            time.Time `json:"-"`
 }

@@ -87,12 +87,12 @@ func ParseTrade(bytes []byte) (*Trade, error) {
 	return &trade, nil
 }
 
-func ParseDepth20(bytes []byte) (*Depth, error) {
+func ParseDepth20(bytes []byte) (*Depth20, error) {
 	var err error
-	orderBook := Depth{
-		Bids:        make([][2]float64, 20),
-		Asks:        make([][2]float64, 20),
-		ArrivalTime: time.Now(),
+	orderBook := Depth20{
+		Bids:      [20][2]float64{},
+		Asks:      [20][2]float64{},
+		ParseTime: time.Now(),
 	}
 	offset := 60
 	collectStart := offset

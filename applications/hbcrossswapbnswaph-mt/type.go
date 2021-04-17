@@ -2,34 +2,37 @@ package main
 
 import (
 	"fmt"
+	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/hbcrossswap"
-	"github.com/geometrybase/hft-micro/hbspot"
 	"time"
 )
 
-type SwapOrderNewError struct {
+type TakerOrderNewError struct {
+	Error  error
+	Params bnswap.NewOrderParams
+}
+
+type HOrderNewError struct {
 	Error  error
 	Params hbcrossswap.NewOrderParam
 }
 
-type SpotOrderNewError struct {
-	Error  error
-	Params hbspot.NewOrderParam
-}
-
-type Quantile struct {
-	Symbol       string
-	Top          float64
+type HBDeltaQuantile struct {
+	HSymbol      string
+	BSymbol      string
+	ShortTop     float64
+	ShortBot     float64
+	LongTop      float64
+	LongBot      float64
 	Mid          float64
-	Bot          float64
 	TopBandScale float64
 	BotBandScale float64
 	MaClose      float64
 }
 
 const (
-	WalkedOrderBookTypePerp = "SWAP"
-	WalkedOrderBookTypeSpot = "Spot"
+	WalkedOrderBookTypeMaker = "huobi"
+	WalkedOrderBookTypeTaker = "binance"
 )
 
 type WalkedOrderBook struct {
@@ -69,33 +72,37 @@ func (wo *WalkedOrderBook) ToString() string {
 }
 
 type Spread struct {
-	Symbol         string
-	Age            time.Duration
-	AgeDiff        time.Duration
-	LastEnter      float64
-	LastExit       float64
-	MedianEnter    float64
-	MedianExit     float64
-	PerpOrderBook  WalkedOrderBook
-	SpotOrderBook  WalkedOrderBook
-	LastUpdateTime time.Time
+	HSymbol          string
+	Age              time.Duration
+	AgeDiff          time.Duration
+	ShortLastEnter   float64
+	ShortLastExit    float64
+	ShortMedianEnter float64
+	ShortMedianExit  float64
+	LongLastEnter    float64
+	LongLastExit     float64
+	LongMedianEnter  float64
+	LongMedianExit   float64
+	MakerOrderBook   WalkedOrderBook
+	TakerOrderBook   WalkedOrderBook
+	LastUpdateTime   time.Time
 }
 
 func (s *Spread) ToString() string {
 	return fmt.Sprintf(
 		"SPREAD %s AGE %v AGE DIFF %v LENTER %f MENTER %f LEXIT %f MEXIT %f %v",
-		s.Symbol,
+		s.HSymbol,
 		s.Age,
 		s.AgeDiff,
-		s.LastEnter,
-		s.MedianEnter,
-		s.LastExit,
-		s.MedianExit,
+		s.ShortLastEnter,
+		s.ShortMedianEnter,
+		s.ShortLastExit,
+		s.ShortMedianExit,
 		s.LastUpdateTime,
 	)
 }
 
-type SpotOrderRequest struct {
-	New    *hbspot.NewOrderParam
-	Cancel *hbspot.CancelAllParam
+type MakerOrderRequest struct {
+	New    *hbcrossswap.NewOrderParam
+	Cancel *hbcrossswap.CancelAllParam
 }

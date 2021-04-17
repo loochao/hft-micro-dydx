@@ -27,7 +27,7 @@ func watchSwapOrderRequest(
 			logger.Debugf("SWAP SUBMIT %v", newOrderParam)
 			_, err := api.SubmitOrder(childCtx, newOrderParam)
 			if err != nil {
-				logger.Debugf("SWAP SUBMIT ERROR %v", err)
+				logger.Debugf("SWAP SUBMIT ERROR %v %v", err, newOrderParam)
 				outputOrderErrorCh <- SwapOrderNewError{
 					Error:  err,
 					Params: newOrderParam,

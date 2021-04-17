@@ -7,7 +7,6 @@ import (
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/hbcrossswap"
-	"github.com/geometrybase/hft-micro/hbspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/getsentry/raven-go"
 	"gopkg.in/yaml.v2"
@@ -16,101 +15,109 @@ import (
 	"time"
 )
 
-var hSymbols = make([]string, 0)
-var bSymbols = make([]string, 0)
-var bhSymbolsMap = make(map[string]string, 0)
-var hbSymbolsMap = make(map[string]string, 0)
+var mSymbols = make([]string, 0)
+var tSymbols = make([]string, 0)
+var tmSymbolsMap = make(map[string]string, 0)
+var mtSymbolsMap = make(map[string]string, 0)
 
-var hbGlobalCtx context.Context
-var hbGlobalCancel context.CancelFunc
-var hbInfluxWriter *common.InfluxWriter
-var hbExternalInfluxWriter *common.InfluxWriter
+var mtGlobalCtx context.Context
+var mtGlobalCancel context.CancelFunc
+var mtInfluxWriter *common.InfluxWriter
+var mtExternalInfluxWriter *common.InfluxWriter
 
-var hAPI *hbcrossswap.API
-var bAPI *bnswap.API
+var mAPI *hbcrossswap.API
+var tAPI *bnswap.API
 
-var hUserWebsocket *hbcrossswap.UserWebsocket
-var bUserWebsocket *bnswap.UserWebsocket
+var mUserWebsocket *hbcrossswap.UserWebsocket
+var tUserWebsocket *bnswap.UserWebsocket
 
-var hOrderSilentTimes = make(map[string]time.Time)
-var hPositionsUpdateTimes = make(map[string]time.Time)
+var mOrderSilentTimes = make(map[string]time.Time)
+var mPositionsUpdateTimes = make(map[string]time.Time)
 var hbspotCancelSilentTimes = make(map[string]time.Time)
-var hSilentTimes = make(map[string]time.Time)
+var mSilentTimes = make(map[string]time.Time)
 var hHttpPositionUpdateSilentTimes = make(map[string]time.Time)
-var hLastOrderTimes = make(map[string]time.Time)
+var mLastOrderTimes = make(map[string]time.Time)
 
-var hbLoopTimer *time.Timer
+var mtLoopTimer *time.Timer
 
-var hNewOrderErrorCh = make(chan SwapOrderNewError, 10)
-var hOrderRequestChs = make(map[string]chan hbcrossswap.NewOrderParam)
+var tNewOrderErrorCh = make(chan TakerOrderNewError, 10)
+var tOrderRequestChs = make(map[string]chan bnswap.NewOrderParams)
 
-var bOrderSilentTimes = make(map[string]time.Time)
+var tOrderSilentTimes = make(map[string]time.Time)
 
-var bPositionsUpdateTimes = make(map[string]time.Time)
-var bLastOrderTimes = make(map[string]time.Time)
+var mPositionsUpdateTimes = make(map[string]time.Time)
+var tLastOrderTimes = make(map[string]time.Time)
 
-var hOpenLogSilentTimes = make(map[string]time.Time)
+var mLogSilentTimes = make(map[string]time.Time)
+var mtUnHedgeLogSilentTimes = time.Unix(0, 0)
 
-var hbcrossswapAccountCh = make(chan hbcrossswap.Account, 10)
+var mAccountCh = make(chan hbcrossswap.Account, 10)
+var mAccount *hbcrossswap.Account
 
-var hbcrossswapAccount *hbcrossswap.Account
-
-var hbcrossswapTickSizes = make(map[string]float64)
-var hbcrossswapContractSizes = make(map[string]float64)
+var mTickSizes = make(map[string]float64)
+var mContractSizes = make(map[string]float64)
 var hbspotPricePrecisions = make(map[string]int)
 var hbspotAmountPrecisions = make(map[string]int)
 
-var hbspotTickSizes = make(map[string]float64)
-var hbspotStepSizes = make(map[string]float64)
-var hbspotMinSizes = make(map[string]float64)
-var hbspotMinNotional = make(map[string]float64)
+var mtStepSizes = make(map[string]float64)
 
-var hPositionCh = make(chan []hbcrossswap.Position, 10)
-var hPositions = make(map[string]hbcrossswap.Position)
+var tTickSizes = make(map[string]float64)
+var tStepSizes = make(map[string]float64)
+var bMinSizes = make(map[string]float64)
+var tMinNotional = make(map[string]float64)
 
-var hbspotBalances = make(map[string]*hbspot.Balance)
-var hbspotUSDTBalance *hbspot.Balance
+var mPositionCh = make(chan []hbcrossswap.Position, 10)
+var mPositions = make(map[string]hbcrossswap.Position)
+
+var tPositions = make(map[string]*bnswap.Position)
+var tPositionsCh = make(chan []bnswap.Position, 10)
+var tPositionsUpdateTimes = make(map[string]time.Time)
+var tUSDTAsset *bnswap.Asset
+var tBNBAsset *bnswap.Asset
+var bAccountCh = make(chan bnswap.Account, 10)
 var hbcrossswapAssetUpdatedForReBalance = false
 var hbspotBalanceUpdatedForReBalance = false
-var hbcrossswapAssetUpdatedForInflux = false
-var hbspotBalanceUpdatedForInflux = false
+var bAssetUpdatedForInflux = false
+var hAccountUpdatedForInflux = false
 var hbcrossswapAssetUpdatedForExternalInflux = false
 var hbspotBalanceUpdatedForExternalInflux = false
 var hbSaveSilentTime = time.Now()
 
-var hbspotAccountCh = make(chan hbspot.Account, 10)
+var tAccountCh = make(chan bnswap.Account, 10)
 
-var hbspotOrderRequestChs = make(map[string]chan SpotOrderRequest)
-var hbspotNewOrderErrorCh chan SpotOrderNewError
+var mOrderRequestChs = make(map[string]chan MakerOrderRequest)
+var mNewOrderErrorCh chan HOrderNewError
 
-var hOpenOrders = make(map[string]hbcrossswap.NewOrderParam)
-var hOrderCancelCounts = make(map[string]int)
+var mOpenOrders = make(map[string]hbcrossswap.NewOrderParam)
+var mOrderCancelCounts = make(map[string]int)
 
-var hFundingRates = make(map[string]hbcrossswap.FundingRate)
-var hFundingRatesCh = make(chan map[string]hbcrossswap.FundingRate, 10)
+var mFundingRates = make(map[string]hbcrossswap.FundingRate)
+var mFundingRatesCh = make(chan map[string]hbcrossswap.FundingRate, 10)
+var tPremiumIndexes = make(map[string]bnswap.PremiumIndex)
+var tPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
+var mtFundingRates = make(map[string]float64)
 
-var bPremiumIndexes = make(map[string]bnswap.PremiumIndex)
-var bPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
+var mtTradeDirections = make(map[string]int)
 
-var hbTradeDirections = make(map[string]int)
+var mtRankSymbolMap map[int]string
 
-var hbRankSymbolMap map[int]string
+var mBarsMapCh = make(chan common.KLinesMap)
+var mBarsMap = make(common.KLinesMap)
+var tBarsMapCh = make(chan common.KLinesMap)
+var tBarsMap = make(common.KLinesMap)
 
-var hbcrossswapBarsMapCh = make(chan common.KLinesMap)
-var hbcrossswapBarsMap = make(common.KLinesMap)
-var hbspotBarsMapCh = make(chan common.KLinesMap)
-var hbspotBarsMap = make(common.KLinesMap)
-var hBarsMapUpdated = make(map[string]bool)
-var hbBarsMapCh = make(chan [2]common.KLinesMap, 10)
-var hbQuantilesCh = make(chan map[string]Quantile)
-var hbQuantiles = make(map[string]Quantile)
-var hLastFilledBuyPrices = make(map[string]float64)
-var hLastFilledSellPrices = make(map[string]float64)
+var mtMapUpdated = make(map[string]bool)
+var mtBarsMapCh = make(chan [2]common.KLinesMap, 10)
+
+var hbQuantilesCh = make(chan map[string]HBDeltaQuantile)
+var mtQuantiles = make(map[string]HBDeltaQuantile)
+var mLastFilledBuyPrices = make(map[string]float64)
+var mLastFilledSellPrices = make(map[string]float64)
 var hbRealisedSpread = make(map[string]float64)
-var hbSpreads = make(map[string]Spread)
-var hbUnHedgeValue float64
+var mtSpreads = make(map[string]Spread)
+var mtUnHedgeValue float64
 
-var hbConfig *Config
+var mtConfig *Config
 
 func init() {
 
@@ -137,45 +144,45 @@ func init() {
 	if !valid {
 		logger.Fatalf("CONFIG IS NOT VALID:\n%s\n", reason)
 	}
-	hbConfig = &config
+	mtConfig = &config
 
 	hostname, err := os.Hostname()
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	for hSymbol, bSymbol := range hbConfig.SymbolsMap {
-		hSymbols = append(hSymbols, hSymbol)
-		bSymbols = append(bSymbols, bSymbol)
-		bhSymbolsMap[bSymbol] = hSymbol
-		hbSymbolsMap[hSymbol] = bSymbol
+	for hSymbol, bSymbol := range mtConfig.SymbolsMap {
+		mSymbols = append(mSymbols, hSymbol)
+		tSymbols = append(tSymbols, bSymbol)
+		tmSymbolsMap[bSymbol] = hSymbol
+		mtSymbolsMap[hSymbol] = bSymbol
 
-		hOrderSilentTimes[hSymbol] = time.Now()
-		hOrderCancelCounts[hSymbol] = 0
-		hOpenLogSilentTimes[hSymbol] = time.Now()
-		hSilentTimes[hSymbol] = time.Now().Add(time.Minute)
+		mOrderSilentTimes[hSymbol] = time.Now()
+		mOrderCancelCounts[hSymbol] = 0
+		mLogSilentTimes[hSymbol] = time.Now()
+		mSilentTimes[hSymbol] = time.Now().Add(time.Minute)
 		hHttpPositionUpdateSilentTimes[hSymbol] = time.Now()
-		hPositionsUpdateTimes[hSymbol] = time.Unix(0, 0)
-		hLastOrderTimes[hSymbol] = time.Unix(0, 0)
+		mPositionsUpdateTimes[hSymbol] = time.Unix(0, 0)
+		mLastOrderTimes[hSymbol] = time.Unix(0, 0)
 
-		bOrderSilentTimes[bSymbol] = time.Now()
-		bPositionsUpdateTimes[bSymbol] = time.Unix(0, 0)
-		bLastOrderTimes[bSymbol] = time.Unix(0, 0)
+		tOrderSilentTimes[bSymbol] = time.Now()
+		mPositionsUpdateTimes[bSymbol] = time.Unix(0, 0)
+		tLastOrderTimes[bSymbol] = time.Unix(0, 0)
 	}
 
-	hBarsMapUpdated["huobi"] = false
-	hBarsMapUpdated["binance"] = false
+	mtMapUpdated["huobi"] = false
+	mtMapUpdated["binance"] = false
 
 	err = raven.SetDSN("https://5c318e0f10a349308d2ff86f51de31d8:fa0a8f90a8244c6ea762130cdd6d1bb9@sentry.jilinchen.com/12")
 
 	raven.SetTagsContext(map[string]string{
-		"influxAddress":     *hbConfig.InternalInflux.Address,
-		"influxDatabase":    *hbConfig.InternalInflux.Address,
-		"influxMeasurement": *hbConfig.InternalInflux.Address,
-		"BnApiKey":          *hbConfig.InternalInflux.Address,
-		"symbols":           fmt.Sprintf("%s", hSymbols),
+		"influxAddress":     *mtConfig.InternalInflux.Address,
+		"influxDatabase":    *mtConfig.InternalInflux.Address,
+		"influxMeasurement": *mtConfig.InternalInflux.Address,
+		"BnApiKey":          *mtConfig.InternalInflux.Address,
+		"symbols":           fmt.Sprintf("%s", mSymbols),
 		"hostname":          hostname,
-		"name":              *hbConfig.Name,
+		"name":              *mtConfig.Name,
 	})
 
 	if err != nil {

@@ -120,7 +120,9 @@ func (api *API) GetKLines(ctx context.Context, params KlineParams) ([]common.KLi
 	}
 	kLines := make([]common.KLine, 0)
 	for _, row := range resp {
-		kLine := common.KLine{}
+		kLine := common.KLine{
+			Symbol: params.Symbol,
+		}
 		open, ok := row[1].(string)
 		if !ok {
 			return nil, fmt.Errorf("can't convert open %v to string", row[1])

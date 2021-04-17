@@ -2,22 +2,21 @@ package main
 
 import (
 	"context"
+	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/hbcrossswap"
-	"github.com/geometrybase/hft-micro/hbspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"os/signal"
 	"runtime/pprof"
-	"strings"
 	"syscall"
 	"time"
 )
 
 func main() {
 
-	if *hbConfig.CpuProfile != "" {
-		f, err := os.Create(*hbConfig.CpuProfile)
+	if *mtConfig.CpuProfile != "" {
+		f, err := os.Create(*mtConfig.CpuProfile)
 		if err != nil {
 			logger.Fatal(err)
 		}
@@ -29,250 +28,253 @@ func main() {
 	}
 
 	var err error
-	hAPI, err = hbcrossswap.NewAPI(
-		*hbConfig.HbApiKey,
-		*hbConfig.HbApiSecret,
-		*hbConfig.ProxyAddress,
+	mAPI, err = hbcrossswap.NewAPI(
+		*mtConfig.HbApiKey,
+		*mtConfig.HbApiSecret,
+		*mtConfig.ProxyAddress,
 	)
 	if err != nil {
 		logger.Fatal(err)
 	}
-	bAPI, err = hbspot.NewAPI(
-		*hbConfig.HbApiKey,
-		*hbConfig.HbApiSecret,
-		*hbConfig.ProxyAddress,
+	tAPI, err = bnswap.NewAPI(
+		&common.Credentials{
+			Key:    *mtConfig.BnApiKey,
+			Secret: *mtConfig.BnApiSecret,
+		},
+		*mtConfig.ProxyAddress,
 	)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	hbGlobalCtx, hbGlobalCancel = context.WithCancel(context.Background())
-	defer hbGlobalCancel()
+	mtGlobalCtx, mtGlobalCancel = context.WithCancel(context.Background())
+	defer mtGlobalCancel()
 
-	accounts, err := bAPI.GetAccounts(hbGlobalCtx)
+	mTickSizes, mContractSizes, err = hbcrossswap.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
 	if err != nil {
 		logger.Fatal(err)
 	}
-	for _, a := range accounts {
-		if a.Type == "spot" {
-			hbspotAccountID = a.ID
+	tTickSizes, tStepSizes, _, tMinNotional, _, _, err = bnswap.GetOrderLimits(mtGlobalCtx, tAPI, tSymbols)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	for makerSymbol, makerStepSize := range mContractSizes {
+		if takerStepSize, ok := tStepSizes[mtSymbolsMap[makerSymbol]]; !ok {
+			logger.Fatalf("TAKER STEP SIZE NOT EXISTS FOR MAKER %s - %s", makerSymbol, mtSymbolsMap[makerSymbol])
+		} else {
+			mtStepSizes[makerSymbol] = common.MergedStepSize(makerStepSize, takerStepSize)
 		}
 	}
-	if hbspotAccountID == 0 {
-		logger.Fatal("HB SPOT ACCOUNT ID NOT EXISTS!!!")
-	}
+	logger.Debugf("MERGED STEP SIZES: %v", mtStepSizes)
 
-	hbcrossswapTickSizes, hbcrossswapContractSizes, err = hbcrossswap.GetOrderLimits(hbGlobalCtx, hAPI, bSymbols)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	hbspotTickSizes, hbspotStepSizes, hbspotMinSizes, hbspotMinNotional, hbspotPricePrecisions, hbspotAmountPrecisions, err = hbspot.GetOrderLimits(hbGlobalCtx, bAPI, hSymbols)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	hbInfluxWriter, err = common.NewInfluxWriter(
-		*hbConfig.InternalInflux.Address,
-		*hbConfig.InternalInflux.Username,
-		*hbConfig.InternalInflux.Password,
-		*hbConfig.InternalInflux.Database,
-		*hbConfig.InternalInflux.BatchSize,
+	mtInfluxWriter, err = common.NewInfluxWriter(
+		*mtConfig.InternalInflux.Address,
+		*mtConfig.InternalInflux.Username,
+		*mtConfig.InternalInflux.Password,
+		*mtConfig.InternalInflux.Database,
+		*mtConfig.InternalInflux.BatchSize,
 	)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	hbExternalInfluxWriter, err = common.NewInfluxWriter(
-		*hbConfig.ExternalInflux.Address,
-		*hbConfig.ExternalInflux.Username,
-		*hbConfig.ExternalInflux.Password,
-		*hbConfig.ExternalInflux.Database,
-		*hbConfig.ExternalInflux.BatchSize,
+	mtExternalInfluxWriter, err = common.NewInfluxWriter(
+		*mtConfig.ExternalInflux.Address,
+		*mtConfig.ExternalInflux.Username,
+		*mtConfig.ExternalInflux.Password,
+		*mtConfig.ExternalInflux.Database,
+		*mtConfig.ExternalInflux.BatchSize,
 	)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	defer func() {
-		err := hbInfluxWriter.Stop()
+		err := mtInfluxWriter.Stop()
 		if err != nil {
 			logger.Warnf("stop influx writer error %v", err)
 		}
 	}()
 
-	bUserWebsocket = hbspot.NewUserWebsocket(
-		hbGlobalCtx,
-		*hbConfig.HbApiKey,
-		*hbConfig.HbApiSecret,
-		hSymbols,
-		*hbConfig.ProxyAddress,
+	tUserWebsocket = bnswap.NewUserWebsocket(
+		mtGlobalCtx,
+		tAPI,
+		*mtConfig.ProxyAddress,
 	)
-	defer bUserWebsocket.Stop()
+	defer tUserWebsocket.Stop()
 
-	hUserWebsocket = hbcrossswap.NewUserWebsocket(
-		hbGlobalCtx,
-		*hbConfig.HbApiKey,
-		*hbConfig.HbApiSecret,
-		bSymbols,
-		*hbConfig.ProxyAddress,
+	mUserWebsocket = hbcrossswap.NewUserWebsocket(
+		mtGlobalCtx,
+		*mtConfig.HbApiKey,
+		*mtConfig.HbApiSecret,
+		mSymbols,
+		*mtConfig.ProxyAddress,
 	)
-	defer hUserWebsocket.Stop()
+	defer mUserWebsocket.Stop()
 
 	influxSaveTimer := time.NewTimer(
 		time.Now().Truncate(
-			*hbConfig.InternalInflux.SaveInterval,
+			*mtConfig.InternalInflux.SaveInterval,
 		).Add(
-			*hbConfig.InternalInflux.SaveInterval * 3,
+			*mtConfig.InternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
 	externalInfluxSaveTimer := time.NewTimer(
 		time.Now().Truncate(
-			*hbConfig.ExternalInflux.SaveInterval,
+			*mtConfig.ExternalInflux.SaveInterval,
 		).Add(
-			*hbConfig.ExternalInflux.SaveInterval * 3,
+			*mtConfig.ExternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
-	hbLoopTimer = time.NewTimer(time.Second) //先等1分钟
-	frRankUpdatedTimer := time.NewTimer(time.Second * 15)
-
+	mtLoopTimer = time.NewTimer(time.Second) //先等1分钟
 	defer influxSaveTimer.Stop()
-	defer hbLoopTimer.Stop()
-	defer frRankUpdatedTimer.Stop()
+	defer mtLoopTimer.Stop()
 	defer externalInfluxSaveTimer.Stop()
 
 	go hbcrossswap.WatchPositionsFromHttp(
-		hbGlobalCtx, hAPI,
-		bSymbols, *hbConfig.PullInterval,
-		hPositionCh,
+		mtGlobalCtx, mAPI,
+		tSymbols, *mtConfig.PullInterval,
+		mPositionCh,
 	)
 	go hbcrossswap.WatchAccountFromHttp(
-		hbGlobalCtx, hAPI,
-		*hbConfig.PullInterval, hbcrossswapAccountCh,
-	)
-	go hbspot.WatchAccountFromHttp(
-		hbGlobalCtx, bAPI, hbspotAccountID,
-		*hbConfig.PullInterval, hbspotAccountCh,
+		mtGlobalCtx, mAPI,
+		*mtConfig.PullInterval, mAccountCh,
 	)
 	go hbcrossswap.WatchFundingRate(
-		hbGlobalCtx, hAPI,
-		bSymbols,
-		*hbConfig.PullInterval*10,
-		hFundingRatesCh,
+		mtGlobalCtx, mAPI,
+		tSymbols,
+		*mtConfig.PullInterval*10,
+		mFundingRatesCh,
+	)
+	go bnswap.WatchAccountFromHttp(
+		mtGlobalCtx, tAPI,
+		*mtConfig.PullInterval, bAccountCh,
+	)
+	go bnswap.WatchPositionsFromHttp(
+		mtGlobalCtx, tAPI,
+		tSymbols,
+		*mtConfig.PullInterval, tPositionsCh,
+	)
+	go bnswap.WatchPremiumIndexesFromHttp(
+		mtGlobalCtx, tAPI,
+		tSymbols,
+		*mtConfig.PullInterval*10, tPremiumIndexesCh,
 	)
 
-	go watchSwapBars(
-		hbGlobalCtx,
-		hAPI,
-		bSymbols,
-		*hbConfig.BarsLookback,
-		*hbConfig.PullBarsInterval,
-		*hbConfig.PullBarsRetryInterval,
-		*hbConfig.RequestInterval,
-		hbcrossswapBarsMapCh,
+	go watchHBars(
+		mtGlobalCtx,
+		mAPI,
+		tSymbols,
+		*mtConfig.BarsLookback,
+		*mtConfig.PullBarsInterval,
+		*mtConfig.PullBarsRetryInterval,
+		*mtConfig.RequestInterval,
+		mBarsMapCh,
 	)
 
-	go watchSpotBars(
-		hbGlobalCtx,
-		bAPI,
-		hSymbols,
-		*hbConfig.BarsLookback,
-		*hbConfig.PullBarsInterval,
-		*hbConfig.PullBarsRetryInterval,
-		*hbConfig.RequestInterval,
-		hbspotBarsMapCh,
+	go watchBBars(
+		mtGlobalCtx,
+		tAPI,
+		mSymbols,
+		*mtConfig.BarsLookback,
+		*mtConfig.PullBarsInterval,
+		*mtConfig.PullBarsRetryInterval,
+		*mtConfig.RequestInterval,
+		tBarsMapCh,
 	)
 
 	go watchDeltaQuantile(
-		hbGlobalCtx,
-		hSymbols,
-		bhSymbolsMap,
-		*hbConfig.BotQuantile,
-		*hbConfig.TopQuantile,
-		*hbConfig.TopBandScale,
-		*hbConfig.BotBandScale,
-		*hbConfig.MinimalEnterDelta,
-		*hbConfig.MaximalExitDelta,
-		*hbConfig.MinimalBandOffset,
-		hbBarsMapCh,
+		mtGlobalCtx,
+		mSymbols,
+		mtSymbolsMap,
+		*mtConfig.BotQuantile,
+		*mtConfig.TopQuantile,
+		*mtConfig.TopBandScale,
+		*mtConfig.BotBandScale,
+		*mtConfig.MinimalEnterDelta,
+		*mtConfig.MaximalExitDelta,
+		*mtConfig.MinimalBandOffset,
+		mtBarsMapCh,
 		hbQuantilesCh,
 	)
 
-	walkedOrderBookCh := make(chan WalkedOrderBook, len(hSymbols)*10)
-	for start := 0; start < len(hSymbols); start += *hbConfig.OrderBookBatchSize {
-		end := start + *hbConfig.OrderBookBatchSize
-		if end > len(hSymbols) {
-			end = len(hSymbols)
+	walkedOrderBookCh := make(chan WalkedOrderBook, len(mSymbols)*10)
+	for start := 0; start < len(tSymbols); start += *mtConfig.OrderBookBatchSize {
+		end := start + *mtConfig.OrderBookBatchSize
+		if end > len(tSymbols) {
+			end = len(tSymbols)
 		}
-		go watchSpotWalkedOrderBooks(
-			hbGlobalCtx,
-			*hbConfig.ProxyAddress,
-			*hbConfig.OrderBookTakerImpact,
-			*hbConfig.OrderBookMakerImpact,
-			hSymbols[start:end],
+		go watchBWalkedOrderBooks(
+			mtGlobalCtx,
+			*mtConfig.ProxyAddress,
+			*mtConfig.OrderBookTakerImpact,
+			*mtConfig.OrderBookMakerImpact,
+			tSymbols[start:end],
 			walkedOrderBookCh,
 		)
 	}
 
-	for start := 0; start < len(bSymbols); start += *hbConfig.OrderBookBatchSize {
-		end := start + *hbConfig.OrderBookBatchSize
-		if end > len(hSymbols) {
-			end = len(hSymbols)
+	for start := 0; start < len(mSymbols); start += *mtConfig.OrderBookBatchSize {
+		end := start + *mtConfig.OrderBookBatchSize
+		if end > len(mSymbols) {
+			end = len(mSymbols)
 		}
-		go watchSwapWalkedOrderBooks(
-			hbGlobalCtx,
-			*hbConfig.ProxyAddress,
-			hbcrossswapContractSizes,
-			*hbConfig.OrderBookTakerImpact,
-			*hbConfig.OrderBookMakerImpact,
-			bSymbols[start:end],
+		go watchHWalkedOrderBooks(
+			mtGlobalCtx,
+			*mtConfig.ProxyAddress,
+			mContractSizes,
+			*mtConfig.OrderBookTakerImpact,
+			*mtConfig.OrderBookMakerImpact,
+			mSymbols[start:end],
 			walkedOrderBookCh,
 		)
 	}
 
-	spreadCh := make(chan Spread, len(hSymbols)*100)
+	spreadCh := make(chan Spread, len(mSymbols)*100)
 	go watchSpread(
-		hbGlobalCtx,
-		hSymbols,
-		hbSymbolsMap,
-		*hbConfig.OrderBookMaxAgeDiff,
-		*hbConfig.OrderBookMaxAge,
-		*hbConfig.SpreadLookbackDuration,
-		*hbConfig.SpreadLookbackMinimalWindow,
+		mtGlobalCtx,
+		mSymbols,
+		mtSymbolsMap,
+		*mtConfig.OrderBookMaxAgeDiff,
+		*mtConfig.OrderBookMaxAge,
+		*mtConfig.SpreadLookbackDuration,
+		*mtConfig.SpreadLookbackMinimalWindow,
 		walkedOrderBookCh,
 		spreadCh,
 	)
 
-	hbspotNewOrderErrorCh = make(chan SpotOrderNewError, len(hSymbols)*2)
-	for _, spotSymbol := range hSymbols {
-		hbspotOrderRequestChs[spotSymbol] = make(chan SpotOrderRequest, 2)
-		go watchSpotOrderRequest(
-			hbGlobalCtx,
-			bAPI,
-			*hbConfig.OrderTimeout,
-			*hbConfig.DryRun,
-			hbspotOrderRequestChs[spotSymbol],
-			hbspotNewOrderErrorCh,
+	mNewOrderErrorCh = make(chan HOrderNewError, len(mSymbols)*2)
+	for _, makerSymbol := range mSymbols {
+		mOrderRequestChs[makerSymbol] = make(chan MakerOrderRequest, 2)
+		go watchMakerOrderRequest(
+			mtGlobalCtx,
+			mAPI,
+			*mtConfig.OrderTimeout,
+			*mtConfig.DryRun,
+			mOrderRequestChs[makerSymbol],
+			mNewOrderErrorCh,
 		)
-		hbspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{
-			Cancel: &hbspot.CancelAllParam{Symbol: spotSymbol},
+		mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
+			Cancel: &hbcrossswap.CancelAllParam{Symbol: makerSymbol},
 		}
 	}
 
-	hNewOrderErrorCh = make(chan SwapOrderNewError, len(hSymbols)*2)
-	for _, swapSymbol := range bSymbols {
-		hOrderRequestChs[swapSymbol] = make(chan hbcrossswap.NewOrderParam, 2)
-		go watchSwapOrderRequest(
-			hbGlobalCtx,
-			hAPI,
-			*hbConfig.OrderTimeout,
-			*hbConfig.DryRun,
-			hOrderRequestChs[swapSymbol],
-			hNewOrderErrorCh,
+	tNewOrderErrorCh = make(chan TakerOrderNewError, len(mSymbols)*2)
+	for _, takerSymbol := range tSymbols {
+		tOrderRequestChs[takerSymbol] = make(chan bnswap.NewOrderParams, 2)
+		go watchTakerOrderRequest(
+			mtGlobalCtx,
+			tAPI,
+			*mtConfig.OrderTimeout,
+			*mtConfig.DryRun,
+			tOrderRequestChs[takerSymbol],
+			tNewOrderErrorCh,
 		)
 	}
 
 	done := make(chan bool, 1)
-	if *hbConfig.CpuProfile != "" {
+	if *mtConfig.CpuProfile != "" {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		go func() {
@@ -289,119 +291,119 @@ func main() {
 		case <-done:
 			logger.Debugf("Exit")
 			return
-		case p := <-hPositionCh:
-			handleSwapHttpPositions(p)
+		case <-mUserWebsocket.RestartCh:
+			logger.Debugf("mUserWebsocket restart silent %v", *mtConfig.RestartSilent)
+			handleRestartSilent()
+		case ps := <-mPositionCh:
+			handleMakerHttpPositions(ps)
 			break
-		case account := <-hbcrossswapAccountCh:
-			handleSwapHttpAccount(account)
+		case account := <-mAccountCh:
+			handleMakerHttpAccount(account)
 			break
-		case account := <-hbspotAccountCh:
-			handleSpotHttpAccount(account)
+		case account := <-tAccountCh:
+			handleTakerHttpAccount(account)
 			break
-		case msg := <-bUserWebsocket.BalanceCh:
-			handleSpotWSBalance(msg)
+		case ps := <-tPositionsCh:
+			handleTakerHttpPositions(ps)
 			break
-		case spotOrder := <-bUserWebsocket.OrderCh:
-			if spotOrder.OrderStatus != nil {
-				if *spotOrder.OrderStatus == hbspot.OrderStatusFilled {
-					if spotOrder.TradeVolume != nil && spotOrder.TradePrice != nil && spotOrder.Type != nil {
-						if strings.Contains(*spotOrder.Type, "buy") {
-							hLastFilledBuyPrices[spotOrder.Symbol] = *spotOrder.TradePrice
-						} else {
-							hLastFilledSellPrices[spotOrder.Symbol] = *spotOrder.TradePrice
-						}
-						logger.Debugf("SPOT WS ORDER FILLED %s %s SIZE %f PRICE %f", spotOrder.Symbol, *spotOrder.Type, *spotOrder.TradeVolume, *spotOrder.TradePrice)
+		case msg := <-tUserWebsocket.BalanceAndPositionUpdateEventCh:
+			handleTakerWSAccount(msg)
+			break
+		case msg := <-mUserWebsocket.PositionCh:
+			handleWSPosition(msg)
+			break
+		case msg := <-mUserWebsocket.AccountCh:
+			handleWSAccount(msg)
+			break
+		case makerOrder := <-mUserWebsocket.OrderCh:
+			if makerOrder.Status == hbcrossswap.OrderStatusFilled ||
+				makerOrder.Status == hbcrossswap.OrderStatusCancelled ||
+				makerOrder.Status == hbcrossswap.OrderStatusPartiallyFilledButCancelledByClient {
+				if makerOrder.Status == hbcrossswap.OrderStatusCancelled {
+					logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
+					mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
+					mPositionsUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)
+				} else {
+					logger.Debugf(
+						"MAKER WS ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
+						makerOrder.Symbol, makerOrder.Direction, makerOrder.TradeVolume, makerOrder.TradeAvgPrice,
+					)
+					if makerOrder.Direction == hbcrossswap.OrderDirectionSell {
+						mLastFilledSellPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
+					} else if makerOrder.Direction == hbcrossswap.OrderDirectionBuy {
+						mLastFilledBuyPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
 					}
-					if openOrder, ok := hOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOrderID == spotOrder.ClientOrderID {
-						delete(hOpenOrders, spotOrder.Symbol)
-					}
-				} else if *spotOrder.OrderStatus == hbspot.OrderStatusCanceled {
-					if openOrder, ok := hOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOrderID == spotOrder.ClientOrderID {
-						delete(hOpenOrders, spotOrder.Symbol)
-					}
-				} else if *spotOrder.OrderStatus == hbspot.OrderStatusRejected {
-					if openOrder, ok := hOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOrderID == spotOrder.ClientOrderID {
-						delete(hOpenOrders, spotOrder.Symbol)
-					}
+				}
+				if openOrder, ok := mOpenOrders[makerOrder.Symbol]; ok && openOrder.ClientOrderID == makerOrder.ClientOrderID {
+					delete(mOpenOrders, makerOrder.Symbol)
 				}
 			}
 			break
-		case msg := <-hUserWebsocket.PositionCh:
-			handleWSPosition(msg)
-			break
-		case msg := <-hUserWebsocket.AccountCh:
-			handleWSAccount(msg)
-			break
-		case swapOrder := <-hUserWebsocket.OrderCh:
-			if swapOrder.Status == hbcrossswap.OrderStatusFilled ||
-				swapOrder.Status == hbcrossswap.OrderStatusCancelled ||
-				swapOrder.Status == hbcrossswap.OrderStatusPartiallyFilledButCancelledByClient {
-				if swapOrder.Status == hbcrossswap.OrderStatusCancelled {
-					logger.Debugf("SWAP WS ORDER CANCELED %v ", swapOrder)
-					hOrderSilentTimes[swapOrder.Symbol] = time.Now().Add(time.Second)
-					hPositionsUpdateTimes[swapOrder.Symbol] = time.Unix(0, 0)
-				} else {
-					logger.Debugf(
-						"SWAP WS ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
-						swapOrder.Symbol, swapOrder.Direction, swapOrder.TradeVolume, swapOrder.TradeAvgPrice,
-					)
-					if swapOrder.Direction == hbcrossswap.OrderDirectionSell {
-						if spotSymbol, ok := hbSymbolsMap[swapOrder.Symbol]; ok {
-							if spotPrice, ok := hLastFilledBuyPrices[spotSymbol]; ok {
-								hbRealisedSpread[spotSymbol] = (swapOrder.TradeAvgPrice - spotPrice) / spotPrice
-								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, swapOrder.Symbol, hbRealisedSpread[spotSymbol])
-							}
+		case takerOrderEvent := <-tUserWebsocket.OrderUpdateEventCh:
+			takerOrder := takerOrderEvent.Order
+			if takerOrder.Status == "REJECTED" || takerOrder.Status == "EXPIRED" {
+				logger.Debugf("TAKER WS ORDER %s %s", takerOrder.Symbol, takerOrder.Status)
+				tOrderSilentTimes[takerOrder.Symbol] = time.Now().Add(time.Second)
+				tPositionsUpdateTimes[takerOrder.Symbol] = time.Unix(0, 0)
+			} else if takerOrder.Status == "FILLED" {
+				logger.Debugf("TAKER WS ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)
+				if makerSymbol, ok := tmSymbolsMap[takerOrder.Symbol]; ok {
+					if takerOrder.Side == common.OrderSideSell {
+						if makerPrice, ok := mLastFilledBuyPrices[makerSymbol]; ok {
+							hbRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
+							logger.Debugf("%s REALISED OPEN SPREAD %f", makerSymbol, hbRealisedSpread[makerSymbol])
 						}
-					} else if swapOrder.Direction == hbcrossswap.OrderDirectionBuy {
-						if spotSymbol, ok := hbSymbolsMap[swapOrder.Symbol]; ok {
-							if spotPrice, ok := hLastFilledSellPrices[spotSymbol]; ok {
-								hbRealisedSpread[spotSymbol] = (swapOrder.TradeAvgPrice - spotPrice) / spotPrice
-								logger.Debugf("%s %s REALISED CLOSE SPREAD %f", spotSymbol, swapOrder.Symbol, hbRealisedSpread[spotSymbol])
-							}
+					} else if takerOrder.Side == common.OrderSideBuy {
+						if makerPrice, ok := mLastFilledSellPrices[makerSymbol]; ok {
+							hbRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
+							logger.Debugf("%s REALISED CLOSE SPREAD %f", makerSymbol, hbRealisedSpread[makerSymbol])
 						}
 					}
 				}
 			}
 			break
 		case spread := <-spreadCh:
-			hbSpreads[spread.Symbol] = spread
-			hbLoopTimer.Reset(time.Nanosecond)
+			mtSpreads[spread.HSymbol] = spread
+			mtLoopTimer.Reset(time.Millisecond)
 			break
-		case hFundingRates = <-hFundingRatesCh:
-			//logger.Debugf("FRS %v", hFundingRates)
+		case mFundingRates = <-mFundingRatesCh:
+			handleUpdateTradeDirections()
 			break
-		case hbcrossswapBarsMap = <-hbcrossswapBarsMapCh:
-			if hBarsMapUpdated["spot"] {
-				hbBarsMapCh <- [2]common.KLinesMap{hbspotBarsMap, hbcrossswapBarsMap}
-				hBarsMapUpdated["spot"] = false
-				hBarsMapUpdated["swap"] = false
+		case tPremiumIndexes = <-tPremiumIndexesCh:
+			handleUpdateTradeDirections()
+			break
+		case mBarsMap = <-mBarsMapCh:
+			if mtMapUpdated[WalkedOrderBookTypeTaker] {
+				mtBarsMapCh <- [2]common.KLinesMap{mBarsMap, tBarsMap}
+				mtMapUpdated[WalkedOrderBookTypeMaker] = false
+				mtMapUpdated[WalkedOrderBookTypeTaker] = false
 			} else {
-				hBarsMapUpdated["swap"] = true
+				mtMapUpdated[WalkedOrderBookTypeMaker] = true
 			}
 			break
-		case hbspotBarsMap = <-hbspotBarsMapCh:
-			if hBarsMapUpdated["swap"] {
-				hbBarsMapCh <- [2]common.KLinesMap{hbspotBarsMap, hbcrossswapBarsMap}
-				hBarsMapUpdated["spot"] = false
-				hBarsMapUpdated["swap"] = false
+		case tBarsMap = <-tBarsMapCh:
+			if mtMapUpdated[WalkedOrderBookTypeMaker] {
+				mtBarsMapCh <- [2]common.KLinesMap{mBarsMap, tBarsMap}
+				mtMapUpdated[WalkedOrderBookTypeMaker] = false
+				mtMapUpdated[WalkedOrderBookTypeTaker] = false
 			} else {
-				hBarsMapUpdated["spot"] = true
+				mtMapUpdated[WalkedOrderBookTypeTaker] = true
 			}
 			break
 		case qs := <-hbQuantilesCh:
-			if hbQuantiles == nil {
+			if mtQuantiles == nil {
 				logger.Debugf("QUANTILES %v", qs)
 			}
-			hbQuantiles = qs
-			hbLoopTimer.Reset(time.Millisecond)
+			mtQuantiles = qs
+			mtLoopTimer.Reset(time.Millisecond)
 			break
 		case <-influxSaveTimer.C:
 			handleSave()
 			influxSaveTimer.Reset(
 				time.Now().Truncate(
-					*hbConfig.InternalInflux.SaveInterval,
+					*mtConfig.InternalInflux.SaveInterval,
 				).Add(
-					*hbConfig.InternalInflux.SaveInterval,
+					*mtConfig.InternalInflux.SaveInterval,
 				).Sub(time.Now()),
 			)
 			break
@@ -409,51 +411,31 @@ func main() {
 			handleExternalInfluxSave()
 			externalInfluxSaveTimer.Reset(
 				time.Now().Truncate(
-					*hbConfig.ExternalInflux.SaveInterval,
+					*mtConfig.ExternalInflux.SaveInterval,
 				).Add(
-					*hbConfig.ExternalInflux.SaveInterval,
+					*mtConfig.ExternalInflux.SaveInterval,
 				).Sub(time.Now()),
 			)
 			break
 
-		case newError := <-hNewOrderErrorCh:
-			hOrderSilentTimes[newError.Params.Symbol] = time.Now().Add(time.Second * 15)
+		case takerNewError := <-tNewOrderErrorCh:
+			mOrderSilentTimes[takerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
 			break
 
-		case order := <-hbspotNewOrderErrorCh:
-			if openOrder, ok := hOpenOrders[order.Params.Symbol]; ok && openOrder.ClientOrderID == order.Params.ClientOrderID {
-				delete(hOpenOrders, order.Params.Symbol)
+		case makerNewError := <-mNewOrderErrorCh:
+			if openOrder, ok := mOpenOrders[makerNewError.Params.Symbol]; ok && openOrder.ClientOrderID == makerNewError.Params.ClientOrderID {
+				delete(mOpenOrders, makerNewError.Params.Symbol)
 			}
-			bOrderSilentTimes[order.Params.Symbol] = time.Now().Add(*hbConfig.OrderSilent * 3)
-		case <-frRankUpdatedTimer.C:
-			frs := make([]float64, len(bSymbols))
-			for i, symbol := range bSymbols {
-				if fr, ok := hFundingRates[symbol]; ok {
-					frs[i] = fr.FundingRate
-				} else {
-					logger.Debugf("MISS FUNDING RATE %s", symbol)
-					break
-				}
-			}
-			if len(hbRankSymbolMap) == 0 {
-				logger.Debugf("RANK FR...")
-			}
-			hbRankSymbolMap, err = common.RankSymbols(bSymbols, frs)
-			if err != nil {
-				logger.Debugf("RankSymbols error %v", err)
-			}
-			//logger.Debugf("SYMBOLS FR RANK %v", hbRankSymbolMap)
-			frRankUpdatedTimer.Reset(time.Minute)
-			break
-		case <-hbLoopTimer.C:
-			updatePerpPositions()
-			updateSpotOldOrders()
-			updateSpotNewOrders()
-			hbLoopTimer.Reset(
+			tOrderSilentTimes[makerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
+		case <-mtLoopTimer.C:
+			updateTakerPositions()
+			updateMakerOldOrders()
+			updateMakerNewOrders()
+			mtLoopTimer.Reset(
 				time.Now().Truncate(
-					*hbConfig.LoopInterval,
+					*mtConfig.LoopInterval,
 				).Add(
-					*hbConfig.LoopInterval,
+					*mtConfig.LoopInterval,
 				).Sub(time.Now()),
 			)
 			break

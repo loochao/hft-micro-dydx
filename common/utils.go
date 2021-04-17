@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"math"
 	"net/url"
 	"sort"
 	"strconv"
@@ -132,18 +133,18 @@ loop:
 			mantissa += uint64(c - '0')
 			continue
 		}
-		v, err :=  strconv.ParseFloat(*(*string)(unsafe.Pointer(&s)), 64)
+		v, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&s)), 64)
 		if err != nil {
 			return 0, fmt.Errorf("ParseBinanceFloat error bad byte %v @ %d in %s", s[i], i, s)
-		}else{
+		} else {
 			return v, nil
 		}
 	}
 	if !sawDigits {
-		v, err :=  strconv.ParseFloat(*(*string)(unsafe.Pointer(&s)), 64)
+		v, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&s)), 64)
 		if err != nil {
 			return 0, errors.New("ParseBinanceFloat error no digits")
-		}else{
+		} else {
 			return v, nil
 		}
 	}
@@ -175,16 +176,16 @@ func ParseBinanceInt(s []byte) (int64, error) {
 			n += int64(c - '0')
 			continue
 		}
-		v, err :=  strconv.ParseInt(*(*string)(unsafe.Pointer(&s)), 10, 64)
+		v, err := strconv.ParseInt(*(*string)(unsafe.Pointer(&s)), 10, 64)
 		if err != nil {
 			return 0, fmt.Errorf("ParseBinanceInt error bad byte %v @ %d in %s", s[i], i, s)
-		}else{
+		} else {
 			return v, nil
 		}
 	}
 	if negative {
 		return -n, nil
-	}else{
+	} else {
 		return n, nil
 	}
 }
@@ -230,11 +231,37 @@ func RankSymbols(symbols []string, values []float64) (map[int]string, error) {
 	return out, nil
 }
 
-
 func Base64Encode(input []byte) string {
 	return base64.StdEncoding.EncodeToString(input)
 }
 
-func FormatByPrecision(f float64, p int) StringFloat{
-	return StringFloat(fmt.Sprintf("%."+fmt.Sprintf("%d",p)+"f", f))
+func FormatByPrecision(f float64, p int) StringFloat {
+	return StringFloat(fmt.Sprintf("%."+fmt.Sprintf("%d", p)+"f", f))
+}
+
+func MergedStepSize(stepSizeA, stepSizeB float64) float64 {
+	base := 1.0
+	for math.Floor(stepSizeA*base) != stepSizeA*base || math.Floor(stepSizeB*base) != stepSizeB*base {
+		base *= 10.0
+	}
+	return float64(LCM(int(stepSizeA*base), int(stepSizeB*base))) / base
+}
+
+func GCD(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
+	}
+	return a
+}
+
+func LCM(a, b int, integers ...int) int {
+	result := a * b / GCD(a, b)
+
+	for i := 0; i < len(integers); i++ {
+		result = LCM(result, integers[i])
+	}
+
+	return result
 }

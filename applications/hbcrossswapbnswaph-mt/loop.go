@@ -2,319 +2,521 @@ package main
 
 import (
 	"fmt"
+	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/hbcrossswap"
-	"github.com/geometrybase/hft-micro/hbspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/rand"
-	"strings"
 	"time"
 )
 
-func updatePerpPositions() {
+func updateTakerPositions() {
 	unHedgedValue := 0.0
-	for _, spotSymbol := range hSymbols {
-		swapSymbol := bhSymbolsMap[spotSymbol]
-		if time.Now().Sub(bPositionsUpdateTimes[spotSymbol]) > *hbConfig.BalancePositionMaxAge {
+	for _, takerSymbol := range tSymbols {
+		makerSymbol := tmSymbolsMap[takerSymbol]
+		if time.Now().Sub(tPositionsUpdateTimes[takerSymbol]) > *mtConfig.BalancePositionMaxAge {
+			continue
+		}
+		if time.Now().Sub(mPositionsUpdateTimes[makerSymbol]) > *mtConfig.BalancePositionMaxAge {
 			continue
 		}
 
-		if time.Now().Sub(hPositionsUpdateTimes[swapSymbol]) > *hbConfig.BalancePositionMaxAge {
+		if tOrderSilentTimes[takerSymbol].Sub(time.Now()).Seconds() > 0 {
 			continue
 		}
 
-		if hOrderSilentTimes[swapSymbol].Sub(time.Now()).Seconds() > 0 {
+		makerPosition, okMakerPosition := mPositions[makerSymbol]
+		takerPosition, okTakerBalance := tPositions[takerSymbol]
+		spread, okSpread := mtSpreads[makerSymbol]
+		if !okMakerPosition || !okTakerBalance || !okSpread {
 			continue
 		}
+		takerOrderBook := spread.TakerOrderBook
 
-		swapPosition, okPerpPosition := hPositions[swapSymbol]
-		spotBalance, okSpotBalance := hbspotBalances[spotSymbol]
-		spread, okSpread := hbSpreads[spotSymbol]
-		if !okPerpPosition || !okSpotBalance || !okSpread {
+		makerContractSize := mContractSizes[makerSymbol]
+
+		takerStepSize := tStepSizes[takerSymbol]
+		takerTickSize := tTickSizes[takerSymbol]
+		takerMinNotional := tMinNotional[takerSymbol]
+
+		makerSize := makerPosition.Volume
+		if makerPosition.Direction == hbcrossswap.OrderDirectionSell {
+			makerSize = -makerSize
+		}
+		makerSize *= makerContractSize
+
+		takerSizeDiff := -makerSize - takerPosition.PositionAmt
+		if takerSizeDiff > 0 {
+			unHedgedValue += math.Abs(takerSizeDiff * takerOrderBook.AskPrice)
+		} else {
+			unHedgedValue += math.Abs(takerSizeDiff * takerOrderBook.BidPrice)
+		}
+		takerSizeDiff = math.Round(takerSizeDiff/takerStepSize) * takerStepSize
+
+		//只做空SWAP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
+		if takerSizeDiff <= 0 && -takerSizeDiff*takerOrderBook.BidPrice*(1.0-*mtConfig.EnterSlippage) < takerMinNotional {
+			continue
+		} else if takerSizeDiff >= 0 && takerSizeDiff*takerOrderBook.AskPrice*(1.0+*mtConfig.EnterSlippage) < takerMinNotional {
 			continue
 		}
-		swapOrderBook := spread.PerpOrderBook
+		logger.Debugf("updateTakerPositions %s SIZE DIFF %f POS %f -> %f", takerSymbol, takerSizeDiff, takerPosition.PositionAmt, -makerSize)
 
-		contractSize := hbcrossswapContractSizes[swapSymbol]
-		swapTickSize := hbcrossswapTickSizes[swapSymbol]
+		reduceOnly := false
+		if takerSizeDiff*takerPosition.PositionAmt < 0 && math.Abs(takerSizeDiff) <= math.Abs(takerPosition.PositionAmt) {
+			reduceOnly = true
+		}
+		price := math.Round(takerOrderBook.AskPrice*(1.0+*mtConfig.EnterSlippage)/takerTickSize) * takerTickSize
+		side := "BUY"
+		if takerSizeDiff < 0 {
+			side = "SELL"
+			takerSizeDiff = -takerSizeDiff
+			price = math.Round(takerOrderBook.BidPrice*(1.0-*mtConfig.EnterSlippage)/takerTickSize) * takerTickSize
+		}
+		takerOrder := bnswap.NewOrderParams{
+			Symbol:           takerSymbol,
+			Side:             side,
+			Type:             "LIMIT",
+			Price:            price,
+			TimeInForce:      "FOK",
+			Quantity:         takerSizeDiff,
+			ReduceOnly:       reduceOnly,
+			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
+		}
+		logger.Debugf("TAKER ORDER %v", takerOrder.ToString())
+		mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 
-		positionVolume := swapPosition.Volume
-		if swapPosition.Direction == hbcrossswap.OrderDirectionSell {
-			positionVolume = -positionVolume
-		}
-		positionSize := positionVolume * contractSize
-
-		swapSize := -(spotBalance.Balance) - positionSize
-		unHedgedValue += math.Abs(swapSize * spread.PerpOrderBook.AskPrice)
-		swapSize = math.Round(swapSize / contractSize)
-
-		if math.Abs(swapSize) < 1 {
-			continue
-		}
-		if swapSize > 0 && swapPosition.Direction == hbcrossswap.OrderDirectionBuy {
-			logger.Debugf("%s SWAP POSITION ERROR, CAN'T ADD %f TO POS %f", swapSize, positionVolume)
-			continue
-		}
-		if swapSize > 0 && swapSize > -positionVolume {
-			swapSize = -positionVolume
-		}
-		logger.Debugf("updatePerpPositions %s SIZE %f POS %f -> %f", swapSymbol, swapSize, positionVolume, positionVolume+swapSize)
-		offset := hbcrossswap.OrderOffsetOpen
-		if swapSize*positionVolume < 0 && math.Abs(swapSize) <= math.Abs(positionVolume) {
-			offset = hbcrossswap.OrderOffsetClose
-		}
-		price := math.Round(swapOrderBook.AskPrice*(1.0+*hbConfig.EnterSlippage)/swapTickSize) * swapTickSize
-		direction := hbcrossswap.OrderDirectionBuy
-		id, _ := common.GenerateShortId()
-		clOrdID := fmt.Sprintf(
-			"%s%d",
-			id,
-			time.Now().Unix(),
-		)
-		clOrdID = strings.ReplaceAll(clOrdID, ".", "_")
-		if swapSize < 0 {
-			direction = hbcrossswap.OrderDirectionSell
-			swapSize = -swapSize
-			price = math.Round(swapOrderBook.BidPrice*(1.0-*hbConfig.EnterSlippage)/swapTickSize) * swapTickSize
-		}
-		order := hbcrossswap.NewOrderParam{
-			Symbol:         swapSymbol,
-			ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-			Price:          common.Float64(price),
-			Volume:         int64(swapSize),
-			Direction:      direction,
-			Offset:         offset,
-			LeverRate:      *hbConfig.Leverage,
-			OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
-		}
-		logger.Debugf("SWAP ORDER %v", order)
-		bOrderSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.OrderSilent)
-
-		hOrderSilentTimes[swapSymbol] = time.Now().Add(*hbConfig.OrderSilent)
-		hPositionsUpdateTimes[swapSymbol] = time.Unix(0, 0)
-		bLastOrderTimes[swapSymbol] = time.Now()
-		hOrderRequestChs[swapSymbol] <- order
+		tOrderSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
+		tLastOrderTimes[takerSymbol] = time.Now()
+		tOrderRequestChs[takerSymbol] <- takerOrder
 	}
-	hbUnHedgeValue = unHedgedValue
+	mtUnHedgeValue = unHedgedValue
 }
 
-func updateSpotNewOrders() {
+func updateMakerNewOrders() {
 
-	if hbspotUSDTBalance == nil {
+	if mAccount == nil {
 		return
 	}
 
-	if hbcrossswapAccount == nil {
+	if tUSDTAsset == nil && tUSDTAsset.AvailableBalance != nil {
 		return
 	}
 
-	if len(hbRankSymbolMap) == 0 {
+	if len(mtRankSymbolMap) == 0 {
 		return
 	}
 
-	if hbUnHedgeValue > *hbConfig.MaxUnHedgeValue {
-		logger.Debugf("UN HEDGE VALUE %f > %f", hbUnHedgeValue, *hbConfig.MaxUnHedgeValue)
+	if mtUnHedgeValue > *mtConfig.MaxUnHedgeValue {
+		if time.Now().Sub(mtUnHedgeLogSilentTimes) > 0 {
+			logger.Debugf("TAKER UN HEDGE VALUE %f > %f", mtUnHedgeValue, *mtConfig.MaxUnHedgeValue)
+			mtUnHedgeLogSilentTimes = time.Now().Add(*mtConfig.LogInterval)
+		}
 		return
 	}
 
-	entryStep := (hbcrossswapAccount.WithdrawAvailable + hbspotUSDTBalance.Available) * *hbConfig.EnterFreePct
-	if entryStep < *hbConfig.EnterMinimalStep {
-		entryStep = *hbConfig.EnterMinimalStep
+	entryStep := (mAccount.WithdrawAvailable + *tUSDTAsset.AvailableBalance) * *mtConfig.EnterFreePct
+	if entryStep < *mtConfig.EnterMinimalStep {
+		entryStep = *mtConfig.EnterMinimalStep
 	}
-	entryTarget := entryStep * *hbConfig.EnterTargetFactor
+	entryTarget := entryStep * *mtConfig.EnterTargetFactor
 
-	//遍历合约 从最大的rank 开始，能保证FR强的先下单
-	for rank := len(bSymbols) - 1; rank >= 0; rank-- {
+	//遍历合约 从最大的rank 开始，能保证FR强的先下单, 优先做空
+	for rank := len(mSymbols) - 1; rank >= 0; rank-- {
 
-		swapSymbol := hbRankSymbolMap[rank]
-		spotSymbol := hbSymbolsMap[swapSymbol]
-		//需要保证期货和现货都有仓位更新，才调整现货仓位
-		if time.Now().Sub(bPositionsUpdateTimes[spotSymbol]) > *hbConfig.BalancePositionMaxAge {
+		makerSymbol := mtRankSymbolMap[rank]
+		takerSymbol := mtSymbolsMap[makerSymbol]
+		//需要保证两边都有仓位更新，才调整现货仓位
+		if time.Now().Sub(mPositionsUpdateTimes[makerSymbol]) > *mtConfig.BalancePositionMaxAge {
 			continue
 		}
-		if time.Now().Sub(hPositionsUpdateTimes[swapSymbol]) > *hbConfig.BalancePositionMaxAge {
+		if time.Now().Sub(tPositionsUpdateTimes[takerSymbol]) > *mtConfig.BalancePositionMaxAge {
 			continue
 		}
-		if _, ok := hOpenOrders[spotSymbol]; ok {
+		if _, ok := mOpenOrders[makerSymbol]; ok {
 			//如果还有订单不操作
 			continue
 		}
-		if time.Now().Sub(bOrderSilentTimes[spotSymbol]) < 0 {
+		if time.Now().Sub(mOrderSilentTimes[makerSymbol]) < 0 {
 			continue
 		}
-		if time.Now().Sub(hSilentTimes[spotSymbol]) < 0 {
+		if time.Now().Sub(mSilentTimes[makerSymbol]) < 0 {
 			continue
 		}
-		quantile, okQuantile := hbQuantiles[spotSymbol]
-		spread, okSpread := hbSpreads[spotSymbol]
-		spotBalance, okSpotBalance := hbspotBalances[spotSymbol]
-		fundingRate, okFundingRate := hFundingRates[swapSymbol]
-		//logger.Debugf("%v %v %v %v %v", okSpread, okQuantile, okSpotBalance, okFundingRate, time.Now().Sub(spread.LastUpdateTime))
-		if !okSpread || !okQuantile || !okSpotBalance || !okFundingRate {
+		quantile, okQuantile := mtQuantiles[makerSymbol]
+		spread, okSpread := mtSpreads[makerSymbol]
+		makerPosition, okMakerPosition := mPositions[makerSymbol]
+		fundingRate, okFundingRate := mtFundingRates[makerSymbol]
+		if !okSpread || !okQuantile || !okMakerPosition || !okFundingRate {
 			continue
 		}
-		if time.Now().Sub(spread.LastUpdateTime) > *hbConfig.SpreadTimeToLive {
+		if time.Now().Sub(spread.LastUpdateTime) > *mtConfig.SpreadTimeToLive {
 			continue
 		}
-		swapContractSize := hbcrossswapContractSizes[swapSymbol]
-		spotStepSize := hbspotStepSizes[spotSymbol]
-		spotTickSize := hbspotTickSizes[spotSymbol]
-		spotMinNotional := hbspotMinNotional[spotSymbol]
-		amountPrecision := hbspotAmountPrecisions[spotSymbol]
-		pricePrecision := hbspotPricePrecisions[spotSymbol]
+		makerOrderBook := spread.MakerOrderBook
+		makerContractSize := mContractSizes[makerSymbol]
+		makerTickSize := mTickSizes[makerSymbol]
+		takerMinNotional := tMinNotional[takerSymbol]
+		makerTakerStepSize := mtStepSizes[makerSymbol]
+		makerStepSize := math.Ceil(makerContractSize/makerTickSize) * makerTickSize
+		makerStepSize = math.Ceil(makerStepSize / makerTickSize)
 
-		currentSpotSize := spotBalance.Balance
-		if spread.LastEnter > quantile.Top &&
-			spread.MedianEnter > quantile.Top &&
-			fundingRate.FundingRate > *hbConfig.MinimalEnterFundingRate &&
-			rank >= len(hSymbols)-*hbConfig.TradeCount {
-			price := spread.SpotOrderBook.MakerBidVWAP
-			price = math.Floor(price/spotTickSize) * spotTickSize
-			targetValue := currentSpotSize*price + entryStep
+		makerSize := makerPosition.Volume * makerContractSize
+		if makerPosition.Direction == hbcrossswap.OrderDirectionSell {
+			makerSize = -makerSize
+		}
+		if spread.ShortLastEnter > quantile.ShortTop &&
+			spread.ShortMedianEnter > quantile.ShortTop &&
+			fundingRate > *mtConfig.MinimalEnterFundingRate &&
+			makerSize >= 0 {
+			price := makerOrderBook.MakerBidVWAP
+			price = math.Floor(price/makerTickSize) * makerTickSize
+			targetValue := makerSize*price + entryStep
 			if targetValue > entryTarget {
 				targetValue = entryTarget
 			}
-			entryValue := targetValue - currentSpotSize*price
+			entryValue := targetValue - makerSize*price
 
-			if entryValue > hbspotUSDTBalance.Available*0.8 {
-				entryValue = hbspotUSDTBalance.Available * 0.8
+			if entryValue > mAccount.WithdrawAvailable*0.8 {
+				entryValue = mAccount.WithdrawAvailable * 0.8
 			}
 
-			entryValue = math.Max(entryValue, spotMinNotional)
+			entryValue = math.Max(entryValue, takerMinNotional)
 
-			amount := entryValue / price
-			amount = math.Round(amount/spotStepSize) * spotStepSize
-			amount = math.Round(amount/swapContractSize) * swapContractSize
+			volume := entryValue / price
+			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
+			volume = math.Round(volume / makerContractSize)
+
+			entryValue = volume * makerContractSize * price
 
 			//不及一个0.8*EntryStep, 不操作
 			if entryValue < entryStep*0.8 {
-				if time.Now().Sub(hOpenLogSilentTimes[spotSymbol]) > 0 {
+				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
 					logger.Debugf(
 						"FAILED TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
 						entryValue,
 						entryStep*0.8,
-						spotSymbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
-						amount,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
 					)
-					hOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
+					mLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
 			}
-			if entryValue > hbspotUSDTBalance.Available {
-				if time.Now().Sub(hOpenLogSilentTimes[spotSymbol]) > 0 {
+			if entryValue > mAccount.WithdrawAvailable {
+				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
 					logger.Debugf(
-						"FAILED TOP OPEN, ENTRY VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
+						"FAILED TOP OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f > %f, %f > %f, SIZE %f",
 						entryValue,
-						hbspotUSDTBalance.Available,
-						spotSymbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
-						amount,
+						mAccount.WithdrawAvailable,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
 					)
-					hOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
+					mLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
 			}
-			if amount*price > hbspotUSDTBalance.Available {
-				if time.Now().Sub(hOpenLogSilentTimes[spotSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED TOP OPEN, ORDER VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
-						amount*price,
-						hbspotUSDTBalance.Available,
-						spotSymbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
-						amount,
-					)
-					hOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
-				}
-				continue
-			}
-			if amount*price < spotMinNotional ||
-				amount < swapContractSize {
-				if time.Now().Sub(hOpenLogSilentTimes[spotSymbol]) > 0 {
+			if entryValue < takerMinNotional ||
+				volume < makerContractSize {
+				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
 					logger.Debugf(
 						"FAILED TOP OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f",
-						amount*price,
-						spotMinNotional,
-						spotSymbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
-						amount,
+						entryValue,
+						takerMinNotional,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
 					)
-					hOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
+					mLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
 			}
-			hOpenLogSilentTimes[spotSymbol] = time.Now()
+			mLogSilentTimes[makerSymbol] = time.Now()
 			logger.Debugf(
 				"TOP OPEN %s %f > %f, %f > %f, SIZE %f",
-				spotSymbol,
-				spread.LastEnter, quantile.Top,
-				spread.MedianEnter, quantile.Top,
-				amount,
+				makerSymbol,
+				spread.ShortLastEnter, quantile.ShortTop,
+				spread.ShortMedianEnter, quantile.ShortTop,
+				volume,
 			)
-			order := hbspot.NewOrderParam{
-				Symbol:        spotSymbol,
-				AccountId:     hbspotAccountID,
-				ClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
-				Price:         common.FormatByPrecision(price, pricePrecision),
-				Amount:        common.FormatByPrecision(amount, amountPrecision),
-				OriginPrice:   price,
-				OriginAmount:  amount,
-				Type:          hbspot.OrderTypeBuyLimit,
+			offset := hbcrossswap.OrderOffsetOpen
+			if makerPosition.Volume < 0 {
+				volume = -makerPosition.Volume
+				offset = hbcrossswap.OrderOffsetClose
+			}
+			direction := hbcrossswap.OrderDirectionBuy
+			order := hbcrossswap.NewOrderParam{
+				Symbol:         makerSymbol,
+				ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
+				Price:          common.Float64(price),
+				Volume:         int64(volume),
+				Direction:      direction,
+				Offset:         offset,
+				LeverRate:      *mtConfig.Leverage,
+				OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
+			}
+			logger.Debugf("MAKER ORDER %v", order)
+			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+			mOrderCancelCounts[makerSymbol] = 0
+			mOpenOrders[makerSymbol] = order
+			mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
+			return
+		} else if spread.LongLastEnter < quantile.LongBot &&
+			spread.LongMedianEnter < quantile.LongBot &&
+			fundingRate < -*mtConfig.MinimalEnterFundingRate &&
+			makerSize <= 0 {
+			price := makerOrderBook.MakerAskVWAP
+			price = math.Ceil(price/makerTickSize) * makerTickSize
+			targetValue := makerSize*price - entryStep
+			if targetValue < -entryTarget {
+				targetValue = -entryTarget
+			}
+			entryValue := targetValue - makerSize*price
+
+			if entryValue > -mAccount.WithdrawAvailable*0.8 {
+				entryValue = -mAccount.WithdrawAvailable * 0.8
 			}
 
-			bOrderSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.OrderSilent)
-			hOrderCancelCounts[spotSymbol] = 0
-			hOpenOrders[spotSymbol] = order
-			hbspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{New: &order}
+			entryValue = math.Min(entryValue, -takerMinNotional)
+
+			volume := entryValue / price
+			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
+			volume = math.Round(volume / makerContractSize)
+
+			entryValue = volume * makerContractSize * price
+
+			//不及一个0.8*EntryStep, 不操作
+			if -entryValue < entryStep*0.8 {
+				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
+					logger.Debugf(
+						"FAILED BOT OPEN, ENTRY VALUE (-)%f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
+						-entryValue,
+						entryStep*0.8,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
+					)
+					mLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+				}
+				continue
+			}
+			if -entryValue > mAccount.WithdrawAvailable {
+				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
+					logger.Debugf(
+						"FAILED BOT OPEN, ENTRY VALUE (-)%f MORE THAN WithdrawAvailable %f, %s %f > %f, %f > %f, SIZE %f",
+						-entryValue,
+						mAccount.WithdrawAvailable,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
+					)
+					mLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+				}
+				continue
+			}
+			if -entryValue < takerMinNotional {
+				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
+					logger.Debugf(
+						"FAILED BOT OPEN, ORDER VALUE (-)%f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f",
+						entryValue,
+						takerMinNotional,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
+					)
+					mLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+				}
+				continue
+			}
+			if -volume < makerContractSize {
+				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
+					logger.Debugf(
+						"FAILED BOT OPEN, ORDER VOLUME (-)%f LESS THAN CONTRACT SIZE %f, %s %f > %f, %f > %f, SIZE %f",
+						-volume,
+						makerContractSize,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
+					)
+					mLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+				}
+				continue
+			}
+			mLogSilentTimes[makerSymbol] = time.Now()
+			logger.Debugf(
+				"BOT OPEN %s %f < %f, %f < %f, SIZE %f",
+				makerSymbol,
+				spread.LongLastEnter, quantile.LongBot,
+				spread.LongMedianEnter, quantile.LongBot,
+				volume,
+			)
+			offset := hbcrossswap.OrderOffsetOpen
+			direction := hbcrossswap.OrderDirectionSell
+			if makerPosition.Volume > 0 {
+				volume = makerPosition.Volume
+				offset = hbcrossswap.OrderOffsetClose
+			}
+			if volume < 0 {
+				volume = -volume
+			}
+			order := hbcrossswap.NewOrderParam{
+				Symbol:         makerSymbol,
+				ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
+				Price:          common.Float64(price),
+				Volume:         int64(volume),
+				Direction:      direction,
+				Offset:         offset,
+				LeverRate:      *mtConfig.Leverage,
+				OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
+			}
+			logger.Debugf("MAKER ORDER BOT OPEN %v", order)
+			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+			mOrderCancelCounts[makerSymbol] = 0
+			mOpenOrders[makerSymbol] = order
+			mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
 			return
-		} else if spread.LastExit < quantile.Bot &&
-			spread.MedianExit < quantile.Bot &&
-			fundingRate.FundingRate < *hbConfig.MinimalKeepFundingRate {
-			price := spread.SpotOrderBook.MakerAskVWAP
-			price = math.Ceil(price/spotTickSize) * spotTickSize
-			if spotBalance.Available*price > spotMinNotional {
-				entryValue := math.Min(-4*entryStep, -spotBalance.Available*price*0.5)
-				if fundingRate.FundingRate > *hbConfig.MinimalKeepFundingRate/2 {
-					entryValue = math.Min(-2*entryStep, -spotBalance.Available*price*0.5)
-				}
-				amount := entryValue / price
-				amount = math.Round(amount/spotStepSize) * spotStepSize
-				amount = math.Round(amount/swapContractSize) * swapContractSize
-				if spotBalance.Available*price+entryValue < entryStep {
-					amount = math.Ceil(-spotBalance.Available/spotStepSize) * spotStepSize
-					amount = math.Ceil(amount/swapContractSize) * swapContractSize
-				}
+		} else if spread.ShortLastExit < quantile.ShortBot &&
+			spread.ShortMedianExit < quantile.ShortBot &&
+			fundingRate < *mtConfig.MinimalKeepFundingRate &&
+			makerSize > 0 {
+			price := spread.TakerOrderBook.MakerAskVWAP
+			price = math.Ceil(price/makerTickSize) * makerTickSize
+			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
+			if fundingRate > *mtConfig.MinimalKeepFundingRate/2 {
+				entryValue = math.Max(2*entryStep, makerSize*price*0.5)
+			}
+			volume := entryValue / price
+			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
+			volume = math.Round(volume / makerContractSize)
+			if makerPosition.Volume*price-entryValue < entryStep {
+				volume = makerPosition.Volume
+			}
+			if volume > 0 {
 				logger.Debugf(
 					"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
-					spotSymbol,
-					spread.LastExit, quantile.Bot,
-					spread.MedianExit, quantile.Bot,
-					amount,
+					makerSymbol,
+					spread.ShortLastExit, quantile.ShortBot,
+					spread.ShortMedianExit, quantile.ShortBot,
+					volume,
 				)
-				if amount < 0 {
-					order := hbspot.NewOrderParam{
-						Symbol:        spotSymbol,
-						AccountId:     hbspotAccountID,
-						ClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
-						Price:         common.FormatByPrecision(price, pricePrecision),
-						Amount:        common.FormatByPrecision(-amount, amountPrecision),
-						OriginPrice:   price,
-						OriginAmount:  amount,
-						Type:          hbspot.OrderTypeSellLimit,
-					}
-					bOrderSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.OrderSilent)
-					hOrderCancelCounts[spotSymbol] = 0
-					hOpenOrders[spotSymbol] = order
-					hbspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{New: &order}
-					return
+				offset := hbcrossswap.OrderOffsetClose
+				direction := hbcrossswap.OrderDirectionSell
+				order := hbcrossswap.NewOrderParam{
+					Symbol:         makerSymbol,
+					ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
+					Price:          common.Float64(price),
+					Volume:         int64(volume),
+					Direction:      direction,
+					Offset:         offset,
+					LeverRate:      *mtConfig.Leverage,
+					OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
 				}
+				logger.Debugf("MAKER ORDER BOT CLOSE %v", order)
+				mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+				mOrderCancelCounts[makerSymbol] = 0
+				mOpenOrders[makerSymbol] = order
+				mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
+				return
+			}
+		} else if spread.LongLastExit > quantile.LongTop &&
+			spread.LongMedianExit > quantile.LongTop &&
+			fundingRate > -*mtConfig.MinimalKeepFundingRate &&
+			makerSize < 0 {
+			price := spread.TakerOrderBook.MakerBidVWAP
+			price = math.Ceil(price/makerTickSize) * makerTickSize
+			entryValue := math.Max(4*entryStep, -makerSize*price*0.5)
+			if fundingRate < -*mtConfig.MinimalKeepFundingRate/2 {
+				entryValue = math.Max(2*entryStep, -makerSize*price*0.5)
+			}
+			volume := entryValue / price
+			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
+			volume = math.Round(volume / makerContractSize)
+			if -makerSize*price-entryValue < entryStep {
+				volume = makerPosition.Volume
+			}
+			if volume > 0 {
+				logger.Debugf(
+					"TOP LONG REDUCE %s %f > %f, %f > %f, VOLUME %f",
+					makerSymbol,
+					spread.ShortLastExit, quantile.ShortBot,
+					spread.ShortMedianExit, quantile.ShortBot,
+					volume,
+				)
+				offset := hbcrossswap.OrderOffsetClose
+				direction := hbcrossswap.OrderDirectionBuy
+				order := hbcrossswap.NewOrderParam{
+					Symbol:         makerSymbol,
+					ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
+					Price:          common.Float64(price),
+					Volume:         int64(volume),
+					Direction:      direction,
+					Offset:         offset,
+					LeverRate:      *mtConfig.Leverage,
+					OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
+				}
+				logger.Debugf("MAKER ORDER BOT CLOSE %v", order)
+				mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+				mOrderCancelCounts[makerSymbol] = 0
+				mOpenOrders[makerSymbol] = order
+				mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
+				return
 			}
 		}
 	}
-}
+
+	func
+	handleRestartSilent()
+	{
+		for _, makerSymbol := range mSymbols {
+			mSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.RestartSilent)
+		}
+	}
+
+	func
+	handleUpdateTradeDirections()
+	{
+		if mFundingRates == nil {
+			return
+		}
+		if tPremiumIndexes == nil {
+			return
+		}
+		frs := make([]float64, len(mSymbols))
+		for i, makerSymbol := range mSymbols {
+			takerSymbol := mtSymbolsMap[makerSymbol]
+			if fr, ok := mFundingRates[makerSymbol]; ok {
+				if pi, ok := tPremiumIndexes[takerSymbol]; ok {
+					frs[i] = pi.FundingRate - fr.FundingRate
+					mtFundingRates[makerSymbol] = frs[i]
+				} else {
+					logger.Fatalf("MISS PREMIUM INDEX FOR TAKER %s", makerSymbol)
+				}
+			} else {
+				logger.Fatalf("MISS FUNDING RATE FOR MAKER %s", makerSymbol)
+			}
+		}
+		var err error
+		if len(mtRankSymbolMap) == 0 {
+			logger.Debugf("RANK FR...")
+			mtRankSymbolMap, err = common.RankSymbols(mSymbols, frs)
+			if err != nil {
+				logger.Debugf("RankSymbols error %v", err)
+			}
+			logger.Debugf("SYMBOLS FR RANK %v", mtRankSymbolMap)
+		} else {
+			mtRankSymbolMap, err = common.RankSymbols(mSymbols, frs)
+			if err != nil {
+				logger.Debugf("RankSymbols error %v", err)
+			}
+		}
+	}

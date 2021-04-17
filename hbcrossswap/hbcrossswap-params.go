@@ -17,10 +17,12 @@ const (
 	KlinePeriod1day  = "1day"
 	KlinePeriod1mon  = "1mon"
 
-	OrderDirectionBuy  = "buy"
-	OrderDirectionSell = "sell"
-	OrderOffsetOpen    = "open"
-	OrderOffsetClose   = "close"
+	OrderDirectionBuy     = "buy"
+	OrderDirectionSell    = "sell"
+	OrderOffsetOpen       = "open"
+	OrderOffsetClose      = "close"
+	PositionDirectionBuy  = "buy"
+	PositionDirectionSell = "sell"
 
 	OrderPriceTypeLimit           = "limit"
 	OrderPriceTypeOpponent        = "opponent"
