@@ -49,7 +49,6 @@ var bOrderSilentTimes = make(map[string]time.Time)
 var bPositionsUpdateTimes = make(map[string]time.Time)
 var bLastOrderTimes = make(map[string]time.Time)
 
-
 var hOpenLogSilentTimes = make(map[string]time.Time)
 
 var hbcrossswapAccountCh = make(chan hbcrossswap.Account, 10)
@@ -90,8 +89,10 @@ var hOrderCancelCounts = make(map[string]int)
 var hFundingRates = make(map[string]hbcrossswap.FundingRate)
 var hFundingRatesCh = make(chan map[string]hbcrossswap.FundingRate, 10)
 
-var hFundingRates = make(map[string]hbcrossswap.FundingRate)
-var hFundingRatesCh = make(chan map[string]hbcrossswap.FundingRate, 10)
+var bPremiumIndexes = make(map[string]bnswap.PremiumIndex)
+var bPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
+
+var hbTradeDirections = make(map[string]int)
 
 var hbRankSymbolMap map[int]string
 

@@ -187,8 +187,10 @@ func updateSpotNewOrders() {
 			entryValue = math.Max(entryValue, spotMinNotional)
 
 			amount := entryValue / price
-			amount = math.Ceil(amount/spotStepSize) * spotStepSize
-			amount = math.Ceil(amount/swapContractSize) * swapContractSize
+			amount = math.Round(amount/spotStepSize) * spotStepSize
+			amount = math.Round(amount/swapContractSize) * swapContractSize
+
+			entryValue = amount*price
 
 			//不及一个0.8*EntryStep, 不操作
 			if entryValue < entryStep*0.8 {
