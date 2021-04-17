@@ -75,6 +75,8 @@ func watchDeltaQuantile(
 						Bot:     bot / maClose,
 						Mid:     mid / maClose,
 						MaClose: maClose,
+						TopBandScale: topScale,
+						BotBandScale: botScale,
 					}
 					if q.Top < minimalEnterDelta {
 						q.Top = minimalEnterDelta
