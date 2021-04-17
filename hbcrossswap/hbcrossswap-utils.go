@@ -35,7 +35,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 					return nil, fmt.Errorf("JsonKeyBids error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
-				if counter >= 40 {
+				if counter >= 40 || bytes[offset+1] == ']'{
 					currentKey = common.JsonKeyAsks
 					offset += 12
 					collectStart = offset
@@ -57,7 +57,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 					return nil, fmt.Errorf("JsonKeyAsks error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
-				if counter >= 40 {
+				if counter >= 40 || bytes[offset+1] == ']'{
 					currentKey = common.JsonKeyEventTime
 					offset += 8
 					collectStart = offset
