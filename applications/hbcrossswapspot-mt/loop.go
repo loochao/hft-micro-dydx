@@ -295,14 +295,14 @@ func updateSpotNewOrders() {
 					amount = math.Ceil(-spotBalance.Available/spotStepSize) * spotStepSize
 					amount = math.Ceil(amount/swapContractSize) * swapContractSize
 				}
-				logger.Debugf(
-					"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
-					spotSymbol,
-					spread.LastExit, quantile.Bot,
-					spread.MedianExit, quantile.Bot,
-					amount,
-				)
 				if amount < 0 {
+					logger.Debugf(
+						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
+						spotSymbol,
+						spread.LastExit, quantile.Bot,
+						spread.MedianExit, quantile.Bot,
+						amount,
+					)
 					order := hbspot.NewOrderParam{
 						Symbol:        spotSymbol,
 						AccountId:     hbspotAccountID,
