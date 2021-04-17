@@ -382,13 +382,13 @@ func main() {
 			break
 		case spread := <-spreadCh:
 			mtSpreads[spread.Symbol] = spread
-			mtLoopTimer.Reset(time.Millisecond)
+			//mtLoopTimer.Reset(time.Millisecond)
 			break
 		case mFundingRates = <-mFundingRatesCh:
 			handleUpdateFundingRates()
 			break
 		case tPremiumIndexes = <-tPremiumIndexesCh:
-			logger.Debugf("%v", tPremiumIndexes)
+			//logger.Debugf("%v", tPremiumIndexes)
 			handleUpdateFundingRates()
 			break
 		case mBarsMap = <-mBarsMapCh:

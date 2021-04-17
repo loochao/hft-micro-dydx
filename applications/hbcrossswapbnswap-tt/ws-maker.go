@@ -26,9 +26,17 @@ func handleWSPosition(wsPositions *hbcrossswap.WSPositions) {
 		if _, ok := mtSymbolsMap[nextPos.Symbol]; ok {
 			if lastPos, ok := mPositions[nextPos.Symbol]; ok {
 				if nextPos.Volume != lastPos.Volume {
-					logger.Debugf("SWAP WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
+					logger.Debugf("MAKER WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
+					if nextPos.Volume != 0 {
+						logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
+						mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+					}
 				} else if nextPos.Volume != 0 && nextPos.Direction != lastPos.Direction {
-					logger.Debugf("SWAP WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
+					if nextPos.Volume != 0 {
+						logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
+						mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+					}
+					logger.Debugf("MAKER WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
 				}
 				nextPos := nextPos
 				mPositions[nextPos.Symbol] = nextPos

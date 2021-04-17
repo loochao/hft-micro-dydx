@@ -24,8 +24,16 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 			//如果SPOT变仓，立刻调MAKER，如果MAKER变仓，等ORDER SILENT TIMEOUT
 			mOrderSilentTimes[nextPos.Symbol] = time.Now()
 			logger.Debugf("MAKER HTTP POSITION %s DIRECTION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Direction, nextPos.Volume, nextPos.CostOpen)
+			if lastPosition != nil && nextPos.Volume != 0 {
+				logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
+				mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+			}
 		} else if nextPos.Volume != 0 &&
 			lastPosition.Direction != nextPos.Direction {
+			if nextPos.Volume != 0 {
+				logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
+				mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+			}
 			logger.Debugf("MAKER HTTP POSITION %s DIRECTION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Direction, nextPos.Volume, nextPos.CostOpen)
 		}
 	}

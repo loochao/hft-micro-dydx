@@ -24,7 +24,7 @@ func handleTakerHttpPositions(positions []bnswap.Position) {
 		}
 		nextPos := nextPos
 		tPositions[nextPos.Symbol] = &nextPos
-		mPositionsUpdateTimes[nextPos.Symbol] = time.Now()
+		tPositionsUpdateTimes[nextPos.Symbol] = time.Now()
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != nextPos.PositionAmt ||
 			lastPosition.EntryPrice != nextPos.EntryPrice {

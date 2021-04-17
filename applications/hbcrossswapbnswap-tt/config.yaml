@@ -1,5 +1,5 @@
 name: hbcrossswapbnswap-tt-gb-ff01
-dryRun: true
+dryRun: false
 proxyAddress: socks5://127.0.0.1:1082
 cpuProfile: #/Users/chenjilin/Downloads/hbcrossswapspot-mt.prof
 internalInflux:
@@ -31,30 +31,24 @@ loopInterval: 5s
 pullInterval: 1m0s
 logInterval: 1m
 
-resetUnrealisedPnlInterval: 15m
-resetUnrealisedTriggerPct: -0.5
-resetCount: 5
-
 balancePositionMaxAge: 3m
 
 pullBarsInterval: 30m
 pullBarsRetryInterval: 3s
 barsLookback: 180
-topQuantile: 0.95
-botQuantile: 0.05
-makerBandOffset: 0.00222
-minimalBandOffset: 0.00222 #0.00222
-minimalEnterDelta: 0.00888 #0.00444
-maximalExitDelta: -0.00111
-topBandScale: 1.0
-botBandScale: 1.0
+topQuantile: 0.55
+botQuantile: 0.45
+makerBandOffset: 0.000222
+minimalBandOffset: 0.000222 #0.00222
+minimalEnterDelta: 0.000666 #0.00444
+maximalExitDelta: -0.000111
+topBandScale: 0.618
+botBandScale: 0.618
 
 minimalEnterFundingRate: 0.0001
-minimalKeepFundingRate: 0.005
+minimalKeepFundingRate: 0.004
 
-orderBookTakerImpact: 500
-orderBookMakerImpact: 100
-orderBookType: depth5@100ms
+orderBookImpact: 500
 orderBookMaxAgeDiff: 250ms
 orderBookMaxAge: 500ms
 orderBookBatchSize: 30
@@ -62,10 +56,6 @@ orderBookBatchSize: 30
 spreadTimeToLive: 500ms
 spreadLookbackMinimalWindow: 3
 spreadLookbackDuration: 1s
-
-reBalanceInterval: 1m
-insuranceFundingRatio: 0.25
-reBalanceMinimalNotional: 20
 
 enterSlippage: 0.03
 startValue: 1000
@@ -88,7 +78,7 @@ makerTakerSymbolsMap:
 #  BTC-USDT: BTCUSDT
 #  ETH-USDT: ETHUSDT
 #  LTC-USDT: LTCUSDT
-  DOGE-USDT: DOGEUSDT
+#  DOGE-USDT: DOGEUSDT
 #  XRP-USDT: XRPUSDT
 #  LINK-USDT: LINKUSDT
 #  TRX-USDT: TRXUSDT
@@ -98,7 +88,7 @@ makerTakerSymbolsMap:
 #  BCH-USDT: BCHUSDT
 #  YFI-USDT: YFIUSDT
 #  UNI-USDT: UNIUSDT
-#  FIL-USDT: FILUSDT
+  FIL-USDT: FILUSDT
 #  YFII-USDT: YFIIUSDT
 #  SNX-USDT: SNXUSDT
 #  BNB-USDT: BNBUSDT
@@ -125,4 +115,4 @@ makerTakerSymbolsMap:
 #  OMG-USDT: OMGUSDT
 #  ONT-USDT: ONTUSDT
 #  AVAX-USDT: AVAXUSDT
-  MATIC-USDT: MATICUSDT
+#  MATIC-USDT: MATICUSDT

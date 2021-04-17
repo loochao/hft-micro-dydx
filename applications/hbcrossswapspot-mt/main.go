@@ -371,7 +371,7 @@ func main() {
 			break
 		case spread := <-spreadCh:
 			hbSpreads[spread.Symbol] = spread
-			hbLoopTimer.Reset(time.Nanosecond)
+			//hbLoopTimer.Reset(time.Nanosecond)
 			break
 		case hbcrossswapFundingRates = <-hbcrossswapFundingRatesCh:
 			//logger.Debugf("FRS %v", hbcrossswapFundingRates)

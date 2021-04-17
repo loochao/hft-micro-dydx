@@ -121,6 +121,7 @@ func updateMakerPositions() {
 		entryStep = *mtConfig.EnterMinimalStep
 	}
 	entryTarget := entryStep * *mtConfig.EnterTargetFactor
+	logger.Debugf("%v", entryTarget)
 
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单, 优先做空
 	for rank := len(mSymbols) - 1; rank >= 0; rank-- {
@@ -174,12 +175,9 @@ func updateMakerPositions() {
 				targetValue = entryTarget
 			}
 			entryValue := targetValue - makerSize*price
-
 			if entryValue > mAccount.WithdrawAvailable*0.8 {
 				entryValue = mAccount.WithdrawAvailable * 0.8
 			}
-
-			entryValue = math.Max(entryValue, takerMinNotional)
 
 			volume := entryValue / price
 			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
@@ -266,11 +264,9 @@ func updateMakerPositions() {
 			}
 			entryValue := targetValue - makerSize*price
 
-			if -entryValue < mAccount.WithdrawAvailable*0.8 {
+			if -entryValue > mAccount.WithdrawAvailable*0.8 {
 				entryValue = -mAccount.WithdrawAvailable * 0.8
 			}
-
-			entryValue = math.Min(entryValue, -takerMinNotional)
 
 			volume := entryValue / price
 			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
