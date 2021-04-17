@@ -59,7 +59,7 @@ type Config struct {
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`
 
-	OrderBookImpact             *float64       `yaml:"orderBookTakerImpact,omitempty"`
+	OrderBookImpact             *float64       `yaml:"orderBookImpact,omitempty"`
 	OrderBookBatchSize          *int           `yaml:"orderBookBatchSize,omitempty"`
 	OrderBookMaxAgeDiff         *time.Duration `yaml:"orderBookMaxAgeDiff,omitempty"`
 	OrderBookMaxAge             *time.Duration `yaml:"orderBookMaxAge,omitempty"`
