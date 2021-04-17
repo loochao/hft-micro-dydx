@@ -96,7 +96,7 @@ func updatePerpPositions() {
 		hbcrossswapLastOrderTimes[swapSymbol] = time.Now()
 		hbcrossswapOrderRequestChs[swapSymbol] <- order
 	}
-	kcUnHedgeValue = unHedgedValue
+	hbUnHedgeValue = unHedgedValue
 }
 
 func updateSpotNewOrders() {
@@ -113,9 +113,9 @@ func updateSpotNewOrders() {
 		return
 	}
 
-	if kcUnHedgeValue > *hbConfig.MaxUnHedgeValue {
+	if hbUnHedgeValue > *hbConfig.MaxUnHedgeValue {
 		if time.Now().Sub(hbUnHedgeLogSilentTime) > 0 {
-			logger.Debugf("UN HEDGE VALUE %f > %f", kcUnHedgeValue, *hbConfig.MaxUnHedgeValue)
+			logger.Debugf("UN HEDGE VALUE %f > %f", hbUnHedgeValue, *hbConfig.MaxUnHedgeValue)
 			hbUnHedgeLogSilentTime = time.Now().Add(time.Minute)
 		}
 		return

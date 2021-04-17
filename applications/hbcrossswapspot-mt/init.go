@@ -102,13 +102,13 @@ var hbspotLastFilledBuyPrices = make(map[string]float64)
 var hbspotLastFilledSellPrices = make(map[string]float64)
 var kcRealisedSpread = make(map[string]float64)
 var hbSpreads = make(map[string]Spread)
-var kcUnHedgeValue float64
+var hbUnHedgeValue float64
 
 var hbConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210417 02:15:50  ####")
+	logger.Debug("####  BUILD @ 20210417 02:25:40  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

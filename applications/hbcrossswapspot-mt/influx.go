@@ -163,6 +163,7 @@ func handleSave() {
 		fields["totalBalance"] = *totalSpotBalance + *totalPerpUSDTBalance
 		fields["swapBalance"] = *totalPerpUSDTBalance
 		fields["spotBalance"] = *totalSpotBalance
+		fields["unHedgeValue"] = hbUnHedgeValue
 		fields["netWorth"] = (*totalSpotBalance + *totalPerpUSDTBalance) / *hbConfig.StartValue
 		fields["startValue"] = *hbConfig.StartValue
 		fields["netWorth"] = netWorth
