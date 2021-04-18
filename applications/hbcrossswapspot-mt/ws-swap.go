@@ -13,14 +13,14 @@ func handleWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 			if hbcrossswapAccount == nil {
 				logger.Debugf("SWAP WS USDT CHANGE MP nil -> %f MB nil -> %f", account.MarginPosition, account.MarginBalance)
 				hbLoopTimer.Reset(time.Nanosecond)
-			} else if hbcrossswapAccount.MarginPosition != account.MarginPosition {
+			} else if hbcrossswapAccount.MarginBalance != account.MarginBalance {
 				hbLoopTimer.Reset(time.Nanosecond)
-				logger.Debugf("SWAP WS USDT CHANGE MP %f -> %f MB %f -> %f ",
-					hbcrossswapAccount.MarginPosition,
-					account.MarginPosition,
-					hbcrossswapAccount.MarginBalance,
-					account.MarginBalance,
-				)
+				//logger.Debugf("SWAP WS USDT CHANGE MP %f -> %f MB %f -> %f ",
+				//	hbcrossswapAccount.MarginPosition,
+				//	account.MarginPosition,
+				//	hbcrossswapAccount.MarginBalance,
+				//	account.MarginBalance,
+				//)
 			}
 			hbcrossswapAccount = &account
 			return
