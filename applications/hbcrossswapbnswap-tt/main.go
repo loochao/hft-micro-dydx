@@ -73,7 +73,7 @@ func main() {
 		totalDiff += tt.Timestamp.Sub(time.Now()).Milliseconds()
 		time.Sleep(time.Second)
 	}
-	logger.Debugf("MAKER DIFF %v", totalDiff/10)
+	logger.Debugf("MAKER TIME DIFF %v", totalDiff/10)
 
 	mtGlobalCtx, mtGlobalCancel = context.WithCancel(context.Background())
 	defer mtGlobalCancel()
