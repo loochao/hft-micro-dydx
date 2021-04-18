@@ -17,9 +17,12 @@ func watchTakerWalkedOrderBooks(
 		logger.Debugf("EXIT watchTakerWalkedOrderBooks %s", symbols)
 	}()
 	lastEventTimes := make(map[string]time.Time)
+	nextWalkTimes := make(map[string]time.Time)
 	for _, s := range symbols {
 		lastEventTimes[s] = time.Unix(0, 0)
+		nextWalkTimes[s] = time.Now()
 	}
+	walkInterval := time.Millisecond*50
 
 	ws := bnswap.NewDepth20Websocket(ctx, symbols, proxyAddress)
 	defer ws.Stop()
@@ -36,6 +39,10 @@ func watchTakerWalkedOrderBooks(
 		case data := <-ws.DataCh:
 			if lastEventTimes[data.Symbol].Sub(data.EventTime) < 0 {
 				lastEventTimes[data.Symbol] = data.EventTime
+				if time.Now().Sub(nextWalkTimes[data.Symbol]) < 0 {
+					break
+				}
+				nextWalkTimes[data.Symbol] = time.Now().Add(walkInterval)
 				if len(output) > 0 {
 					logger.Debugf("TAKER DEPTH OUTPUT LEN %d", len(output))
 				}

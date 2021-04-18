@@ -21,9 +21,12 @@ func watchMakerWalkedOrderBooks(
 	}()
 
 	lastEventTimes := make(map[string]time.Time)
+	nextWalkTimes := make(map[string]time.Time)
 	for _, symbol := range symbols {
 		lastEventTimes[symbol] = time.Unix(0, 0)
+		nextWalkTimes[symbol] = time.Now()
 	}
+	walkInterval := time.Millisecond*50
 	ws := hbcrossswap.NewDepth20Websocket(
 		ctx,
 		symbols,
@@ -43,6 +46,10 @@ func watchMakerWalkedOrderBooks(
 			if lastEventTimes[lob.Symbol].Sub(lob.EventTime) < 0 {
 				lastEventTimes[lob.Symbol] = lob.EventTime
 				if m, ok := contractSizes[lob.Symbol]; ok {
+					if time.Now().Sub(nextWalkTimes[lob.Symbol]) < 0 {
+						break
+					}
+					nextWalkTimes[lob.Symbol] = time.Now().Add(walkInterval)
 					if len(outputWLob) > 0 {
 						logger.Debugf("MAKER DEPTH OUTPUT LEN %d", len(outputWLob))
 					}
