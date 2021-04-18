@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/getsentry/raven-go"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -92,7 +90,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210418 14:42:04  ####")
+	logger.Debug("####  BUILD @ 20210418 14:42:24  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -151,6 +149,7 @@ func init() {
 
 	mtMapUpdated[TakerName] = false
 	mtMapUpdated[MakerName] = false
+
 
 	//err = raven.SetDSN("https://5c318e0f10a349308d2ff86f51de31d8:fa0a8f90a8244c6ea762130cdd6d1bb9@sentry.jilinchen.com/12")
 	//if err != nil {
