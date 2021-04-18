@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 )
 
@@ -18,6 +19,8 @@ type UserWebsocket struct {
 	OrderUpdateEventCh              chan *OrderUpdateEvent
 	done                            chan interface{}
 	reconnectCh                     chan interface{}
+	mu                              sync.Mutex
+	stopped                         bool
 }
 
 func (w *UserWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
@@ -31,7 +34,7 @@ func (w *UserWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
 			select {
-			case <- ctx.Done():
+			case <-ctx.Done():
 				break
 			default:
 				go w.restart()
@@ -42,7 +45,7 @@ func (w *UserWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
 		if err != nil {
 			logger.Warnf("NextReader error %v", err)
 			select {
-			case <- ctx.Done():
+			case <-ctx.Done():
 				break
 			default:
 				go w.restart()
@@ -53,7 +56,7 @@ func (w *UserWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
 		if err != nil {
 			logger.Warnf("readAll error %v", err)
 			select {
-			case <- ctx.Done():
+			case <-ctx.Done():
 				break
 			default:
 				go w.restart()
@@ -273,7 +276,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
 			select {
-			case <- ctx.Done():
+			case <-ctx.Done():
 				break
 			default:
 				go w.restart()
@@ -283,21 +286,21 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 		return nil
 	})
 
-	timer := time.NewTimer(time.Minute*5)
+	timer := time.NewTimer(time.Minute * 5)
 
 	for {
 		select {
 		case <-timer.C:
 			logger.Warnf("USER WS TIMEOUT, NO TRAFFIC IN %v, RESTART", time.Minute*5)
 			select {
-			case <- ctx.Done():
+			case <-ctx.Done():
 				break
 			default:
 				go w.restart()
 			}
 			return
 		case <-trafficCh:
-			timer.Reset(time.Minute*5)
+			timer.Reset(time.Minute * 5)
 		case <-ctx.Done():
 			return
 		case <-w.done:
@@ -308,9 +311,11 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 }
 
 func (w *UserWebsocket) Stop() {
-	if _, ok := <-w.done; ok {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if !w.stopped {
+		w.stopped = true
 		close(w.done)
-		logger.Infof("BNSWAP USER WS STOPPED")
 	}
 }
 
@@ -357,6 +362,8 @@ func NewUserWebsocket(
 		OrderUpdateEventCh:              make(chan *OrderUpdateEvent, 10),
 		BalanceAndPositionUpdateEventCh: make(chan *BalanceAndPositionUpdateEvent, 10),
 		messageCh:                       make(chan []byte, 10),
+		mu:                              sync.Mutex{},
+		stopped:                         false,
 	}
 	go func(ctx context.Context, ws *UserWebsocket, listenKey ListenKey) {
 		timer := time.NewTimer(time.Minute * 20)

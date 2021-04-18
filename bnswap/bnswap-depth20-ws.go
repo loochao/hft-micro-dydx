@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -17,6 +18,8 @@ type Depth20Websocket struct {
 	DataCh      chan *Depth20
 	done        chan interface{}
 	reconnectCh chan interface{}
+	mu          sync.Mutex
+	stopped     bool
 }
 
 func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) {
@@ -241,7 +244,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
 			select {
-			case <- ctx.Done():
+			case <-ctx.Done():
 				return nil
 			default:
 				go w.restart()
@@ -263,10 +266,13 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 }
 
 func (w *Depth20Websocket) Stop() {
+
 	logger.Debugf("STOP START...")
-	if _, ok := <-w.done; ok {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if !w.stopped {
+		w.stopped = true
 		close(w.done)
-		logger.Infof("BNSWAP MARK PRICE WS STOPPED")
 	}
 	logger.Debugf("STOP END...")
 }
@@ -301,6 +307,8 @@ func NewDepth20Websocket(
 		reconnectCh: make(chan interface{}),
 		DataCh:      make(chan *Depth20, len(symbols)),
 		messageCh:   make(chan []byte, 10*len(symbols)),
+		mu:          sync.Mutex{},
+		stopped:     false,
 	}
 	go ws.start(ctx, symbols, proxy)
 	ws.reconnectCh <- nil
