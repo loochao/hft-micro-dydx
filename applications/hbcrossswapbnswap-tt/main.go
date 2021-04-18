@@ -415,7 +415,7 @@ func main() {
 				logger.Debugf("QUANTILES %s", d)
 			}
 			mtQuantiles = qs
-			mtLoopTimer.Reset(time.Millisecond)
+			//mtLoopTimer.Reset(time.Millisecond)
 			break
 		case <-influxSaveTimer.C:
 			handleSave()

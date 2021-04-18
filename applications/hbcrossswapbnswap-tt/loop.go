@@ -121,7 +121,6 @@ func updateMakerPositions() {
 		entryStep = *mtConfig.EnterMinimalStep
 	}
 	entryTarget := entryStep * *mtConfig.EnterTargetFactor
-	logger.Debugf("%v", entryTarget)
 
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单, 优先做空
 	for rank := len(mSymbols) - 1; rank >= 0; rank-- {

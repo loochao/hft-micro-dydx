@@ -23,7 +23,7 @@ func handleWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 
 func handleWSPosition(wsPositions *hbcrossswap.WSPositions) {
 	for _, nextPos := range wsPositions.Positions {
-		if _, ok := mtSymbolsMap[nextPos.Symbol]; ok {
+		if takerSymbol, ok := mtSymbolsMap[nextPos.Symbol]; ok {
 			if lastPos, ok := mPositions[nextPos.Symbol]; ok {
 				if nextPos.Volume != lastPos.Volume {
 					logger.Debugf("MAKER WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
@@ -31,12 +31,16 @@ func handleWSPosition(wsPositions *hbcrossswap.WSPositions) {
 						logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
 						mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
 					}
+					tOrderSilentTimes[takerSymbol] = time.Now()
+					mtLoopTimer.Reset(time.Nanosecond)
 				} else if nextPos.Volume != 0 && nextPos.Direction != lastPos.Direction {
 					if nextPos.Volume != 0 {
 						logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
 						mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
 					}
 					logger.Debugf("MAKER WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
+					tOrderSilentTimes[takerSymbol] = time.Now()
+					mtLoopTimer.Reset(time.Nanosecond)
 				}
 				nextPos := nextPos
 				mPositions[nextPos.Symbol] = nextPos
