@@ -51,13 +51,29 @@ func main() {
 		return
 	}
 
-	tt, err := tAPI.GetServerTime(context.Background())
-	if err != nil {
-		logger.Debugf("bnswap.GetServerTime error %v", err)
-		return
+	totalDiff := int64(0)
+	for i := 0; i < 100; i++ {
+		tt, err := tAPI.GetServerTime(context.Background())
+		if err != nil {
+			logger.Debugf("bnswap.GetServerTime error %v", err)
+			return
+		}
+		totalDiff += time.Now().UnixNano()/1000000 - tt.ServerTime
+		time.Sleep(time.Second)
 	}
-	diff := time.Now().UnixNano()/1000000 - tt.ServerTime
-	logger.Debugf("DIFF %v", diff)
+	logger.Debugf("TAKER TIME DIFF %v", totalDiff/10)
+
+	totalDiff = int64(0)
+	for i := 0; i < 100; i++ {
+		tt, err := mAPI.GetHeartbeat(context.Background())
+		if err != nil {
+			logger.Debugf("bnswap.GetServerTime error %v", err)
+			return
+		}
+		totalDiff += tt.Timestamp.Sub(time.Now()).Milliseconds()
+		time.Sleep(time.Second)
+	}
+	logger.Debugf("MAKER DIFF %v", totalDiff/10)
 
 	mtGlobalCtx, mtGlobalCancel = context.WithCancel(context.Background())
 	defer mtGlobalCancel()
