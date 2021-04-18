@@ -354,10 +354,10 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 			go w.startDataHandler(internalCtx, 2)
 			go w.startDataHandler(internalCtx, 3)
 
-			go w.startDataHandler(internalCtx, 4)
-			go w.startDataHandler(internalCtx, 5)
-			go w.startDataHandler(internalCtx, 6)
-			go w.startDataHandler(internalCtx, 7)
+			//go w.startDataHandler(internalCtx, 4)
+			//go w.startDataHandler(internalCtx, 5)
+			//go w.startDataHandler(internalCtx, 6)
+			//go w.startDataHandler(internalCtx, 7)
 		}
 	}
 }
