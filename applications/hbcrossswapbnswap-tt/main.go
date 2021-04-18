@@ -51,6 +51,14 @@ func main() {
 		return
 	}
 
+	tt, err := tAPI.GetServerTime(context.Background())
+	if err != nil {
+		logger.Debugf("bnswap.GetServerTime error %v", err)
+		return
+	}
+	diff := time.Now().UnixNano()/1000000 - tt.ServerTime
+	logger.Debugf("DIFF %v", diff)
+
 	mtGlobalCtx, mtGlobalCancel = context.WithCancel(context.Background())
 	defer mtGlobalCancel()
 

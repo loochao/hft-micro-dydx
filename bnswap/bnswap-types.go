@@ -175,6 +175,10 @@ func (kp *KlineParams) ToUrlValues() url.Values {
 	return values
 }
 
+type ServerTime struct {
+	ServerTime int64 `json:"serverTime"`
+}
+
 //{
 //"entryPrice": "0.00000",
 //"marginType": "isolated",

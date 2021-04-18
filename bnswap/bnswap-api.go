@@ -189,6 +189,21 @@ func (api *API) GetPositions(ctx context.Context) ([]Position, error) {
 	return positions, nil
 }
 
+func (api *API) GetServerTime(ctx context.Context) (*ServerTime, error) {
+	var positions ServerTime
+	err := api.SendAuthenticatedHTTPRequest(
+		ctx,
+		http.MethodGet,
+		"/fapi/v1/time",
+		nil,
+		&positions,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &positions, nil
+}
+
 func (api *API) GetAccount(ctx context.Context) (*Account, error) {
 	var account Account
 	err := api.SendAuthenticatedHTTPRequest(
