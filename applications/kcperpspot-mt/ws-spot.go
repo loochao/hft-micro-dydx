@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/geometrybase/hft-micro/kcspot"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"time"
 )
 
@@ -54,7 +55,7 @@ func handleSpotWSBalance(balance *kcspot.WsBalance) {
 	kcspotBalancesUpdateTimes[symbol] = time.Now()
 
 	if lastBalance == nil ||
-		lastBalance.Holds+lastBalance.Available != kcspotBalances[symbol].Available+kcspotBalances[symbol].Holds {
+		math.Abs(lastBalance.Holds+lastBalance.Available-kcspotBalances[symbol].Available-kcspotBalances[symbol].Holds) > 0.000001 {
 		if lastBalance == nil {
 			logger.Debugf("SPOT WS BALANCE CHANGED %s Available nil -> %f Holds nil -> %f", account.Currency, account.Available, account.Holds)
 		} else {
