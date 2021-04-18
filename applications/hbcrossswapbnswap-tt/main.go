@@ -26,7 +26,7 @@ func main() {
 			logger.Debugf("pprof.StartCPUProfile error %v", err)
 			return
 		}
-		//defer pprof.StopCPUProfile()
+		defer pprof.StopCPUProfile()
 	}
 
 	var err error
