@@ -21,6 +21,9 @@ func watchDeltaQuantile(
 	inputCh chan [2]common.KLinesMap,
 	outputCh chan map[string]MakerTakerDeltaQuantile,
 ) {
+	defer func(){
+		logger.Debugf("LOOP END watchDeltaQuantile %s")
+	}()
 	for {
 		select {
 		case <-ctx.Done():

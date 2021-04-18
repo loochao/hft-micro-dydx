@@ -15,6 +15,9 @@ func watchTakerOrderRequest(
 	orderRequestCh chan bnswap.NewOrderParams,
 	outputOrderErrorCh chan TakerOrderNewError,
 ) {
+	defer func(){
+		logger.Debugf("LOOP END watchTakerOrderRequest %s")
+	}()
 	for {
 		select {
 		case <-ctx.Done():

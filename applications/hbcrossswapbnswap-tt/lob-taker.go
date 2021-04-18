@@ -12,6 +12,9 @@ func watchTakerWalkedOrderBooks(
 	cancel context.CancelFunc,
 	proxyAddress string,
 	impact float64, symbols []string, output chan WalkedOrderBook) {
+	defer func(){
+		logger.Debugf("LOOP END watchTakerWalkedOrderBooks %s", symbols)
+	}()
 	lastEventTimes := make(map[string]time.Time)
 	for _, s := range symbols {
 		lastEventTimes[s] = time.Unix(0, 0)

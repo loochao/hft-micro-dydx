@@ -15,6 +15,9 @@ func watchMakerOrderRequest(
 	newOrderParamCh chan hbcrossswap.NewOrderParam,
 	outputOrderErrorCh chan MakerOrderNewError,
 ) {
+	defer func(){
+		logger.Debugf("LOOP END watchMakerOrderRequest %s")
+	}()
 	for {
 		select {
 		case <-ctx.Done():
