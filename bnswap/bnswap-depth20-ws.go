@@ -181,10 +181,12 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 	defer func() {
 		logger.Debugf("EXIT start")
 		cancel()
-		w.Stop()
 		if internalCancel != nil {
 			internalCancel()
 		}
+		logger.Debugf("START STOP")
+		w.Stop()
+		logger.Debugf("END STOP")
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
