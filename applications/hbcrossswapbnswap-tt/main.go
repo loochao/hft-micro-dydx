@@ -206,42 +206,42 @@ func main() {
 	//	*mtConfig.PullInterval*10, tPremiumIndexesCh,
 	//)
 
-	//go watchMakerBars(
-	//	mtGlobalCtx,
-	//	mAPI,
-	//	mSymbols,
-	//	*mtConfig.BarsLookback,
-	//	*mtConfig.PullBarsInterval,
-	//	*mtConfig.PullBarsRetryInterval,
-	//	*mtConfig.RequestInterval,
-	//	mBarsMapCh,
-	//)
-	//
-	//go watchTakerBars(
-	//	mtGlobalCtx,
-	//	tAPI,
-	//	tSymbols,
-	//	*mtConfig.BarsLookback,
-	//	*mtConfig.PullBarsInterval,
-	//	*mtConfig.PullBarsRetryInterval,
-	//	*mtConfig.RequestInterval,
-	//	tBarsMapCh,
-	//)
+	go watchMakerBars(
+		mtGlobalCtx,
+		mAPI,
+		mSymbols,
+		*mtConfig.BarsLookback,
+		*mtConfig.PullBarsInterval,
+		*mtConfig.PullBarsRetryInterval,
+		*mtConfig.RequestInterval,
+		mBarsMapCh,
+	)
 
-	//go watchDeltaQuantile(
-	//	mtGlobalCtx,
-	//	mSymbols,
-	//	mtSymbolsMap,
-	//	*mtConfig.BotQuantile,
-	//	*mtConfig.TopQuantile,
-	//	*mtConfig.TopBandScale,
-	//	*mtConfig.BotBandScale,
-	//	*mtConfig.MinimalEnterDelta,
-	//	*mtConfig.MaximalExitDelta,
-	//	*mtConfig.MinimalBandOffset,
-	//	mtBarsMapCh,
-	//	mtQuantilesCh,
-	//)
+	go watchTakerBars(
+		mtGlobalCtx,
+		tAPI,
+		tSymbols,
+		*mtConfig.BarsLookback,
+		*mtConfig.PullBarsInterval,
+		*mtConfig.PullBarsRetryInterval,
+		*mtConfig.RequestInterval,
+		tBarsMapCh,
+	)
+
+	go watchDeltaQuantile(
+		mtGlobalCtx,
+		mSymbols,
+		mtSymbolsMap,
+		*mtConfig.BotQuantile,
+		*mtConfig.TopQuantile,
+		*mtConfig.TopBandScale,
+		*mtConfig.BotBandScale,
+		*mtConfig.MinimalEnterDelta,
+		*mtConfig.MaximalExitDelta,
+		*mtConfig.MinimalBandOffset,
+		mtBarsMapCh,
+		mtQuantilesCh,
+	)
 
 	walkedOrderBookCh := make(chan WalkedOrderBook, len(mSymbols)*10)
 	go watchTakerWalkedOrderBooks(
