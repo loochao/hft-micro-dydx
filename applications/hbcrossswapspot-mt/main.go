@@ -7,10 +7,8 @@ import (
 	"github.com/geometrybase/hft-micro/hbspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
-	"os/signal"
 	"runtime/pprof"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -271,24 +269,10 @@ func main() {
 		)
 	}
 
-	done := make(chan bool, 1)
-	if *hbConfig.CpuProfile != "" {
-		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-		go func() {
-			sig := <-sigs
-			logger.Debugf("Exit with sig %d, clean *.tmp files", sig)
-			done <- true
-		}()
-	}
-
-	logger.Debugf("START")
+	logger.Debugf("MAIN LOOP START")
 
 	for {
 		select {
-		case <-done:
-			logger.Debugf("Exit")
-			return
 		case <-hbspotUserWebsocket.RestartCh:
 			logger.Debugf("hbspotUserWebsocket restart silent %v", *hbConfig.RestartSilent)
 			handleRestartSilent()
