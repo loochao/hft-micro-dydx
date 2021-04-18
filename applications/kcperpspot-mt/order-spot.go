@@ -75,12 +75,12 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 	spread, ok1 := kcSpreads[order.Symbol]
 	quantile, ok2 := kcQuantiles[order.Symbol]
 	if !ok1 || !ok2 || time.Now().Sub(spread.PerpOrderBook.ParseTime) > *kcConfig.SpreadTimeToLive {
-		logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.PerpOrderBook.ParseTime), order.Symbol)
+		logger.Debugf("%s SPREAD IS OUT OF DATE %v, CANCEL", order.Symbol, time.Now().Sub(spread.PerpOrderBook.ParseTime))
 		return false
 	}
 	if order.Side == kcspot.OrderSideBuy &&
 		float64(order.Price) < (1.0-2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.BidPrice-kcspotTickSizes[order.Symbol] {
-		logger.Debugf("%s BUY PRICE %f < MAKER BAND OFFSET BID PRICE %f",
+		logger.Debugf("%s BUY PRICE %f < MAKER BAND OFFSET BID PRICE %f, CANCEL",
 			order.Symbol,
 			order.Price,
 			(1.0-2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.BidPrice-kcspotTickSizes[order.Symbol],
@@ -88,7 +88,7 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 		return false
 	} else if order.Side == kcspot.OrderSideSell &&
 		float64(order.Price) > (1.0+2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.AskPrice+kcspotTickSizes[order.Symbol] {
-		logger.Debugf("%s SELL PRICE %f > MAKER BAND OFFSEF ASK PRICE %f",
+		logger.Debugf("%s SELL PRICE %f > MAKER BAND OFFSET ASK PRICE %f, CANCEL",
 			order.Symbol,
 			order.Price,
 			(1.0+2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.AskPrice+kcspotTickSizes[order.Symbol],
@@ -105,7 +105,7 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 	}
 	if order.Side == kcspot.OrderSideBuy {
 		logger.Debugf(
-			"NOT PROFITABLE %s BUY ORDER PERP BIDVWAP %f ORDER PRICE %f DELTA %f < TOP %f - %f",
+			"%s NOT PROFITABLE BUY ORDER PERP BID VWAP %f ORDER PRICE %f DELTA %f < TOP %f - %f",
 			order.Symbol,
 			spread.PerpOrderBook.TakerBidVWAP,
 			order.Price,
@@ -115,7 +115,7 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 		)
 	} else {
 		logger.Debugf(
-			"NOT PROFITABLE %s BUY ORDER PERP ASKVWAP %f ORDER PRICE %f DELTA %f > BOT %f + %f",
+			"%s NOT PROFITABLE BUY ORDER PERP ASK VWAP %f ORDER PRICE %f DELTA %f > BOT %f + %f",
 			order.Symbol,
 			spread.PerpOrderBook.TakerAskVWAP,
 			order.Price,
