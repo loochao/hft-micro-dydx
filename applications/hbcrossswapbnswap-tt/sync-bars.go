@@ -72,6 +72,11 @@ func watchMakerBars(
 						})
 					if err != nil {
 						logger.Debugf("SWAP GetKlines for %s error %v", symbol, err)
+						select {
+						case <- ctx.Done():
+							return
+						default:
+						}
 						retryCount--
 						time.Sleep(pullRetryInterval)
 						continue
@@ -202,6 +207,11 @@ func watchTakerBars(
 					history, err = api.GetHistoryKLines(ctx, symbol, klineInterval, symbolStartTime)
 					if err != nil {
 						logger.Debugf("SWAP GetHistoryKlines for %s error %v", symbol, err)
+						select {
+						case <- ctx.Done():
+							return
+						default:
+						}
 						retryCount--
 						time.Sleep(pullRetryInterval)
 						continue
