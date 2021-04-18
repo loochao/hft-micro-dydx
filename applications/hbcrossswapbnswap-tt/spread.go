@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
@@ -140,6 +141,7 @@ func watchSpread(
 
 			longMedianEnterSpread := longEnterSpreadSortedSlices[makerSymbol].Median()
 			longMedianExitSpread := longExitSpreadSortedSlices[makerSymbol].Median()
+			logger.Debugf("LEN SPREAD CH %d", len(outputCh))
 
 			outputCh <- Spread{
 				Symbol:         makerSymbol,
