@@ -264,15 +264,15 @@ func main() {
 		if end > len(mSymbols) {
 			end = len(mSymbols)
 		}
-		//go watchMakerWalkedOrderBooks(
-		//	mtGlobalCtx,
-		//	mtGlobalCancel,
-		//	*mtConfig.ProxyAddress,
-		//	mContractSizes,
-		//	*mtConfig.OrderBookImpact,
-		//	mSymbols[start:end],
-		//	walkedOrderBookCh,
-		//)
+		go watchMakerWalkedOrderBooks(
+			mtGlobalCtx,
+			mtGlobalCancel,
+			*mtConfig.ProxyAddress,
+			mContractSizes,
+			*mtConfig.OrderBookImpact,
+			mSymbols[start:end],
+			walkedOrderBookCh,
+		)
 	}
 
 	spreadCh := make(chan Spread, len(mSymbols)*100)
