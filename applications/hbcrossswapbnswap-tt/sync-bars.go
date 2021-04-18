@@ -33,10 +33,20 @@ func watchMakerBars(
 			allSuccess := true
 		symbolLoop:
 			for _, symbol := range makerSymbols {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
 				var history []common.KLine
 				var err error
 				retryCount := 10
 				for retryCount > 0 {
+					select {
+					case <-ctx.Done():
+						return
+					default:
+					}
 					if bars, ok := barsMap[symbol]; ok {
 						symbolStartTime := bars[len(bars)-1].Timestamp
 						//一分钟内说明是最新数据
@@ -134,7 +144,6 @@ func watchMakerBars(
 	}
 }
 
-
 func watchTakerBars(
 	ctx context.Context,
 	api *bnswap.API,
@@ -149,7 +158,7 @@ func watchTakerBars(
 	defer loopTimer.Stop()
 	barsMap := make(common.KLinesMap)
 	klineInterval := "5m"
-	klineDuration := time.Minute*5
+	klineDuration := time.Minute * 5
 	for {
 		select {
 		case <-ctx.Done():
@@ -158,10 +167,20 @@ func watchTakerBars(
 			allSuccess := true
 		symbolLoop:
 			for _, symbol := range takerSymbols {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
 				var history []common.KLine
 				var err error
 				retryCount := 10
 				for retryCount > 0 {
+					select {
+					case <-ctx.Done():
+						return
+					default:
+					}
 					symbolEndTime := time.Now().Truncate(klineDuration)
 					symbolStartTime := symbolEndTime.Add(-klineDuration * time.Duration(barsLookback+3))
 					if bars, ok := barsMap[symbol]; ok {
