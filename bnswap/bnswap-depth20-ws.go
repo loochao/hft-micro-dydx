@@ -103,7 +103,6 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 				continue
 			}
 			if msg[61] == 'E' {
-				logger.Debugf("%s", msg[64:77])
 				t, err := common.ParseInt(msg[64:77])
 				if err != nil {
 					logger.Debugf("ParseDepth20 error %v %s", err, msg[64:77])
@@ -114,7 +113,6 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 					continue
 				}
 			} else if msg[62] == 'E' {
-				logger.Debugf("%s", msg[65:78])
 				t, err := common.ParseInt(msg[65:78])
 				if err != nil {
 					logger.Debugf("ParseDepth20 error %v %s", err, msg[65:78])
