@@ -7,7 +7,9 @@ import (
 	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
+	"os/signal"
 	"runtime/pprof"
+	"syscall"
 	"time"
 )
 
@@ -291,10 +293,24 @@ func main() {
 		)
 	}
 
-	logger.Debugf("START")
+	done := make(chan bool, 1)
+	if *mtConfig.CpuProfile != "" {
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			<-sigs
+			mtGlobalCancel()
+			close(done)
+		}()
+	}
+
+	logger.Debugf("START MAIN LOOP")
 
 	for {
 		select {
+		case <-done:
+			logger.Debugf("EXIT MAIN LOOP")
+			return
 		case <-mUserWebsocket.RestartCh:
 			logger.Debugf("mUserWebsocket restart silent %v", *mtConfig.RestartSilent)
 			handleRestartSilent()

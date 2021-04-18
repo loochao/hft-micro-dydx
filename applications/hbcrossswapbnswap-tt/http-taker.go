@@ -40,7 +40,7 @@ func handleTakerHttpAccount(account bnswap.Account) {
 		if asset.Asset == "USDT" {
 			asset := asset
 			if tAccount == nil {
-				logger.Debugf("TAKER HTTP WB CHANGE%v -> %f", nil, *asset.WalletBalance)
+				logger.Debugf("TAKER HTTP WB CHANGE %v -> %f", nil, *asset.WalletBalance)
 				mtLoopTimer.Reset(time.Nanosecond)
 			} else if tAccount.WalletBalance != nil &&
 				asset.WalletBalance != nil &&
