@@ -22,7 +22,7 @@ func watchTakerWalkedOrderBooks(
 	}
 
 	ws := bnswap.NewDepth20Websocket(ctx, symbols, proxyAddress)
-	//defer ws.Stop()
+	defer ws.Stop()
 
 	var wb WalkedOrderBook
 	for {
