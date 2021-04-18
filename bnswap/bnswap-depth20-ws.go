@@ -263,10 +263,12 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 }
 
 func (w *Depth20Websocket) Stop() {
+	logger.Debugf("STOP START...")
 	if _, ok := <-w.done; ok {
 		close(w.done)
 		logger.Infof("BNSWAP MARK PRICE WS STOPPED")
 	}
+	logger.Debugf("STOP END...")
 }
 
 func (w *Depth20Websocket) restart() {
