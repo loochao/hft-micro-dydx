@@ -114,7 +114,6 @@ func ParseDepth50(bytes []byte) (*Depth50, error) {
 	return &orderBook, nil
 }
 
-
 func ParseDepth5(bytes []byte) (*Depth5, error) {
 	var err error
 	orderBook := Depth5{
@@ -153,7 +152,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 					return nil, err
 				}
 				counter += 1
-				if counter >= 10 {
+				if counter >= 10 || bytes[offset+1] == ']' {
 					currentKey = common.JsonKeyEventTime
 					offset += 8
 					collectStart = offset
@@ -174,7 +173,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 					return nil, err
 				}
 				counter += 1
-				if counter >= 10 {
+				if counter >= 10 || bytes[offset+1] == ']' {
 					currentKey = common.JsonKeyBids
 					offset += 12
 					collectStart = offset
@@ -243,7 +242,7 @@ func WatchPositionsFromHttp(
 				positionBySymbols := make(map[string]Position)
 				for _, symbol := range symbols {
 					positionBySymbols[symbol] = Position{
-						Symbol: symbol,
+						Symbol:    symbol,
 						ParseTime: time.Now(),
 						EventTime: time.Now(),
 					}
@@ -323,7 +322,6 @@ func GetOrderLimits(
 	}
 	return
 }
-
 
 func WatchCurrentFundingRate(
 	ctx context.Context, api *API, symbols []string, interval time.Duration,

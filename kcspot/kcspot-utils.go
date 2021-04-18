@@ -97,7 +97,6 @@ func ParseDepth50(bytes []byte) (*Depth50, error) {
 	return &orderBook, nil
 }
 
-
 func ParseDepth5(bytes []byte) (*Depth5, error) {
 	var err error
 	orderBook := Depth5{
@@ -124,7 +123,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 					return nil, err
 				}
 				counter += 1
-				if counter >= 10 {
+				if counter >= 10 || (bytes[offset+1] == ']' && bytes[offset+2] == ']') {
 					currentKey = common.JsonKeyEventTime
 					offset += 16
 					collectStart = offset
@@ -145,7 +144,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 					return nil, err
 				}
 				counter += 1
-				if counter >= 10 {
+				if counter >= 10 || (bytes[offset+1] == ']' && bytes[offset+2] == ']') {
 					currentKey = common.JsonKeyBids
 					offset += 14
 					collectStart = offset
