@@ -91,9 +91,9 @@ func (w *Depth20Websocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *Depth20Websocket) startDataHandler(ctx context.Context) {
+func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 	defer func() {
-		logger.Debugf("EXIT startDataHandler")
+		logger.Debugf("EXIT startDataHandler %d", id)
 	}()
 	for {
 		select {
@@ -215,15 +215,15 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 			go w.startRead(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn)
 
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
+			go w.startDataHandler(internalCtx, 0)
+			go w.startDataHandler(internalCtx, 1)
+			go w.startDataHandler(internalCtx, 2)
+			go w.startDataHandler(internalCtx, 3)
 
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
+			go w.startDataHandler(internalCtx, 4)
+			go w.startDataHandler(internalCtx, 5)
+			go w.startDataHandler(internalCtx, 6)
+			go w.startDataHandler(internalCtx, 7)
 		}
 	}
 }

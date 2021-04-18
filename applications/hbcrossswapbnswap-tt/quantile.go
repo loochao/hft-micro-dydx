@@ -22,7 +22,7 @@ func watchDeltaQuantile(
 	outputCh chan map[string]MakerTakerDeltaQuantile,
 ) {
 	defer func(){
-		logger.Debugf("LOOP END watchDeltaQuantile %s")
+		logger.Debugf("EXIT watchDeltaQuantile %s")
 	}()
 	for {
 		select {

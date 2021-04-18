@@ -14,7 +14,7 @@ func watchTakerWalkedOrderBooks(
 	impact float64, symbols []string, output chan WalkedOrderBook) {
 	logger.Debugf("watchTakerWalkedOrderBooks %s", symbols)
 	defer func() {
-		logger.Debugf("LOOP END watchTakerWalkedOrderBooks %s", symbols)
+		logger.Debugf("EXIT watchTakerWalkedOrderBooks %s", symbols)
 	}()
 	lastEventTimes := make(map[string]time.Time)
 	for _, s := range symbols {

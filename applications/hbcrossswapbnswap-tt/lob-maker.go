@@ -17,7 +17,7 @@ func watchMakerWalkedOrderBooks(
 ) {
 	logger.Debugf("watchMakerWalkedOrderBooks %s", symbols)
 	defer func(){
-		logger.Debugf("LOOP END watchMakerWalkedOrderBooks %s", symbols)
+		logger.Debugf("EXIT watchMakerWalkedOrderBooks %s", symbols)
 	}()
 
 	lastEventTimes := make(map[string]time.Time)

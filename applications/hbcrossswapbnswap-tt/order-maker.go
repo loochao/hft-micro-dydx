@@ -16,7 +16,7 @@ func watchMakerOrderRequest(
 	outputOrderErrorCh chan MakerOrderNewError,
 ) {
 	defer func(){
-		logger.Debugf("LOOP END watchMakerOrderRequest")
+		logger.Debugf("EXIT watchMakerOrderRequest")
 	}()
 	for {
 		select {

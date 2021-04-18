@@ -16,7 +16,7 @@ func watchTakerOrderRequest(
 	outputOrderErrorCh chan TakerOrderNewError,
 ) {
 	defer func(){
-		logger.Debugf("LOOP END watchTakerOrderRequest")
+		logger.Debugf("EXIT watchTakerOrderRequest")
 	}()
 	for {
 		select {
