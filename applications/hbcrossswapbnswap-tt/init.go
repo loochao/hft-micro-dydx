@@ -92,7 +92,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210418 14:41:23  ####")
+	logger.Debug("####  BUILD @ 20210418 14:42:04  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -152,19 +152,17 @@ func init() {
 	mtMapUpdated[TakerName] = false
 	mtMapUpdated[MakerName] = false
 
-	err = raven.SetDSN("https://5c318e0f10a349308d2ff86f51de31d8:fa0a8f90a8244c6ea762130cdd6d1bb9@sentry.jilinchen.com/12")
-
-	raven.SetTagsContext(map[string]string{
-		"influxAddress":     *mtConfig.InternalInflux.Address,
-		"influxDatabase":    *mtConfig.InternalInflux.Address,
-		"influxMeasurement": *mtConfig.InternalInflux.Address,
-		"BnApiKey":          *mtConfig.InternalInflux.Address,
-		"symbols":           fmt.Sprintf("%s", mSymbols),
-		"hostname":          hostname,
-		"name":              *mtConfig.Name,
-	})
-
-	if err != nil {
-		logger.Fatal(err)
-	}
+	//err = raven.SetDSN("https://5c318e0f10a349308d2ff86f51de31d8:fa0a8f90a8244c6ea762130cdd6d1bb9@sentry.jilinchen.com/12")
+	//if err != nil {
+	//	logger.Fatal(err)
+	//}
+	//raven.SetTagsContext(map[string]string{
+	//	"influxAddress":     *mtConfig.InternalInflux.Address,
+	//	"influxDatabase":    *mtConfig.InternalInflux.Address,
+	//	"influxMeasurement": *mtConfig.InternalInflux.Address,
+	//	"BnApiKey":          *mtConfig.InternalInflux.Address,
+	//	"symbols":           fmt.Sprintf("%s", mSymbols),
+	//	"hostname":          hostname,
+	//	"name":              *mtConfig.Name,
+	//})
 }
