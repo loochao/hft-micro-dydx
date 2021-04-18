@@ -48,6 +48,7 @@ func handleSpotWSBalance(balance *hbspot.WSBalance) {
 		hbLoopTimer.Reset(time.Nanosecond)
 		hbcrossswapOrderSilentTimes[symbol] = time.Now().Add(time.Nanosecond)
 		if hasLast {
+			logger.Debugf("SPOT ENTER SILENT %s %v", symbol, *hbConfig.EnterSilent)
 			hbspotSilentTimes[symbol] = time.Now().Add(*hbConfig.EnterSilent)
 		}
 	}
