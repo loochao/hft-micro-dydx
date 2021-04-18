@@ -179,26 +179,24 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 	defer func() {
 		logger.Debugf("EXIT startDataHandler %d", id)
 	}()
-	reportTimer := time.NewTimer(time.Minute)
 	totalCount := 0
 	slowCount := 0
-	defer reportTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case <-reportTimer.C:
-			if totalCount > 0 {
-				logger.Debugf("SLOW RATIO %f", float64(slowCount)/float64(totalCount))
-			}
-			totalCount = 0
-			slowCount = 0
-			reportTimer.Reset(time.Minute)
 		case msg := <-w.messageCh:
 			if msg[2] == 'c' && len(msg) > 56{
 				totalCount ++
+				if totalCount > 10000 {
+					if totalCount > 0 {
+						logger.Debugf("SLOW RATIO %f", float64(slowCount)/float64(totalCount))
+					}
+					totalCount = 0
+					slowCount = 0
+				}
 				if msg[40] == ':' {
 					t, err := common.ParseInt(msg[41:54])
 					if err != nil {
