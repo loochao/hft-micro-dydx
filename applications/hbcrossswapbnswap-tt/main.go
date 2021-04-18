@@ -146,7 +146,7 @@ func main() {
 		logger.Debugf("bnswap.NewUserWebsocket error %v", err)
 		return
 	}
-	//defer tUserWebsocket.Stop()
+	defer tUserWebsocket.Stop()
 
 	mUserWebsocket = hbcrossswap.NewUserWebsocket(
 		mtGlobalCtx,
@@ -155,7 +155,7 @@ func main() {
 		mSymbols,
 		*mtConfig.ProxyAddress,
 	)
-	//defer mUserWebsocket.Stop()
+	defer mUserWebsocket.Stop()
 
 	influxSaveTimer := time.NewTimer(
 		time.Now().Truncate(
