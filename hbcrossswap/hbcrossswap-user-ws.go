@@ -193,7 +193,8 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					case w.loginCh <- true:
 					}
 				} else {
-					logger.Fatalf("LOGIN FAILED %s", msg)
+					logger.Debugf("HBSWAP LOGIN FAILED %s, STOP WS", msg)
+					w.Stop()
 				}
 			case 'n':
 				switch msg[24] {
@@ -283,7 +284,8 @@ func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy strin
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			logger.Fatalf("PARSE PROXY %v", err)
+			logger.Debugf("PARSE PROXY %v", err)
+			return nil, err
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -325,10 +327,10 @@ func (w *UserWebsocket) start(ctx context.Context, symbols []string, proxy strin
 
 	defer func() {
 		cancel()
-		w.Stop()
 		if internalCancel != nil {
 			internalCancel()
 		}
+		w.Stop()
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
@@ -345,7 +347,9 @@ func (w *UserWebsocket) start(ctx context.Context, symbols []string, proxy strin
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			conn, err := w.reconnect(internalCtx, "wss://api.hbdm.vn/linear-swap-notification", proxy, 0)
 			if err != nil {
-				logger.Fatalf("RECONNECT ERROR %v", err)
+				logger.Debugf("HBSWAP RECONNECT ERROR %v, STOP WS", err)
+				internalCancel()
+				w.Stop()
 				return
 			}
 			go w.startRead(conn)
@@ -498,13 +502,17 @@ func (w *UserWebsocket) restart() {
 	default:
 	}
 	select {
-	case <-time.After(time.Millisecond):
-		logger.Fatal("NIL TO RESTART CH TIMEOUT IN 1MS, EXIT")
+	case <-time.After(time.Second):
+		logger.Debugf("HBSWAP NIL TO RESTART CH TIMEOUT IN 1S, STOP WS")
+		w.Stop()
+		return
 	case w.RestartCh <- nil:
 	}
 	select {
-	case <-time.After(time.Millisecond):
-		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
+	case <-time.After(time.Second):
+		logger.Debugf("HBSWAP NIL TO RECONNECT CH TIMEOUT IN 1MS, STOP WS")
+		w.Stop()
+		return
 	case w.reconnectCh <- nil:
 	}
 }

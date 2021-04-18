@@ -8,7 +8,9 @@ import (
 )
 
 func watchTakerWalkedOrderBooks(
-	ctx context.Context, proxyAddress string,
+	ctx context.Context,
+	cancel context.CancelFunc,
+	proxyAddress string,
 	impact float64, symbols []string, output chan WalkedOrderBook) {
 	lastEventTimes := make(map[string]time.Time)
 	for _, s := range symbols {
@@ -21,7 +23,9 @@ func watchTakerWalkedOrderBooks(
 	for {
 		select {
 		case <-ws.Done():
-			logger.Fatal("B DEPTH50 WS CONTEXT DONE %s", symbols)
+			logger.Debugf("TAKER DEPTH50 WS CONTEXT DONE %s", symbols)
+			cancel()
+			return
 		case <-ctx.Done():
 			return
 		case data := <-ws.DataCh:

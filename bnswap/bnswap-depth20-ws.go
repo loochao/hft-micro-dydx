@@ -107,7 +107,8 @@ func (w *Depth20Websocket) reconnect(ctx context.Context, wsUrl string, proxy st
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			logger.Fatalf("PARSE PROXY %v", err)
+			logger.Debugf("PARSE PROXY %v", err)
+			return nil, err
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -182,7 +183,8 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string,  proxy s
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
-				logger.Fatalf("RECONNECT ERROR %v", err)
+				logger.Debugf("RECONNECT ERROR %v, STOP WS", err)
+				w.Stop()
 				return
 			}
 			go w.startRead(conn)
@@ -244,11 +246,10 @@ func (w *Depth20Websocket) restart() {
 		return
 	default:
 	}
-	timer := time.NewTimer(time.Millisecond)
-	defer timer.Stop()
 	select {
-	case <-timer.C:
-		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
+	case <-time.After(time.Second):
+		w.Stop()
+		logger.Debugf("BNSWAP NIL TO RECONNECT CH TIMEOUT IN 1S, STOP WS")
 	case w.reconnectCh <- nil:
 		return
 	}

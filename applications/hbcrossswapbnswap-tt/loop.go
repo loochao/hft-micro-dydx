@@ -446,10 +446,12 @@ func handleUpdateFundingRates() {
 				frs[i] = pi.FundingRate - fr.FundingRate
 				mtFundingRates[makerSymbol] = frs[i]
 			} else {
-				logger.Fatalf("MISS PREMIUM INDEX FOR TAKER %s", makerSymbol)
+				logger.Debugf("MISS PREMIUM INDEX FOR TAKER %s", makerSymbol)
+				return
 			}
 		} else {
-			logger.Fatalf("MISS FUNDING RATE FOR MAKER %s", makerSymbol)
+			logger.Debugf("MISS FUNDING RATE FOR MAKER %s", makerSymbol)
+			return
 		}
 	}
 	var err error

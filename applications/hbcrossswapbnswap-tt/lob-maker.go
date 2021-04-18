@@ -8,7 +8,9 @@ import (
 )
 
 func watchMakerWalkedOrderBooks(
-	ctx context.Context, proxyAddress string,
+	ctx context.Context,
+	cancel context.CancelFunc,
+	proxyAddress string,
 	contractSizes map[string]float64,
 	impact float64, symbols []string,
 	outputWLob chan WalkedOrderBook,
@@ -26,7 +28,9 @@ func watchMakerWalkedOrderBooks(
 	for {
 		select {
 		case <-ws.Done():
-			logger.Fatal("DEPTH50 WS CONTEXT DONE %s", symbols)
+			logger.Debugf("DEPTH50 WS CONTEXT DONE %s", symbols)
+			cancel()
+			return
 		case <-ctx.Done():
 			return
 		case lob := <-ws.DataCh:

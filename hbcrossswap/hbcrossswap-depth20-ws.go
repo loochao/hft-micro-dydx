@@ -182,7 +182,8 @@ func (w *Depth20Websocket) reconnect(ctx context.Context, wsUrl string, proxy st
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			logger.Fatalf("PARSE PROXY %v", err)
+			logger.Debugf("HBSWAP PARSE PROXY %v", err)
+			return nil, err
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -224,10 +225,10 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 
 	defer func() {
 		cancel()
-		w.Stop()
 		if internalCancel != nil {
 			internalCancel()
 		}
+		w.Stop()
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
@@ -248,7 +249,8 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			conn, err := w.reconnect(internalCtx, "wss://api.hbdm.vn/linear-swap-ws", proxy, 0)
 			if err != nil {
-				logger.Fatalf("RECONNECT ERROR %v", err)
+				logger.Debugf("RECONNECT ERROR %v, STOP WS", err)
+				w.Stop()
 				return
 			}
 			go w.startRead(conn)
@@ -347,13 +349,17 @@ func (w *Depth20Websocket) restart() {
 	default:
 	}
 	select {
-	case <-time.After(time.Millisecond):
-		logger.Fatal("NIL TO RESTART CH TIMEOUT IN 1MS, EXIT")
+	case <-time.After(time.Second):
+		logger.Debugf("SWAP NIL TO RESTART CH TIMEOUT IN 1S, STOP WS")
+		w.Stop()
+		return
 	case w.RestartCh <- nil:
 	}
 	select {
-	case <-time.After(time.Millisecond):
-		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
+	case <-time.After(time.Second):
+		logger.Debugf("NIL TO RECONNECT CH TIMEOUT IN 1S, STOP WS")
+		w.Stop()
+		return
 	case w.reconnectCh <- nil:
 	}
 }

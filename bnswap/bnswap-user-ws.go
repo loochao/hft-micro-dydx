@@ -91,7 +91,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					balanceAndPositionUpdateEvent := BalanceAndPositionUpdateEvent{}
 					err := json.Unmarshal(msg, &balanceAndPositionUpdateEvent)
 					if err != nil {
-						logger.Debugf("Unmarshal BalanceAndPositionUpdateEvent %v %s",err, msg)
+						logger.Debugf("Unmarshal BalanceAndPositionUpdateEvent %v %s", err, msg)
 						break
 					}
 					select {
@@ -142,7 +142,7 @@ func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy strin
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			logger.Fatalf("PARSE PROXY %v", err)
+			return nil, err
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -209,7 +209,9 @@ func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) 
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
-				logger.Fatalf("RECONNECT ERROR %v", err)
+				internalCancel()
+				logger.Debugf("RECONNECT ERROR %v", err)
+				w.Stop()
 				return
 			}
 			go w.startRead(conn, time.Hour*24)
@@ -287,11 +289,10 @@ func (w *UserWebsocket) restart() {
 		return
 	default:
 	}
-	timer := time.NewTimer(time.Millisecond)
-	defer timer.Stop()
 	select {
-	case <-timer.C:
-		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT WS")
+	case <-time.After(time.Second):
+		logger.Debugf("NIL TO RECONNECT CH TIMEOUT IN 1MS, STOP WS")
+		w.Stop()
 	case w.reconnectCh <- nil:
 		return
 	}
@@ -305,7 +306,7 @@ func NewUserWebsocket(
 	ctx context.Context,
 	api *API,
 	proxy string,
-) *UserWebsocket {
+) (*UserWebsocket, error) {
 	var listenKey ListenKey
 	err := api.SendAuthenticatedHTTPRequest(
 		ctx,
@@ -315,7 +316,7 @@ func NewUserWebsocket(
 		&listenKey,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		return nil, err
 	}
 	wsUrl := "wss://fstream.binance.com/ws/" + listenKey.ListenKey
 	ws := UserWebsocket{
@@ -344,7 +345,8 @@ func NewUserWebsocket(
 					&resp,
 				)
 				if err != nil {
-					logger.Fatal(err)
+					logger.Debugf("UPDATE LISTEN KEY FAILED %v, STOP WS!", err)
+					ws.Stop()
 				}
 				timer.Reset(time.Minute * 20)
 			}
@@ -352,5 +354,5 @@ func NewUserWebsocket(
 	}(ctx, &ws, listenKey)
 	go ws.start(ctx, wsUrl, proxy)
 	ws.reconnectCh <- nil
-	return &ws
+	return &ws, nil
 }

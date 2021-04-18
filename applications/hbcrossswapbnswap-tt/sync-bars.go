@@ -108,12 +108,12 @@ func watchMakerBars(
 			}
 			if allSuccess {
 				outputMap := make(common.KLinesMap)
-				length := len(barsMap[makerSymbols[0]])
-				for symbol, bars := range barsMap {
-					if len(bars) != length {
-						logger.Fatalf("SWAP %s LENGTH %d NOT EQUAL TO %d", symbol, len(bars), length)
-					}
-				}
+				//length := len(barsMap[makerSymbols[0]])
+				//for symbol, bars := range barsMap {
+				//	if len(bars) != length {
+				//		logger.Fatalf("SWAP %s LENGTH %d NOT EQUAL TO %d", symbol, len(bars), length)
+				//	}
+				//}
 				for symbol, bars := range barsMap {
 					outputMap[symbol] = make([]common.KLine, len(bars))
 					copy(outputMap[symbol], bars)
@@ -232,12 +232,12 @@ func watchTakerBars(
 			}
 			if allSuccess {
 				outputMap := make(common.KLinesMap)
-				length := len(barsMap[takerSymbols[0]])
-				for symbol, bars := range barsMap {
-					if len(bars) != length {
-						logger.Fatalf("SWAP %s LENGTH %d NOT EQUAL TO %d", symbol, len(bars), length)
-					}
-				}
+				//length := len(barsMap[takerSymbols[0]])
+				//for symbol, bars := range barsMap {
+				//	if len(bars) != length {
+				//		logger.Fatalf("SWAP %s LENGTH %d NOT EQUAL TO %d", symbol, len(bars), length)
+				//	}
+				//}
 				for symbol, bars := range barsMap {
 					outputMap[symbol] = make([]common.KLine, len(bars))
 					copy(outputMap[symbol], bars)

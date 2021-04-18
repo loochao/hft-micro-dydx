@@ -18,11 +18,13 @@ func main() {
 	if *mtConfig.CpuProfile != "" {
 		f, err := os.Create(*mtConfig.CpuProfile)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Debugf("os.Create error %v", err)
+			return
 		}
 		err = pprof.StartCPUProfile(f)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Debugf("pprof.StartCPUProfile error %v", err)
+			return
 		}
 		defer pprof.StopCPUProfile()
 	}
@@ -34,7 +36,8 @@ func main() {
 		*mtConfig.ProxyAddress,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("hbcrossswap.NewAPI error %v", err)
+		return
 	}
 	tAPI, err = bnswap.NewAPI(
 		&common.Credentials{
@@ -44,7 +47,8 @@ func main() {
 		*mtConfig.ProxyAddress,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("bnswap.NewAPI error %v", err)
+		return
 	}
 
 	mtGlobalCtx, mtGlobalCancel = context.WithCancel(context.Background())
@@ -77,16 +81,19 @@ func main() {
 
 	mTickSizes, mContractSizes, err = hbcrossswap.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("hbcrossswap.GetOrderLimits error %v", err)
+		return
 	}
 	tTickSizes, tStepSizes, _, tMinNotional, _, _, err = bnswap.GetOrderLimits(mtGlobalCtx, tAPI, tSymbols)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("bnswap.GetOrderLimits error %v", err)
+		return
 	}
 
 	for makerSymbol, makerStepSize := range mContractSizes {
 		if takerStepSize, ok := tStepSizes[mtSymbolsMap[makerSymbol]]; !ok {
-			logger.Fatalf("TAKER STEP SIZE NOT EXISTS FOR MAKER %s - %s", makerSymbol, mtSymbolsMap[makerSymbol])
+			logger.Debugf("TAKER STEP SIZE NOT EXISTS FOR MAKER %s - %s", makerSymbol, mtSymbolsMap[makerSymbol])
+			return
 		} else {
 			mtStepSizes[makerSymbol] = common.MergedStepSize(makerStepSize, takerStepSize)
 		}
@@ -101,8 +108,15 @@ func main() {
 		*mtConfig.InternalInflux.BatchSize,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("common.NewInfluxWriter error %v", err)
+		return
 	}
+	defer func() {
+		err := mtInfluxWriter.Stop()
+		if err != nil {
+			logger.Warnf("stop influx writer error %v", err)
+		}
+	}()
 
 	mtExternalInfluxWriter, err = common.NewInfluxWriter(
 		*mtConfig.ExternalInflux.Address,
@@ -112,21 +126,26 @@ func main() {
 		*mtConfig.ExternalInflux.BatchSize,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("common.NewInfluxWriter error %v", err)
+		return
 	}
-
 	defer func() {
-		err := mtInfluxWriter.Stop()
+		err := mtExternalInfluxWriter.Stop()
 		if err != nil {
 			logger.Warnf("stop influx writer error %v", err)
 		}
 	}()
 
-	tUserWebsocket = bnswap.NewUserWebsocket(
+
+	tUserWebsocket, err = bnswap.NewUserWebsocket(
 		mtGlobalCtx,
 		tAPI,
 		*mtConfig.ProxyAddress,
 	)
+	if err != nil {
+		logger.Debugf("bnswap.NewUserWebsocket error %v", err)
+		return
+	}
 	defer tUserWebsocket.Stop()
 
 	mUserWebsocket = hbcrossswap.NewUserWebsocket(
@@ -232,6 +251,7 @@ func main() {
 		}
 		go watchTakerWalkedOrderBooks(
 			mtGlobalCtx,
+			mtGlobalCancel,
 			*mtConfig.ProxyAddress,
 			*mtConfig.OrderBookImpact,
 			tSymbols[start:end],
@@ -246,6 +266,7 @@ func main() {
 		}
 		go watchMakerWalkedOrderBooks(
 			mtGlobalCtx,
+			mtGlobalCancel,
 			*mtConfig.ProxyAddress,
 			mContractSizes,
 			*mtConfig.OrderBookImpact,
@@ -293,7 +314,6 @@ func main() {
 		)
 	}
 
-	done := make(chan bool, 1)
 	if *mtConfig.CpuProfile != "" {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -301,8 +321,6 @@ func main() {
 			sig := <-sigs
 			logger.Debugf("CATCH EXIT SIGNAL %v", sig)
 			mtGlobalCancel()
-			pprof.StopCPUProfile()
-			close(done)
 		}()
 	}
 
@@ -310,8 +328,14 @@ func main() {
 
 	for {
 		select {
-		case <-done:
-			logger.Debugf("EXIT MAIN LOOP")
+		case <-mtGlobalCtx.Done():
+			logger.Debugf("GLOBAL CTX DONE, EXIT MAIN LOOP")
+			return
+		case <-mUserWebsocket.Done():
+			logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
+			return
+		case <-tUserWebsocket.Done():
+			logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
 			return
 		case <-mUserWebsocket.RestartCh:
 			logger.Debugf("mUserWebsocket restart silent %v", *mtConfig.RestartSilent)
