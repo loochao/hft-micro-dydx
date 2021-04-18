@@ -108,8 +108,8 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 					logger.Debugf("ParseDepth20 error %v %s", err, msg[64:77])
 					continue
 				}
-				if time.Now().UnixNano()/1000000-t > 50 {
-					logger.Debugf("SLOW MSG DIFF %d", time.Now().UnixNano()/1000000-t)
+				if time.Now().UnixNano()/1000000-t > 100 {
+					//logger.Debugf("SLOW MSG DIFF %d", time.Now().UnixNano()/1000000-t)
 					continue
 				}
 			} else if msg[62] == 'E' {
@@ -118,8 +118,8 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 					logger.Debugf("ParseDepth20 error %v %s", err, msg[65:78])
 					continue
 				}
-				if time.Now().UnixNano()/1000000-t > 50 {
-					logger.Debugf("SLOW MSG DIFF %d", time.Now().UnixNano()/1000000-t)
+				if time.Now().UnixNano()/1000000-t > 100 {
+					//logger.Debugf("SLOW MSG DIFF %d", time.Now().UnixNano()/1000000-t)
 					continue
 				}
 			} else if msg[63] == 'E' {
@@ -128,8 +128,8 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 					logger.Debugf("ParseDepth20 error %v %s", err, msg[66:79])
 					continue
 				}
-				if time.Now().UnixNano()/1000000-t > 50 {
-					logger.Debugf("SLOW MSG DIFF %d", time.Now().UnixNano()/1000000-t)
+				if time.Now().UnixNano()/1000000-t > 100 {
+					//logger.Debugf("SLOW MSG DIFF %d", time.Now().UnixNano()/1000000-t)
 					continue
 				}
 			}
