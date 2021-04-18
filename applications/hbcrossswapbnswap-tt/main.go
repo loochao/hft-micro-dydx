@@ -52,7 +52,7 @@ func main() {
 	}
 
 	mtGlobalCtx, mtGlobalCancel = context.WithCancel(context.Background())
-	//defer mtGlobalCancel()
+	defer mtGlobalCancel()
 
 	if *mtConfig.ChangeLeverage {
 		for _, takerSymbol := range tSymbols {
