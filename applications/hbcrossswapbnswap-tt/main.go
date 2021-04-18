@@ -249,14 +249,14 @@ func main() {
 		if end > len(tSymbols) {
 			end = len(tSymbols)
 		}
-		go watchTakerWalkedOrderBooks(
-			mtGlobalCtx,
-			mtGlobalCancel,
-			*mtConfig.ProxyAddress,
-			*mtConfig.OrderBookImpact,
-			tSymbols[start:end],
-			walkedOrderBookCh,
-		)
+		//go watchTakerWalkedOrderBooks(
+		//	mtGlobalCtx,
+		//	mtGlobalCancel,
+		//	*mtConfig.ProxyAddress,
+		//	*mtConfig.OrderBookImpact,
+		//	tSymbols[start:end],
+		//	walkedOrderBookCh,
+		//)
 	}
 
 	for start := 0; start < len(mSymbols); start += *mtConfig.OrderBookBatchSize {
@@ -264,15 +264,15 @@ func main() {
 		if end > len(mSymbols) {
 			end = len(mSymbols)
 		}
-		go watchMakerWalkedOrderBooks(
-			mtGlobalCtx,
-			mtGlobalCancel,
-			*mtConfig.ProxyAddress,
-			mContractSizes,
-			*mtConfig.OrderBookImpact,
-			mSymbols[start:end],
-			walkedOrderBookCh,
-		)
+		//go watchMakerWalkedOrderBooks(
+		//	mtGlobalCtx,
+		//	mtGlobalCancel,
+		//	*mtConfig.ProxyAddress,
+		//	mContractSizes,
+		//	*mtConfig.OrderBookImpact,
+		//	mSymbols[start:end],
+		//	walkedOrderBookCh,
+		//)
 	}
 
 	spreadCh := make(chan Spread, len(mSymbols)*100)
@@ -331,15 +331,15 @@ func main() {
 		case <-mtGlobalCtx.Done():
 			logger.Debugf("GLOBAL CTX DONE, EXIT MAIN LOOP")
 			return
-		case <-mUserWebsocket.Done():
-			logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
-			return
-		case <-tUserWebsocket.Done():
-			logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
-			return
-		case <-mUserWebsocket.RestartCh:
-			logger.Debugf("mUserWebsocket restart silent %v", *mtConfig.RestartSilent)
-			handleRestartSilent()
+		//case <-mUserWebsocket.Done():
+		//	logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
+		//	return
+		//case <-tUserWebsocket.Done():
+		//	logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
+		//	return
+		//case <-mUserWebsocket.RestartCh:
+		//	logger.Debugf("mUserWebsocket restart silent %v", *mtConfig.RestartSilent)
+		//	handleRestartSilent()
 		case ps := <-mPositionCh:
 			handleMakerHttpPositions(ps)
 			break
