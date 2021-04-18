@@ -301,6 +301,7 @@ func main() {
 			sig := <-sigs
 			logger.Debugf("CATCH EXIT SIGNAL %v", sig)
 			mtGlobalCancel()
+			pprof.StopCPUProfile()
 			close(done)
 		}()
 	}
