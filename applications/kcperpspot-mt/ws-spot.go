@@ -54,9 +54,12 @@ func handleSpotWSBalance(balance *kcspot.WsBalance) {
 	kcspotBalancesUpdateTimes[symbol] = time.Now()
 
 	if lastBalance == nil ||
-		lastBalance.Holds != kcspotBalances[symbol].Holds ||
-		lastBalance.Available != kcspotBalances[symbol].Available {
-		logger.Debugf("SPOT WS BALANCE CHANGED NEW %v", account)
+		lastBalance.Holds+lastBalance.Available != kcspotBalances[symbol].Available+kcspotBalances[symbol].Holds {
+		if lastBalance == nil {
+			logger.Debugf("SPOT WS BALANCE CHANGED %s Available nil -> %f Holds nil -> %f", account.Currency, account.Available, account.Holds)
+		} else {
+			logger.Debugf("SPOT WS BALANCE CHANGED %s Available %f -> %f Holds %f -> %f", account.Currency, lastBalance.Available, account.Available, lastBalance.Holds, account.Holds)
+		}
 		kcspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*kcConfig.HttpSilent)
 		kcperpOrderSilentTimes[symbol] = time.Now()
 		kcLoopTimer.Reset(time.Nanosecond)
