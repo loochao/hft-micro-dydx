@@ -12,12 +12,12 @@ func handleMakerWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 		if account.MarginAsset == "USDT" {
 			account := account
 			if mAccount == nil {
-				logger.Debugf("SWAP WS USDT CHANGE WA nil -> %f MB nil -> %f", account.WithdrawAvailable, account.MarginBalance)
+				logger.Debugf("MAKER WS USDT CHANGE WA nil -> %f MB nil -> %f", account.WithdrawAvailable, account.MarginBalance)
 				mtLoopTimer.Reset(time.Nanosecond)
 			} else if mAccount.MarginBalance != account.MarginBalance {
 				mtLoopTimer.Reset(time.Nanosecond)
 				if math.Abs(mAccount.MarginPosition - account.MarginPosition) > *mtConfig.EnterMinimalStep*0.5 {
-					logger.Debugf("SWAP WS USDT CHANGE WA %f -> %f MB %f -> %f ",
+					logger.Debugf("MAKER WS USDT CHANGE WA %f -> %f MB %f -> %f ",
 						mAccount.WithdrawAvailable,
 						account.WithdrawAvailable,
 						mAccount.MarginBalance,

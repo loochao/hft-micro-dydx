@@ -349,6 +349,7 @@ func main() {
 						"MAKER WS ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
 						makerOrder.Symbol, makerOrder.Direction, makerOrder.TradeVolume, makerOrder.TradeAvgPrice,
 					)
+					mHttpPositionUpdateSilentTimes[makerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 					if makerOrder.Direction == hbcrossswap.OrderDirectionSell {
 						mLastFilledSellPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
 					} else if makerOrder.Direction == hbcrossswap.OrderDirectionBuy {
@@ -365,6 +366,7 @@ func main() {
 				tPositionsUpdateTimes[takerOrder.Symbol] = time.Unix(0, 0)
 			} else if takerOrder.Status == "FILLED" {
 				logger.Debugf("TAKER WS ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)
+				tHttpPositionUpdateSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 				if makerSymbol, ok := tmSymbolsMap[takerOrder.Symbol]; ok {
 					if takerOrder.Side == common.OrderSideSell {
 						if makerPrice, ok := mLastFilledBuyPrices[makerSymbol]; ok {

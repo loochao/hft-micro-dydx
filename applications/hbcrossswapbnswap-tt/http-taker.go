@@ -14,8 +14,8 @@ func handleTakerHttpPositions(positions []bnswap.Position) {
 		if nextPos.PositionSide != "BOTH" {
 			return
 		}
-		if nextPos.UpdateTime.Sub(tLastOrderTimes[nextPos.Symbol]) < *mtConfig.PullInterval {
-			return
+		if time.Now().Sub(tHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
+			continue
 		}
 		var lastPosition *bnswap.Position
 		if p, ok := tPositions[nextPos.Symbol]; ok {
@@ -40,13 +40,13 @@ func handleTakerHttpAccount(account bnswap.Account) {
 		if asset.Asset == "USDT" {
 			asset := asset
 			if tAccount == nil {
-				logger.Debugf("TAKER HTTP AVAILABLE BALANCE %v -> %f", nil, *asset.AvailableBalance)
+				logger.Debugf("TAKER HTTP WB CHANGE%v -> %f", nil, *asset.WalletBalance)
 				mtLoopTimer.Reset(time.Nanosecond)
-			} else if tAccount.AvailableBalance != nil &&
-				asset.AvailableBalance != nil &&
-				*tAccount.AvailableBalance != *asset.AvailableBalance {
+			} else if tAccount.WalletBalance != nil &&
+				asset.WalletBalance != nil &&
+				*tAccount.WalletBalance != *asset.WalletBalance {
 				mtLoopTimer.Reset(time.Nanosecond)
-				logger.Debugf("TAKER HTTP AVAILABLE BALANCE %f -> %f", *tAccount.AvailableBalance, *asset.AvailableBalance)
+				logger.Debugf("TAKER HTTP WB CHANGE %f -> %f", *tAccount.WalletBalance, *asset.WalletBalance)
 			}
 			tAccount = &asset
 			break

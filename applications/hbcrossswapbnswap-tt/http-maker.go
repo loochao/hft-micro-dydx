@@ -3,12 +3,16 @@ package main
 import (
 	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"time"
 )
 
 func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 	for _, nextPos := range positions {
 		if _, ok := mtSymbolsMap[nextPos.Symbol]; !ok {
+			continue
+		}
+		if time.Now().Sub(mHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
 			continue
 		}
 		var lastPosition *hbcrossswap.Position
@@ -21,8 +25,8 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 		if lastPosition == nil ||
 			lastPosition.Volume != nextPos.Volume ||
 			lastPosition.CostOpen != nextPos.CostOpen {
-			//如果SPOT变仓，立刻调MAKER，如果MAKER变仓，等ORDER SILENT TIMEOUT
-			mOrderSilentTimes[nextPos.Symbol] = time.Now()
+			mtLoopTimer.Reset(time.Nanosecond)
+			tOrderSilentTimes[nextPos.Symbol] = time.Now()
 			logger.Debugf("MAKER HTTP POSITION %s DIRECTION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Direction, nextPos.Volume, nextPos.CostOpen)
 			if lastPosition != nil && nextPos.Volume != 0 {
 				logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
@@ -30,6 +34,8 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 			}
 		} else if nextPos.Volume != 0 &&
 			lastPosition.Direction != nextPos.Direction {
+			mtLoopTimer.Reset(time.Nanosecond)
+			tOrderSilentTimes[nextPos.Symbol] = time.Now()
 			if nextPos.Volume != 0 {
 				logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
 				mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
@@ -41,9 +47,18 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 
 func handleMakerHttpAccount(account hbcrossswap.Account) {
 	if mAccount == nil {
-		logger.Debugf("MAKER HTTP USDT ACCOUNT MarginBalance nil -> %f", account.MarginBalance)
-	//} else if mAccount.MarginBalance != account.MarginBalance {
-	//	logger.Debugf("MAKER HTTP USDT ACCOUNT MarginBalance %f -> %f", mAccount.MarginBalance, account.MarginBalance)
+		mtLoopTimer.Reset(time.Nanosecond)
+		logger.Debugf("MAKER HTTP USDT CHANGE MB nil -> %f", account.MarginBalance)
+	} else if mAccount.MarginBalance != account.MarginBalance {
+		mtLoopTimer.Reset(time.Nanosecond)
+		if math.Abs(mAccount.MarginPosition - account.MarginPosition) > *mtConfig.EnterMinimalStep*0.5 {
+			logger.Debugf("MAKER HTTP USDT CHANGE WA %f -> %f MB %f -> %f ",
+				mAccount.WithdrawAvailable,
+				account.WithdrawAvailable,
+				mAccount.MarginBalance,
+				account.MarginBalance,
+			)
+		}
 	}
 	mAccount = &account
 }
