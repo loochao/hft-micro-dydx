@@ -50,15 +50,15 @@ func handleSave() {
 		fields := make(map[string]interface{})
 		if position, ok := mPositions[makerSymbol]; ok {
 			if position.Direction == hbcrossswap.OrderDirectionBuy {
-				fields["makerSize"] = position.Volume * mContractSizes[takerSymbol]
+				fields["makerSize"] = position.Volume * mContractSizes[makerSymbol]
 			} else {
-				fields["makerSize"] = -position.Volume * mContractSizes[takerSymbol]
+				fields["makerSize"] = -position.Volume * mContractSizes[makerSymbol]
 			}
 			if spread, ok := mtSpreads[makerSymbol]; ok {
 				if position.Direction == hbcrossswap.OrderDirectionBuy {
-					fields["makerValue"] = position.Volume * mContractSizes[takerSymbol] * spread.MakerOrderBook.BidVWAP
+					fields["makerValue"] = position.Volume * mContractSizes[makerSymbol] * spread.MakerOrderBook.BidVWAP
 				} else {
-					fields["makerValue"] = -position.Volume * mContractSizes[takerSymbol] * spread.MakerOrderBook.AskVWAP
+					fields["makerValue"] = -position.Volume * mContractSizes[makerSymbol] * spread.MakerOrderBook.AskVWAP
 				}
 			}
 		}
