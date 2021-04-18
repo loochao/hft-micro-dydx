@@ -387,8 +387,8 @@ func (w *UserWebsocket) start(ctx context.Context, symbols []string, proxy strin
 				w.Stop()
 				return
 			}
-			go w.startRead(conn)
-			go w.startWrite(ctx, conn)
+			go w.startRead(internalCtx, conn)
+			go w.startWrite(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn, symbols)
 
 			go w.startDataHandler(internalCtx)
