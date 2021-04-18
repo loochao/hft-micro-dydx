@@ -26,7 +26,7 @@ func main() {
 			logger.Debugf("pprof.StartCPUProfile error %v", err)
 			return
 		}
-		defer pprof.StopCPUProfile()
+		//defer pprof.StopCPUProfile()
 	}
 
 	var err error
@@ -52,7 +52,7 @@ func main() {
 	}
 
 	mtGlobalCtx, mtGlobalCancel = context.WithCancel(context.Background())
-	defer mtGlobalCancel()
+	//defer mtGlobalCancel()
 
 	if *mtConfig.ChangeLeverage {
 		for _, takerSymbol := range tSymbols {
@@ -146,7 +146,7 @@ func main() {
 		logger.Debugf("bnswap.NewUserWebsocket error %v", err)
 		return
 	}
-	defer tUserWebsocket.Stop()
+	//defer tUserWebsocket.Stop()
 
 	mUserWebsocket = hbcrossswap.NewUserWebsocket(
 		mtGlobalCtx,
@@ -155,7 +155,7 @@ func main() {
 		mSymbols,
 		*mtConfig.ProxyAddress,
 	)
-	defer mUserWebsocket.Stop()
+	//defer mUserWebsocket.Stop()
 
 	influxSaveTimer := time.NewTimer(
 		time.Now().Truncate(
@@ -172,9 +172,9 @@ func main() {
 		).Sub(time.Now()),
 	)
 	mtLoopTimer = time.NewTimer(time.Second) //先等1分钟
-	defer influxSaveTimer.Stop()
-	defer mtLoopTimer.Stop()
-	defer externalInfluxSaveTimer.Stop()
+	//defer influxSaveTimer.Stop()
+	//defer mtLoopTimer.Stop()
+	//defer externalInfluxSaveTimer.Stop()
 
 	go hbcrossswap.WatchPositionsFromHttp(
 		mtGlobalCtx, mAPI,
