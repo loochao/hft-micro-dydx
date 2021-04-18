@@ -298,7 +298,8 @@ func main() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		go func() {
-			<-sigs
+			sig := <-sigs
+			logger.Debugf("CATCH EXIT SIGNAL %v", sig)
 			mtGlobalCancel()
 			close(done)
 		}()
