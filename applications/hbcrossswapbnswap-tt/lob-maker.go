@@ -15,6 +15,7 @@ func watchMakerWalkedOrderBooks(
 	impact float64, symbols []string,
 	outputWLob chan WalkedOrderBook,
 ) {
+	logger.Debugf("watchMakerWalkedOrderBooks %s", symbols)
 	defer func(){
 		logger.Debugf("LOOP END watchMakerWalkedOrderBooks %s", symbols)
 	}()
