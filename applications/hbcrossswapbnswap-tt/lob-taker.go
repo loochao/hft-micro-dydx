@@ -43,9 +43,9 @@ func watchTakerWalkedOrderBooks(
 					break
 				}
 				nextWalkTimes[data.Symbol] = time.Now().Add(walkInterval)
-				if len(output) > 0 {
-					logger.Debugf("TAKER DEPTH OUTPUT LEN %d", len(output))
-				}
+				//if len(output) > 0 {
+				//	logger.Debugf("TAKER DEPTH OUTPUT LEN %d", len(output))
+				//}
 				wb = walkTakerOrderBook(data, impact)
 				select {
 				case <-ctx.Done():

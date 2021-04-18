@@ -50,9 +50,9 @@ func watchMakerWalkedOrderBooks(
 						break
 					}
 					nextWalkTimes[lob.Symbol] = time.Now().Add(walkInterval)
-					if len(outputWLob) > 0 {
-						logger.Debugf("MAKER DEPTH OUTPUT LEN %d", len(outputWLob))
-					}
+					//if len(outputWLob) > 0 {
+					//	logger.Debugf("MAKER DEPTH OUTPUT LEN %d", len(outputWLob))
+					//}
 					wb = walkPerpOrderBook(lob, impact, m)
 					select {
 					case <-ctx.Done():
