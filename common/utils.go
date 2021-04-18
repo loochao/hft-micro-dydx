@@ -78,7 +78,7 @@ func GetHMAC(hashType int, input, key []byte) []byte {
 	return h.Sum(nil)
 }
 
-//func ParseBinanceFloat(data []byte) {
+//func ParseFloat(data []byte) {
 //	startZero := true
 //	startIndex := 0
 //	length := len(data)
@@ -99,7 +99,7 @@ var float64pow10 = []float64{
 	1e20, 1e21, 1e22,
 }
 
-func ParseBinanceFloat(s []byte) (float64, error) {
+func ParseFloat(s []byte) (float64, error) {
 	mantissa := uint64(0)
 	exp := 0
 	base := uint64(10)
@@ -135,7 +135,7 @@ loop:
 		}
 		v, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&s)), 64)
 		if err != nil {
-			return 0, fmt.Errorf("ParseBinanceFloat error bad byte %v @ %d in %s", s[i], i, s)
+			return 0, fmt.Errorf("ParseFloat error bad byte %v @ %d in %s", s[i], i, s)
 		} else {
 			return v, nil
 		}
@@ -143,7 +143,7 @@ loop:
 	if !sawDigits {
 		v, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&s)), 64)
 		if err != nil {
-			return 0, errors.New("ParseBinanceFloat error no digits")
+			return 0, errors.New("ParseFloat error no digits")
 		} else {
 			return v, nil
 		}
@@ -161,9 +161,9 @@ loop:
 	}
 }
 
-func ParseBinanceInt(s []byte) (int64, error) {
+func ParseInt(s []byte) (int64, error) {
 	if len(s) == 0 {
-		return 0, errors.New("ParseBinanceInt error no digits")
+		return 0, errors.New("ParseInt error no digits")
 	}
 	n := int64(0)
 	negative := false
@@ -178,7 +178,7 @@ func ParseBinanceInt(s []byte) (int64, error) {
 		}
 		v, err := strconv.ParseInt(*(*string)(unsafe.Pointer(&s)), 10, 64)
 		if err != nil {
-			return 0, fmt.Errorf("ParseBinanceInt error bad byte %v @ %d in %s", s[i], i, s)
+			return 0, fmt.Errorf("ParseInt error bad byte %v @ %d in %s", s[i], i, s)
 		} else {
 			return v, nil
 		}

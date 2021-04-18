@@ -60,3 +60,59 @@ func BenchmarkJsonParseDepth50(t *testing.B) {
 		}
 	}
 }
+
+func TestParseDepth5(t *testing.T) {
+	bytes := []byte(`{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,"timestamp":1618717277315},"subject":"level2","topic":"/contractMarket/level2Depth5:ATOMUSDTM","type":"message"}`)
+	wsCap := WsCap{}
+	err := json.Unmarshal(bytes, &wsCap)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jsonD := Depth5{}
+	err = json.Unmarshal(wsCap.Data, &jsonD)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jsonD.Symbol = strings.Split(wsCap.Topic, ":")[1]
+	depth5, err := ParseDepth5(bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, jsonD.Symbol, depth5.Symbol)
+	assert.Equal(t, jsonD.EventTime, depth5.EventTime)
+	assert.Equal(t, jsonD.Sequence, depth5.Sequence)
+	for i := 0; i < 5; i++ {
+		assert.Equal(t, jsonD.Bids[i][0], depth5.Bids[i][0])
+		assert.Equal(t, jsonD.Bids[i][1], depth5.Bids[i][1])
+		assert.Equal(t, jsonD.Asks[i][0], depth5.Asks[i][0])
+		assert.Equal(t, jsonD.Asks[i][1], depth5.Asks[i][1])
+	}
+}
+
+func TestParseDepth52(t *testing.T) {
+	bytes := []byte(`{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060],[18.082,11060],[17.779,407]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,"timestamp":1618717277315},"subject":"level2","topic":"/contractMarket/level2Depth5:ATOMUSDTM","type":"message"}`)
+	wsCap := WsCap{}
+	err := json.Unmarshal(bytes, &wsCap)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jsonD := Depth5{}
+	err = json.Unmarshal(wsCap.Data, &jsonD)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jsonD.Symbol = strings.Split(wsCap.Topic, ":")[1]
+	depth5, err := ParseDepth5(bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, jsonD.Symbol, depth5.Symbol)
+	assert.Equal(t, jsonD.EventTime, depth5.EventTime)
+	assert.Equal(t, jsonD.Sequence, depth5.Sequence)
+	for i := 0; i < 5; i++ {
+		assert.Equal(t, jsonD.Bids[i][0], depth5.Bids[i][0])
+		assert.Equal(t, jsonD.Bids[i][1], depth5.Bids[i][1])
+		assert.Equal(t, jsonD.Asks[i][0], depth5.Asks[i][0])
+		assert.Equal(t, jsonD.Asks[i][1], depth5.Asks[i][1])
+	}
+}

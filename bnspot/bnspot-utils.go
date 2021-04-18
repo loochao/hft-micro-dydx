@@ -26,7 +26,7 @@ func ParseDepth20(bytes []byte) (*Depth, error) {
 		switch currentKey {
 		case common.JsonKeyBids:
 			if bytes[offset] == '"' {
-				orderBook.Bids[counter/2][counter%2], err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}
@@ -46,7 +46,7 @@ func ParseDepth20(bytes []byte) (*Depth, error) {
 			break
 		case common.JsonKeyAsks:
 			if bytes[offset] == '"' {
-				orderBook.Asks[counter/2][counter%2], err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}
@@ -66,7 +66,7 @@ func ParseDepth20(bytes []byte) (*Depth, error) {
 			break
 		case common.JsonKeyLastUpdateId:
 			if bytes[offset] == ',' {
-				orderBook.LastUpdateId, err = common.ParseBinanceInt(bytes[collectStart:offset])
+				orderBook.LastUpdateId, err = common.ParseInt(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}

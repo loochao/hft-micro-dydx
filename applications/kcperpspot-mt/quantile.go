@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/tdigest"
 )
 
@@ -26,7 +25,7 @@ func watchDeltaQuantile(
 		case <-ctx.Done():
 			return
 		case data := <-inputCh:
-			logger.Debugf("QUANTILES UPDATING...")
+			//logger.Debugf("QUANTILES UPDATING...")
 			spotBarsMap := data[0]
 			perpBarsMap := data[1]
 			quantiles := make(map[string]Quantile)
@@ -86,7 +85,7 @@ func watchDeltaQuantile(
 				}
 			}
 			if len(quantiles) > 0 {
-				logger.Debugf("QUANTILES UPDATED.")
+				//logger.Debugf("QUANTILES UPDATED.")
 				outputCh <- quantiles
 			}
 		}

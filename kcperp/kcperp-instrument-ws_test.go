@@ -20,12 +20,9 @@ func TestNewInstrumentWebsocket(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ws := NewInstrumentWebsocket(ctx, api, []string{"BNBUSDTM"}, "socks5://127.0.0.1:1081",nil, nil, )
+	ws := NewInstrumentWebsocket(ctx, api, []string{"BNBUSDTM"}, "socks5://127.0.0.1:1081",nil  )
 	for {
 		select {
-		case d := <-ws.FundingRateCh:
-			logger.Debugf("%v", d)
-			break
 		case d := <-ws.MarkPriceCh:
 			logger.Debugf("%v", d)
 			break

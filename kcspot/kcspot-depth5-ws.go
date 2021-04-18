@@ -125,6 +125,7 @@ func (w *Depth5Websocket) startDataHandler(ctx context.Context) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
+			logger.Debugf("%s", msg)
 			if msg[2] == 'd' && msg[5] == 'a' {
 				depth20, err := ParseDepth5(msg)
 				if err != nil {

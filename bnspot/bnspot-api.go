@@ -235,11 +235,11 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	for key, values := range resp.Header {
 		key := strings.ToLower(key)
 		if strings.Contains(key, "x-mbx-used-weight") && len(values) > 0 {
-			limits[key], _ = common.ParseBinanceInt([]byte(values[0]))
+			limits[key], _ = common.ParseInt([]byte(values[0]))
 		} else if strings.Contains(key, "x-mbx-order-count") && len(values) > 0 {
-			limits[key], _ = common.ParseBinanceInt([]byte(values[0]))
+			limits[key], _ = common.ParseInt([]byte(values[0]))
 		} else if strings.Contains(key, "retry-after") && len(values) > 0 {
-			limits[key], _ = common.ParseBinanceInt([]byte(values[0]))
+			limits[key], _ = common.ParseInt([]byte(values[0]))
 		}
 	}
 	contents, err := ioutil.ReadAll(reader)

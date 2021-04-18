@@ -2,6 +2,7 @@ package kcspot
 
 import (
 	"encoding/json"
+	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -34,5 +35,69 @@ func BenchmarkParseDepth50(t *testing.B) {
 	t.ReportAllocs()
 	for i := 0; i < t.N; i++ {
 		_, _ = ParseDepth50(bytes)
+	}
+}
+
+func TestParseDepth5(t *testing.T) {
+	bytes := []byte(`{"data":{"asks":[["55447.5","0.00128653"],["55447.6","0.0040067"],["55447.7","5.26962769"],["55449","0.00016278"],["55451.5","0.00013396"]],"bids":[["55403.1","0.01254575"],["55402.5","0.00005319"],["55279.9","0.201"],["55268.3","0.02406837"],["55233.5","0.0004668"]],"timestamp":1618724853172},"subject":"level2","topic":"/spotMarket/level2Depth5:BTC-USDT","type":"message"}`)
+	jsonD := Depth5{}
+	err := json.Unmarshal(bytes, &jsonD)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%v", jsonD)
+	depth5, err := ParseDepth5(bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, jsonD.Symbol, depth5.Symbol)
+	assert.Equal(t, jsonD.EventTime, depth5.EventTime)
+	for i := 0; i < 5; i++ {
+		assert.Equal(t, jsonD.Bids[i][0], depth5.Bids[i][0])
+		assert.Equal(t, jsonD.Bids[i][1], depth5.Bids[i][1])
+		assert.Equal(t, jsonD.Asks[i][0], depth5.Asks[i][0])
+		assert.Equal(t, jsonD.Asks[i][1], depth5.Asks[i][1])
+	}
+}
+
+func TestParseDepth52(t *testing.T) {
+	bytes := []byte(`{"data":{"asks":[["55447.6","0.0040067"],["55447.7","5.26962769"],["55449","0.00016278"],["55451.5","0.00013396"]],"bids":[["55403.1","0.01254575"],["55402.5","0.00005319"],["55279.9","0.201"],["55268.3","0.02406837"],["55233.5","0.0004668"]],"timestamp":1618724853172},"subject":"level2","topic":"/spotMarket/level2Depth5:BTC-USDT","type":"message"}`)
+	jsonD := Depth5{}
+	err := json.Unmarshal(bytes, &jsonD)
+	if err != nil {
+		t.Fatal(err)
+	}
+	depth5, err := ParseDepth5(bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, jsonD.Symbol, depth5.Symbol)
+	assert.Equal(t, jsonD.EventTime, depth5.EventTime)
+	for i := 0; i < 5; i++ {
+		assert.Equal(t, jsonD.Bids[i][0], depth5.Bids[i][0])
+		assert.Equal(t, jsonD.Bids[i][1], depth5.Bids[i][1])
+		assert.Equal(t, jsonD.Asks[i][0], depth5.Asks[i][0])
+		assert.Equal(t, jsonD.Asks[i][1], depth5.Asks[i][1])
+	}
+}
+
+func TestParseDepth53(t *testing.T) {
+	bytes := []byte(`{"data":{"asks":[],"bids":[["55403.1","0.01254575"],["55402.5","0.00005319"],["55279.9","0.201"],["55268.3","0.02406837"],["55233.5","0.0004668"]],"timestamp":1618724853172},"subject":"level2","topic":"/spotMarket/level2Depth5:BTC-USDT","type":"message"}`)
+	jsonD := Depth5{}
+	err := json.Unmarshal(bytes, &jsonD)
+	if err != nil {
+		t.Fatal(err)
+	}
+	depth5, err := ParseDepth5(bytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, jsonD.Symbol, depth5.Symbol)
+	assert.Equal(t, jsonD.EventTime, depth5.EventTime)
+	for i := 0; i < 5; i++ {
+		assert.Equal(t, jsonD.Bids[i][0], depth5.Bids[i][0])
+		assert.Equal(t, jsonD.Bids[i][1], depth5.Bids[i][1])
+		assert.Equal(t, jsonD.Asks[i][0], depth5.Asks[i][0])
+		assert.Equal(t, jsonD.Asks[i][1], depth5.Asks[i][1])
 	}
 }

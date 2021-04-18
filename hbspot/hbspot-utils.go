@@ -32,7 +32,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 		switch currentKey {
 		case common.JsonKeyBids:
 			if bytes[offset] == ',' || bytes[offset] == ']' {
-				orderBook.Bids[counter/2][counter%2], err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, fmt.Errorf("JsonKeyBids error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
@@ -54,7 +54,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			break
 		case common.JsonKeyAsks:
 			if bytes[offset] == ',' || bytes[offset] == ']' {
-				orderBook.Asks[counter/2][counter%2], err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, fmt.Errorf("JsonKeyAsks error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
@@ -76,7 +76,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			break
 		case common.JsonKeyVersion:
 			if bytes[offset] == ',' {
-				orderBook.Version, err = common.ParseBinanceInt(bytes[collectStart:offset])
+				orderBook.Version, err = common.ParseInt(bytes[collectStart:offset])
 				if err != nil {
 					return nil, fmt.Errorf("JsonKeyVersion error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
@@ -88,7 +88,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			break
 		case common.JsonKeyEventTime:
 			offset += 13
-			timestamp, err := common.ParseBinanceInt(bytes[collectStart:offset])
+			timestamp, err := common.ParseInt(bytes[collectStart:offset])
 			if err != nil {
 				return nil, fmt.Errorf("JsonKeyEventTime error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 			}

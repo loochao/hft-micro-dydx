@@ -40,11 +40,8 @@ type Config struct {
 
 	LoopInterval          *time.Duration `yaml:"loopInterval,omitempty"`
 	PullInterval          *time.Duration `yaml:"pullInterval,omitempty"`
+	LogInterval           *time.Duration `yaml:"logInterval,omitempty"`
 	BalancePositionMaxAge *time.Duration `yaml:"balancePositionMaxAge,omitempty"`
-
-	ResetUnrealisedPnlInterval *time.Duration `yaml:"resetUnrealisedPnlInterval,omitempty"`
-	ResetUnrealisedTriggerPct  *float64       `yaml:"resetUnrealisedTriggerPct,omitempty"`
-	ResetCount                 *int           `yaml:"resetCount,omitempty"`
 
 	SpotPerpPairs map[string]string `yaml:"spotPerpPairs,omitempty"`
 
@@ -65,26 +62,21 @@ type Config struct {
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`
 
-	OrderBookTakerImpact        *float64           `yaml:"orderBookTakerImpact,omitempty"`
-	OrderBookMakerImpact        *float64           `yaml:"orderBookMakerImpact,omitempty"`
-	OrderBookBatchSize          *int               `yaml:"orderBookBatchSize,omitempty"`
-	OrderBookMaxAgeDiff         *time.Duration     `yaml:"orderBookMaxAgeDiff,omitempty"`
-	OrderBookMaxAge             *time.Duration     `yaml:"orderBookMaxAge,omitempty"`
-	SpreadTimeToLive            *time.Duration     `yaml:"spreadTimeToLive,omitempty"`
-	SpreadLookbackDuration      *time.Duration     `yaml:"spreadLookbackDuration,omitempty"`
-	SpreadLookbackMinimalWindow *int               `yaml:"spreadLookbackMinimalWindow,omitempty"`
-	BnbMinSize                  *float64           `yaml:"bnbMinSize,omitempty"`
-	BnbCheckInterval            *time.Duration     `yaml:"bnbCheckInterval,omitempty"`
-	StartValue                  *float64           `yaml:"startValue,omitempty"`
-	EnterFreePct                *float64           `yaml:"enterFreePct,omitempty"`
-	EnterMinimalStep            *float64           `yaml:"enterMinimalStep,omitempty"`
-	EnterTargetFactor           *float64           `yaml:"enterTargetFactor,omitempty"`
-	MaxUnHedgeValue             *float64           `yaml:"maxUnHedgeValue,omitempty"`
-	StartValues                 map[string]float64 `yaml:"startValues,omitempty"`
+	OrderBookTakerImpact        *float64       `yaml:"orderBookTakerImpact,omitempty"`
+	OrderBookMakerImpact        *float64       `yaml:"orderBookMakerImpact,omitempty"`
+	OrderBookBatchSize          *int           `yaml:"orderBookBatchSize,omitempty"`
+	OrderBookMaxAgeDiff         *time.Duration `yaml:"orderBookMaxAgeDiff,omitempty"`
+	OrderBookMaxAge             *time.Duration `yaml:"orderBookMaxAge,omitempty"`
+	SpreadTimeToLive            *time.Duration `yaml:"spreadTimeToLive,omitempty"`
+	SpreadLookbackDuration      *time.Duration `yaml:"spreadLookbackDuration,omitempty"`
+	SpreadLookbackMinimalWindow *int           `yaml:"spreadLookbackMinimalWindow,omitempty"`
 
-	InsuranceFundingRatio    *float64       `yaml:"insuranceFundingRatio,omitempty"`
-	ReBalanceInterval        *time.Duration `yaml:"reBalanceInterval,omitempty"`
-	ReBalanceMinimalNotional *float64       `yaml:"reBalanceMinimalNotional,omitempty"`
+	StartValue        *float64           `yaml:"startValue,omitempty"`
+	EnterFreePct      *float64           `yaml:"enterFreePct,omitempty"`
+	EnterMinimalStep  *float64           `yaml:"enterMinimalStep,omitempty"`
+	EnterTargetFactor *float64           `yaml:"enterTargetFactor,omitempty"`
+	MaxUnHedgeValue   *float64           `yaml:"maxUnHedgeValue,omitempty"`
+	StartValues       map[string]float64 `yaml:"startValues,omitempty"`
 
 	OrderTimeout        *time.Duration `yaml:"orderTimeout,omitempty"`
 	OrderSilent         *time.Duration `yaml:"orderSilent,omitempty"`
@@ -93,6 +85,7 @@ type Config struct {
 	EnterSlippage       *float64       `yaml:"enterSlippage,omitempty"`
 	EnterSilent         *time.Duration `yaml:"enterSilent,omitempty"`
 	RestartSilent       *time.Duration `yaml:"restartSilent,omitempty"`
+	HttpSilent          *time.Duration `yaml:"httpSilent,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

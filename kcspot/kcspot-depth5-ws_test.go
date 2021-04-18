@@ -19,7 +19,7 @@ func TestNewDepth5Websocket(t *testing.T) {
 		os.Getenv("KCPERP_KEY"),
 		os.Getenv("KCPERP_SECRET"),
 		os.Getenv("KCPERP_PASSPHRASE"),
-		"socks5://127.0.0.1:1080")
+		"socks5://127.0.0.1:1081")
 	if err != nil {
 		log.Fatal(err)
 	}

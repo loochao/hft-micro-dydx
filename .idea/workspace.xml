@@ -3,8 +3,31 @@
   <component name="ChangeListManager">
     <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/lob-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/lob-swap.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/loop.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/loop.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/kcperpspot-mt/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/kcperpspot-mt/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/kcperpspot-mt/http-perp.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/kcperpspot-mt/http-perp.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/kcperpspot-mt/http-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/kcperpspot-mt/http-spot.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/kcperpspot-mt/influx.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/kcperpspot-mt/influx.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/kcperpspot-mt/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/kcperpspot-mt/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/kcperpspot-mt/loop.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/kcperpspot-mt/loop.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/kcperpspot-mt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/kcperpspot-mt/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/kcperpspot-mt/quantile.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/kcperpspot-mt/quantile.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/kcperpspot-mt/ws-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/kcperpspot-mt/ws-spot.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/kcperpspot-mt/ws-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/kcperpspot-mt/ws-swap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-api.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-types.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-types.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/utils_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/utils_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hbspot/hbspot-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbspot/hbspot-utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kcperp/kcperp-instrument-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/kcperp/kcperp-instrument-ws_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kcperp/kcperp-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/kcperp/kcperp-utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kcperp/kcperp-utils_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/kcperp/kcperp-utils_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kcspot/kcspot-depth5-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/kcspot/kcspot-depth5-ws.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kcspot/kcspot-depth5-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/kcspot/kcspot-depth5-ws_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kcspot/kcspot-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/kcspot/kcspot-utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kcspot/kcspot-utils_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/kcspot/kcspot-utils_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,71 +86,76 @@
       <recent name="$PROJECT_DIR$/kcperp/jsons" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt">
-    <configuration name="go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Test.TestParseDepth53 in github.com/geometrybase/hft-micro/kcspot">
+    <configuration name="TestNewDepth5Websocket in github.com/geometrybase/hft-micro/kcspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$" />
-      <parameters value="-config $PROJECT_DIR$/applications/hbcrossswapbnswap-tt/config.yaml" />
-      <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" />
-      <directory value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswaph-tt" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$" />
-      <parameters value="-config $PROJECT_DIR$/applications/hbcrossswapbnswaph-tt/config.yaml" />
-      <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/applications/hbcrossswapbnswaph-tt" />
-      <directory value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestAPI_GetContracts in github.com/geometrybase/hft-micro/hbcrossswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/hbcrossswap" />
+      <working_directory value="$PROJECT_DIR$/kcspot" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/hbcrossswap" />
+      <package value="github.com/geometrybase/hft-micro/kcspot" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestAPI_GetContracts\E$" />
+      <pattern value="^\QTestNewDepth5Websocket\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestMergedStepSize in github.com/geometrybase/hft-micro/common" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestParseDepth5 in github.com/geometrybase/hft-micro/kcperp" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/common" />
+      <working_directory value="$PROJECT_DIR$/kcperp" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/common" />
+      <package value="github.com/geometrybase/hft-micro/kcperp" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestMergedStepSize\E$" />
+      <pattern value="^\QTestParseDepth5\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="go test hbcrossswapbnswaph-tt" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestParseDepth5 in github.com/geometrybase/hft-micro/kcspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/applications/hbcrossswapbnswaph-tt" />
+      <working_directory value="$PROJECT_DIR$/kcspot" />
       <framework value="gotest" />
-      <kind value="DIRECTORY" />
-      <package value="github.com/geometrybase/hft-micro" />
-      <directory value="$PROJECT_DIR$/applications/hbcrossswapbnswaph-tt" />
+      <kind value="PACKAGE" />
+      <package value="github.com/geometrybase/hft-micro/kcspot" />
+      <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestParseDepth5\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestParseDepth52 in github.com/geometrybase/hft-micro/kcspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hft-micro" />
+      <working_directory value="$PROJECT_DIR$/kcspot" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/geometrybase/hft-micro/kcspot" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestParseDepth52\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestParseDepth53 in github.com/geometrybase/hft-micro/kcspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hft-micro" />
+      <working_directory value="$PROJECT_DIR$/kcspot" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/geometrybase/hft-micro/kcspot" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestParseDepth53\E$" />
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswaph-tt" />
-      <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" />
-      <item itemvalue="Go Test.TestMergedStepSize in github.com/geometrybase/hft-micro/common" />
-      <item itemvalue="Go Test.TestAPI_GetContracts in github.com/geometrybase/hft-micro/hbcrossswap" />
-      <item itemvalue="Go Test.go test hbcrossswapbnswaph-tt" />
+      <item itemvalue="Go Test.TestParseDepth5 in github.com/geometrybase/hft-micro/kcspot" />
+      <item itemvalue="Go Test.TestNewDepth5Websocket in github.com/geometrybase/hft-micro/kcspot" />
+      <item itemvalue="Go Test.TestParseDepth52 in github.com/geometrybase/hft-micro/kcspot" />
+      <item itemvalue="Go Test.TestParseDepth53 in github.com/geometrybase/hft-micro/kcspot" />
+      <item itemvalue="Go Test.TestParseDepth5 in github.com/geometrybase/hft-micro/kcperp" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" />
-        <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswaph-tt" />
-        <item itemvalue="Go Test.go test hbcrossswapbnswaph-tt" />
-        <item itemvalue="Go Test.TestAPI_GetContracts in github.com/geometrybase/hft-micro/hbcrossswap" />
-        <item itemvalue="Go Test.TestMergedStepSize in github.com/geometrybase/hft-micro/common" />
+        <item itemvalue="Go Test.TestParseDepth53 in github.com/geometrybase/hft-micro/kcspot" />
+        <item itemvalue="Go Test.TestParseDepth52 in github.com/geometrybase/hft-micro/kcspot" />
+        <item itemvalue="Go Test.TestParseDepth5 in github.com/geometrybase/hft-micro/kcperp" />
+        <item itemvalue="Go Test.TestParseDepth5 in github.com/geometrybase/hft-micro/kcspot" />
+        <item itemvalue="Go Test.TestNewDepth5Websocket in github.com/geometrybase/hft-micro/kcspot" />
       </list>
     </recent_temporary>
   </component>

@@ -31,7 +31,7 @@ import (
 //	b := []byte("0.53100000")
 //	for n := 0; n < t.N; n++ {
 //		a := RemoveTailZero(&b)
-//		_, err := strconv.ParseBinanceFloat(*(*string)(unsafe.Pointer(a)), 64)
+//		_, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(a)), 64)
 //		if err != nil {
 //			t.Fatal(err)
 //		}
@@ -41,7 +41,7 @@ import (
 //func BenchmarkFastBytesToString(t *testing.B) {
 //	b := []byte("0.53100000")
 //	for n := 0; n < t.N; n++ {
-//		_, err := strconv.ParseBinanceFloat(*(*string)(unsafe.Pointer(&b)), 64)
+//		_, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&b)), 64)
 //		if err != nil {
 //			t.Fatal(err)
 //		}
@@ -51,7 +51,7 @@ import (
 //func BenchmarkBytesToString(t *testing.B) {
 //	b := []byte("0.53100000")
 //	for n := 0; n < t.N; n++ {
-//		_, err := strconv.ParseBinanceFloat(string(b), 64)
+//		_, err := strconv.ParseFloat(string(b), 64)
 //		if err != nil {
 //			t.Fatal(err)
 //		}
@@ -74,7 +74,7 @@ func BenchmarkParseBinanceFloat(t *testing.B) {
 	b := []byte("3.14159265")
 	t.ReportAllocs()
 	for n := 0; n < t.N; n++ {
-		_, _ = ParseBinanceFloat(b)
+		_, _ = ParseFloat(b)
 	}
 }
 
@@ -88,7 +88,7 @@ func BenchmarkParseInt(t *testing.B) {
 func BenchmarkParseBinanceInt(t *testing.B) {
 	b := []byte("314159265")
 	for n := 0; n < t.N; n++ {
-		_, _ = ParseBinanceInt(b)
+		_, _ = ParseInt(b)
 	}
 }
 

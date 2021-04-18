@@ -9,13 +9,6 @@ import (
 
 func handleSave() {
 
-	if !kcperpAssetUpdatedForInflux || !kcspotBalanceUpdatedForInflux ||
-		time.Now().Sub(kcSaveSilentTime).Seconds() < 0 {
-		return
-	}
-	kcperpAssetUpdatedForInflux = false
-	kcspotBalanceUpdatedForInflux = false
-
 	var totalSpotBalance, totalPerpUSDTBalance *float64
 
 	if kcspotUSDTBalance != nil {
@@ -180,13 +173,6 @@ func handleSave() {
 }
 
 func handleExternalInfluxSave() {
-	if !kcperpAssetUpdatedForExternalInflux ||
-		!kcspotBalanceUpdatedForExternalInflux ||
-		time.Now().Sub(kcSaveSilentTime).Seconds() < 0 {
-		return
-	}
-	kcperpAssetUpdatedForExternalInflux = false
-	kcspotBalanceUpdatedForExternalInflux = false
 
 	var totalSpotBalance, totalPerpUSDTBalance *float64
 

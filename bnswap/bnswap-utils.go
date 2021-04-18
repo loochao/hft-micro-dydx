@@ -22,7 +22,7 @@ func ParseTrade(bytes []byte) (*Trade, error) {
 		switch currentKey {
 		case common.JsonKeyPrice:
 			if bytes[offset] == '"' {
-				trade.Price, err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				trade.Price, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}
@@ -33,7 +33,7 @@ func ParseTrade(bytes []byte) (*Trade, error) {
 			break
 		case common.JsonKeyQuantity:
 			if bytes[offset] == '"' {
-				trade.Quantity, err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				trade.Quantity, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}
@@ -53,7 +53,7 @@ func ParseTrade(bytes []byte) (*Trade, error) {
 			break
 		case common.JsonKeyUnknown:
 			if bytes[offset] == 'E' && bytes[offset-1] == '"' && bytes[offset+1] == '"' && offset+13 < bytesLen {
-				eventTime, err := common.ParseBinanceInt(bytes[offset+3 : offset+16])
+				eventTime, err := common.ParseInt(bytes[offset+3 : offset+16])
 				if err != nil {
 					return nil, err
 				}
@@ -103,7 +103,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 		switch currentKey {
 		case common.JsonKeyBids:
 			if bytes[offset] == '"' {
-				orderBook.Bids[counter/2][counter%2], err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}
@@ -123,7 +123,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			break
 		case common.JsonKeyAsks:
 			if bytes[offset] == '"' {
-				orderBook.Asks[counter/2][counter%2], err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}
@@ -143,7 +143,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			break
 		case common.JsonKeyLastUpdateId:
 			if bytes[offset] == ',' {
-				orderBook.LastUpdateId, err = common.ParseBinanceInt(bytes[collectStart:offset])
+				orderBook.LastUpdateId, err = common.ParseInt(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}
@@ -163,7 +163,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			break
 		case common.JsonKeyUnknown:
 			if bytes[offset] == 'E' && bytes[offset-1] == '"' && bytes[offset+1] == '"' && offset+13 < bytesLen {
-				eventTime, err := common.ParseBinanceInt(bytes[offset+3 : offset+16])
+				eventTime, err := common.ParseInt(bytes[offset+3 : offset+16])
 				if err != nil {
 					return nil, err
 				}
@@ -223,7 +223,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			break
 		case common.JsonKeyMarkPrice:
 			if bytes[offset] == '"' {
-				markPrice.MarkPrice, err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				markPrice.MarkPrice, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}
@@ -234,7 +234,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			break
 		case common.JsonKeyIndexPrice:
 			if bytes[offset] == '"' {
-				markPrice.IndexPrice, err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				markPrice.IndexPrice, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}
@@ -245,7 +245,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			break
 		case common.JsonKeyEstimatedSettlePrice:
 			if bytes[offset] == '"' {
-				markPrice.EstimatedSettlePrice, err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				markPrice.EstimatedSettlePrice, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}
@@ -256,7 +256,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			break
 		case common.JsonKeyFundingRate:
 			if bytes[offset] == '"' {
-				markPrice.FundingRate, err = common.ParseBinanceFloat(bytes[collectStart:offset])
+				markPrice.FundingRate, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
 					return nil, err
 				}

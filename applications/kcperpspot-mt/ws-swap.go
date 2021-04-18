@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func handleWSBalance(wsBalance *kcperp.WsBalanceEvent) {
+func handlePerpWSBalance(wsBalance *kcperp.WsBalanceEvent) {
 	if kcperpUSDTAccount != nil {
 		if wsBalance.Currency != nil && kcperpUSDTAccount.Currency == *wsBalance.Currency {
 			if wsBalance.AvailableBalance != nil && kcperpUSDTAccount.AvailableBalance != *wsBalance.AvailableBalance {
@@ -16,6 +16,7 @@ func handleWSBalance(wsBalance *kcperp.WsBalanceEvent) {
 				//	*wsBalance.AvailableBalance,
 				//)
 				kcperpUSDTAccount.AvailableBalance = *wsBalance.AvailableBalance
+				kcLoopTimer.Reset(time.Nanosecond)
 			}
 			if wsBalance.OrderMargin != nil {
 				//logger.Debugf(
@@ -37,12 +38,14 @@ func handleWSBalance(wsBalance *kcperp.WsBalanceEvent) {
 	}
 }
 
-func handleWSPosition(nextPos *kcperp.WSPosition) {
+func handlePerpWSPosition(nextPos *kcperp.WSPosition) {
 	if _, ok := kcpsSymbolsMap[nextPos.Symbol]; ok {
 		if lastPos, ok := kcperpPositions[nextPos.Symbol]; ok && nextPos.EventTime.Sub(lastPos.EventTime) > 0 {
 			if nextPos.CurrentQty != nil {
 				lastPos.CurrentQty = *nextPos.CurrentQty
 				logger.Debugf("PERP WS POS %s NEW QTY %v", nextPos.Symbol, lastPos.CurrentQty)
+				kcperpHttpPositionUpdateSilentTimes[lastPos.Symbol] = time.Now().Add(*kcConfig.HttpSilent)
+				kcLoopTimer.Reset(time.Nanosecond)
 			}
 			if nextPos.AvgEntryPrice != nil {
 				lastPos.AvgEntryPrice = *nextPos.AvgEntryPrice

@@ -36,8 +36,10 @@ var kcperpNewOrderErrorCh = make(chan PerpOrderNewError, 10)
 var kcperpOrderRequestChs = make(map[string]chan kcperp.NewOrderParam)
 
 var kcspotHttpBalanceUpdateSilentTimes = make(map[string]time.Time)
-var kcspotLastOrderTimes = make(map[string]time.Time)
-var kcperpLastOrderTimes = make(map[string]time.Time)
+var kcperpHttpPositionUpdateSilentTimes = make(map[string]time.Time)
+
+//var kcspotLastOrderTimes = make(map[string]time.Time)
+//var kcperpLastOrderTimes = make(map[string]time.Time)
 
 var kcspotSymbols = make([]string, 0)
 var kcperpSymbols = make([]string, 0)
@@ -45,6 +47,7 @@ var kcspSymbolsMap = make(map[string]string, 0)
 var kcpsSymbolsMap = make(map[string]string, 0)
 
 var kcOpenLogSilentTimes = make(map[string]time.Time)
+var kcUnHedgeLogSilentTime = time.Now()
 
 var kcperpAccountCh = make(chan kcperp.Account, 10)
 
@@ -65,13 +68,6 @@ var kcperpPositions = make(map[string]kcperp.Position)
 
 var kcspotBalances = make(map[string]kcspot.Account)
 var kcspotUSDTBalance *kcspot.Account
-var kcperpAssetUpdatedForReBalance = false
-var kcspotBalanceUpdatedForReBalance = false
-var kcperpAssetUpdatedForInflux = false
-var kcspotBalanceUpdatedForInflux = false
-var kcperpAssetUpdatedForExternalInflux = false
-var kcspotBalanceUpdatedForExternalInflux = false
-var kcSaveSilentTime = time.Now()
 
 var kcspotAccountCh = make(chan []kcspot.Account, 10)
 
@@ -99,12 +95,13 @@ var kcspotLastFilledSellPrices = make(map[string]float64)
 var kcRealisedSpread = make(map[string]float64)
 var kcSpreads = make(map[string]Spread)
 var kcUnHedgeValue float64
+var kcLoopTimer = time.NewTimer(time.Hour * 24)
 
 var kcConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210418 03:46:43  ####")
+	logger.Debug("####  BUILD @ 20210418 06:23:25  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -150,10 +147,12 @@ func init() {
 
 		kcOpenLogSilentTimes[spotSymbol] = time.Now()
 		kcspotSilentTimes[spotSymbol] = time.Now().Add(time.Minute)
-		kcspotHttpBalanceUpdateSilentTimes[spotSymbol] = time.Now()
 
-		kcperpLastOrderTimes[perpSymbol] = time.Unix(0, 0)
-		kcspotLastOrderTimes[spotSymbol] = time.Unix(0, 0)
+		kcspotHttpBalanceUpdateSilentTimes[spotSymbol] = time.Now()
+		kcperpHttpPositionUpdateSilentTimes[perpSymbol] = time.Now()
+
+		//kcperpLastOrderTimes[perpSymbol] = time.Unix(0, 0)
+		//kcspotLastOrderTimes[spotSymbol] = time.Unix(0, 0)
 	}
 
 	kcBarsMapUpdated["swap"] = false

@@ -7,7 +7,7 @@ import (
 	"github.com/geometrybase/hft-micro/kcspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
-	"strings"
+	"math/rand"
 	"time"
 )
 
@@ -65,13 +65,6 @@ func updatePerpPositions() {
 		}
 		price := math.Round(perpOrderBook.AskPrice*(1.0+*kcConfig.EnterSlippage)/perpTickSize) * perpTickSize
 		side := kcperp.OrderSideBuy
-		id, _ := common.GenerateShortId()
-		clOrdID := fmt.Sprintf(
-			"%s%d",
-			id,
-			time.Now().Unix(),
-		)
-		clOrdID = strings.ReplaceAll(clOrdID, ".", "_")
 		if perpSize < 0 {
 			side = kcperp.OrderSideSell
 			perpSize = -perpSize
@@ -85,7 +78,7 @@ func updatePerpPositions() {
 			TimeInForce: kcperp.OrderTimeInForceIOC,
 			Size:        int64(perpSize),
 			ReduceOnly:  reduceOnly,
-			ClientOid:   clOrdID,
+			ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 			Leverage:    *kcConfig.Leverage,
 		}
 		logger.Debugf("PERP ORDER %v", order)
@@ -93,7 +86,7 @@ func updatePerpPositions() {
 
 		kcperpOrderSilentTimes[perpSymbol] = time.Now().Add(*kcConfig.OrderSilent)
 		kcperpPositionsUpdateTimes[perpSymbol] = time.Unix(0, 0)
-		kcperpLastOrderTimes[perpSymbol] = time.Now()
+		kcperpHttpPositionUpdateSilentTimes[perpSymbol] = time.Now().Add(*kcConfig.HttpSilent)
 		kcperpOrderRequestChs[perpSymbol] <- order
 	}
 	kcUnHedgeValue = unHedgedValue
@@ -114,7 +107,10 @@ func updateSpotNewOrders() {
 	}
 
 	if kcUnHedgeValue > *kcConfig.MaxUnHedgeValue {
-		logger.Debugf("UN HEDGE VALUE %f > %f", kcUnHedgeValue, *kcConfig.MaxUnHedgeValue)
+		if time.Now().Sub(kcUnHedgeLogSilentTime) > 0 {
+			kcUnHedgeLogSilentTime = time.Now().Add(*kcConfig.LogInterval)
+			logger.Debugf("UN HEDGE VALUE %f > %f", kcUnHedgeValue, *kcConfig.MaxUnHedgeValue)
+		}
 		return
 	}
 
@@ -123,6 +119,7 @@ func updateSpotNewOrders() {
 		entryStep = *kcConfig.EnterMinimalStep
 	}
 	entryTarget := entryStep * *kcConfig.EnterTargetFactor
+	usdtAvailable := kcspotUSDTBalance.Available
 
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单
 	for rank := len(kcperpSymbols) - 1; rank >= 0; rank-- {
@@ -174,8 +171,8 @@ func updateSpotNewOrders() {
 			}
 			entryValue := targetValue - currentSpotSize*price
 
-			if entryValue > kcspotUSDTBalance.Available*0.8 {
-				entryValue = kcspotUSDTBalance.Available * 0.8
+			if entryValue > usdtAvailable*0.8 {
+				entryValue = usdtAvailable * 0.8
 			}
 
 			entryValue = math.Max(entryValue, spotMinNotional)
@@ -183,6 +180,8 @@ func updateSpotNewOrders() {
 			quantity := entryValue / price
 			quantity = math.Round(quantity/spotStepSize) * spotStepSize
 			quantity = math.Round(quantity/perpStepSize) * perpStepSize
+
+			entryValue = quantity * price
 
 			//不及一个0.8*EntryStep, 不操作
 			if entryValue < entryStep*0.8 {
@@ -196,37 +195,22 @@ func updateSpotNewOrders() {
 						spread.MedianEnter, quantile.Top,
 						quantity,
 					)
-					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
+					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
 				}
 				continue
 			}
-			if entryValue > kcspotUSDTBalance.Available {
+			if entryValue > usdtAvailable {
 				if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
 					logger.Debugf(
 						"FAILED TOP OPEN, ENTRY VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
 						entryValue,
-						kcspotUSDTBalance.Available,
+						usdtAvailable,
 						spotSymbol,
 						spread.LastEnter, quantile.Top,
 						spread.MedianEnter, quantile.Top,
 						quantity,
 					)
-					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
-				}
-				continue
-			}
-			if quantity*price > kcspotUSDTBalance.Available {
-				if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED TOP OPEN, ORDER VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
-						quantity*price,
-						kcspotUSDTBalance.Available,
-						spotSymbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
-						quantity,
-					)
-					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
+					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
 				}
 				continue
 			}
@@ -242,7 +226,7 @@ func updateSpotNewOrders() {
 						spread.MedianEnter, quantile.Top,
 						quantity,
 					)
-					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
+					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
 				}
 				continue
 			}
@@ -254,12 +238,6 @@ func updateSpotNewOrders() {
 				spread.MedianEnter, quantile.Top,
 				quantity,
 			)
-			id, _ := common.GenerateShortId()
-			clOrdID := fmt.Sprintf(
-				"%s%d",
-				id,
-				time.Now().Unix(),
-			)
 			order := kcspot.NewOrderParam{
 				Symbol:      spotSymbol,
 				Price:       common.Float64(price),
@@ -267,7 +245,7 @@ func updateSpotNewOrders() {
 				TimeInForce: kcspot.OrderTimeInForceGTC,
 				Side:        kcspot.OrderSideBuy,
 				Type:        kcspot.OrderTypeLimit,
-				ClientOid:   clOrdID,
+				ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 			}
 			kcspotOrderSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.OrderSilent)
 			kcspotOrderCancelCounts[spotSymbol] = 0
@@ -299,12 +277,6 @@ func updateSpotNewOrders() {
 						spread.MedianExit, quantile.Bot,
 						quantity,
 					)
-					id, _ := common.GenerateShortId()
-					clOrdID := fmt.Sprintf(
-						"%s%d",
-						id,
-						time.Now().Unix(),
-					)
 					order := kcspot.NewOrderParam{
 						Symbol:      spotSymbol,
 						Price:       common.Float64(price),
@@ -312,7 +284,7 @@ func updateSpotNewOrders() {
 						TimeInForce: kcspot.OrderTimeInForceGTC,
 						Side:        kcspot.OrderSideSell,
 						Type:        kcspot.OrderTypeLimit,
-						ClientOid:   clOrdID,
+						ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 					}
 					kcspotOrderSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.OrderSilent)
 					kcspotOrderCancelCounts[spotSymbol] = 0
@@ -325,7 +297,7 @@ func updateSpotNewOrders() {
 	}
 }
 
-func handleWebsocketRestart(){
+func handleWebsocketRestart() {
 	for _, spotSymbol := range kcspotSymbols {
 		kcspotSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.RestartSilent)
 	}

@@ -132,19 +132,13 @@ func main() {
 			*kcConfig.ExternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
-	loopTimer := time.NewTimer(time.Hour * 24) //先等1分钟
-	//targetValueUpdateTimer := time.NewTimer(time.Hour * 24)
-	//resetUnrealisedPnlTimer := time.NewTimer(time.Minute)
-	//reBalanceTimer := time.NewTimer(time.Second)
+
 	frRankUpdatedTimer := time.NewTimer(time.Second * 180)
 
 	defer influxSaveTimer.Stop()
-	defer loopTimer.Stop()
-	//defer targetValueUpdateTimer.Stop()
-	//defer resetUnrealisedPnlTimer.Stop()
-	//defer reBalanceTimer.Stop()
+	defer kcLoopTimer.Stop()
 	defer frRankUpdatedTimer.Stop()
-	//
+
 	go kcperp.WatchPositionsFromHttp(
 		kcGlobalCtx, kcperpAPI,
 		kcperpSymbols, *kcConfig.PullInterval,
@@ -325,6 +319,8 @@ func main() {
 			break
 		case spotOrder := <-kcspotUserWebsocket.OrderCh:
 			if spotOrder.Type == kcspot.OrderTypeFilled {
+				kcLoopTimer.Reset(time.Nanosecond)
+				kcspotHttpBalanceUpdateSilentTimes[spotOrder.Symbol] = time.Now().Add(*kcConfig.HttpSilent)
 				if spotOrder.FilledSize > 0 {
 					if spotOrder.Side == kcspot.OrderSideBuy {
 						kcspotLastFilledBuyPrices[spotOrder.Symbol] = spotOrder.Price
@@ -347,35 +343,37 @@ func main() {
 			}
 			break
 		case msg := <-kcperpUserWebsocket.PositionCh:
-			handleWSPosition(msg)
+			handlePerpWSPosition(msg)
 			break
 		case msg := <-kcperpUserWebsocket.BalanceCh:
-			handleWSBalance(msg)
+			handlePerpWSBalance(msg)
 			break
-		case order := <-kcperpUserWebsocket.OrderCh:
-			if order.Type == kcperp.OrderTypeCanceled ||
-				order.Type == kcperp.OrderTypeMatch {
-				if order.Type == kcperp.OrderTypeCanceled {
-					logger.Debugf("PERP WS ORDER CANCELED %v ", order)
-					kcperpOrderSilentTimes[order.Symbol] = time.Now().Add(time.Second)
-					kcperpPositionsUpdateTimes[order.Symbol] = time.Unix(0, 0)
+		case perpOrder := <-kcperpUserWebsocket.OrderCh:
+			if perpOrder.Type == kcperp.OrderTypeCanceled ||
+				perpOrder.Type == kcperp.OrderTypeMatch {
+				if perpOrder.Type == kcperp.OrderTypeCanceled {
+					logger.Debugf("PERP WS ORDER CANCELED %v ", perpOrder)
+					kcperpOrderSilentTimes[perpOrder.Symbol] = time.Now().Add(time.Second)
+					kcperpPositionsUpdateTimes[perpOrder.Symbol] = time.Unix(0, 0)
 				} else {
 					logger.Debugf(
 						"PERP WS ORDER MATCHED %s SIDE %s MATCHED SIZE %v MATCHED PRICE %f",
-						order.Symbol, order.Side, order.MatchSize, order.MatchPrice,
+						perpOrder.Symbol, perpOrder.Side, perpOrder.MatchSize, perpOrder.MatchPrice,
 					)
-					if order.Side == kcperp.OrderSideSell {
-						if spotSymbol, ok := kcpsSymbolsMap[order.Symbol]; ok {
+					kcLoopTimer.Reset(time.Nanosecond)
+					kcperpHttpPositionUpdateSilentTimes[perpOrder.Symbol] = time.Now().Add(*kcConfig.HttpSilent)
+					if perpOrder.Side == kcperp.OrderSideSell {
+						if spotSymbol, ok := kcpsSymbolsMap[perpOrder.Symbol]; ok {
 							if spotPrice, ok := kcspotLastFilledBuyPrices[spotSymbol]; ok {
-								kcRealisedSpread[spotSymbol] = (order.MatchPrice - spotPrice) / spotPrice
-								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, order.Symbol, kcRealisedSpread[spotSymbol])
+								kcRealisedSpread[spotSymbol] = (perpOrder.MatchPrice - spotPrice) / spotPrice
+								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, perpOrder.Symbol, kcRealisedSpread[spotSymbol])
 							}
 						}
-					} else if order.Side == kcperp.OrderSideBuy {
-						if spotSymbol, ok := kcpsSymbolsMap[order.Symbol]; ok {
+					} else if perpOrder.Side == kcperp.OrderSideBuy {
+						if spotSymbol, ok := kcpsSymbolsMap[perpOrder.Symbol]; ok {
 							if spotPrice, ok := kcspotLastFilledSellPrices[spotSymbol]; ok {
-								kcRealisedSpread[spotSymbol] = (order.MatchPrice - spotPrice) / spotPrice
-								logger.Debugf("%s %s REALISED CLOSE SPREAD %f", spotSymbol, order.Symbol, kcRealisedSpread[spotSymbol])
+								kcRealisedSpread[spotSymbol] = (perpOrder.MatchPrice - spotPrice) / spotPrice
+								logger.Debugf("%s %s REALISED CLOSE SPREAD %f", spotSymbol, perpOrder.Symbol, kcRealisedSpread[spotSymbol])
 							}
 						}
 					}
@@ -391,16 +389,6 @@ func main() {
 		case fr := <-kcperpFundingRatesCh:
 			kcperpFundingRates[fr.Symbol] = fr
 			break
-		//case <-resetUnrealisedPnlTimer.C:
-		//	//handleResetPnl()
-		//	resetUnrealisedPnlTimer.Reset(
-		//		time.Now().Truncate(
-		//			*kcConfig.ResetUnrealisedPnlInterval,
-		//		).Add(
-		//			*kcConfig.ResetUnrealisedPnlInterval,
-		//		).Sub(time.Now()),
-		//	)
-		//	break
 		case kcperpBarsMap = <-kcperpBarsMapCh:
 			if kcBarsMapUpdated["spot"] {
 				kcBarsMapCh <- [2]common.KLinesMap{kcspotBarsMap, kcperpBarsMap}
@@ -420,8 +408,7 @@ func main() {
 			}
 			break
 		case kcQuantiles = <-kcQuantilesCh:
-			//logger.Debugf("QUANTILES %v", kcQuantiles)
-			loopTimer.Reset(time.Second)
+			kcLoopTimer.Reset(time.Second)
 			break
 		case <-influxSaveTimer.C:
 			handleSave()
@@ -470,13 +457,12 @@ func main() {
 			if err != nil {
 				logger.Debugf("RankSymbols error %v", err)
 			}
-			//logger.Debugf("SYMBOLS FR RANK %v", kcRankSymbolMap)
 			frRankUpdatedTimer.Reset(time.Minute)
-		case <-loopTimer.C:
+		case <-kcLoopTimer.C:
 			updatePerpPositions()
 			updateSpotOldOrders()
 			updateSpotNewOrders()
-			loopTimer.Reset(
+			kcLoopTimer.Reset(
 				time.Now().Truncate(
 					*kcConfig.LoopInterval,
 				).Add(
