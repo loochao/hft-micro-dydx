@@ -38,6 +38,8 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != tPositions[pos.Symbol].PositionAmt ||
 			lastPosition.EntryPrice != tPositions[pos.Symbol].EntryPrice {
+			tHttpPositionUpdateSilentTimes[pos.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
+			mtLoopTimer.Reset(time.Nanosecond)
 			logger.Debugf("WS POSITION CHANGED NEW %s", pos.ToString())
 		}
 	}
@@ -47,11 +49,17 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 			cwb := balance.CrossWalletBalance
 			if tAccount == nil {
 				tAccount = &bnswap.Asset{
-					Asset:         balance.Asset,
-					WalletBalance: &wb,
+					Asset:              balance.Asset,
+					WalletBalance:      &wb,
 					CrossWalletBalance: &cwb,
 				}
+				logger.Debugf("WS USDT CHANGE WB nil -> %f", wb)
+				mtLoopTimer.Reset(time.Nanosecond)
 			} else {
+				if tAccount.WalletBalance != nil && *tAccount.WalletBalance != wb {
+					mtLoopTimer.Reset(time.Nanosecond)
+					logger.Debugf("WS USDT CHANGE WB nil -> %f", *tAccount.WalletBalance, wb)
+				}
 				tAccount.WalletBalance = &wb
 				tAccount.CrossWalletBalance = &cwb
 			}
@@ -74,4 +82,3 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 		//}
 	}
 }
-

@@ -31,7 +31,8 @@ var tAPI *bnswap.API
 var mUserWebsocket *hbcrossswap.UserWebsocket
 var tUserWebsocket *bnswap.UserWebsocket
 
-//var mHttpPositionUpdateSilentTimes = make(map[string]time.Time)
+var mHttpPositionUpdateSilentTimes = make(map[string]time.Time)
+var tHttpPositionUpdateSilentTimes = make(map[string]time.Time)
 
 var mTickSizes = make(map[string]float64)
 var mContractSizes = make(map[string]float64)
@@ -48,7 +49,6 @@ var mPositionsUpdateTimes = make(map[string]time.Time)
 var mOrderRequestChs = make(map[string]chan hbcrossswap.NewOrderParam)
 var mNewOrderErrorCh chan MakerOrderNewError
 var mOrderSilentTimes = make(map[string]time.Time)
-var mLastOrderTimes = make(map[string]time.Time)
 var mSilentTimes = make(map[string]time.Time)
 
 var tPositionsCh = make(chan []bnswap.Position, 10)
@@ -59,7 +59,6 @@ var tAccountCh = make(chan bnswap.Account, 10)
 var tNewOrderErrorCh = make(chan TakerOrderNewError, 10)
 var tOrderRequestChs = make(map[string]chan bnswap.NewOrderParams)
 var tOrderSilentTimes = make(map[string]time.Time)
-var tLastOrderTimes = make(map[string]time.Time)
 
 
 var mFundingRates map[string]hbcrossswap.FundingRate
@@ -132,13 +131,13 @@ func init() {
 		mOrderSilentTimes[makerSymbol] = time.Now()
 		mtLogSilentTimes[makerSymbol] = time.Now()
 		mSilentTimes[makerSymbol] = time.Now().Add(time.Minute)
-		//mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
 		mPositionsUpdateTimes[makerSymbol] = time.Unix(0, 0)
-		mLastOrderTimes[makerSymbol] = time.Unix(0, 0)
 
 		tOrderSilentTimes[takerSymbol] = time.Now()
 		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
-		tLastOrderTimes[takerSymbol] = time.Unix(0, 0)
+
+		mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
+		tHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
 	}
 
 	mtMapUpdated[TakerName] = false

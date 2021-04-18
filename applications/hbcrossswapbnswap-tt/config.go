@@ -81,6 +81,7 @@ type Config struct {
 	EnterSlippage       *float64       `yaml:"enterSlippage,omitempty"`
 	EnterSilent         *time.Duration `yaml:"enterSilent,omitempty"`
 	RestartSilent       *time.Duration `yaml:"restartSilent,omitempty"`
+	HttpSilent          *time.Duration `yaml:"httpSilent,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

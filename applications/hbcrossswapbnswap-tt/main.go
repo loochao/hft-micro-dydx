@@ -331,10 +331,10 @@ func main() {
 			handleTakerWSAccount(msg)
 			break
 		case msg := <-mUserWebsocket.PositionCh:
-			handleWSPosition(msg)
+			handleMakerWSPosition(msg)
 			break
 		case msg := <-mUserWebsocket.AccountCh:
-			handleWSAccount(msg)
+			handleMakerWSAccount(msg)
 			break
 		case makerOrder := <-mUserWebsocket.OrderCh:
 			if makerOrder.Status == hbcrossswap.OrderStatusFilled ||
