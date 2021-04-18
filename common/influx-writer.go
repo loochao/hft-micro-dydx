@@ -113,6 +113,9 @@ func (iw *InfluxWriter) savePoints(points []*client.Point) error {
 }
 
 func (iw *InfluxWriter) watchPoints() {
+	defer func() {
+		logger.Debugf("EXIT watchPoints")
+	}()
 	// 控制save的频率
 	timer := time.NewTimer(time.Second * 3)
 	defer timer.Stop()
@@ -120,8 +123,8 @@ func (iw *InfluxWriter) watchPoints() {
 	for {
 		select {
 		case <-iw.done:
-			logger.Debugf("watchPoints writer is DONE, exit")
-			time.Sleep(time.Second * 3)
+			//logger.Debugf("watchPoints writer is DONE, exit")
+			//time.Sleep(time.Second * 3)
 			close(iw.PushCh)
 			for pt := range iw.PushCh {
 				iw.points = append(iw.points, pt)
@@ -136,7 +139,7 @@ func (iw *InfluxWriter) watchPoints() {
 			} else {
 				logger.Debugf("savedPoints %d", len(pts))
 			}
-			time.Sleep(time.Second * 10)
+			//time.Sleep(time.Second * 10)
 		case <-timer.C:
 			saveSilent = false
 		case pt := <-iw.PushCh:
