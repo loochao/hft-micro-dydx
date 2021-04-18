@@ -105,7 +105,7 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 	}
 	if order.Side == kcspot.OrderSideBuy {
 		logger.Debugf(
-			"%s NOT PROFITABLE BUY ORDER PERP BID VWAP %f ORDER PRICE %f DELTA %f < TOP %f - %f",
+			"%s NOT PROFITABLE BUY ORDER PERP BIDVWAP %f ORDER PRICE %f DELTA %f < TOP %f - %f",
 			order.Symbol,
 			spread.PerpOrderBook.TakerBidVWAP,
 			order.Price,
@@ -115,7 +115,7 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 		)
 	} else {
 		logger.Debugf(
-			"%s NOT PROFITABLE BUY ORDER PERP ASK VWAP %f ORDER PRICE %f DELTA %f > BOT %f + %f",
+			"%s NOT PROFITABLE BUY ORDER PERP ASKVWAP %f ORDER PRICE %f DELTA %f > BOT %f + %f",
 			order.Symbol,
 			spread.PerpOrderBook.TakerAskVWAP,
 			order.Price,

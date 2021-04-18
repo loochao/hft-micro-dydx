@@ -13,6 +13,9 @@ git push origin master
 
 chmod 755 "./dist/hft-mirco-hbcrossswapbnswap-tt.$dt"
 
+echo "pd02"
+rsync -avx --progress "./dist/hft-mirco-hbcrossswapbnswap-tt.$dt" pd02:/usr/local/bin/
+
 echo "tokyo1"
 rsync -avx --progress "./dist/hft-mirco-hbcrossswapbnswap-tt.$dt" tokyo1:/usr/local/bin/
 
