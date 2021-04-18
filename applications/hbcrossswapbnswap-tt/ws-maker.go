@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"time"
 )
 
@@ -13,14 +14,16 @@ func handleMakerWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 			if mAccount == nil {
 				logger.Debugf("SWAP WS USDT CHANGE WA nil -> %f MB nil -> %f", account.WithdrawAvailable, account.MarginBalance)
 				mtLoopTimer.Reset(time.Nanosecond)
-			} else if mAccount.WithdrawAvailable != account.WithdrawAvailable {
+			} else if mAccount.MarginBalance != account.MarginBalance {
 				mtLoopTimer.Reset(time.Nanosecond)
-				logger.Debugf("SWAP WS USDT CHANGE WA %f -> %f MB %f -> %f ",
-					mAccount.WithdrawAvailable,
-					account.WithdrawAvailable,
-					mAccount.MarginBalance,
-					account.MarginBalance,
-				)
+				if math.Abs(mAccount.MarginPosition - account.MarginPosition) > *mtConfig.EnterMinimalStep*0.5 {
+					logger.Debugf("SWAP WS USDT CHANGE WA %f -> %f MB %f -> %f ",
+						mAccount.WithdrawAvailable,
+						account.WithdrawAvailable,
+						mAccount.MarginBalance,
+						account.MarginBalance,
+					)
+				}
 			}
 			mAccount = &account
 			return
