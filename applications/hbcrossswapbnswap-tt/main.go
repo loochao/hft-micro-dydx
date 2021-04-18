@@ -244,36 +244,46 @@ func main() {
 	//)
 
 	walkedOrderBookCh := make(chan WalkedOrderBook, len(mSymbols)*10)
-	for start := 0; start < len(tSymbols); start += *mtConfig.OrderBookBatchSize {
-		end := start + *mtConfig.OrderBookBatchSize
-		if end > len(tSymbols) {
-			end = len(tSymbols)
-		}
-		go watchTakerWalkedOrderBooks(
-			mtGlobalCtx,
-			mtGlobalCancel,
-			*mtConfig.ProxyAddress,
-			*mtConfig.OrderBookImpact,
-			tSymbols[start:end],
-			walkedOrderBookCh,
-		)
-	}
-
-	for start := 0; start < len(mSymbols); start += *mtConfig.OrderBookBatchSize {
-		end := start + *mtConfig.OrderBookBatchSize
-		if end > len(mSymbols) {
-			end = len(mSymbols)
-		}
-		go watchMakerWalkedOrderBooks(
-			mtGlobalCtx,
-			mtGlobalCancel,
-			*mtConfig.ProxyAddress,
-			mContractSizes,
-			*mtConfig.OrderBookImpact,
-			mSymbols[start:end],
-			walkedOrderBookCh,
-		)
-	}
+	go watchTakerWalkedOrderBooks(
+		mtGlobalCtx,
+		mtGlobalCancel,
+		*mtConfig.ProxyAddress,
+		*mtConfig.OrderBookImpact,
+		tSymbols[:len(tSymbols)/2],
+		walkedOrderBookCh,
+	)
+	go watchTakerWalkedOrderBooks(
+		mtGlobalCtx,
+		mtGlobalCancel,
+		*mtConfig.ProxyAddress,
+		*mtConfig.OrderBookImpact,
+		tSymbols[len(tSymbols)/2:],
+		walkedOrderBookCh,
+	)
+	go watchMakerWalkedOrderBooks(
+		mtGlobalCtx,
+		mtGlobalCancel,
+		*mtConfig.ProxyAddress,
+		mContractSizes,
+		*mtConfig.OrderBookImpact,
+		mSymbols[len(mSymbols)/2:],
+		walkedOrderBookCh,
+	)
+	go watchMakerWalkedOrderBooks(
+		mtGlobalCtx,
+		mtGlobalCancel,
+		*mtConfig.ProxyAddress,
+		mContractSizes,
+		*mtConfig.OrderBookImpact,
+		mSymbols[:len(mSymbols)/2],
+		walkedOrderBookCh,
+	)
+	//for start := 0; start < len(mSymbols); start += *mtConfig.OrderBookBatchSize {
+	//	end := start + *mtConfig.OrderBookBatchSize
+	//	if end > len(mSymbols) {
+	//		end = len(mSymbols)
+	//	}
+	//}
 
 	spreadCh := make(chan Spread, len(mSymbols)*100)
 	go watchSpread(
