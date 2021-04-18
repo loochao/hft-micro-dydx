@@ -16,10 +16,17 @@ func watchTakerWalkedOrderBooks(
 	defer func() {
 		logger.Debugf("LOOP END watchTakerWalkedOrderBooks %s", symbols)
 	}()
+	for {
+		select {
+		case <- ctx.Done():
+			return
+		}
+	}
 	lastEventTimes := make(map[string]time.Time)
 	for _, s := range symbols {
 		lastEventTimes[s] = time.Unix(0, 0)
 	}
+
 
 	ws := bnswap.NewDepth20Websocket(ctx, symbols, proxyAddress)
 	defer ws.Stop()

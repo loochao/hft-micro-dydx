@@ -19,6 +19,12 @@ func watchMakerWalkedOrderBooks(
 	defer func(){
 		logger.Debugf("LOOP END watchMakerWalkedOrderBooks %s", symbols)
 	}()
+	for {
+		select {
+		case <- ctx.Done():
+			return
+		}
+	}
 	lastEventTimes := make(map[string]time.Time)
 	for _, symbol := range symbols {
 		lastEventTimes[symbol] = time.Unix(0, 0)
