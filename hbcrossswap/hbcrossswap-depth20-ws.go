@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -185,7 +186,38 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			if msg[2] == 'c' {
+			if msg[2] == 'c' && len(msg) > 56{
+				if msg[40] == ':' {
+					t, err := common.ParseInt(msg[41:54])
+					if err != nil {
+						logger.Debugf("ParseDepth20 error %v %s", err, msg[41:54])
+						continue
+					}
+					if time.Now().UnixNano()/1000000-t > 100 {
+						logger.Debugf("SLOW MSG DIFF %d", time.Now().UnixNano()/1000000-t)
+						continue
+					}
+				} else if msg[41] == 'E' {
+					t, err := common.ParseInt(msg[42:55])
+					if err != nil {
+						logger.Debugf("ParseDepth20 error %v %s", err, msg[42:55])
+						continue
+					}
+					if time.Now().UnixNano()/1000000-t > 100 {
+						logger.Debugf("SLOW MSG DIFF %d", time.Now().UnixNano()/1000000-t)
+						continue
+					}
+				} else if msg[42] == 'E' {
+					t, err := common.ParseInt(msg[43:56])
+					if err != nil {
+						logger.Debugf("ParseDepth20 error %v %s", err, msg[43:56])
+						continue
+					}
+					if time.Now().UnixNano()/1000000-t > 100 {
+						logger.Debugf("SLOW MSG DIFF %d", time.Now().UnixNano()/1000000-t)
+						continue
+					}
+				}
 				depth20, err := ParseDepth20(msg)
 				if err != nil {
 					logger.Debugf("ParseDepth20 error %v %s", err, msg)
