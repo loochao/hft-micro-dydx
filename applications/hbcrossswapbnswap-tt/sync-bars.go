@@ -97,7 +97,7 @@ func watchMakerBars(
 					nextPullTimes[symbol] = globalNextRetryTime
 					continue
 				}
-				logger.Debugf("MAKER GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
+				//logger.Debugf("MAKER GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
 				if _, ok := barsMap[symbol]; !ok {
 					barsMap[symbol] = history
 				}
@@ -141,7 +141,7 @@ func watchMakerBars(
 						output <- outputMap
 					}
 					outputResults = false
-					logger.Debugf("OUTPUT BARS")
+					logger.Debugf("OUTPUT MAKER BARS")
 				}
 			}
 			loopTimer.Reset(time.Second)
@@ -232,7 +232,7 @@ func watchTakerBars(
 					nextPullTimes[symbol] = globalNextRetryTime
 					continue
 				}
-				logger.Debugf("TAKER GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
+				//logger.Debugf("TAKER GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
 				if _, ok := barsMap[symbol]; !ok {
 					barsMap[symbol] = history
 				}
@@ -276,7 +276,7 @@ func watchTakerBars(
 						output <- outputMap
 					}
 					outputResults = false
-					logger.Debugf("OUTPUT BARS")
+					logger.Debugf("OUTPUT TAKER BARS")
 				}
 			}
 			loopTimer.Reset(time.Second)

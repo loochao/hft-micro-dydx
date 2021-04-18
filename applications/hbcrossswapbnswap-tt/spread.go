@@ -19,7 +19,7 @@ func watchSpread(
 	outputCh chan Spread,
 ) {
 	defer func() {
-		logger.Debugf("EXIT watchSpread %s")
+		logger.Debugf("EXIT watchSpread")
 	}()
 	makerOrderBooks := make(map[string]WalkedOrderBook)
 	takerOrderBooks := make(map[string]WalkedOrderBook)
