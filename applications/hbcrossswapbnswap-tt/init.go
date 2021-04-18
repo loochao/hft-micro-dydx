@@ -60,7 +60,6 @@ var tNewOrderErrorCh = make(chan TakerOrderNewError, 10)
 var tOrderRequestChs = make(map[string]chan bnswap.NewOrderParams)
 var tOrderSilentTimes = make(map[string]time.Time)
 
-
 var mFundingRates map[string]hbcrossswap.FundingRate
 var mFundingRatesCh = make(chan map[string]hbcrossswap.FundingRate, 10)
 var tPremiumIndexes map[string]bnswap.PremiumIndex
@@ -87,12 +86,13 @@ var mtSaveSilentTime = time.Now()
 var mtUnHedgeLogSilentTimes = time.Unix(0, 0)
 var mtLogSilentTimes = make(map[string]time.Time)
 var mtLoopTimer *time.Timer
+var mtDualEnds []int
 
 var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210418 14:24:38  ####")
+	logger.Debug("####  BUILD @ 20210418 14:34:03  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -139,6 +139,15 @@ func init() {
 		mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
 		tHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
 	}
+	mtDualEnds = make([]int, 0)
+	for i := 0; i < len(mSymbols)/2; i++ {
+		mtDualEnds = append(mtDualEnds, i)
+		mtDualEnds = append(mtDualEnds, len(mSymbols)-i)
+	}
+	if len(mSymbols) % 2 == 1 {
+		mtDualEnds = append(mtDualEnds, len(mSymbols)/2)
+	}
+	logger.Debugf("DUAL ENDS RANK %d", mtDualEnds)
 
 	mtMapUpdated[TakerName] = false
 	mtMapUpdated[MakerName] = false
