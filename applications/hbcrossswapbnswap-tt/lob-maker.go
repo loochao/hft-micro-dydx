@@ -28,7 +28,7 @@ func watchMakerWalkedOrderBooks(
 	for {
 		select {
 		case <-ws.Done():
-			logger.Debugf("DEPTH50 WS CONTEXT DONE %s", symbols)
+			logger.Debugf("DEPTH20 WS CONTEXT DONE %s", symbols)
 			cancel()
 			return
 		case <-ctx.Done():
@@ -37,6 +37,9 @@ func watchMakerWalkedOrderBooks(
 			if lastEventTimes[lob.Symbol].Sub(lob.EventTime) < 0 {
 				lastEventTimes[lob.Symbol] = lob.EventTime
 				if m, ok := contractSizes[lob.Symbol]; ok {
+					if len(outputWLob) > 0 {
+						logger.Debugf("MAKER DEPTH OUTPUT LEN %d", len(outputWLob))
+					}
 					outputWLob <- walkPerpOrderBook(lob, impact, m)
 				}
 			}

@@ -23,7 +23,7 @@ func watchTakerWalkedOrderBooks(
 	for {
 		select {
 		case <-ws.Done():
-			logger.Debugf("TAKER DEPTH50 WS CONTEXT DONE %s", symbols)
+			logger.Debugf("TAKER DEPTH20 WS CONTEXT DONE %s", symbols)
 			cancel()
 			return
 		case <-ctx.Done():
@@ -31,6 +31,9 @@ func watchTakerWalkedOrderBooks(
 		case data := <-ws.DataCh:
 			if lastEventTimes[data.Symbol].Sub(data.EventTime) < 0 {
 				lastEventTimes[data.Symbol] = data.EventTime
+				if len(output) > 0 {
+					logger.Debugf("TAKER DEPTH OUTPUT LEN %d", len(output))
+				}
 				output <- walkTakerOrderBook(data, impact)
 			}
 			break
