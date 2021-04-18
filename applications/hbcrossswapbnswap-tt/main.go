@@ -52,7 +52,7 @@ func main() {
 	}
 
 	totalDiff := int64(0)
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		tt, err := tAPI.GetServerTime(context.Background())
 		if err != nil {
 			logger.Debugf("bnswap.GetServerTime error %v", err)
@@ -64,7 +64,7 @@ func main() {
 	logger.Debugf("TAKER TIME DIFF %v", totalDiff/10)
 
 	totalDiff = int64(0)
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		tt, err := mAPI.GetHeartbeat(context.Background())
 		if err != nil {
 			logger.Debugf("bnswap.GetServerTime error %v", err)
