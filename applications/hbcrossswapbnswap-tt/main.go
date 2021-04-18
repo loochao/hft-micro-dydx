@@ -111,12 +111,12 @@ func main() {
 		logger.Debugf("common.NewInfluxWriter error %v", err)
 		return
 	}
-	defer func() {
-		err := mtInfluxWriter.Stop()
-		if err != nil {
-			logger.Warnf("stop influx writer error %v", err)
-		}
-	}()
+	//defer func() {
+	//	err := mtInfluxWriter.Stop()
+	//	if err != nil {
+	//		logger.Warnf("stop influx writer error %v", err)
+	//	}
+	//}()
 
 	mtExternalInfluxWriter, err = common.NewInfluxWriter(
 		*mtConfig.ExternalInflux.Address,
@@ -129,12 +129,12 @@ func main() {
 		logger.Debugf("common.NewInfluxWriter error %v", err)
 		return
 	}
-	defer func() {
-		err := mtExternalInfluxWriter.Stop()
-		if err != nil {
-			logger.Warnf("stop influx writer error %v", err)
-		}
-	}()
+	//defer func() {
+	//	err := mtExternalInfluxWriter.Stop()
+	//	if err != nil {
+	//		logger.Warnf("stop influx writer error %v", err)
+	//	}
+	//}()
 
 
 	tUserWebsocket, err = bnswap.NewUserWebsocket(
