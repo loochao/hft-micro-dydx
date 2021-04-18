@@ -20,6 +20,9 @@ type Depth20Websocket struct {
 }
 
 func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) {
+	defer func() {
+		logger.Debugf("EXIT startRead")
+	}()
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -86,6 +89,9 @@ func (w *Depth20Websocket) readAll(r io.Reader) ([]byte, error) {
 }
 
 func (w *Depth20Websocket) startDataHandler(ctx context.Context) {
+	defer func() {
+		logger.Debugf("EXIT startDataHandler")
+	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -173,6 +179,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 	var internalCancel context.CancelFunc
 
 	defer func() {
+		logger.Debugf("EXIT start")
 		cancel()
 		w.Stop()
 		if internalCancel != nil {
@@ -221,6 +228,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn) {
 
 	defer func() {
+		logger.Debugf("EXIT maintainHeartbeat")
 		err := conn.Close()
 		if err != nil {
 			logger.Debugf("conn.Close() ERROR %v", err)

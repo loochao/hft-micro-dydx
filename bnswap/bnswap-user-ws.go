@@ -21,6 +21,9 @@ type UserWebsocket struct {
 }
 
 func (w *UserWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
+	defer func() {
+		logger.Debugf("EXIT startRead")
+	}()
 	totalLen := 0
 	totalCount := 0
 	for {
@@ -92,6 +95,9 @@ func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
 }
 
 func (w *UserWebsocket) startDataHandler(ctx context.Context) {
+	defer func() {
+		logger.Debugf("EXIT startDataHandler")
+	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -199,6 +205,7 @@ func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) 
 	var internalCancel context.CancelFunc
 
 	defer func() {
+		logger.Debugf("EXIT start")
 		cancel()
 		w.Stop()
 		if internalCancel != nil {
@@ -249,6 +256,7 @@ func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) 
 func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn) {
 
 	defer func() {
+		logger.Debugf("EXIT maintainHeartbeat")
 		err := conn.Close()
 		if err != nil {
 			logger.Debugf("conn.Close() ERROR %v", err)
