@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/hbcrossswap"
@@ -413,8 +412,7 @@ func main() {
 			break
 		case qs := <-mtQuantilesCh:
 			if mtQuantiles == nil {
-				d, _ := json.Marshal(qs)
-				logger.Debugf("QUANTILES %s", d)
+				//logger.Debugf("QUANTILES %s", d)
 			}
 			mtQuantiles = qs
 			//mtLoopTimer.Reset(time.Millisecond)
