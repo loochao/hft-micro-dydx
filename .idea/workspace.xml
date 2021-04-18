@@ -10,6 +10,7 @@
       <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/order-taker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/order-taker.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/ws-maker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/ws-maker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/main.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
