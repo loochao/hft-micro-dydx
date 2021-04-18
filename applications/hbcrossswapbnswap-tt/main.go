@@ -278,12 +278,6 @@ func main() {
 		mSymbols[:len(mSymbols)/2],
 		walkedOrderBookCh,
 	)
-	//for start := 0; start < len(mSymbols); start += *mtConfig.OrderBookBatchSize {
-	//	end := start + *mtConfig.OrderBookBatchSize
-	//	if end > len(mSymbols) {
-	//		end = len(mSymbols)
-	//	}
-	//}
 
 	spreadCh := make(chan Spread, len(mSymbols)*100)
 	go watchSpread(
