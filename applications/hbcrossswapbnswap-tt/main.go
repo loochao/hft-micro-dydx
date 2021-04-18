@@ -58,7 +58,7 @@ func main() {
 			logger.Debugf("bnswap.GetServerTime error %v", err)
 			return
 		}
-		totalDiff += time.Now().UnixNano()/1000000 - tt.ServerTime
+		totalDiff += tt.ServerTime - time.Now().UnixNano()/1000000
 		time.Sleep(time.Second)
 	}
 	logger.Debugf("TAKER TIME DIFF %v", totalDiff/10)
