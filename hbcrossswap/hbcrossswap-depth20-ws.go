@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 )
 
@@ -22,6 +23,8 @@ type Depth20Websocket struct {
 	RestartCh   chan interface{}
 	symbolCh    chan string
 	pingCh      chan []byte
+	mu          sync.Mutex
+	stopped     bool
 }
 
 func (w *Depth20Websocket) startWrite(ctx context.Context, conn *websocket.Conn) {
@@ -380,9 +383,11 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 }
 
 func (w *Depth20Websocket) Stop() {
-	if _, ok := <-w.done; ok {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if !w.stopped {
+		w.stopped = true
 		close(w.done)
-		logger.Infof("SWAP MARK PRICE WS STOPPED")
 	}
 }
 
@@ -427,6 +432,8 @@ func NewDepth20Websocket(
 		writeCh:     make(chan interface{}, 100*len(symbols)),
 		symbolCh:    make(chan string, 100*len(symbols)),
 		pingCh:      make(chan []byte, 100),
+		mu:          sync.Mutex{},
+		stopped:     false,
 	}
 	go ws.start(ctx, symbols, proxy)
 	ws.reconnectCh <- nil

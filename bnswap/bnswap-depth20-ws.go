@@ -187,9 +187,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 		if internalCancel != nil {
 			internalCancel()
 		}
-		logger.Debugf("START STOP")
 		w.Stop()
-		logger.Debugf("END STOP")
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
@@ -266,15 +264,12 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 }
 
 func (w *Depth20Websocket) Stop() {
-
-	logger.Debugf("STOP START...")
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if !w.stopped {
 		w.stopped = true
 		close(w.done)
 	}
-	logger.Debugf("STOP END...")
 }
 
 func (w *Depth20Websocket) restart() {

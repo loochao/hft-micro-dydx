@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -29,6 +30,8 @@ type UserWebsocket struct {
 	topicCh     chan string
 	loginCh     chan bool
 	pingCh      chan []byte
+	mu          sync.Mutex
+	stopped     bool
 }
 
 func (w *UserWebsocket) startWrite(ctx context.Context, conn *websocket.Conn) {
@@ -534,9 +537,11 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 }
 
 func (w *UserWebsocket) Stop() {
-	if _, ok := <-w.done; ok {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if !w.stopped {
+		w.stopped = true
 		close(w.done)
-		logger.Infof("HBSWAP MARK PRICE WS STOPPED")
 	}
 }
 
@@ -587,6 +592,8 @@ func NewUserWebsocket(
 		topicCh:     make(chan string, 100*len(symbols)),
 		pingCh:      make(chan []byte, 100),
 		loginCh:     make(chan bool, 100),
+		mu:          sync.Mutex{},
+		stopped:     false,
 	}
 	go ws.start(ctx, symbols, proxy)
 	ws.reconnectCh <- nil
