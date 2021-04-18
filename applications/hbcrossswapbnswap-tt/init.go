@@ -9,7 +9,6 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"os"
 	"time"
 )
 
@@ -90,7 +89,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210418 14:42:24  ####")
+	logger.Debug("####  BUILD @ 20210418 14:42:40  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -115,10 +114,6 @@ func init() {
 	}
 	mtConfig = &config
 
-	hostname, err := os.Hostname()
-	if err != nil {
-		logger.Fatal(err)
-	}
 
 	for makerSymbol, takerSymbol := range mtConfig.MakerTakerSymbolsMap {
 		mSymbols = append(mSymbols, makerSymbol)
@@ -150,6 +145,10 @@ func init() {
 	mtMapUpdated[TakerName] = false
 	mtMapUpdated[MakerName] = false
 
+	//hostname, err := os.Hostname()
+	//if err != nil {
+	//	logger.Fatal(err)
+	//}
 
 	//err = raven.SetDSN("https://5c318e0f10a349308d2ff86f51de31d8:fa0a8f90a8244c6ea762130cdd6d1bb9@sentry.jilinchen.com/12")
 	//if err != nil {
