@@ -20,26 +20,41 @@ type UserWebsocket struct {
 	reconnectCh                     chan interface{}
 }
 
-func (w *UserWebsocket) startRead(conn *websocket.Conn, readTimeout time.Duration) {
+func (w *UserWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
 	totalLen := 0
 	totalCount := 0
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(readTimeout))
+		err := conn.SetReadDeadline(time.Now().Add(time.Hour * 4))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
-			go w.restart()
+			select {
+			case <- ctx.Done():
+				break
+			default:
+				go w.restart()
+			}
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
 			logger.Warnf("NextReader error %v", err)
-			go w.restart()
+			select {
+			case <- ctx.Done():
+				break
+			default:
+				go w.restart()
+			}
 			return
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
 			logger.Warnf("readAll error %v", err)
-			go w.restart()
+			select {
+			case <- ctx.Done():
+				break
+			default:
+				go w.restart()
+			}
 			return
 		}
 		totalCount += 1
@@ -214,8 +229,8 @@ func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) 
 				w.Stop()
 				return
 			}
-			go w.startRead(conn, time.Hour*24)
-			go w.maintainHeartbeat(internalCtx, conn, time.Minute*10)
+			go w.startRead(internalCtx, conn)
+			go w.maintainHeartbeat(internalCtx, conn)
 
 			go w.startDataHandler(internalCtx)
 			go w.startDataHandler(internalCtx)
@@ -231,7 +246,7 @@ func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) 
 	}
 }
 
-func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn, timeout time.Duration) {
+func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn) {
 
 	defer func() {
 		err := conn.Close()
@@ -247,25 +262,34 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 		case trafficCh <- nil:
 		default:
 		}
-		//logger.Debugf("BNSWAP USER WS PingHandler %s", msg)
-		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(timeout))
+		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
-			go w.restart()
+			select {
+			case <- ctx.Done():
+				break
+			default:
+				go w.restart()
+			}
 			return nil
 		}
 		return nil
 	})
 
-	timer := time.NewTimer(timeout)
+	timer := time.NewTimer(time.Minute*5)
 
 	for {
 		select {
 		case <-timer.C:
-			logger.Warnf("USER WS TIMEOUT, NO TRAFFIC IN %v, RESTART", timeout)
-			go w.restart()
+			logger.Warnf("USER WS TIMEOUT, NO TRAFFIC IN %v, RESTART", time.Minute*5)
+			select {
+			case <- ctx.Done():
+				break
+			default:
+				go w.restart()
+			}
 			return
 		case <-trafficCh:
-			timer.Reset(timeout)
+			timer.Reset(time.Minute*5)
 		case <-ctx.Done():
 			return
 		case <-w.done:

@@ -48,47 +48,76 @@ func (w *Depth20Websocket) startWrite(ctx context.Context, conn *websocket.Conn)
 			}
 			err = conn.SetWriteDeadline(time.Now().Add(300 * time.Millisecond))
 			if err != nil {
-				w.restart()
+				select {
+				case <-ctx.Done():
+					break
+				default:
+					w.restart()
+				}
 				return
 			}
 
 			err = conn.WriteMessage(websocket.TextMessage, bytes)
-
 			if err != nil {
 				logger.Warnf("WriteMessage %s error %v", string(bytes), err)
-				w.restart()
+				select {
+				case <-ctx.Done():
+					break
+				default:
+					w.restart()
+				}
 				return
 			}
 		}
 	}
 }
 
-func (w *Depth20Websocket) startRead(conn *websocket.Conn) {
+func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) {
 	totalCount := 0
 	totalLen := 0
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				w.restart()
+			}
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
 			logger.Warnf("NextReader error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				w.restart()
+			}
 			return
 		}
 		gr, err := gzip.NewReader(r)
 		if err != nil {
 			logger.Warnf("NewReader error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				w.restart()
+			}
 			return
 		}
 		msg, err := w.readAll(gr)
 		if err != nil {
 			logger.Warnf("readAll error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				w.restart()
+			}
 			return
 		}
 		totalCount += 1
@@ -106,7 +135,12 @@ func (w *Depth20Websocket) startRead(conn *websocket.Conn) {
 		err = gr.Close()
 		if err != nil {
 			logger.Warnf("gr.Close() error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				w.restart()
+			}
 			return
 		}
 	}
@@ -253,7 +287,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 				w.Stop()
 				return
 			}
-			go w.startRead(conn)
+			go w.startRead(internalCtx, conn)
 			go w.startWrite(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn, symbols)
 

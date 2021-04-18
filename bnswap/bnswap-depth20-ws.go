@@ -19,24 +19,39 @@ type Depth20Websocket struct {
 	reconnectCh chan interface{}
 }
 
-func (w *Depth20Websocket) startRead(conn *websocket.Conn) {
+func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) {
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				go w.restart()
+			}
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
 			logger.Warnf("NextReader error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				go w.restart()
+			}
 			return
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
 			logger.Warnf("readAll error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				go w.restart()
+			}
 			return
 		}
 		if len(msg) < 128 {
@@ -142,7 +157,7 @@ func (w *Depth20Websocket) reconnect(ctx context.Context, wsUrl string, proxy st
 	return conn, nil
 }
 
-func (w *Depth20Websocket) start(ctx context.Context, symbols []string,  proxy string) {
+func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy string) {
 	urlStr := "wss://fstream.binance.com/stream?streams="
 	for _, symbol := range symbols {
 		urlStr += fmt.Sprintf(
@@ -187,7 +202,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string,  proxy s
 				w.Stop()
 				return
 			}
-			go w.startRead(conn)
+			go w.startRead(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn)
 
 			go w.startDataHandler(internalCtx)
@@ -215,7 +230,12 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 	conn.SetPingHandler(func(msg string) error {
 		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
-			go w.restart()
+			select {
+			case <- ctx.Done():
+				return nil
+			default:
+				go w.restart()
+			}
 			return nil
 		}
 		return nil
@@ -270,7 +290,7 @@ func NewDepth20Websocket(
 		DataCh:      make(chan *Depth20, len(symbols)),
 		messageCh:   make(chan []byte, 10*len(symbols)),
 	}
-	go ws.start(ctx, symbols,  proxy)
+	go ws.start(ctx, symbols, proxy)
 	ws.reconnectCh <- nil
 	return &ws
 }
