@@ -12,7 +12,7 @@ func watchTakerWalkedOrderBooks(
 	cancel context.CancelFunc,
 	proxyAddress string,
 	impact float64, symbols []string, output chan WalkedOrderBook) {
-	defer func(){
+	defer func() {
 		logger.Debugf("LOOP END watchTakerWalkedOrderBooks %s", symbols)
 	}()
 	lastEventTimes := make(map[string]time.Time)
@@ -23,6 +23,7 @@ func watchTakerWalkedOrderBooks(
 	ws := bnswap.NewDepth20Websocket(ctx, symbols, proxyAddress)
 	defer ws.Stop()
 
+	var wb WalkedOrderBook
 	for {
 		select {
 		case <-ws.Done():
@@ -37,7 +38,12 @@ func watchTakerWalkedOrderBooks(
 				if len(output) > 0 {
 					logger.Debugf("TAKER DEPTH OUTPUT LEN %d", len(output))
 				}
-				output <- walkTakerOrderBook(data, impact)
+				wb = walkTakerOrderBook(data, impact)
+				select {
+				case <-ctx.Done():
+					return
+				case output <- wb:
+				}
 			}
 			break
 		}

@@ -176,35 +176,35 @@ func main() {
 	//defer mtLoopTimer.Stop()
 	//defer externalInfluxSaveTimer.Stop()
 
-	go hbcrossswap.WatchPositionsFromHttp(
-		mtGlobalCtx, mAPI,
-		mSymbols, *mtConfig.PullInterval,
-		mPositionCh,
-	)
-	go hbcrossswap.WatchAccountFromHttp(
-		mtGlobalCtx, mAPI,
-		*mtConfig.PullInterval, mAccountCh,
-	)
-	go hbcrossswap.WatchFundingRate(
-		mtGlobalCtx, mAPI,
-		mSymbols,
-		*mtConfig.PullInterval*10,
-		mFundingRatesCh,
-	)
-	go bnswap.WatchAccountFromHttp(
-		mtGlobalCtx, tAPI,
-		*mtConfig.PullInterval, tAccountCh,
-	)
-	go bnswap.WatchPositionsFromHttp(
-		mtGlobalCtx, tAPI,
-		tSymbols,
-		*mtConfig.PullInterval, tPositionsCh,
-	)
-	go bnswap.WatchPremiumIndexesFromHttp(
-		mtGlobalCtx, tAPI,
-		tSymbols,
-		*mtConfig.PullInterval*10, tPremiumIndexesCh,
-	)
+	//go hbcrossswap.WatchPositionsFromHttp(
+	//	mtGlobalCtx, mAPI,
+	//	mSymbols, *mtConfig.PullInterval,
+	//	mPositionCh,
+	//)
+	//go hbcrossswap.WatchAccountFromHttp(
+	//	mtGlobalCtx, mAPI,
+	//	*mtConfig.PullInterval, mAccountCh,
+	//)
+	//go hbcrossswap.WatchFundingRate(
+	//	mtGlobalCtx, mAPI,
+	//	mSymbols,
+	//	*mtConfig.PullInterval*10,
+	//	mFundingRatesCh,
+	//)
+	//go bnswap.WatchAccountFromHttp(
+	//	mtGlobalCtx, tAPI,
+	//	*mtConfig.PullInterval, tAccountCh,
+	//)
+	//go bnswap.WatchPositionsFromHttp(
+	//	mtGlobalCtx, tAPI,
+	//	tSymbols,
+	//	*mtConfig.PullInterval, tPositionsCh,
+	//)
+	//go bnswap.WatchPremiumIndexesFromHttp(
+	//	mtGlobalCtx, tAPI,
+	//	tSymbols,
+	//	*mtConfig.PullInterval*10, tPremiumIndexesCh,
+	//)
 
 	//go watchMakerBars(
 	//	mtGlobalCtx,

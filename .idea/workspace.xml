@@ -5,6 +5,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-maker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-maker.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-taker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-taker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/order-maker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/order-maker.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/order-taker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/order-taker.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/spread.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/spread.go" afterDir="false" />

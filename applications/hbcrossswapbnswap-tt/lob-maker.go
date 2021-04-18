@@ -28,6 +28,7 @@ func watchMakerWalkedOrderBooks(
 		proxyAddress,
 	)
 	defer ws.Stop()
+	var wb WalkedOrderBook
 	for {
 		select {
 		case <-ws.Done():
@@ -43,7 +44,12 @@ func watchMakerWalkedOrderBooks(
 					if len(outputWLob) > 0 {
 						logger.Debugf("MAKER DEPTH OUTPUT LEN %d", len(outputWLob))
 					}
-					outputWLob <- walkPerpOrderBook(lob, impact, m)
+					wb = walkPerpOrderBook(lob, impact, m)
+					select {
+					case <-ctx.Done():
+						return
+					case outputWLob <- wb:
+					}
 				}
 			}
 			break

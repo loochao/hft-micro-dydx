@@ -18,7 +18,7 @@ func watchSpread(
 	walkedOrderBookCh chan WalkedOrderBook,
 	outputCh chan Spread,
 ) {
-	defer func(){
+	defer func() {
 		logger.Debugf("LOOP END watchSpread %s")
 	}()
 	makerOrderBooks := make(map[string]WalkedOrderBook)
@@ -147,8 +147,10 @@ func watchSpread(
 			if len(outputCh) > 0 {
 				logger.Debugf("LEN SPREAD CH %d", len(outputCh))
 			}
-
-			outputCh <- Spread{
+			select {
+			case <-ctx.Done():
+				return
+			case outputCh <- Spread{
 				Symbol:         makerSymbol,
 				MakerOrderBook: takerLob,
 				TakerOrderBook: makerLob,
@@ -164,9 +166,11 @@ func watchSpread(
 				LongMedianEnter: longMedianEnterSpread,
 				LongMedianExit:  longMedianExitSpread,
 
-				Age:              age,
-				AgeDiff:          ageDiff,
+				Age:     age,
+				AgeDiff: ageDiff,
+			}:
 			}
+
 		}
 	}
 }
