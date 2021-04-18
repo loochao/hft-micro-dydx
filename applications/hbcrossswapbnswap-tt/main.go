@@ -249,14 +249,14 @@ func main() {
 		if end > len(tSymbols) {
 			end = len(tSymbols)
 		}
-		//go watchTakerWalkedOrderBooks(
-		//	mtGlobalCtx,
-		//	mtGlobalCancel,
-		//	*mtConfig.ProxyAddress,
-		//	*mtConfig.OrderBookImpact,
-		//	tSymbols[start:end],
-		//	walkedOrderBookCh,
-		//)
+		go watchTakerWalkedOrderBooks(
+			mtGlobalCtx,
+			mtGlobalCancel,
+			*mtConfig.ProxyAddress,
+			*mtConfig.OrderBookImpact,
+			tSymbols[start:end],
+			walkedOrderBookCh,
+		)
 	}
 
 	for start := 0; start < len(mSymbols); start += *mtConfig.OrderBookBatchSize {
