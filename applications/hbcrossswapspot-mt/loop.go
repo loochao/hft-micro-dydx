@@ -94,7 +94,7 @@ func updatePerpPositions() {
 
 		hbcrossswapOrderSilentTimes[swapSymbol] = time.Now().Add(*hbConfig.OrderSilent)
 		hbcrossswapPositionsUpdateTimes[swapSymbol] = time.Unix(0, 0)
-		hbcrossswapLastOrderTimes[swapSymbol] = time.Now()
+		hbcrossswapHttpPositionUpdateSilentTimes[swapSymbol] = time.Now().Add(*hbConfig.PullInterval * 3)
 		hbcrossswapOrderRequestChs[swapSymbol] <- order
 	}
 	hbUnHedgeValue = unHedgedValue

@@ -40,8 +40,6 @@ var hbcrossswapOrderRequestChs = make(map[string]chan hbcrossswap.NewOrderParam)
 
 var hbspotHttpBalanceUpdateSilentTimes = make(map[string]time.Time)
 var hbcrossswapHttpPositionUpdateSilentTimes = make(map[string]time.Time)
-var hbspotLastOrderTimes = make(map[string]time.Time)
-var hbcrossswapLastOrderTimes = make(map[string]time.Time)
 
 var hbspotSymbols = make([]string, 0)
 var hbcrossswapSymbols = make([]string, 0)
@@ -111,7 +109,7 @@ var hbConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210418 01:41:51  ####")
+	logger.Debug("####  BUILD @ 20210418 02:09:17  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -160,8 +158,6 @@ func init() {
 		hbspotHttpBalanceUpdateSilentTimes[spotSymbol] = time.Now()
 		hbcrossswapHttpPositionUpdateSilentTimes[swapSymbol] = time.Now()
 
-		hbcrossswapLastOrderTimes[swapSymbol] = time.Unix(0, 0)
-		hbspotLastOrderTimes[spotSymbol] = time.Unix(0, 0)
 	}
 
 	kcBarsMapUpdated["swap"] = false

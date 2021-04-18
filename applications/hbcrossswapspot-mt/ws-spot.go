@@ -43,7 +43,7 @@ func handleSpotWSBalance(balance *hbspot.WSBalance) {
 		nb := hbspotBalances[symbol]
 		nb.Balance = *balance.Balance
 		hbspotBalances[symbol] = nb
-		hbspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*hbConfig.PullInterval*3)
+		hbspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*hbConfig.HttpSilent)
 		hbLoopTimer.Reset(time.Nanosecond)
 		hbcrossswapOrderSilentTimes[symbol] = time.Now().Add(time.Nanosecond)
 		if hasLast {

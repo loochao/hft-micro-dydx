@@ -310,6 +310,7 @@ func main() {
 		case spotOrder := <-hbspotUserWebsocket.OrderCh:
 			if spotOrder.OrderStatus != nil {
 				if *spotOrder.OrderStatus == hbspot.OrderStatusFilled {
+					hbspotHttpBalanceUpdateSilentTimes[spotOrder.Symbol] = time.Now().Add(*hbConfig.HttpSilent)
 					if spotOrder.TradeVolume != nil && spotOrder.TradePrice != nil && spotOrder.Type != nil {
 						if strings.Contains(*spotOrder.Type, "buy") {
 							hbspotLastFilledBuyPrices[spotOrder.Symbol] = *spotOrder.TradePrice
@@ -351,6 +352,7 @@ func main() {
 						"SWAP WS ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
 						swapOrder.Symbol, swapOrder.Direction, swapOrder.TradeVolume, swapOrder.TradeAvgPrice,
 					)
+					hbcrossswapHttpPositionUpdateSilentTimes[swapOrder.Symbol] = time.Now().Add(*hbConfig.PullInterval * 3)
 					if swapOrder.Direction == hbcrossswap.OrderDirectionSell {
 						if spotSymbol, ok := kcpsSymbolsMap[swapOrder.Symbol]; ok {
 							if spotPrice, ok := hbspotLastFilledBuyPrices[spotSymbol]; ok {

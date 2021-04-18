@@ -11,9 +11,16 @@ func handleWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 		if account.MarginAsset == "USDT" {
 			account := account
 			if hbcrossswapAccount == nil {
-				logger.Debugf("SWAP WS USDT CHANGE MARGIN BALANCE %f", account.MarginBalance)
+				logger.Debugf("SWAP WS USDT CHANGE WA nil -> %f MB nil -> %f", account.WithdrawAvailable, account.MarginBalance)
 				//} else if account.WithdrawAvailable != hbcrossswapAccount.WithdrawAvailable {
 				//	logger.Debugf("SWAP WS USDT CHANGE WithdrawAvailable %f -> %f", hbcrossswapAccount.WithdrawAvailable, account.WithdrawAvailable)
+			} else if hbcrossswapAccount.WithdrawAvailable != account.WithdrawAvailable {
+				logger.Debugf("SWAP WS USDT CHANGE WA %f -> %f MB %f -> %f ",
+					hbcrossswapAccount.WithdrawAvailable,
+					account.WithdrawAvailable,
+					hbcrossswapAccount.MarginBalance,
+					account.MarginBalance,
+				)
 			}
 			hbcrossswapAccount = &account
 			return
@@ -33,7 +40,7 @@ func handleWSPosition(wsPositions *hbcrossswap.WSPositions) {
 				nextPos := nextPos
 				hbcrossswapPositions[nextPos.Symbol] = nextPos
 				hbcrossswapPositionsUpdateTimes[nextPos.Symbol] = time.Now()
-				hbcrossswapHttpPositionUpdateSilentTimes[nextPos.Symbol] = time.Now().Add(*hbConfig.PullInterval*3)
+				hbcrossswapHttpPositionUpdateSilentTimes[nextPos.Symbol] = time.Now().Add(*hbConfig.PullInterval * 3)
 			}
 		}
 	}
