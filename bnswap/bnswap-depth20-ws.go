@@ -3,6 +3,7 @@ package bnswap
 import (
 	"context"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -60,10 +61,6 @@ func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) 
 			}
 			return
 		}
-		if len(msg) < 128 {
-			logger.Debugf("PING PONG %s", msg)
-			continue
-		}
 		select {
 		case <-time.After(time.Millisecond):
 			logger.Debug("BNSPOT DEPTH20 MSG TO MESSAGE CH TIMEOUT IN 1MS")
@@ -102,6 +99,42 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
+			if len(msg) < 79 {
+				continue
+			}
+			if msg[61] == 'E' {
+				logger.Debugf("%s", msg[64:77])
+				t, err := common.ParseInt(msg[64:77])
+				if err != nil {
+					logger.Debugf("ParseDepth20 error %v %s", err, msg[64:77])
+					continue
+				}
+				if time.Now().UnixNano()/1000000-t > 50 {
+					logger.Debugf("SLOW MSG DIFF %d %s", time.Now().UnixNano()/1000000-t, msg)
+					continue
+				}
+			} else if msg[62] == 'E' {
+				logger.Debugf("%s", msg[65:78])
+				t, err := common.ParseInt(msg[65:78])
+				if err != nil {
+					logger.Debugf("ParseDepth20 error %v %s", err, msg[65:78])
+					continue
+				}
+				if time.Now().UnixNano()/1000000-t > 50 {
+					logger.Debugf("SLOW MSG DIFF %d %s", time.Now().UnixNano()/1000000-t, msg)
+					continue
+				}
+			} else if msg[63] == 'E' {
+				t, err := common.ParseInt(msg[66:79])
+				if err != nil {
+					logger.Debugf("ParseDepth20 error %v %s", err, msg[66:79])
+					continue
+				}
+				if time.Now().UnixNano()/1000000-t > 50 {
+					logger.Debugf("SLOW MSG DIFF %d %s", time.Now().UnixNano()/1000000-t, msg)
+					continue
+				}
+			}
 			depth20, err := ParseDepth20(msg)
 			if err != nil {
 				logger.Debugf("ParseDepth20 error %v %s", err, msg)

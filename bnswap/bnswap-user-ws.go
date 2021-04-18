@@ -285,12 +285,12 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 		return nil
 	})
 
-	timer := time.NewTimer(time.Minute * 5)
+	timer := time.NewTimer(time.Minute * 15)
 
 	for {
 		select {
 		case <-timer.C:
-			logger.Warnf("USER WS TIMEOUT, NO TRAFFIC IN %v, RESTART", time.Minute*5)
+			logger.Warnf("USER WS TIMEOUT, NO TRAFFIC IN %v, RESTART", time.Minute*15)
 			select {
 			case <-ctx.Done():
 				break
@@ -299,7 +299,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 			}
 			return
 		case <-trafficCh:
-			timer.Reset(time.Minute * 5)
+			timer.Reset(time.Minute * 15)
 		case <-ctx.Done():
 			return
 		case <-w.done:

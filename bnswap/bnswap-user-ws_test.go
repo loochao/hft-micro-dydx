@@ -20,7 +20,10 @@ func TestNewUserWebsocket(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute*1)
-	ws := NewUserWebsocket(ctx, api, proxy)
+	ws , err := NewUserWebsocket(ctx, api, proxy)
+	if err != nil {
+		t.Fatal(err)
+	}
 	for {
 		select {
 		case <-ctx.Done():

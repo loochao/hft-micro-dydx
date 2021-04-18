@@ -2,9 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-maker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-maker.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-taker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-taker.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/spread.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/spread.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-user-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-user-ws.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-user-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-user-ws_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-utils_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-utils_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,16 +66,27 @@
       <recent name="$PROJECT_DIR$/kcperp/jsons" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestParseDepth53 in github.com/geometrybase/hft-micro/kcspot">
-    <configuration name="TestNewDepth5Websocket in github.com/geometrybase/hft-micro/kcspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap">
+    <configuration name="TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/kcspot" />
+      <working_directory value="$PROJECT_DIR$/bnswap" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/kcspot" />
+      <package value="github.com/geometrybase/hft-micro/bnswap" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestNewDepth5Websocket\E$" />
+      <pattern value="^\QTestNewDepth20Ws\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestParseDepth20 in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hft-micro" />
+      <working_directory value="$PROJECT_DIR$/bnswap" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/geometrybase/hft-micro/bnswap" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestParseDepth20\E$" />
       <method v="2" />
     </configuration>
     <configuration name="TestParseDepth5 in github.com/geometrybase/hft-micro/kcperp" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -81,17 +95,6 @@
       <framework value="gotest" />
       <kind value="PACKAGE" />
       <package value="github.com/geometrybase/hft-micro/kcperp" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestParseDepth5\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestParseDepth5 in github.com/geometrybase/hft-micro/kcspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/kcspot" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/kcspot" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <pattern value="^\QTestParseDepth5\E$" />
@@ -120,19 +123,19 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Go Test.TestParseDepth5 in github.com/geometrybase/hft-micro/kcspot" />
-      <item itemvalue="Go Test.TestNewDepth5Websocket in github.com/geometrybase/hft-micro/kcspot" />
       <item itemvalue="Go Test.TestParseDepth52 in github.com/geometrybase/hft-micro/kcspot" />
       <item itemvalue="Go Test.TestParseDepth53 in github.com/geometrybase/hft-micro/kcspot" />
       <item itemvalue="Go Test.TestParseDepth5 in github.com/geometrybase/hft-micro/kcperp" />
+      <item itemvalue="Go Test.TestParseDepth20 in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" />
+        <item itemvalue="Go Test.TestParseDepth20 in github.com/geometrybase/hft-micro/bnswap" />
         <item itemvalue="Go Test.TestParseDepth53 in github.com/geometrybase/hft-micro/kcspot" />
         <item itemvalue="Go Test.TestParseDepth52 in github.com/geometrybase/hft-micro/kcspot" />
         <item itemvalue="Go Test.TestParseDepth5 in github.com/geometrybase/hft-micro/kcperp" />
-        <item itemvalue="Go Test.TestParseDepth5 in github.com/geometrybase/hft-micro/kcspot" />
-        <item itemvalue="Go Test.TestNewDepth5Websocket in github.com/geometrybase/hft-micro/kcspot" />
       </list>
     </recent_temporary>
   </component>

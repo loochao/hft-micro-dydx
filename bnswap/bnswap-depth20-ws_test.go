@@ -9,10 +9,9 @@ import (
 
 func TestNewDepth20Ws(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute*5)
-	symbols := []string{"BTCUSDT", "ETHUSDT", "FLMUSDT", "BLZUSDT", "TRXUSDT", "EOSUSDT"}
-	readTimeout := time.Second * 10
-	proxy := "socks5://127.0.0.1:1080"
-	ws := NewDepth20Websocket(ctx, symbols, readTimeout, proxy)
+	symbols := []string{"BTCUSDT", "LINKUSDT", "WAVESUSDT"}
+	proxy := "socks5://127.0.0.1:1081"
+	ws := NewDepth20Websocket(ctx, symbols,  proxy)
 	for {
 		select {
 		case <-ctx.Done():
