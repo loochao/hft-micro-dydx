@@ -137,25 +137,25 @@ func main() {
 	//}()
 
 
-	//tUserWebsocket, err = bnswap.NewUserWebsocket(
-	//	mtGlobalCtx,
-	//	tAPI,
-	//	*mtConfig.ProxyAddress,
-	//)
-	//if err != nil {
-	//	logger.Debugf("bnswap.NewUserWebsocket error %v", err)
-	//	return
-	//}
-	//defer tUserWebsocket.Stop()
-	//
-	//mUserWebsocket = hbcrossswap.NewUserWebsocket(
-	//	mtGlobalCtx,
-	//	*mtConfig.HbApiKey,
-	//	*mtConfig.HbApiSecret,
-	//	mSymbols,
-	//	*mtConfig.ProxyAddress,
-	//)
-	//defer mUserWebsocket.Stop()
+	tUserWebsocket, err = bnswap.NewUserWebsocket(
+		mtGlobalCtx,
+		tAPI,
+		*mtConfig.ProxyAddress,
+	)
+	if err != nil {
+		logger.Debugf("bnswap.NewUserWebsocket error %v", err)
+		return
+	}
+	defer tUserWebsocket.Stop()
+
+	mUserWebsocket = hbcrossswap.NewUserWebsocket(
+		mtGlobalCtx,
+		*mtConfig.HbApiKey,
+		*mtConfig.HbApiSecret,
+		mSymbols,
+		*mtConfig.ProxyAddress,
+	)
+	defer mUserWebsocket.Stop()
 
 	influxSaveTimer := time.NewTimer(
 		time.Now().Truncate(
@@ -172,9 +172,9 @@ func main() {
 		).Sub(time.Now()),
 	)
 	mtLoopTimer = time.NewTimer(time.Second) //先等1分钟
-	//defer influxSaveTimer.Stop()
-	//defer mtLoopTimer.Stop()
-	//defer externalInfluxSaveTimer.Stop()
+	defer influxSaveTimer.Stop()
+	defer mtLoopTimer.Stop()
+	defer externalInfluxSaveTimer.Stop()
 
 	go hbcrossswap.WatchPositionsFromHttp(
 		mtGlobalCtx, mAPI,
@@ -335,15 +335,15 @@ func main() {
 		case <-mtGlobalCtx.Done():
 			logger.Debugf("GLOBAL CTX DONE, EXIT MAIN LOOP")
 			return
-		//case <-mUserWebsocket.Done():
-		//	logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
-		//	return
-		//case <-tUserWebsocket.Done():
-		//	logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
-		//	return
-		//case <-mUserWebsocket.RestartCh:
-		//	logger.Debugf("mUserWebsocket restart silent %v", *mtConfig.RestartSilent)
-		//	handleRestartSilent()
+		case <-mUserWebsocket.Done():
+			logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
+			return
+		case <-tUserWebsocket.Done():
+			logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
+			return
+		case <-mUserWebsocket.RestartCh:
+			logger.Debugf("mUserWebsocket restart silent %v", *mtConfig.RestartSilent)
+			handleRestartSilent()
 		case ps := <-mPositionCh:
 			handleMakerHttpPositions(ps)
 			break
@@ -356,61 +356,61 @@ func main() {
 		case ps := <-tPositionsCh:
 			handleTakerHttpPositions(ps)
 			break
-		//case msg := <-tUserWebsocket.BalanceAndPositionUpdateEventCh:
-		//	handleTakerWSAccount(msg)
-		//	break
-		//case msg := <-mUserWebsocket.PositionCh:
-		//	handleMakerWSPosition(msg)
-		//	break
-		//case msg := <-mUserWebsocket.AccountCh:
-		//	handleMakerWSAccount(msg)
-		//	break
-		//case makerOrder := <-mUserWebsocket.OrderCh:
-		//	if makerOrder.Status == hbcrossswap.OrderStatusFilled ||
-		//		makerOrder.Status == hbcrossswap.OrderStatusCancelled ||
-		//		makerOrder.Status == hbcrossswap.OrderStatusPartiallyFilledButCancelledByClient {
-		//		if makerOrder.Status == hbcrossswap.OrderStatusCancelled {
-		//			logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
-		//			mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
-		//			mPositionsUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)
-		//		} else {
-		//			logger.Debugf(
-		//				"MAKER WS ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
-		//				makerOrder.Symbol, makerOrder.Direction, makerOrder.TradeVolume, makerOrder.TradeAvgPrice,
-		//			)
-		//			mHttpPositionUpdateSilentTimes[makerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
-		//			if makerOrder.Direction == hbcrossswap.OrderDirectionSell {
-		//				mLastFilledSellPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
-		//			} else if makerOrder.Direction == hbcrossswap.OrderDirectionBuy {
-		//				mLastFilledBuyPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
-		//			}
-		//		}
-		//	}
-		//	break
-		//case takerOrderEvent := <-tUserWebsocket.OrderUpdateEventCh:
-		//	takerOrder := takerOrderEvent.Order
-		//	if takerOrder.Status == "REJECTED" || takerOrder.Status == "EXPIRED" {
-		//		logger.Debugf("TAKER WS ORDER %s %s", takerOrder.Symbol, takerOrder.Status)
-		//		tOrderSilentTimes[takerOrder.Symbol] = time.Now().Add(time.Second)
-		//		tPositionsUpdateTimes[takerOrder.Symbol] = time.Unix(0, 0)
-		//	} else if takerOrder.Status == "FILLED" {
-		//		logger.Debugf("TAKER WS ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)
-		//		tHttpPositionUpdateSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
-		//		if makerSymbol, ok := tmSymbolsMap[takerOrder.Symbol]; ok {
-		//			if takerOrder.Side == common.OrderSideSell {
-		//				if makerPrice, ok := mLastFilledBuyPrices[makerSymbol]; ok {
-		//					mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
-		//					logger.Debugf("%s REALISED OPEN SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
-		//				}
-		//			} else if takerOrder.Side == common.OrderSideBuy {
-		//				if makerPrice, ok := mLastFilledSellPrices[makerSymbol]; ok {
-		//					mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
-		//					logger.Debugf("%s REALISED LONG SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
-		//				}
-		//			}
-		//		}
-		//	}
-		//	break
+		case msg := <-tUserWebsocket.BalanceAndPositionUpdateEventCh:
+			handleTakerWSAccount(msg)
+			break
+		case msg := <-mUserWebsocket.PositionCh:
+			handleMakerWSPosition(msg)
+			break
+		case msg := <-mUserWebsocket.AccountCh:
+			handleMakerWSAccount(msg)
+			break
+		case makerOrder := <-mUserWebsocket.OrderCh:
+			if makerOrder.Status == hbcrossswap.OrderStatusFilled ||
+				makerOrder.Status == hbcrossswap.OrderStatusCancelled ||
+				makerOrder.Status == hbcrossswap.OrderStatusPartiallyFilledButCancelledByClient {
+				if makerOrder.Status == hbcrossswap.OrderStatusCancelled {
+					logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
+					mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
+					mPositionsUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)
+				} else {
+					logger.Debugf(
+						"MAKER WS ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
+						makerOrder.Symbol, makerOrder.Direction, makerOrder.TradeVolume, makerOrder.TradeAvgPrice,
+					)
+					mHttpPositionUpdateSilentTimes[makerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
+					if makerOrder.Direction == hbcrossswap.OrderDirectionSell {
+						mLastFilledSellPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
+					} else if makerOrder.Direction == hbcrossswap.OrderDirectionBuy {
+						mLastFilledBuyPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
+					}
+				}
+			}
+			break
+		case takerOrderEvent := <-tUserWebsocket.OrderUpdateEventCh:
+			takerOrder := takerOrderEvent.Order
+			if takerOrder.Status == "REJECTED" || takerOrder.Status == "EXPIRED" {
+				logger.Debugf("TAKER WS ORDER %s %s", takerOrder.Symbol, takerOrder.Status)
+				tOrderSilentTimes[takerOrder.Symbol] = time.Now().Add(time.Second)
+				tPositionsUpdateTimes[takerOrder.Symbol] = time.Unix(0, 0)
+			} else if takerOrder.Status == "FILLED" {
+				logger.Debugf("TAKER WS ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)
+				tHttpPositionUpdateSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
+				if makerSymbol, ok := tmSymbolsMap[takerOrder.Symbol]; ok {
+					if takerOrder.Side == common.OrderSideSell {
+						if makerPrice, ok := mLastFilledBuyPrices[makerSymbol]; ok {
+							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
+							logger.Debugf("%s REALISED OPEN SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
+						}
+					} else if takerOrder.Side == common.OrderSideBuy {
+						if makerPrice, ok := mLastFilledSellPrices[makerSymbol]; ok {
+							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
+							logger.Debugf("%s REALISED LONG SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
+						}
+					}
+				}
+			}
+			break
 		case spread := <-spreadCh:
 			mtSpreads[spread.Symbol] = spread
 			//mtLoopTimer.Reset(time.Millisecond)
