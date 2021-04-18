@@ -16,6 +16,7 @@ func handleSpotWSBalance(balance *hbspot.WSBalance) {
 			if balance.Balance != nil && *balance.Balance != hbspotUSDTBalance.Balance {
 				logger.Debugf("SPOT WS USDT BALANCE CHANGED %f -> %f", hbspotUSDTBalance.Balance, *balance.Balance)
 				hbspotUSDTBalance.Balance = *balance.Balance
+				hbLoopTimer.Reset(time.Nanosecond)
 			}
 		}
 		hbspotBalanceUpdatedForInflux = true

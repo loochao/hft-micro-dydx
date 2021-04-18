@@ -12,9 +12,9 @@ func handleWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 			account := account
 			if hbcrossswapAccount == nil {
 				logger.Debugf("SWAP WS USDT CHANGE WA nil -> %f MB nil -> %f", account.WithdrawAvailable, account.MarginBalance)
-				//} else if account.WithdrawAvailable != hbcrossswapAccount.WithdrawAvailable {
-				//	logger.Debugf("SWAP WS USDT CHANGE WithdrawAvailable %f -> %f", hbcrossswapAccount.WithdrawAvailable, account.WithdrawAvailable)
+				hbLoopTimer.Reset(time.Nanosecond)
 			} else if hbcrossswapAccount.WithdrawAvailable != account.WithdrawAvailable {
+				hbLoopTimer.Reset(time.Nanosecond)
 				logger.Debugf("SWAP WS USDT CHANGE WA %f -> %f MB %f -> %f ",
 					hbcrossswapAccount.WithdrawAvailable,
 					account.WithdrawAvailable,
