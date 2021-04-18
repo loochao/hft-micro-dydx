@@ -249,14 +249,14 @@ func main() {
 		if end > len(tSymbols) {
 			end = len(tSymbols)
 		}
-		go watchTakerWalkedOrderBooks(
-			mtGlobalCtx,
-			mtGlobalCancel,
-			*mtConfig.ProxyAddress,
-			*mtConfig.OrderBookImpact,
-			tSymbols[start:end],
-			walkedOrderBookCh,
-		)
+		//go watchTakerWalkedOrderBooks(
+		//	mtGlobalCtx,
+		//	mtGlobalCancel,
+		//	*mtConfig.ProxyAddress,
+		//	*mtConfig.OrderBookImpact,
+		//	tSymbols[start:end],
+		//	walkedOrderBookCh,
+		//)
 	}
 
 	for start := 0; start < len(mSymbols); start += *mtConfig.OrderBookBatchSize {
@@ -264,15 +264,15 @@ func main() {
 		if end > len(mSymbols) {
 			end = len(mSymbols)
 		}
-		go watchMakerWalkedOrderBooks(
-			mtGlobalCtx,
-			mtGlobalCancel,
-			*mtConfig.ProxyAddress,
-			mContractSizes,
-			*mtConfig.OrderBookImpact,
-			mSymbols[start:end],
-			walkedOrderBookCh,
-		)
+		//go watchMakerWalkedOrderBooks(
+		//	mtGlobalCtx,
+		//	mtGlobalCancel,
+		//	*mtConfig.ProxyAddress,
+		//	mContractSizes,
+		//	*mtConfig.OrderBookImpact,
+		//	mSymbols[start:end],
+		//	walkedOrderBookCh,
+		//)
 	}
 
 	spreadCh := make(chan Spread, len(mSymbols)*100)
