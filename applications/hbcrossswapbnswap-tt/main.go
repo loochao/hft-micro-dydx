@@ -206,27 +206,27 @@ func main() {
 		*mtConfig.PullInterval*10, tPremiumIndexesCh,
 	)
 
-	go watchMakerBars(
-		mtGlobalCtx,
-		mAPI,
-		mSymbols,
-		*mtConfig.BarsLookback,
-		*mtConfig.PullBarsInterval,
-		*mtConfig.PullBarsRetryInterval,
-		*mtConfig.RequestInterval,
-		mBarsMapCh,
-	)
-
-	go watchTakerBars(
-		mtGlobalCtx,
-		tAPI,
-		tSymbols,
-		*mtConfig.BarsLookback,
-		*mtConfig.PullBarsInterval,
-		*mtConfig.PullBarsRetryInterval,
-		*mtConfig.RequestInterval,
-		tBarsMapCh,
-	)
+	//go watchMakerBars(
+	//	mtGlobalCtx,
+	//	mAPI,
+	//	mSymbols,
+	//	*mtConfig.BarsLookback,
+	//	*mtConfig.PullBarsInterval,
+	//	*mtConfig.PullBarsRetryInterval,
+	//	*mtConfig.RequestInterval,
+	//	mBarsMapCh,
+	//)
+	//
+	//go watchTakerBars(
+	//	mtGlobalCtx,
+	//	tAPI,
+	//	tSymbols,
+	//	*mtConfig.BarsLookback,
+	//	*mtConfig.PullBarsInterval,
+	//	*mtConfig.PullBarsRetryInterval,
+	//	*mtConfig.RequestInterval,
+	//	tBarsMapCh,
+	//)
 
 	go watchDeltaQuantile(
 		mtGlobalCtx,

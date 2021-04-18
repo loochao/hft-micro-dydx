@@ -141,7 +141,9 @@ func watchSpread(
 
 			longMedianEnterSpread := longEnterSpreadSortedSlices[makerSymbol].Median()
 			longMedianExitSpread := longExitSpreadSortedSlices[makerSymbol].Median()
-			logger.Debugf("LEN SPREAD CH %d", len(outputCh))
+			if len(outputCh) > 0 {
+				logger.Debugf("LEN SPREAD CH %d", len(outputCh))
+			}
 
 			outputCh <- Spread{
 				Symbol:         makerSymbol,
