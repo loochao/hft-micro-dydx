@@ -34,10 +34,10 @@ func updatePerpPositions() {
 		if !okPerpPosition || !okSpotBalance || !okSpread {
 			continue
 		}
-		swapOrderBook := spread.PerpOrderBook
+		//swapOrderBook := spread.PerpOrderBook
 
 		contractSize := hbcrossswapContractSizes[swapSymbol]
-		swapTickSize := hbcrossswapTickSizes[swapSymbol]
+		//swapTickSize := hbcrossswapTickSizes[swapSymbol]
 
 		positionVolume := swapPosition.Volume
 		if swapPosition.Direction == hbcrossswap.OrderDirectionSell {
@@ -64,7 +64,7 @@ func updatePerpPositions() {
 		if swapSize*positionVolume < 0 && math.Abs(swapSize) <= math.Abs(positionVolume) {
 			offset = hbcrossswap.OrderOffsetClose
 		}
-		price := math.Round(swapOrderBook.AskPrice*(1.0+*hbConfig.EnterSlippage)/swapTickSize) * swapTickSize
+		//price := math.Round(swapOrderBook.AskPrice*(1.0+*hbConfig.EnterSlippage)/swapTickSize) * swapTickSize
 		direction := hbcrossswap.OrderDirectionBuy
 		id, _ := common.GenerateShortId()
 		clOrdID := fmt.Sprintf(
@@ -76,17 +76,18 @@ func updatePerpPositions() {
 		if swapSize < 0 {
 			direction = hbcrossswap.OrderDirectionSell
 			swapSize = -swapSize
-			price = math.Round(swapOrderBook.BidPrice*(1.0-*hbConfig.EnterSlippage)/swapTickSize) * swapTickSize
+			//price = math.Round(swapOrderBook.BidPrice*(1.0-*hbConfig.EnterSlippage)/swapTickSize) * swapTickSize
 		}
 		order := hbcrossswap.NewOrderParam{
-			Symbol:         swapSymbol,
-			ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-			Price:          common.Float64(price),
+			Symbol:        swapSymbol,
+			ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
+			//Price:          common.Float64(price),
 			Volume:         int64(swapSize),
 			Direction:      direction,
 			Offset:         offset,
 			LeverRate:      *hbConfig.Leverage,
-			OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
+			OrderPriceType: hbcrossswap.OrderPriceTypeFOKOptimal20FOK,
+			//OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
 		}
 		logger.Debugf("SWAP ORDER %v", order)
 		hbspotOrderSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.OrderSilent)
@@ -126,6 +127,7 @@ func updateSpotNewOrders() {
 		entryStep = *hbConfig.EnterMinimalStep
 	}
 	entryTarget := entryStep * *hbConfig.EnterTargetFactor
+	spotUSDTAvailable := hbspotUSDTBalance.Available
 
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单
 	for rank := len(hbcrossswapSymbols) - 1; rank >= 0; rank-- {
@@ -180,8 +182,8 @@ func updateSpotNewOrders() {
 			}
 			entryValue := targetValue - currentSpotSize*price
 
-			if entryValue > hbspotUSDTBalance.Available*0.8 {
-				entryValue = hbspotUSDTBalance.Available * 0.8
+			if entryValue > spotUSDTAvailable*0.8 {
+				entryValue = spotUSDTAvailable * 0.8
 			}
 
 			entryValue = math.Max(entryValue, spotMinNotional)
@@ -190,7 +192,7 @@ func updateSpotNewOrders() {
 			amount = math.Round(amount/spotStepSize) * spotStepSize
 			amount = math.Round(amount/swapContractSize) * swapContractSize
 
-			entryValue = amount*price
+			entryValue = amount * price
 
 			//不及一个0.8*EntryStep, 不操作
 			if entryValue < entryStep*0.8 {
@@ -208,27 +210,12 @@ func updateSpotNewOrders() {
 				}
 				continue
 			}
-			if entryValue > hbspotUSDTBalance.Available {
+			if entryValue > spotUSDTAvailable {
 				if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
 					logger.Debugf(
 						"FAILED TOP OPEN, ENTRY VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
 						entryValue,
-						hbspotUSDTBalance.Available,
-						spotSymbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
-						amount,
-					)
-					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
-				}
-				continue
-			}
-			if amount*price > hbspotUSDTBalance.Available {
-				if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED TOP OPEN, ORDER VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
-						amount*price,
-						hbspotUSDTBalance.Available,
+						spotUSDTAvailable,
 						spotSymbol,
 						spread.LastEnter, quantile.Top,
 						spread.MedianEnter, quantile.Top,
@@ -272,7 +259,7 @@ func updateSpotNewOrders() {
 				OriginAmount:  amount,
 				Type:          hbspot.OrderTypeBuyLimit,
 			}
-
+			spotUSDTAvailable -= entryValue
 			hbspotOrderSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.OrderSilent)
 			hbspotOrderCancelCounts[spotSymbol] = 0
 			hbspotOpenOrders[spotSymbol] = order

@@ -241,12 +241,12 @@ func updateMakerPositions() {
 			order := hbcrossswap.NewOrderParam{
 				Symbol:         makerSymbol,
 				ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-				Price:          common.Float64(price),
+				//Price:          common.Float64(price),
 				Volume:         int64(volume),
 				Direction:      hbcrossswap.OrderDirectionBuy,
 				Offset:         hbcrossswap.OrderOffsetOpen,
 				LeverRate:      *mtConfig.Leverage,
-				OrderPriceType: hbcrossswap.OrderPriceTypeFOK,
+				OrderPriceType: hbcrossswap.OrderPriceTypeFOKOptimal20FOK,
 			}
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 			mOrderRequestChs[makerSymbol] <- order
@@ -330,12 +330,12 @@ func updateMakerPositions() {
 			order := hbcrossswap.NewOrderParam{
 				Symbol:         makerSymbol,
 				ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-				Price:          common.Float64(price),
+				//Price:          common.Float64(price),
 				Volume:         int64(-volume),
 				Direction:      hbcrossswap.OrderDirectionSell,
 				Offset:         hbcrossswap.OrderOffsetOpen,
 				LeverRate:      *mtConfig.Leverage,
-				OrderPriceType: hbcrossswap.OrderPriceTypeFOK,
+				OrderPriceType: hbcrossswap.OrderPriceTypeFOKOptimal20FOK,
 			}
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 			mOrderRequestChs[makerSymbol] <- order
@@ -368,12 +368,12 @@ func updateMakerPositions() {
 				order := hbcrossswap.NewOrderParam{
 					Symbol:         makerSymbol,
 					ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-					Price:          common.Float64(price),
+					//Price:          common.Float64(price),
 					Volume:         int64(volume),
 					Direction:      hbcrossswap.OrderDirectionSell,
 					Offset:         hbcrossswap.OrderOffsetClose,
 					LeverRate:      *mtConfig.Leverage,
-					OrderPriceType: hbcrossswap.OrderPriceTypeFOK,
+					OrderPriceType: hbcrossswap.OrderPriceTypeFOKOptimal20FOK,
 				}
 				mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 				mOrderRequestChs[makerSymbol] <- order
@@ -406,12 +406,12 @@ func updateMakerPositions() {
 				order := hbcrossswap.NewOrderParam{
 					Symbol:         makerSymbol,
 					ClientOrderID:  time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-					Price:          common.Float64(price),
+					//Price:          common.Float64(price),
 					Volume:         int64(volume),
 					Direction:      hbcrossswap.OrderDirectionBuy,
 					Offset:         hbcrossswap.OrderOffsetClose,
 					LeverRate:      *mtConfig.Leverage,
-					OrderPriceType: hbcrossswap.OrderPriceTypeFOK,
+					OrderPriceType: hbcrossswap.OrderPriceTypeFOKOptimal20FOK,
 				}
 				mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 				mOrderRequestChs[makerSymbol] <- order

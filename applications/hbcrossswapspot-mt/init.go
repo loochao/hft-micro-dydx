@@ -39,6 +39,7 @@ var hbcrossswapNewOrderErrorCh = make(chan SwapOrderNewError, 10)
 var hbcrossswapOrderRequestChs = make(map[string]chan hbcrossswap.NewOrderParam)
 
 var hbspotHttpBalanceUpdateSilentTimes = make(map[string]time.Time)
+var hbcrossswapHttpPositionUpdateSilentTimes = make(map[string]time.Time)
 var hbspotLastOrderTimes = make(map[string]time.Time)
 var hbcrossswapLastOrderTimes = make(map[string]time.Time)
 
@@ -62,6 +63,8 @@ var hbspotTickSizes = make(map[string]float64)
 var hbspotStepSizes = make(map[string]float64)
 var hbspotMinSizes = make(map[string]float64)
 var hbspotMinNotional = make(map[string]float64)
+
+var hbMergedStepSizes = make(map[string]float64)
 
 var hbGlobalCtx context.Context
 var hbGlobalCancel context.CancelFunc
@@ -108,7 +111,7 @@ var hbConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210417 23:59:37  ####")
+	logger.Debug("####  BUILD @ 20210418 01:41:51  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -155,6 +158,7 @@ func init() {
 		kcOpenLogSilentTimes[spotSymbol] = time.Now()
 		hbspotSilentTimes[spotSymbol] = time.Now().Add(time.Minute)
 		hbspotHttpBalanceUpdateSilentTimes[spotSymbol] = time.Now()
+		hbcrossswapHttpPositionUpdateSilentTimes[swapSymbol] = time.Now()
 
 		hbcrossswapLastOrderTimes[swapSymbol] = time.Unix(0, 0)
 		hbspotLastOrderTimes[spotSymbol] = time.Unix(0, 0)

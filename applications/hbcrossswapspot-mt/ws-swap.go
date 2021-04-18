@@ -33,6 +33,7 @@ func handleWSPosition(wsPositions *hbcrossswap.WSPositions) {
 				nextPos := nextPos
 				hbcrossswapPositions[nextPos.Symbol] = nextPos
 				hbcrossswapPositionsUpdateTimes[nextPos.Symbol] = time.Now()
+				hbcrossswapHttpPositionUpdateSilentTimes[nextPos.Symbol] = time.Now().Add(*hbConfig.PullInterval*3)
 			}
 		}
 	}

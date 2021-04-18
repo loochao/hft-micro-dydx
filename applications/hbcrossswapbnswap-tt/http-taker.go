@@ -40,15 +40,16 @@ func handleTakerHttpAccount(account bnswap.Account) {
 		if asset.Asset == "USDT" {
 			asset := asset
 			if tAccount == nil {
-				logger.Debugf("TAKER HTTP MARGIN BALANCE %v -> %f", nil, *asset.MarginBalance)
-			} else if tAccount.MarginBalance != nil &&
-				asset.MarginBalance != nil &&
-				*tAccount.MarginBalance != *asset.MarginBalance {
-				logger.Debugf("TAKER HTTP MARGIN BALANCE %f -> %f", *tAccount.MarginBalance, *asset.MarginBalance)
-
+				logger.Debugf("TAKER HTTP AVAILABLE BALANCE %v -> %f", nil, *asset.AvailableBalance)
+				mtLoopTimer.Reset(time.Nanosecond)
+			} else if tAccount.AvailableBalance != nil &&
+				asset.AvailableBalance != nil &&
+				*tAccount.AvailableBalance != *asset.AvailableBalance {
+				mtLoopTimer.Reset(time.Nanosecond)
+				logger.Debugf("TAKER HTTP AVAILABLE BALANCE %f -> %f", *tAccount.AvailableBalance, *asset.AvailableBalance)
 			}
 			tAccount = &asset
-			continue
+			break
 		}
 		//if asset.Asset == "BNB" {
 		//	asset := asset

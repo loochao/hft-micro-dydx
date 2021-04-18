@@ -11,6 +11,14 @@ func handleSwapHttpPositions(positions []hbcrossswap.Position) {
 		if _, ok := kcpsSymbolsMap[nextPos.Symbol]; !ok {
 			continue
 		}
+		// 交易所前置机存在缓存
+		// 如果有WS更新 或者 刚下过单，不使用HTTP拉过来的Position
+		if time.Now().Sub(hbcrossswapHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
+			return
+		}
+		if time.Now().Sub(hbcrossswapLastOrderTimes[nextPos.Symbol]) < *hbConfig.PullInterval*3 {
+			return
+		}
 		var lastPosition *hbcrossswap.Position
 		if p, ok := hbcrossswapPositions[nextPos.Symbol]; ok {
 			p := p

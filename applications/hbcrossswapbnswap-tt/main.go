@@ -374,7 +374,7 @@ func main() {
 					} else if takerOrder.Side == common.OrderSideBuy {
 						if makerPrice, ok := mLastFilledSellPrices[makerSymbol]; ok {
 							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
-							logger.Debugf("%s REALISED CLOSE SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
+							logger.Debugf("%s REALISED LONG SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
 						}
 					}
 				}

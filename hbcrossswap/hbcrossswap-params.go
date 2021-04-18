@@ -38,8 +38,8 @@ const (
 	OrderPriceTypeOptimal20IOC    = "optimal_20_ioc"
 	OrderPriceTypeOpponentFOK     = "opponent_fok"
 	OrderPriceTypeFOKOptimal5FOK  = "optimal_5_fok"
-	OrderPriceTypeFOKOptimal10FOK = "optimal_5_fok"
-	OrderPriceTypeFOKOptimal20FOK = "optimal_5_fok"
+	OrderPriceTypeFOKOptimal10FOK = "optimal_10_fok"
+	OrderPriceTypeFOKOptimal20FOK = "optimal_20_fok"
 
 	OrderStatusSubmit                              = 1  //1. Placing orders to order book;
 	OrderStatusSubmitting                          = 2  // 2 Placing orders to order book;
