@@ -108,6 +108,7 @@ func handleSpotHttpAccount(account hbspot.Account) {
 		if nb.Balance != nb.Trade+nb.Frozen {
 			logger.Debugf("SPOT HTTP %s Balance %f -> %f", symbol, nb.Available, nb.Trade+nb.Frozen)
 			nb.Balance = nb.Trade + nb.Frozen
+			hbLoopTimer.Reset(time.Nanosecond)
 		}
 		hbspotBalances[symbol] = nb
 	}

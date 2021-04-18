@@ -308,6 +308,7 @@ func main() {
 			handleSpotWSBalance(msg)
 			break
 		case spotOrder := <-hbspotUserWebsocket.OrderCh:
+			hbLoopTimer.Reset(time.Nanosecond)
 			if spotOrder.OrderStatus != nil {
 				if *spotOrder.OrderStatus == hbspot.OrderStatusFilled {
 					hbspotHttpBalanceUpdateSilentTimes[spotOrder.Symbol] = time.Now().Add(*hbConfig.HttpSilent)
@@ -340,6 +341,7 @@ func main() {
 			handleWSAccount(msg)
 			break
 		case swapOrder := <-hbcrossswapUserWebsocket.OrderCh:
+			hbLoopTimer.Reset(time.Nanosecond)
 			if swapOrder.Status == hbcrossswap.OrderStatusFilled ||
 				swapOrder.Status == hbcrossswap.OrderStatusCancelled ||
 				swapOrder.Status == hbcrossswap.OrderStatusPartiallyFilledButCancelledByClient {

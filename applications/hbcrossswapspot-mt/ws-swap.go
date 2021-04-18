@@ -37,6 +37,7 @@ func handleWSPosition(wsPositions *hbcrossswap.WSPositions) {
 				} else if nextPos.Volume != 0 && nextPos.Direction != lastPos.Direction {
 					logger.Debugf("SWAP WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
 				}
+				hbLoopTimer.Reset(time.Nanosecond)
 				nextPos := nextPos
 				hbcrossswapPositions[nextPos.Symbol] = nextPos
 				hbcrossswapPositionsUpdateTimes[nextPos.Symbol] = time.Now()
