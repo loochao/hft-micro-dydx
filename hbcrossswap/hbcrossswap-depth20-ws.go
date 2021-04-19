@@ -186,7 +186,6 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 			return
 		case msg := <-w.messageCh:
 			if msg[2] == 'c' {
-				logger.Debugf("%s", msg)
 				depth20, err := ParseDepth20(msg)
 				if err != nil {
 					logger.Debugf("ParseDepth20 error %v %s", err, msg)

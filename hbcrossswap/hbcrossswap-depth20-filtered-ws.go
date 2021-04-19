@@ -185,6 +185,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 	timeDelta := 0.0
 	decay1 := decay
 	decay2 := 1.0 - decay
+	logSilentTime := time.Now()
 	for {
 		select {
 		case <-ctx.Done():
@@ -195,7 +196,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 			if msg[2] == 'c' && len(msg) > 56{
 				//{"ch":"market.FIL-USDT.depth.step6","ts":1618845641135,"tick":{"mrid":18528726394,"id":1618845641,"bids":[[154.423,36],[154.419,214],[154.414,380],[154.407,421],[154.398,64],[154.388,73],[154.386,8],[154.361,171],[154.36,300],[154.359,1],[154.354,175],[154.34,171],[154.339,48],[154.329,283],[154.327,243],[154.323,13],[154.315,50],[154.303,200],[154.302,48],[154.285,806]],"asks":[[154.436,154],[154.459,441],[154.46,58],[154.472,154],[154.473,134],[154.475,380],[154.497,163],[154.499,666],[154.511,88],[154.514,30],[154.515,283],[154.516,715],[154.517,70],[154.52,2],[154.53,222],[154.532,50],[154.557,1297],[154.565,3],[154.609,48],[154.61,4]],"ts":1618845641132,"version":1618845641,"ch":"market.FIL-USDT.depth.step6"}}
 				totalCount++
-				if totalCount > 10000 {
+				if totalCount > 100000 {
 					if totalCount > 0 {
 						logger.Debugf("EMA TIME DELTA %f DROP RATIO %f", emaTimeDelta,float64(filterCount)/float64(totalCount))
 					}
@@ -247,6 +248,11 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 						filterCount++
 						continue
 					}
+				}else{
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("bad msg, can't find timestamp: %s", msg)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 				depth20, err := ParseDepth20(msg)
 				if err != nil {
@@ -254,10 +260,6 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 					continue
 				}
 				select {
-				case <-ctx.Done():
-					return
-				case <-w.done:
-					return
 				case <-time.After(time.Millisecond):
 					logger.Warn("SWAP DEPTH20 TO OUTPUT CH TIME OUT IN 1MS")
 				case w.DataCh <- depth20:

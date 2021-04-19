@@ -5,11 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 )
 
@@ -22,6 +24,8 @@ type Depth20FilteredWebsocket struct {
 	reconnectCh chan interface{}
 	symbolCh    chan string
 	pingCh      chan []byte
+	stopped     bool
+	mu          sync.Mutex
 }
 
 func (w *Depth20FilteredWebsocket) startWrite(ctx context.Context, conn *websocket.Conn) {
@@ -48,46 +52,75 @@ func (w *Depth20FilteredWebsocket) startWrite(ctx context.Context, conn *websock
 			}
 			err = conn.SetWriteDeadline(time.Now().Add(300 * time.Millisecond))
 			if err != nil {
-				w.restart()
+				select {
+				case <-ctx.Done():
+					break
+				default:
+					w.restart()
+				}
 				return
 			}
 
 			err = conn.WriteMessage(websocket.TextMessage, bytes)
-
 			if err != nil {
-				w.restart()
+				select {
+				case <-ctx.Done():
+					break
+				default:
+					w.restart()
+				}
 				return
 			}
 		}
 	}
 }
 
-func (w *Depth20FilteredWebsocket) startRead(conn *websocket.Conn) {
+func (w *Depth20FilteredWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
 	totalCount := 0
 	totalLen := 0
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				w.restart()
+			}
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
 			logger.Warnf("NextReader error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				w.restart()
+			}
 			return
 		}
 		gr, err := gzip.NewReader(r)
 		if err != nil {
 			logger.Warnf("NewReader error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				w.restart()
+			}
 			return
 		}
 		msg, err := w.readAll(gr)
 		if err != nil {
 			logger.Warnf("readAll error %v", err)
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				w.restart()
+			}
 			return
 		}
 		totalCount += 1
@@ -139,6 +172,8 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 	timeDelta := 0.0
 	decay1 := decay
 	decay2 := 1.0 - decay
+	logSilentTime := time.Now()
+	bytesLen := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -147,16 +182,48 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 			return
 		case msg := <-w.messageCh:
 			if msg[2] == 'c' {
+				bytesLen = len(msg)
+				if bytesLen < 17 {
+					continue
+				}
+				//{"ch":"market.btcusdt.depth.step1","ts":1618845880265,"tick":{"bids":[[55177.6,0.292371],[55176.8,0.084949],[55170.4,0.67],[55170.2,0.032873],[55169.0,0.01],[55165.8,0.1],[55163.1,0.32],[55159.6,1.28],[55156.5,0.99],[55155.9,0.003489],[55155.0,1.195819],[55154.3,0.014323],[55154.1,0.03],[55153.8,2.0E-4],[55153.1,0.017567],[55151.0,0.016979],[55150.4,0.132173],[55150.3,0.052],[55150.0,0.005958],[55146.2,2.0E-4]],"asks":[[55177.7,0.006907],[55182.3,0.004239],[55182.5,0.001],[55186.6,0.685273],[55187.0,0.006],[55188.7,0.006],[55189.7,0.006],[55190.0,0.003636],[55191.4,0.010475],[55192.0,0.2],[55192.7,0.054338],[55192.8,0.1],[55193.1,6.5E-4],[55193.4,0.136479],[55194.0,0.018871],[55195.5,0.01],[55196.5,0.01891],[55197.4,0.0057],[55198.0,0.006],[55198.3,2.0E-4]],"version":125371959389,"ts":1618845880259}}
+				totalCount++
+				if totalCount > 10 {
+					if totalCount > 0 {
+						logger.Debugf("EMA TIME DELTA %f DROP RATIO %f", emaTimeDelta, float64(filterCount)/float64(totalCount))
+					}
+					totalCount = 0
+					filterCount = 0
+				}
+				if msg[bytesLen-16] == ':' {
+					t, err := common.ParseInt(msg[bytesLen-15 : bytesLen-2])
+					if err != nil {
+						logger.Debugf("ParseDepth20 error %v %s", err, msg[bytesLen-15:bytesLen-2])
+						continue
+					}
+					timeDelta = float64(time.Now().UnixNano()/1000000 - t)
+					if timeDelta > 1000 {
+						timeDelta = 1000
+					}
+					//logger.Debugf("%d %s %v %f", bytesLen-16, msg[bytesLen-15:bytesLen-2], t, timeDelta)
+					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
+					if timeDelta > emaTimeDelta+bias {
+						filterCount++
+						continue
+					}
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("bad msg, can't find timestamp: %s", msg)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
+
 				depth20, err := ParseDepth20(msg)
 				if err != nil {
 					logger.Debugf("ParseDepth20 error %v %s", err, msg)
 					continue
 				}
 				select {
-				case <-ctx.Done():
-					return
-				case <-w.done:
-					return
 				case <-time.After(time.Millisecond):
 					logger.Warn("HBSPOT DEPTH20 TO OUTPUT CH TIME OUT IN 1MS")
 				case w.DataCh <- depth20:
@@ -189,7 +256,7 @@ func (w *Depth20FilteredWebsocket) reconnect(ctx context.Context, wsUrl string, 
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			logger.Fatalf("PARSE PROXY %v", err)
+			return nil, fmt.Errorf("PARSE PROXY %v", err)
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -231,10 +298,10 @@ func (w *Depth20FilteredWebsocket) start(ctx context.Context, symbols []string, 
 
 	defer func() {
 		cancel()
-		w.Stop()
 		if internalCancel != nil {
 			internalCancel()
 		}
+		w.Stop()
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
@@ -255,10 +322,10 @@ func (w *Depth20FilteredWebsocket) start(ctx context.Context, symbols []string, 
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			conn, err := w.reconnect(internalCtx, "wss://api-aws.huobi.pro/ws", proxy, 0)
 			if err != nil {
-				logger.Fatalf("RECONNECT ERROR %v", err)
+				logger.Debugf("RECONNECT ERROR %v", err)
 				return
 			}
-			go w.startRead(conn)
+			go w.startRead(internalCtx, conn)
 			go w.startWrite(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn, symbols)
 
@@ -340,9 +407,12 @@ func (w *Depth20FilteredWebsocket) maintainHeartbeat(ctx context.Context, conn *
 }
 
 func (w *Depth20FilteredWebsocket) Stop() {
-	if _, ok := <-w.done; ok {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if !w.stopped {
+		w.stopped = true
 		close(w.done)
-		logger.Infof("HBSPOT DEPTH20 WS STOPPED")
+		logger.Debugf("HBSPOT DEPTH20 WS STOPPED")
 	}
 }
 
@@ -351,16 +421,15 @@ func (w *Depth20FilteredWebsocket) restart() {
 	select {
 	case <-w.done:
 		return
-	default:
-	}
-	select {
 	case <-time.After(time.Millisecond):
-		logger.Fatal("NIL TO RESTART CH TIMEOUT IN 1MS, EXIT")
+		logger.Debugf("NIL TO RESTART CH TIMEOUT IN 1MS, EXIT")
 	case w.RestartCh <- nil:
 	}
 	select {
+	case <-w.done:
+		return
 	case <-time.After(time.Millisecond):
-		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
+		logger.Debugf("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
 	case w.reconnectCh <- nil:
 	}
 }
@@ -384,6 +453,8 @@ func NewDepth20FilteredWebsocket(
 		writeCh:     make(chan interface{}, 100*len(symbols)),
 		symbolCh:    make(chan string, 100*len(symbols)),
 		pingCh:      make(chan []byte, 100),
+		stopped:     false,
+		mu:          sync.Mutex{},
 	}
 	go ws.start(ctx, symbols, proxy, decay, bias)
 	ws.reconnectCh <- nil

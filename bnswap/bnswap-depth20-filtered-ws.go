@@ -99,6 +99,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 	timeDelta := 0.0
 	decay1 := decay
 	decay2 := 1.0 - decay
+	logSilentTime := time.Now()
 	for {
 		select {
 		case <-ctx.Done():
@@ -107,7 +108,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 			return
 		case msg := <-w.messageCh:
 			totalCount++
-			if totalCount > 10000 {
+			if totalCount > 100000 {
 				if totalCount > 0 {
 					logger.Debugf("EMA TIME DELTA %f DROP RATIO %f", emaTimeDelta, float64(filterCount)/float64(totalCount))
 				}
@@ -161,6 +162,11 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 				if timeDelta > emaTimeDelta + bias{
 					filterCount++
 					continue
+				}
+			}else{
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("bad msg, can't find timestamp: %s", msg)
+					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
 			depth20, err := ParseDepth20(msg)
