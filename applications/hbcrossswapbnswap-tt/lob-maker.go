@@ -10,6 +10,7 @@ import (
 func watchMakerWalkedOrderBooks(
 	ctx context.Context,
 	cancel context.CancelFunc,
+	makerDecay float64,
 	proxyAddress string,
 	contractSizes map[string]float64,
 	impact float64, symbols []string,
@@ -27,8 +28,9 @@ func watchMakerWalkedOrderBooks(
 		nextWalkTimes[symbol] = time.Now()
 	}
 	walkInterval := time.Millisecond*50
-	ws := hbcrossswap.NewDepth20Websocket(
+	ws := hbcrossswap.NewDepth20FilteredWebsocket(
 		ctx,
+		makerDecay,
 		symbols,
 		proxyAddress,
 	)

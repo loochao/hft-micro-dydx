@@ -10,6 +10,7 @@ import (
 func watchTakerWalkedOrderBooks(
 	ctx context.Context,
 	cancel context.CancelFunc,
+	takerDecay float64,
 	proxyAddress string,
 	impact float64, symbols []string, output chan WalkedOrderBook) {
 	logger.Debugf("watchTakerWalkedOrderBooks %s", symbols)
@@ -22,9 +23,9 @@ func watchTakerWalkedOrderBooks(
 		lastEventTimes[s] = time.Unix(0, 0)
 		nextWalkTimes[s] = time.Now()
 	}
-	walkInterval := time.Millisecond*50
+	walkInterval := time.Millisecond * 50
 
-	ws := bnswap.NewDepth20Websocket(ctx, symbols, proxyAddress)
+	ws := bnswap.NewDepth20FilteredWebsocket(ctx, takerDecay, symbols, proxyAddress)
 	defer ws.Stop()
 
 	var wb WalkedOrderBook

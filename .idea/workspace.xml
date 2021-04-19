@@ -2,8 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-filtered-ws.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-filtered-ws_test.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-depth20-filtered-ws.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/loop.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/loop.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-maker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-maker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-taker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-taker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-depth20-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-depth20-ws.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,22 +54,44 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/tools" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/hbcrossswap" />
     <property name="settings.editor.selected.configurable" value="configurable.group.build" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/hbcrossswap" />
+      <recent name="$PROJECT_DIR$/bnswap" />
       <recent name="$PROJECT_DIR$/tools" />
       <recent name="$PROJECT_DIR$/applications" />
       <recent name="$PROJECT_DIR$/applications/hbcrossswapbnswaph-mt" />
-      <recent name="$PROJECT_DIR$/applications/bnswaphbcrossswap-mt" />
-      <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/kcperp/jsons" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestAPI_GetServerTime in github.com/geometrybase/hft-micro/bnswap">
+  <component name="RunManager" selected="Go Test.TestNewDepth20FilteredWebsocket in github.com/geometrybase/hft-micro/bnswap">
+    <configuration name="BenchmarkFloat64Ema in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hft-micro" />
+      <working_directory value="$PROJECT_DIR$/bnswap" />
+      <framework value="gobench" />
+      <kind value="PACKAGE" />
+      <package value="github.com/geometrybase/hft-micro/bnswap" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QBenchmarkFloat64Ema\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="BenchmarkInt64Ema in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hft-micro" />
+      <working_directory value="$PROJECT_DIR$/bnswap" />
+      <framework value="gobench" />
+      <kind value="PACKAGE" />
+      <package value="github.com/geometrybase/hft-micro/bnswap" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QBenchmarkInt64Ema\E$" />
+      <method v="2" />
+    </configuration>
     <configuration name="TestAPI_GetServerTime in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
       <working_directory value="$PROJECT_DIR$/bnswap" />
@@ -74,18 +103,7 @@
       <pattern value="^\QTestAPI_GetServerTime\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestNewDepth20Websocket in github.com/geometrybase/hft-micro/hbcrossswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/hbcrossswap" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/hbcrossswap" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestNewDepth20Websocket\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestInt64Ema in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
       <working_directory value="$PROJECT_DIR$/bnswap" />
       <framework value="gotest" />
@@ -93,10 +111,10 @@
       <package value="github.com/geometrybase/hft-micro/bnswap" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestNewDepth20Ws\E$" />
+      <pattern value="^\QTestInt64Ema\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestParseDepth20 in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestNewDepth20FilteredWebsocket in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
       <working_directory value="$PROJECT_DIR$/bnswap" />
       <framework value="gotest" />
@@ -104,34 +122,23 @@
       <package value="github.com/geometrybase/hft-micro/bnswap" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestParseDepth20\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestParseDepth53 in github.com/geometrybase/hft-micro/kcspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/kcspot" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/kcspot" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestParseDepth53\E$" />
+      <pattern value="^\QTestNewDepth20FilteredWebsocket\E$" />
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Go Test.TestParseDepth53 in github.com/geometrybase/hft-micro/kcspot" />
-      <item itemvalue="Go Test.TestParseDepth20 in github.com/geometrybase/hft-micro/bnswap" />
-      <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" />
-      <item itemvalue="Go Test.TestNewDepth20Websocket in github.com/geometrybase/hft-micro/hbcrossswap" />
       <item itemvalue="Go Test.TestAPI_GetServerTime in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Test.TestInt64Ema in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Test.BenchmarkInt64Ema in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Test.BenchmarkFloat64Ema in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Test.TestNewDepth20FilteredWebsocket in github.com/geometrybase/hft-micro/bnswap" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.TestNewDepth20FilteredWebsocket in github.com/geometrybase/hft-micro/bnswap" />
+        <item itemvalue="Go Test.BenchmarkFloat64Ema in github.com/geometrybase/hft-micro/bnswap" />
+        <item itemvalue="Go Test.BenchmarkInt64Ema in github.com/geometrybase/hft-micro/bnswap" />
+        <item itemvalue="Go Test.TestInt64Ema in github.com/geometrybase/hft-micro/bnswap" />
         <item itemvalue="Go Test.TestAPI_GetServerTime in github.com/geometrybase/hft-micro/bnswap" />
-        <item itemvalue="Go Test.TestNewDepth20Websocket in github.com/geometrybase/hft-micro/hbcrossswap" />
-        <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" />
-        <item itemvalue="Go Test.TestParseDepth20 in github.com/geometrybase/hft-micro/bnswap" />
-        <item itemvalue="Go Test.TestParseDepth53 in github.com/geometrybase/hft-micro/kcspot" />
       </list>
     </recent_temporary>
   </component>

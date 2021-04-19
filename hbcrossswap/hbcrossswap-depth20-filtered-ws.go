@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -14,7 +15,7 @@ import (
 	"time"
 )
 
-type Depth20Websocket struct {
+type Depth20FilteredWebsocket struct {
 	messageCh   chan []byte
 	DataCh      chan *Depth20
 	writeCh     chan interface{}
@@ -27,7 +28,7 @@ type Depth20Websocket struct {
 	stopped     bool
 }
 
-func (w *Depth20Websocket) startWrite(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth20FilteredWebsocket) startWrite(ctx context.Context, conn *websocket.Conn) {
 	defer func() {
 		logger.Debugf("EXIT startWrite")
 	}()
@@ -78,7 +79,7 @@ func (w *Depth20Websocket) startWrite(ctx context.Context, conn *websocket.Conn)
 	}
 }
 
-func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth20FilteredWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
 	defer func() {
 		logger.Debugf("EXIT startRead")
 	}()
@@ -156,7 +157,7 @@ func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) 
 
 }
 
-func (w *Depth20Websocket) readAll(r io.Reader) ([]byte, error) {
+func (w *Depth20FilteredWebsocket) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -174,10 +175,16 @@ func (w *Depth20Websocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
+func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int, decay float64) {
 	defer func() {
 		logger.Debugf("EXIT startDataHandler %d", id)
 	}()
+	totalCount := 0
+	slowCount := 0
+	emaTimeDelta := 100.0
+	timeDelta := 0.0
+	decay1 := decay
+	decay2 := 1.0 - decay
 	for {
 		select {
 		case <-ctx.Done():
@@ -185,7 +192,52 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			if msg[2] == 'c' {
+			if msg[2] == 'c' && len(msg) > 56{
+				totalCount++
+				if totalCount > 10000 {
+					if totalCount > 0 {
+						logger.Debugf("EMA TIME DELTA %f SLOW RATIO %f", emaTimeDelta,float64(slowCount)/float64(totalCount))
+					}
+					totalCount = 0
+					slowCount = 0
+				}
+				if msg[40] == ':' {
+					t, err := common.ParseInt(msg[41:54])
+					if err != nil {
+						logger.Debugf("ParseDepth20 error %v %s", err, msg[41:54])
+						continue
+					}
+					timeDelta = float64(time.Now().UnixNano()/1000000-t)
+					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
+					if timeDelta > emaTimeDelta {
+						slowCount++
+						continue
+					}
+				} else if msg[41] == 'E' {
+					t, err := common.ParseInt(msg[42:55])
+					if err != nil {
+						logger.Debugf("ParseDepth20 error %v %s", err, msg[42:55])
+						continue
+					}
+					timeDelta = float64(time.Now().UnixNano()/1000000-t)
+					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
+					if timeDelta > emaTimeDelta {
+						slowCount++
+						continue
+					}
+				} else if msg[42] == 'E' {
+					t, err := common.ParseInt(msg[43:56])
+					if err != nil {
+						logger.Debugf("ParseDepth20 error %v %s", err, msg[43:56])
+						continue
+					}
+					timeDelta = float64(time.Now().UnixNano()/1000000-t)
+					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
+					if timeDelta > emaTimeDelta {
+						slowCount++
+						continue
+					}
+				}
 				depth20, err := ParseDepth20(msg)
 				if err != nil {
 					logger.Debugf("ParseDepth20 error %v %s", err, msg)
@@ -217,7 +269,7 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 	}
 }
 
-func (w *Depth20Websocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *Depth20FilteredWebsocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("RECONNECT %s, %d RETRIES", wsUrl, counter)
@@ -263,7 +315,7 @@ func (w *Depth20Websocket) reconnect(ctx context.Context, wsUrl string, proxy st
 	return conn, nil
 }
 
-func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy string) {
+func (w *Depth20FilteredWebsocket) start(ctx context.Context, decay float64, symbols []string, proxy string) {
 
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
@@ -304,10 +356,10 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 			go w.startWrite(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn, symbols)
 
-			go w.startDataHandler(internalCtx, 0)
-			go w.startDataHandler(internalCtx, 1)
-			go w.startDataHandler(internalCtx, 2)
-			go w.startDataHandler(internalCtx, 3)
+			go w.startDataHandler(internalCtx, 0, decay)
+			go w.startDataHandler(internalCtx, 1, decay)
+			go w.startDataHandler(internalCtx, 2, decay)
+			go w.startDataHandler(internalCtx, 3, decay)
 
 			//go w.startDataHandler(internalCtx, 4)
 			//go w.startDataHandler(internalCtx, 5)
@@ -317,7 +369,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 	}
 }
 
-func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *Depth20FilteredWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn, symbols []string) {
 
 	defer func() {
 		logger.Debugf("EXIT maintainHeartbeat")
@@ -382,7 +434,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 
 }
 
-func (w *Depth20Websocket) Stop() {
+func (w *Depth20FilteredWebsocket) Stop() {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if !w.stopped {
@@ -391,7 +443,7 @@ func (w *Depth20Websocket) Stop() {
 	}
 }
 
-func (w *Depth20Websocket) restart() {
+func (w *Depth20FilteredWebsocket) restart() {
 	logger.Infof("SWAP WS RESTART")
 	select {
 	case <-w.done:
@@ -414,16 +466,17 @@ func (w *Depth20Websocket) restart() {
 	}
 }
 
-func (w *Depth20Websocket) Done() chan interface{} {
+func (w *Depth20FilteredWebsocket) Done() chan interface{} {
 	return w.done
 }
 
-func NewDepth20Websocket(
+func NewDepth20FilteredWebsocket(
 	ctx context.Context,
+	decay float64,
 	symbols []string,
 	proxy string,
-) *Depth20Websocket {
-	ws := Depth20Websocket{
+) *Depth20FilteredWebsocket {
+	ws := Depth20FilteredWebsocket{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
 		DataCh:      make(chan *Depth20, 100*len(symbols)),
@@ -435,7 +488,7 @@ func NewDepth20Websocket(
 		mu:          sync.Mutex{},
 		stopped:     false,
 	}
-	go ws.start(ctx, symbols, proxy)
+	go ws.start(ctx, decay, symbols, proxy)
 	ws.reconnectCh <- nil
 	return &ws
 }
