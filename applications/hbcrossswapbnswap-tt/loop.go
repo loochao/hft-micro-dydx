@@ -123,8 +123,7 @@ func updateMakerPositions() {
 	entryTarget := entryStep * *mtConfig.EnterTargetFactor
 
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单, 优先做空
-	for rank := len(mSymbols) - 1; rank >= 0; rank-- {
-
+	for _, rank := range mtDualEnds{
 		makerSymbol := mtRankSymbolMap[rank]
 		takerSymbol := mtSymbolsMap[makerSymbol]
 		//需要保证两边都有仓位更新，才调整现货仓位
@@ -165,7 +164,7 @@ func updateMakerPositions() {
 
 		if spread.ShortLastEnter > quantile.ShortTop &&
 			spread.ShortMedianEnter > quantile.ShortTop &&
-			fundingRate > *mtConfig.MinimalEnterFundingRate &&
+			//fundingRate > *mtConfig.MinimalEnterFundingRate &&
 			makerSize >= 0 {
 			price := makerOrderBook.AskVWAP * (1.0 + *mtConfig.EnterSlippage)
 			price = math.Floor(price/makerTickSize) * makerTickSize
@@ -254,7 +253,7 @@ func updateMakerPositions() {
 			return
 		} else if spread.LongLastEnter < quantile.LongBot &&
 			spread.LongMedianEnter < quantile.LongBot &&
-			fundingRate < -*mtConfig.MinimalEnterFundingRate &&
+			//fundingRate < -*mtConfig.MinimalEnterFundingRate &&
 			makerSize <= 0 {
 			price := makerOrderBook.BidVWAP * (1.0 - *mtConfig.EnterSlippage)
 			price = math.Floor(price/makerTickSize) * makerTickSize
