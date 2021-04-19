@@ -280,7 +280,7 @@ func main() {
 	go watchTakerWalkedOrderBooks(
 		mtGlobalCtx,
 		mtGlobalCancel,
-		*mtConfig.OrderBookMakerDecay,
+		*mtConfig.OrderBookTakerDecay,
 		*mtConfig.ProxyAddress,
 		*mtConfig.OrderBookImpact,
 		tSymbols[len(tSymbols)/2:],
@@ -289,6 +289,7 @@ func main() {
 	go watchMakerWalkedOrderBooks(
 		mtGlobalCtx,
 		mtGlobalCancel,
+		*mtConfig.OrderBookMakerDecay,
 		*mtConfig.ProxyAddress,
 		mContractSizes,
 		*mtConfig.OrderBookImpact,
@@ -298,6 +299,7 @@ func main() {
 	go watchMakerWalkedOrderBooks(
 		mtGlobalCtx,
 		mtGlobalCancel,
+		*mtConfig.OrderBookMakerDecay,
 		*mtConfig.ProxyAddress,
 		mContractSizes,
 		*mtConfig.OrderBookImpact,
