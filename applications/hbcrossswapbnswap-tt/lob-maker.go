@@ -10,7 +10,7 @@ import (
 func watchMakerWalkedOrderBooks(
 	ctx context.Context,
 	cancel context.CancelFunc,
-	makerDecay float64,
+	makerDecay, makerBias float64,
 	proxyAddress string,
 	contractSizes map[string]float64,
 	impact float64, symbols []string,
@@ -31,6 +31,7 @@ func watchMakerWalkedOrderBooks(
 	ws := hbcrossswap.NewDepth20FilteredWebsocket(
 		ctx,
 		makerDecay,
+		makerBias,
 		symbols,
 		proxyAddress,
 	)

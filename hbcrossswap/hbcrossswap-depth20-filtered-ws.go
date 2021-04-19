@@ -175,7 +175,7 @@ func (w *Depth20FilteredWebsocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int, decay float64) {
+func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int, decay, bias float64) {
 	defer func() {
 		logger.Debugf("EXIT startDataHandler %d", id)
 	}()
@@ -196,7 +196,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 				totalCount++
 				if totalCount > 10000 {
 					if totalCount > 0 {
-						logger.Debugf("EMA TIME DELTA %f FILTER  RATIO %f", emaTimeDelta,float64(filterCount)/float64(totalCount))
+						logger.Debugf("EMA TIME DELTA %f DROP RATIO %f", emaTimeDelta,float64(filterCount)/float64(totalCount))
 					}
 					totalCount = 0
 					filterCount = 0
@@ -212,7 +212,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 						timeDelta = 1000
 					}
 					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-					if timeDelta > emaTimeDelta {
+					if timeDelta > emaTimeDelta + bias {
 						filterCount++
 						continue
 					}
@@ -227,7 +227,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 						timeDelta = 1000
 					}
 					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-					if timeDelta > emaTimeDelta {
+					if timeDelta > emaTimeDelta + bias {
 						filterCount++
 						continue
 					}
@@ -242,7 +242,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 						timeDelta = 1000
 					}
 					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-					if timeDelta > emaTimeDelta {
+					if timeDelta > emaTimeDelta + bias {
 						filterCount++
 						continue
 					}
@@ -324,7 +324,7 @@ func (w *Depth20FilteredWebsocket) reconnect(ctx context.Context, wsUrl string, 
 	return conn, nil
 }
 
-func (w *Depth20FilteredWebsocket) start(ctx context.Context, decay float64, symbols []string, proxy string) {
+func (w *Depth20FilteredWebsocket) start(ctx context.Context, decay, bias float64, symbols []string, proxy string) {
 
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
@@ -365,10 +365,10 @@ func (w *Depth20FilteredWebsocket) start(ctx context.Context, decay float64, sym
 			go w.startWrite(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn, symbols)
 
-			go w.startDataHandler(internalCtx, 0, decay)
-			go w.startDataHandler(internalCtx, 1, decay)
-			go w.startDataHandler(internalCtx, 2, decay)
-			go w.startDataHandler(internalCtx, 3, decay)
+			go w.startDataHandler(internalCtx, 0, decay, bias)
+			go w.startDataHandler(internalCtx, 1, decay, bias)
+			go w.startDataHandler(internalCtx, 2, decay, bias)
+			go w.startDataHandler(internalCtx, 3, decay, bias)
 
 			//go w.startDataHandler(internalCtx, 4)
 			//go w.startDataHandler(internalCtx, 5)
@@ -481,7 +481,7 @@ func (w *Depth20FilteredWebsocket) Done() chan interface{} {
 
 func NewDepth20FilteredWebsocket(
 	ctx context.Context,
-	decay float64,
+	decay, bias float64,
 	symbols []string,
 	proxy string,
 ) *Depth20FilteredWebsocket {
@@ -497,7 +497,7 @@ func NewDepth20FilteredWebsocket(
 		mu:          sync.Mutex{},
 		stopped:     false,
 	}
-	go ws.start(ctx, decay, symbols, proxy)
+	go ws.start(ctx, decay, bias, symbols, proxy)
 	ws.reconnectCh <- nil
 	return &ws
 }

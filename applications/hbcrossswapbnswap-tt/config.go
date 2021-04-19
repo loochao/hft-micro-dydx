@@ -61,6 +61,8 @@ type Config struct {
 
 	OrderBookTakerDecay         *float64       `yaml:"orderBookTakerDecay,omitempty"`
 	OrderBookMakerDecay         *float64       `yaml:"orderBookMakerDecay,omitempty"`
+	OrderBookTakerBias          *float64       `yaml:"orderBookTakerBias,omitempty"`
+	OrderBookMakerBias          *float64       `yaml:"orderBookMakerBias,omitempty"`
 	OrderBookImpact             *float64       `yaml:"orderBookImpact,omitempty"`
 	OrderBookMaxAgeDiff         *time.Duration `yaml:"orderBookMaxAgeDiff,omitempty"`
 	OrderBookMaxAge             *time.Duration `yaml:"orderBookMaxAge,omitempty"`
