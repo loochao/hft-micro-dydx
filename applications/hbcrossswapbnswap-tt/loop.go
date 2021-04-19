@@ -97,7 +97,7 @@ func updateMakerPositions() {
 		return
 	}
 
-	if tAccount == nil && tAccount.AvailableBalance != nil {
+	if tAccount == nil || tAccount.AvailableBalance == nil {
 		return
 	}
 
