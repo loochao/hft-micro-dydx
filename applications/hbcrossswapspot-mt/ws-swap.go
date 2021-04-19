@@ -16,7 +16,7 @@ func handleWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 				hbLoopTimer.Reset(time.Nanosecond)
 			} else if hbcrossswapAccount.MarginBalance != account.MarginBalance {
 				hbLoopTimer.Reset(time.Nanosecond)
-				if math.Abs(hbcrossswapAccount.MarginPosition - account.MarginPosition) > *hbConfig.EnterMinimalStep*0.5 {
+				if math.Abs(hbcrossswapAccount.MarginPosition-account.MarginPosition) > *hbConfig.EnterMinimalStep*0.5 {
 					logger.Debugf("SWAP WS USDT CHANGE MP %f -> %f MB %f -> %f ",
 						hbcrossswapAccount.MarginPosition,
 						account.MarginPosition,
@@ -33,12 +33,13 @@ func handleWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 
 func handleWSPosition(wsPositions *hbcrossswap.WSPositions) {
 	for _, nextPos := range wsPositions.Positions {
+		if nextPos.Direction != hbcrossswap.PositionDirectionSell {
+			continue
+		}
 		if _, ok := kcpsSymbolsMap[nextPos.Symbol]; ok {
 			if lastPos, ok := hbcrossswapPositions[nextPos.Symbol]; ok {
 				if nextPos.Volume != lastPos.Volume {
-					logger.Debugf("SWAP WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
-				} else if nextPos.Volume != 0 && nextPos.Direction != lastPos.Direction {
-					logger.Debugf("SWAP WS POS %s %s %f -> %s %f", nextPos.Symbol, lastPos.Direction, lastPos.Volume, nextPos.Direction, nextPos.Volume)
+					logger.Debugf("SWAP WS SELL POS %s %f -> %f", nextPos.Symbol, lastPos.Volume, nextPos.Volume)
 				}
 				hbLoopTimer.Reset(time.Nanosecond)
 				nextPos := nextPos

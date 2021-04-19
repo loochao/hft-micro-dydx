@@ -11,6 +11,9 @@ func handleSwapHttpPositions(positions []hbcrossswap.Position) {
 		if _, ok := kcpsSymbolsMap[nextPos.Symbol]; !ok {
 			continue
 		}
+		if nextPos.Direction != hbcrossswap.PositionDirectionSell {
+			continue
+		}
 		// 交易所前置机存在缓存
 		// 如果有WS更新 或者 刚下过单，不使用HTTP拉过来的Position
 		if hbcrossswapHttpPositionUpdateSilentTimes[nextPos.Symbol].Sub(time.Now()) > 0 {
@@ -28,12 +31,8 @@ func handleSwapHttpPositions(positions []hbcrossswap.Position) {
 			lastPosition.CostOpen != nextPos.CostOpen {
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			hbcrossswapOrderSilentTimes[nextPos.Symbol] = time.Now()
-			logger.Debugf("SWAP HTTP POSITION %s DIRECTION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Direction, nextPos.Volume, nextPos.CostOpen)
+			logger.Debugf("SWAP HTTP SELL POSITION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Volume, nextPos.CostOpen)
 			hbLoopTimer.Reset(time.Nanosecond)
-		} else if nextPos.Volume != 0 &&
-			lastPosition.Direction != nextPos.Direction {
-			hbLoopTimer.Reset(time.Nanosecond)
-			logger.Debugf("SWAP HTTP POSITION %s DIRECTION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Direction, nextPos.Volume, nextPos.CostOpen)
 		}
 	}
 }

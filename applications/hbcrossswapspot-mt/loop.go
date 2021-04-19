@@ -39,10 +39,7 @@ func updatePerpPositions() {
 		contractSize := hbcrossswapContractSizes[swapSymbol]
 		//swapTickSize := hbcrossswapTickSizes[swapSymbol]
 
-		positionVolume := swapPosition.Volume
-		if swapPosition.Direction == hbcrossswap.OrderDirectionSell {
-			positionVolume = -positionVolume
-		}
+		positionVolume := -swapPosition.Volume
 		positionSize := positionVolume * contractSize
 
 		swapSize := -(spotBalance.Balance) - positionSize
@@ -50,10 +47,6 @@ func updatePerpPositions() {
 		swapSize = math.Round(swapSize / contractSize)
 
 		if math.Abs(swapSize) < 1 {
-			continue
-		}
-		if swapSize > 0 && swapPosition.Direction == hbcrossswap.OrderDirectionBuy {
-			logger.Debugf("%s SWAP POSITION ERROR, CAN'T ADD %f TO POS %f", swapSize, positionVolume)
 			continue
 		}
 		if swapSize > 0 && swapSize > -positionVolume {

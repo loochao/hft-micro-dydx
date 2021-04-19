@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
 	"strings"
@@ -26,7 +25,7 @@ func handleSave() {
 			balance, okBalance := hbspotBalances[spotSymbol]
 			spread, okSpread := hbSpreads[spotSymbol]
 			if okBalance && okSpread {
-				spotBalance += spread.SpotOrderBook.TakerBidVWAP *balance.Balance
+				spotBalance += spread.SpotOrderBook.TakerBidVWAP * balance.Balance
 			} else {
 				logger.Debugf("%s MISS BALANCE %v OR TAKER VWAP %v", spotSymbol, okBalance, spread.SpotOrderBook.TakerBidVWAP)
 				getAllBalances = false
@@ -82,17 +81,9 @@ func handleSave() {
 		spotSymbol := kcpsSymbolsMap[swapSymbol]
 		fields := make(map[string]interface{})
 		if position, ok := hbcrossswapPositions[swapSymbol]; ok {
-			if position.Direction == hbcrossswap.OrderDirectionBuy {
-				fields["swapSize"] = position.Volume*hbcrossswapContractSizes[swapSymbol]
-			}else{
-				fields["swapSize"] = -position.Volume*hbcrossswapContractSizes[swapSymbol]
-			}
+			fields["swapSize"] = -position.Volume * hbcrossswapContractSizes[swapSymbol]
 			if spread, ok := hbSpreads[spotSymbol]; ok {
-				if position.Direction == hbcrossswap.OrderDirectionBuy {
-					fields["swapValue"] = position.Volume*hbcrossswapContractSizes[swapSymbol]*spread.PerpOrderBook.TakerBidVWAP
-				}else{
-					fields["swapValue"] = -position.Volume*hbcrossswapContractSizes[swapSymbol]*spread.PerpOrderBook.TakerAskVWAP
-				}
+				fields["swapValue"] = -position.Volume * hbcrossswapContractSizes[swapSymbol] * spread.PerpOrderBook.TakerAskVWAP
 			}
 		}
 		if spotBalance, ok := hbspotBalances[spotSymbol]; ok {
