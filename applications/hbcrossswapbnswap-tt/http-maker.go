@@ -18,12 +18,16 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 		if _, ok := mtSymbolsMap[nextPos.Symbol]; !ok {
 			continue
 		}
+		if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
+			hasBuyPositions[nextPos.Symbol] = true
+		}else{
+			hasSellPositions[nextPos.Symbol] = true
+		}
 		if time.Now().Sub(mHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
 			continue
 		}
 		var lastPosition *hbcrossswap.Position
 		if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
-			hasBuyPositions[nextPos.Symbol] = true
 			if p, ok := mBuyPositions[nextPos.Symbol]; ok {
 				p := p
 				lastPosition = &p
@@ -42,7 +46,6 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 				}
 			}
 		} else {
-			hasSellPositions[nextPos.Symbol] = true
 			if p, ok := mSellPositions[nextPos.Symbol]; ok {
 				p := p
 				lastPosition = &p
