@@ -64,7 +64,7 @@ func main() {
 		totalDiff += tt.ServerTime - time.Now().UnixNano()/1000000
 		time.Sleep(time.Second)
 	}
-	logger.Debugf("TAKER ROUTE TIME %f SEVER TIME DIFF %f WITH HALF ROUTE %f", requestTime/10, totalDiff/10, totalDiff/10+requestTime/20)
+	logger.Debugf("TAKER ROUTE TIME %d SEVER TIME DIFF %d WITH HALF ROUTE %d", requestTime/10, totalDiff/10, totalDiff/10+requestTime/20)
 
 	totalDiff = int64(0)
 	requestTime = int64(0)
@@ -79,7 +79,7 @@ func main() {
 		totalDiff += tt.Timestamp.Sub(time.Now()).Milliseconds()
 		time.Sleep(time.Second)
 	}
-	logger.Debugf("MAKER ROUTE TIME %f SEVER TIME DIFF %f WITH HALF ROUTE %f", requestTime/10, totalDiff/10, totalDiff/10+requestTime/20)
+	logger.Debugf("MAKER ROUTE TIME %d SEVER TIME DIFF %d WITH HALF ROUTE %d", requestTime/10, totalDiff/10, totalDiff/10+requestTime/20)
 
 	mtGlobalCtx, mtGlobalCancel = context.WithCancel(context.Background())
 	defer mtGlobalCancel()
