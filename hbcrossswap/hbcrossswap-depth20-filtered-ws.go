@@ -180,7 +180,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 		logger.Debugf("EXIT startDataHandler %d", id)
 	}()
 	totalCount := 0
-	slowCount := 0
+	filterCount := 0
 	emaTimeDelta := 100.0
 	timeDelta := 0.0
 	decay1 := decay
@@ -196,10 +196,10 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 				totalCount++
 				if totalCount > 10000 {
 					if totalCount > 0 {
-						logger.Debugf("EMA TIME DELTA %f SLOW RATIO %f", emaTimeDelta,float64(slowCount)/float64(totalCount))
+						logger.Debugf("EMA TIME DELTA %f FILTER  RATIO %f", emaTimeDelta,float64(filterCount)/float64(totalCount))
 					}
 					totalCount = 0
-					slowCount = 0
+					filterCount = 0
 				}
 				if msg[40] == ':' {
 					t, err := common.ParseInt(msg[41:54])
@@ -210,7 +210,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 					timeDelta = float64(time.Now().UnixNano()/1000000-t)
 					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
 					if timeDelta > emaTimeDelta {
-						slowCount++
+						filterCount++
 						continue
 					}
 				} else if msg[41] == 'E' {
@@ -222,7 +222,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 					timeDelta = float64(time.Now().UnixNano()/1000000-t)
 					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
 					if timeDelta > emaTimeDelta {
-						slowCount++
+						filterCount++
 						continue
 					}
 				} else if msg[42] == 'E' {
@@ -234,7 +234,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 					timeDelta = float64(time.Now().UnixNano()/1000000-t)
 					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
 					if timeDelta > emaTimeDelta {
-						slowCount++
+						filterCount++
 						continue
 					}
 				}
