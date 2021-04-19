@@ -95,7 +95,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 	}()
 	totalCount := 0
 	filterCount := 0
-	emaTimeDelta := 100.0
+	emaTimeDelta := 50.0
 	timeDelta := 0.0
 	decay1 := decay
 	decay2 := 1.0 - decay
