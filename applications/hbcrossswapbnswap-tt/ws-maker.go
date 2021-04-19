@@ -32,6 +32,7 @@ func handleMakerWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 }
 
 func handleMakerWSPosition(wsPositions *hbcrossswap.WSPositions) {
+	logger.Debugf("%v", wsPositions)
 	for _, nextPos := range wsPositions.Positions {
 		if takerSymbol, ok := mtSymbolsMap[nextPos.Symbol]; ok {
 			if lastPos, ok := mPositions[nextPos.Symbol]; ok {
