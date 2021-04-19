@@ -124,6 +124,9 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 					continue
 				}
 				timeDelta = float64(time.Now().UnixNano()/1000000 - t)
+				if timeDelta > 1000 {
+					timeDelta = 1000
+				}
 				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
 				if timeDelta > emaTimeDelta {
 					filterCount++
@@ -136,6 +139,9 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 					continue
 				}
 				timeDelta = float64(time.Now().UnixNano()/1000000 - t)
+				if timeDelta > 1000 {
+					timeDelta = 1000
+				}
 				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
 				if timeDelta > emaTimeDelta {
 					filterCount++
@@ -148,6 +154,9 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 					continue
 				}
 				timeDelta = float64(time.Now().UnixNano()/1000000 - t)
+				if timeDelta > 1000 {
+					timeDelta = 1000
+				}
 				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
 				if timeDelta > emaTimeDelta {
 					filterCount++
