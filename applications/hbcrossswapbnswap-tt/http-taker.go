@@ -30,7 +30,7 @@ func handleTakerHttpPositions(positions []bnswap.Position) {
 			lastPosition.EntryPrice != nextPos.EntryPrice {
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			tOrderSilentTimes[nextPos.Symbol] = time.Now()
-			logger.Debugf("MAKER HTTP POSITION %s", nextPos.ToString())
+			logger.Debugf("TAKER HTTP POSITION %s", nextPos.ToString())
 		}
 	}
 }
