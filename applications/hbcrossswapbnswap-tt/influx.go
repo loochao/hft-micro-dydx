@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
 	"strings"
@@ -48,17 +47,11 @@ func handleSave() {
 	for _, makerSymbol := range mSymbols {
 		takerSymbol := mtSymbolsMap[makerSymbol]
 		fields := make(map[string]interface{})
-		if position, ok := mPositions[makerSymbol]; ok {
-			if position.Direction == hbcrossswap.OrderDirectionBuy {
-				fields["makerSize"] = position.Volume * mContractSizes[makerSymbol]
-			} else {
-				fields["makerSize"] = -position.Volume * mContractSizes[makerSymbol]
-			}
-			if spread, ok := mtSpreads[makerSymbol]; ok {
-				if position.Direction == hbcrossswap.OrderDirectionBuy {
-					fields["makerValue"] = position.Volume * mContractSizes[makerSymbol] * spread.MakerOrderBook.BidVWAP
-				} else {
-					fields["makerValue"] = -position.Volume * mContractSizes[makerSymbol] * spread.MakerOrderBook.AskVWAP
+		if buyPosition, ok := mBuyPositions[makerSymbol]; ok {
+			if sellPosition, ok := mSellPositions[makerSymbol]; ok {
+				fields["makerSize"] = (buyPosition.Volume - sellPosition.Volume) * mContractSizes[makerSymbol]
+				if spread, ok := mtSpreads[makerSymbol]; ok {
+					fields["makerValue"] = (buyPosition.Volume - sellPosition.Volume) * mContractSizes[makerSymbol] * spread.MakerOrderBook.BidVWAP
 				}
 			}
 		}
@@ -118,7 +111,7 @@ func handleSave() {
 			time.Now().UTC(),
 		)
 		if err != nil {
-			logger.Debugf("new position point error %v", err)
+			logger.Debugf("new buyPosition point error %v", err)
 		} else {
 			go mtInfluxWriter.Push(pt)
 		}
@@ -155,5 +148,3 @@ func handleExternalInfluxSave() {
 		}
 	}
 }
-
-

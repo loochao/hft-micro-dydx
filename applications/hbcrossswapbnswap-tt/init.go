@@ -41,7 +41,8 @@ var mtStepSizes = make(map[string]float64)
 var mAccount *hbcrossswap.Account
 var mAccountCh = make(chan hbcrossswap.Account, 10)
 var mPositionCh = make(chan []hbcrossswap.Position, 10)
-var mPositions = make(map[string]hbcrossswap.Position)
+var mBuyPositions = make(map[string]hbcrossswap.Position)
+var mSellPositions = make(map[string]hbcrossswap.Position)
 var mPositionsUpdateTimes = make(map[string]time.Time)
 var mOrderRequestChs = make(map[string]chan hbcrossswap.NewOrderParam)
 var mNewOrderErrorCh chan MakerOrderNewError
@@ -89,7 +90,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210419 10:37:00  ####")
+	logger.Debug("####  BUILD @ 20210419 12:16:45  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
