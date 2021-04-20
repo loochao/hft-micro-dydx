@@ -20,11 +20,13 @@ func main() {
 	if *bnConfig.CpuProfile != "" {
 		f, err := os.Create(*bnConfig.CpuProfile)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Debugf("os.Create error %v", err)
+			return
 		}
 		err = pprof.StartCPUProfile(f)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Debugf("pprof.StartCPUProfile error %v", err)
+			return
 		}
 		defer pprof.StopCPUProfile()
 	}
@@ -35,27 +37,35 @@ func main() {
 		Secret: *bnConfig.ApiSecret,
 	}, *bnConfig.ProxyAddress)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("bnswap.NewAPI error %v", err)
+		return
 	}
 	bnspotAPI, err = bnspot.NewAPI(&common.Credentials{
 		Key:    *bnConfig.ApiKey,
 		Secret: *bnConfig.ApiSecret,
 	}, *bnConfig.ProxyAddress)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("bnspot.NewAPI error %v", err)
+		return
 	}
-
 	bnGlobalCtx, bnGlobalCancel = context.WithCancel(context.Background())
 	defer bnGlobalCancel()
 
 	bnswapTickSizes, bnswapStepSizes, _, bnswapMinNotional, _, _, err = bnswap.GetOrderLimits(bnGlobalCtx, bnswapAPI, bnSymbols)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("bnswap.GetOrderLimits %v", err)
+		return
 	}
 	bnspotTickSizes, bnspotStepSizes, _, bnspotMinNotional, err = bnspot.GetOrderLimits(bnGlobalCtx, bnspotAPI, bnSymbols)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("bnspot.GetOrderLimits %v", err)
+		return
 	}
+
+	for symbol :=  range bnswapStepSizes {
+		bnMergedStepSizes[symbol] = common.MergedStepSize(bnswapStepSizes[symbol], bnspotStepSizes[symbol])
+	}
+
 
 	bnInfluxWriter, err = common.NewInfluxWriter(
 		*bnConfig.InternalInflux.Address,
@@ -65,7 +75,8 @@ func main() {
 		*bnConfig.InternalInflux.BatchSize,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("common.NewInfluxWriter %v", err)
+		return
 	}
 
 	bnExternalInfluxWriter, err = common.NewInfluxWriter(
@@ -76,15 +87,23 @@ func main() {
 		*bnConfig.ExternalInflux.BatchSize,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("common.NewInfluxWriter %v", err)
+		return
 	}
 
-	defer func() {
-		err := bnInfluxWriter.Stop()
-		if err != nil {
-			logger.Warnf("stop influx writer error %v", err)
-		}
-	}()
+	//defer func() {
+	//	err := bnInfluxWriter.Stop()
+	//	if err != nil {
+	//		logger.Warnf("stop influx writer error %v", err)
+	//	}
+	//}()
+	//
+	//defer func() {
+	//	err := bnInfluxWriter.Stop()
+	//	if err != nil {
+	//		logger.Warnf("stop influx writer error %v", err)
+	//	}
+	//}()
 
 	if *bnConfig.ChangeLeverage {
 		for _, symbol := range bnSymbols {
@@ -111,18 +130,26 @@ func main() {
 		}
 	}
 
-	bnspotUserWebsocket = bnspot.NewUserWebsocket(
+	bnspotUserWebsocket, err = bnspot.NewUserWebsocket(
 		bnGlobalCtx,
 		bnspotAPI,
 		*bnConfig.ProxyAddress,
 	)
+	if err != nil {
+		logger.Debugf("bnspot.NewUserWebsocket error %v", err)
+		return
+	}
 	defer bnspotUserWebsocket.Stop()
 
-	bnswapUserWebsocket = bnswap.NewUserWebsocket(
+	bnswapUserWebsocket, err = bnswap.NewUserWebsocket(
 		bnGlobalCtx,
 		bnswapAPI,
 		*bnConfig.ProxyAddress,
 	)
+	if err != nil {
+		logger.Debugf("bnswap.NewUserWebsocket error %v", err)
+		return
+	}
 	defer bnswapUserWebsocket.Stop()
 
 	influxSaveTimer := time.NewTimer(
@@ -167,6 +194,13 @@ func main() {
 		*bnConfig.PullInterval, bnspotAccountCh,
 	)
 
+	go bnswap.WatchPremiumIndexesFromHttp(
+		bnGlobalCtx, bnswapAPI,
+		bnSymbols,
+		*bnConfig.PullInterval*10,
+		bnswapPremiumIndexesCh,
+	)
+
 	go watchSwapBars(
 		bnGlobalCtx,
 		bnswapAPI,
@@ -174,6 +208,7 @@ func main() {
 		*bnConfig.BarsLookback,
 		*bnConfig.PullBarsInterval,
 		*bnConfig.PullBarsRetryInterval,
+		time.Second,
 		bnswapBarsMapCh,
 	)
 
@@ -184,6 +219,7 @@ func main() {
 		*bnConfig.BarsLookback,
 		*bnConfig.PullBarsInterval,
 		*bnConfig.PullBarsRetryInterval,
+		time.Second,
 		bnspotBarsMapCh,
 	)
 
@@ -208,7 +244,9 @@ func main() {
 			end = len(bnSymbols)
 		}
 		go watchSpotWalkedOrderBooks(
-			bnGlobalCtx, *bnConfig.ProxyAddress,
+			bnGlobalCtx,
+			bnGlobalCancel,
+			*bnConfig.ProxyAddress,
 			*bnConfig.OrderBookTakerImpact,
 			*bnConfig.OrderBookMakerImpact,
 			bnSymbols[start:end],
@@ -216,23 +254,19 @@ func main() {
 		)
 	}
 
-	swapMarkPriceCh := make(chan *bnswap.MarkPrice, len(bnSymbols))
 	for start := 0; start < len(bnSymbols); start += *bnConfig.OrderBookBatchSize {
 		end := start + *bnConfig.OrderBookBatchSize
 		if end > len(bnSymbols) {
 			end = len(bnSymbols)
 		}
 		go watchSwapWalkedOrderBooks(
-			bnGlobalCtx, *bnConfig.ProxyAddress,
+			bnGlobalCtx,
+			bnGlobalCancel,
+			*bnConfig.ProxyAddress,
 			*bnConfig.OrderBookTakerImpact,
 			*bnConfig.OrderBookMakerImpact,
 			bnSymbols[start:end],
 			walkedOrderBookCh,
-		)
-		go watchMarkPrice(
-			bnGlobalCtx, *bnConfig.ProxyAddress,
-			bnSymbols[start:end],
-			swapMarkPriceCh,
 		)
 	}
 
@@ -368,10 +402,8 @@ func main() {
 			break
 		case spread := <-spreadCh:
 			bnSpreads[spread.Symbol] = spread
-			//logger.Debugf("%s", spread.ToString())
 			break
-		case markPrice := <-swapMarkPriceCh:
-			bnswapMarkPrices[markPrice.Symbol] = *markPrice
+		case bnswapPremiumIndexes = <-bnswapPremiumIndexesCh:
 			break
 		case <-resetUnrealisedPnlTimer.C:
 			//handleResetPnl()
@@ -442,7 +474,7 @@ func main() {
 					bnRealisedSpread[order.Symbol] = (order.CumQuote - spotPrice) / spotPrice
 					logger.Debugf("%s REALISED OPEN SPREAD %f", order.Symbol, bnRealisedSpread[order.Symbol])
 				}
-			}else if order.Side == common.OrderSideBuy && order.Status == "FILLED" {
+			} else if order.Side == common.OrderSideBuy && order.Status == "FILLED" {
 				if spotPrice, ok := bnspotLastFilledSellPrices[order.Symbol]; ok {
 					bnRealisedSpread[order.Symbol] = (order.CumQuote - spotPrice) / spotPrice
 					logger.Debugf("%s REALISED CLOSE SPREAD %f", order.Symbol, bnRealisedSpread[order.Symbol])
@@ -494,8 +526,8 @@ func main() {
 		case <-frRankUpdatedTimer.C:
 			frs := make([]float64, len(bnSymbols))
 			for i, symbol := range bnSymbols {
-				if markPrice, ok := bnswapMarkPrices[symbol]; ok {
-					frs[i] = markPrice.FundingRate
+				if premiumIndex, ok := bnswapPremiumIndexes[symbol]; ok {
+					frs[i] = premiumIndex.FundingRate
 				} else {
 					logger.Debugf("MISS MARK PRICE %s", symbol)
 					return

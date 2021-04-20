@@ -54,19 +54,19 @@ const (
 	OrderStatusExpired         = "EXPIRED"
 )
 
-type Depth struct {
-	Symbol       string       `json:"s,omitempty"`
-	LastUpdateId int64        `json:"lastUpdateId,omitempty"`
-	Bids         [][2]float64 `json:"-"`
-	Asks         [][2]float64 `json:"_"`
-	ArrivalTime  time.Time    `json:"-"`
+type Depth20 struct {
+	Symbol       string         `json:"s,omitempty"`
+	LastUpdateId int64          `json:"lastUpdateId,omitempty"`
+	Bids         [20][2]float64 `json:"-"`
+	Asks         [20][2]float64 `json:"_"`
+	ParseTime    time.Time      `json:"-"`
 }
 
-func (depth *Depth) UnmarshalJSON(data []byte) error {
-	type Alias Depth
+func (depth *Depth20) UnmarshalJSON(data []byte) error {
+	type Alias Depth20
 	aux := &struct {
-		Bids [][2]string `json:"bids"`
-		Asks [][2]string `json:"asks"`
+		Bids [20][2]string `json:"bids"`
+		Asks [20][2]string `json:"asks"`
 		*Alias
 	}{
 		Alias: (*Alias)(depth),
@@ -74,24 +74,22 @@ func (depth *Depth) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	aux.Alias.Bids = make([][2]float64, 0)
-	aux.Alias.Asks = make([][2]float64, 0)
-	for _, d := range aux.Bids {
-		price, _ := strconv.ParseFloat(d[0], 64)
-		size, _ := strconv.ParseFloat(d[1], 64)
-		aux.Alias.Bids = append(aux.Alias.Bids, [2]float64{price, size})
+	aux.Alias.Bids = [20][2]float64{}
+	aux.Alias.Asks = [20][2]float64{}
+	for i, d := range aux.Bids {
+		aux.Alias.Bids[i][0], _ = strconv.ParseFloat(d[0], 64)
+		aux.Alias.Bids[i][1], _ = strconv.ParseFloat(d[1], 64)
 	}
-	for _, d := range aux.Asks {
-		price, _ := strconv.ParseFloat(d[0], 64)
-		size, _ := strconv.ParseFloat(d[1], 64)
-		aux.Alias.Asks = append(aux.Alias.Asks, [2]float64{price, size})
+	for i, d := range aux.Asks {
+		aux.Alias.Asks[i][0], _ = strconv.ParseFloat(d[0], 64)
+		aux.Alias.Asks[i][1], _ = strconv.ParseFloat(d[1], 64)
 	}
 	return nil
 }
 
-type DepthStream struct {
-	Stream string `json:"stream,omitempty"`
-	Data   Depth  `json:"data,omitempty"`
+type Depth20Stream struct {
+	Stream string  `json:"stream,omitempty"`
+	Data   Depth20 `json:"data,omitempty"`
 }
 
 type ExchangeInfo struct {

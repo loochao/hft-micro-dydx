@@ -142,8 +142,8 @@ func updateSpotNewOrders() {
 		quantile, okQuantile := bnQuantiles[symbol]
 		spread, okSpread := bnSpreads[symbol]
 		spotBalance, okSpotBalance := bnspotBalances[symbol]
-		markPrice, okMarkPrice := bnswapMarkPrices[symbol]
-		if !okSpread || !okQuantile || !okSpotBalance || !okMarkPrice {
+		premiumIndex, okPremiumIndex := bnswapPremiumIndexes[symbol]
+		if !okSpread || !okQuantile || !okSpotBalance || !okPremiumIndex {
 			continue
 		}
 		if time.Now().Sub(spread.LastUpdateTime) > *bnConfig.SpreadTimeToLive {
@@ -158,7 +158,7 @@ func updateSpotNewOrders() {
 		currentSpotSize := spotBalance.Locked + spotBalance.Free
 		if spread.LastEnter > quantile.Top &&
 			spread.MedianEnter > quantile.Top &&
-			markPrice.FundingRate > *bnConfig.MinimalEnterFundingRate &&
+			premiumIndex.FundingRate > *bnConfig.MinimalEnterFundingRate &&
 			rank >= len(bnSymbols)-*bnConfig.TradeCount {
 			price := spread.SpotOrderBook.MakerBidVWAP
 			price = math.Floor(price/spotTickSize) * spotTickSize
@@ -273,19 +273,19 @@ func updateSpotNewOrders() {
 			return
 		} else if spread.LastExit < quantile.Bot &&
 			spread.MedianExit < quantile.Bot &&
-			markPrice.FundingRate < *bnConfig.MinimalKeepFundingRate {
+			premiumIndex.FundingRate < *bnConfig.MinimalKeepFundingRate {
 			price := spread.SpotOrderBook.MakerAskVWAP
 			price = math.Ceil(price/spotTickSize) * spotTickSize
 			if spotBalance.Free*price > spotMinNotional {
 				entryValue := math.Min(-4*entryStep, -spotBalance.Free*price*0.5)
-				if markPrice.FundingRate > *bnConfig.MinimalKeepFundingRate/2 {
+				if premiumIndex.FundingRate > *bnConfig.MinimalKeepFundingRate/2 {
 					entryValue = math.Min(-2*entryStep, -spotBalance.Free*price*0.5)
 				}
 				quantity := entryValue / price
 				quantity = math.Round(quantity/spotStepSize) * spotStepSize
 				quantity = math.Round(quantity/swapStepSize) * swapStepSize
 				if spotBalance.Free*price-entryValue < entryStep {
-					quantity = math.Ceil(-spotBalance.Free/spotStepSize) * spotStepSize
+					quantity = -math.Floor(spotBalance.Free/spotStepSize) * spotStepSize
 					//quantity = math.Ceil(quantity/swapStepSize) * swapStepSize
 				}
 				if quantity < 0 {
@@ -340,9 +340,9 @@ func hedgeBnb() {
 
 	swapPosition, okSwapPosition := bnswapPositions[symbol]
 	spotBalance, okSpotBalance := bnspotBalances[symbol]
-	swapMarkPrice, okSwapMarkPrice := bnswapMarkPrices[symbol]
+	swapPremiumIndex, okSwapPremiumIndex := bnswapPremiumIndexes[symbol]
 	if !okSwapPosition || !okSpotBalance ||
-		!okSwapMarkPrice || bnswapBNBAsset == nil ||
+		!okSwapPremiumIndex || bnswapBNBAsset == nil ||
 		bnswapBNBAsset.MarginBalance == nil {
 		return
 	}
@@ -359,10 +359,10 @@ func hedgeBnb() {
 	if math.Abs(swapSize) < swapStepSize {
 		return
 	}
-	if swapSize < 0 && -swapSize*swapMarkPrice.MarkPrice*(1.0-*bnConfig.EnterSlippage) < swapMinNotional {
+	if swapSize < 0 && -swapSize*swapPremiumIndex.MarkPrice*(1.0-*bnConfig.EnterSlippage) < swapMinNotional {
 		return
 	}
-	if swapSize > 0 && swapSize*swapMarkPrice.MarkPrice*(1.0+*bnConfig.EnterSlippage) < swapMinNotional {
+	if swapSize > 0 && swapSize*swapPremiumIndex.MarkPrice*(1.0+*bnConfig.EnterSlippage) < swapMinNotional {
 		return
 	}
 	logger.Debugf("hedgeBnb %s SIZE %f POS %f -> %f", symbol, swapSize, swapPosition.PositionAmt, targetSize)
@@ -371,7 +371,7 @@ func hedgeBnb() {
 	if swapSize*swapPosition.PositionAmt < 0 && math.Abs(swapSize) <= math.Abs(swapPosition.PositionAmt) {
 		reduceOnly = true
 	}
-	price := math.Round(swapMarkPrice.MarkPrice*(1.0+*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
+	price := math.Round(swapPremiumIndex.MarkPrice*(1.0+*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 	side := "BUY"
 	id, _ := common.GenerateShortId()
 	clOrdID := fmt.Sprintf(
@@ -383,7 +383,7 @@ func hedgeBnb() {
 	if swapSize < 0 {
 		side = "SELL"
 		swapSize = -swapSize
-		price = math.Round(swapMarkPrice.MarkPrice*(1.0-*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
+		price = math.Round(swapPremiumIndex.MarkPrice*(1.0-*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 	}
 	order := bnswap.NewOrderParams{
 		Symbol:           symbol,

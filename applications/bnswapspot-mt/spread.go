@@ -105,6 +105,10 @@ func watchSpread(
 			medianEnterSpread := enterSpreadSortedSlices[symbol].Median()
 			medianExitSpread := exitSpreadSortedSlices[symbol].Median()
 
+			select {
+			case <- ctx.Done():
+			}
+
 			outputCh <- Spread{
 				Symbol: symbol,
 				SwapOrderBook: swapLob,

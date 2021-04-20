@@ -298,10 +298,11 @@ func main() {
 	}
 
 	logger.Debugf("MAIN LOOP START")
-
+	fundingInterval := time.Hour * 8
+	fundingSilent := time.Minute * 5
 	for {
 		select {
-		case <- hbGlobalCtx.Done():
+		case <-hbGlobalCtx.Done():
 			logger.Debug("MAIN LOOP EXIT")
 		case <-hbspotUserWebsocket.RestartCh:
 			logger.Debugf("hbspotUserWebsocket restart silent %v", *hbConfig.RestartSilent)
@@ -470,9 +471,12 @@ func main() {
 			frRankUpdatedTimer.Reset(time.Minute)
 			break
 		case <-hbLoopTimer.C:
-			updatePerpPositions()
-			updateSpotOldOrders()
-			updateSpotNewOrders()
+			if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
+				time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
+				updatePerpPositions()
+				updateSpotOldOrders()
+				updateSpotNewOrders()
+			}
 			hbLoopTimer.Reset(
 				time.Now().Truncate(
 					*hbConfig.LoopInterval,

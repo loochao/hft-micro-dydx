@@ -7,7 +7,9 @@ import (
 )
 
 func watchSwapWalkedOrderBooks(
-	ctx context.Context, proxyAddress string,
+	ctx context.Context,
+	cancel context.CancelFunc,
+	proxyAddress string,
 	takerImpact, makerImpact float64, symbols []string,
 	outputWLob chan WalkedOrderBook,
 ) {
@@ -18,17 +20,21 @@ func watchSwapWalkedOrderBooks(
 		proxyAddress,
 	)
 	defer ws.Stop()
-
 	for {
 		select {
 		case <-ws.Done():
-			logger.Fatal("DEPTH20 WS CONTEXT DONE %s", symbols)
+			logger.Debugf("DEPTH20 WS CONTEXT DONE %s", symbols)
+			cancel()
+			return
 		case <-ctx.Done():
 			return
 		case lob := <-ws.DataCh:
 			if lastUpdatedIds[lob.Symbol] < lob.LastUpdateId {
 				lastUpdatedIds[lob.Symbol] = lob.LastUpdateId
-				outputWLob <- walkSwapOrderBook(lob, takerImpact, makerImpact)
+				select {
+				case <-ctx.Done():
+				case outputWLob <- walkSwapOrderBook(lob, takerImpact, makerImpact):
+				}
 			}
 			break
 		}
@@ -121,28 +127,4 @@ func walkSwapOrderBook(orderBook *bnswap.Depth20, takerImpact, makerImpact float
 	wLob.AskPrice = orderBook.Asks[0][0]
 	wLob.AskSize = orderBook.Asks[0][1]
 	return wLob
-}
-
-func watchMarkPrice(
-	ctx context.Context, proxyAddress string,
-	symbols []string,
-	outputCh chan *bnswap.MarkPrice,
-) {
-	ws := bnswap.NewMarkPriceWebsocket(
-		ctx,
-		symbols,
-		proxyAddress,
-	)
-	defer ws.Stop()
-
-	for {
-		select {
-		case <-ws.Done():
-			logger.Fatal("DEPTH20 WS CONTEXT DONE %s", symbols)
-		case <-ctx.Done():
-			return
-		case outputCh <- <-ws.DataCh:
-			break
-		}
-	}
 }

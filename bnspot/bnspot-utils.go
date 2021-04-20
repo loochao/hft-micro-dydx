@@ -9,13 +9,13 @@ import (
 	"time"
 )
 
-func ParseDepth20(bytes []byte) (*Depth, error) {
+func ParseDepth20(bytes []byte) (*Depth20, error) {
 	//{"stream":"flmusdt@depth20@100ms","data":{"lastUpdateId":165284515,"bids":[["0.48560000","2036.02000000"],["0.48550000","480.00000000"],["0.48520000","14257.67000000"],["0.48510000","1056.25000000"],["0.48500000","1894.32000000"],["0.48480000","2145.67000000"],["0.48460000","2196.59000000"],["0.48330000","3000.00000000"],["0.48320000","2531.26000000"],["0.48310000","21.18000000"],["0.48300000","4292.54000000"],["0.48270000","5042.00000000"],["0.48240000","5051.00000000"],["0.48230000","24.83000000"],["0.48220000","457.11000000"],["0.48200000","4142.12000000"],["0.48160000","31.15000000"],["0.48150000","71.96000000"],["0.48130000","1284.94000000"],["0.48110000","1098.85000000"]],"asks":[["0.48630000","5601.00000000"],["0.48650000","990.00000000"],["0.48670000","7816.00000000"],["0.48680000","7914.96000000"],["0.48690000","963.00000000"],["0.48720000","3640.00000000"],["0.48730000","814.24000000"],["0.48780000","3560.00000000"],["0.48800000","1029.00000000"],["0.48880000","13221.24000000"],["0.48940000","3000.00000000"],["0.48980000","62.75000000"],["0.49000000","1482.94000000"],["0.49040000","516.34000000"],["0.49110000","46.50000000"],["0.49120000","27.10000000"],["0.49130000","31.03000000"],["0.49150000","66.27000000"],["0.49160000","1291.65000000"],["0.49190000","159.76000000"]]}}
 	var err error
-	orderBook := Depth{
-		Bids:        make([][2]float64, 20),
-		Asks:        make([][2]float64, 20),
-		ArrivalTime: time.Now(),
+	orderBook := Depth20{
+		Bids:      [20][2]float64{},
+		Asks:      [20][2]float64{},
+		ParseTime: time.Now(),
 	}
 	offset := 2
 	collectStart := offset
@@ -28,7 +28,7 @@ func ParseDepth20(bytes []byte) (*Depth, error) {
 			if bytes[offset] == '"' {
 				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyBids error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 40 {
@@ -48,7 +48,7 @@ func ParseDepth20(bytes []byte) (*Depth, error) {
 			if bytes[offset] == '"' {
 				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyAsks error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 40 {
@@ -68,7 +68,7 @@ func ParseDepth20(bytes []byte) (*Depth, error) {
 			if bytes[offset] == ',' {
 				orderBook.LastUpdateId, err = common.ParseInt(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyLastUpdateId error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				currentKey = common.JsonKeyUnknown
 				offset += 2

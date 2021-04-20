@@ -182,13 +182,13 @@ func handleReBalanceBnb() {
 		return
 	}
 	bnbBalance, ok1 := bnspotBalances[bnBNBSymbol]
-	bnbMarkPrice, ok2 := bnswapMarkPrices[bnBNBSymbol]
+	bnbPremiumIndex, ok2 := bnswapPremiumIndexes[bnBNBSymbol]
 	if ok1 && ok2 && bnswapBNBAsset != nil && bnswapBNBAsset.MarginBalance != nil && bnspotUSDTBalance != nil {
 		currentSize := bnbBalance.Free + *bnswapBNBAsset.MarginBalance
 		if currentSize < *bnConfig.BnbMinSize {
 			size := *bnConfig.BnbMinSize - currentSize
 			size = math.Ceil(size/bnspotStepSizes[bnBNBSymbol]) * bnspotStepSizes[bnBNBSymbol]
-			price := bnbMarkPrice.IndexPrice * (1.0 + *bnConfig.EnterSlippage)
+			price := bnbPremiumIndex.IndexPrice * (1.0 + *bnConfig.EnterSlippage)
 			price = math.Ceil(price/bnspotTickSizes[bnBNBSymbol])*bnspotTickSizes[bnBNBSymbol]
 			if size*price < bnspotMinNotional[bnBNBSymbol] {
 				size = math.Ceil(bnspotMinNotional[bnBNBSymbol]/price/bnspotStepSizes[bnBNBSymbol]) * bnspotStepSizes[bnBNBSymbol]

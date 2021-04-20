@@ -24,7 +24,7 @@ func ParseTrade(bytes []byte) (*Trade, error) {
 			if bytes[offset] == '"' {
 				trade.Price, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyPrice error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				currentKey = common.JsonKeyUnknown
 				offset += 3
@@ -35,7 +35,7 @@ func ParseTrade(bytes []byte) (*Trade, error) {
 			if bytes[offset] == '"' {
 				trade.Quantity, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyQuantity error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				currentKey = common.JsonKeyUnknown
 				offset = bytesLen
@@ -55,7 +55,7 @@ func ParseTrade(bytes []byte) (*Trade, error) {
 			if bytes[offset] == 'E' && bytes[offset-1] == '"' && bytes[offset+1] == '"' && offset+13 < bytesLen {
 				eventTime, err := common.ParseInt(bytes[offset+3 : offset+16])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("EventTime error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				trade.EventTime = time.Unix(0, eventTime*1000000)
 				offset += 21
@@ -105,7 +105,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == '"' {
 				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyBids error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 40 {
@@ -125,7 +125,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == '"' {
 				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyAsks error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 40 {
@@ -145,7 +145,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == ',' {
 				orderBook.LastUpdateId, err = common.ParseInt(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyLastUpdateId error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				currentKey = common.JsonKeyUnknown
 				offset += 2
@@ -165,7 +165,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == 'E' && bytes[offset-1] == '"' && bytes[offset+1] == '"' && offset+13 < bytesLen {
 				eventTime, err := common.ParseInt(bytes[offset+3 : offset+16])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("EventTime error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				orderBook.EventTime = time.Unix(0, eventTime*1000000)
 				offset += 17
@@ -225,7 +225,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			if bytes[offset] == '"' {
 				markPrice.MarkPrice, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyMarkPrice error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				currentKey = common.JsonKeyUnknown
 				offset += 3
@@ -236,7 +236,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			if bytes[offset] == '"' {
 				markPrice.IndexPrice, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyIndexPrice error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				currentKey = common.JsonKeyUnknown
 				offset += 3
@@ -247,7 +247,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			if bytes[offset] == '"' {
 				markPrice.EstimatedSettlePrice, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyEstimatedSettlePrice error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				currentKey = common.JsonKeyUnknown
 				offset += 3
@@ -258,7 +258,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			if bytes[offset] == '"' {
 				markPrice.FundingRate, err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("JsonKeyFundingRate error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				currentKey = common.JsonKeyUnknown
 				offset += 3
@@ -270,7 +270,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 				timeStr := bytes[offset+3 : offset+16]
 				eventTime, err := strconv.ParseInt(*(*string)(unsafe.Pointer(&timeStr)), 10, 64)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("EventTime error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				markPrice.EventTime = time.Unix(0, eventTime*1000000)
 				offset += 16
@@ -280,7 +280,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 				timeStr := bytes[offset+3 : offset+16]
 				nextFundingTime, err := strconv.ParseInt(*(*string)(unsafe.Pointer(&timeStr)), 10, 64)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("NextFundingTime error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				markPrice.NextFundingTime = time.Unix(0, nextFundingTime*1000000)
 				offset += 16

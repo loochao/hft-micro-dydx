@@ -2,6 +2,7 @@ package bnspot
 
 import (
 	"context"
+	"github.com/geometrybase/hft-micro/logger"
 	"testing"
 	"time"
 )
@@ -9,9 +10,8 @@ import (
 func TestNewDepth20Ws(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute*5)
 	symbols := []string{"BTCUSDT", "ETHUSDT", "FLMUSDT", "BLZUSDT", "TRXUSDT", "EOSUSDT"}
-	readTimeout := time.Second * 10
-	proxy := "socks5://127.0.0.1:1080"
-	ws := NewDepth20Websocket(ctx, symbols, readTimeout, proxy)
+	proxy := "socks5://127.0.0.1:1081"
+	ws := NewDepth20Websocket(ctx, symbols[:1], proxy)
 	for {
 		select {
 		case <-ctx.Done():
@@ -19,8 +19,8 @@ func TestNewDepth20Ws(t *testing.T) {
 		case <-ws.Done():
 			return
 		case depth20 := <-ws.DataCh:
-			_ = depth20
-			//Debugf("%v", *depth20)
+			//_ = depth20
+			logger.Debugf("%v", *depth20)
 		}
 	}
 }

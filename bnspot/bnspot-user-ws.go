@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 )
 
@@ -18,6 +19,8 @@ type UserWebsocket struct {
 	messageCh            chan []byte
 	done                 chan interface{}
 	reconnectCh          chan interface{}
+	mu                   sync.Mutex
+	stopped              bool
 }
 
 func (w *UserWebsocket) startRead(conn *websocket.Conn, readTimeout time.Duration) {
@@ -27,19 +30,19 @@ func (w *UserWebsocket) startRead(conn *websocket.Conn, readTimeout time.Duratio
 		err := conn.SetReadDeadline(time.Now().Add(readTimeout))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
-			go w.restart()
+			w.restart()
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
 			logger.Warnf("NextReader error %v", err)
-			go w.restart()
+			w.restart()
 			return
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
 			logger.Warnf("readAll error %v", err)
-			go w.restart()
+			w.restart()
 			return
 		}
 		totalCount += 1
@@ -141,7 +144,7 @@ func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy strin
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			logger.Fatalf("PARSE PROXY %v", err)
+			return nil, fmt.Errorf("PARSE PROXY %v", err)
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -208,7 +211,7 @@ func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) 
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
-				logger.Fatalf("RECONNECT ERROR %v", err)
+				logger.Debugf("RECONNECT ERROR %v", err)
 				return
 			}
 			go w.startRead(conn, time.Hour*24)
@@ -267,7 +270,10 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 }
 
 func (w *UserWebsocket) Stop() {
-	if _, ok := <-w.done; ok {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if !w.stopped {
+		w.stopped = true
 		close(w.done)
 		logger.Infof("BNSPOT USER WS STOPPED")
 	}
@@ -280,13 +286,13 @@ func (w *UserWebsocket) restart() {
 		return
 	default:
 	}
-	timer := time.NewTimer(time.Millisecond)
-	defer timer.Stop()
 	select {
-	case <-timer.C:
-		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT WS")
+	case <-time.After(time.Millisecond):
+		logger.Debugf("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT WS")
+		w.Stop()
+		break
 	case w.reconnectCh <- nil:
-		return
+		break
 	}
 }
 
@@ -298,7 +304,7 @@ func NewUserWebsocket(
 	ctx context.Context,
 	api *API,
 	proxy string,
-) *UserWebsocket {
+) (*UserWebsocket, error) {
 	var listenKey ListenKey
 	_, err := api.SendAuthenticatedHTTPRequest(
 		ctx,
@@ -308,7 +314,7 @@ func NewUserWebsocket(
 		&listenKey,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		return nil, err
 	}
 	wsUrl := "wss://stream.binance.com:9443/ws/" + listenKey.ListenKey
 	ws := UserWebsocket{
@@ -317,6 +323,8 @@ func NewUserWebsocket(
 		OrderUpdateEventCh:   make(chan *OrderUpdateEvent, 10),
 		AccountUpdateEventCh: make(chan *AccountUpdateEvent, 10),
 		messageCh:            make(chan []byte, 10),
+		stopped:              false,
+		mu:                   sync.Mutex{},
 	}
 	go func(ctx context.Context, ws *UserWebsocket, listenKey ListenKey) {
 		timer := time.NewTimer(time.Minute * 20)
@@ -345,5 +353,5 @@ func NewUserWebsocket(
 	}(ctx, &ws, listenKey)
 	go ws.start(ctx, wsUrl, proxy)
 	ws.reconnectCh <- nil
-	return &ws
+	return &ws, nil
 }

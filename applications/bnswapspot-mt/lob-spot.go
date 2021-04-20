@@ -8,7 +8,9 @@ import (
 )
 
 func watchSpotWalkedOrderBooks(
-	ctx context.Context, proxyAddress string,
+	ctx context.Context,
+	cancel context.CancelFunc,
+	proxyAddress string,
 	takerImpact, makerImpact float64, symbols []string, output chan WalkedOrderBook) {
 	ws := bnspot.NewDepth20Websocket(ctx, symbols, time.Minute, proxyAddress)
 	defer ws.Stop()
@@ -19,22 +21,27 @@ func watchSpotWalkedOrderBooks(
 		case data := <-ws.DataCh:
 			if lastUpdatedIds[data.Symbol] < data.LastUpdateId {
 				lastUpdatedIds[data.Symbol] = data.LastUpdateId
-				output <- walkSpotOrderBook(data, takerImpact, makerImpact)
+				select {
+				case <-ctx.Done():
+				case output <- walkSpotOrderBook(data, takerImpact, makerImpact):
+				}
 			}
 			break
 		case <-ws.Done():
-			logger.Fatal("DEPTH20 WS CONTEXT DONE %s", symbols)
+			cancel()
+			logger.Debugf("DEPTH20 WS CONTEXT DONE %s", symbols)
+			return
 		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func walkSpotOrderBook(orderBook *bnspot.Depth, takerImpact, makerImpact float64) WalkedOrderBook {
+func walkSpotOrderBook(orderBook *bnspot.Depth20, takerImpact, makerImpact float64) WalkedOrderBook {
 	wLob := WalkedOrderBook{
 		Symbol:      orderBook.Symbol,
 		Type:        WalkedOrderBookTypeSpot,
-		ArrivalTime: orderBook.ArrivalTime,
+		ArrivalTime: orderBook.ParseTime,
 	}
 	totalTakerValue := 0.0
 	totalTakerQty := 0.0
@@ -116,5 +123,3 @@ func walkSpotOrderBook(orderBook *bnspot.Depth, takerImpact, makerImpact float64
 	wLob.AskSize = orderBook.Asks[0][1]
 	return wLob
 }
-
-

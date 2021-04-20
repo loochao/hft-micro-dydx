@@ -57,6 +57,8 @@ var bnspotTickSizes = make(map[string]float64)
 var bnspotStepSizes = make(map[string]float64)
 var bnspotMinNotional = make(map[string]float64)
 
+var bnMergedStepSizes = make(map[string]float64)
+
 var bnGlobalCtx context.Context
 var bnGlobalCancel context.CancelFunc
 var bnswapPositionCh = make(chan []bnswap.Position, 10)
@@ -82,7 +84,8 @@ var bnspotNewOrderErrorCh chan SpotOrderNewError
 var bnspotOpenOrders = make(map[string]bnspot.NewOrderParams)
 var bnspotOrderCancelCounts = make(map[string]int)
 
-var bnswapMarkPrices = make(map[string]bnswap.MarkPrice)
+var bnswapPremiumIndexes = make(map[string]bnswap.PremiumIndex)
+var bnswapPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 100)
 var bnRankSymbolMap map[int]string
 
 var bnswapBarsMapCh = make(chan common.KLinesMap)

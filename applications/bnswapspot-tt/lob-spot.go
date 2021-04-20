@@ -30,11 +30,11 @@ func watchSpotWalkedOrderBooks(
 	}
 }
 
-func walkSpotOrderBook(orderBook *bnspot.Depth, takerImpact, makerImpact float64) WalkedOrderBook {
+func walkSpotOrderBook(orderBook *bnspot.Depth20, takerImpact, makerImpact float64) WalkedOrderBook {
 	wLob := WalkedOrderBook{
 		Symbol:      orderBook.Symbol,
 		Type:        WalkedOrderBookTypeSpot,
-		ArrivalTime: orderBook.ArrivalTime,
+		ArrivalTime: orderBook.ParseTime,
 	}
 	totalTakerValue := 0.0
 	totalTakerQty := 0.0

@@ -23,11 +23,11 @@ func handleSave() {
 		getAllBalances := true
 		for _, symbol := range bnSymbols {
 			balance, okBalance := bnspotBalances[symbol]
-			markPrice, okMarkPrice := bnswapMarkPrices[symbol]
-			if okBalance && okMarkPrice {
-				spotBalance += markPrice.IndexPrice * (balance.Free + balance.Locked)
+			premiumIndex, okPremiumIndex := bnswapPremiumIndexes[symbol]
+			if okBalance && okPremiumIndex {
+				spotBalance += premiumIndex.IndexPrice * (balance.Free + balance.Locked)
 			} else {
-				logger.Debugf("%s MISS BALANCE %v OR VWAP %v", symbol, okBalance, okMarkPrice)
+				logger.Debugf("%s MISS BALANCE %v OR VWAP %v", symbol, okBalance, okPremiumIndex)
 				getAllBalances = false
 				break
 			}
@@ -67,7 +67,7 @@ func handleSave() {
 		fields["swapInitialMargin"] = *bnswapUSDTAsset.InitialMargin
 		fields["swapMaintMargin"] = *bnswapUSDTAsset.MaintMargin
 		if bnswapBNBAsset != nil && bnswapBNBAsset.MarginBalance != nil {
-			if markPrice, ok := bnswapMarkPrices[bnBNBSymbol]; ok {
+			if markPrice, ok := bnswapPremiumIndexes[bnBNBSymbol]; ok {
 				balance := *bnswapBNBAsset.MarginBalance * markPrice.IndexPrice
 				fields["swapBNBMarginBalance"] = *bnswapBNBAsset.MarginBalance
 				fields["swapBNBBalance"] = balance
@@ -94,27 +94,14 @@ func handleSave() {
 		fields := make(map[string]interface{})
 		if position, ok := bnswapPositions[symbol]; ok {
 			fields["swapBalance"] = position.PositionAmt
-			//fields["swapEntryPrice"] = position.EntryPrice
-			//fields["swapEntryValue"] = position.EntryPrice * position.PositionAmt
-			//if position.PositionAmt != 0 {
-			//	fields["swapUnRealizedProfit"] = position.UnRealizedProfit
-			//	fields["swapLiquidationPrice"] = position.LiquidationPrice
-			//	fields["swapMarkPrice"] = position.MarkPrice
-			//	fields["swapMaxNotionalValue"] = position.MaxNotionalValue
-			//}
-			//if orderBook, ok := bnswapOrderBooks[symbol]; ok {
-			//	fields["swapURPnl"] = position.PositionAmt * ((orderBook.Bids[0][0]+orderBook.Asks[0][0])*0.5 - position.EntryPrice)
-			//	fields["swapClose"] = (orderBook.Bids[0][0] + orderBook.Asks[0][0]) * 0.5
-			//	fields["swapValue"] = (orderBook.Bids[0][0] + orderBook.Asks[0][0]) * 0.5 * position.PositionAmt
-			//}
 		}
 		if spotBalance, ok := bnspotBalances[symbol]; ok {
 			fields["spotBalance"] = spotBalance.Free + spotBalance.Locked
-			if markPrice, ok := bnswapMarkPrices[symbol]; ok {
-				fields["spotValue"] = markPrice.IndexPrice * (spotBalance.Free + spotBalance.Locked)
+			if premiumIndex, ok := bnswapPremiumIndexes[symbol]; ok {
+				fields["spotValue"] = premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)
 			}
 		}
-		if markPrice, ok := bnswapMarkPrices[symbol]; ok {
+		if markPrice, ok := bnswapPremiumIndexes[symbol]; ok {
 			fields["swapNextFundingRate"] = markPrice.FundingRate
 		}
 		if spread, ok := bnSpreads[symbol]; ok {
@@ -217,7 +204,7 @@ func handleExternalInfluxSave() {
 		getAllBalances := true
 		for _, symbol := range bnSymbols {
 			balance, okBalance := bnspotBalances[symbol]
-			markPrice, okMP := bnswapMarkPrices[symbol]
+			markPrice, okMP := bnswapPremiumIndexes[symbol]
 			if okBalance && okMP {
 				spotBalance += markPrice.IndexPrice * (balance.Free + balance.Locked)
 			} else {

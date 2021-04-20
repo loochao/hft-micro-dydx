@@ -287,9 +287,9 @@ func updateSpotPositions() {
 				quantity := entryValue / price
 				quantity = math.Round(quantity/spotStepSize) * spotStepSize
 				quantity = math.Round(quantity/swapStepSize) * swapStepSize
-				if spotBalance.Free*price+entryValue < entryStep {
-					quantity = math.Ceil(-spotBalance.Free/spotStepSize) * spotStepSize
-					quantity = math.Ceil(quantity/swapStepSize) * swapStepSize
+				if spotBalance.Free*price-entryValue < entryStep {
+					quantity = -math.Floor(spotBalance.Free/spotStepSize) * spotStepSize
+					//quantity = math.Ceil(quantity/swapStepSize) * swapStepSize
 				}
 				logger.Debugf(
 					"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
