@@ -148,22 +148,7 @@ func WatchPositionsFromHttp(
 			if err != nil {
 				logger.Debugf("WatchPositionsFromHttp GetPositions error %v", err)
 			} else {
-				//有一种情况是有的合约的仓位是拉不到的, 拉不到的都是空仓
-				positionBySymbols := make(map[string]Position)
-				for _, symbol := range symbols {
-					positionBySymbols[symbol] = Position{
-						Symbol: symbol,
-					}
-				}
-				for _, position := range positions {
-					position := position
-					positionBySymbols[position.Symbol] = position
-				}
-				outPositions := make([]Position, len(symbols))
-				for i, symbol := range symbols {
-					outPositions[i] = positionBySymbols[symbol]
-				}
-				output <- outPositions
+				output <- positions
 			}
 			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
 		}
