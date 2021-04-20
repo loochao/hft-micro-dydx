@@ -258,19 +258,20 @@ func updateSpotNewOrders() {
 			price := spread.SpotOrderBook.MakerAskVWAP
 			price = math.Ceil(price/spotTickSize) * spotTickSize
 			if spotBalance.Available*price > spotMinNotional {
-				entryValue := math.Min(-4*entryStep, -spotBalance.Available*price*0.5)
+				entryValue := math.Min(4*entryStep, spotBalance.Available*price*0.5)
 				if fundingRate.Value > *kcConfig.MinimalKeepFundingRate/2 {
-					entryValue = math.Min(-2*entryStep, -spotBalance.Available*price*0.5)
+					entryValue = math.Min(2*entryStep, spotBalance.Available*price*0.5)
 				}
 				quantity := entryValue / price
 				quantity = math.Round(quantity/spotStepSize) * spotStepSize
 				quantity = math.Round(quantity/perpStepSize) * perpStepSize
+				entryValue = quantity*price
 				if spotBalance.Available*price-entryValue < entryStep {
 					//quantity = -spotBalance.Available
-					quantity = math.Ceil(-spotBalance.Available/spotStepSize) * spotStepSize
+					quantity = math.Floor(spotBalance.Available/spotStepSize) * spotStepSize
 					//quantity = math.Ceil(quantity/perpStepSize) * perpStepSize
 				}
-				if quantity < 0 {
+				if quantity > 0 {
 					logger.Debugf(
 						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
 						spotSymbol,
