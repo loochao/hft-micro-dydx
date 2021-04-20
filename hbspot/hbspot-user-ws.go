@@ -223,7 +223,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					logger.Debugf("msg %s", msg)
 					break
 				}
-				logger.Debugf("SUB %s", msg)
+				//logger.Debugf("SUB %s", msg)
 				select {
 				case w.topicCh <- subResp.Ch:
 				default:
@@ -341,7 +341,7 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 		}
 	}()
 
-	topicTimeout := time.Minute
+	topicTimeout := time.Hour*24
 	topicCheckInterval := time.Second
 	topicCheckTimer := time.NewTimer(time.Second)
 	defer topicCheckTimer.Stop()
