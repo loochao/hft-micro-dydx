@@ -288,7 +288,7 @@ func updateSpotNewOrders() {
 						AccountId:     hbspotAccountID,
 						ClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 						Price:         common.FormatByPrecision(price, pricePrecision),
-						Amount:        common.FormatByPrecision(-amount, amountPrecision),
+						Amount:        common.FormatByPrecision(amount, amountPrecision),
 						OriginPrice:   price,
 						OriginAmount:  amount,
 						Type:          hbspot.OrderTypeSellLimit,
