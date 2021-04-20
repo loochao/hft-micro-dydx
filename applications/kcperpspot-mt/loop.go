@@ -282,7 +282,7 @@ func updateSpotNewOrders() {
 					order := kcspot.NewOrderParam{
 						Symbol:      spotSymbol,
 						Price:       common.Float64(price),
-						Size:        common.Float64(-quantity),
+						Size:        common.Float64(quantity),
 						TimeInForce: kcspot.OrderTimeInForceGTC,
 						Side:        kcspot.OrderSideSell,
 						Type:        kcspot.OrderTypeLimit,
