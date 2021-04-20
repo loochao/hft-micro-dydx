@@ -162,9 +162,9 @@ func updateMakerPositions() {
 
 			makerSize := makerBuyPosition.Volume * makerContractSize
 			price := makerOrderBook.BidVWAP * (1.0 - *mtConfig.EnterSlippage)
-			price = math.Floor(price/makerTickSize) * makerTickSize
+			price = math.Ceil(price/makerTickSize) * makerTickSize
 			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
-			if fundingRate > *mtConfig.MinimalKeepFundingRate/2 {
+			if fundingRate > *mtConfig.MinimalKeepFundingRate*0.5 {
 				entryValue = math.Max(2*entryStep, makerSize*price*0.5)
 			}
 			volume := entryValue / price
