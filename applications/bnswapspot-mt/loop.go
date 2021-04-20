@@ -284,9 +284,9 @@ func updateSpotNewOrders() {
 				quantity := entryValue / price
 				quantity = math.Round(quantity/spotStepSize) * spotStepSize
 				quantity = math.Round(quantity/swapStepSize) * swapStepSize
-				if spotBalance.Free*price+entryValue < entryStep {
+				if spotBalance.Free*price-entryValue < entryStep {
 					quantity = math.Ceil(-spotBalance.Free/spotStepSize) * spotStepSize
-					quantity = math.Ceil(quantity/swapStepSize) * swapStepSize
+					//quantity = math.Ceil(quantity/swapStepSize) * swapStepSize
 				}
 				if quantity < 0 {
 					logger.Debugf(
