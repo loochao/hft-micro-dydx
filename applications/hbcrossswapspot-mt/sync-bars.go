@@ -13,7 +13,7 @@ import (
 func watchSwapBars(
 	ctx context.Context,
 	api *hbcrossswap.API,
-	symbols []string,
+	makerSymbols []string,
 	barsLookback int,
 	pullInterval time.Duration,
 	pullRetryInterval time.Duration,
@@ -22,114 +22,132 @@ func watchSwapBars(
 ) {
 	loopTimer := time.NewTimer(time.Second)
 	defer loopTimer.Stop()
+	outputTimer := time.NewTimer(time.Second)
+	defer outputTimer.Stop()
 	barsMap := make(common.KLinesMap)
+	nextPullTimes := make(map[string]time.Time)
+	for i, makerSymbol := range makerSymbols {
+		nextPullTimes[makerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
+	}
 	klinePeriod := hbcrossswap.KlinePeriod5min
 	klineDuration := hbcrossswap.KlinePeriodDuration[klinePeriod]
+	globalNextPullTime := time.Now()
+	globalNextRetryTime := time.Now()
+	outputResults := true
 	for {
 		select {
 		case <-ctx.Done():
 			return
+		case <-outputTimer.C:
+			outputResults = true
+			outputTimer.Reset(pullInterval)
+			break
 		case <-loopTimer.C:
-			allSuccess := true
-		symbolLoop:
-			for _, symbol := range symbols {
-				var history []common.KLine
-				var err error
-				retryCount := 10
-				for retryCount > 0 {
-					if bars, ok := barsMap[symbol]; ok {
-						symbolStartTime := bars[len(bars)-1].Timestamp
-						//一分钟内说明是最新数据
-						if math.Abs(time.Now().Truncate(klineDuration).Sub(symbolStartTime).Seconds()) < 0 {
-							logger.Debugf("SWAP %s HAS NEWEST BAR,  FIRST TIME %v CLOSE %f LAST TIME %v CLOSE %f, CONTINUE",
-								symbol,
-								barsMap[symbol][0].Timestamp,
-								barsMap[symbol][0].Close,
-								barsMap[symbol][len(barsMap[symbol])-1].Timestamp,
-								barsMap[symbol][len(barsMap[symbol])-1].Close,
-							)
-							continue symbolLoop
-						}
-						symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
-					}
-					time.Sleep(requestInterval)
-					subCtx, _ := context.WithTimeout(ctx, time.Minute)
-					history, err = api.GetKlines(
-						subCtx, hbcrossswap.KlinesParam{
-							Symbol: symbol,
-							Size:   barsLookback,
-							Period: klinePeriod,
-						})
-					if err != nil {
-						logger.Debugf("SWAP GetKlines for %s error %v", symbol, err)
-						retryCount--
-						time.Sleep(pullRetryInterval)
+			globalNextPullTime = time.Now().Add(pullInterval)
+			globalNextRetryTime = time.Now()
+			for symbol, nextPullTime := range nextPullTimes {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+				if time.Now().Sub(nextPullTime) < 0 {
+					continue
+				}
+				symbolEndTime := time.Now().Truncate(klineDuration)
+				symbolStartTime := symbolEndTime.Add(-klineDuration * time.Duration(barsLookback+3))
+				if bars, ok := barsMap[symbol]; ok {
+					symbolStartTime = bars[len(bars)-1].Timestamp
+					//一分钟内说明是最新数据
+					if math.Abs(time.Now().Truncate(time.Minute).Sub(symbolStartTime).Seconds()) < 60 {
+						logger.Debugf("TAKER %s HAS NEWEST BAR,  FIRST TIME %v CLOSE %f LAST TIME %v CLOSE %f, CONTINUE",
+							symbol,
+							barsMap[symbol][0].Timestamp,
+							barsMap[symbol][0].Close,
+							barsMap[symbol][len(barsMap[symbol])-1].Timestamp,
+							barsMap[symbol][len(barsMap[symbol])-1].Close,
+						)
+						globalNextPullTime = globalNextPullTime.Add(requestInterval)
+						nextPullTimes[symbol] = globalNextPullTime
 						continue
 					}
+					symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
+				}
+				history, err := api.GetKlines(
+					ctx, hbcrossswap.KlinesParam{
+						Symbol: symbol,
+						Size:   barsLookback,
+						Period: klinePeriod,
+					})
+				if err != nil {
+					logger.Debugf("MAKER GetKlines for %s error %v", symbol, err)
+					select {
+					case <-ctx.Done():
+						return
+					default:
+					}
+					globalNextRetryTime = globalNextRetryTime.Add(pullRetryInterval)
+					nextPullTimes[symbol] = globalNextRetryTime
+					continue
+				}
 
-					// 假定第一根是最新的不完整BAR
-					if len(history) <= 1 {
-						logger.Debugf("SWAP %s BAR LEN <= 1 %d", symbol, barsLookback)
-						retryCount--
+				if len(history) <= 1 {
+					logger.Debugf("MAKER %s BAR LEN <= 1", symbol)
+					globalNextRetryTime = globalNextRetryTime.Add(pullRetryInterval)
+					nextPullTimes[symbol] = globalNextRetryTime
+					continue
+				}
+				//logger.Debugf("MAKER GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
+				if _, ok := barsMap[symbol]; !ok {
+					barsMap[symbol] = history
+				}
+				for _, bar := range history {
+					if bar.Timestamp.Sub(symbolStartTime).Seconds() <= 0 {
 						continue
 					}
-					//logger.Debugf("SWAP GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
-					if _, ok := barsMap[symbol]; !ok {
-						barsMap[symbol] = history
+					if bar.Timestamp.Sub(time.Now().Truncate(time.Minute)).Seconds() > 0 {
+						continue
 					}
-					for _, bar := range history {
-						if bar.Timestamp.Sub(time.Now().Truncate(klineDuration).Add(-klineDuration)).Seconds() > 0 {
-							continue
-						}
-						lastBar := barsMap[symbol][len(barsMap[symbol])-1]
-						if bar.Timestamp.Sub(lastBar.Timestamp).Seconds() <= 0 {
-							continue
-						}
-						bar := bar
-						barsMap[symbol] = append(barsMap[symbol], bar)
+					lastBar := barsMap[symbol][len(barsMap[symbol])-1]
+					if bar.Timestamp.Sub(lastBar.Timestamp).Seconds() <= 0 {
+						continue
 					}
-					if len(barsMap[symbol]) > barsLookback {
-						barsMap[symbol] = barsMap[symbol][len(barsMap[symbol])-barsLookback:]
-					}
-					//logger.Debugf(
-					//	"SWAP %s FIRST TIME %v CLOSE %f LAST TIME %v CLOSE %f",
-					//	symbol,
-					//	barsMap[symbol][0].Timestamp,
-					//	barsMap[symbol][0].Close,
-					//	barsMap[symbol][len(barsMap[symbol])-1].Timestamp,
-					//	barsMap[symbol][len(barsMap[symbol])-1].Close,
-					//)
-					break
+					bar := bar
+					barsMap[symbol] = append(barsMap[symbol], bar)
 				}
-				if retryCount == 0 {
-					allSuccess = false
-					break
+				if len(barsMap[symbol]) > barsLookback {
+					barsMap[symbol] = barsMap[symbol][len(barsMap[symbol])-barsLookback:]
 				}
+				globalNextPullTime = globalNextPullTime.Add(requestInterval)
+				nextPullTimes[symbol] = globalNextPullTime
+				continue
 			}
-			if allSuccess {
-				outputMap := make(common.KLinesMap)
-				length := len(barsMap[symbols[0]])
-				for symbol, bars := range barsMap {
-					if len(bars) != length {
-						logger.Fatalf("SWAP %s LENGTH %d NOT EQUAL TO %d", symbol, len(bars), length)
+
+			if outputResults {
+				allSuccess := true
+				for _, symbol := range makerSymbols {
+					if len(barsMap[symbol]) == 0 {
+						allSuccess = false
+						break
 					}
-				}
-				for symbol, bars := range barsMap {
-					outputMap[symbol] = make([]common.KLine, len(bars))
-					copy(outputMap[symbol], bars)
 				}
 				if allSuccess {
-					output <- outputMap
+					outputMap := make(common.KLinesMap)
+					for symbol, bars := range barsMap {
+						outputMap[symbol] = make([]common.KLine, len(bars))
+						copy(outputMap[symbol], bars)
+					}
+					select {
+					case <-ctx.Done():
+						return
+					case output <- outputMap:
+					}
+					outputResults = false
+					logger.Debugf("OUTPUT SWAP BARS")
 				}
 			}
-			//logger.Debugf(
-			//	"PULL SWAP BARS IN %v",
-			//	time.Now().Add(pullInterval/2).Truncate(pullInterval).Add(pullInterval).Sub(time.Now()),
-			//)
-
-			loopTimer.Reset(
-				time.Now().Add(pullInterval / 2).Truncate(pullInterval).Add(pullInterval).Sub(time.Now()),
-			)
+			loopTimer.Reset(time.Second)
+			break
 		}
 	}
 }
@@ -137,7 +155,7 @@ func watchSwapBars(
 func watchSpotBars(
 	ctx context.Context,
 	api *hbspot.API,
-	symbols []string,
+	takerSymbols []string,
 	barsLookback int,
 	pullInterval time.Duration,
 	pullRetryInterval time.Duration,
@@ -146,111 +164,131 @@ func watchSpotBars(
 ) {
 	loopTimer := time.NewTimer(time.Second)
 	defer loopTimer.Stop()
+	outputTimer := time.NewTimer(time.Second)
+	defer outputTimer.Stop()
 	barsMap := make(common.KLinesMap)
+	nextPullTimes := make(map[string]time.Time)
+	for i, takerSymbol := range takerSymbols {
+		nextPullTimes[takerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
+	}
 	klinePeriod := hbspot.KlinePeriod5min
 	klineDuration := hbspot.KlinePeriodDuration[klinePeriod]
+	globalNextPullTime := time.Now()
+	globalNextRetryTime := time.Now()
+	outputResults := true
 	for {
 		select {
 		case <-ctx.Done():
 			return
+		case <-outputTimer.C:
+			outputResults = true
+			outputTimer.Reset(pullInterval)
+			break
 		case <-loopTimer.C:
-			allSuccess := true
-		symbolLoop:
-			for _, symbol := range symbols {
-				var history []common.KLine
-				var err error
-				retryCount := 10
-				for retryCount > 0 {
-					if bars, ok := barsMap[symbol]; ok {
-						symbolStartTime := bars[len(bars)-1].Timestamp
-						//一分钟内说明是最新数据
-						if math.Abs(time.Now().Truncate(time.Minute).Sub(symbolStartTime).Seconds()) < 60 {
-							logger.Debugf("SPOT %s HAS NEWEST BAR,  FIRST TIME %v CLOSE %f LAST TIME %v CLOSE %f, CONTINUE",
-								symbol,
-								barsMap[symbol][0].Timestamp,
-								barsMap[symbol][0].Close,
-								barsMap[symbol][len(barsMap[symbol])-1].Timestamp,
-								barsMap[symbol][len(barsMap[symbol])-1].Close,
-							)
-							continue symbolLoop
-						}
-						symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
-					}
-					time.Sleep(requestInterval)
-					subCtx, _ := context.WithTimeout(ctx, time.Minute)
-					history, err = api.GetKlines(subCtx, hbspot.KlinesParam{
-						Symbol: symbol,
-						Size:   barsLookback,
-						Period: klinePeriod,
-					})
-					if err != nil {
-						logger.Debugf("SPOT GetHistoryKlines for %s error %v", symbol, err)
-						retryCount--
-						time.Sleep(pullRetryInterval)
+			globalNextPullTime = time.Now().Add(pullInterval)
+			globalNextRetryTime = time.Now()
+			for symbol, nextPullTime := range nextPullTimes {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+				if time.Now().Sub(nextPullTime) < 0 {
+					continue
+				}
+				symbolEndTime := time.Now().Truncate(klineDuration)
+				symbolStartTime := symbolEndTime.Add(-klineDuration * time.Duration(barsLookback+3))
+				if bars, ok := barsMap[symbol]; ok {
+					symbolStartTime = bars[len(bars)-1].Timestamp
+					//一分钟内说明是最新数据
+					if math.Abs(time.Now().Truncate(time.Minute).Sub(symbolStartTime).Seconds()) < 60 {
+						logger.Debugf("TAKER %s HAS NEWEST BAR,  FIRST TIME %v CLOSE %f LAST TIME %v CLOSE %f, CONTINUE",
+							symbol,
+							barsMap[symbol][0].Timestamp,
+							barsMap[symbol][0].Close,
+							barsMap[symbol][len(barsMap[symbol])-1].Timestamp,
+							barsMap[symbol][len(barsMap[symbol])-1].Close,
+						)
+						globalNextPullTime = globalNextPullTime.Add(requestInterval)
+						nextPullTimes[symbol] = globalNextPullTime
 						continue
 					}
-					// 假定第一根是最新的不完整BAR
-					if len(history) <= 1 {
-						logger.Debugf("SPOT %s BAR LEN <= 1", symbol)
-						retryCount--
+					symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
+				}
+				history, err := api.GetKlines(ctx, hbspot.KlinesParam{
+					Symbol: symbol,
+					Size:   barsLookback,
+					Period: klinePeriod,
+				})
+				if err != nil {
+					logger.Debugf("TAKER GetHistoryKlines for %s error %v", symbol, err)
+					select {
+					case <-ctx.Done():
+						return
+					default:
+					}
+					globalNextRetryTime = globalNextRetryTime.Add(pullRetryInterval)
+					nextPullTimes[symbol] = globalNextRetryTime
+					continue
+				}
+
+				if len(history) <= 1 {
+					logger.Debugf("TAKER %s BAR LEN <= 1", symbol)
+					globalNextRetryTime = globalNextRetryTime.Add(pullRetryInterval)
+					nextPullTimes[symbol] = globalNextRetryTime
+					continue
+				}
+				//logger.Debugf("TAKER GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
+				if _, ok := barsMap[symbol]; !ok {
+					barsMap[symbol] = history
+				}
+				for _, bar := range history {
+					if bar.Timestamp.Sub(symbolStartTime).Seconds() <= 0 {
 						continue
 					}
-					//logger.Debugf("SPOT GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
-					if _, ok := barsMap[symbol]; !ok {
-						barsMap[symbol] = history
+					if bar.Timestamp.Sub(time.Now().Truncate(time.Minute)).Seconds() > 0 {
+						continue
 					}
-					for _, bar := range history {
-						if bar.Timestamp.Sub(time.Now().Truncate(klineDuration).Add(-klineDuration)).Seconds() >= 0 {
-							continue
-						}
-						lastBar := barsMap[symbol][len(barsMap[symbol])-1]
-						if bar.Timestamp.Sub(lastBar.Timestamp).Seconds() <= 0 {
-							continue
-						}
-						bar := bar
-						barsMap[symbol] = append(barsMap[symbol], bar)
+					lastBar := barsMap[symbol][len(barsMap[symbol])-1]
+					if bar.Timestamp.Sub(lastBar.Timestamp).Seconds() <= 0 {
+						continue
 					}
-					if len(barsMap[symbol]) > barsLookback {
-						barsMap[symbol] = barsMap[symbol][len(barsMap[symbol])-barsLookback:]
-					}
-					//logger.Debugf(
-					//	"SPOT %s FIRST TIME %v CLOSE %f LAST TIME %v CLOSE %f",
-					//	symbol,
-					//	barsMap[symbol][0].Timestamp,
-					//	barsMap[symbol][0].Close,
-					//	barsMap[symbol][len(barsMap[symbol])-1].Timestamp,
-					//	barsMap[symbol][len(barsMap[symbol])-1].Close,
-					//)
-					break
+					bar := bar
+					barsMap[symbol] = append(barsMap[symbol], bar)
 				}
-				if retryCount == 0 {
-					allSuccess = false
-					break
+				if len(barsMap[symbol]) > barsLookback {
+					barsMap[symbol] = barsMap[symbol][len(barsMap[symbol])-barsLookback:]
 				}
+				globalNextPullTime = globalNextPullTime.Add(requestInterval)
+				nextPullTimes[symbol] = globalNextPullTime
+				continue
 			}
-			if allSuccess {
-				outputMap := make(common.KLinesMap)
-				length := len(barsMap[symbols[0]])
-				for symbol, bars := range barsMap {
-					if len(bars) != length {
-						logger.Fatalf("SPOT %s LENGTH %d NOT EQUAL TO %d", symbol, len(bars), length)
+
+			if outputResults {
+				allSuccess := true
+				for _, symbol := range takerSymbols {
+					if len(barsMap[symbol]) == 0 {
+						allSuccess = false
+						break
 					}
-				}
-				for symbol, bars := range barsMap {
-					outputMap[symbol] = make([]common.KLine, len(bars))
-					copy(outputMap[symbol], bars)
 				}
 				if allSuccess {
-					output <- outputMap
+					outputMap := make(common.KLinesMap)
+					for symbol, bars := range barsMap {
+						outputMap[symbol] = make([]common.KLine, len(bars))
+						copy(outputMap[symbol], bars)
+					}
+					select {
+					case <-ctx.Done():
+						return
+					case output <- outputMap:
+					}
+					outputResults = false
+					logger.Debugf("OUTPUT SPOT BARS")
 				}
 			}
-			logger.Debugf(
-				"PULL SPOT BARS IN %v",
-				time.Now().Add(pullInterval/2).Truncate(pullInterval).Add(pullInterval).Sub(time.Now()),
-			)
-			loopTimer.Reset(
-				time.Now().Add(pullInterval / 2).Truncate(pullInterval).Add(pullInterval).Sub(time.Now()),
-			)
+			loopTimer.Reset(time.Second)
+			break
 		}
 	}
 }

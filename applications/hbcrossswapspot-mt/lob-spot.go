@@ -8,26 +8,35 @@ import (
 )
 
 func watchSpotWalkedOrderBooks(
-	ctx context.Context, proxyAddress string,
+	ctx context.Context,
+	cancel context.CancelFunc,
+	makerDecay, makerBias float64,
+	proxyAddress string,
 	takerImpact, makerImpact float64, symbols []string, output chan WalkedOrderBook) {
 	lastEventTimes := make(map[string]time.Time)
 	for _, s := range symbols {
 		lastEventTimes[s] = time.Unix(0, 0)
 	}
 
-	ws := hbspot.NewDepth20Websocket(ctx, symbols, proxyAddress)
+	ws := hbspot.NewDepth20FilteredWebsocket(ctx, makerDecay, makerBias, symbols, proxyAddress)
 	defer ws.Stop()
 
 	for {
 		select {
 		case <-ws.Done():
-			logger.Fatal("DEPTH50 WS CONTEXT DONE %s", symbols)
+			logger.Debugf("DEPTH50 WS CONTEXT DONE %s", symbols)
+			cancel()
+			return
 		case <-ctx.Done():
 			return
 		case data := <-ws.DataCh:
 			if lastEventTimes[data.Symbol].Sub(data.EventTime) < 0 {
 				lastEventTimes[data.Symbol] = data.EventTime
-				output <- walkSpotOrderBook(data, takerImpact, makerImpact)
+				select {
+				case <-ctx.Done():
+					return
+				case output <- walkSpotOrderBook(data, takerImpact, makerImpact):
+				}
 			}
 			break
 		case <-ws.RestartCh:

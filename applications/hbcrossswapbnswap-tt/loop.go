@@ -155,13 +155,12 @@ func updateMakerPositions() {
 		makerStepSize := math.Ceil(makerContractSize/makerTickSize) * makerTickSize
 		makerStepSize = math.Ceil(makerStepSize / makerTickSize)
 
-		makerSize := (makerBuyPosition.Volume - makerSellPosition.Volume) * makerContractSize
-
 		if spread.ShortLastExit < quantile.ShortBot &&
 			spread.ShortMedianExit < quantile.ShortBot &&
 			fundingRate < *mtConfig.MinimalKeepFundingRate &&
 			makerBuyPosition.Volume > 0 {
-			makerSize = makerBuyPosition.Volume * makerContractSize
+
+			makerSize := makerBuyPosition.Volume * makerContractSize
 			price := makerOrderBook.BidVWAP * (1.0 - *mtConfig.EnterSlippage)
 			price = math.Floor(price/makerTickSize) * makerTickSize
 			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
@@ -201,7 +200,8 @@ func updateMakerPositions() {
 			spread.LongMedianExit > quantile.LongTop &&
 			fundingRate > -*mtConfig.MinimalKeepFundingRate &&
 			makerSellPosition.Volume > 0 {
-			makerSize = makerSellPosition.Volume
+
+			makerSize := makerSellPosition.Volume * makerContractSize
 			price := makerOrderBook.AskVWAP * (1.0 + *mtConfig.EnterSlippage)
 			price = math.Ceil(price/makerTickSize) * makerTickSize
 			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
@@ -236,186 +236,188 @@ func updateMakerPositions() {
 				mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
 				mOrderRequestChs[makerSymbol] <- order
 				return
-			} else if spread.ShortLastEnter > quantile.ShortTop &&
-				spread.ShortMedianEnter > quantile.ShortTop &&
-				//fundingRate > *mtConfig.MinimalEnterFundingRate &&
-				makerSize >= 0 && makerSellPosition.Volume == 0 {
-				price := makerOrderBook.AskVWAP * (1.0 + *mtConfig.EnterSlippage)
-				price = math.Floor(price/makerTickSize) * makerTickSize
-				targetValue := makerSize*price + entryStep
-				if targetValue > entryTarget {
-					targetValue = entryTarget
-				}
-				entryValue := targetValue - makerSize*price
-				if entryValue > mAccount.WithdrawAvailable*0.8 {
-					entryValue = mAccount.WithdrawAvailable * 0.8
-				}
-
-				volume := entryValue / price
-				volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
-				volume = math.Round(volume / makerContractSize)
-
-				entryValue = volume * makerContractSize * price
-
-				//不及一个0.8*EntryStep, 不操作
-				if entryValue < entryStep*0.8 {
-					if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
-						logger.Debugf(
-							"FAILED SHORT TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
-							entryValue,
-							entryStep*0.8,
-							makerSymbol,
-							spread.ShortLastEnter, quantile.ShortTop,
-							spread.ShortMedianEnter, quantile.ShortTop,
-							volume,
-						)
-						mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
-					}
-					continue
-				}
-				if entryValue > mAccount.WithdrawAvailable {
-					if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
-						logger.Debugf(
-							"FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f > %f, %f > %f, SIZE %f",
-							entryValue,
-							mAccount.WithdrawAvailable,
-							makerSymbol,
-							spread.ShortLastEnter, quantile.ShortTop,
-							spread.ShortMedianEnter, quantile.ShortTop,
-							volume,
-						)
-						mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
-					}
-					continue
-				}
-				if entryValue < takerMinNotional {
-					if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
-						logger.Debugf(
-							"FAILED SHORT TOP OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f",
-							entryValue,
-							takerMinNotional,
-							makerSymbol,
-							spread.ShortLastEnter, quantile.ShortTop,
-							spread.ShortMedianEnter, quantile.ShortTop,
-							volume,
-						)
-						mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
-					}
-					continue
-				}
-				mtLogSilentTimes[makerSymbol] = time.Now()
-				logger.Debugf(
-					"SHORT TOP OPEN %s %f > %f, %f > %f, SIZE %f",
-					makerSymbol,
-					spread.ShortLastEnter, quantile.ShortTop,
-					spread.ShortMedianEnter, quantile.ShortTop,
-					volume,
-				)
-				order := hbcrossswap.NewOrderParam{
-					Symbol:        makerSymbol,
-					ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-					//Price:          common.Float64(price),
-					Volume:         int64(volume),
-					Direction:      hbcrossswap.OrderDirectionBuy,
-					Offset:         hbcrossswap.OrderOffsetOpen,
-					LeverRate:      *mtConfig.Leverage,
-					OrderPriceType: hbcrossswap.OrderPriceTypeFOKOptimal20FOK,
-				}
-				mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
-				mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
-				mOrderRequestChs[makerSymbol] <- order
-				return
-			} else if spread.LongLastEnter < quantile.LongBot &&
-				spread.LongMedianEnter < quantile.LongBot &&
-				//fundingRate < -*mtConfig.MinimalEnterFundingRate &&
-				makerSize <= 0 && makerBuyPosition.Volume == 0 {
-				price := makerOrderBook.BidVWAP * (1.0 - *mtConfig.EnterSlippage)
-				price = math.Floor(price/makerTickSize) * makerTickSize
-				targetValue := makerSize*price - entryStep
-				if targetValue < -entryTarget {
-					targetValue = -entryTarget
-				}
-				entryValue := targetValue - makerSize*price
-
-				if -entryValue > mAccount.WithdrawAvailable*0.8 {
-					entryValue = -mAccount.WithdrawAvailable * 0.8
-				}
-
-				volume := entryValue / price
-				volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
-				volume = math.Round(volume / makerContractSize)
-
-				entryValue = volume * makerContractSize * price
-
-				//不及一个0.8*EntryStep, 不操作
-				if -entryValue < entryStep*0.8 {
-					if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
-						logger.Debugf(
-							"FAILED LONG BOT OPEN, ENTRY VALUE (-)%f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
-							-entryValue,
-							entryStep*0.8,
-							makerSymbol,
-							spread.ShortLastEnter, quantile.ShortTop,
-							spread.ShortMedianEnter, quantile.ShortTop,
-							volume,
-						)
-						mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
-					}
-					continue
-				}
-				if -entryValue > mAccount.WithdrawAvailable {
-					if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
-						logger.Debugf(
-							"FAILED LONG BOT OPEN, ENTRY VALUE (-)%f MORE THAN WithdrawAvailable %f, %s %f > %f, %f > %f, SIZE %f",
-							-entryValue,
-							mAccount.WithdrawAvailable,
-							makerSymbol,
-							spread.ShortLastEnter, quantile.ShortTop,
-							spread.ShortMedianEnter, quantile.ShortTop,
-							volume,
-						)
-						mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
-					}
-					continue
-				}
-				if -entryValue < takerMinNotional {
-					if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
-						logger.Debugf(
-							"FAILED LONG BOT OPEN, ORDER VALUE (-)%f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f",
-							entryValue,
-							takerMinNotional,
-							makerSymbol,
-							spread.ShortLastEnter, quantile.ShortTop,
-							spread.ShortMedianEnter, quantile.ShortTop,
-							volume,
-						)
-						mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
-					}
-					continue
-				}
-				mtLogSilentTimes[makerSymbol] = time.Now()
-				logger.Debugf(
-					"LONG BOT OPEN %s %f < %f, %f < %f, SIZE %f",
-					makerSymbol,
-					spread.LongLastEnter, quantile.LongBot,
-					spread.LongMedianEnter, quantile.LongBot,
-					volume,
-				)
-				order := hbcrossswap.NewOrderParam{
-					Symbol:        makerSymbol,
-					ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-					//Price:          common.Float64(price),
-					Volume:         int64(-volume),
-					Direction:      hbcrossswap.OrderDirectionSell,
-					Offset:         hbcrossswap.OrderOffsetOpen,
-					LeverRate:      *mtConfig.Leverage,
-					OrderPriceType: hbcrossswap.OrderPriceTypeFOKOptimal20FOK,
-				}
-				mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
-				mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
-				mOrderRequestChs[makerSymbol] <- order
-				return
 			}
+		} else if spread.ShortLastEnter > quantile.ShortTop &&
+			spread.ShortMedianEnter > quantile.ShortTop &&
+			//fundingRate > *mtConfig.MinimalEnterFundingRate &&
+			makerSellPosition.Volume == 0 {
+			makerSize := makerBuyPosition.Volume * makerContractSize
+			price := makerOrderBook.AskVWAP * (1.0 + *mtConfig.EnterSlippage)
+			price = math.Floor(price/makerTickSize) * makerTickSize
+			targetValue := makerSize*price + entryStep
+			if targetValue > entryTarget {
+				targetValue = entryTarget
+			}
+			entryValue := targetValue - makerSize*price
+			if entryValue > mAccount.WithdrawAvailable*0.8 {
+				entryValue = mAccount.WithdrawAvailable * 0.8
+			}
+
+			volume := entryValue / price
+			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
+			volume = math.Round(volume / makerContractSize)
+
+			entryValue = volume * makerContractSize * price
+
+			//不及一个0.8*EntryStep, 不操作
+			if entryValue < entryStep*0.8 {
+				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+					logger.Debugf(
+						"FAILED SHORT TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
+						entryValue,
+						entryStep*0.8,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
+					)
+					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+				}
+				continue
+			}
+			if entryValue > mAccount.WithdrawAvailable {
+				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+					logger.Debugf(
+						"FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f > %f, %f > %f, SIZE %f",
+						entryValue,
+						mAccount.WithdrawAvailable,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
+					)
+					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+				}
+				continue
+			}
+			if entryValue < takerMinNotional {
+				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+					logger.Debugf(
+						"FAILED SHORT TOP OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f",
+						entryValue,
+						takerMinNotional,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
+					)
+					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+				}
+				continue
+			}
+			mtLogSilentTimes[makerSymbol] = time.Now()
+			logger.Debugf(
+				"SHORT TOP OPEN %s %f > %f, %f > %f, SIZE %f",
+				makerSymbol,
+				spread.ShortLastEnter, quantile.ShortTop,
+				spread.ShortMedianEnter, quantile.ShortTop,
+				volume,
+			)
+			order := hbcrossswap.NewOrderParam{
+				Symbol:        makerSymbol,
+				ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
+				//Price:          common.Float64(price),
+				Volume:         int64(volume),
+				Direction:      hbcrossswap.OrderDirectionBuy,
+				Offset:         hbcrossswap.OrderOffsetOpen,
+				LeverRate:      *mtConfig.Leverage,
+				OrderPriceType: hbcrossswap.OrderPriceTypeFOKOptimal20FOK,
+			}
+			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+			mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
+			mOrderRequestChs[makerSymbol] <- order
+			return
+		} else if spread.LongLastEnter < quantile.LongBot &&
+			spread.LongMedianEnter < quantile.LongBot &&
+			//fundingRate < -*mtConfig.MinimalEnterFundingRate &&
+			makerBuyPosition.Volume == 0 {
+			makerSize := makerSellPosition.Volume * makerContractSize
+			price := makerOrderBook.BidVWAP * (1.0 - *mtConfig.EnterSlippage)
+			price = math.Floor(price/makerTickSize) * makerTickSize
+			targetValue := makerSize*price + entryStep
+			if targetValue > entryTarget {
+				targetValue = entryTarget
+			}
+			entryValue := targetValue - makerSize*price
+
+			if entryValue > mAccount.WithdrawAvailable*0.8 {
+				entryValue = mAccount.WithdrawAvailable * 0.8
+			}
+
+			volume := entryValue / price
+			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
+			volume = math.Round(volume / makerContractSize)
+
+			entryValue = volume * makerContractSize * price
+
+			//不及一个0.8*EntryStep, 不操作
+			if entryValue < entryStep*0.8 {
+				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+					logger.Debugf(
+						"FAILED LONG BOT OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
+						entryValue,
+						entryStep*0.8,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
+					)
+					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+				}
+				continue
+			}
+			if entryValue > mAccount.WithdrawAvailable {
+				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+					logger.Debugf(
+						"FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f > %f, %f > %f, SIZE %f",
+						entryValue,
+						mAccount.WithdrawAvailable,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
+					)
+					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+				}
+				continue
+			}
+			if entryValue < takerMinNotional {
+				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+					logger.Debugf(
+						"FAILED LONG BOT OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f",
+						entryValue,
+						takerMinNotional,
+						makerSymbol,
+						spread.ShortLastEnter, quantile.ShortTop,
+						spread.ShortMedianEnter, quantile.ShortTop,
+						volume,
+					)
+					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+				}
+				continue
+			}
+			mtLogSilentTimes[makerSymbol] = time.Now()
+			logger.Debugf(
+				"LONG BOT OPEN %s %f < %f, %f < %f, SIZE %f",
+				makerSymbol,
+				spread.LongLastEnter, quantile.LongBot,
+				spread.LongMedianEnter, quantile.LongBot,
+				volume,
+			)
+			order := hbcrossswap.NewOrderParam{
+				Symbol:        makerSymbol,
+				ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
+				//Price:          common.Float64(price),
+				Volume:         int64(volume),
+				Direction:      hbcrossswap.OrderDirectionSell,
+				Offset:         hbcrossswap.OrderOffsetOpen,
+				LeverRate:      *mtConfig.Leverage,
+				OrderPriceType: hbcrossswap.OrderPriceTypeFOKOptimal20FOK,
+			}
+			mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
+			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+			mOrderRequestChs[makerSymbol] <- order
+			return
 		}
 	}
 

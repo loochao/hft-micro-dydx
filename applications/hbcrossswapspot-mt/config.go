@@ -56,6 +56,10 @@ type Config struct {
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`
 
+	OrderBookTakerDecay         *float64       `yaml:"orderBookTakerDecay,omitempty"`
+	OrderBookMakerDecay         *float64       `yaml:"orderBookMakerDecay,omitempty"`
+	OrderBookTakerBias          *float64       `yaml:"orderBookTakerBias,omitempty"`
+	OrderBookMakerBias          *float64       `yaml:"orderBookMakerBias,omitempty"`
 	OrderBookTakerImpact        *float64       `yaml:"orderBookTakerImpact,omitempty"`
 	OrderBookMakerImpact        *float64       `yaml:"orderBookMakerImpact,omitempty"`
 	OrderBookBatchSize          *int           `yaml:"orderBookBatchSize,omitempty"`

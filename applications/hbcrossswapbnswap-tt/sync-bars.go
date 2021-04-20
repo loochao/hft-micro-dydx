@@ -137,8 +137,10 @@ func watchMakerBars(
 						outputMap[symbol] = make([]common.KLine, len(bars))
 						copy(outputMap[symbol], bars)
 					}
-					if allSuccess {
-						output <- outputMap
+					select {
+					case <-ctx.Done():
+						return
+					case output <- outputMap:
 					}
 					outputResults = false
 					logger.Debugf("OUTPUT MAKER BARS")
@@ -272,8 +274,10 @@ func watchTakerBars(
 						outputMap[symbol] = make([]common.KLine, len(bars))
 						copy(outputMap[symbol], bars)
 					}
-					if allSuccess {
-						output <- outputMap
+					select {
+					case <-ctx.Done():
+						return
+					case output <- outputMap:
 					}
 					outputResults = false
 					logger.Debugf("OUTPUT TAKER BARS")

@@ -89,7 +89,11 @@ func watchDeltaQuantile(
 			}
 			if len(quantiles) > 0 {
 				logger.Debugf("QUANTILES UPDATED.")
-				outputCh <- quantiles
+				select {
+				case <- ctx.Done():
+					return
+				case outputCh <- quantiles:
+				}
 			}
 		}
 	}

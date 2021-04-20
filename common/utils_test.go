@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
@@ -222,4 +223,86 @@ func TestMergedStepSize(t *testing.T) {
 	a = 0.1
 	b = 0.033333
 	logger.Debugf("%f %f %f", a, b, MergedStepSize(a, b))
+}
+
+func BenchmarkSelectWithContext(t *testing.B) {
+	ch := make(chan interface{})
+	ctx := context.Background()
+	go func() {
+		for {
+			select {
+			case <-ch:
+			}
+		}
+	}()
+	t.ReportAllocs()
+	t.ResetTimer()
+	for n := 0; n < t.N; n++ {
+		select {
+		case <-ctx.Done():
+		case <-ctx.Done():
+		case <-ctx.Done():
+		case <-ctx.Done():
+		case <-ctx.Done():
+		case <-ctx.Done():
+		case <-ctx.Done():
+		case ch <- nil:
+		}
+	}
+}
+
+func BenchmarkSelectWithoutContext(t *testing.B) {
+	ch := make(chan interface{})
+	go func() {
+		for {
+			select {
+			case <-ch:
+			}
+		}
+	}()
+	t.ReportAllocs()
+	t.ResetTimer()
+	for n := 0; n < t.N; n++ {
+		select {
+		case ch <- nil:
+		}
+	}
+}
+
+func BenchmarkSelectWithContexts(t *testing.B) {
+	ch := make(chan interface{})
+	ctx1 := context.Background()
+	ctx2 := context.Background()
+	ctx3 := context.Background()
+	ctx4 := context.Background()
+	ctx5 := context.Background()
+	ctx6 := context.Background()
+	ctx7 := context.Background()
+	ctx8 := context.Background()
+	ctx9 := context.Background()
+	ctx0 := context.Background()
+	go func() {
+		for {
+			select {
+			case <-ch:
+			}
+		}
+	}()
+	t.ReportAllocs()
+	t.ResetTimer()
+	for n := 0; n < t.N; n++ {
+		select {
+		case <-ctx0.Done():
+		case <-ctx1.Done():
+		case <-ctx2.Done():
+		case <-ctx3.Done():
+		case <-ctx4.Done():
+		case <-ctx5.Done():
+		case <-ctx6.Done():
+		case <-ctx7.Done():
+		case <-ctx8.Done():
+		case <-ctx9.Done():
+		case ch <- nil:
+		}
+	}
 }

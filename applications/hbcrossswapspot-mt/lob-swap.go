@@ -8,7 +8,10 @@ import (
 )
 
 func watchSwapWalkedOrderBooks(
-	ctx context.Context, proxyAddress string,
+	ctx context.Context,
+	cancel context.CancelFunc,
+	takerDecay, takerBias float64,
+	proxyAddress string,
 	contractSizes map[string]float64,
 	takerImpact, makerImpact float64, symbols []string,
 	outputWLob chan WalkedOrderBook,
@@ -17,8 +20,9 @@ func watchSwapWalkedOrderBooks(
 	for _, symbol := range symbols {
 		lastEventTimes[symbol] = time.Unix(0, 0)
 	}
-	ws := hbcrossswap.NewDepth20Websocket(
+	ws := hbcrossswap.NewDepth20FilteredWebsocket(
 		ctx,
+		takerDecay, takerBias,
 		symbols,
 		proxyAddress,
 	)
@@ -26,14 +30,20 @@ func watchSwapWalkedOrderBooks(
 	for {
 		select {
 		case <-ws.Done():
-			logger.Fatal("DEPTH50 WS CONTEXT DONE %s", symbols)
+			logger.Debugf("DEPTH50 WS CONTEXT DONE %s", symbols)
+			cancel()
+			return
 		case <-ctx.Done():
 			return
 		case lob := <-ws.DataCh:
 			if lastEventTimes[lob.Symbol].Sub(lob.EventTime) < 0 {
 				lastEventTimes[lob.Symbol] = lob.EventTime
 				if m, ok := contractSizes[lob.Symbol]; ok {
-					outputWLob <- walkPerpOrderBook(lob, takerImpact, makerImpact, m)
+					select {
+					case <-ctx.Done():
+						return
+					case outputWLob <- walkPerpOrderBook(lob, takerImpact, makerImpact, m):
+					}
 				}
 			}
 			break

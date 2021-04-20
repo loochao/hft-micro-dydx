@@ -7,8 +7,10 @@ import (
 	"github.com/geometrybase/hft-micro/hbspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
+	"os/signal"
 	"runtime/pprof"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -17,11 +19,13 @@ func main() {
 	if *hbConfig.CpuProfile != "" {
 		f, err := os.Create(*hbConfig.CpuProfile)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Debugf("os.Create %v", err)
+			return
 		}
 		err = pprof.StartCPUProfile(f)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Debugf("pprof.StartCPUProfile %v", err)
+			return
 		}
 		defer pprof.StopCPUProfile()
 	}
@@ -33,7 +37,8 @@ func main() {
 		*hbConfig.ProxyAddress,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("hbcrossswap.NewAPI %v", err)
+		return
 	}
 	hbspotAPI, err = hbspot.NewAPI(
 		*hbConfig.ApiKey,
@@ -41,7 +46,8 @@ func main() {
 		*hbConfig.ProxyAddress,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("hbspot.NewAPI %v", err)
+		return
 	}
 
 	hbGlobalCtx, hbGlobalCancel = context.WithCancel(context.Background())
@@ -49,7 +55,8 @@ func main() {
 
 	accounts, err := hbspotAPI.GetAccounts(hbGlobalCtx)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("hbspotAPI.GetAccounts %v", err)
+		return
 	}
 	for _, a := range accounts {
 		if a.Type == "spot" {
@@ -57,16 +64,19 @@ func main() {
 		}
 	}
 	if hbspotAccountID == 0 {
-		logger.Fatal("HB SPOT ACCOUNT ID NOT EXISTS!!!")
+		logger.Debug("HB SPOT ACCOUNT ID NOT EXISTS!!!")
+		return
 	}
 
 	hbcrossswapTickSizes, hbcrossswapContractSizes, err = hbcrossswap.GetOrderLimits(hbGlobalCtx, hbcrossswapAPI, hbcrossswapSymbols)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("hbcrossswap.GetOrderLimits %v", err)
+		return
 	}
 	hbspotTickSizes, hbspotStepSizes, hbspotMinSizes, hbspotMinNotional, hbspotPricePrecisions, hbspotAmountPrecisions, err = hbspot.GetOrderLimits(hbGlobalCtx, hbspotAPI, hbspotSymbols)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("hbspot.GetOrderLimits %v", err)
+		return
 	}
 
 	hbInfluxWriter, err = common.NewInfluxWriter(
@@ -77,7 +87,8 @@ func main() {
 		*hbConfig.InternalInflux.BatchSize,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("common.NewInfluxWriter %v", err)
+		return
 	}
 
 	kcExternalInfluxWriter, err = common.NewInfluxWriter(
@@ -88,7 +99,8 @@ func main() {
 		*hbConfig.ExternalInflux.BatchSize,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("common.NewInfluxWriter %v", err)
+		return
 	}
 
 	defer func() {
@@ -203,6 +215,9 @@ func main() {
 		}
 		go watchSpotWalkedOrderBooks(
 			hbGlobalCtx,
+			hbGlobalCancel,
+			*hbConfig.OrderBookMakerDecay,
+			*hbConfig.OrderBookMakerBias,
 			*hbConfig.ProxyAddress,
 			*hbConfig.OrderBookTakerImpact,
 			*hbConfig.OrderBookMakerImpact,
@@ -218,6 +233,9 @@ func main() {
 		}
 		go watchSwapWalkedOrderBooks(
 			hbGlobalCtx,
+			hbGlobalCancel,
+			*hbConfig.OrderBookTakerDecay,
+			*hbConfig.OrderBookTakerBias,
 			*hbConfig.ProxyAddress,
 			hbcrossswapContractSizes,
 			*hbConfig.OrderBookTakerImpact,
@@ -269,10 +287,22 @@ func main() {
 		)
 	}
 
+	if *hbConfig.CpuProfile != "" {
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			sig := <-sigs
+			logger.Debugf("CATCH EXIT SIGNAL %v", sig)
+			hbGlobalCancel()
+		}()
+	}
+
 	logger.Debugf("MAIN LOOP START")
 
 	for {
 		select {
+		case <- hbGlobalCtx.Done():
+			logger.Debug("MAIN LOOP EXIT")
 		case <-hbspotUserWebsocket.RestartCh:
 			logger.Debugf("hbspotUserWebsocket restart silent %v", *hbConfig.RestartSilent)
 			handleRestartSilent()

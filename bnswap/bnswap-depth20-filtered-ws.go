@@ -108,10 +108,8 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 			return
 		case msg := <-w.messageCh:
 			totalCount++
-			if totalCount > 100000 {
-				if totalCount > 0 {
-					logger.Debugf("EMA TIME DELTA %f DROP RATIO %f", emaTimeDelta, float64(filterCount)/float64(totalCount))
-				}
+			if totalCount > 10000 {
+				logger.Debugf("EMA TIME DELTA %f DROP RATIO %f", emaTimeDelta, float64(filterCount)/float64(totalCount))
 				totalCount = 0
 				filterCount = 0
 			}
@@ -129,7 +127,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 					timeDelta = 1000
 				}
 				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-				if timeDelta > emaTimeDelta + bias{
+				if timeDelta > emaTimeDelta+bias {
 					filterCount++
 					continue
 				}
@@ -144,7 +142,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 					timeDelta = 1000
 				}
 				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-				if timeDelta > emaTimeDelta + bias{
+				if timeDelta > emaTimeDelta+bias {
 					filterCount++
 					continue
 				}
@@ -159,11 +157,11 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 					timeDelta = 1000
 				}
 				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-				if timeDelta > emaTimeDelta + bias{
+				if timeDelta > emaTimeDelta+bias {
 					filterCount++
 					continue
 				}
-			}else{
+			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("bad msg, can't find timestamp: %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)

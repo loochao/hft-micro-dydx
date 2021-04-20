@@ -193,13 +193,11 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			if msg[2] == 'c' && len(msg) > 56{
+			if msg[2] == 'c' && len(msg) > 56 {
 				//{"ch":"market.FIL-USDT.depth.step6","ts":1618845641135,"tick":{"mrid":18528726394,"id":1618845641,"bids":[[154.423,36],[154.419,214],[154.414,380],[154.407,421],[154.398,64],[154.388,73],[154.386,8],[154.361,171],[154.36,300],[154.359,1],[154.354,175],[154.34,171],[154.339,48],[154.329,283],[154.327,243],[154.323,13],[154.315,50],[154.303,200],[154.302,48],[154.285,806]],"asks":[[154.436,154],[154.459,441],[154.46,58],[154.472,154],[154.473,134],[154.475,380],[154.497,163],[154.499,666],[154.511,88],[154.514,30],[154.515,283],[154.516,715],[154.517,70],[154.52,2],[154.53,222],[154.532,50],[154.557,1297],[154.565,3],[154.609,48],[154.61,4]],"ts":1618845641132,"version":1618845641,"ch":"market.FIL-USDT.depth.step6"}}
 				totalCount++
-				if totalCount > 100000 {
-					if totalCount > 0 {
-						logger.Debugf("EMA TIME DELTA %f DROP RATIO %f", emaTimeDelta,float64(filterCount)/float64(totalCount))
-					}
+				if totalCount > 10000 {
+					logger.Debugf("EMA TIME DELTA %f DROP RATIO %f", emaTimeDelta, float64(filterCount)/float64(totalCount))
 					totalCount = 0
 					filterCount = 0
 				}
@@ -209,12 +207,12 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 						logger.Debugf("ParseDepth20 error %v %s", err, msg[41:54])
 						continue
 					}
-					timeDelta = float64(time.Now().UnixNano()/1000000-t)
+					timeDelta = float64(time.Now().UnixNano()/1000000 - t)
 					if timeDelta > 1000 {
 						timeDelta = 1000
 					}
 					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-					if timeDelta > emaTimeDelta + bias {
+					if timeDelta > emaTimeDelta+bias {
 						filterCount++
 						continue
 					}
@@ -224,12 +222,12 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 						logger.Debugf("ParseDepth20 error %v %s", err, msg[42:55])
 						continue
 					}
-					timeDelta = float64(time.Now().UnixNano()/1000000-t)
+					timeDelta = float64(time.Now().UnixNano()/1000000 - t)
 					if timeDelta > 1000 {
 						timeDelta = 1000
 					}
 					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-					if timeDelta > emaTimeDelta + bias {
+					if timeDelta > emaTimeDelta+bias {
 						filterCount++
 						continue
 					}
@@ -239,16 +237,16 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 						logger.Debugf("ParseDepth20 error %v %s", err, msg[43:56])
 						continue
 					}
-					timeDelta = float64(time.Now().UnixNano()/1000000-t)
+					timeDelta = float64(time.Now().UnixNano()/1000000 - t)
 					if timeDelta > 1000 {
 						timeDelta = 1000
 					}
 					emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-					if timeDelta > emaTimeDelta + bias {
+					if timeDelta > emaTimeDelta+bias {
 						filterCount++
 						continue
 					}
-				}else{
+				} else {
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("bad msg, can't find timestamp: %s", msg)
 						logSilentTime = time.Now().Add(time.Minute)
