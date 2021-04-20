@@ -22,10 +22,17 @@ type Depth20Websocket struct {
 	stopped     bool
 }
 
-func (w *Depth20Websocket) startRead(conn *websocket.Conn) {
+func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) {
 	totalLen := 0
 	totalCount := 0
 	for {
+		select {
+		case <-w.done:
+			return
+		case <-ctx.Done():
+			return
+		default:
+		}
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
@@ -52,7 +59,13 @@ func (w *Depth20Websocket) startRead(conn *websocket.Conn) {
 			totalCount = 0
 		}
 		//此处有两种情况，1、主线程退出，发不出去无所谓 2、WS重启，重启完就可以发出来了，中间这个go routine会停住
-		w.messageCh <- msg
+		select {
+		case <-ctx.Done():
+			return
+		case <-w.done:
+			return
+		case w.messageCh <- msg:
+		}
 	}
 }
 
@@ -119,7 +132,7 @@ func (w *Depth20Websocket) reconnect(ctx context.Context, wsUrl string, proxy st
 	return conn, nil
 }
 
-func (w *Depth20Websocket) start(ctx context.Context, symbols []string,  proxy string) {
+func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy string) {
 	urlStr := "wss://stream.binance.com:9443/stream?streams="
 	for _, symbol := range symbols {
 		urlStr += fmt.Sprintf(
@@ -174,10 +187,8 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string,  proxy s
 				}
 				return
 			}
-			go w.startRead(conn)
+			go w.startRead(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn)
-
-
 		}
 	}
 }
@@ -206,7 +217,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 		return nil
 	})
 
-	timer := time.NewTimer(time.Minute*15)
+	timer := time.NewTimer(time.Minute * 15)
 	for {
 		select {
 		case <-ctx.Done():
@@ -218,7 +229,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 			w.restart()
 			return
 		case <-trafficCh:
-			timer.Reset(time.Minute*15)
+			timer.Reset(time.Minute * 15)
 		}
 	}
 
@@ -299,7 +310,7 @@ func NewDepth20Websocket(
 		stopped:     false,
 		mu:          sync.Mutex{},
 	}
-	go ws.start(ctx, symbols,  proxy)
+	go ws.start(ctx, symbols, proxy)
 	go ws.startDataHandler(ctx)
 	go ws.startDataHandler(ctx)
 	go ws.startDataHandler(ctx)

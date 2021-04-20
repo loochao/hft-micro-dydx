@@ -472,9 +472,9 @@ func main() {
 			frRankUpdatedTimer.Reset(time.Minute)
 			break
 		case <-hbLoopTimer.C:
+			updatePerpPositions()
 			if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
 				time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
-				updatePerpPositions()
 				updateSpotOldOrders()
 				updateSpotNewOrders()
 			}

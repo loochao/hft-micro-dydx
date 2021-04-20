@@ -111,14 +111,14 @@ func main() {
 		}
 	}
 
-	bnspotUserWebsocket = bnspot.NewUserWebsocket(
+	bnspotUserWebsocket, err = bnspot.NewUserWebsocket(
 		bnGlobalCtx,
 		bnspotAPI,
 		*bnConfig.ProxyAddress,
 	)
 	defer bnspotUserWebsocket.Stop()
 
-	bnswapUserWebsocket = bnswap.NewUserWebsocket(
+	bnswapUserWebsocket, err = bnswap.NewUserWebsocket(
 		bnGlobalCtx,
 		bnswapAPI,
 		*bnConfig.ProxyAddress,

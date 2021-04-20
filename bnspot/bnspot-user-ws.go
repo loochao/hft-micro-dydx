@@ -23,11 +23,18 @@ type UserWebsocket struct {
 	stopped              bool
 }
 
-func (w *UserWebsocket) startRead(conn *websocket.Conn, readTimeout time.Duration) {
+func (w *UserWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
 	totalLen := 0
 	totalCount := 0
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(readTimeout))
+		select {
+		case <-ctx.Done():
+			return
+		case <-w.done:
+			return
+		default:
+		}
+		err := conn.SetReadDeadline(time.Now().Add(time.Hour*4))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
 			w.restart()
@@ -53,6 +60,10 @@ func (w *UserWebsocket) startRead(conn *websocket.Conn, readTimeout time.Duratio
 			totalCount = 0
 		}
 		select {
+		case <-ctx.Done():
+			return
+		case <-w.done:
+			return
 		case <-time.After(time.Millisecond):
 			logger.Warnf("MSG TO MESSAGE CH TIMEOUT IN 1MS")
 		case w.messageCh <- msg:
@@ -80,6 +91,9 @@ func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
 }
 
 func (w *UserWebsocket) startDataHandler(ctx context.Context) {
+	defer func() {
+		logger.Debugf("EXIT startDataHandler")
+	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -212,20 +226,16 @@ func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) 
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
 				logger.Debugf("RECONNECT ERROR %v", err)
+				internalCancel()
 				return
 			}
-			go w.startRead(conn, time.Hour*24)
-			go w.maintainHeartbeat(internalCtx, conn, time.Minute*10)
-
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
+			go w.startRead(ctx, conn)
+			go w.maintainHeartbeat(internalCtx, conn)
 		}
 	}
 }
 
-func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn, timeout time.Duration) {
+func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn) {
 
 	defer func() {
 		err := conn.Close()
@@ -235,14 +245,12 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 	}()
 
 	trafficCh := make(chan interface{})
-
 	conn.SetPingHandler(func(msg string) error {
 		select {
 		case trafficCh <- nil:
 		default:
 		}
-		//logger.Debugf("BNSPOT USER WS PingHandler %s", msg)
-		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(timeout))
+		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
 			go w.restart()
 			return nil
@@ -250,16 +258,16 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 		return nil
 	})
 
-	timer := time.NewTimer(timeout)
+	timer := time.NewTimer(time.Minute*15)
 
 	for {
 		select {
 		case <-timer.C:
-			logger.Warnf("USER WS TIMEOUT, NO TRAFFIC IN %v, RESTART", timeout)
+			logger.Warnf("USER WS TIMEOUT, NO TRAFFIC IN 15M, RESTART")
 			go w.restart()
 			return
 		case <-trafficCh:
-			timer.Reset(timeout)
+			timer.Reset(time.Minute*15)
 		case <-ctx.Done():
 			return
 		case <-w.done:
@@ -345,13 +353,19 @@ func NewUserWebsocket(
 					&resp,
 				)
 				if err != nil {
-					logger.Fatal(err)
+					logger.Debugf("api.SendAuthenticatedHTTPRequest error %v", err)
+					ws.Stop()
+					return
 				}
 				timer.Reset(time.Minute * 20)
 			}
 		}
 	}(ctx, &ws, listenKey)
 	go ws.start(ctx, wsUrl, proxy)
+	go ws.startDataHandler(ctx)
+	go ws.startDataHandler(ctx)
+	go ws.startDataHandler(ctx)
+	go ws.startDataHandler(ctx)
 	ws.reconnectCh <- nil
 	return &ws, nil
 }
