@@ -237,7 +237,9 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 				default:
 				}
 			} else {
-				logger.Debugf("OTHER MSG %s", msg)
+				if msg[2] != 'i' {
+					logger.Debugf("OTHER MSG %s", msg)
+				}
 			}
 		}
 	}
