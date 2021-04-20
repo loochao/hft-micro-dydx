@@ -442,6 +442,7 @@ func main() {
 			break
 
 		case newError := <-hbcrossswapNewOrderErrorCh:
+			hbcrossswapPositionsUpdateTimes[newError.Params.Symbol] = time.Now()
 			hbcrossswapOrderSilentTimes[newError.Params.Symbol] = time.Now().Add(time.Second * 15)
 			break
 
