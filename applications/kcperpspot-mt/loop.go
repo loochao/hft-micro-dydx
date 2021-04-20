@@ -266,8 +266,8 @@ func updateSpotNewOrders() {
 				quantity = math.Round(quantity/spotStepSize) * spotStepSize
 				quantity = math.Round(quantity/perpStepSize) * perpStepSize
 				if spotBalance.Available*price-entryValue < entryStep {
-					quantity = -spotBalance.Available
-					//quantity = math.Ceil(-spotBalance.Available/spotStepSize) * spotStepSize
+					//quantity = -spotBalance.Available
+					quantity = math.Ceil(-spotBalance.Available/spotStepSize) * spotStepSize
 					//quantity = math.Ceil(quantity/perpStepSize) * perpStepSize
 				}
 				if quantity < 0 {
