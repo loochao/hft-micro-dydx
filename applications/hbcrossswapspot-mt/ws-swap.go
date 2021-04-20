@@ -32,6 +32,7 @@ func handleWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 }
 
 func handleWSPosition(wsPositions *hbcrossswap.WSPositions) {
+	logger.Debugf("%v", wsPositions)
 	for _, nextPos := range wsPositions.Positions {
 		if nextPos.Direction != hbcrossswap.PositionDirectionSell {
 			continue
