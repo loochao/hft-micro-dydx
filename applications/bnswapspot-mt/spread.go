@@ -154,7 +154,7 @@ func watchSingleSpread(
 				}
 			} else if lob.Type == WalkedOrderBookTypeSpot {
 				spotOrderBook = lob
-				if spotOrderBook == nil {
+				if swapOrderBook == nil {
 					break
 				}
 			} else {
