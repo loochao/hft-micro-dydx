@@ -95,7 +95,6 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context, id int) {
 				totalLen = 0
 				totalCount = 0
 			}
-			//{"e":"ACCOUNT_UPDATE","T":1616821544492,"E":1616821544496,"a":{"B":[{"a":"BNB","wb":"0.06858897","cw":"0"}],"P":[],"m":"DEPOSIT"}}
 			if msg[0] == '{' && len(msg) > 14 {
 				if msg[2] == 'e' && msg[6] == 'o' {
 					accountUpdateEvent := AccountUpdateEvent{}
@@ -115,7 +114,6 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context, id int) {
 					}
 
 				} else if msg[2] == 'e' && msg[6] == 'e' {
-					//{"e":"ORDER_TRADE_UPDATE","T":1616821790804,"E":1616821790808,"o":{"s":"LTCUSDT","c":"web_g5yhWZ53GcE18wViaj4O","S":"SELL","o":"LIMIT","f":"GTC","q":"0.100","p":"200","ap":"0","sp":"0","x":"NEW","X":"NEW","i":11207370007,"l":"0","z":"0","L":"0","T":1616821790804,"t":0,"b":"0","a":"20","m":false,"R":false,"wt":"CONTRACT_PRICE","ot":"LIMIT","ps":"BOTH","cp":false,"rp":"0","pP":false,"si":0,"ss":0}}
 					orderUpdateEvent := OrderUpdateEvent{}
 					err := json.Unmarshal(msg, &orderUpdateEvent)
 					if err != nil {
@@ -131,6 +129,8 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context, id int) {
 					//	logger.Warn("executionReport TO OUTPUT CH TIME OUT IN 1MS")
 					case w.OrderUpdateEventCh <- &orderUpdateEvent:
 					}
+				} else if msg[2] == 'e' && msg[6] == 'b' {
+					continue
 				} else {
 					logger.Debugf("OTHER MSG %s", msg)
 				}
