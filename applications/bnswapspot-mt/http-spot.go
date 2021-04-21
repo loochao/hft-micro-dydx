@@ -163,7 +163,7 @@ func reBalanceBnB(
 		if err != nil {
 			logger.Debugf("NewFutureAccountTransfer error %v", err)
 		} else {
-			logger.Debugf("%v", resp)
+			logger.Debugf("NewFutureAccountTransfer success %d %s %v", tType, change,resp.TranId)
 		}
 	}
 }
