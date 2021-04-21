@@ -166,7 +166,6 @@ func main() {
 		}
 	}()
 
-
 	tUserWebsocket, err = bnswap.NewUserWebsocket(
 		mtGlobalCtx,
 		tAPI,
@@ -368,7 +367,8 @@ func main() {
 	}
 
 	logger.Debugf("START MAIN LOOP")
-
+	fundingInterval := time.Hour * 8
+	fundingSilent := time.Minute * 5
 	for {
 		select {
 		case <-mtGlobalCtx.Done():
@@ -514,7 +514,10 @@ func main() {
 			break
 		case <-mtLoopTimer.C:
 			updateTakerPositions()
-			updateMakerPositions()
+			if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
+				time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingInterval {
+				updateMakerPositions()
+			}
 			mtLoopTimer.Reset(
 				time.Now().Truncate(
 					*mtConfig.LoopInterval,
