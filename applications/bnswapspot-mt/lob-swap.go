@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/logger"
+	"time"
 )
 
 func watchSwapWalkedOrderBooks(
@@ -35,6 +36,8 @@ func watchSwapWalkedOrderBooks(
 				lastUpdatedIds[lob.Symbol] = lob.LastUpdateId
 				select {
 				case <-ctx.Done():
+				case <-time.After(time.Millisecond):
+					logger.Debugf("%s WLOB TO OUTPUT CH TIMEOUT IN 1MS, CH LEN %d", lob.Symbol, len(output[lob.Symbol]))
 				case output[lob.Symbol] <- walkSwapOrderBook(lob, takerImpact, makerImpact):
 				}
 			}

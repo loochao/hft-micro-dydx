@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/logger"
+	"time"
 )
 
 func watchSpotWalkedOrderBooks(
@@ -22,6 +23,8 @@ func watchSpotWalkedOrderBooks(
 				lastUpdatedIds[data.Symbol] = data.LastUpdateId
 				select {
 				case <-ctx.Done():
+				case <-time.After(time.Millisecond):
+					logger.Debugf("%s WLOB TO OUTPUT CH TIMEOUT IN 1MS, CH LEN %d", data.Symbol, len(output[data.Symbol]))
 				case output[data.Symbol] <- walkSpotOrderBook(data, takerImpact, makerImpact):
 				}
 			}

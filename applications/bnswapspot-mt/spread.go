@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
@@ -174,7 +175,7 @@ func watchSingleSpread(
 			lastEnterSpread := (swapOrderBook.TakerBidVWAP - spotOrderBook.MakerBidVWAP) / spotOrderBook.MakerBidVWAP
 			lastExitSpread := (swapOrderBook.TakerAskVWAP - spotOrderBook.MakerAskVWAP) / spotOrderBook.MakerAskVWAP
 
-			arrivalTimes= append(arrivalTimes, swapOrderBook.ArrivalTime)
+			arrivalTimes = append(arrivalTimes, swapOrderBook.ArrivalTime)
 			enterSpreadWindow = append(enterSpreadWindow, lastEnterSpread)
 			exitSpreadWindow = append(exitSpreadWindow, lastExitSpread)
 			enterSpreadSortedSlice = enterSpreadSortedSlice.Insert(lastEnterSpread)
@@ -215,6 +216,8 @@ func watchSingleSpread(
 			select {
 			case <-ctx.Done():
 				return
+			case <-time.After(time.Millisecond):
+				logger.Debugf("SPREAD TO OUTPUT CH TIMEOUT IN 1MS, CH LEN %d", len(outputCh))
 			case outputCh <- Spread{
 				Symbol:         symbol,
 				SwapOrderBook:  *swapOrderBook,
