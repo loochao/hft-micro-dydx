@@ -60,6 +60,8 @@ type Config struct {
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`
 
+	OrderBookTakerDecay         *float64       `yaml:"orderBookTakerDecay,omitempty"`
+	OrderBookTakerBias          *float64       `yaml:"orderBookTakerBias,omitempty"`
 	OrderBookTakerImpact        *float64       `yaml:"orderBookTakerImpact,omitempty"`
 	OrderBookMakerImpact        *float64       `yaml:"orderBookMakerImpact,omitempty"`
 	OrderBookBatchSize          *int           `yaml:"orderBookBatchSize,omitempty"`
@@ -86,6 +88,7 @@ type Config struct {
 	EnterSlippage       *float64           `yaml:"enterSlippage,omitempty"`
 	EnterSilent         *time.Duration     `yaml:"enterSilent,omitempty"`
 	StartValues         map[string]float64 `yaml:"startValues,omitempty"`
+	HttpSilent          *time.Duration     `yaml:"httpSilent,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

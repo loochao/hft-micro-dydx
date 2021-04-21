@@ -17,6 +17,7 @@ import (
 
 var bnInfluxWriter *common.InfluxWriter
 var bnExternalInfluxWriter *common.InfluxWriter
+var bnLoopTimer *time.Timer
 
 var bnswapAPI *bnswap.API
 var bnspotAPI *bnspot.API
@@ -32,12 +33,11 @@ var bnspotCancelSilentTimes = make(map[string]time.Time)
 var bnspotSilentTimes = make(map[string]time.Time)
 
 var bnspotBalancesUpdateTimes = make(map[string]time.Time)
-var bnswapOrderNewErrorCh = make(chan SwapOrderNewError, 10)
-var bnswapOrderFinishCh = make(chan bnswap.Order, 100)
+var bnswapOrderNewErrorCh = make(chan TakerOrderNewError, 10)
+var bnswapOrderFinishCh = make(chan bnswap.Order, 10000)
 
 var bnspotHttpBalanceUpdateSilentTimes = make(map[string]time.Time)
-var bnspotLastOrderTimes = make(map[string]time.Time)
-var bnswapLastOrderTimes = make(map[string]time.Time)
+var bnswapHttpPositionUpdateSilentTimes = make(map[string]time.Time)
 
 var bnSymbols = make([]string, 0)
 var bnSymbolsMap = make(map[string]bool, 0)
@@ -66,12 +66,14 @@ var bnswapPositions = make(map[string]bnswap.Position)
 
 var bnspotBalances = make(map[string]bnspot.Balance)
 var bnspotUSDTBalance *bnspot.Balance
+
 var bnswapAssetUpdatedForReBalance = false
 var bnspotBalanceUpdatedForReBalance = false
 var bnswapAssetUpdatedForInflux = false
 var bnspotBalanceUpdatedForInflux = false
 var bnswapAssetUpdatedForExternalInflux = false
 var bnspotBalanceUpdatedForExternalInflux = false
+
 var bnSaveSilentTime = time.Now()
 
 var bnspotAccountCh = make(chan bnspot.Account, 10)
@@ -79,7 +81,10 @@ var bnspotAccountCh = make(chan bnspot.Account, 10)
 var bnspotOrderRequestChs = make(map[string]chan SpotOrderRequest)
 var bnspotNewOrderResponseCh chan bnspot.NewOrderResponse
 var bnspotCancelOrderResponsesCh chan []bnspot.CancelOrderResponse
-var bnspotNewOrderErrorCh chan SpotOrderNewError
+var bnspotNewOrderErrorCh chan MakerOrderNewError
+
+var bnswapOrderRequestChs = make(map[string]chan bnswap.NewOrderParams)
+var bnswapNewOrderErrorCh chan TakerOrderNewError
 
 var bnspotOpenOrders = make(map[string]bnspot.NewOrderParams)
 var bnspotOrderCancelCounts = make(map[string]int)
@@ -107,7 +112,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210418 04:12:22  ####")
+	logger.Debug("####  BUILD @ 20210421 14:41:02  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -156,8 +161,7 @@ func init() {
 		bnOpenLogSilentTimes[symbol] = time.Now()
 		bnspotSilentTimes[symbol] = time.Now().Add(time.Minute)
 		bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now()
-		bnswapLastOrderTimes[symbol] = time.Unix(0, 0)
-		bnspotLastOrderTimes[symbol] = time.Unix(0, 0)
+		bnswapHttpPositionUpdateSilentTimes[symbol] = time.Now()
 	}
 
 	bnBarsMapUpdated["swap"] = false

@@ -30,40 +30,24 @@ func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) 
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				go w.restart()
-			}
+			w.restart()
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
 			logger.Warnf("NextReader error %v", err)
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				go w.restart()
-			}
+			w.restart()
 			return
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
 			logger.Warnf("readAll error %v", err)
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				go w.restart()
-			}
+			w.restart()
 			return
 		}
 		select {
-		case <-time.After(time.Millisecond):
-			logger.Debug("BNSPOT DEPTH20 MSG TO MESSAGE CH TIMEOUT IN 1MS")
 		case w.messageCh <- msg:
+		default:
 		}
 	}
 
@@ -91,6 +75,9 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 	defer func() {
 		logger.Debugf("EXIT startDataHandler %d", id)
 	}()
+	logSilentTime := time.Now()
+	totalLen := 0
+	totalCount := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -98,6 +85,13 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
+			totalCount += 1
+			totalLen += len(msg)
+			if totalCount > 1000000 {
+				logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
+				totalLen = 0
+				totalCount = 0
+			}
 			depth20, err := ParseDepth20(msg)
 			if err != nil {
 				logger.Debugf("ParseDepth20 error %v %s", err, msg)
@@ -109,7 +103,10 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 			case <-w.done:
 				return
 			case <-time.After(time.Millisecond):
-				logger.Warn("BNSPOT DEPTH20 TO OUTPUT CH TIME OUT IN 1MS")
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Warn("BNSWAP DEPTH20 TO OUTPUT CH TIME OUT IN 1MS")
+					logSilentTime = time.Now().Add(time.Minute)
+				}
 			case w.DataCh <- depth20:
 			}
 		}
@@ -190,6 +187,10 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 	for {
 		select {
 		case <-ctx.Done():
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
 			return
 		case <-w.reconnectCh:
 			if internalCancel != nil {
@@ -206,15 +207,14 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 			if err != nil {
 				logger.Debugf("RECONNECT ERROR %v, STOP WS", err)
 				w.Stop()
+				if internalCancel != nil {
+					internalCancel()
+					internalCancel = nil
+				}
 				return
 			}
 			go w.startRead(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn)
-
-			go w.startDataHandler(internalCtx, 0)
-			go w.startDataHandler(internalCtx, 1)
-			go w.startDataHandler(internalCtx, 2)
-			go w.startDataHandler(internalCtx, 3)
 
 			//go w.startDataHandler(internalCtx, 4)
 			//go w.startDataHandler(internalCtx, 5)
@@ -241,7 +241,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 			case <-ctx.Done():
 				return nil
 			default:
-				go w.restart()
+				w.restart()
 			}
 			return nil
 		}
@@ -269,7 +269,6 @@ func (w *Depth20Websocket) Stop() {
 }
 
 func (w *Depth20Websocket) restart() {
-	logger.Infof("BNSWAP WS RESTART")
 	select {
 	case <-w.done:
 		return
@@ -280,6 +279,7 @@ func (w *Depth20Websocket) restart() {
 		w.Stop()
 		logger.Debugf("BNSWAP NIL TO RECONNECT CH TIMEOUT IN 1S, STOP WS")
 	case w.reconnectCh <- nil:
+		logger.Infof("BNSWAP WS RESTART")
 		return
 	}
 }
@@ -296,12 +296,16 @@ func NewDepth20Websocket(
 	ws := Depth20Websocket{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		DataCh:      make(chan *Depth20, len(symbols)),
-		messageCh:   make(chan []byte, 10*len(symbols)),
+		DataCh:      make(chan *Depth20, 100*len(symbols)),
+		messageCh:   make(chan []byte, 400*len(symbols)),
 		mu:          sync.Mutex{},
 		stopped:     false,
 	}
 	go ws.start(ctx, symbols, proxy)
+	go ws.startDataHandler(ctx, 1)
+	go ws.startDataHandler(ctx, 2)
+	go ws.startDataHandler(ctx, 3)
+	go ws.startDataHandler(ctx, 4)
 	ws.reconnectCh <- nil
 	return &ws
 }

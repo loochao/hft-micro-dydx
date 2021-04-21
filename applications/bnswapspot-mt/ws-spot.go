@@ -32,7 +32,7 @@ func handleSpotWSOutboundAccountPosition(account *bnspot.AccountUpdateEvent) {
 
 		bnspotBalances[symbol] = wsBalance.ToBalance()
 		bnspotBalancesUpdateTimes[symbol] = time.Now()
-		bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(time.Minute * 3)
+		bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
 
 		if lastBalance == nil ||
 			lastBalance.Free != bnspotBalances[symbol].Free ||
@@ -47,6 +47,7 @@ func handleSpotWSOutboundAccountPosition(account *bnspot.AccountUpdateEvent) {
 			if lastBalance != nil && lastBalance.Free+lastBalance.Locked != bnspotBalances[symbol].Free+bnspotBalances[symbol].Locked {
 				bnspotSilentTimes[symbol] = time.Now().Add(*bnConfig.EnterSilent)
 			}
+			bnLoopTimer.Reset(time.Nanosecond)
 		}
 	}
 }

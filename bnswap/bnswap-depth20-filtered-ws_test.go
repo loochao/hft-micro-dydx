@@ -13,7 +13,7 @@ func TestNewDepth20FilteredWebsocket(t *testing.T) {
 	proxy := "socks5://127.0.0.1:1081"
 
 
-	ws := NewDepth20FilteredWebsocket(ctx, 0.995, symbols,  proxy)
+	ws := NewDepth20FilteredWebsocket(ctx, 0.995, 50, symbols,  proxy)
 	for {
 		select {
 		case <-ctx.Done():

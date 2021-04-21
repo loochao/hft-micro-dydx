@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
@@ -16,7 +15,7 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 		if nextPos.PositionSide != "BOTH" {
 			return
 		}
-		if nextPos.UpdateTime.Sub(bnswapLastOrderTimes[nextPos.Symbol]) < *bnConfig.PullInterval {
+		if bnswapHttpPositionUpdateSilentTimes[nextPos.Symbol].Sub(nextPos.UpdateTime) > 0 {
 			return
 		}
 		var lastPosition *bnswap.Position
@@ -30,6 +29,7 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 			lastPosition.PositionAmt != nextPos.PositionAmt ||
 			lastPosition.EntryPrice != nextPos.EntryPrice {
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
+			bnLoopTimer.Reset(time.Nanosecond)
 			bnswapOrderSilentTimes[nextPos.Symbol] = time.Now()
 			logger.Debugf("SWAP HTTP POSITION %s", nextPos.ToString())
 		}
@@ -44,6 +44,7 @@ func handleSwapHttpAccount(account bnswap.Account) {
 			bnswapAssetUpdatedForReBalance = true
 			bnswapAssetUpdatedForInflux = true
 			bnswapAssetUpdatedForExternalInflux = true
+			bnLoopTimer.Reset(time.Nanosecond)
 			continue
 		}
 		if asset.Asset == "BNB" {
@@ -54,27 +55,27 @@ func handleSwapHttpAccount(account bnswap.Account) {
 	}
 }
 
-func swapCreateOrder(
-	ctx context.Context,
-	api *bnswap.API,
-	timeout time.Duration,
-	params bnswap.NewOrderParams,
-) {
-	childCtx, _ := context.WithTimeout(ctx, timeout)
-	order, err := api.SubmitOrder(childCtx, params)
-	if err != nil {
-		logger.Debugf("SUBMIT ERROR %s  %v ", params.ToString(), err)
-		select {
-		case <-ctx.Done():
-		case bnswapOrderNewErrorCh <- SwapOrderNewError{
-			Error:  err,
-			Params: params,
-		}:
-		}
-	} else if order.Status == "FILLED" ||
-		order.Status == "CANCELED" ||
-		order.Status == "REJECTED" ||
-		order.Status == "EXPIRED" {
-		bnswapOrderFinishCh <- *order
-	}
-}
+//func swapCreateOrder(
+//	ctx context.Context,
+//	api *bnswap.API,
+//	timeout time.Duration,
+//	params bnswap.NewOrderParams,
+//) {
+//	childCtx, _ := context.WithTimeout(ctx, timeout)
+//	order, err := api.SubmitOrder(childCtx, params)
+//	if err != nil {
+//		logger.Debugf("SUBMIT ERROR %s  %v ", params.ToString(), err)
+//		select {
+//		case <-ctx.Done():
+//		case bnswapOrderNewErrorCh <- TakerOrderNewError{
+//			Error:  err,
+//			Params: params,
+//		}:
+//		}
+//	} else if order.Status == "FILLED" ||
+//		order.Status == "CANCELED" ||
+//		order.Status == "REJECTED" ||
+//		order.Status == "EXPIRED" {
+//		bnswapOrderFinishCh <- *order
+//	}
+//}

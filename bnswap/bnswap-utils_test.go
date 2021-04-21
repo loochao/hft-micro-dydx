@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/geometrybase/hft-micro/logger"
 	"testing"
+	"time"
 )
 
 func TestParseDepth20(t *testing.T) {
@@ -89,3 +90,21 @@ func BenchmarkParseMarkPriceByStdJson(t *testing.B) {
 //		}
 //	}
 //}
+
+
+func TestFundingTime(t *testing.T) {
+	fundingInterval := time.Hour * 8
+	fundingSilent := time.Minute
+	tt, err := time.Parse(time.RFC3339, "2006-01-02T16:01:05Z")
+	if err !=nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%v", tt)
+	logger.Debugf("%v", tt.Truncate(fundingInterval))
+	logger.Debugf("%v", tt.Sub(tt.Truncate(fundingInterval)))
+	logger.Debugf("%v", tt.Sub(tt.Truncate(fundingInterval)) > fundingSilent)
+	logger.Debugf("%v", tt.Truncate(fundingInterval).Add(fundingInterval).Sub(tt) > fundingSilent)
+	//time.RFC3339
+	//time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
+	//	time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent
+}

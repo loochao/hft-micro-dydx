@@ -106,21 +106,22 @@ func watchSpread(
 			medianExitSpread := exitSpreadSortedSlices[symbol].Median()
 
 			select {
-			case <- ctx.Done():
+			case <-ctx.Done():
+				return
+			case outputCh <- Spread{
+				Symbol:         symbol,
+				SwapOrderBook:  swapLob,
+				SpotOrderBook:  spotLob,
+				LastUpdateTime: lob.ArrivalTime,
+				LastEnter:      lastEnterSpread,
+				LastExit:       lastExitSpread,
+				MedianEnter:    medianEnterSpread,
+				MedianExit:     medianExitSpread,
+				Age:            age,
+				AgeDiff:        ageDiff,
+			}:
 			}
 
-			outputCh <- Spread{
-				Symbol: symbol,
-				SwapOrderBook: swapLob,
-				SpotOrderBook: spotLob,
-				LastUpdateTime: lob.ArrivalTime,
-				LastEnter: lastEnterSpread,
-				LastExit: lastExitSpread,
-				MedianEnter: medianEnterSpread,
-				MedianExit: medianExitSpread,
-				Age: age,
-				AgeDiff: ageDiff,
-			}
 		}
 	}
 }

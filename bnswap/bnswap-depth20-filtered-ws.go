@@ -24,7 +24,7 @@ type Depth20FilteredWebsocket struct {
 	stopped     bool
 }
 
-func (w *Depth20FilteredWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth20FilteredWebsocket) startRead(conn *websocket.Conn) {
 	defer func() {
 		logger.Debugf("EXIT startRead")
 	}()
@@ -32,40 +32,24 @@ func (w *Depth20FilteredWebsocket) startRead(ctx context.Context, conn *websocke
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				go w.restart()
-			}
+			w.restart()
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
 			logger.Warnf("NextReader error %v", err)
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				go w.restart()
-			}
+			w.restart()
 			return
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
 			logger.Warnf("readAll error %v", err)
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				go w.restart()
-			}
+			w.restart()
 			return
 		}
 		select {
-		case <-time.After(time.Millisecond):
-			logger.Debug("BNSPOT DEPTH20 MSG TO MESSAGE CH TIMEOUT IN 1MS")
 		case w.messageCh <- msg:
+		default:
 		}
 	}
 
@@ -95,7 +79,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 	}()
 	totalCount := 0
 	filterCount := 0
-	emaTimeDelta := 50.0
+	emaTimeDelta := bias
 	timeDelta := 0.0
 	decay1 := decay
 	decay2 := 1.0 - decay
@@ -178,7 +162,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 			case <-w.done:
 				return
 			case <-time.After(time.Millisecond):
-				logger.Warn("BNSPOT DEPTH20 TO OUTPUT CH TIME OUT IN 1MS")
+				logger.Warn("BNSWAP DEPTH20 TO OUTPUT CH TIME OUT IN 1MS")
 			case w.DataCh <- depth20:
 			}
 		}
@@ -231,7 +215,7 @@ func (w *Depth20FilteredWebsocket) reconnect(ctx context.Context, wsUrl string, 
 	return conn, nil
 }
 
-func (w *Depth20FilteredWebsocket) start(ctx context.Context, decay, bias float64, symbols []string, proxy string) {
+func (w *Depth20FilteredWebsocket) start(ctx context.Context, symbols []string, proxy string) {
 	urlStr := "wss://fstream.binance.com/stream?streams="
 	for _, symbol := range symbols {
 		urlStr += fmt.Sprintf(
@@ -247,18 +231,19 @@ func (w *Depth20FilteredWebsocket) start(ctx context.Context, decay, bias float6
 	var internalCancel context.CancelFunc
 
 	defer func() {
-		logger.Debugf("EXIT start")
-		cancel()
-		if internalCancel != nil {
-			internalCancel()
-		}
 		w.Stop()
+		cancel()
+		logger.Debugf("EXIT start")
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
 			return
 		case <-w.reconnectCh:
 			if internalCancel != nil {
@@ -269,26 +254,22 @@ func (w *Depth20FilteredWebsocket) start(ctx context.Context, decay, bias float6
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
 				internalCancel()
+				internalCancel = nil
 			}
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
 				logger.Debugf("RECONNECT ERROR %v, STOP WS", err)
+				if internalCancel != nil {
+					internalCancel()
+					internalCancel = nil
+				}
 				w.Stop()
 				return
 			}
-			go w.startRead(internalCtx, conn)
+			go w.startRead(conn)
 			go w.maintainHeartbeat(internalCtx, conn)
 
-			go w.startDataHandler(internalCtx, 0, decay, bias)
-			go w.startDataHandler(internalCtx, 1, decay, bias)
-			go w.startDataHandler(internalCtx, 2, decay, bias)
-			go w.startDataHandler(internalCtx, 3, decay, bias)
-
-			//go w.startDataHandler(internalCtx, 4)
-			//go w.startDataHandler(internalCtx, 5)
-			//go w.startDataHandler(internalCtx, 6)
-			//go w.startDataHandler(internalCtx, 7)
 		}
 	}
 }
@@ -310,7 +291,7 @@ func (w *Depth20FilteredWebsocket) maintainHeartbeat(ctx context.Context, conn *
 			case <-ctx.Done():
 				return nil
 			default:
-				go w.restart()
+				w.restart()
 			}
 			return nil
 		}
@@ -338,7 +319,6 @@ func (w *Depth20FilteredWebsocket) Stop() {
 }
 
 func (w *Depth20FilteredWebsocket) restart() {
-	logger.Infof("BNSWAP WS RESTART")
 	select {
 	case <-w.done:
 		return
@@ -349,6 +329,7 @@ func (w *Depth20FilteredWebsocket) restart() {
 		w.Stop()
 		logger.Debugf("BNSWAP NIL TO RECONNECT CH TIMEOUT IN 1S, STOP WS")
 	case w.reconnectCh <- nil:
+		logger.Infof("BNSWAP WS RESTART")
 		return
 	}
 }
@@ -366,12 +347,16 @@ func NewDepth20FilteredWebsocket(
 	ws := Depth20FilteredWebsocket{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		DataCh:      make(chan *Depth20, len(symbols)),
-		messageCh:   make(chan []byte, 10*len(symbols)),
+		DataCh:      make(chan *Depth20, 100*len(symbols)),
+		messageCh:   make(chan []byte, 400*len(symbols)),
 		mu:          sync.Mutex{},
 		stopped:     false,
 	}
-	go ws.start(ctx, decay, bias, symbols, proxy)
+	go ws.start(ctx, symbols, proxy)
+	go ws.startDataHandler(ctx, 0, decay, bias)
+	go ws.startDataHandler(ctx, 1, decay, bias)
+	go ws.startDataHandler(ctx, 2, decay, bias)
+	go ws.startDataHandler(ctx, 3, decay, bias)
 	ws.reconnectCh <- nil
 	return &ws
 }

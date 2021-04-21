@@ -9,13 +9,15 @@ import (
 func watchSwapWalkedOrderBooks(
 	ctx context.Context,
 	cancel context.CancelFunc,
+	takerDecay, takerBias float64,
 	proxyAddress string,
 	takerImpact, makerImpact float64, symbols []string,
-	outputWLob chan WalkedOrderBook,
+	output chan WalkedOrderBook,
 ) {
 	lastUpdatedIds := make(map[string]int64)
-	ws := bnswap.NewDepth20Websocket(
+	ws := bnswap.NewDepth20FilteredWebsocket(
 		ctx,
+		takerDecay, takerBias,
 		symbols,
 		proxyAddress,
 	)
@@ -33,7 +35,7 @@ func watchSwapWalkedOrderBooks(
 				lastUpdatedIds[lob.Symbol] = lob.LastUpdateId
 				select {
 				case <-ctx.Done():
-				case outputWLob <- walkSwapOrderBook(lob, takerImpact, makerImpact):
+				case output <- walkSwapOrderBook(lob, takerImpact, makerImpact):
 				}
 			}
 			break

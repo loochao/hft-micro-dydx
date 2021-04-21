@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-type SwapOrderNewError struct {
+type TakerOrderNewError struct {
 	Error  error
 	Params bnswap.NewOrderParams
 }
 
-type SpotOrderNewError struct {
+type MakerOrderNewError struct {
 	Error  error
 	Params bnspot.NewOrderParams
 }
@@ -31,7 +31,7 @@ type Quantile struct {
 
 const (
 	WalkedOrderBookTypeSwap = "SWAP"
-	WalkedOrderBookTypeSpot = "Spot"
+	WalkedOrderBookTypeSpot = "SPOT"
 )
 
 type WalkedOrderBook struct {

@@ -7,6 +7,7 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
+	"math/rand"
 	"strings"
 	"time"
 )
@@ -65,19 +66,15 @@ func updateSwapPositions() {
 		}
 		price := math.Round(swapOrderBook.AskPrice*(1.0+*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 		side := "BUY"
-		id, _ := common.GenerateShortId()
-		clOrdID := fmt.Sprintf(
-			"%s-H%.6f",
-			id,
-			spotBalance.Locked+spotBalance.Free,
-		)
-		clOrdID = strings.ReplaceAll(clOrdID, ".", "_")
 		if swapSize < 0 {
 			side = "SELL"
 			swapSize = -swapSize
 			price = math.Round(swapOrderBook.BidPrice*(1.0-*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 		}
-		order := bnswap.NewOrderParams{
+		bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
+		bnswapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
+		bnswapHttpPositionUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
+		bnswapOrderRequestChs[symbol]<-bnswap.NewOrderParams{
 			Symbol:           symbol,
 			Side:             side,
 			Type:             "LIMIT",
@@ -85,18 +82,12 @@ func updateSwapPositions() {
 			TimeInForce:      "FOK",
 			Quantity:         swapSize,
 			ReduceOnly:       reduceOnly,
-			NewClientOrderId: clOrdID,
-		}
-		bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
-		bnswapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
-		bnswapLastOrderTimes[symbol] = time.Now()
-		if !*bnConfig.DryRun {
-			go swapCreateOrder(bnGlobalCtx, bnswapAPI, *bnConfig.OrderTimeout, order)
+			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 		}
 	}
 }
 
-func updateSpotNewOrders() {
+func updateMakerNewOrders() {
 
 	if bnspotUSDTBalance == nil {
 		return
@@ -149,11 +140,11 @@ func updateSpotNewOrders() {
 		if time.Now().Sub(spread.LastUpdateTime) > *bnConfig.SpreadTimeToLive {
 			continue
 		}
-		swapStepSize := bnswapStepSizes[symbol]
 		swapMinNotional := bnswapMinNotional[symbol]
 		spotStepSize := bnspotStepSizes[symbol]
 		spotTickSize := bnspotTickSizes[symbol]
 		spotMinNotional := bnspotMinNotional[symbol]
+		mergedStepSize := bnMergedStepSizes[symbol]
 
 		currentSpotSize := spotBalance.Locked + spotBalance.Free
 		if spread.LastEnter > quantile.Top &&
@@ -176,8 +167,9 @@ func updateSpotNewOrders() {
 			entryValue = math.Max(entryValue, spotMinNotional)
 
 			quantity := entryValue / price
-			quantity = math.Round(quantity/spotStepSize) * spotStepSize
-			quantity = math.Round(quantity/swapStepSize) * swapStepSize
+			quantity = math.Round(quantity/mergedStepSize) * mergedStepSize
+
+			entryValue = quantity*price
 
 			//不及一个0.8*EntryStep, 不操作
 			if entryValue < entryStep*0.8 {
@@ -210,37 +202,6 @@ func updateSpotNewOrders() {
 				}
 				continue
 			}
-			if quantity*price > bnspotUSDTBalance.Free {
-				if time.Now().Sub(bnOpenLogSilentTimes[symbol]) > 0 {
-					logger.Debugf(
-						"FAILED TOP OPEN, ORDER VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
-						quantity*price,
-						bnspotUSDTBalance.Free,
-						symbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
-						quantity,
-					)
-					bnOpenLogSilentTimes[symbol] = time.Now().Add(time.Minute * 5)
-				}
-				continue
-			}
-			if quantity*price < spotMinNotional ||
-				quantity*price < swapMinNotional {
-				if time.Now().Sub(bnOpenLogSilentTimes[symbol]) > 0 {
-					logger.Debugf(
-						"FAILED TOP OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f",
-						quantity*price,
-						spotMinNotional,
-						symbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
-						quantity,
-					)
-					bnOpenLogSilentTimes[symbol] = time.Now().Add(time.Minute * 5)
-				}
-				continue
-			}
 			bnOpenLogSilentTimes[symbol] = time.Now()
 			logger.Debugf(
 				"TOP OPEN %s %f > %f, %f > %f, SIZE %f",
@@ -249,14 +210,6 @@ func updateSpotNewOrders() {
 				spread.MedianEnter, quantile.Top,
 				quantity,
 			)
-			id, _ := common.GenerateShortId()
-			clOrdID := fmt.Sprintf(
-				"%sLE%dME%dT%d",
-				id,
-				int(spread.LastEnter*10000),
-				int(spread.MedianEnter*10000),
-				int(quantile.Top*10000),
-			)
 			order := bnspot.NewOrderParams{
 				Symbol:           symbol,
 				Price:            price,
@@ -264,11 +217,12 @@ func updateSpotNewOrders() {
 				TimeInForce:      bnspot.OrderTimeInForceGTC,
 				Side:             bnspot.OrderSideBuy,
 				Type:             bnspot.OrderTypeLimit,
-				NewClientOrderID: clOrdID,
+				NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 			}
 			bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
 			bnspotOrderCancelCounts[symbol] = 0
 			bnspotOpenOrders[symbol] = order
+			bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			bnspotOrderRequestChs[symbol] <- SpotOrderRequest{New: &order}
 			return
 		} else if spread.LastExit < quantile.Bot &&
@@ -282,11 +236,9 @@ func updateSpotNewOrders() {
 					entryValue = math.Min(-2*entryStep, -spotBalance.Free*price*0.5)
 				}
 				quantity := entryValue / price
-				quantity = math.Round(quantity/spotStepSize) * spotStepSize
-				quantity = math.Round(quantity/swapStepSize) * swapStepSize
+				quantity = math.Round(quantity/mergedStepSize) * mergedStepSize
 				if spotBalance.Free*price-entryValue < entryStep {
 					quantity = -math.Floor(spotBalance.Free/spotStepSize) * spotStepSize
-					//quantity = math.Ceil(quantity/swapStepSize) * swapStepSize
 				}
 				if quantity < 0 {
 					logger.Debugf(
@@ -296,14 +248,6 @@ func updateSpotNewOrders() {
 						spread.MedianExit, quantile.Bot,
 						quantity,
 					)
-					id, _ := common.GenerateShortId()
-					clOrdID := fmt.Sprintf(
-						"%sLE%dME%dB%d",
-						id,
-						int(spread.LastExit*10000),
-						int(spread.MedianExit*10000),
-						int(quantile.Bot*10000),
-					)
 					order := bnspot.NewOrderParams{
 						Symbol:           symbol,
 						Price:            price,
@@ -311,11 +255,12 @@ func updateSpotNewOrders() {
 						TimeInForce:      bnspot.OrderTimeInForceGTC,
 						Side:             bnspot.OrderSideSell,
 						Type:             bnspot.OrderTypeLimit,
-						NewClientOrderID: clOrdID,
+						NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 					}
 					bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
 					bnspotOrderCancelCounts[symbol] = 0
 					bnspotOpenOrders[symbol] = order
+					bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
 					bnspotOrderRequestChs[symbol] <- SpotOrderRequest{New: &order}
 					return
 				}
@@ -385,7 +330,10 @@ func hedgeBnb() {
 		swapSize = -swapSize
 		price = math.Round(swapPremiumIndex.MarkPrice*(1.0-*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 	}
-	order := bnswap.NewOrderParams{
+	bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
+	bnswapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
+	bnswapHttpPositionUpdateSilentTimes[symbol] = time.Now()
+	bnswapOrderRequestChs[symbol] <- bnswap.NewOrderParams{
 		Symbol:           symbol,
 		Side:             side,
 		Type:             "LIMIT",
@@ -394,11 +342,5 @@ func hedgeBnb() {
 		Quantity:         swapSize,
 		ReduceOnly:       reduceOnly,
 		NewClientOrderId: clOrdID,
-	}
-	bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
-	bnswapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
-	bnswapLastOrderTimes[symbol] = time.Now()
-	if !*bnConfig.DryRun {
-		go swapCreateOrder(bnGlobalCtx, bnswapAPI, *bnConfig.OrderTimeout, order)
 	}
 }

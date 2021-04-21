@@ -10,6 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 	"unsafe"
 )
 
@@ -251,6 +252,36 @@ func BenchmarkSelectWithContext(t *testing.B) {
 	}
 }
 
+func BenchmarkWithOutSelect(t *testing.B) {
+	ch := make(chan interface{})
+	go func() {
+		for {
+			<-ch
+		}
+	}()
+	t.ReportAllocs()
+	t.ResetTimer()
+	for n := 0; n < t.N; n++ {
+		ch <- nil
+	}
+}
+
+func BenchmarkWithOutSelectMoreConsumer(t *testing.B) {
+	ch := make(chan interface{})
+	for i := 0; i < 4; i++ {
+		go func() {
+			for {
+				<-ch
+			}
+		}()
+	}
+	t.ReportAllocs()
+	t.ResetTimer()
+	for n := 0; n < t.N; n++ {
+		ch <- nil
+	}
+}
+
 func BenchmarkSelectWithoutContext(t *testing.B) {
 	ch := make(chan interface{})
 	go func() {
@@ -268,6 +299,82 @@ func BenchmarkSelectWithoutContext(t *testing.B) {
 		}
 	}
 }
+
+func BenchmarkSelectWithBufferWithoutContext(t *testing.B) {
+	ch := make(chan interface{}, 100)
+	go func() {
+		timer := time.NewTimer(time.Microsecond)
+		for {
+			select {
+			case <- timer.C:
+				select {
+				case <-ch:
+				}
+				timer.Reset(time.Microsecond)
+			}
+		}
+	}()
+	t.ReportAllocs()
+	t.ResetTimer()
+	for n := 0; n < t.N; n++ {
+		select {
+		case ch <- nil:
+		}
+	}
+}
+
+func BenchmarkSelectWithoutContextMoreConsumer(t *testing.B) {
+	ch := make(chan interface{})
+	for i := 0; i < 4; i++ {
+		go func() {
+			timer := time.NewTimer(time.Microsecond)
+			for {
+				select {
+				case <- timer.C:
+					select {
+					case <-ch:
+					}
+					timer.Reset(time.Microsecond)
+				}
+			}
+		}()
+	}
+	t.ReportAllocs()
+	t.ResetTimer()
+	for n := 0; n < t.N; n++ {
+		select {
+		case ch <- nil:
+		}
+	}
+}
+
+func BenchmarkSelectWithoutContextAndBufferAndMoreConsumer(t *testing.B) {
+	ch := make(chan interface{}, 10000)
+	for i := 0; i < 4; i++ {
+		go func() {
+			timer := time.NewTimer(time.Microsecond)
+			for {
+				select {
+				case <- timer.C:
+					select {
+					case <-ch:
+					}
+					timer.Reset(time.Microsecond)
+				}
+			}
+		}()
+	}
+	t.ReportAllocs()
+	t.ResetTimer()
+	for n := 0; n < t.N; n++ {
+		select {
+		case ch <- nil:
+		}
+	}
+}
+
+
+
 
 func BenchmarkSelectWithContexts(t *testing.B) {
 	ch := make(chan interface{})

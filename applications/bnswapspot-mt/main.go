@@ -62,10 +62,11 @@ func main() {
 		return
 	}
 
-	for symbol :=  range bnswapStepSizes {
+	for symbol := range bnswapStepSizes {
 		bnMergedStepSizes[symbol] = common.MergedStepSize(bnswapStepSizes[symbol], bnspotStepSizes[symbol])
 	}
 
+	logger.Debugf("MERGED STEP SIZES %v", bnMergedStepSizes)
 
 	bnInfluxWriter, err = common.NewInfluxWriter(
 		*bnConfig.InternalInflux.Address,
@@ -91,19 +92,19 @@ func main() {
 		return
 	}
 
-	//defer func() {
-	//	err := bnInfluxWriter.Stop()
-	//	if err != nil {
-	//		logger.Warnf("stop influx writer error %v", err)
-	//	}
-	//}()
-	//
-	//defer func() {
-	//	err := bnInfluxWriter.Stop()
-	//	if err != nil {
-	//		logger.Warnf("stop influx writer error %v", err)
-	//	}
-	//}()
+	defer func() {
+		err := bnInfluxWriter.Stop()
+		if err != nil {
+			logger.Warnf("stop influx writer error %v", err)
+		}
+	}()
+
+	defer func() {
+		err := bnInfluxWriter.Stop()
+		if err != nil {
+			logger.Warnf("stop influx writer error %v", err)
+		}
+	}()
 
 	if *bnConfig.ChangeLeverage {
 		for _, symbol := range bnSymbols {
@@ -166,7 +167,7 @@ func main() {
 			*bnConfig.ExternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
-	loopTimer := time.NewTimer(time.Hour * 24) //先等1分钟
+	bnLoopTimer = time.NewTimer(time.Hour * 24) //先等1分钟
 	targetValueUpdateTimer := time.NewTimer(time.Hour * 24)
 	resetUnrealisedPnlTimer := time.NewTimer(time.Minute)
 	reBalanceTimer := time.NewTimer(time.Second)
@@ -175,7 +176,7 @@ func main() {
 
 	defer bnbReBalanceTimer.Stop()
 	defer influxSaveTimer.Stop()
-	defer loopTimer.Stop()
+	defer bnLoopTimer.Stop()
 	defer targetValueUpdateTimer.Stop()
 	defer resetUnrealisedPnlTimer.Stop()
 	defer reBalanceTimer.Stop()
@@ -262,6 +263,8 @@ func main() {
 		go watchSwapWalkedOrderBooks(
 			bnGlobalCtx,
 			bnGlobalCancel,
+			*bnConfig.OrderBookTakerDecay,
+			*bnConfig.OrderBookTakerBias,
 			*bnConfig.ProxyAddress,
 			*bnConfig.OrderBookTakerImpact,
 			*bnConfig.OrderBookMakerImpact,
@@ -282,9 +285,9 @@ func main() {
 		spreadCh,
 	)
 
-	bnspotCancelOrderResponsesCh = make(chan []bnspot.CancelOrderResponse, len(bnSymbols)*2)
-	bnspotNewOrderResponseCh = make(chan bnspot.NewOrderResponse, len(bnSymbols)*2)
-	bnspotNewOrderErrorCh = make(chan SpotOrderNewError, len(bnSymbols)*2)
+	bnspotCancelOrderResponsesCh = make(chan []bnspot.CancelOrderResponse, len(bnSymbols)*100)
+	bnspotNewOrderResponseCh = make(chan bnspot.NewOrderResponse, len(bnSymbols)*100)
+	bnspotNewOrderErrorCh = make(chan MakerOrderNewError, len(bnSymbols)*100)
 	for _, symbol := range bnSymbols {
 		bnspotOrderRequestChs[symbol] = make(chan SpotOrderRequest, 2)
 		go watchSpotOrderRequest(
@@ -301,22 +304,37 @@ func main() {
 			Cancel: &bnspot.CancelAllOrderParams{Symbol: symbol},
 		}
 	}
+	bnswapNewOrderErrorCh = make(chan TakerOrderNewError, len(bnSymbols)*100)
+	for _, symbol := range bnSymbols {
+		bnswapOrderRequestChs[symbol] = make(chan bnswap.NewOrderParams, 2)
+		go watchTakerOrderRequest(
+			bnGlobalCtx,
+			bnswapAPI,
+			*bnConfig.OrderTimeout,
+			*bnConfig.DryRun,
+			bnswapOrderRequestChs[symbol],
+			bnswapOrderFinishCh,
+			bnswapNewOrderErrorCh,
+		)
+	}
 
-	done := make(chan bool, 1)
 	if *bnConfig.CpuProfile != "" {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		go func() {
 			sig := <-sigs
-			logger.Debugf("Exit with sig %d, clean *.tmp files", sig)
-			done <- true
+			logger.Debugf("Exit with sig %d,", sig)
+			bnGlobalCancel()
 		}()
 	}
 
+	fundingInterval := time.Hour * 8
+	fundingSilent := time.Minute * 3
+
 	for {
 		select {
-		case <-done:
-			logger.Debugf("Exit")
+		case <-bnGlobalCtx.Done():
+			logger.Debugf("EXIT MAIN LOOP")
 			return
 		case <-reBalanceTimer.C:
 			if bnspotUSDTBalance != nil && bnswapUSDTAsset != nil && bnswapUSDTAsset.AvailableBalance != nil {
@@ -383,6 +401,7 @@ func main() {
 				if openOrder, ok := bnspotOpenOrders[data.Symbol]; ok && openOrder.NewClientOrderID == data.ClientOrderID {
 					delete(bnspotOpenOrders, data.Symbol)
 				}
+				bnspotHttpBalanceUpdateSilentTimes[data.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			} else if data.CurrentOrderStatus == bnspot.OrderStatusCancelled {
 				if openOrder, ok := bnspotOpenOrders[data.Symbol]; ok && openOrder.NewClientOrderID == data.OriginalClientOrderID {
 					delete(bnspotOpenOrders, data.Symbol)
@@ -435,7 +454,7 @@ func main() {
 			break
 		case bnQuantiles = <-bnQuantilesCh:
 			//logger.Debugf("QUANTILE %v", bnQuantiles)
-			loopTimer.Reset(time.Second)
+			bnLoopTimer.Reset(time.Second)
 			break
 		case <-influxSaveTimer.C:
 			handleSave()
@@ -474,11 +493,13 @@ func main() {
 					bnRealisedSpread[order.Symbol] = (order.CumQuote - spotPrice) / spotPrice
 					logger.Debugf("%s REALISED OPEN SPREAD %f", order.Symbol, bnRealisedSpread[order.Symbol])
 				}
+				bnswapHttpPositionUpdateSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			} else if order.Side == common.OrderSideBuy && order.Status == "FILLED" {
 				if spotPrice, ok := bnspotLastFilledSellPrices[order.Symbol]; ok {
 					bnRealisedSpread[order.Symbol] = (order.CumQuote - spotPrice) / spotPrice
 					logger.Debugf("%s REALISED CLOSE SPREAD %f", order.Symbol, bnRealisedSpread[order.Symbol])
 				}
+				bnswapHttpPositionUpdateSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			}
 			logger.Debug(logStr)
 			break
@@ -543,11 +564,14 @@ func main() {
 			handleReBalanceBnb()
 			bnbReBalanceTimer.Reset(*bnConfig.BnbCheckInterval)
 			break
-		case <-loopTimer.C:
+		case <-bnLoopTimer.C:
 			updateSwapPositions()
-			updateSpotOldOrders()
-			updateSpotNewOrders()
-			loopTimer.Reset(
+			updateMakerOldOrders()
+			if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
+				time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
+				updateMakerNewOrders()
+			}
+			bnLoopTimer.Reset(
 				time.Now().Truncate(
 					*bnConfig.LoopInterval,
 				).Add(

@@ -22,17 +22,11 @@ type Depth20Websocket struct {
 	stopped     bool
 }
 
-func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) {
-	totalLen := 0
-	totalCount := 0
+func (w *Depth20Websocket) startRead(conn *websocket.Conn) {
+	defer func() {
+		logger.Debugf("EXIT startRead")
+	}()
 	for {
-		select {
-		case <-w.done:
-			return
-		case <-ctx.Done():
-			return
-		default:
-		}
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
@@ -51,20 +45,10 @@ func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) 
 			w.restart()
 			return
 		}
-		totalCount += 1
-		totalLen += len(msg)
-		if totalCount > 1000000 {
-			logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
-			totalLen = 0
-			totalCount = 0
-		}
-		//此处有两种情况，1、主线程退出，发不出去无所谓 2、WS重启，重启完就可以发出来了，中间这个go routine会停住
+		//以最快的速度送走数据, 进行一下个LOOP, 盘口的数据是可以丢的
 		select {
-		case <-ctx.Done():
-			return
-		case <-w.done:
-			return
 		case w.messageCh <- msg:
+		default:
 		}
 	}
 }
@@ -98,7 +82,7 @@ func (w *Depth20Websocket) reconnect(ctx context.Context, wsUrl string, proxy st
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			logger.Fatalf("PARSE PROXY %v", err)
+			return nil, fmt.Errorf("PARSE PROXY %v", err)
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -149,10 +133,8 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 
 	defer func() {
 		w.Stop()
-		if internalCancel != nil {
-			internalCancel()
-		}
 		cancel()
+		logger.Debugf("EXIT start")
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
@@ -161,11 +143,13 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 		case <-ctx.Done():
 			if internalCancel != nil {
 				internalCancel()
+				internalCancel = nil
 			}
 			return
 		case <-w.done:
 			if internalCancel != nil {
 				internalCancel()
+				internalCancel = nil
 			}
 			return
 		case <-w.reconnectCh:
@@ -177,6 +161,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
 				internalCancel()
+				internalCancel = nil
 			}
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
@@ -184,10 +169,11 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 				logger.Debugf("RECONNECT ERROR %v", err)
 				if internalCancel != nil {
 					internalCancel()
+					internalCancel = nil
 				}
 				return
 			}
-			go w.startRead(internalCtx, conn)
+			go w.startRead(conn)
 			go w.maintainHeartbeat(internalCtx, conn)
 		}
 	}
@@ -225,7 +211,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 		case <-w.done:
 			return
 		case <-timer.C:
-			logger.Warnf("USER WS TIMEOUT, NO TRAFFIC IN 15M, RESTART")
+			logger.Warnf("BNSPOT DEPTH20 WS, NO TRAFFIC IN 15M, RESTART")
 			w.restart()
 			return
 		case <-trafficCh:
@@ -248,8 +234,8 @@ func (w *Depth20Websocket) Stop() {
 func (w *Depth20Websocket) restart() {
 	select {
 	case <-w.done:
-	case <-time.After(time.Millisecond):
-		logger.Debugf("BNSPOT NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT WS")
+	case <-time.After(time.Second):
+		logger.Debugf("BNSPOT NIL TO RECONNECT CH TIMEOUT IN 1S, EXIT WS")
 		w.Stop()
 	case w.reconnectCh <- nil:
 		logger.Debugf("BNSPOT DEPTH20 WS RESTART")
@@ -262,6 +248,8 @@ func (w *Depth20Websocket) Done() chan interface{} {
 
 func (w *Depth20Websocket) startDataHandler(ctx context.Context) {
 	logSilentTime := time.Now()
+	totalLen := 0
+	totalCount := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -269,6 +257,13 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
+			totalCount += 1
+			totalLen += len(msg)
+			if totalCount > 1000000 {
+				logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
+				totalLen = 0
+				totalCount = 0
+			}
 			if msg[2] != 's' {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("BNSPOT OTHER MSG %s", msg)
@@ -305,8 +300,8 @@ func NewDepth20Websocket(
 	ws := Depth20Websocket{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		DataCh:      make(chan *Depth20, len(symbols)),
-		messageCh:   make(chan []byte, 10*len(symbols)),
+		DataCh:      make(chan *Depth20, 100*len(symbols)),
+		messageCh:   make(chan []byte, 400*len(symbols)),
 		stopped:     false,
 		mu:          sync.Mutex{},
 	}

@@ -40,6 +40,8 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			lastPosition.EntryPrice != bnswapPositions[pos.Symbol].EntryPrice {
 			//bnswapOrderSilentTimes[pos.Symbol] = time.Now()
 			logger.Debugf("WS POSITION CHANGED NEW %s", pos.ToString())
+			bnswapHttpPositionUpdateSilentTimes[pos.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
+			bnLoopTimer.Reset(time.Nanosecond)
 		}
 	}
 	for _, balance := range data.Account.Balances {

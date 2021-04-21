@@ -4,16 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnspot"
-	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
+	"math/rand"
 	"strings"
 	"time"
 )
 
 func handleSpotHttpAccount(account bnspot.Account) {
-	//logger.Debugf("handleSpotHttpAccount updateTime lastOrderTime Diff %f", account.UpdateTime.Sub(bnspotLastOrderTimes).Seconds())
-
 	hasUSDT := false
 	hasSpotBalances := make(map[string]bool)
 	for _, balance := range account.Balances {
@@ -37,16 +35,11 @@ func handleSpotHttpAccount(account bnspot.Account) {
 		if bnspotHttpBalanceUpdateSilentTimes[symbol].Sub(time.Now()) > 0 {
 			continue
 		}
-		if account.UpdateTime.Sub(bnspotLastOrderTimes[symbol]).Seconds() < 0.0 {
-			continue
-		}
-
 		var lastBalance *bnspot.Balance
 		if b, ok := bnspotBalances[symbol]; ok {
 			b := b
 			lastBalance = &b
 		}
-
 		bnspotBalances[symbol] = balance
 		bnspotBalancesUpdateTimes[symbol] = time.Now()
 
@@ -63,6 +56,7 @@ func handleSpotHttpAccount(account bnspot.Account) {
 			if lastBalance != nil && lastBalance.Free+lastBalance.Locked != bnspotBalances[symbol].Free+bnspotBalances[symbol].Locked {
 				bnspotSilentTimes[symbol] = time.Now().Add(*bnConfig.EnterSilent)
 			}
+			bnLoopTimer.Reset(time.Nanosecond)
 		}
 	}
 	if !hasUSDT {
@@ -195,18 +189,9 @@ func handleReBalanceBnb() {
 			}
 			if price*size < bnspotUSDTBalance.Free {
 				logger.Debugf("CHANGE BNB SIZE %f PRICE %f", size, price)
-				id, _ := common.GenerateShortId()
-				clOrdID := fmt.Sprintf(
-					"%sBNBBURN",
-					id,
-				)
-				clOrdID = strings.ReplaceAll(clOrdID, ".", "_")
-				if len(clOrdID) > 36 {
-					clOrdID = clOrdID[:36]
-				}
 				bnspotOrderSilentTimes[bnBNBSymbol] = time.Now().Add(*bnConfig.OrderSilent)
 				bnspotBalancesUpdateTimes[bnBNBSymbol] = time.Unix(0, 0)
-				bnspotLastOrderTimes[bnBNBSymbol] = time.Now()
+				bnspotHttpBalanceUpdateSilentTimes[bnBNBSymbol] = time.Now().Add(*bnConfig.HttpSilent)
 				bnspotOrderRequestChs[bnBNBSymbol] <- SpotOrderRequest{
 					New: &bnspot.NewOrderParams{
 						Symbol:           bnBNBSymbol,
@@ -215,7 +200,7 @@ func handleReBalanceBnb() {
 						TimeInForce:      "FOK",
 						Price:            price,
 						Quantity:         size,
-						NewClientOrderID: clOrdID,
+						NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 					},
 				}
 			}

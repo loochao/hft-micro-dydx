@@ -361,7 +361,7 @@ func WatchPositionsFromHttp(
 				positionBySymbols := make(map[string]Position)
 				for _, symbol := range symbols {
 					positionBySymbols[symbol] = Position{
-						Symbol: symbol,
+						Symbol:       symbol,
 						PositionSide: "BOTH",
 					}
 				}
@@ -507,3 +507,4 @@ func WatchPremiumIndexesFromHttp(
 		}
 	}
 }
+

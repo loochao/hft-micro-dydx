@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/logger"
-	"time"
 )
 
 func watchSpotWalkedOrderBooks(
@@ -12,7 +11,7 @@ func watchSpotWalkedOrderBooks(
 	cancel context.CancelFunc,
 	proxyAddress string,
 	takerImpact, makerImpact float64, symbols []string, output chan WalkedOrderBook) {
-	ws := bnspot.NewDepth20Websocket(ctx, symbols, time.Minute, proxyAddress)
+	ws := bnspot.NewDepth20Websocket(ctx, symbols, proxyAddress)
 	defer ws.Stop()
 
 	lastUpdatedIds := make(map[string]int64)

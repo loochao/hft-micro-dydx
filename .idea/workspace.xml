@@ -2,8 +2,35 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/order-taker.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/interface-depth20.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/interface-depth20_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/quantile.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/quantile.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/http-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/http-spot.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/http-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/http-swap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/lob-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/lob-spot.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/lob-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/lob-swap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/loop.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/loop.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/order-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/order-maker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/spread.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/spread.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/sync-bars.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/sync-bars.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/type.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/type.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/ws-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/ws-spot.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-mt/ws-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-mt/ws-swap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-depth20-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-depth20-ws.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-depth20-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-depth20-ws_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-types.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-types.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-user-ws-types.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-ws-types.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnspot/bnspot-user-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnspot/bnspot-user-ws.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-depth20-filtered-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-filtered-ws.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-depth20-filtered-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-filtered-ws_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-ws.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-utils.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-utils_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-utils_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/utils_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/utils_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,32 +74,23 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/hbspot" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/applications/bnswapspot-mt" />
     <property name="settings.editor.selected.configurable" value="configurable.group.build" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/applications/bnswapspot-mt" />
+      <recent name="$PROJECT_DIR$/bnspot" />
       <recent name="$PROJECT_DIR$/hbspot" />
       <recent name="$PROJECT_DIR$/hbcrossswap" />
       <recent name="$PROJECT_DIR$/bnswap" />
-      <recent name="$PROJECT_DIR$/tools" />
-      <recent name="$PROJECT_DIR$/applications" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/kcperp/jsons" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Build.go build github.com/geometrybase/hft-micro/applications/test-exit">
-    <configuration name="go build github.com/geometrybase/hft-micro/applications/test-exit" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
-      <filePath value="$PROJECT_DIR$/applications/test-exit/main.go" />
-      <package value="github.com/geometrybase/hft-micro/applications/test-exit" />
-      <directory value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="BenchmarkSelectWithContext in github.com/geometrybase/hft-micro/common" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Test.TestFundingTime in github.com/geometrybase/hft-micro/bnswap">
+    <configuration name="BenchmarkSelectWithoutContextAndBufferAndMoreConsumer in github.com/geometrybase/hft-micro/common" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
       <working_directory value="$PROJECT_DIR$/common" />
       <framework value="gobench" />
@@ -80,18 +98,18 @@
       <package value="github.com/geometrybase/hft-micro/common" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QBenchmarkSelectWithContext\E$" />
+      <pattern value="^\QBenchmarkSelectWithoutContextAndBufferAndMoreConsumer\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="BenchmarkSelectWithContexts in github.com/geometrybase/hft-micro/common" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestFundingTime in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/common" />
-      <framework value="gobench" />
+      <working_directory value="$PROJECT_DIR$/bnswap" />
+      <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/common" />
+      <package value="github.com/geometrybase/hft-micro/bnswap" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QBenchmarkSelectWithContexts\E$" />
+      <pattern value="^\QTestFundingTime\E$" />
       <method v="2" />
     </configuration>
     <configuration name="TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -105,31 +123,42 @@
       <pattern value="^\QTestNewDepth20Ws\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestNewUserWebsocket in github.com/geometrybase/hft-micro/bnspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/bnspot" />
+      <working_directory value="$PROJECT_DIR$/bnswap" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/bnspot" />
+      <package value="github.com/geometrybase/hft-micro/bnswap" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestNewUserWebsocket\E$" />
+      <pattern value="^\QTestNewDepth20Ws\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestWalkMakerTakerDepth20 in github.com/geometrybase/hft-micro/common" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hft-micro" />
+      <working_directory value="$PROJECT_DIR$/common" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/geometrybase/hft-micro/common" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestWalkMakerTakerDepth20\E$" />
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/test-exit" />
-      <item itemvalue="Go Test.BenchmarkSelectWithContext in github.com/geometrybase/hft-micro/common" />
-      <item itemvalue="Go Test.BenchmarkSelectWithContexts in github.com/geometrybase/hft-micro/common" />
+      <item itemvalue="Go Test.BenchmarkSelectWithoutContextAndBufferAndMoreConsumer in github.com/geometrybase/hft-micro/common" />
+      <item itemvalue="Go Test.TestWalkMakerTakerDepth20 in github.com/geometrybase/hft-micro/common" />
       <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnspot" />
-      <item itemvalue="Go Test.TestNewUserWebsocket in github.com/geometrybase/hft-micro/bnspot" />
+      <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Test.TestFundingTime in github.com/geometrybase/hft-micro/bnswap" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/test-exit" />
+        <item itemvalue="Go Test.TestFundingTime in github.com/geometrybase/hft-micro/bnswap" />
+        <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" />
         <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnspot" />
-        <item itemvalue="Go Test.TestNewUserWebsocket in github.com/geometrybase/hft-micro/bnspot" />
-        <item itemvalue="Go Test.BenchmarkSelectWithContexts in github.com/geometrybase/hft-micro/common" />
-        <item itemvalue="Go Test.BenchmarkSelectWithContext in github.com/geometrybase/hft-micro/common" />
+        <item itemvalue="Go Test.TestWalkMakerTakerDepth20 in github.com/geometrybase/hft-micro/common" />
+        <item itemvalue="Go Test.BenchmarkSelectWithoutContextAndBufferAndMoreConsumer in github.com/geometrybase/hft-micro/common" />
       </list>
     </recent_temporary>
   </component>
