@@ -93,7 +93,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 		case msg := <-w.messageCh:
 			totalCount++
 			if totalCount > 10000 {
-				logger.Debugf("EMA TIME DELTA %f DROP RATIO %f", emaTimeDelta, float64(filterCount)/float64(totalCount))
+				logger.Debugf("%d EMA TIME DELTA %f DROP RATIO %f", id, emaTimeDelta, float64(filterCount)/float64(totalCount))
 				totalCount = 0
 				filterCount = 0
 			}
