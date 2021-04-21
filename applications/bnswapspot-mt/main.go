@@ -238,7 +238,23 @@ func main() {
 		bnQuantilesCh,
 	)
 
-	walkedOrderBookCh := make(chan WalkedOrderBook, len(bnSymbols)*10)
+
+	spreadCh := make(chan Spread, len(bnSymbols)*10)
+	walkedOrderBookChMap := make(map[string]chan*WalkedOrderBook)
+	for _, symbol := range bnSymbols {
+		walkedOrderBookChMap[symbol] = make(chan *WalkedOrderBook, 100)
+		go watchSingleSpread(
+			bnGlobalCtx,
+			symbol,
+			*bnConfig.OrderBookMaxAgeDiff,
+			*bnConfig.OrderBookMaxAge,
+			*bnConfig.SpreadLookbackDuration,
+			*bnConfig.SpreadLookbackMinimalWindow,
+			walkedOrderBookChMap[symbol],
+			spreadCh,
+		)
+	}
+
 	for start := 0; start < len(bnSymbols); start += *bnConfig.OrderBookBatchSize {
 		end := start + *bnConfig.OrderBookBatchSize
 		if end > len(bnSymbols) {
@@ -251,7 +267,7 @@ func main() {
 			*bnConfig.OrderBookTakerImpact,
 			*bnConfig.OrderBookMakerImpact,
 			bnSymbols[start:end],
-			walkedOrderBookCh,
+			walkedOrderBookChMap,
 		)
 	}
 
@@ -269,21 +285,11 @@ func main() {
 			*bnConfig.OrderBookTakerImpact,
 			*bnConfig.OrderBookMakerImpact,
 			bnSymbols[start:end],
-			walkedOrderBookCh,
+			walkedOrderBookChMap,
 		)
 	}
 
-	spreadCh := make(chan Spread, len(bnSymbols)*10)
-	go watchSpread(
-		bnGlobalCtx,
-		bnSymbols,
-		*bnConfig.OrderBookMaxAgeDiff,
-		*bnConfig.OrderBookMaxAge,
-		*bnConfig.SpreadLookbackDuration,
-		*bnConfig.SpreadLookbackMinimalWindow,
-		walkedOrderBookCh,
-		spreadCh,
-	)
+
 
 	bnspotCancelOrderResponsesCh = make(chan []bnspot.CancelOrderResponse, len(bnSymbols)*100)
 	bnspotNewOrderResponseCh = make(chan bnspot.NewOrderResponse, len(bnSymbols)*100)

@@ -10,7 +10,7 @@ func watchSpotWalkedOrderBooks(
 	ctx context.Context,
 	cancel context.CancelFunc,
 	proxyAddress string,
-	takerImpact, makerImpact float64, symbols []string, output chan WalkedOrderBook) {
+	takerImpact, makerImpact float64, symbols []string, output map[string]chan *WalkedOrderBook) {
 	ws := bnspot.NewDepth20Websocket(ctx, symbols, proxyAddress)
 	defer ws.Stop()
 
@@ -22,7 +22,7 @@ func watchSpotWalkedOrderBooks(
 				lastUpdatedIds[data.Symbol] = data.LastUpdateId
 				select {
 				case <-ctx.Done():
-				case output <- walkSpotOrderBook(data, takerImpact, makerImpact):
+				case output[data.Symbol] <- walkSpotOrderBook(data, takerImpact, makerImpact):
 				}
 			}
 			break
@@ -36,7 +36,7 @@ func watchSpotWalkedOrderBooks(
 	}
 }
 
-func walkSpotOrderBook(orderBook *bnspot.Depth20, takerImpact, makerImpact float64) WalkedOrderBook {
+func walkSpotOrderBook(orderBook *bnspot.Depth20, takerImpact, makerImpact float64) *WalkedOrderBook {
 	wLob := WalkedOrderBook{
 		Symbol:      orderBook.Symbol,
 		Type:        WalkedOrderBookTypeSpot,
@@ -120,5 +120,5 @@ func walkSpotOrderBook(orderBook *bnspot.Depth20, takerImpact, makerImpact float
 	wLob.BidSize = orderBook.Bids[0][1]
 	wLob.AskPrice = orderBook.Asks[0][0]
 	wLob.AskSize = orderBook.Asks[0][1]
-	return wLob
+	return &wLob
 }

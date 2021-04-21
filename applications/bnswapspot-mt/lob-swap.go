@@ -12,7 +12,7 @@ func watchSwapWalkedOrderBooks(
 	takerDecay, takerBias float64,
 	proxyAddress string,
 	takerImpact, makerImpact float64, symbols []string,
-	output chan WalkedOrderBook,
+	output map[string]chan *WalkedOrderBook,
 ) {
 	lastUpdatedIds := make(map[string]int64)
 	ws := bnswap.NewDepth20FilteredWebsocket(
@@ -35,7 +35,7 @@ func watchSwapWalkedOrderBooks(
 				lastUpdatedIds[lob.Symbol] = lob.LastUpdateId
 				select {
 				case <-ctx.Done():
-				case output <- walkSwapOrderBook(lob, takerImpact, makerImpact):
+				case output[lob.Symbol] <- walkSwapOrderBook(lob, takerImpact, makerImpact):
 				}
 			}
 			break
@@ -43,7 +43,7 @@ func watchSwapWalkedOrderBooks(
 	}
 }
 
-func walkSwapOrderBook(orderBook *bnswap.Depth20, takerImpact, makerImpact float64) WalkedOrderBook {
+func walkSwapOrderBook(orderBook *bnswap.Depth20, takerImpact, makerImpact float64) *WalkedOrderBook {
 	wLob := WalkedOrderBook{
 		Symbol:      orderBook.Symbol,
 		Type:        WalkedOrderBookTypeSwap,
@@ -128,5 +128,5 @@ func walkSwapOrderBook(orderBook *bnswap.Depth20, takerImpact, makerImpact float
 	wLob.BidSize = orderBook.Bids[0][1]
 	wLob.AskPrice = orderBook.Asks[0][0]
 	wLob.AskSize = orderBook.Asks[0][1]
-	return wLob
+	return &wLob
 }

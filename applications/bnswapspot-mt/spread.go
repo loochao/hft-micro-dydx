@@ -125,3 +125,110 @@ func watchSpread(
 		}
 	}
 }
+
+func watchSingleSpread(
+	ctx context.Context,
+	symbol string,
+	maxAgeDiff,
+	maxAge,
+	lookbackDuration time.Duration,
+	lookbackWindow int,
+	walkedOrderBookCh chan *WalkedOrderBook,
+	outputCh chan Spread,
+) {
+	var swapOrderBook, spotOrderBook *WalkedOrderBook
+	enterSpreadWindow := make([]float64, 0)
+	exitSpreadWindow := make([]float64, 0)
+	enterSpreadSortedSlice := common.SortedFloatSlice{}
+	exitSpreadSortedSlice := common.SortedFloatSlice{}
+	arrivalTimes := make([]time.Time, 0)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case lob := <-walkedOrderBookCh:
+			if lob.Type == WalkedOrderBookTypeSwap {
+				swapOrderBook = lob
+				if spotOrderBook == nil {
+					break
+				}
+			} else if lob.Type == WalkedOrderBookTypeSpot {
+				spotOrderBook = lob
+				if spotOrderBook == nil {
+					break
+				}
+			} else {
+				break
+			}
+
+			ageDiff := spotOrderBook.ArrivalTime.Sub(swapOrderBook.ArrivalTime)
+			if ageDiff < 0 {
+				ageDiff = -ageDiff
+			}
+			age := (time.Now().Sub(spotOrderBook.ArrivalTime) + time.Now().Sub(swapOrderBook.ArrivalTime)) / 2
+			if age > maxAge ||
+				ageDiff > maxAgeDiff {
+				break
+			}
+
+			lastEnterSpread := (swapOrderBook.TakerBidVWAP - spotOrderBook.MakerBidVWAP) / spotOrderBook.MakerBidVWAP
+			lastExitSpread := (swapOrderBook.TakerAskVWAP - spotOrderBook.MakerAskVWAP) / spotOrderBook.MakerAskVWAP
+
+			arrivalTimes= append(arrivalTimes, swapOrderBook.ArrivalTime)
+			enterSpreadWindow = append(enterSpreadWindow, lastEnterSpread)
+			exitSpreadWindow = append(exitSpreadWindow, lastExitSpread)
+			enterSpreadSortedSlice = enterSpreadSortedSlice.Insert(lastEnterSpread)
+			exitSpreadSortedSlice = exitSpreadSortedSlice.Insert(lastExitSpread)
+			cutIndex := 0
+			for i, arrivalTime := range arrivalTimes {
+				if lob.ArrivalTime.Sub(arrivalTime) > lookbackDuration {
+					cutIndex = i
+				} else {
+					break
+				}
+			}
+			if cutIndex > 0 {
+				for _, d := range enterSpreadWindow[:cutIndex] {
+					enterSpreadSortedSlice = enterSpreadSortedSlice.Delete(d)
+				}
+				for _, d := range exitSpreadWindow[:cutIndex] {
+					exitSpreadSortedSlice = exitSpreadSortedSlice.Delete(d)
+				}
+				arrivalTimes = arrivalTimes[cutIndex:]
+				enterSpreadWindow = enterSpreadWindow[cutIndex:]
+				exitSpreadWindow = exitSpreadWindow[cutIndex:]
+			}
+
+			if len(enterSpreadWindow) < lookbackWindow ||
+				len(exitSpreadWindow) < lookbackWindow {
+				break
+			}
+
+			arrivalTimeDiff := lob.ArrivalTime.Sub(arrivalTimes[0])
+			if arrivalTimeDiff < lookbackDuration/2 {
+				break
+			}
+
+			medianEnterSpread := enterSpreadSortedSlice.Median()
+			medianExitSpread := exitSpreadSortedSlice.Median()
+
+			select {
+			case <-ctx.Done():
+				return
+			case outputCh <- Spread{
+				Symbol:         symbol,
+				SwapOrderBook:  *swapOrderBook,
+				SpotOrderBook:  *spotOrderBook,
+				LastUpdateTime: lob.ArrivalTime,
+				LastEnter:      lastEnterSpread,
+				LastExit:       lastExitSpread,
+				MedianEnter:    medianEnterSpread,
+				MedianExit:     medianExitSpread,
+				Age:            age,
+				AgeDiff:        ageDiff,
+			}:
+			}
+
+		}
+	}
+}
