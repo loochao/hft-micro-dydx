@@ -21,7 +21,7 @@ func watchDeltaQuantile(
 	inputCh chan [2]common.KLinesMap,
 	outputCh chan map[string]MakerTakerDeltaQuantile,
 ) {
-	defer func(){
+	defer func() {
 		logger.Debugf("EXIT watchDeltaQuantile")
 	}()
 	for {
@@ -76,8 +76,8 @@ func watchDeltaQuantile(
 					q := MakerTakerDeltaQuantile{
 						Symbol:   makerSymbol,
 						ShortTop: top / maClose,
-						ShortBot: bot / maClose,
-						LongTop:  top / maClose,
+						ShortBot: (bot + botScale*botBand*0.5) / maClose,
+						LongTop:  (top - topScale*topBand*0.5) / maClose,
 						LongBot:  bot / maClose,
 						Mid:      mid / maClose,
 						MaClose:  maClose,
