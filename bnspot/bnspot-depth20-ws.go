@@ -287,6 +287,10 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context) {
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			case w.DataCh <- depth20:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("BNSPOT DEPTH20 DATA CH LEN %d", len(w.DataCh))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
 			}
 		}
 	}

@@ -337,6 +337,7 @@ func main() {
 	fundingInterval := time.Hour * 8
 	fundingSilent := time.Minute * 3
 
+	spreadLogTime := time.Now()
 	for {
 		select {
 		case <-bnGlobalCtx.Done():
@@ -427,6 +428,10 @@ func main() {
 			break
 		case spread := <-spreadCh:
 			bnSpreads[spread.Symbol] = spread
+			if time.Now().Sub(spreadLogTime) > 0 {
+				logger.Debugf("SPREAD CH LEN %d", len(spreadCh))
+				spreadLogTime = time.Now().Add(time.Minute)
+			}
 			break
 		case bnswapPremiumIndexes = <-bnswapPremiumIndexesCh:
 			break
