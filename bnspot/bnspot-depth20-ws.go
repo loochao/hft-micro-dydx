@@ -282,7 +282,7 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context) {
 			case <-w.done:
 				return
 			case <-time.After(time.Millisecond):
-				logger.Warn("BNSPOT DEPTH20 TO OUTPUT CH TIME OUT IN 1MS, CH LEN %d", len(w.DataCh))
+				logger.Debugf("BNSPOT DEPTH20 TO OUTPUT CH TIME OUT IN 1MS, CH LEN %d", len(w.DataCh))
 				//if time.Now().Sub(logSilentTime) > 0 {
 				//	logger.Warn("BNSPOT DEPTH20 TO OUTPUT CH TIME OUT IN 1 Microsecond")
 				//	logSilentTime = time.Now().Add(time.Minute)
