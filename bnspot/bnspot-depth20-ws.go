@@ -304,8 +304,8 @@ func NewDepth20Websocket(
 	ws := Depth20Websocket{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		DataCh:      make(chan *Depth20, 100*len(symbols)),
-		messageCh:   make(chan []byte, 400*len(symbols)),
+		DataCh:      make(chan *Depth20, 10*len(symbols)),
+		messageCh:   make(chan []byte, 10*len(symbols)),
 		stopped:     false,
 		mu:          sync.Mutex{},
 	}

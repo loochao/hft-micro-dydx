@@ -323,9 +323,9 @@ func NewUserWebsocket(
 	ws := UserWebsocket{
 		done:                 make(chan interface{}),
 		reconnectCh:          make(chan interface{}),
-		OrderUpdateEventCh:   make(chan *OrderUpdateEvent, 100),
-		AccountUpdateEventCh: make(chan *AccountUpdateEvent, 100),
-		messageCh:            make(chan []byte, 400),
+		OrderUpdateEventCh:   make(chan *OrderUpdateEvent, 10),
+		AccountUpdateEventCh: make(chan *AccountUpdateEvent, 10),
+		messageCh:            make(chan []byte, 10),
 		stopped:              false,
 		mu:                   sync.Mutex{},
 	}

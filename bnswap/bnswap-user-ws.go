@@ -27,52 +27,30 @@ func (w *UserWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
 	defer func() {
 		logger.Debugf("EXIT startRead")
 	}()
-	totalLen := 0
-	totalCount := 0
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Hour * 4))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
-			select {
-			case <-ctx.Done():
-				break
-			default:
-				go w.restart()
-			}
+			w.restart()
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
 			logger.Warnf("NextReader error %v", err)
-			select {
-			case <-ctx.Done():
-				break
-			default:
-				go w.restart()
-			}
+			w.restart()
 			return
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
 			logger.Warnf("readAll error %v", err)
-			select {
-			case <-ctx.Done():
-				break
-			default:
-				go w.restart()
-			}
+			w.restart()
 			return
 		}
-		totalCount += 1
-		totalLen += len(msg)
-		if totalLen > 1000000 {
-			logger.Debugf("BNSWAP USER WS AVERAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
-			totalLen = 0
-			totalCount = 0
-		}
 		select {
-		case <-time.After(time.Millisecond):
-			logger.Warnf("BNSWAP USER WS MSG TO MESSAGE CH TIMEOUT IN 1MS")
+		case <-ctx.Done():
+			return
+		case <-w.done:
+			return
 		case w.messageCh <- msg:
 		}
 	}
@@ -101,6 +79,8 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context, id int) {
 	defer func() {
 		logger.Debugf("EXIT startDataHandler %d", id)
 	}()
+	totalLen := 0
+	totalCount := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -108,6 +88,13 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context, id int) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
+			totalCount += 1
+			totalLen += len(msg)
+			if totalLen > 1000000 {
+				logger.Debugf("BNSWAP USER WS AVERAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
+				totalLen = 0
+				totalCount = 0
+			}
 			//{"e":"ACCOUNT_UPDATE","T":1616821544492,"E":1616821544496,"a":{"B":[{"a":"BNB","wb":"0.06858897","cw":"0"}],"P":[],"m":"DEPOSIT"}}
 			if msg[0] == '{' && len(msg) > 14 {
 				if msg[2] == 'e' && msg[6] == 'A' && msg[14] == 'U' {
@@ -209,17 +196,21 @@ func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) 
 
 	defer func() {
 		logger.Debugf("EXIT start")
-		cancel()
 		w.Stop()
 		if internalCancel != nil {
 			internalCancel()
 		}
+		cancel()
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
 			return
 		case <-w.reconnectCh:
 			if internalCancel != nil {
@@ -235,21 +226,13 @@ func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) 
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
 				internalCancel()
+				internalCancel = nil
 				logger.Debugf("RECONNECT ERROR %v", err)
 				w.Stop()
 				return
 			}
 			go w.startRead(internalCtx, conn)
 			go w.maintainHeartbeat(internalCtx, conn)
-
-			go w.startDataHandler(internalCtx, 0)
-			go w.startDataHandler(internalCtx, 1)
-			go w.startDataHandler(internalCtx, 2)
-			go w.startDataHandler(internalCtx, 3)
-			go w.startDataHandler(internalCtx, 4)
-			go w.startDataHandler(internalCtx, 5)
-			go w.startDataHandler(internalCtx, 6)
-			go w.startDataHandler(internalCtx, 7)
 
 		}
 	}
@@ -391,6 +374,10 @@ func NewUserWebsocket(
 		}
 	}(ctx, &ws, listenKey)
 	go ws.start(ctx, wsUrl, proxy)
+	go ws.startDataHandler(ctx, 1)
+	go ws.startDataHandler(ctx, 2)
+	go ws.startDataHandler(ctx, 3)
+	go ws.startDataHandler(ctx, 4)
 	ws.reconnectCh <- nil
 	return &ws, nil
 }

@@ -242,7 +242,7 @@ func main() {
 	spreadCh := make(chan Spread, len(bnSymbols)*10)
 	walkedOrderBookChMap := make(map[string]chan*WalkedOrderBook)
 	for _, symbol := range bnSymbols {
-		walkedOrderBookChMap[symbol] = make(chan *WalkedOrderBook, 100)
+		walkedOrderBookChMap[symbol] = make(chan *WalkedOrderBook, 10)
 		go watchSingleSpread(
 			bnGlobalCtx,
 			symbol,
@@ -291,9 +291,9 @@ func main() {
 
 
 
-	bnspotCancelOrderResponsesCh = make(chan []bnspot.CancelOrderResponse, len(bnSymbols)*100)
-	bnspotNewOrderResponseCh = make(chan bnspot.NewOrderResponse, len(bnSymbols)*100)
-	bnspotNewOrderErrorCh = make(chan MakerOrderNewError, len(bnSymbols)*100)
+	bnspotCancelOrderResponsesCh = make(chan []bnspot.CancelOrderResponse, len(bnSymbols))
+	bnspotNewOrderResponseCh = make(chan bnspot.NewOrderResponse, len(bnSymbols))
+	bnspotNewOrderErrorCh = make(chan MakerOrderNewError, len(bnSymbols))
 	for _, symbol := range bnSymbols {
 		bnspotOrderRequestChs[symbol] = make(chan SpotOrderRequest, 2)
 		go watchSpotOrderRequest(
@@ -310,7 +310,7 @@ func main() {
 			Cancel: &bnspot.CancelAllOrderParams{Symbol: symbol},
 		}
 	}
-	bnswapNewOrderErrorCh = make(chan TakerOrderNewError, len(bnSymbols)*100)
+	bnswapNewOrderErrorCh = make(chan TakerOrderNewError, len(bnSymbols))
 	for _, symbol := range bnSymbols {
 		bnswapOrderRequestChs[symbol] = make(chan bnswap.NewOrderParams, 2)
 		go watchTakerOrderRequest(
