@@ -55,6 +55,7 @@ type Config struct {
 	MaximalExitDelta  *float64 `yaml:"maximalExitDelta,omitempty"`
 	TopBandScale      *float64 `yaml:"topBandScale,omitempty"`
 	BotBandScale      *float64 `yaml:"botBandScale,omitempty"`
+	MakerOrderOffset  *float64 `yaml:"makerOrderOffset,omitempty"`
 
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`
@@ -63,7 +64,9 @@ type Config struct {
 	OrderBookMakerDecay         *float64       `yaml:"orderBookMakerDecay,omitempty"`
 	OrderBookTakerBias          *float64       `yaml:"orderBookTakerBias,omitempty"`
 	OrderBookMakerBias          *float64       `yaml:"orderBookMakerBias,omitempty"`
-	OrderBookImpact             *float64       `yaml:"orderBookImpact,omitempty"`
+	OrderBookBatchSize          *int           `yaml:"orderBookBatchSize,omitempty"`
+	OrderBookMakerImpact        *float64       `yaml:"orderBookMakerImpact,omitempty"`
+	OrderBookTakerImpact        *float64       `yaml:"orderBookTakerImpact,omitempty"`
 	OrderBookMaxAgeDiff         *time.Duration `yaml:"orderBookMaxAgeDiff,omitempty"`
 	OrderBookMaxAge             *time.Duration `yaml:"orderBookMaxAge,omitempty"`
 	SpreadTimeToLive            *time.Duration `yaml:"spreadTimeToLive,omitempty"`

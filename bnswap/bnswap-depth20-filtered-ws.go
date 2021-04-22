@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -20,8 +20,7 @@ type Depth20FilteredWebsocket struct {
 	done        chan interface{}
 	reconnectCh chan interface{}
 	api         *API
-	mu          sync.Mutex
-	stopped     bool
+	stopped     int32
 }
 
 func (w *Depth20FilteredWebsocket) startRead(conn *websocket.Conn) {
@@ -100,6 +99,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 			if len(msg) < 79 {
 				continue
 			}
+			logger.Debugf("%s", msg)
 			if msg[61] == 'E' {
 				t, err := common.ParseInt(msg[64:77])
 				if err != nil {
@@ -314,10 +314,8 @@ func (w *Depth20FilteredWebsocket) maintainHeartbeat(ctx context.Context, conn *
 }
 
 func (w *Depth20FilteredWebsocket) Stop() {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	if !w.stopped {
-		w.stopped = true
+	if atomic.LoadInt32(&w.stopped) == 0 {
+		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
 	}
 }
@@ -353,8 +351,7 @@ func NewDepth20FilteredWebsocket(
 		reconnectCh: make(chan interface{}),
 		DataCh:      make(chan *Depth20, 10*len(symbols)),
 		messageCh:   make(chan []byte, 10*len(symbols)),
-		mu:          sync.Mutex{},
-		stopped:     false,
+		stopped:     0,
 	}
 	go ws.start(ctx, symbols, proxy)
 	go ws.startDataHandler(ctx, 0, decay, bias)

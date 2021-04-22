@@ -17,8 +17,20 @@ type MakerOrderNewError struct {
 	Params hbcrossswap.NewOrderParam
 }
 
+type MakerOrderRequest struct {
+	New    *hbcrossswap.NewOrderParam
+	Cancel *hbcrossswap.CancelAllParam
+}
+
+type MakerOpenOrder struct {
+	*hbcrossswap.NewOrderParam
+	ResponseOrderID string
+	Symbol          string
+}
+
 type MakerTakerDeltaQuantile struct {
 	Symbol       string
+	TakerSymbol  string
 	BSymbol      string
 	ShortTop     float64
 	ShortBot     float64
@@ -33,8 +45,8 @@ type MakerTakerDeltaQuantile struct {
 const (
 	WalkedOrderBookTypeMaker = "huobi"
 	WalkedOrderBookTypeTaker = "binance"
-	MakerName = "huobi"
-	TakerName = "binance"
+	MakerName                = "huobi"
+	TakerName                = "binance"
 )
 
 type WalkedOrderBook struct {
@@ -97,4 +109,3 @@ func (s *Spread) ToString() string {
 		s.LastUpdateTime,
 	)
 }
-

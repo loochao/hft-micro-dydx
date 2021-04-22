@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
 	"strings"
@@ -51,14 +53,14 @@ func handleSave() {
 			if sellPosition, ok := mSellPositions[makerSymbol]; ok {
 				fields["makerSize"] = (buyPosition.Volume - sellPosition.Volume) * mContractSizes[makerSymbol]
 				if spread, ok := mtSpreads[makerSymbol]; ok {
-					fields["makerValue"] = (buyPosition.Volume - sellPosition.Volume) * mContractSizes[makerSymbol] * spread.MakerOrderBook.BidVWAP
+					fields["makerValue"] = (buyPosition.Volume - sellPosition.Volume) * mContractSizes[makerSymbol] * spread.MakerDepth.MakerBid
 				}
 			}
 		}
 		if takerPosition, ok := tPositions[takerSymbol]; ok {
 			fields["takerSize"] = takerPosition.PositionAmt
 			if spread, ok := mtSpreads[makerSymbol]; ok {
-				fields["takerValue"] = spread.TakerOrderBook.BidVWAP * takerPosition.PositionAmt
+				fields["takerValue"] = spread.TakerDepth.TakerBid * takerPosition.PositionAmt
 			}
 		}
 		if fr, ok := mFundingRates[makerSymbol]; ok {
@@ -73,19 +75,25 @@ func handleSave() {
 		if spread, ok := mtSpreads[makerSymbol]; ok {
 
 			fields["spreadShortLastEnter"] = spread.ShortLastEnter
-			fields["spreadShortLastExit"] = spread.ShortLastExit
+			fields["spreadShortLastLeave"] = spread.ShortLastLeave
 			fields["spreadShortMedianEnter"] = spread.ShortMedianEnter
-			fields["spreadShortMedianExit"] = spread.ShortMedianExit
+			fields["spreadShortMedianLeave"] = spread.ShortMedianLeave
 
 			fields["spreadLongLastEnter"] = spread.LongLastEnter
-			fields["spreadLongLastExit"] = spread.LongLastExit
+			fields["spreadLongLastLeave"] = spread.LongLastLeave
 			fields["spreadLongMedianEnter"] = spread.LongMedianEnter
-			fields["spreadLongMedianExit"] = spread.LongMedianExit
+			fields["spreadLongMedianLeave"] = spread.LongMedianLeave
 
-			fields["takerBidVWAP"] = spread.TakerOrderBook.BidVWAP
-			fields["takerAskVWAP"] = spread.TakerOrderBook.AskVWAP
-			fields["makerBidVWAP"] = spread.MakerOrderBook.BidVWAP
-			fields["makerAskVWAP"] = spread.MakerOrderBook.AskVWAP
+			fields["takerMakerBid"] = spread.TakerDepth.MakerBid
+			fields["takerMakerAsk"] = spread.TakerDepth.MakerAsk
+			fields["takerTakerBid"] = spread.TakerDepth.TakerBid
+			fields["takerTakerAsk"] = spread.TakerDepth.TakerAsk
+
+			fields["makerMakerBid"] = spread.MakerDepth.MakerBid
+			fields["makerMakerAsk"] = spread.MakerDepth.MakerAsk
+			fields["makerTakerBid"] = spread.MakerDepth.TakerBid
+			fields["makerTakerAsk"] = spread.MakerDepth.TakerAsk
+
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
 		}
@@ -145,6 +153,85 @@ func handleExternalInfluxSave() {
 			} else {
 				go mtExternalInfluxWriter.Push(pt)
 			}
+		}
+	}
+}
+
+func watchReports(
+	ctx context.Context,
+	influxWriter *common.InfluxWriter,
+	influxConfig InfluxConfig,
+	depthReportCh chan common.DepthReport,
+	spreadReportCh chan common.SpreadReport,
+) {
+	depthReports := make(map[string]common.DepthReport)
+	spreadReports := make(map[string]common.SpreadReport)
+	saveTimer := time.NewTimer(*influxConfig.SaveInterval)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case spreadReport := <-spreadReportCh:
+			spreadReports[spreadReport.MakerSymbol] = spreadReport
+			break
+		case depthReport := <-depthReportCh:
+			depthReports[depthReport.Exchange] = depthReport
+			break
+		case <-saveTimer.C:
+			for exchange, report := range depthReports {
+				fields := make(map[string]interface{})
+				fields["avgLen"] = report.AvgLen
+				fields["dropRatio"] = report.DropRatio
+				fields["bias"] = report.Bias
+				fields["decay"] = report.Decay
+				if len(fields) > 0 {
+					pt, err := client.NewPoint(
+						*influxConfig.Measurement,
+						map[string]string{
+							"exchange": exchange,
+							"type":     "depth-report",
+						},
+						fields,
+						time.Now().UTC(),
+					)
+					if err != nil {
+						logger.Debugf("DepthReport NewPoint error %v", err)
+					} else {
+						select {
+						case influxWriter.PushCh <- pt:
+						default:
+						}
+					}
+				}
+			}
+			for makerSymbol, report := range spreadReports {
+				fields := make(map[string]interface{})
+				fields["matchRatio"] = report.MatchRatio
+				fields["maxAgeDiff"] = float64(report.MaxAgeDiff)
+				fields["maxAge"] = float64(report.MaxAge)
+				if len(fields) > 0 {
+					pt, err := client.NewPoint(
+						*influxConfig.Measurement,
+						map[string]string{
+							"makerSymbol": makerSymbol,
+							"takerSymbol": report.TakerSymbol,
+							"type":     "spread-report",
+						},
+						fields,
+						time.Now().UTC(),
+					)
+					if err != nil {
+						logger.Debugf("SpreadReport NewPoint error %v", err)
+					} else {
+						select {
+						case influxWriter.PushCh <- pt:
+						default:
+						}
+					}
+				}
+			}
+			saveTimer.Reset(*influxConfig.SaveInterval)
+			break
 		}
 	}
 }

@@ -1,7 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="" />
+    <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-routed-ws.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-routed-ws_test.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-depth20-routed-ws.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-depth20-routed-ws_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/lob-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/lob-spot.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/bnswapspot-tt/lob-swap.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/bnswapspot-tt/lob-swap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/config.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/influx.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/influx.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-maker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-maker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-taker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/lob-taker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/loop.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/loop.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/order-maker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/order-maker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/spread.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/spread.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/type.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/type.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/spread.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapspot-mt/spread.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-depth20-filtered-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-filtered-ws.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-depth20-filtered-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-depth20-filtered-ws_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bnswap/bnswap-types.go" beforeDir="false" afterPath="$PROJECT_DIR$/bnswap/bnswap-types.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/interface-depth20.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/interface-depth20.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-types.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-types.go" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -44,31 +70,29 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/applications/bnswapspot-mt" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/hbcrossswap" />
     <property name="settings.editor.selected.configurable" value="configurable.group.build" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/hbcrossswap" />
+      <recent name="$PROJECT_DIR$/bnswap" />
       <recent name="$PROJECT_DIR$/applications/bnswapspot-mt" />
       <recent name="$PROJECT_DIR$/bnspot" />
       <recent name="$PROJECT_DIR$/hbspot" />
-      <recent name="$PROJECT_DIR$/hbcrossswap" />
-      <recent name="$PROJECT_DIR$/bnswap" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/kcperp/jsons" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestFundingTime in github.com/geometrybase/hft-micro/bnswap">
-    <configuration name="BenchmarkSelectWithoutContextAndBufferAndMoreConsumer in github.com/geometrybase/hft-micro/common" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt">
+    <configuration name="go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/common" />
-      <framework value="gobench" />
+      <working_directory value="$PROJECT_DIR$" />
+      <parameters value="-config $PROJECT_DIR$/applications/hbcrossswapbnswap-tt/config.yaml" />
       <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/common" />
+      <package value="github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QBenchmarkSelectWithoutContextAndBufferAndMoreConsumer\E$" />
       <method v="2" />
     </configuration>
     <configuration name="TestFundingTime in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -82,18 +106,7 @@
       <pattern value="^\QTestFundingTime\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/bnspot" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/bnspot" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestNewDepth20Ws\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestNewDepth20FilteredWebsocket in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
       <working_directory value="$PROJECT_DIR$/bnswap" />
       <framework value="gotest" />
@@ -101,34 +114,45 @@
       <package value="github.com/geometrybase/hft-micro/bnswap" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestNewDepth20Ws\E$" />
+      <pattern value="^\QTestNewDepth20FilteredWebsocket\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestWalkMakerTakerDepth20 in github.com/geometrybase/hft-micro/common" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/common" />
+      <working_directory value="$PROJECT_DIR$/bnswap" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/common" />
+      <package value="github.com/geometrybase/hft-micro/bnswap" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestWalkMakerTakerDepth20\E$" />
+      <pattern value="^\QTestNewDepth20RoutedWebsocket\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/hbcrossswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="hft-micro" />
+      <working_directory value="$PROJECT_DIR$/hbcrossswap" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="github.com/geometrybase/hft-micro/hbcrossswap" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestNewDepth20RoutedWebsocket\E$" />
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Go Test.BenchmarkSelectWithoutContextAndBufferAndMoreConsumer in github.com/geometrybase/hft-micro/common" />
-      <item itemvalue="Go Test.TestWalkMakerTakerDepth20 in github.com/geometrybase/hft-micro/common" />
-      <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnspot" />
-      <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" />
       <item itemvalue="Go Test.TestFundingTime in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Test.TestNewDepth20FilteredWebsocket in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/hbcrossswap" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" />
+        <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/hbcrossswap" />
+        <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/bnswap" />
+        <item itemvalue="Go Test.TestNewDepth20FilteredWebsocket in github.com/geometrybase/hft-micro/bnswap" />
         <item itemvalue="Go Test.TestFundingTime in github.com/geometrybase/hft-micro/bnswap" />
-        <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnswap" />
-        <item itemvalue="Go Test.TestNewDepth20Ws in github.com/geometrybase/hft-micro/bnspot" />
-        <item itemvalue="Go Test.TestWalkMakerTakerDepth20 in github.com/geometrybase/hft-micro/common" />
-        <item itemvalue="Go Test.BenchmarkSelectWithoutContextAndBufferAndMoreConsumer in github.com/geometrybase/hft-micro/common" />
       </list>
     </recent_temporary>
   </component>

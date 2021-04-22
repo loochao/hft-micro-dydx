@@ -2,115 +2,46 @@ package main
 
 import (
 	"context"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
-	"time"
 )
 
-func watchMakerWalkedOrderBooks(
+func watchMakerDepthWebsocket(
 	ctx context.Context,
 	cancel context.CancelFunc,
 	makerDecay, makerBias float64,
 	proxyAddress string,
-	contractSizes map[string]float64,
-	impact float64, symbols []string,
-	outputWLob chan WalkedOrderBook,
+	depthReportCh chan common.DepthReport,
+	channels map[string]chan []byte,
 ) {
-	logger.Debugf("watchMakerWalkedOrderBooks %s", symbols)
-	defer func(){
-		logger.Debugf("EXIT watchMakerWalkedOrderBooks %s", symbols)
-	}()
-
-	lastEventTimes := make(map[string]time.Time)
-	nextWalkTimes := make(map[string]time.Time)
-	for _, symbol := range symbols {
-		lastEventTimes[symbol] = time.Unix(0, 0)
-		nextWalkTimes[symbol] = time.Now()
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
 	}
-	walkInterval := time.Millisecond*50
-	ws := hbcrossswap.NewDepth20FilteredWebsocket(
+	logger.Debugf("START watchMakerDepthWebsocket %s", symbols)
+	defer func() {
+		logger.Debugf("EXIT watchMakerDepthWebsocket %s", symbols)
+	}()
+	ws := hbcrossswap.NewDepth20RoutedWebsocket(
 		ctx,
 		makerDecay,
 		makerBias,
-		symbols,
 		proxyAddress,
+		channels,
+		depthReportCh,
 	)
 	defer ws.Stop()
-	var wb WalkedOrderBook
 	for {
 		select {
 		case <-ws.Done():
-			logger.Debugf("DEPTH20 WS CONTEXT DONE %s", symbols)
 			cancel()
+			logger.Debugf("DEPTH20 WS CONTEXT DONE %v", channels)
 			return
 		case <-ctx.Done():
 			return
-		case lob := <-ws.DataCh:
-			if lastEventTimes[lob.Symbol].Sub(lob.EventTime) < 0 {
-				lastEventTimes[lob.Symbol] = lob.EventTime
-				if m, ok := contractSizes[lob.Symbol]; ok {
-					if time.Now().Sub(nextWalkTimes[lob.Symbol]) < 0 {
-						break
-					}
-					nextWalkTimes[lob.Symbol] = time.Now().Add(walkInterval)
-					//if len(outputWLob) > 0 {
-					//	logger.Debugf("MAKER DEPTH OUTPUT LEN %d", len(outputWLob))
-					//}
-					wb = walkPerpOrderBook(lob, impact, m)
-					select {
-					case <-ctx.Done():
-						return
-					case outputWLob <- wb:
-					}
-				}
-			}
-			break
+		case <-ws.RestartCh:
+			logger.Debugf("DEPTH20 WS RESTART %v", channels)
 		}
 	}
-}
-
-func walkPerpOrderBook(orderBook *hbcrossswap.Depth20, impact, contractSize float64) WalkedOrderBook {
-	wLob := WalkedOrderBook{
-		Symbol:    orderBook.Symbol,
-		Type:      WalkedOrderBookTypeMaker,
-		ParseTime: orderBook.ParseTime,
-		EventTime: orderBook.EventTime,
-	}
-	totalValue := 0.0
-	totalQty := 0.0
-	for _, bid := range orderBook.Bids {
-		value := bid[0] * bid[1] * contractSize
-		wLob.BidFarPrice = bid[0]
-		if totalValue+value >= impact {
-			totalQty += (impact - totalValue) / bid[0]
-			totalValue = impact
-			break
-		} else {
-			totalQty += bid[1] * contractSize
-			totalValue += value
-		}
-	}
-	wLob.BidVWAP = totalValue / totalQty
-
-	totalValue = 0.0
-	totalQty = 0.0
-	for _, ask := range orderBook.Asks {
-		value := ask[0] * ask[1] * contractSize
-		wLob.TakerAskFarPrice = ask[0]
-		if totalValue+value >= impact {
-			totalQty += (impact - totalValue) / ask[0]
-			totalValue = impact
-			break
-		} else {
-			totalQty += ask[1] * contractSize
-			totalValue += value
-		}
-	}
-	wLob.AskVWAP = totalValue / totalQty
-	wLob.ImpactValue = impact
-	wLob.BidPrice = orderBook.Bids[0][0]
-	wLob.BidSize = orderBook.Bids[0][1] * contractSize
-	wLob.AskPrice = orderBook.Asks[0][0]
-	wLob.AskSize = orderBook.Asks[0][1] * contractSize
-	return wLob
 }

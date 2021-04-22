@@ -77,6 +77,19 @@ type Depth20 struct {
 	EventTime time.Time      `json:"-"`
 }
 
+func (depth *Depth20) GetBids() [20][2]float64 {
+	return depth.Bids
+}
+func (depth *Depth20) GetAsks() [20][2]float64 {
+	return depth.Asks
+}
+func (depth *Depth20) GetSymbol() string {
+	return depth.Symbol
+}
+func (depth *Depth20) GetTime() time.Time {
+	return depth.EventTime
+}
+
 func (depth *Depth20) UnmarshalJSON(data []byte) error {
 	type Alias Depth20
 	aux := struct {
@@ -273,7 +286,7 @@ type WSOrder struct {
 	OrderType      int       `json:"order_type"`
 	CreatedAt      time.Time `json:"created_at"`
 	TradeVolume    int64     `json:"trade_volume"`
-	TradeTurnover  float64     `json:"trade_turnover"`
+	TradeTurnover  float64   `json:"trade_turnover"`
 	Fee            float64   `json:"fee"`
 	TradeAvgPrice  float64   `json:"trade_avg_price"`
 	MarginFrozen   float64   `json:"margin_frozen"`

@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -27,15 +28,57 @@ type WalkedMakerTakerDepth struct {
 	TakerBidSize float64
 	TakerAskSize float64
 
-	EventTime time.Time
-	Symbol    string
+	Time   time.Time
+	Symbol string
 }
 
-func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) WalkedMakerTakerDepth {
+type MakerTakerSpread struct {
+	MakerSymbol      string
+	TakerSymbol      string
+	Age              time.Duration
+	AgeDiff          time.Duration
+	ShortLastEnter   float64
+	ShortLastLeave   float64
+	ShortMedianEnter float64
+	ShortMedianLeave float64
+	LongLastEnter    float64
+	LongLastLeave    float64
+	LongMedianEnter  float64
+	LongMedianLeave  float64
+	MakerDepth       WalkedMakerTakerDepth
+	TakerDepth       WalkedMakerTakerDepth
+	Time             time.Time
+}
 
-	wd, hasMakerData, hasTakerData := WalkedMakerTakerDepth{
-		Symbol:    depth20.GetSymbol(),
-		EventTime: depth20.GetTime(),
+type SpreadReport struct {
+	MaxAge      time.Duration
+	MaxAgeDiff  time.Duration
+	MatchRatio  float64
+	MakerSymbol string
+	TakerSymbol string
+}
+
+type DepthReport struct {
+	Exchange  string
+	DropRatio float64
+	AvgLen    int
+	Decay     float64
+	Bias      float64
+}
+
+func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) (*WalkedMakerTakerDepth, error) {
+
+	wd, hasMakerData, hasTakerData := &WalkedMakerTakerDepth{
+		Symbol: depth20.GetSymbol(),
+		Time:   depth20.GetTime(),
+		TakerAsk: 0,
+		TakerBid: 0,
+		MakerAsk: 0,
+		MakerBid: 0,
+		TakerBidSize: 0,
+		TakerAskSize: 0,
+		MakerAskSize: 0,
+		MakerBidSize: 0,
 	}, false, false
 
 	for _, bid := range depth20.GetBids() {
@@ -66,6 +109,9 @@ func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) Wa
 			break
 		}
 	}
+	if wd.TakerBidSize == 0 || wd.MakerBidSize == 0 {
+		return nil, fmt.Errorf("bad depth bids %v", depth20.GetBids())
+	}
 	wd.TakerBid /= wd.TakerBidSize
 	wd.MakerBid /= wd.MakerBidSize
 
@@ -87,7 +133,7 @@ func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) Wa
 		if !hasTakerData {
 			wd.TakerFarAsk = ask[0]
 			if wd.TakerAsk+value >= takerImpact {
-				wd.TakerAskSize += (takerImpact - wd.TakerAskSize) / ask[0]
+				wd.TakerAskSize += (takerImpact - wd.TakerAsk) / ask[0]
 				wd.TakerAsk = takerImpact
 				hasTakerData = true
 			} else {
@@ -99,7 +145,10 @@ func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) Wa
 			break
 		}
 	}
+	if wd.TakerAskSize == 0 || wd.MakerAskSize == 0 {
+		return nil, fmt.Errorf("bad depth ask %v", depth20.GetAsks())
+	}
 	wd.TakerAsk /= wd.TakerAskSize
 	wd.MakerAsk /= wd.MakerAskSize
-	return wd
+	return wd, nil
 }

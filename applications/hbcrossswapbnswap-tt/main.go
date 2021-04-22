@@ -271,74 +271,89 @@ func main() {
 		mtBarsMapCh,
 		mtQuantilesCh,
 	)
-
-	walkedOrderBookCh := make(chan WalkedOrderBook, len(mSymbols)*10)
-	go watchTakerWalkedOrderBooks(
+	depthReportCh := make(chan common.DepthReport, 10000)
+	spreadReportCh := make(chan common.SpreadReport, 10000)
+	go watchReports(
 		mtGlobalCtx,
-		mtGlobalCancel,
-		*mtConfig.OrderBookTakerDecay,
-		*mtConfig.OrderBookTakerBias,
-		*mtConfig.ProxyAddress,
-		*mtConfig.OrderBookImpact,
-		tSymbols[:len(tSymbols)/2],
-		walkedOrderBookCh,
-	)
-	go watchTakerWalkedOrderBooks(
-		mtGlobalCtx,
-		mtGlobalCancel,
-		*mtConfig.OrderBookTakerDecay,
-		*mtConfig.OrderBookTakerBias,
-		*mtConfig.ProxyAddress,
-		*mtConfig.OrderBookImpact,
-		tSymbols[len(tSymbols)/2:],
-		walkedOrderBookCh,
+		mtInfluxWriter,
+		*mtConfig.InternalInflux,
+		depthReportCh,
+		spreadReportCh,
 	)
 
-	go watchMakerWalkedOrderBooks(
-		mtGlobalCtx,
-		mtGlobalCancel,
-		*mtConfig.OrderBookMakerDecay,
-		*mtConfig.OrderBookMakerBias,
-		*mtConfig.ProxyAddress,
-		mContractSizes,
-		*mtConfig.OrderBookImpact,
-		mSymbols[len(mSymbols)/2:],
-		walkedOrderBookCh,
-	)
-	go watchMakerWalkedOrderBooks(
-		mtGlobalCtx,
-		mtGlobalCancel,
-		*mtConfig.OrderBookMakerDecay,
-		*mtConfig.OrderBookMakerBias,
-		*mtConfig.ProxyAddress,
-		mContractSizes,
-		*mtConfig.OrderBookImpact,
-		mSymbols[:len(mSymbols)/2],
-		walkedOrderBookCh,
-	)
+	makerRowDepthChs := make(map[string]chan []byte)
+	for start := 0; start < len(mSymbols); start += *mtConfig.OrderBookBatchSize {
+		end := start + *mtConfig.OrderBookBatchSize
+		if end > len(mSymbols) {
+			end = len(mSymbols)
+		}
+		subMakerRowDepthChs := make(map[string]chan []byte)
+		for _, symbol := range mSymbols[start:end] {
+			makerRowDepthChs[symbol] = make(chan []byte, 100)
+			subMakerRowDepthChs[symbol] = makerRowDepthChs[symbol]
+		}
+		go watchMakerDepthWebsocket(
+			mtGlobalCtx,
+			mtGlobalCancel,
+			*mtConfig.OrderBookMakerDecay,
+			*mtConfig.OrderBookMakerBias,
+			*mtConfig.ProxyAddress,
+			depthReportCh,
+			subMakerRowDepthChs,
+		)
+	}
 
-	spreadCh := make(chan Spread, len(mSymbols)*100)
-	go watchSpread(
-		mtGlobalCtx,
-		mSymbols,
-		tmSymbolsMap,
-		*mtConfig.OrderBookMaxAgeDiff,
-		*mtConfig.OrderBookMaxAge,
-		*mtConfig.SpreadLookbackDuration,
-		*mtConfig.SpreadLookbackMinimalWindow,
-		walkedOrderBookCh,
-		spreadCh,
-	)
+	takerRowDepthChs := make(map[string]chan []byte)
+	for start := 0; start < len(tSymbols); start += *mtConfig.OrderBookBatchSize {
+		end := start + *mtConfig.OrderBookBatchSize
+		if end > len(tSymbols) {
+			end = len(tSymbols)
+		}
+		subTakerRowDepthChs := make(map[string]chan []byte)
+		for _, symbol := range tSymbols[start:end] {
+			takerRowDepthChs[symbol] = make(chan []byte, 100)
+			subTakerRowDepthChs[symbol] = takerRowDepthChs[symbol]
+		}
+		go watchTakerDepthWebsocket(
+			mtGlobalCtx,
+			mtGlobalCancel,
+			*mtConfig.OrderBookTakerDecay,
+			*mtConfig.OrderBookTakerBias,
+			*mtConfig.ProxyAddress,
+			depthReportCh,
+			subTakerRowDepthChs,
+		)
+	}
+
+	spreadCh := make(chan *common.MakerTakerSpread, len(mSymbols)*100)
+	for makerSymbol, takerSymbol := range mtConfig.MakerTakerSymbolsMap {
+		go watchMakerTakerSpread(
+			mtGlobalCtx,
+			makerSymbol, takerSymbol,
+			mContractSizes[makerSymbol],
+			*mtConfig.OrderBookMakerImpact,
+			*mtConfig.OrderBookTakerImpact,
+			*mtConfig.OrderBookMaxAgeDiff,
+			*mtConfig.OrderBookMaxAge,
+			*mtConfig.SpreadLookbackDuration,
+			*mtConfig.SpreadLookbackMinimalWindow,
+			makerRowDepthChs[makerSymbol],
+			takerRowDepthChs[takerSymbol],
+			spreadReportCh,
+			spreadCh,
+		)
+	}
 
 	mNewOrderErrorCh = make(chan MakerOrderNewError, len(mSymbols)*2)
 	for _, makerSymbol := range mSymbols {
-		mOrderRequestChs[makerSymbol] = make(chan hbcrossswap.NewOrderParam, 2)
+		mOrderRequestChs[makerSymbol] = make(chan MakerOrderRequest, 2)
 		go watchMakerOrderRequest(
 			mtGlobalCtx,
 			mAPI,
 			*mtConfig.OrderTimeout,
 			*mtConfig.DryRun,
 			mOrderRequestChs[makerSymbol],
+			mOpenOrderCh,
 			mNewOrderErrorCh,
 		)
 	}
@@ -451,7 +466,7 @@ func main() {
 			}
 			break
 		case spread := <-spreadCh:
-			mtSpreads[spread.Symbol] = spread
+			mtSpreads[spread.MakerSymbol] = spread
 			//mtLoopTimer.Reset(time.Millisecond)
 			break
 		case mFundingRates = <-mFundingRatesCh:
@@ -512,11 +527,24 @@ func main() {
 		case makerNewError := <-mNewOrderErrorCh:
 			mOrderSilentTimes[makerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
 			break
+		case makerOpenOrder := <-mOpenOrderCh:
+			if openOrder, ok := mOpenOrders[makerOpenOrder.Symbol]; ok {
+				if makerOpenOrder.NewOrderParam == nil && openOrder.ResponseOrderID == makerOpenOrder.ResponseOrderID {
+					//Cancel的Http回报
+					delete(mOpenOrders, makerOpenOrder.Symbol)
+				} else if makerOpenOrder.NewOrderParam != nil && openOrder.ClientOrderID == makerOpenOrder.ClientOrderID {
+					//New的Http回报
+					mOpenOrders[makerOpenOrder.Symbol] = makerOpenOrder
+				}
+			}
 		case <-mtLoopTimer.C:
 			updateTakerPositions()
 			if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
 				time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
-				updateMakerPositions()
+				updateMakerOldOrders()
+				updateMakerNewOrders()
+			} else {
+				cancelAllMakerOpenOrders()
 			}
 			mtLoopTimer.Reset(
 				time.Now().Truncate(

@@ -44,10 +44,14 @@ var mPositionCh = make(chan []hbcrossswap.Position, 10)
 var mBuyPositions = make(map[string]hbcrossswap.Position)
 var mSellPositions = make(map[string]hbcrossswap.Position)
 var mPositionsUpdateTimes = make(map[string]time.Time)
-var mOrderRequestChs = make(map[string]chan hbcrossswap.NewOrderParam)
+var mOrderRequestChs = make(map[string]chan MakerOrderRequest)
 var mNewOrderErrorCh chan MakerOrderNewError
 var mOrderSilentTimes = make(map[string]time.Time)
 var mSilentTimes = make(map[string]time.Time)
+var mOpenOrders = make(map[string]MakerOpenOrder)
+var mOrderCancelCounts = make(map[string]int)
+var mOrderCancelSilentTimes = make(map[string]time.Time)
+var mOpenOrderCh = make(chan MakerOpenOrder, 10000)
 
 var tPositionsCh = make(chan []bnswap.Position, 10)
 var tPositions = make(map[string]*bnswap.Position)
@@ -73,14 +77,13 @@ var mtMapUpdated = make(map[string]bool)
 var mtBarsMapCh = make(chan [2]common.KLinesMap, 10)
 var mtQuantilesCh = make(chan map[string]MakerTakerDeltaQuantile, 10)
 var mtQuantiles map[string]MakerTakerDeltaQuantile
-var mtSpreads = make(map[string]Spread)
+var mtSpreads = make(map[string]*common.MakerTakerSpread)
 
 var mLastFilledBuyPrices = make(map[string]float64)
 var mLastFilledSellPrices = make(map[string]float64)
 var mtRealisedSpread = make(map[string]float64)
 
 var mtUnHedgeValue float64
-var mtSaveSilentTime = time.Now()
 var mtUnHedgeLogSilentTimes = time.Unix(0, 0)
 var mtLogSilentTimes = make(map[string]time.Time)
 var mtLoopTimer *time.Timer
@@ -90,7 +93,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210422 01:13:48  ####")
+	logger.Debug("####  BUILD @ 20210422 15:21:05  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -126,6 +129,8 @@ func init() {
 		mtLogSilentTimes[makerSymbol] = time.Now()
 		mSilentTimes[makerSymbol] = time.Now().Add(time.Minute)
 		mPositionsUpdateTimes[makerSymbol] = time.Unix(0, 0)
+		mOrderCancelCounts[makerSymbol] = 0
+		mOrderCancelSilentTimes[makerSymbol] = time.Now()
 
 		tOrderSilentTimes[takerSymbol] = time.Now()
 		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)

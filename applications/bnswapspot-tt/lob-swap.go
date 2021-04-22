@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/logger"
-	"time"
 )
 
 func watchSwapWalkedOrderBooks(
@@ -16,7 +15,6 @@ func watchSwapWalkedOrderBooks(
 	ws := bnswap.NewDepth20Websocket(
 		ctx,
 		symbols,
-		time.Minute,
 		proxyAddress,
 	)
 	defer ws.Stop()

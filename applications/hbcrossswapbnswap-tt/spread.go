@@ -2,176 +2,251 @@ package main
 
 import (
 	"context"
+	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
-func watchSpread(
+func watchMakerTakerSpread(
 	ctx context.Context,
-	makerSymbols []string,
-	takerMakerSymbolsMap map[string]string,
+	makerSymbol, takerSymbol string,
+	contractSize,
+	makerImpact, takerImpact float64,
 	maxAgeDiff,
 	maxAge,
 	lookbackDuration time.Duration,
-	lookbackWindow int,
-	walkedOrderBookCh chan WalkedOrderBook,
-	outputCh chan Spread,
+	lookbackMinimalWindow int,
+	makerDepthCh, takerDepthCh chan []byte,
+	reportCh chan common.SpreadReport,
+	outputCh chan *common.MakerTakerSpread,
 ) {
-	defer func() {
-		logger.Debugf("EXIT watchSpread")
-	}()
-	makerOrderBooks := make(map[string]WalkedOrderBook)
-	takerOrderBooks := make(map[string]WalkedOrderBook)
-	shortEnterSpreadWindows := make(map[string][]float64)
-	shortExitSpreadWindows := make(map[string][]float64)
-	shortEnterSpreadSortedSlices := make(map[string]common.SortedFloatSlice)
-	shortExitSpreadSortedSlices := make(map[string]common.SortedFloatSlice)
+	var err error
+	var makerRawDepth, takerRawDepth []byte
+	var makerDepth, newMakerDepth *hbcrossswap.Depth20
+	var takerDepth, newTakerDepth *bnswap.Depth20
+	var makerWalkedDepth, takerWalkedDepth *common.WalkedMakerTakerDepth
+	var spreadTime time.Time
+	var ageDiff, age time.Duration
+	shortEnterWindow := make([]float64, 0)
+	shortLeaveWindow := make([]float64, 0)
+	shortEnterSortedSlice := common.SortedFloatSlice{}
+	shortLeaveSortedSlice := common.SortedFloatSlice{}
+	longEnterWindow := make([]float64, 0)
+	longLeaveWindow := make([]float64, 0)
+	longEnterSortedSlice := common.SortedFloatSlice{}
+	longLeaveSortedSlice := common.SortedFloatSlice{}
+	times := make([]time.Time, 0)
 
-	longEnterSpreadWindows := make(map[string][]float64)
-	longExitSpreadWindows := make(map[string][]float64)
-	longEnterSpreadSortedSlices := make(map[string]common.SortedFloatSlice)
-	longExitSpreadSortedSlices := make(map[string]common.SortedFloatSlice)
+	logSilentTime := time.Now()
+	walkSpreadTimer := time.NewTimer(time.Hour * 999)
+	makerWalkDepthTimer := time.NewTimer(time.Hour * 999)
+	takerWalkDepthTimer := time.NewTimer(time.Hour * 999)
+	makerParseTimer := time.NewTimer(time.Hour * 999)
+	takerParseTimer := time.NewTimer(time.Hour * 999)
 
-	parseTimes := make(map[string][]time.Time)
-	for _, hSymbol := range makerSymbols {
-
-		shortEnterSpreadWindows[hSymbol] = make([]float64, 0)
-		shortExitSpreadWindows[hSymbol] = make([]float64, 0)
-		shortEnterSpreadSortedSlices[hSymbol] = common.SortedFloatSlice{}
-		shortExitSpreadSortedSlices[hSymbol] = common.SortedFloatSlice{}
-
-		longEnterSpreadWindows[hSymbol] = make([]float64, 0)
-		longExitSpreadWindows[hSymbol] = make([]float64, 0)
-		longEnterSpreadSortedSlices[hSymbol] = common.SortedFloatSlice{}
-		longExitSpreadSortedSlices[hSymbol] = common.SortedFloatSlice{}
-
-		parseTimes[hSymbol] = make([]time.Time, 0)
-	}
+	expectedChanSendingTime := time.Nanosecond*300
+	cutIndex := 0
+	spread := 0.0
+	i := 0
+	matchCount := 0
+	depthCount := 0
+	var shortLastEnter, shortLastLeave, longLastEnter, longLastLeave float64
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case lob := <-walkedOrderBookCh:
-			makerSymbol := lob.Symbol
-			var makerLob, takerLob WalkedOrderBook
-			var ok bool
-			if lob.Type == WalkedOrderBookTypeTaker {
-				makerSymbol = takerMakerSymbolsMap[lob.Symbol]
-				takerOrderBooks[makerSymbol] = lob
-				takerLob = lob
-				if makerLob, ok = makerOrderBooks[makerSymbol]; !ok {
-					break
-				}
-			} else if lob.Type == WalkedOrderBookTypeMaker {
-				makerOrderBooks[makerSymbol] = lob
-				makerLob = lob
-				if takerLob, ok = takerOrderBooks[makerSymbol]; !ok {
-					break
-				}
-			} else {
+		case <-walkSpreadTimer.C:
+			if makerWalkedDepth == nil || takerWalkedDepth == nil {
 				break
 			}
-
-			ageDiff := makerLob.ParseTime.Sub(takerLob.ParseTime)
+			ageDiff = makerWalkedDepth.Time.Sub(takerWalkedDepth.Time)
+			//取新一点的时间为spread time
 			if ageDiff < 0 {
+				spreadTime = takerWalkedDepth.Time
 				ageDiff = -ageDiff
+			} else {
+				spreadTime = makerWalkedDepth.Time
 			}
-			age := (time.Now().Sub(makerLob.ParseTime) + time.Now().Sub(takerLob.ParseTime)) / 2
-			if age > maxAge ||
-				ageDiff > maxAgeDiff {
+			age = (time.Now().Sub(makerWalkedDepth.Time) + time.Now().Sub(takerWalkedDepth.Time)) / 2
+			if age > maxAge || ageDiff > maxAgeDiff {
 				break
 			}
+			matchCount++
+			shortLastEnter = (takerWalkedDepth.TakerBid - makerWalkedDepth.MakerBid) / makerWalkedDepth.MakerBid
+			shortLastLeave = (takerWalkedDepth.TakerAsk - makerWalkedDepth.MakerAsk) / makerWalkedDepth.MakerAsk
 
-			shortLastEnterSpread := (takerLob.BidVWAP - makerLob.AskVWAP) / makerLob.AskVWAP
-			shortLastExitSpread := (takerLob.AskVWAP - makerLob.BidVWAP) / makerLob.BidVWAP
+			longLastEnter = (takerWalkedDepth.TakerAsk - makerWalkedDepth.MakerAsk) / makerWalkedDepth.MakerAsk
+			longLastLeave = (takerWalkedDepth.TakerBid - makerWalkedDepth.MakerBid) / makerWalkedDepth.MakerBid
 
-			longLastEnterSpread := (takerLob.AskVWAP - makerLob.BidVWAP) / makerLob.BidVWAP
-			longLastExitSpread := (takerLob.BidVWAP - makerLob.AskVWAP) / makerLob.AskVWAP
+			times = append(times, takerWalkedDepth.Time)
+			shortEnterWindow = append(shortEnterWindow, shortLastEnter)
+			shortLeaveWindow = append(shortLeaveWindow, shortLastLeave)
+			shortEnterSortedSlice = shortEnterSortedSlice.Insert(shortLastEnter)
+			shortLeaveSortedSlice = shortLeaveSortedSlice.Insert(shortLastLeave)
 
-			parseTimes[makerSymbol] = append(parseTimes[makerSymbol], takerLob.ParseTime)
-			shortEnterSpreadWindows[makerSymbol] = append(shortEnterSpreadWindows[makerSymbol], shortLastEnterSpread)
-			shortExitSpreadWindows[makerSymbol] = append(shortExitSpreadWindows[makerSymbol], shortLastExitSpread)
-			shortEnterSpreadSortedSlices[makerSymbol] = shortEnterSpreadSortedSlices[makerSymbol].Insert(shortLastEnterSpread)
-			shortExitSpreadSortedSlices[makerSymbol] = shortExitSpreadSortedSlices[makerSymbol].Insert(shortLastExitSpread)
-
-			longEnterSpreadWindows[makerSymbol] = append(longEnterSpreadWindows[makerSymbol], longLastEnterSpread)
-			longExitSpreadWindows[makerSymbol] = append(longExitSpreadWindows[makerSymbol], longLastExitSpread)
-			longEnterSpreadSortedSlices[makerSymbol] = longEnterSpreadSortedSlices[makerSymbol].Insert(longLastEnterSpread)
-			longExitSpreadSortedSlices[makerSymbol] = longExitSpreadSortedSlices[makerSymbol].Insert(longLastExitSpread)
-			cutIndex := 0
-			for i, arrivalTime := range parseTimes[makerSymbol] {
-				if lob.ParseTime.Sub(arrivalTime) > lookbackDuration {
+			longEnterWindow = append(longEnterWindow, longLastEnter)
+			longLeaveWindow = append(longLeaveWindow, longLastLeave)
+			longEnterSortedSlice = longEnterSortedSlice.Insert(longLastEnter)
+			longLeaveSortedSlice = longLeaveSortedSlice.Insert(longLastLeave)
+			cutIndex = 0
+			for i, eventTime := range times {
+				if spreadTime.Sub(eventTime) > lookbackDuration {
 					cutIndex = i
 				} else {
 					break
 				}
 			}
 			if cutIndex > 0 {
-				for _, d := range shortEnterSpreadWindows[makerSymbol][:cutIndex] {
-					shortEnterSpreadSortedSlices[makerSymbol] = shortEnterSpreadSortedSlices[makerSymbol].Delete(d)
+				for _, spread = range shortEnterWindow[:cutIndex] {
+					shortEnterSortedSlice = shortEnterSortedSlice.Delete(spread)
 				}
-				for _, d := range shortExitSpreadWindows[makerSymbol][:cutIndex] {
-					shortExitSpreadSortedSlices[makerSymbol] = shortExitSpreadSortedSlices[makerSymbol].Delete(d)
+				for _, spread = range shortLeaveWindow[:cutIndex] {
+					shortLeaveSortedSlice = shortLeaveSortedSlice.Delete(spread)
 				}
-				shortEnterSpreadWindows[makerSymbol] = shortEnterSpreadWindows[makerSymbol][cutIndex:]
-				shortExitSpreadWindows[makerSymbol] = shortExitSpreadWindows[makerSymbol][cutIndex:]
+				shortEnterWindow = shortEnterWindow[cutIndex:]
+				shortLeaveWindow = shortLeaveWindow[cutIndex:]
 
-				for _, d := range longEnterSpreadWindows[makerSymbol][:cutIndex] {
-					longEnterSpreadSortedSlices[makerSymbol] = longEnterSpreadSortedSlices[makerSymbol].Delete(d)
+				for _, spread = range longEnterWindow[:cutIndex] {
+					longEnterSortedSlice = longEnterSortedSlice.Delete(spread)
 				}
-				for _, d := range longExitSpreadWindows[makerSymbol][:cutIndex] {
-					longExitSpreadSortedSlices[makerSymbol] = longExitSpreadSortedSlices[makerSymbol].Delete(d)
+				for _, spread = range longLeaveWindow[:cutIndex] {
+					longLeaveSortedSlice = longLeaveSortedSlice.Delete(spread)
 				}
-				longEnterSpreadWindows[makerSymbol] = longEnterSpreadWindows[makerSymbol][cutIndex:]
-				longExitSpreadWindows[makerSymbol] = longExitSpreadWindows[makerSymbol][cutIndex:]
+				longEnterWindow = longEnterWindow[cutIndex:]
+				longLeaveWindow = longLeaveWindow[cutIndex:]
 
-				parseTimes[makerSymbol] = parseTimes[makerSymbol][cutIndex:]
+				times = times[cutIndex:]
 			}
 
-			if len(shortEnterSpreadWindows[makerSymbol]) < lookbackWindow ||
-				len(shortExitSpreadWindows[makerSymbol]) < lookbackWindow {
+			if len(shortEnterWindow) < lookbackMinimalWindow ||
+				len(shortLeaveWindow) < lookbackMinimalWindow {
 				break
 			}
 
-			arrivalTimeDiff := lob.ParseTime.Sub(parseTimes[makerSymbol][0])
-			if arrivalTimeDiff < lookbackDuration/2 {
+			if spreadTime.Sub(times[0]) < lookbackDuration/2 {
 				break
 			}
 
-			shortMedianEnterSpread := shortEnterSpreadSortedSlices[makerSymbol].Median()
-			shortMedianExitSpread := shortExitSpreadSortedSlices[makerSymbol].Median()
-
-			longMedianEnterSpread := longEnterSpreadSortedSlices[makerSymbol].Median()
-			longMedianExitSpread := longExitSpreadSortedSlices[makerSymbol].Median()
-			//if len(outputCh) > 0 {
-			//	logger.Debugf("LEN SPREAD CH %d", len(outputCh))
-			//}
 			select {
 			case <-ctx.Done():
-				return
-			case outputCh <- Spread{
-				Symbol:         makerSymbol,
-				MakerOrderBook: takerLob,
-				TakerOrderBook: makerLob,
-				LastUpdateTime: lob.ParseTime,
+			case outputCh <- &common.MakerTakerSpread{
+				TakerSymbol: takerSymbol,
+				MakerSymbol: makerSymbol,
+				TakerDepth:  *takerWalkedDepth,
+				MakerDepth:  *makerWalkedDepth,
 
-				ShortLastEnter:   shortLastEnterSpread,
-				ShortLastExit:    shortLastExitSpread,
-				ShortMedianEnter: shortMedianEnterSpread,
-				ShortMedianExit:  shortMedianExitSpread,
+				ShortLastEnter:   shortLastEnter,
+				ShortLastLeave:   shortLastLeave,
+				ShortMedianEnter: shortEnterSortedSlice.Median(),
+				ShortMedianLeave: shortLeaveSortedSlice.Median(),
 
-				LongLastEnter:   longLastEnterSpread,
-				LongLastExit:    longLastExitSpread,
-				LongMedianEnter: longMedianEnterSpread,
-				LongMedianExit:  longMedianExitSpread,
+				LongLastEnter:   longLastEnter,
+				LongLastLeave:   longLastLeave,
+				LongMedianEnter: longEnterSortedSlice.Median(),
+				LongMedianLeave: longLeaveSortedSlice.Median(),
 
 				Age:     age,
 				AgeDiff: ageDiff,
+				Time:    spreadTime,
 			}:
+				//logger.Debugf("SEND SPREAD")
+			default:
+				logger.Debugf("SEND SPREAD FAILED %s-%s", makerSymbol, takerSymbol)
 			}
-
+			break
+		case <-makerWalkDepthTimer.C:
+			if makerDepth != nil {
+				makerWalkedDepth, err = common.WalkMakerTakerDepth20(makerDepth, makerImpact, takerImpact)
+				if err != nil {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("makerWalkedDepth common.WalkMakerTakerDepth20 error %v", err)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+					break
+				}
+				walkSpreadTimer.Reset(time.Nanosecond)
+			}
+			break
+		case <-takerWalkDepthTimer.C:
+			if takerDepth != nil {
+				takerWalkedDepth, err = common.WalkMakerTakerDepth20(takerDepth, makerImpact, takerImpact)
+				if err != nil {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("takerWalkedDepth common.WalkMakerTakerDepth20 error %v", err)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+					break
+				}
+				walkSpreadTimer.Reset(time.Nanosecond)
+			}
+			break
+		case <-makerParseTimer.C:
+			newMakerDepth, err = hbcrossswap.ParseDepth20(makerRawDepth)
+			if err != nil {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("hbcrossswap.ParseDepth20 error %v", err)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			} else if makerDepth == nil || newMakerDepth.MRID > makerDepth.MRID {
+				//需要乘以ContractSize
+				for i = range newMakerDepth.Bids {
+					newMakerDepth.Bids[i][1] *= contractSize
+					newMakerDepth.Asks[i][1] *= contractSize
+				}
+				makerDepth = newMakerDepth
+				makerWalkDepthTimer.Reset(time.Nanosecond)
+			}
+			break
+		case <-takerParseTimer.C:
+			newTakerDepth, err = bnswap.ParseDepth20(takerRawDepth)
+			if err != nil {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("bnswap.ParseDepth20 error %v", err)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			} else if takerDepth == nil || newTakerDepth.LastUpdateId > takerDepth.LastUpdateId {
+				takerDepth = newTakerDepth
+				takerWalkDepthTimer.Reset(time.Nanosecond)
+			}
+			break
+		case makerRawDepth = <-makerDepthCh:
+			makerParseTimer.Reset(expectedChanSendingTime)
+			depthCount++
+			if depthCount > 1000 {
+				select {
+				case reportCh <- common.SpreadReport{
+					MaxAge:      maxAge,
+					MaxAgeDiff:  maxAgeDiff,
+					MatchRatio:  float64(matchCount) / float64(depthCount),
+					TakerSymbol: takerSymbol,
+					MakerSymbol: makerSymbol,
+				}:
+				default:
+				}
+				matchCount = 0
+				depthCount = 0
+			}
+			break
+		case takerRawDepth = <-takerDepthCh:
+			takerParseTimer.Reset(expectedChanSendingTime)
+			depthCount++
+			if depthCount > 1000 {
+				select {
+				case reportCh <- common.SpreadReport{
+					MaxAge:      maxAge,
+					MaxAgeDiff:  maxAgeDiff,
+					MatchRatio:  float64(matchCount) / float64(depthCount),
+					TakerSymbol: takerSymbol,
+					MakerSymbol: makerSymbol,
+				}:
+				default:
+				}
+				matchCount = 0
+				depthCount = 0
+			}
+			break
 		}
 	}
 }
-

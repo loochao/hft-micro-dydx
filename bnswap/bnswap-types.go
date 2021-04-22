@@ -18,6 +18,18 @@ type Depth20 struct {
 	Asks         [20][2]float64 `json:"a,omitempty"`
 	ParseTime    time.Time      `json:"-"`
 }
+func (depth *Depth20) GetBids() [20][2]float64 {
+	return depth.Bids
+}
+func (depth *Depth20) GetAsks() [20][2]float64 {
+	return depth.Asks
+}
+func (depth *Depth20) GetSymbol() string {
+	return depth.Symbol
+}
+func (depth *Depth20) GetTime() time.Time {
+	return depth.EventTime
+}
 
 func (depth *Depth20) UnmarshalJSON(data []byte) error {
 	type Alias Depth20

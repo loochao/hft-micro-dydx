@@ -1,6 +1,6 @@
 name: hbcrossswapbnswap-tt-gb-ff01
-dryRun: false
-proxyAddress: socks5://127.0.0.1:1082
+dryRun: true
+proxyAddress: socks5://127.0.0.1:1081
 cpuProfile: #/Users/chenjilin/Downloads/hbcrossswapspot-mt.prof
 internalInflux:
   address: http://tigger.jilinchen.com:18086
@@ -38,18 +38,25 @@ pullBarsRetryInterval: 3s
 barsLookback: 180
 topQuantile: 0.55
 botQuantile: 0.45
-makerBandOffset: 0.000222
+makerOrderOffset: 0.00111
 minimalBandOffset: 0.000222 #0.00222
 minimalEnterDelta: 0.000666 #0.00444
 maximalExitDelta: -0.000111
 topBandScale: 0.618
 botBandScale: 0.618
 
-minimalEnterFundingRate: 0.0001
+minimalEnterFundingRate: 0.00001
 minimalKeepFundingRate: 0.004
 
-orderBookImpact: 500
-orderBookMaxAgeDiff: 250ms
+orderBookTakerDecay: 0.9999
+orderBookTakerBias: 500
+
+orderBookMakerDecay: 0.9999
+orderBookMakerBias: 500
+
+orderBookTakerImpact: 3000
+orderBookMakerImpact: 300
+orderBookMaxAgeDiff: 50ms
 orderBookMaxAge: 500ms
 orderBookBatchSize: 30
 
@@ -72,26 +79,27 @@ orderCancelSilent: 5s
 orderMaxCancelCount: 5
 enterSilent: 10m
 restartSilent: 10m
+httpSilent: 10m
 
 requestInterval: 10s
 makerTakerSymbolsMap:
-#  BTC-USDT: BTCUSDT
-#  ETH-USDT: ETHUSDT
-#  LTC-USDT: LTCUSDT
-#  DOGE-USDT: DOGEUSDT
-#  XRP-USDT: XRPUSDT
-#  LINK-USDT: LINKUSDT
-#  TRX-USDT: TRXUSDT
-#  DOT-USDT: DOTUSDT
-#  ADA-USDT: ADAUSDT
-#  EOS-USDT: EOSUSDT
-#  BCH-USDT: BCHUSDT
-#  YFI-USDT: YFIUSDT
-#  UNI-USDT: UNIUSDT
-  FIL-USDT: FILUSDT
+    BTC-USDT: BTCUSDT
+    BNB-USDT: BNBUSDT
+    ETH-USDT: ETHUSDT
+  #  LTC-USDT: LTCUSDT
+  #  DOGE-USDT: DOGEUSDT
+    XRP-USDT: XRPUSDT
+  #  LINK-USDT: LINKUSDT
+  #  TRX-USDT: TRXUSDT
+  #  DOT-USDT: DOTUSDT
+  #  ADA-USDT: ADAUSDT
+  #  EOS-USDT: EOSUSDT
+  #  BCH-USDT: BCHUSDT
+  #  YFI-USDT: YFIUSDT
+  #  UNI-USDT: UNIUSDT
+#  FIL-USDT: FILUSDT
 #  YFII-USDT: YFIIUSDT
 #  SNX-USDT: SNXUSDT
-#  BNB-USDT: BNBUSDT
 #  ZEC-USDT: ZECUSDT
 #  DASH-USDT: DASHUSDT
 #  ETC-USDT: ETCUSDT

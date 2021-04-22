@@ -473,9 +473,9 @@ func main() {
 			break
 		case <-hbLoopTimer.C:
 			updatePerpPositions()
+			updateSpotOldOrders()
 			if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
 				time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
-				updateSpotOldOrders()
 				updateSpotNewOrders()
 			}
 			hbLoopTimer.Reset(
