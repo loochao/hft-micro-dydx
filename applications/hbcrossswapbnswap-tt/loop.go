@@ -94,17 +94,17 @@ func updateTakerPositions() {
 func updateMakerPositions() {
 
 	if mAccount == nil {
-		logger.Debugf("mACCOUNT NOT READY")
+		//logger.Debugf("mACCOUNT NOT READY")
 		return
 	}
 
 	if tAccount == nil || tAccount.AvailableBalance == nil {
-		logger.Debugf("tACCOUNT NOT READY")
+		//logger.Debugf("tACCOUNT NOT READY")
 		return
 	}
 
 	if len(mtRankSymbolMap) == 0 {
-		logger.Debugf("RankSymbolMAP NOT READY")
+		//logger.Debugf("RankSymbolMAP NOT READY")
 		return
 	}
 
@@ -144,10 +144,10 @@ func updateMakerPositions() {
 		makerBuyPosition, okMakerBuyPosition := mBuyPositions[makerSymbol]
 		makerSellPosition, okMakerSellPosition := mSellPositions[makerSymbol]
 		fundingRate, okFundingRate := mtFundingRates[makerSymbol]
-		if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
-			mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
-			logger.Debugf("CHECK %v %v %v %v %v", okSpread, okQuantile, okMakerBuyPosition, okMakerSellPosition, okFundingRate)
-		}
+		//if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+		//	mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+		//	//logger.Debugf("CHECK %v %v %v %v %v", okSpread, okQuantile, okMakerBuyPosition, okMakerSellPosition, okFundingRate)
+		//}
 		if !okSpread || !okQuantile || !okMakerBuyPosition || !okMakerSellPosition || !okFundingRate {
 			continue
 		}
