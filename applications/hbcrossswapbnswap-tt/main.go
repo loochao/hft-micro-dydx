@@ -381,24 +381,25 @@ func main() {
 		}()
 	}
 
-	for _, makerSymbol := range mSymbols {
-		select {
-		case <-mtGlobalCtx.Done():
-			return
-		case <-time.After(*mtConfig.RequestInterval):
-			logger.Debugf("INITIAL CANCEL ALL %s", makerSymbol)
+	go func() {
+		for _, makerSymbol := range mSymbols {
 			select {
 			case <-mtGlobalCtx.Done():
 				return
-			case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
-				Cancel: &hbcrossswap.CancelAllParam{
-					Symbol: makerSymbol,
-				},
-			}:
+			case <-time.After(*mtConfig.RequestInterval):
+				logger.Debugf("INITIAL CANCEL ALL %s", makerSymbol)
+				select {
+				case <-mtGlobalCtx.Done():
+					return
+				case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
+					Cancel: &hbcrossswap.CancelAllParam{
+						Symbol: makerSymbol,
+					},
+				}:
+				}
 			}
-
 		}
-	}
+	}()
 
 	logger.Debugf("START MAIN LOOP")
 	fundingInterval := time.Hour * 8
