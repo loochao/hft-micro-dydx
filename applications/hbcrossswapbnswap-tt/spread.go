@@ -151,9 +151,11 @@ func watchMakerTakerSpread(
 				AgeDiff: ageDiff,
 				Time:    spreadTime,
 			}:
-				//logger.Debugf("SEND SPREAD")
 			default:
-				logger.Debugf("SEND SPREAD FAILED %s-%s", makerSymbol, takerSymbol)
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("SEND SPREAD FAILED %s-%s", makerSymbol, takerSymbol)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
 			}
 			break
 		case <-makerWalkDepthTimer.C:
