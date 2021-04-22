@@ -381,6 +381,25 @@ func main() {
 		}()
 	}
 
+	for _, makerSymbol := range mSymbols {
+		select {
+		case <-mtGlobalCtx.Done():
+			return
+		case <-time.After(*mtConfig.RequestInterval):
+			logger.Debugf("INITIAL CANCEL ALL %s", makerSymbol)
+			select {
+			case <-mtGlobalCtx.Done():
+				return
+			case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
+				Cancel: &hbcrossswap.CancelAllParam{
+					Symbol: makerSymbol,
+				},
+			}:
+			}
+
+		}
+	}
+
 	logger.Debugf("START MAIN LOOP")
 	fundingInterval := time.Hour * 8
 	fundingSilent := time.Minute * 5
@@ -435,6 +454,8 @@ func main() {
 						"MAKER WS ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
 						makerOrder.Symbol, makerOrder.Direction, makerOrder.TradeVolume, makerOrder.TradeAvgPrice,
 					)
+					tOrderSilentTimes[mtSymbolsMap[makerOrder.Symbol]] = time.Now()
+					mtLoopTimer.Reset(time.Nanosecond)
 					mHttpPositionUpdateSilentTimes[makerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 					if makerOrder.Direction == hbcrossswap.OrderDirectionSell {
 						mLastFilledSellPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
