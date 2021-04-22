@@ -65,11 +65,12 @@ type SpreadReport struct {
 }
 
 type DepthReport struct {
-	Exchange  string
-	DropRatio float64
-	AvgLen    int
-	Decay     float64
-	Bias      float64
+	Exchange     string
+	DropRatio    float64
+	EmaTimeDelta float64
+	AvgLen       int
+	Decay        float64
+	Bias         float64
 }
 
 func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) (*WalkedMakerTakerDepth, error) {

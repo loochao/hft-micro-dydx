@@ -184,6 +184,7 @@ func watchReports(
 				fields["dropRatio"] = report.DropRatio
 				fields["bias"] = report.Bias
 				fields["decay"] = report.Decay
+				fields["emaTimeDelta"] = report.EmaTimeDelta
 				if len(fields) > 0 {
 					pt, err := client.NewPoint(
 						*influxConfig.Measurement,

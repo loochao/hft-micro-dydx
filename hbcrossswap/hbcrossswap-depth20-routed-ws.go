@@ -156,6 +156,7 @@ func (w *Depth20RoutedWebsocket) startRead(ctx context.Context, conn *websocket.
 			if reportCh != nil {
 				report.DropRatio = float64(filterCount) / float64(totalCount)
 				report.AvgLen = totalLen / totalCount
+				report.EmaTimeDelta = emaTimeDelta
 				select {
 				case reportCh <- report:
 				default:

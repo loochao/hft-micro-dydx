@@ -165,6 +165,7 @@ func updateMakerNewOrders() {
 		makerTakerStepSize := mtStepSizes[makerSymbol]
 		makerStepSize := math.Ceil(makerContractSize/makerTickSize) * makerTickSize
 		makerStepSize = math.Ceil(makerStepSize / makerTickSize)
+
 		if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
 			mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 			logger.Debugf("LOOP %s", makerSymbol)
