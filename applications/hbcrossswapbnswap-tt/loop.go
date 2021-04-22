@@ -94,14 +94,17 @@ func updateTakerPositions() {
 func updateMakerPositions() {
 
 	if mAccount == nil {
+		logger.Debugf("mACCOUNT NOT READY")
 		return
 	}
 
 	if tAccount == nil || tAccount.AvailableBalance == nil {
+		logger.Debugf("tACCOUNT NOT READY")
 		return
 	}
 
 	if len(mtRankSymbolMap) == 0 {
+		logger.Debugf("RankSymbolMAP NOT READY")
 		return
 	}
 
