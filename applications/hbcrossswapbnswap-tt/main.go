@@ -423,6 +423,9 @@ func main() {
 			if makerOrder.Status == hbcrossswap.OrderStatusFilled ||
 				makerOrder.Status == hbcrossswap.OrderStatusCancelled ||
 				makerOrder.Status == hbcrossswap.OrderStatusPartiallyFilledButCancelledByClient {
+				if openOrder, ok := mOpenOrders[makerOrder.Symbol]; ok && openOrder.ClientOrderID == makerOrder.ClientOrderID {
+					delete(mOpenOrders, makerOrder.Symbol)
+				}
 				if makerOrder.Status == hbcrossswap.OrderStatusCancelled {
 					logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
 					mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
