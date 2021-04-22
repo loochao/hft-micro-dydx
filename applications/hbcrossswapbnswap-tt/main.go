@@ -515,7 +515,7 @@ func main() {
 		case <-mtLoopTimer.C:
 			updateTakerPositions()
 			if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
-				time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingInterval {
+				time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
 				updateMakerPositions()
 			}
 			mtLoopTimer.Reset(
