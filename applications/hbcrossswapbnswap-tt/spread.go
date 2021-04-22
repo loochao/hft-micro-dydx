@@ -183,6 +183,9 @@ func watchMakerTakerSpread(
 			}
 			break
 		case <-makerParseTimer.C:
+			if makerRawDepth == nil {
+				break
+			}
 			newMakerDepth, err = hbcrossswap.ParseDepth20(makerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
@@ -200,6 +203,9 @@ func watchMakerTakerSpread(
 			}
 			break
 		case <-takerParseTimer.C:
+			if takerRawDepth == nil {
+				break
+			}
 			newTakerDepth, err = bnswap.ParseDepth20(takerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
