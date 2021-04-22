@@ -13,7 +13,7 @@ func watchTakerDepthWebsocket(
 	takerDecay, takerBias float64,
 	proxyAddress string,
 	depthReportCh chan common.DepthReport,
-	channels map[string]chan []byte,
+	channels map[string]chan *common.DepthRawMessage,
 ) {
 	symbols := make([]string, 0)
 	for symbol := range channels {

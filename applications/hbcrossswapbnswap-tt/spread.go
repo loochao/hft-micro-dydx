@@ -18,12 +18,12 @@ func watchMakerTakerSpread(
 	maxAge,
 	lookbackDuration time.Duration,
 	lookbackMinimalWindow int,
-	makerDepthCh, takerDepthCh chan []byte,
+	makerDepthCh, takerDepthCh chan *common.DepthRawMessage,
 	reportCh chan common.SpreadReport,
 	outputCh chan *common.MakerTakerSpread,
 ) {
 	var err error
-	var makerRawDepth, takerRawDepth []byte
+	var makerRawDepth, takerRawDepth *common.DepthRawMessage
 	var makerDepth, newMakerDepth *hbcrossswap.Depth20
 	var takerDepth, newTakerDepth *bnswap.Depth20
 	var makerWalkedDepth, takerWalkedDepth *common.WalkedMakerTakerDepth
@@ -46,7 +46,7 @@ func watchMakerTakerSpread(
 	makerParseTimer := time.NewTimer(time.Hour * 999)
 	takerParseTimer := time.NewTimer(time.Hour * 999)
 
-	expectedChanSendingTime := time.Nanosecond*300
+	expectedChanSendingTime := time.Nanosecond * 300
 	cutIndex := 0
 	spread := 0.0
 	i := 0
@@ -183,7 +183,7 @@ func watchMakerTakerSpread(
 			}
 			break
 		case <-makerParseTimer.C:
-			newMakerDepth, err = hbcrossswap.ParseDepth20(makerRawDepth)
+			newMakerDepth, err = hbcrossswap.ParseDepth20(makerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("hbcrossswap.ParseDepth20 error %v", err)
@@ -200,7 +200,7 @@ func watchMakerTakerSpread(
 			}
 			break
 		case <-takerParseTimer.C:
-			newTakerDepth, err = bnswap.ParseDepth20(takerRawDepth)
+			newTakerDepth, err = bnswap.ParseDepth20(takerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("bnswap.ParseDepth20 error %v", err)
@@ -212,6 +212,20 @@ func watchMakerTakerSpread(
 			}
 			break
 		case makerRawDepth = <-makerDepthCh:
+			if takerRawDepth != nil {
+				ageDiff = makerRawDepth.Time.Sub(takerRawDepth.Time)
+				if ageDiff > maxAgeDiff {
+					//taker已经过期
+					takerRawDepth = nil
+					takerDepth = nil
+					takerWalkedDepth = nil
+				} else if ageDiff < -maxAgeDiff {
+					//maker已经过期
+					makerRawDepth = nil
+					makerDepth = nil
+					makerWalkedDepth = nil
+				}
+			}
 			makerParseTimer.Reset(expectedChanSendingTime)
 			depthCount++
 			if depthCount > 1000 {
@@ -230,6 +244,20 @@ func watchMakerTakerSpread(
 			}
 			break
 		case takerRawDepth = <-takerDepthCh:
+			if makerRawDepth != nil {
+				ageDiff = takerRawDepth.Time.Sub(makerRawDepth.Time)
+				if ageDiff > maxAgeDiff {
+					//maker已经过期
+					makerRawDepth = nil
+					makerDepth = nil
+					makerWalkedDepth = nil
+				} else if ageDiff < -maxAgeDiff {
+					//taker已经过期
+					takerRawDepth = nil
+					takerDepth = nil
+					takerWalkedDepth = nil
+				}
+			}
 			takerParseTimer.Reset(expectedChanSendingTime)
 			depthCount++
 			if depthCount > 1000 {

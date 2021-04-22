@@ -281,15 +281,15 @@ func main() {
 		spreadReportCh,
 	)
 
-	makerRowDepthChs := make(map[string]chan []byte)
+	makerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
 	for start := 0; start < len(mSymbols); start += *mtConfig.OrderBookBatchSize {
 		end := start + *mtConfig.OrderBookBatchSize
 		if end > len(mSymbols) {
 			end = len(mSymbols)
 		}
-		subMakerRowDepthChs := make(map[string]chan []byte)
+		subMakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
 		for _, symbol := range mSymbols[start:end] {
-			makerRowDepthChs[symbol] = make(chan []byte, 100)
+			makerRowDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
 			subMakerRowDepthChs[symbol] = makerRowDepthChs[symbol]
 		}
 		go watchMakerDepthWebsocket(
@@ -303,15 +303,15 @@ func main() {
 		)
 	}
 
-	takerRowDepthChs := make(map[string]chan []byte)
+	takerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
 	for start := 0; start < len(tSymbols); start += *mtConfig.OrderBookBatchSize {
 		end := start + *mtConfig.OrderBookBatchSize
 		if end > len(tSymbols) {
 			end = len(tSymbols)
 		}
-		subTakerRowDepthChs := make(map[string]chan []byte)
+		subTakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
 		for _, symbol := range tSymbols[start:end] {
-			takerRowDepthChs[symbol] = make(chan []byte, 100)
+			takerRowDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
 			subTakerRowDepthChs[symbol] = takerRowDepthChs[symbol]
 		}
 		go watchTakerDepthWebsocket(

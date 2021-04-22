@@ -12,6 +12,12 @@ type Depth20 interface {
 	GetSymbol() string
 }
 
+type DepthRawMessage struct {
+	Depth  []byte
+	Symbol string
+	Time   time.Time
+}
+
 type WalkedMakerTakerDepth struct {
 	MakerFarAsk float64
 	MakerAsk    float64
@@ -69,12 +75,12 @@ type DepthReport struct {
 func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) (*WalkedMakerTakerDepth, error) {
 
 	wd, hasMakerData, hasTakerData := &WalkedMakerTakerDepth{
-		Symbol: depth20.GetSymbol(),
-		Time:   depth20.GetTime(),
-		TakerAsk: 0,
-		TakerBid: 0,
-		MakerAsk: 0,
-		MakerBid: 0,
+		Symbol:       depth20.GetSymbol(),
+		Time:         depth20.GetTime(),
+		TakerAsk:     0,
+		TakerBid:     0,
+		MakerAsk:     0,
+		MakerBid:     0,
 		TakerBidSize: 0,
 		TakerAskSize: 0,
 		MakerAskSize: 0,

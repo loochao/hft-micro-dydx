@@ -22,7 +22,7 @@ type Depth20RoutedWebsocket struct {
 	stopped     int32
 }
 
-func (w *Depth20RoutedWebsocket) startRead(conn *websocket.Conn, channels map[string]chan []byte, decay, bias float64, symbols []string, reportCh chan common.DepthReport) {
+func (w *Depth20RoutedWebsocket) startRead(conn *websocket.Conn, channels map[string]chan *common.DepthRawMessage, decay, bias float64, symbols []string, reportCh chan common.DepthReport) {
 	logger.Debugf("START startRead %s", symbols)
 	defer func() {
 		logger.Debugf("EXIT startRead %s", symbols)
@@ -37,7 +37,7 @@ func (w *Depth20RoutedWebsocket) startRead(conn *websocket.Conn, channels map[st
 	logSilentTime := time.Now()
 	var symbolBytes []byte
 	var symbol string
-	var ch chan []byte
+	var ch chan *common.DepthRawMessage
 	var ok bool
 	var t int64
 	var report = common.DepthReport{
@@ -165,7 +165,11 @@ func (w *Depth20RoutedWebsocket) startRead(conn *websocket.Conn, channels map[st
 		}
 		if ch, ok = channels[symbol]; ok {
 			select {
-			case ch <- msg:
+			case ch <- &common.DepthRawMessage{
+				Symbol: symbol,
+				Time:   time.Unix(0, t*1000000),
+				Depth:  msg,
+			}:
 				//logger.Debugf("SEND %s", symbol)
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
@@ -243,7 +247,7 @@ func (w *Depth20RoutedWebsocket) reconnect(ctx context.Context, wsUrl string, pr
 	return conn, nil
 }
 
-func (w *Depth20RoutedWebsocket) start(ctx context.Context, channels map[string]chan []byte, proxy string, decay, bias float64, reportCh chan common.DepthReport) {
+func (w *Depth20RoutedWebsocket) start(ctx context.Context, channels map[string]chan *common.DepthRawMessage, proxy string, decay, bias float64, reportCh chan common.DepthReport) {
 	urlStr := "wss://fstream.binance.com/stream?streams="
 	symbols := make([]string, 0)
 	for symbol := range channels {
@@ -370,7 +374,7 @@ func NewDepth20RoutedWebsocket(
 	ctx context.Context,
 	decay, bias float64,
 	proxy string,
-	channels map[string]chan []byte,
+	channels map[string]chan *common.DepthRawMessage,
 	reportCh chan common.DepthReport,
 ) *Depth20RoutedWebsocket {
 	ws := Depth20RoutedWebsocket{
