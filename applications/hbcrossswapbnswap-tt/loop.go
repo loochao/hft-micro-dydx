@@ -166,10 +166,10 @@ func updateMakerNewOrders() {
 		makerStepSize := math.Ceil(makerContractSize/makerTickSize) * makerTickSize
 		makerStepSize = math.Ceil(makerStepSize / makerTickSize)
 
-		if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
-			mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
-			logger.Debugf("LOOP %s", makerSymbol)
-		}
+		//if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+		//	mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+		//	logger.Debugf("LOOP %s", makerSymbol)
+		//}
 
 		if spread.ShortLastLeave < quantile.ShortBot &&
 			spread.ShortMedianLeave < quantile.ShortBot &&
