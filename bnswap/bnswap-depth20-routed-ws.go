@@ -68,11 +68,11 @@ func (w *Depth20RoutedWebsocket) startRead(conn *websocket.Conn, channels map[st
 		totalCount++
 		totalLen += len(msg)
 		if totalCount > 10000 {
-			logger.Debugf(
-				"AVERAGE MESSAGE LENGTH %d/%d = %f EMA TIME DELTA %f DROP RATIO %f",
-				totalLen, totalCount, float64(totalLen)/float64(totalCount),
-				emaTimeDelta, float64(filterCount)/float64(totalCount),
-			)
+			//logger.Debugf(
+			//	"AVERAGE MESSAGE LENGTH %d/%d = %f EMA TIME DELTA %f DROP RATIO %f",
+			//	totalLen, totalCount, float64(totalLen)/float64(totalCount),
+			//	emaTimeDelta, float64(filterCount)/float64(totalCount),
+			//)
 			if reportCh != nil {
 				report.DropRatio = float64(filterCount) / float64(totalCount)
 				report.AvgLen = totalLen / totalCount
