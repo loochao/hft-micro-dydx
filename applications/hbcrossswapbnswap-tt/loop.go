@@ -204,7 +204,7 @@ func updateMakerNewOrders() {
 					Direction:      hbcrossswap.OrderDirectionSell,
 					Offset:         hbcrossswap.OrderOffsetClose,
 					LeverRate:      *mtConfig.Leverage,
-					OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
+					OrderPriceType: hbcrossswap.OrderPriceTypePostOnly,
 				}
 
 				mOpenOrders[makerSymbol] = MakerOpenOrder{
@@ -251,7 +251,7 @@ func updateMakerNewOrders() {
 					Direction:      hbcrossswap.OrderDirectionBuy,
 					Offset:         hbcrossswap.OrderOffsetClose,
 					LeverRate:      *mtConfig.Leverage,
-					OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
+					OrderPriceType: hbcrossswap.OrderPriceTypePostOnly,
 				}
 				mOpenOrders[makerSymbol] = MakerOpenOrder{
 					Symbol: makerSymbol,
@@ -347,7 +347,7 @@ func updateMakerNewOrders() {
 				Direction:      hbcrossswap.OrderDirectionBuy,
 				Offset:         hbcrossswap.OrderOffsetOpen,
 				LeverRate:      *mtConfig.Leverage,
-				OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
+				OrderPriceType: hbcrossswap.OrderPriceTypePostOnly,
 			}
 			mOpenOrders[makerSymbol] = MakerOpenOrder{
 				Symbol: makerSymbol,
@@ -443,7 +443,7 @@ func updateMakerNewOrders() {
 				Direction:      hbcrossswap.OrderDirectionSell,
 				Offset:         hbcrossswap.OrderOffsetOpen,
 				LeverRate:      *mtConfig.Leverage,
-				OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
+				OrderPriceType: hbcrossswap.OrderPriceTypePostOnly,
 			}
 			mOpenOrders[makerSymbol] = MakerOpenOrder{
 				Symbol: makerSymbol,

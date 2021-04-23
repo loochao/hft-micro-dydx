@@ -64,7 +64,6 @@ func watchMakerOrderRequest(
 	}
 }
 
-
 func cancelAllMakerOpenOrders() {
 	for symbol, order := range mOpenOrders {
 		if mOrderCancelCounts[symbol] > *mtConfig.OrderMaxCancelCount {
@@ -87,6 +86,7 @@ func updateMakerOldOrders() {
 	for symbol, order := range mOpenOrders {
 		if mOrderCancelCounts[symbol] > *mtConfig.OrderMaxCancelCount {
 			delete(mOpenOrders, symbol)
+			mOrderCancelCounts[order.Symbol] = 0
 			continue
 		}
 		if time.Now().Sub(mOrderCancelSilentTimes[symbol]) < 0 {
@@ -154,12 +154,11 @@ func isOrderProfitable(order hbcrossswap.NewOrderParam) bool {
 	}
 	if order.Direction == hbcrossswap.OrderDirectionBuy {
 		logger.Debugf(
-			"NOT PROFITABLE %s BUY ORDER, CANCEL",
+			"NOT PROFITABLE %s BUY ORDER, CANCEL", order.Symbol,
 		)
 	} else {
 		logger.Debugf(
-			"NOT PROFITABLE %s SELL ORDER, CANCEL",
-			order.Symbol,
+			"NOT PROFITABLE %s SELL ORDER, CANCEL", order.Symbol,
 		)
 	}
 	return false
