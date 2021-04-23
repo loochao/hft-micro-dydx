@@ -195,11 +195,6 @@ func watchMakerTakerSpread(
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if makerDepth == nil || newMakerDepth.EventTime.Sub(makerDepth.EventTime) > 0 {
-				//需要乘以multiplier
-				for i = range newMakerDepth.Bids {
-					newMakerDepth.Bids[i][1] *= multiplier
-					newMakerDepth.Asks[i][1] *= multiplier
-				}
 				makerDepth = newMakerDepth
 				makerWalkDepthTimer.Reset(time.Nanosecond)
 			}
@@ -215,6 +210,11 @@ func watchMakerTakerSpread(
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if takerDepth == nil || newTakerDepth.Sequence > takerDepth.Sequence {
+				//需要乘以multiplier
+				for i = range newTakerDepth.Bids {
+					newTakerDepth.Bids[i][1] *= multiplier
+					newTakerDepth.Asks[i][1] *= multiplier
+				}
 				takerDepth = newTakerDepth
 				takerWalkDepthTimer.Reset(time.Nanosecond)
 			}
