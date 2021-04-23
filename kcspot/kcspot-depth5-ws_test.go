@@ -23,7 +23,7 @@ func TestNewDepth5Websocket(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ws := NewDepth5Websocket(ctx, api, []string{"BTC-USDT"},  "socks5://127.0.0.1:1081" )
+	ws := NewDepth5Websocket(ctx, api, []string{"XRP-USDT"},  "socks5://127.0.0.1:1081" )
 	for {
 		select {
 		case d := <- ws.DataCh:

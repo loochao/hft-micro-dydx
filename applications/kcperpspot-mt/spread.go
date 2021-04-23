@@ -191,7 +191,7 @@ func watchMakerTakerSpread(
 			newMakerDepth, err = kcspot.ParseDepth5(makerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("kcspot.ParseDepth5 error %v %s", err, makerSymbol)
+					logger.Debugf("kcspot.ParseDepth5 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if makerDepth == nil || newMakerDepth.EventTime.Sub(makerDepth.EventTime) > 0 {
@@ -211,7 +211,7 @@ func watchMakerTakerSpread(
 			newTakerDepth, err = kcperp.ParseDepth5(takerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("kcperp.ParseDepth5 error %v %s", err, takerSymbol)
+					logger.Debugf("kcperp.ParseDepth5 error %v %s %s", err, takerSymbol, takerRawDepth.Depth)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if takerDepth == nil || newTakerDepth.Sequence > takerDepth.Sequence {
