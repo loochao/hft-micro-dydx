@@ -169,3 +169,22 @@ func TestAPI_ChangeAutoDepositStatus(t *testing.T) {
 	}
 	logger.Debugf("%v", res)
 }
+
+func TestAPI_GetSystemStatus(t *testing.T) {
+	var api *API
+	var ctx = context.Background()
+	var err error
+	api, err = NewAPI(
+		os.Getenv("KCPERP_KEY"),
+		os.Getenv("KCPERP_SECRET"),
+		os.Getenv("KCPERP_PASSPHRASE"),
+		"socks5://127.0.0.1:1081")
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := api.GetSystemStatus(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%v", res)
+}

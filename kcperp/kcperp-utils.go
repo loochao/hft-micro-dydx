@@ -136,7 +136,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 			if bytes[offset] == ',' {
 				orderBook.Sequence, err = common.ParseInt(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyLastUpdateId error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyLastUpdateId error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				if bytes[offset+4] != 'k' && bytes[offset+5] != 's' && bytes[offset+6] != '"' {
 					return nil, fmt.Errorf("bad bytes %s", bytes)
@@ -149,7 +149,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 			if bytes[offset] == ',' || bytes[offset] == ']' {
 				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyBids error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 10 || bytes[offset+1] == ']' {
@@ -170,7 +170,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 			if bytes[offset] == ',' || bytes[offset] == ']' {
 				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyAsks error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 10 || bytes[offset+1] == ']' {
@@ -192,7 +192,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 			offset += 13
 			timestamp, err := common.ParseInt(bytes[collectStart:offset])
 			if err != nil {
-				return nil, fmt.Errorf("JsonKeyEventTime error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+				return nil, fmt.Errorf("JsonKeyEventTime error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 			}
 			orderBook.EventTime = time.Unix(0, timestamp*1000000)
 			offset += 85
@@ -299,7 +299,7 @@ func WatchSystemStatusHttp(
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			systemStatus, err := api.GetSystemStatus(subCtx)
 			if err != nil {
-				logger.Debugf("WatchAccountFromHttp GetAccountOverView error %v", err)
+				logger.Debugf("WatchSystemStatusHttp GetSystemStatus error %v", err)
 				select {
 				case output <- false:
 				default:

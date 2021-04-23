@@ -497,6 +497,6 @@ func (wsCap *CurrentFundingRate) UnmarshalJSON(data []byte) error {
 }
 
 type SystemStatus struct {
-	Msg    string
-	Status string
+	Msg    string `json:"msg"`
+	Status string `json:"status"`
 }
