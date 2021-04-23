@@ -33,20 +33,17 @@ func updatePerpPositions() {
 		if !okPerpPosition || !okSpotBalance || !okSpread {
 			continue
 		}
-		perpOrderBook := spread.PerpOrderBook
+		perpOrderBook := spread.TakerDepth
 
 		multiplier := kcperpMultipliers[perpSymbol]
 		perpTickSize := kcperpTickSizes[perpSymbol]
-		perpLotSize := kcperpLotSizes[perpSymbol]
-		lotSize := kcperpLotSizes[perpSymbol]
 
 		perpSize := -(spotBalance.Holds + spotBalance.Available) - perpPosition.CurrentQty*multiplier
-		unHedgedValue += math.Abs(perpSize * spread.PerpOrderBook.AskPrice)
+		unHedgedValue += math.Abs(perpSize * spread.TakerDepth.MakerAsk)
 		perpSize = math.Round(perpSize / multiplier)
-		perpSize = math.Round(perpSize/lotSize) * lotSize
 
 		//只做空PERP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
-		if perpSize <= 0 && -perpSize < perpLotSize {
+		if perpSize <= 0  {
 			continue
 		}
 		if perpSize > 0 && perpPosition.CurrentQty >= 0 {
@@ -63,12 +60,12 @@ func updatePerpPositions() {
 		if perpSize*perpPosition.CurrentQty < 0 && math.Abs(perpSize) <= math.Abs(perpPosition.CurrentQty) {
 			reduceOnly = true
 		}
-		price := math.Round(perpOrderBook.AskPrice*(1.0+*kcConfig.EnterSlippage)/perpTickSize) * perpTickSize
+		price := math.Round(perpOrderBook.MakerAsk*(1.0+*kcConfig.EnterSlippage)/perpTickSize) * perpTickSize
 		side := kcperp.OrderSideBuy
 		if perpSize < 0 {
 			side = kcperp.OrderSideSell
 			perpSize = -perpSize
-			price = math.Round(perpOrderBook.BidPrice*(1.0-*kcConfig.EnterSlippage)/perpTickSize) * perpTickSize
+			price = math.Round(perpOrderBook.MakerBid*(1.0-*kcConfig.EnterSlippage)/perpTickSize) * perpTickSize
 		}
 		order := kcperp.NewOrderParam{
 			Symbol:      perpSymbol,
@@ -150,20 +147,21 @@ func updateSpotNewOrders() {
 		if !okSpread || !okQuantile || !okSpotBalance || !okFundingRate {
 			continue
 		}
-		if time.Now().Sub(spread.LastUpdateTime) > *kcConfig.SpreadTimeToLive {
+		if time.Now().Sub(spread.Time) > *kcConfig.SpreadTimeToLive {
 			continue
 		}
-		perpStepSize := kcperpLotSizes[perpSymbol] * kcperpMultipliers[perpSymbol]
+		perpStepSize :=  kcperpMultipliers[perpSymbol]
 		spotStepSize := kcspotStepSizes[spotSymbol]
 		spotTickSize := kcspotTickSizes[spotSymbol]
+		mergedStepSize := kcMergedStepSizes[spotSymbol]
 		spotMinNotional := kcspotMinNotional[spotSymbol]
 
 		currentSpotSize := spotBalance.Available + spotBalance.Holds
-		if spread.LastEnter > quantile.Top &&
-			spread.MedianEnter > quantile.Top &&
+		if spread.ShortLastEnter > quantile.Top &&
+			spread.ShortMedianEnter > quantile.Top &&
 			fundingRate.Value > *kcConfig.MinimalEnterFundingRate &&
 			rank >= len(kcspotSymbols)-*kcConfig.TradeCount {
-			price := spread.SpotOrderBook.MakerBidVWAP
+			price := spread.MakerDepth.MakerBid
 			price = math.Floor(price/spotTickSize) * spotTickSize
 			targetValue := currentSpotSize*price + entryStep
 			if targetValue > entryTarget {
@@ -178,8 +176,7 @@ func updateSpotNewOrders() {
 			entryValue = math.Max(entryValue, spotMinNotional)
 
 			quantity := entryValue / price
-			quantity = math.Round(quantity/spotStepSize) * spotStepSize
-			quantity = math.Round(quantity/perpStepSize) * perpStepSize
+			quantity = math.Round(quantity/mergedStepSize) * mergedStepSize
 
 			entryValue = quantity * price
 
@@ -191,8 +188,8 @@ func updateSpotNewOrders() {
 						entryValue,
 						entryStep*0.8,
 						spotSymbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
+						spread.ShortLastEnter, quantile.Top,
+						spread.ShortMedianEnter, quantile.Top,
 						quantity,
 					)
 					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
@@ -206,8 +203,8 @@ func updateSpotNewOrders() {
 						entryValue,
 						usdtAvailable,
 						spotSymbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
+						spread.ShortLastEnter, quantile.Top,
+						spread.ShortMedianEnter, quantile.Top,
 						quantity,
 					)
 					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
@@ -222,8 +219,8 @@ func updateSpotNewOrders() {
 						quantity*price,
 						spotMinNotional,
 						spotSymbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
+						spread.ShortLastEnter, quantile.Top,
+						spread.ShortMedianEnter, quantile.Top,
 						quantity,
 					)
 					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
@@ -234,8 +231,8 @@ func updateSpotNewOrders() {
 			logger.Debugf(
 				"TOP OPEN %s %f > %f, %f > %f, SIZE %f",
 				spotSymbol,
-				spread.LastEnter, quantile.Top,
-				spread.MedianEnter, quantile.Top,
+				spread.ShortLastEnter, quantile.Top,
+				spread.ShortMedianEnter, quantile.Top,
 				quantity,
 			)
 			order := kcspot.NewOrderParam{
@@ -252,10 +249,10 @@ func updateSpotNewOrders() {
 			kcspotOpenOrders[spotSymbol] = order
 			kcspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{New: &order}
 			return
-		} else if spread.LastExit < quantile.Bot &&
-			spread.MedianExit < quantile.Bot &&
+		} else if spread.ShortLastLeave < quantile.Bot &&
+			spread.ShortMedianLeave < quantile.Bot &&
 			fundingRate.Value < *kcConfig.MinimalKeepFundingRate {
-			price := spread.SpotOrderBook.MakerAskVWAP
+			price := spread.MakerDepth.MakerAsk
 			price = math.Ceil(price/spotTickSize) * spotTickSize
 			if spotBalance.Available*price > spotMinNotional {
 				entryValue := math.Min(4*entryStep, spotBalance.Available*price*0.5)
@@ -275,8 +272,8 @@ func updateSpotNewOrders() {
 					logger.Debugf(
 						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
 						spotSymbol,
-						spread.LastExit, quantile.Bot,
-						spread.MedianExit, quantile.Bot,
+						spread.ShortLastLeave, quantile.Bot,
+						spread.ShortMedianLeave, quantile.Bot,
 						quantity,
 					)
 					order := kcspot.NewOrderParam{

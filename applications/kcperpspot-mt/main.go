@@ -50,7 +50,7 @@ func main() {
 	kcGlobalCtx, kcGlobalCancel = context.WithCancel(context.Background())
 	defer kcGlobalCancel()
 
-	kcperpLotSizes, kcperpMultipliers, kcperpTickSizes, _, err = kcperp.GetOrderLimits(kcGlobalCtx, kcperpAPI, kcperpSymbols)
+	_, kcperpMultipliers, kcperpTickSizes, _, err = kcperp.GetOrderLimits(kcGlobalCtx, kcperpAPI, kcperpSymbols)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -58,8 +58,12 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
+	for _, spotSymbol := range kcspotSymbols {
+		kcMergedStepSizes[spotSymbol] =common.MergedStepSize(kcspotStepSizes[spotSymbol], kcperpMultipliers[kcspSymbolsMap[spotSymbol]])
+	}
+	logger.Debugf("MERGED STEP SIZE %v", kcMergedStepSizes)
 
-	kcInfluxWriter, err = common.NewInfluxWriter(
+	kcInternalInfluxWriter, err = common.NewInfluxWriter(
 		*kcConfig.InternalInflux.Address,
 		*kcConfig.InternalInflux.Username,
 		*kcConfig.InternalInflux.Password,
@@ -82,7 +86,7 @@ func main() {
 	}
 
 	defer func() {
-		err := kcInfluxWriter.Stop()
+		err := kcInternalInfluxWriter.Stop()
 		if err != nil {
 			logger.Warnf("stop influx writer error %v", err)
 		}
@@ -139,28 +143,28 @@ func main() {
 	defer kcLoopTimer.Stop()
 	defer frRankUpdatedTimer.Stop()
 
-	go kcperp.WatchPositionsFromHttp(
+	go kcperp.PositionsHttpLoop(
 		kcGlobalCtx, kcperpAPI,
 		kcperpSymbols, *kcConfig.PullInterval,
 		kcperpPositionCh,
 	)
-	go kcperp.WatchAccountFromHttp(
+	go kcperp.AccountHttpLoop(
 		kcGlobalCtx, kcperpAPI,
 		kcperp.AccountParam{Currency: "USDT"},
 		*kcConfig.PullInterval, kcperpAccountCh,
 	)
-	go kcspot.WatchAccountFromHttp(
+	go kcspot.AccountHttpLoop(
 		kcGlobalCtx, kcspotAPI,
 		kcspot.AccountsParam{},
 		*kcConfig.PullInterval, kcspotAccountCh,
 	)
-	go kcperp.WatchCurrentFundingRate(
+	go kcperp.FundingRateLoop(
 		kcGlobalCtx, kcperpAPI,
 		kcperpSymbols,
 		*kcConfig.PullInterval*10, kcperpFundingRatesCh,
 	)
 
-	go watchPerpBars(
+	go perpBarsPullingLoop(
 		kcGlobalCtx,
 		kcperpAPI,
 		kcperpSymbols,
@@ -170,7 +174,7 @@ func main() {
 		kcperpBarsMapCh,
 	)
 
-	go watchSpotBars(
+	go spotBarsPullingLoop(
 		kcGlobalCtx,
 		kcspotAPI,
 		kcspotSymbols,
@@ -180,7 +184,7 @@ func main() {
 		kcspotBarsMapCh,
 	)
 
-	go watchDeltaQuantile(
+	go deltaQuantileLoop(
 		kcGlobalCtx,
 		kcspotSymbols,
 		kcspSymbolsMap,
@@ -195,60 +199,82 @@ func main() {
 		kcQuantilesCh,
 	)
 
-	walkedOrderBookCh := make(chan WalkedOrderBook, len(kcspotSymbols)*10)
+	depthReportCh := make(chan common.DepthReport, 10000)
+	spreadReportCh := make(chan common.SpreadReport, 10000)
+	go reportsSaveLoop(
+		kcGlobalCtx,
+		kcInternalInfluxWriter,
+		*kcConfig.InternalInflux,
+		depthReportCh,
+		spreadReportCh,
+	)
+
+	makerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
 	for start := 0; start < len(kcspotSymbols); start += *kcConfig.OrderBookBatchSize {
 		end := start + *kcConfig.OrderBookBatchSize
 		if end > len(kcspotSymbols) {
 			end = len(kcspotSymbols)
 		}
-		go watchSpotWalkedOrderBooks(
+		subMakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
+		for _, symbol := range kcspotSymbols[start:end] {
+			makerRowDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
+			subMakerRowDepthChs[symbol] = makerRowDepthChs[symbol]
+		}
+		go makerDepthWSLoop(
 			kcGlobalCtx,
+			kcGlobalCancel,
 			kcspotAPI,
 			*kcConfig.ProxyAddress,
-			*kcConfig.OrderBookTakerImpact,
-			*kcConfig.OrderBookMakerImpact,
-			kcspotSymbols[start:end],
-			walkedOrderBookCh,
+			*kcConfig.OrderBookMakerDecay,
+			*kcConfig.OrderBookMakerBias,
+			*kcConfig.ReportCount,
+			depthReportCh,
+			subMakerRowDepthChs,
 		)
 	}
 
-	perpMarkPriceCh := make(chan *kcperp.MarkPrice, len(kcperpSymbols)*100)
+	takerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
 	for start := 0; start < len(kcperpSymbols); start += *kcConfig.OrderBookBatchSize {
 		end := start + *kcConfig.OrderBookBatchSize
-		if end > len(kcspotSymbols) {
-			end = len(kcspotSymbols)
+		if end > len(kcperpSymbols) {
+			end = len(kcperpSymbols)
 		}
-		go watchPerpWalkedOrderBooks(
+		subTakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
+		for _, symbol := range kcperpSymbols[start:end] {
+			takerRowDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
+			subTakerRowDepthChs[symbol] = takerRowDepthChs[symbol]
+		}
+		go takerDepthWSLoop(
 			kcGlobalCtx,
+			kcGlobalCancel,
 			kcperpAPI,
 			*kcConfig.ProxyAddress,
-			kcperpMultipliers,
-			*kcConfig.OrderBookTakerImpact,
-			*kcConfig.OrderBookMakerImpact,
-			kcperpSymbols[start:end],
-			walkedOrderBookCh,
-		)
-		go watchInstrument(
-			kcGlobalCtx,
-			kcperpAPI,
-			*kcConfig.ProxyAddress,
-			kcperpSymbols[start:end],
-			perpMarkPriceCh,
+			*kcConfig.OrderBookTakerDecay,
+			*kcConfig.OrderBookTakerBias,
+			*kcConfig.ReportCount,
+			depthReportCh,
+			subTakerRowDepthChs,
 		)
 	}
 
-	spreadCh := make(chan Spread, len(kcspotSymbols)*100)
-	go watchSpread(
-		kcGlobalCtx,
-		kcspotSymbols,
-		kcpsSymbolsMap,
-		*kcConfig.OrderBookMaxAgeDiff,
-		*kcConfig.OrderBookMaxAge,
-		*kcConfig.SpreadLookbackDuration,
-		*kcConfig.SpreadLookbackMinimalWindow,
-		walkedOrderBookCh,
-		spreadCh,
-	)
+	spreadCh := make(chan *common.MakerTakerSpread, len(kcspotSymbols)*100)
+	for makerSymbol, takerSymbol := range kcConfig.SpotPerpPairs {
+		go watchMakerTakerSpread(
+			kcGlobalCtx,
+			makerSymbol, takerSymbol,
+			kcperpMultipliers[makerSymbol],
+			*kcConfig.OrderBookMakerImpact,
+			*kcConfig.OrderBookTakerImpact,
+			*kcConfig.OrderBookMaxAgeDiff,
+			*kcConfig.OrderBookMaxAge,
+			*kcConfig.SpreadLookbackDuration,
+			*kcConfig.SpreadLookbackMinimalWindow,
+			makerRowDepthChs[makerSymbol],
+			takerRowDepthChs[takerSymbol],
+			spreadReportCh,
+			spreadCh,
+		)
+	}
 
 	kcspotNewOrderErrorCh = make(chan SpotOrderNewError, len(kcspotSymbols)*2)
 	for _, spotSymbol := range kcspotSymbols {
@@ -305,19 +331,18 @@ func main() {
 
 	defer kcGlobalCancel()
 
+	logger.Debugf("START mainLoop")
 	for {
 		select {
 		case <-done:
-			logger.Debugf("Exit")
+			logger.Debugf("EXIT mainLoop")
 			return
 		case kcspotSystemReady = <-kcSpotSystemStatusCh:
-			logger.Debugf("kcspotSystemReady %v", kcspotSystemReady)
 			if !kcspotSystemReady {
 				kcSystemReadyTime = time.Now().Add(*kcConfig.RestartSilent)
 			}
 			break
 		case kcperpSystemReady = <-kcPerpSystemStatusCh:
-			logger.Debugf("kcperpSystemReady %v", kcperpSystemReady)
 			if !kcperpSystemReady {
 				kcSystemReadyTime = time.Now().Add(*kcConfig.RestartSilent)
 			}
@@ -406,10 +431,7 @@ func main() {
 			}
 			break
 		case spread := <-spreadCh:
-			kcSpreads[spread.Symbol] = spread
-			break
-		case markPrice := <-perpMarkPriceCh:
-			kcperpMarkPrices[markPrice.Symbol] = markPrice
+			kcSpreads[spread.MakerSymbol] = spread
 			break
 		case fr := <-kcperpFundingRatesCh:
 			kcperpFundingRates[fr.Symbol] = fr
@@ -484,7 +506,7 @@ func main() {
 			}
 			frRankUpdatedTimer.Reset(time.Minute)
 		case <-kcLoopTimer.C:
-			if kcperpSystemReady && kcspotSystemReady && time.Now().Sub(kcSystemReadyTime) > 0{
+			if kcperpSystemReady && kcspotSystemReady && time.Now().Sub(kcSystemReadyTime) > 0 {
 				updatePerpPositions()
 				updateSpotOldOrders()
 				updateSpotNewOrders()

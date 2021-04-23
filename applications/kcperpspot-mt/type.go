@@ -68,33 +68,6 @@ func (wo *WalkedOrderBook) ToString() string {
 	)
 }
 
-type Spread struct {
-	Symbol         string
-	Age            time.Duration
-	AgeDiff        time.Duration
-	LastEnter      float64
-	LastExit       float64
-	MedianEnter    float64
-	MedianExit     float64
-	PerpOrderBook  WalkedOrderBook
-	SpotOrderBook  WalkedOrderBook
-	LastUpdateTime time.Time
-}
-
-func (s *Spread) ToString() string {
-	return fmt.Sprintf(
-		"SPREAD %s AGE %v AGE DIFF %v LENTER %f MENTER %f LEXIT %f MEXIT %f %v",
-		s.Symbol,
-		s.Age,
-		s.AgeDiff,
-		s.LastEnter,
-		s.MedianEnter,
-		s.LastExit,
-		s.MedianExit,
-		s.LastUpdateTime,
-	)
-}
-
 type SpotOrderRequest struct {
 	New    *kcspot.NewOrderParam
 	Cancel *kcspot.CancelAllOrdersParam

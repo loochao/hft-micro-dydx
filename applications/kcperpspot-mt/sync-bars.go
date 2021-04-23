@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func watchPerpBars(
+func perpBarsPullingLoop(
 	ctx context.Context,
 	api *kcperp.API,
 	symbols []string,
@@ -137,7 +137,7 @@ func watchPerpBars(
 	}
 }
 
-func watchSpotBars(
+func spotBarsPullingLoop(
 	ctx context.Context,
 	api *kcspot.API,
 	symbols []string,

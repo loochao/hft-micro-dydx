@@ -221,7 +221,7 @@ func passPhraseEncrypt(key, plain []byte) string {
 	return base64.StdEncoding.EncodeToString(hm.Sum(nil))
 }
 
-func WatchPositionsFromHttp(
+func PositionsHttpLoop(
 	ctx context.Context, api *API,
 	symbols []string, interval time.Duration,
 	output chan []Position,
@@ -236,7 +236,7 @@ func WatchPositionsFromHttp(
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			positions, err := api.GetPositions(subCtx)
 			if err != nil {
-				logger.Debugf("WatchPositionsFromHttp GetPositions error %v", err)
+				logger.Debugf("PositionsHttpLoop GetPositions error %v", err)
 			} else {
 				//有一种情况是有的合约的仓位是拉不到的, 拉不到的都是空仓
 				positionBySymbols := make(map[string]Position)
@@ -262,7 +262,7 @@ func WatchPositionsFromHttp(
 	}
 }
 
-func WatchAccountFromHttp(
+func AccountHttpLoop(
 	ctx context.Context, api *API, param AccountParam, interval time.Duration,
 	output chan Account,
 ) {
@@ -276,7 +276,7 @@ func WatchAccountFromHttp(
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			account, err := api.GetAccountOverView(subCtx, param)
 			if err != nil {
-				logger.Debugf("WatchAccountFromHttp GetAccountOverView error %v", err)
+				logger.Debugf("AccountHttpLoop GetAccountOverView error %v", err)
 			} else {
 				output <- *account
 			}
@@ -363,7 +363,7 @@ func GetOrderLimits(
 	return
 }
 
-func WatchCurrentFundingRate(
+func FundingRateLoop(
 	ctx context.Context, api *API, symbols []string, interval time.Duration,
 	output chan CurrentFundingRate,
 ) {
@@ -378,7 +378,7 @@ func WatchCurrentFundingRate(
 				subCtx, _ := context.WithTimeout(ctx, time.Minute)
 				fr, err := api.GetCurrentFundingRate(subCtx, symbol)
 				if err != nil {
-					logger.Debugf("WatchCurrentFundingRate GetAccountOverView error %v", err)
+					logger.Debugf("FundingRateLoop GetAccountOverView error %v", err)
 				} else {
 					output <- *fr
 				}

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -22,9 +23,12 @@ type UserWebsocket struct {
 	done        chan interface{}
 	reconnectCh chan interface{}
 	topicCh     chan string
+	stopped     int32
 }
 
-func (w *UserWebsocket) startWrite(ctx context.Context, conn *websocket.Conn) {
+func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
+	logger.Debugf("START writeLoop")
+	defer logger.Debugf("EXIT writeLoop")
 	for {
 		select {
 		case <-ctx.Done():
@@ -42,20 +46,19 @@ func (w *UserWebsocket) startWrite(ctx context.Context, conn *websocket.Conn) {
 			default:
 				bytes, err = json.Marshal(msg)
 				if err != nil {
-					logger.Warnf("Marshal err %v", err)
+					logger.Debugf("Marshal err %v", err)
 					continue
 				}
 			}
-			err = conn.SetWriteDeadline(time.Now().Add(300 * time.Millisecond))
+			err = conn.SetWriteDeadline(time.Now().Add(time.Minute))
 			if err != nil {
+				logger.Debugf("conn.SetWriteDeadline error %v, restart ws", err)
 				w.restart()
 				return
 			}
-
 			err = conn.WriteMessage(websocket.TextMessage, bytes)
-
 			if err != nil {
-				logger.Warnf("WriteMessage %s error %v", string(bytes), err)
+				logger.Debugf("conn.WriteMessage %s error %v", bytes, err)
 				w.restart()
 				return
 			}
@@ -63,38 +66,40 @@ func (w *UserWebsocket) startWrite(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *UserWebsocket) startRead(conn *websocket.Conn) {
-	totalCount := 0
-	totalLen := 0
+func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
+	logger.Debugf("START readLoop")
+	defer logger.Debugf("EXIT readLoop")
+	//totalCount := 0
+	//totalLen := 0
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
-			logger.Warnf("SetReadDeadline error %v", err)
-			go w.restart()
+			logger.Debugf("conn.SetReadDeadline error %v", err)
+			w.restart()
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
-			logger.Warnf("NextReader error %v", err)
-			go w.restart()
+			logger.Debugf("conn.NextReader error %v", err)
+			w.restart()
 			return
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
-			logger.Warnf("readAll error %v", err)
-			go w.restart()
+			logger.Debugf("w.readAll error %v", err)
+			w.restart()
 			return
 		}
-		totalCount += 1
-		totalLen += len(msg)
-		if totalCount > 1000000 {
-			logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
-			totalLen = 0
-			totalCount = 0
-		}
+		//totalCount += 1
+		//totalLen += len(msg)
+		//if totalCount > 10000 {
+		//	logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
+		//	totalLen = 0
+		//	totalCount = 0
+		//}
 		select {
-		case <-time.After(time.Millisecond):
-			logger.Debug("KCSPOT DEPTH20 MSG TO MESSAGE CH TIMEOUT IN 1MS")
+		case <-time.After(time.Second):
+			logger.Debugf("w.messageCh <- msg timeout in 1s")
 		case w.messageCh <- msg:
 		}
 	}
@@ -119,7 +124,9 @@ func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *UserWebsocket) startDataHandler(ctx context.Context) {
+func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
+	logger.Debugf("START dataHandleLoop %d", id)
+	defer logger.Debugf("EXIT dataHandleLoop %d", id)
 	for {
 		select {
 		case <-ctx.Done():
@@ -127,11 +134,10 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			//logger.Debugf("MSG %s", msg)
 			var wsCap WsCap
 			err := json.Unmarshal(msg, &wsCap)
 			if err != nil {
-				logger.Debugf("Unmarshal error %v %s", err, msg)
+				logger.Debugf("json.Unmarshal(msg, &wsCap) error %v %s", err, msg)
 				continue
 			}
 			splits := strings.Split(wsCap.Topic, ":")
@@ -151,8 +157,8 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					return
 				case <-w.done:
 					return
-				case <-time.After(time.Millisecond):
-					logger.Warn("KCSPOT WS ORDER TO OUTPUT CH TIME OUT IN 1MS")
+				case <-time.After(time.Second):
+					logger.Debugf("w.OrderCh <- &order timeout in 1s")
 				case w.OrderCh <- &order:
 				}
 				select {
@@ -172,8 +178,8 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 					return
 				case <-w.done:
 					return
-				case <-time.After(time.Millisecond):
-					logger.Warn("KCSPOT WS BALANCE TO OUTPUT CH TIME OUT IN 1MS")
+				case <-time.After(time.Second):
+					logger.Debugf("w.BalanceCh <- &balance timeout in 1s")
 				case w.BalanceCh <- &balance:
 				}
 				select {
@@ -187,7 +193,7 @@ func (w *UserWebsocket) startDataHandler(ctx context.Context) {
 				} else if wsCap.Type == "pong" {
 					//logger.Debugf("PONG %s", wsCap.ID)
 				} else {
-					logger.Debugf("KCSPOT OTHER MSG %s", msg)
+					logger.Debugf("other msg %s", msg)
 				}
 			}
 		}
@@ -205,7 +211,7 @@ func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy strin
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			logger.Fatalf("PARSE PROXY %v", err)
+			return nil, fmt.Errorf("url.Parse error %v", err)
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -226,7 +232,7 @@ func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy strin
 		},
 	)
 	if err != nil {
-		logger.Warnf("dialer.DialContext ERROR %v", err)
+		logger.Debugf("dialer.DialContext error %v", err)
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("reconnect error: context is done")
@@ -239,7 +245,9 @@ func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy strin
 	return conn, nil
 }
 
-func (w *UserWebsocket) start(ctx context.Context, api *API, topics []string, proxy string) {
+func (w *UserWebsocket) mainLoop(ctx context.Context, api *API, topics []string, proxy string) {
+	logger.Debugf("START mainLoop")
+	defer logger.Debugf("EXIT mainLoop")
 
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
@@ -257,6 +265,10 @@ func (w *UserWebsocket) start(ctx context.Context, api *API, topics []string, pr
 	for {
 		select {
 		case <-ctx.Done():
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
 			return
 		case <-w.reconnectCh:
 			if internalCancel != nil {
@@ -271,46 +283,41 @@ func (w *UserWebsocket) start(ctx context.Context, api *API, topics []string, pr
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			connectToken, err := api.GetPrivateConnectToken(internalCtx)
 			if err != nil {
-				logger.Fatalf("GetPublicConnectToken error %v", err)
+				logger.Debugf("api.GetPrivateConnectToken error %v, stop ws", err)
+				internalCancel()
+				w.Stop()
 				return
 			}
 			if len(connectToken.InstanceServers) == 0 {
-				if err != nil {
-					logger.Fatalf("No InstanceServers %v", connectToken)
-					return
-				}
+				logger.Debugf("no instanceServers %v, stop ws", connectToken)
+				internalCancel()
+				w.Stop()
+				return
 			}
 			urlStr := connectToken.InstanceServers[0].Endpoint + "?token=" + connectToken.Token
-			//logger.Debugf("KCSPOT DEPTH50 WS %s", urlStr)
 
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
-				logger.Fatalf("RECONNECT ERROR %v", err)
+				logger.Debugf("w.reconnect error %v", err)
+				internalCancel()
+				w.Stop()
 				return
 			}
-			go w.startRead(conn)
-			go w.startWrite(internalCtx, conn)
-			go w.maintainHeartbeat(internalCtx, conn, topics, time.Duration(connectToken.InstanceServers[0].PingInterval)*time.Millisecond)
-
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
-
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
-			go w.startDataHandler(internalCtx)
+			go w.readLoop(conn)
+			go w.writeLoop(internalCtx, conn)
+			go w.heartbeatLoop(internalCtx, conn, topics, time.Duration(connectToken.InstanceServers[0].PingInterval)*time.Millisecond)
 		}
 	}
 }
 
-func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn, topics []string, pingInterval time.Duration) {
+func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn, topics []string, pingInterval time.Duration) {
 
+	logger.Debugf("START heartbeatLoop")
 	defer func() {
+		logger.Debugf("EXIT heartbeatLoop")
 		err := conn.Close()
 		if err != nil {
-			logger.Debugf("conn.Close() ERROR %v", err)
+			logger.Debugf("conn.Close() error %v", err)
 		}
 	}()
 
@@ -338,28 +345,25 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 			case <-ctx.Done():
 				return
 			case <-time.After(time.Millisecond):
-				logger.Debug("SEND PING TO WRITE TIMEOUT IN 1MS")
-				break
+				logger.Debugf("w.writeCh <- Ping timeout in 1ms")
 			case w.writeCh <- Ping{
 				ID:   fmt.Sprintf("%d", time.Now().Nanosecond()/1000000),
 				Type: "ping",
 			}:
-				break
 			}
 			break
 		case <-topicCheckTimer.C:
-			ts := make([]string, 0)
 		loop:
 			for topic, updateTime := range topicUpdatedTimes {
 				if time.Now().Sub(updateTime) > topicTimeout {
+					logger.Debugf("SUBSCRIBE %s", topic)
 					select {
 					case <-ctx.Done():
 						return
 					case <-time.After(time.Millisecond):
-						logger.Debugf("SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", ts)
-						break
+						logger.Debugf("w.writeCh <- SubscribeMsg %s timeout in 1ms", topic)
 					case w.writeCh <- SubscribeMsg{
-						ID:             strings.Join(ts, ","),
+						ID:             topic,
 						Type:           "subscribe",
 						Topic:          topic,
 						PrivateChannel: true,
@@ -380,27 +384,26 @@ func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.C
 }
 
 func (w *UserWebsocket) Stop() {
-	if _, ok := <-w.done; ok {
+	if atomic.LoadInt32(&w.stopped) == 0 {
+		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
-		logger.Infof("BNSWAP MARK PRICE WS STOPPED")
+		logger.Debugf("stopped")
 	}
 }
 
 func (w *UserWebsocket) restart() {
-	logger.Infof("BNSWAP WS RESTART")
+	logger.Debugf("BNSWAP WS RESTART")
+	select {
+	case w.RestartCh <- nil:
+	default:
+		logger.Debugf("w.RestartCh <- nil failed")
+	}
 	select {
 	case <-w.done:
 		return
-	default:
-	}
-	select {
-	case <-time.After(time.Millisecond):
-		logger.Fatal("NIL TO RESTART CH TIMEOUT IN 1MS, EXIT")
-	case w.RestartCh <- nil:
-	}
-	select {
-	case <-time.After(time.Millisecond):
-		logger.Fatal("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
+	case <-time.After(time.Second):
+		logger.Debugf("w.reconnectCh <- nil timeout in 1s, stop ws")
+		w.Stop()
 	case w.reconnectCh <- nil:
 	}
 }
@@ -423,8 +426,13 @@ func NewUserWebsocket(
 		RestartCh:   make(chan interface{}, 100),
 		writeCh:     make(chan interface{}, 100),
 		topicCh:     make(chan string, 100),
+		stopped:     0,
 	}
-	go ws.start(ctx, api, []string{"/account/balance", "/spotMarket/tradeOrders"}, proxy)
+	go ws.mainLoop(ctx, api, []string{"/account/balance", "/spotMarket/tradeOrders"}, proxy)
+	go ws.dataHandleLoop(ctx, 1)
+	go ws.dataHandleLoop(ctx, 2)
+	go ws.dataHandleLoop(ctx, 3)
+	go ws.dataHandleLoop(ctx, 4)
 	ws.reconnectCh <- nil
 	return &ws
 }

@@ -143,6 +143,19 @@ type Depth5 struct {
 	EventTime time.Time     `json:"-"`
 }
 
+func (depth *Depth5) GetBids() [5][2]float64 {
+	return depth.Bids
+}
+func (depth *Depth5) GetAsks() [5][2]float64 {
+	return depth.Asks
+}
+func (depth *Depth5) GetSymbol() string {
+	return depth.Symbol
+}
+func (depth *Depth5) GetTime() time.Time {
+	return depth.EventTime
+}
+
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	type Alias Depth5
 	aux := struct {

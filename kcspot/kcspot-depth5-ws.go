@@ -145,7 +145,7 @@ func (w *Depth5Websocket) startDataHandler(ctx context.Context, id int) {
 				case <-w.done:
 					return
 				case <-time.After(time.Millisecond):
-					logger.Warn("KCSPOT DEPTH50 TO OUTPUT CH TIME OUT IN 1MS")
+					logger.Debugf("w.DataCh <- depth20 timeout in 1ms")
 				case w.DataCh <- depth20:
 				}
 				select {
@@ -160,7 +160,7 @@ func (w *Depth5Websocket) startDataHandler(ctx context.Context, id int) {
 func (w *Depth5Websocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
-		logger.Debugf("RECONNECT %s, %d RETRIES", wsUrl, counter)
+		logger.Debugf("reconnect %s, %d retries", wsUrl, counter)
 	}
 
 	var dialer *websocket.Dialer
@@ -202,7 +202,9 @@ func (w *Depth5Websocket) reconnect(ctx context.Context, wsUrl string, proxy str
 	return conn, nil
 }
 
-func (w *Depth5Websocket) start(ctx context.Context, api *API, symbols []string, proxy string) {
+func (w *Depth5Websocket) mainLoop(ctx context.Context, api *API, symbols []string, proxy string) {
+	logger.Debugf("START mainLoop")
+	defer logger.Debugf("EXIT mainLoop")
 
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
@@ -258,15 +260,16 @@ func (w *Depth5Websocket) start(ctx context.Context, api *API, symbols []string,
 			}
 			go w.readLoop(conn)
 			go w.writeLoop(internalCtx, conn)
-			go w.maintainHeartbeat(internalCtx, conn, symbols)
+			go w.heartbeatLoop(internalCtx, conn, symbols)
 
 		}
 	}
 }
 
-func (w *Depth5Websocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn, symbols []string) {
-
+func (w *Depth5Websocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+	logger.Debugf("START heartbeatLoop")
 	defer func() {
+		logger.Debugf("EXIT heartbeatLoop")
 		err := conn.Close()
 		if err != nil {
 			logger.Debugf("conn.Close() ERROR %v", err)
@@ -309,7 +312,7 @@ func (w *Depth5Websocket) maintainHeartbeat(ctx context.Context, conn *websocket
 		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
-					logger.Debugf("KCPERP SUBSCRIBE %s", fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol))
+					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol))
 					select {
 					case <-ctx.Done():
 					case <-time.After(time.Millisecond):
@@ -337,7 +340,7 @@ func (w *Depth5Websocket) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
-		logger.Infof("stopped")
+		logger.Debugf("stopped")
 	}
 }
 
@@ -375,8 +378,9 @@ func NewDepth5Websocket(
 		messageCh:   make(chan []byte, 100*len(symbols)),
 		writeCh:     make(chan interface{}, 100*len(symbols)),
 		symbolCh:    make(chan string, 100*len(symbols)),
+		stopped:     0,
 	}
-	go ws.start(ctx, api, symbols, proxy)
+	go ws.mainLoop(ctx, api, symbols, proxy)
 	go ws.startDataHandler(ctx, 1)
 	go ws.startDataHandler(ctx, 2)
 	go ws.startDataHandler(ctx, 3)

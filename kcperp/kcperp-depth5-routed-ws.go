@@ -220,7 +220,7 @@ func (w *Depth5RoutedWebsocket) readLoop(
 				}:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("SEND MSG OUT FAILED %s CH LEN %d", symbol, len(ch))
+						logger.Debugf("ch <- &common.DepthRawMessage failed %s len(ch) %d", symbol, len(ch))
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}

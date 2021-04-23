@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
 	"strings"
@@ -18,9 +20,9 @@ func handleSave() {
 			balance, okBalance := kcspotBalances[spotSymbol]
 			spread, okSpread := kcSpreads[spotSymbol]
 			if okBalance && okSpread {
-				spotBalance += spread.SpotOrderBook.TakerBidVWAP * (balance.Available + balance.Holds)
+				spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
 			} else {
-				logger.Debugf("%s MISS BALANCE %v OR TAKER VWAP %v", spotSymbol, okBalance, spread.SpotOrderBook.TakerBidVWAP)
+				logger.Debugf("%s MISS BALANCE %v OR TAKER VWAP %v", spotSymbol, okBalance, spread.MakerDepth.TakerBid)
 				getAllBalances = false
 				break
 			}
@@ -42,7 +44,7 @@ func handleSave() {
 			if err != nil {
 				logger.Debugf("Spot Balance NewPoint error %v", err)
 			} else {
-				go kcInfluxWriter.Push(pt)
+				go kcInternalInfluxWriter.Push(pt)
 			}
 		}
 	}
@@ -64,7 +66,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("Perp Balance NewPoint error %v", err)
 		} else {
-			go kcInfluxWriter.Push(pt)
+			go kcInternalInfluxWriter.Push(pt)
 		}
 		tp := kcperpUSDTAccount.MarginBalance + kcperpUSDTAccount.UnrealisedPNL
 		totalPerpUSDTBalance = &tp
@@ -75,14 +77,14 @@ func handleSave() {
 		fields := make(map[string]interface{})
 		if position, ok := kcperpPositions[perpSymbol]; ok {
 			fields["perpCurrentQty"] = position.CurrentQty
-			if markPrice, ok := kcperpMarkPrices[perpSymbol]; ok {
-				fields["perpValue"] = position.CurrentQty * kcperpMultipliers[perpSymbol] * markPrice.IndexPrice
+			if spread, ok := kcSpreads[spotSymbol]; ok {
+				fields["perpValue"] = position.CurrentQty * kcperpMultipliers[perpSymbol] * spread.TakerDepth.TakerBid
 			}
 		}
 		if spotBalance, ok := kcspotBalances[spotSymbol]; ok {
 			fields["spotBalance"] = spotBalance.Available + spotBalance.Holds
-			if markPrice, ok := kcperpMarkPrices[perpSymbol]; ok {
-				fields["spotValue"] = markPrice.IndexPrice * (spotBalance.Available + spotBalance.Holds)
+			if spread, ok := kcSpreads[spotSymbol]; ok {
+				fields["spotValue"] = spread.MakerDepth.MakerAsk * (spotBalance.Available + spotBalance.Holds)
 			}
 		}
 		if fr, ok := kcperpFundingRates[perpSymbol]; ok {
@@ -90,27 +92,24 @@ func handleSave() {
 			fields["perpPredictedFundingRate"] = fr.PredictedValue
 		}
 		if spread, ok := kcSpreads[spotSymbol]; ok {
-			fields["lastEnterSpread"] = spread.LastEnter
-			fields["lastExitSpread"] = spread.LastExit
-			fields["medianEnterSpread"] = spread.MedianEnter
-			fields["medianExitSpread"] = spread.MedianExit
+			fields["shortLastEnter"] = spread.ShortLastEnter
+			fields["shortLastLeave"] = spread.ShortLastLeave
+			fields["shortMedianEnter"] = spread.ShortMedianEnter
+			fields["shortMedianLeave"] = spread.ShortMedianLeave
 
-			fields["spotTakerBidVWAP"] = spread.SpotOrderBook.TakerBidVWAP
-			fields["spotMakerBidVWAP"] = spread.SpotOrderBook.MakerBidVWAP
-			fields["spotTakerAskVWAP"] = spread.SpotOrderBook.TakerAskVWAP
-			fields["spotMakerAskVWAP"] = spread.SpotOrderBook.MakerAskVWAP
-			fields["spotTakerAskFarPrice"] = spread.SpotOrderBook.TakerAskFarPrice
-			fields["spotTakerBidFarPrice"] = spread.SpotOrderBook.TakerBidFarPrice
-			fields["spotTakerAskFarPrice5"] = (1.0 + *kcConfig.MakerBandOffset) * spread.SpotOrderBook.AskPrice
-			fields["spotTakerBidFarPrice5"] = (1.0 - *kcConfig.MakerBandOffset) * spread.SpotOrderBook.BidPrice
+			fields["spotTakerBid"] = spread.MakerDepth.TakerBid
+			fields["spotMakerBid"] = spread.MakerDepth.MakerBid
+			fields["spotTakerAsk"] = spread.MakerDepth.TakerAsk
+			fields["spotMakerAsk"] = spread.MakerDepth.MakerAsk
+			fields["spotTakerFarAsk"] = spread.MakerDepth.TakerFarAsk
+			fields["spotTakerFarBid"] = spread.MakerDepth.TakerFarBid
 			if order, ok := kcspotOpenOrders[spotSymbol]; ok {
 				fields["spotOpenOrderPrice"] = order.Price
 			}
-
-			fields["perpTakerBidVWAP"] = spread.PerpOrderBook.TakerBidVWAP
-			fields["perpMakerBidVWAP"] = spread.PerpOrderBook.MakerBidVWAP
-			fields["perpTakerAskVWAP"] = spread.PerpOrderBook.TakerAskVWAP
-			fields["perpMakerAskVWAP"] = spread.PerpOrderBook.MakerAskVWAP
+			fields["perpTakerBid"] = spread.TakerDepth.TakerBid
+			fields["perpMakerBid"] = spread.TakerDepth.MakerBid
+			fields["perpTakerAsk"] = spread.TakerDepth.TakerAsk
+			fields["perpMakerAsk"] = spread.TakerDepth.MakerAsk
 
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
@@ -137,7 +136,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("new position point error %v", err)
 		} else {
-			go kcInfluxWriter.Push(pt)
+			go kcInternalInfluxWriter.Push(pt)
 		}
 	}
 
@@ -167,7 +166,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("Total Balance NewPoint error %v", err)
 		} else {
-			go kcInfluxWriter.Push(pt)
+			go kcInternalInfluxWriter.Push(pt)
 		}
 	}
 }
@@ -183,7 +182,7 @@ func handleExternalInfluxSave() {
 			balance, okBalance := kcspotBalances[spotSymbol]
 			spread, okSpread := kcSpreads[spotSymbol]
 			if okBalance && okSpread {
-				spotBalance += spread.SpotOrderBook.TakerBidVWAP * (balance.Available + balance.Holds)
+				spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
 			} else {
 				getAllBalances = false
 				break
@@ -222,6 +221,86 @@ func handleExternalInfluxSave() {
 			} else {
 				go kcExternalInfluxWriter.Push(pt)
 			}
+		}
+	}
+}
+
+func reportsSaveLoop(
+	ctx context.Context,
+	influxWriter *common.InfluxWriter,
+	influxConfig InfluxConfig,
+	depthReportCh chan common.DepthReport,
+	spreadReportCh chan common.SpreadReport,
+) {
+	depthReports := make(map[string]common.DepthReport)
+	spreadReports := make(map[string]common.SpreadReport)
+	saveTimer := time.NewTimer(*influxConfig.SaveInterval)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case spreadReport := <-spreadReportCh:
+			spreadReports[spreadReport.MakerSymbol] = spreadReport
+			break
+		case depthReport := <-depthReportCh:
+			depthReports[depthReport.Exchange] = depthReport
+			break
+		case <-saveTimer.C:
+			for exchange, report := range depthReports {
+				fields := make(map[string]interface{})
+				fields["avgLen"] = report.AvgLen
+				fields["dropRatio"] = report.DropRatio
+				fields["bias"] = report.Bias
+				fields["decay"] = report.Decay
+				fields["emaTimeDelta"] = report.EmaTimeDelta
+				if len(fields) > 0 {
+					pt, err := client.NewPoint(
+						*influxConfig.Measurement,
+						map[string]string{
+							"exchange": exchange,
+							"type":     "depth-report",
+						},
+						fields,
+						time.Now().UTC(),
+					)
+					if err != nil {
+						logger.Debugf("DepthReport NewPoint error %v", err)
+					} else {
+						select {
+						case influxWriter.PushCh <- pt:
+						default:
+						}
+					}
+				}
+			}
+			for makerSymbol, report := range spreadReports {
+				fields := make(map[string]interface{})
+				fields["matchRatio"] = report.MatchRatio
+				fields["maxAgeDiff"] = float64(report.MaxAgeDiff)
+				fields["maxAge"] = float64(report.MaxAge)
+				if len(fields) > 0 {
+					pt, err := client.NewPoint(
+						*influxConfig.Measurement,
+						map[string]string{
+							"makerSymbol": makerSymbol,
+							"takerSymbol": report.TakerSymbol,
+							"type":        "spread-report",
+						},
+						fields,
+						time.Now().UTC(),
+					)
+					if err != nil {
+						logger.Debugf("SpreadReport NewPoint error %v", err)
+					} else {
+						select {
+						case influxWriter.PushCh <- pt:
+						default:
+						}
+					}
+				}
+			}
+			saveTimer.Reset(*influxConfig.SaveInterval)
+			break
 		}
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/geometrybase/hft-micro/tdigest"
 )
 
-func watchDeltaQuantile(
+func deltaQuantileLoop(
 	ctx context.Context,
 	spotSymbols []string,
 	spSymbolMap map[string]string,

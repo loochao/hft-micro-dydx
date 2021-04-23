@@ -74,52 +74,52 @@ func updateSpotOldOrders() {
 func isOrderProfitable(order kcspot.NewOrderParam) bool {
 	spread, ok1 := kcSpreads[order.Symbol]
 	quantile, ok2 := kcQuantiles[order.Symbol]
-	if !ok1 || !ok2 || time.Now().Sub(spread.PerpOrderBook.ParseTime) > *kcConfig.SpreadTimeToLive {
-		logger.Debugf("%s SPREAD IS OUT OF DATE %v, CANCEL", order.Symbol, time.Now().Sub(spread.PerpOrderBook.ParseTime))
+	if !ok1 || !ok2 || time.Now().Sub(spread.Time) > *kcConfig.SpreadTimeToLive {
+		logger.Debugf("%s SPREAD IS OUT OF DATE %v, CANCEL", order.Symbol, time.Now().Sub(spread.Time))
 		return false
 	}
 	if order.Side == kcspot.OrderSideBuy &&
-		float64(order.Price) < (1.0-2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.BidPrice-kcspotTickSizes[order.Symbol] {
-		logger.Debugf("%s BUY PRICE %f < MAKER BAND OFFSET BID PRICE %f, CANCEL",
+		float64(order.Price) < (1.0-2**kcConfig.MakerBandOffset)*spread.MakerDepth.MakerFarBid{
+		logger.Debugf("%s BUY PRICE %f < MINIMAL BID PRICE %f, CANCEL",
 			order.Symbol,
 			order.Price,
-			(1.0-2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.BidPrice-kcspotTickSizes[order.Symbol],
+			(1.0-2**kcConfig.MakerBandOffset)*spread.MakerDepth.MakerFarBid,
 		)
 		return false
 	} else if order.Side == kcspot.OrderSideSell &&
-		float64(order.Price) > (1.0+2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.AskPrice+kcspotTickSizes[order.Symbol] {
-		logger.Debugf("%s SELL PRICE %f > MAKER BAND OFFSET ASK PRICE %f, CANCEL",
+		float64(order.Price) > (1.0+2**kcConfig.MakerBandOffset)*spread.MakerDepth.MakerFarAsk{
+		logger.Debugf("%s SELL PRICE %f > MAXIMAL ASK PRICE %f, CANCEL",
 			order.Symbol,
 			order.Price,
-			(1.0+2**kcConfig.MakerBandOffset)*spread.SpotOrderBook.AskPrice+kcspotTickSizes[order.Symbol],
+			(1.0+2**kcConfig.MakerBandOffset)*spread.MakerDepth.MakerFarAsk,
 		)
 		return false
 	}
 
 	if order.Side == kcspot.OrderSideBuy &&
-		(spread.PerpOrderBook.TakerBidVWAP-float64(order.Price))/float64(order.Price) > quantile.Top-*kcConfig.MakerBandOffset {
+		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.Top-*kcConfig.MakerBandOffset {
 		return true
 	} else if order.Side == kcspot.OrderSideSell &&
-		(spread.PerpOrderBook.TakerAskVWAP-float64(order.Price))/float64(order.Price) < quantile.Bot+*kcConfig.MakerBandOffset {
+		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.Bot+*kcConfig.MakerBandOffset {
 		return true
 	}
 	if order.Side == kcspot.OrderSideBuy {
 		logger.Debugf(
-			"%s NOT PROFITABLE BUY ORDER PERP BIDVWAP %f ORDER PRICE %f DELTA %f < TOP %f - %f",
+			"%s NOT PROFITABLE BUY ORDER PERP TAKER BID %f ORDER PRICE %f DELTA %f < TOP %f - %f",
 			order.Symbol,
-			spread.PerpOrderBook.TakerBidVWAP,
+			spread.TakerDepth.TakerBid,
 			order.Price,
-			(spread.PerpOrderBook.TakerBidVWAP-float64(order.Price))/float64(order.Price),
+			(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price),
 			quantile.Top,
 			*kcConfig.MakerBandOffset,
 		)
 	} else {
 		logger.Debugf(
-			"%s NOT PROFITABLE BUY ORDER PERP ASKVWAP %f ORDER PRICE %f DELTA %f > BOT %f + %f",
+			"%s NOT PROFITABLE BUY ORDER PERP TAKER ASK %f ORDER PRICE %f DELTA %f > BOT %f + %f",
 			order.Symbol,
-			spread.PerpOrderBook.TakerAskVWAP,
+			spread.TakerDepth.TakerAsk,
 			order.Price,
-			(spread.PerpOrderBook.TakerAskVWAP-float64(order.Price))/float64(order.Price),
+			(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price),
 			quantile.Bot,
 			*kcConfig.MakerBandOffset,
 		)

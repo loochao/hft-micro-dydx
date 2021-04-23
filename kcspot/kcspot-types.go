@@ -139,13 +139,25 @@ func (depth *Depth50) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-
 type Depth5 struct {
-	Symbol    string         `json:"-"`
+	Symbol    string        `json:"-"`
 	Bids      [5][2]float64 `json:"-"`
 	Asks      [5][2]float64 `json:"_"`
-	ParseTime time.Time      `json:"-"`
-	EventTime time.Time      `json:"-"`
+	ParseTime time.Time     `json:"-"`
+	EventTime time.Time     `json:"-"`
+}
+
+func (depth *Depth5) GetBids() [5][2]float64 {
+	return depth.Bids
+}
+func (depth *Depth5) GetAsks() [5][2]float64 {
+	return depth.Asks
+}
+func (depth *Depth5) GetSymbol() string {
+	return depth.Symbol
+}
+func (depth *Depth5) GetTime() time.Time {
+	return depth.EventTime
 }
 
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
@@ -154,7 +166,7 @@ func (depth *Depth5) UnmarshalJSON(data []byte) error {
 		Data struct {
 			Bids      [5][2]string `json:"bids,omitempty"`
 			Asks      [5][2]string `json:"asks,omitempty"`
-			EventTime int64         `json:"timestamp,omitempty"`
+			EventTime int64        `json:"timestamp,omitempty"`
 		} `json:"data,omitempty"`
 		Topic string `json:"topic,omitempty"`
 	}{}
@@ -184,7 +196,6 @@ func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
-
 
 type Ping struct {
 	ID   string `json:"id"`

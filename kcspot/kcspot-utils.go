@@ -32,7 +32,7 @@ func ParseDepth50(bytes []byte) (*Depth50, error) {
 			if bytes[offset] == '"' {
 				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyBids error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 100 {
@@ -53,7 +53,7 @@ func ParseDepth50(bytes []byte) (*Depth50, error) {
 			if bytes[offset] == '"' {
 				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyAsks error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 100 {
@@ -75,7 +75,7 @@ func ParseDepth50(bytes []byte) (*Depth50, error) {
 			offset += 13
 			timestamp, err := common.ParseInt(bytes[collectStart:offset])
 			if err != nil {
-				return nil, fmt.Errorf("JsonKeyEventTime error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+				return nil, fmt.Errorf("JsonKeyEventTime error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 			}
 			orderBook.EventTime = time.Unix(0, timestamp*1000000)
 			currentKey = common.JsonKeySymbol
@@ -120,7 +120,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 			if bytes[offset] == '"' {
 				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyBids error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 10 || (bytes[offset+1] == ']' && bytes[offset+2] == ']') {
@@ -141,7 +141,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 			if bytes[offset] == '"' {
 				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyAsks error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 10 || (bytes[offset+1] == ']' && bytes[offset+2] == ']') {
@@ -163,7 +163,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 			offset += 13
 			timestamp, err := common.ParseInt(bytes[collectStart:offset])
 			if err != nil {
-				return nil, fmt.Errorf("JsonKeyEventTime error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+				return nil, fmt.Errorf("JsonKeyEventTime error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 			}
 			orderBook.EventTime = time.Unix(0, timestamp*1000000)
 			currentKey = common.JsonKeySymbol
@@ -185,7 +185,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 	return &orderBook, nil
 }
 
-func WatchAccountFromHttp(
+func AccountHttpLoop(
 	ctx context.Context, api *API, param AccountsParam, interval time.Duration,
 	output chan []Account,
 ) {
@@ -199,7 +199,7 @@ func WatchAccountFromHttp(
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			account, err := api.GetAccounts(subCtx, param)
 			if err != nil {
-				logger.Debugf("WatchAccountFromHttp GetAccount error %v", err)
+				logger.Debugf("AccountHttpLoop GetAccount error %v", err)
 			} else {
 				output <- account
 			}
@@ -260,7 +260,7 @@ func WatchSystemStatusHttp(
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			systemStatus, err := api.GetSystemStatus(subCtx)
 			if err != nil {
-				logger.Debugf("WatchAccountFromHttp GetAccountOverView error %v", err)
+				logger.Debugf("AccountHttpLoop GetAccountOverView error %v", err)
 				select {
 				case output <- false:
 				default:
