@@ -115,7 +115,7 @@ func isOrderProfitable(order hbcrossswap.NewOrderParam) bool {
 	//检查价格有没有挂太远，太远撤掉
 	if order.Direction == hbcrossswap.OrderDirectionBuy &&
 		float64(order.Price) < (1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid {
-		logger.Debugf("%s BUY PRICE %f < MAKER BID MAX OFFSET PRICE %f",
+		logger.Debugf("%s BUY PRICE %f < MAKER BID MINIMAL PRICE %f",
 			order.Symbol,
 			order.Price,
 			(1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid,
@@ -123,7 +123,7 @@ func isOrderProfitable(order hbcrossswap.NewOrderParam) bool {
 		return false
 	} else if order.Direction == hbcrossswap.OrderDirectionSell &&
 		float64(order.Price) > (1.0+2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk {
-		logger.Debugf("%s SELL PRICE %f > MAKER ASK MAX OFFSET PRICE %f",
+		logger.Debugf("%s SELL PRICE %f > MAKER ASK MAXIMAL PRICE %f",
 			order.Symbol,
 			order.Price,
 			(1.0+2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk,

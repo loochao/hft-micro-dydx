@@ -184,7 +184,7 @@ func handleSpotHttpAccount(account hbspot.Account) {
 //	if time.Now().Sub(tOrderSilentTimes[bnBNBSymbol]) < 0 {
 //		return
 //	}
-//	if time.Now().Sub(mPositionsUpdateTimes[bnBNBSymbol]) > *mtConfig.BalancePositionMaxAge {
+//	if time.Now().Sub(mPositionsUpdateTimes[bnBNBSymbol]) > *mtConfig.PositionMaxAge {
 //		return
 //	}
 //	bnbBalance, ok1 := tPositions[bnBNBSymbol]

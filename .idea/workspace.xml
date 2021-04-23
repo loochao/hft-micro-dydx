@@ -2,7 +2,22 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/config.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/config.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/depth.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/depth20-routed-ws.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/high-low-quantile.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/http-pulls.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/influx.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/init.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/loop.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/main.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/order-taker.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/type.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/applications/bnswap-lag/ws-taker.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tools/bnswap-lag.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-mt/http-spot.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-mt/http-spot.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/order-maker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-tt/order-maker.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -38,6 +53,7 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="DefaultGoTemplateProperty" value="Go File" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
@@ -47,22 +63,31 @@
     <property name="go.import.settings.migrated" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/hbcrossswap" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/tools" />
     <property name="settings.editor.selected.configurable" value="configurable.group.build" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/tools" />
+      <recent name="$PROJECT_DIR$/applications/bnswap-lag" />
+      <recent name="$PROJECT_DIR$/applications" />
       <recent name="$PROJECT_DIR$/hbcrossswap" />
       <recent name="$PROJECT_DIR$/bnswap" />
-      <recent name="$PROJECT_DIR$/applications/bnswapspot-mt" />
-      <recent name="$PROJECT_DIR$/bnspot" />
-      <recent name="$PROJECT_DIR$/hbspot" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/kcperp/jsons" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt">
+  <component name="RunManager" selected="Go Build.go build github.com/geometrybase/hft-micro/applications/bnswap-lag">
+    <configuration name="go build github.com/geometrybase/hft-micro/applications/bnswap-lag" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="hft-micro" />
+      <working_directory value="$PROJECT_DIR$" />
+      <parameters value="-config $PROJECT_DIR$/applications/bnswap-lag/config.yaml" />
+      <kind value="PACKAGE" />
+      <package value="github.com/geometrybase/hft-micro/applications/bnswap-lag" />
+      <directory value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
     <configuration name="go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
       <working_directory value="$PROJECT_DIR$" />
@@ -70,17 +95,6 @@
       <kind value="PACKAGE" />
       <package value="github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" />
       <directory value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestFundingTime in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/bnswap" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/bnswap" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestFundingTime\E$" />
       <method v="2" />
     </configuration>
     <configuration name="TestNewDepth20FilteredWebsocket in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -118,18 +132,18 @@
     </configuration>
     <list>
       <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" />
-      <item itemvalue="Go Test.TestFundingTime in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/bnswap-lag" />
       <item itemvalue="Go Test.TestNewDepth20FilteredWebsocket in github.com/geometrybase/hft-micro/bnswap" />
       <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/bnswap" />
       <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/hbcrossswap" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/bnswap-lag" />
         <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/hbcrossswapbnswap-tt" />
         <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/hbcrossswap" />
         <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/bnswap" />
         <item itemvalue="Go Test.TestNewDepth20FilteredWebsocket in github.com/geometrybase/hft-micro/bnswap" />
-        <item itemvalue="Go Test.TestFundingTime in github.com/geometrybase/hft-micro/bnswap" />
       </list>
     </recent_temporary>
   </component>

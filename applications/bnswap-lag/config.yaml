@@ -1,0 +1,148 @@
+name: bnswap-lag-pd01
+dryRun: true
+proxyAddress: socks5://127.0.0.1:1081
+cpuProfile: #/Users/chenjilin/Downloads/hbcrossswapspot-mt.prof
+internalInflux:
+  address: http://tigger.jilinchen.com:18086
+  username: hft
+  password: hft
+  database: hft
+  measurement: bnswap-pd01
+  batchSize: 0
+  saveInterval: 1m0s
+externalInflux:
+  address: http://hehe.jilinchen.com:7003
+  username: hft
+  password: hft
+  database: fund
+  measurement: accounts
+  batchSize: 0
+  saveInterval: 1m0s
+
+apiKey: nmoDPx8mmEsZxfchaBHtpb1KIL5dep8jJphifzm94rrSkBDATMaNCssCcUxiubNO
+apiSecret: AMSTHxBUHmH8uNkzGCNnS1L087ffwkMTYkBy44MvcedMOW85E5ajT3XRukBmnVJb
+
+leverage: 3
+changeLeverage: false
+marginType: CROSSED
+loopInterval: 5s
+pullInterval: 1m0s
+logInterval: 1m
+
+positionMaxAge: 3m
+
+pullBarsInterval: 5m
+pullBarsRetryInterval: 3s
+barsLookback: 240
+quantileOffset: 0.45
+dirWindow: 30
+
+timeDecay: 0.9999
+timeBias: 50
+depthBatchSize: 30
+
+startValue: 355
+enterFreePct: 0.025
+enterMinimalStep: 20
+enterTargetFactor: 4
+startValues:
+  root: 0
+
+orderTimeout: 5s
+orderSilent: 5s
+orderCancelSilent: 5s
+orderMaxCancelCount: 5
+enterSilent: 5m
+restartSilent: 10m
+httpSilent: 10m
+symbolLoopInterval: 1m
+enterThreshold: 100
+leaveThreshold: 30
+requestInterval: 1s
+
+tradeSymbolIndex: 2
+symbols:
+  - BTCUSDT
+  - ETHUSDT
+  - LTCUSDT
+  - NEOUSDT
+  - QTUMUSDT
+  - EOSUSDT
+  - ZRXUSDT
+  - OMGUSDT
+  - LRCUSDT
+  - TRXUSDT
+  - KNCUSDT
+  - IOTAUSDT
+  - LINKUSDT
+  - CVCUSDT
+  - ETCUSDT
+  - ZECUSDT
+  - BATUSDT
+  - DASHUSDT
+  - XMRUSDT
+  - ENJUSDT
+  - XRPUSDT
+  - STORJUSDT
+  - BTSUSDT
+  - ADAUSDT
+  - XLMUSDT
+  - WAVESUSDT
+  - ICXUSDT
+  - RLCUSDT
+  - IOSTUSDT
+  - BLZUSDT
+  - ONTUSDT
+  - ZILUSDT
+  - ZENUSDT
+  - THETAUSDT
+  - VETUSDT
+  - RENUSDT
+  - MATICUSDT
+  - ATOMUSDT
+  - FTMUSDT
+  - CHZUSDT
+  - ALGOUSDT
+  - DOGEUSDT
+  - ANKRUSDT
+  - TOMOUSDT
+  - BANDUSDT
+  - XTZUSDT
+  - KAVAUSDT
+  - BCHUSDT
+  - SOLUSDT
+  - HNTUSDT
+  - COMPUSDT
+  - MKRUSDT
+  - SXPUSDT
+  - SNXUSDT
+  - DOTUSDT
+  - RUNEUSDT
+  - BALUSDT
+  - YFIUSDT
+  - SRMUSDT
+  - CRVUSDT
+  - SANDUSDT
+  - OCEANUSDT
+  - LUNAUSDT
+  - RSRUSDT
+  - TRBUSDT
+  - EGLDUSDT
+  - BZRXUSDT
+  - KSMUSDT
+  - SUSHIUSDT
+  - YFIIUSDT
+  - BELUSDT
+  - UNIUSDT
+  - AVAXUSDT
+  - FLMUSDT
+  - ALPHAUSDT
+  - NEARUSDT
+  - AAVEUSDT
+  - FILUSDT
+  - CTKUSDT
+  - AXSUSDT
+  - AKROUSDT
+  - SKLUSDT
+  - GRTUSDT
+  - 1INCHUSDT
