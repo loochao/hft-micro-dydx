@@ -145,6 +145,11 @@ func (api *API) GetPublicConnectToken(ctx context.Context) (*ConnectToken, error
 	return pct, api.SendHTTPRequest(ctx, http.MethodPost, "/api/v1/bullet-public", nil, pct)
 }
 
+func (api *API) GetSystemStatus(ctx context.Context) (*SystemStatus, error) {
+	pct := &SystemStatus{}
+	return pct, api.SendHTTPRequest(ctx, http.MethodPost, "/api/v1/status", nil, pct)
+}
+
 func (api *API) GetPrivateConnectToken(ctx context.Context) (*ConnectToken, error) {
 	pct := &ConnectToken{}
 	return pct, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/v1/bullet-private", nil, nil, pct)

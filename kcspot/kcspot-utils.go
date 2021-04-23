@@ -245,3 +245,44 @@ func GetOrderLimits(
 	}
 	return
 }
+
+func WatchSystemStatusHttp(
+	ctx context.Context, api *API, interval time.Duration,
+	output chan bool,
+) {
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			systemStatus, err := api.GetSystemStatus(subCtx)
+			if err != nil {
+				logger.Debugf("WatchAccountFromHttp GetAccountOverView error %v", err)
+				select {
+				case output <- false:
+				default:
+					logger.Debugf("WatchSystemStatusHttp send status out failed")
+				}
+			} else {
+				if systemStatus.Status == SystemStatusOpen {
+					select {
+					case output <- true:
+					default:
+						logger.Debugf("WatchSystemStatusHttp send status out failed")
+					}
+				} else {
+					select {
+					case output <- false:
+					default:
+						logger.Debugf("WatchSystemStatusHttp send status out failed")
+					}
+				}
+			}
+			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
+		}
+	}
+}
+

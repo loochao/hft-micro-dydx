@@ -96,12 +96,16 @@ var kcRealisedSpread = make(map[string]float64)
 var kcSpreads = make(map[string]Spread)
 var kcUnHedgeValue float64
 var kcLoopTimer = time.NewTimer(time.Hour * 24)
+var kcspotSystemReady = false
+var kcperpSystemReady = false
+var kcSpotSystemStatusCh = make(chan bool, 10)
+var kcPerpSystemStatusCh = make(chan bool, 10)
 
 var kcConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210420 17:45:13  ####")
+	logger.Debug("####  BUILD @ 20210423 10:16:01  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

@@ -290,6 +290,19 @@ func main() {
 		}()
 	}
 
+	go kcperp.WatchSystemStatusHttp(
+		kcGlobalCtx,
+		kcperpAPI,
+		*kcConfig.PullInterval/2,
+		kcPerpSystemStatusCh,
+	)
+	go kcspot.WatchSystemStatusHttp(
+		kcGlobalCtx,
+		kcspotAPI,
+		*kcConfig.PullInterval/2,
+		kcPerpSystemStatusCh,
+	)
+
 	defer kcGlobalCancel()
 
 	for {
@@ -297,6 +310,12 @@ func main() {
 		case <-done:
 			logger.Debugf("Exit")
 			return
+		case kcspotSystemReady = <-kcSpotSystemStatusCh:
+			logger.Debugf("kcspotSystemReady %v", kcspotSystemReady)
+			break
+		case kcperpSystemReady = <-kcPerpSystemStatusCh:
+			logger.Debugf("kcperpSystemReady %v", kcperpSystemReady)
+			break
 		case <-kcspotUserWebsocket.RestartCh:
 			logger.Debugf("kcspotUserWebsocket restart silent %v", *kcConfig.RestartSilent)
 			handleWebsocketRestart()
@@ -459,9 +478,20 @@ func main() {
 			}
 			frRankUpdatedTimer.Reset(time.Minute)
 		case <-kcLoopTimer.C:
-			updatePerpPositions()
-			updateSpotOldOrders()
-			updateSpotNewOrders()
+			if kcperpSystemReady && kcspotSystemReady {
+				updatePerpPositions()
+				updateSpotOldOrders()
+				updateSpotNewOrders()
+			} else {
+				if len(kcspotOpenOrders) > 0 {
+					for symbol := range kcspotOpenOrders {
+						kcspotOrderRequestChs[symbol] <- SpotOrderRequest{
+							Cancel: &kcspot.CancelAllOrdersParam{Symbol: symbol},
+						}
+						delete(kcspotOpenOrders, symbol)
+					}
+				}
+			}
 			kcLoopTimer.Reset(
 				time.Now().Truncate(
 					*kcConfig.LoopInterval,

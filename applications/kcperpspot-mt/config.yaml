@@ -1,6 +1,6 @@
 name: kcperpspot-mt-pd02
-dryRun: false
-proxyAddress: socks5://127.0.0.1:1080
+dryRun: true
+proxyAddress: socks5://127.0.0.1:1081
 cpuProfile: /Users/chenjilin/Downloads/kcperpspot-mt.prof
 internalInflux:
   address: http://jilinchen.com:18086
@@ -29,6 +29,9 @@ leverage: 10
 changeAutoDepositStatus: false
 loopInterval: 5s
 pullInterval: 1m0s
+logInterval: 1m
+httpSilent: 5m
+restartSilent: 5m
 
 resetUnrealisedPnlInterval: 15m
 resetUnrealisedTriggerPct: -0.5

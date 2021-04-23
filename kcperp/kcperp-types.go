@@ -31,6 +31,10 @@ const (
 	OrderTypeFilled   = "filled"
 	OrderTypeCanceled = "canceled"
 	OrderTypeUpdate   = "update"
+
+	SystemStatusOpen       = "open"
+	SystemStatusCancelOnly = "cancelonly"
+	SystemStatusClose      = "close"
 )
 
 var GranularityDurations = map[int]time.Duration{
@@ -490,4 +494,9 @@ func (wsCap *CurrentFundingRate) UnmarshalJSON(data []byte) error {
 	wsCap.EventTime = time.Unix(0, aux.TimePoint*1000000)
 	wsCap.ParseTime = time.Now()
 	return nil
+}
+
+type SystemStatus struct {
+	Msg    string
+	Status string
 }

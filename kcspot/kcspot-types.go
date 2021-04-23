@@ -35,6 +35,10 @@ const (
 	OrderTypeFilled   = "filled"
 	OrderTypeCanceled = "canceled"
 	OrderTypeUpdate   = "update"
+
+	SystemStatusOpen       = "open"
+	SystemStatusCancelOnly = "cancelonly"
+	SystemStatusClose      = "close"
 )
 
 var CandleTypeDurations = map[string]time.Duration{
@@ -360,4 +364,9 @@ func (wsCap *WSOrder) UnmarshalJSON(data []byte) error {
 	wsCap.ParseTime = time.Now()
 	wsCap.OrderTime = time.Unix(0, aux.OrderTime)
 	return nil
+}
+
+type SystemStatus struct {
+	Msg    string
+	Status string
 }

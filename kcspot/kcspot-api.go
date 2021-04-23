@@ -131,6 +131,11 @@ func (api *API) GetSymbols(ctx context.Context) ([]Symbol, error) {
 	return symbols, api.SendHTTPRequest(ctx, http.MethodGet, "/api/v1/symbols", nil, &symbols)
 }
 
+func (api *API) GetSystemStatus(ctx context.Context) (*SystemStatus, error) {
+	status := &SystemStatus{}
+	return status, api.SendHTTPRequest(ctx, http.MethodGet, "/api/v1/status", nil, &status)
+}
+
 func (api *API) GetPublicConnectToken(ctx context.Context) (*ConnectToken, error) {
 	pct := &ConnectToken{}
 	return pct, api.SendHTTPRequest(ctx, http.MethodPost, "/api/v1/bullet-public", nil, pct)
