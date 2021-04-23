@@ -300,7 +300,7 @@ func main() {
 		kcGlobalCtx,
 		kcspotAPI,
 		*kcConfig.PullInterval/2,
-		kcPerpSystemStatusCh,
+		kcSpotSystemStatusCh,
 	)
 
 	defer kcGlobalCancel()
