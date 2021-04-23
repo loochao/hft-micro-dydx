@@ -45,7 +45,6 @@ func (api *API) SendHTTPRequest(ctx context.Context, method, path string, params
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
