@@ -153,7 +153,7 @@ func watchMakerTakerSpread(
 			}:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("SEND SPREAD FAILED %s-%s", makerSymbol, takerSymbol)
+					logger.Debugf("outputCh <- &common.MakerTakerSpread %s-%s len(outputCh) %d", makerSymbol, takerSymbol, len(outputCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -163,7 +163,7 @@ func watchMakerTakerSpread(
 				makerWalkedDepth, err = common.WalkMakerTakerDepth5(makerDepth, makerImpact, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("makerWalkedDepth common.WalkMakerTakerDepth5 error %v", err)
+						logger.Debugf("common.WalkMakerTakerDepth5 error %v %s", err, makerSymbol)
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 					break
@@ -176,7 +176,7 @@ func watchMakerTakerSpread(
 				takerWalkedDepth, err = common.WalkMakerTakerDepth5(takerDepth, makerImpact, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("takerWalkedDepth common.WalkMakerTakerDepth5 error %v", err)
+						logger.Debugf("common.WalkMakerTakerDepth5 error %v %s", err, takerSymbol)
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 					break
@@ -191,7 +191,7 @@ func watchMakerTakerSpread(
 			newMakerDepth, err = kcspot.ParseDepth5(makerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("kcspot.ParseDepth5 error %v", err)
+					logger.Debugf("kcspot.ParseDepth5 error %v %s", err, makerSymbol)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if makerDepth == nil || newMakerDepth.EventTime.Sub(makerDepth.EventTime) > 0 {
@@ -211,7 +211,7 @@ func watchMakerTakerSpread(
 			newTakerDepth, err = kcperp.ParseDepth5(takerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("kcperp.ParseDepth5 error %v", err)
+					logger.Debugf("kcperp.ParseDepth5 error %v %s", err, takerSymbol)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if takerDepth == nil || newTakerDepth.Sequence > takerDepth.Sequence {
