@@ -312,9 +312,15 @@ func main() {
 			return
 		case kcspotSystemReady = <-kcSpotSystemStatusCh:
 			logger.Debugf("kcspotSystemReady %v", kcspotSystemReady)
+			if !kcspotSystemReady {
+				kcSystemReadyTime = time.Now().Add(*kcConfig.RestartSilent)
+			}
 			break
 		case kcperpSystemReady = <-kcPerpSystemStatusCh:
 			logger.Debugf("kcperpSystemReady %v", kcperpSystemReady)
+			if !kcperpSystemReady {
+				kcSystemReadyTime = time.Now().Add(*kcConfig.RestartSilent)
+			}
 			break
 		case <-kcspotUserWebsocket.RestartCh:
 			logger.Debugf("kcspotUserWebsocket restart silent %v", *kcConfig.RestartSilent)
@@ -478,7 +484,7 @@ func main() {
 			}
 			frRankUpdatedTimer.Reset(time.Minute)
 		case <-kcLoopTimer.C:
-			if kcperpSystemReady && kcspotSystemReady {
+			if kcperpSystemReady && kcspotSystemReady && time.Now().Sub(kcSystemReadyTime) > 0{
 				updatePerpPositions()
 				updateSpotOldOrders()
 				updateSpotNewOrders()

@@ -100,12 +100,13 @@ var kcspotSystemReady = false
 var kcperpSystemReady = false
 var kcSpotSystemStatusCh = make(chan bool, 10)
 var kcPerpSystemStatusCh = make(chan bool, 10)
+var kcSystemReadyTime = time.Now()
 
 var kcConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210423 10:23:22  ####")
+	logger.Debug("####  BUILD @ 20210423 10:25:21  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
