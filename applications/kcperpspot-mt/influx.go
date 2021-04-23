@@ -22,7 +22,7 @@ func handleSave() {
 			if okBalance && okSpread {
 				spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
 			} else {
-				logger.Debugf("%s MISS BALANCE %v OR TAKER VWAP %v", spotSymbol, okBalance, spread.MakerDepth.TakerBid)
+				logger.Debugf("miss balance or spread %s", spotSymbol)
 				getAllBalances = false
 				break
 			}
