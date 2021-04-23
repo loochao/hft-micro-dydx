@@ -145,6 +145,17 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 				logger.Debugf("json.Unmarshal error %v %s", err, msg)
 				continue
 			}
+			if len(msg) < 128 {
+				if wsCap.Type == "ack" {
+					select {
+					case w.topicCh <- wsCap.ID:
+					default:
+					}
+				} else if wsCap.Type == "pong" || wsCap.Type == "welcome" {
+				} else if wsCap.Topic == "" {
+					logger.Debugf("other msg %s", msg)
+				}
+			}
 			splits := strings.Split(wsCap.Topic, ":")
 			if len(splits) == 0 || splits[0] == "" {
 				continue
@@ -212,13 +223,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 				}
 				break
 			default:
-				if wsCap.Type == "welcome" {
-					logger.Debugf("WELCOME %s", wsCap.ID)
-				} else if wsCap.Type == "pong" {
-					logger.Debugf("PONG %s", wsCap.ID)
-				} else {
-					logger.Debugf("KCPERP OTHER MSG %s", msg)
-				}
+				logger.Debugf("other msg %s", msg)
 			}
 		}
 	}
@@ -227,7 +232,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
-		logger.Debugf("RECONNECT %s, %d RETRIES", wsUrl, counter)
+		logger.Debugf("reconnect %s, %d retries", wsUrl, counter)
 	}
 
 	var dialer *websocket.Dialer
@@ -365,7 +370,10 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 		case <-w.done:
 			return
 		case topic := <-w.topicCh:
-			topicUpdatedTimes[topic] = time.Now()
+			if _, ok := topicUpdatedTimes[topic]; ok {
+				//logger.Debugf("TOPIC %s add 4 hours", topic)
+				topicUpdatedTimes[topic] = time.Now().Add(time.Hour*4)
+			}
 			break
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)
@@ -384,6 +392,7 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 		loop:
 			for topic, updateTime := range topicUpdatedTimes {
 				if time.Now().Sub(updateTime) > topicTimeout {
+					logger.Debugf("SUBSCRIBE %s", topic)
 					select {
 					case <-ctx.Done():
 						return
@@ -395,7 +404,7 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 						Type:           "subscribe",
 						Topic:          topic,
 						PrivateChannel: true,
-						Response:       false,
+						Response:       true,
 					}:
 						topicUpdatedTimes[topic] = time.Now().Add(topicCheckInterval * time.Duration(len(topics)*2))
 						break loop

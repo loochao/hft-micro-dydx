@@ -89,6 +89,7 @@ func (w *Depth5Websocket) readLoop(conn *websocket.Conn) {
 			go w.restart()
 			return
 		}
+		logger.Debugf("%s", msg)
 		totalCount += 1
 		totalLen += len(msg)
 		if totalCount > 1000000 {

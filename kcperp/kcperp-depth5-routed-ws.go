@@ -406,6 +406,7 @@ func (w *Depth5RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websock
 		case <-w.done:
 			return
 		case symbol := <-w.symbolCh:
+			logger.Debugf("%s", symbol)
 			symbolUpdatedTimes[symbol] = time.Now()
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)

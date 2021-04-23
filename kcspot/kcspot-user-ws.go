@@ -134,11 +134,22 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			logger.Debugf("%s", msg)
 			var wsCap WsCap
 			err := json.Unmarshal(msg, &wsCap)
 			if err != nil {
 				logger.Debugf("json.Unmarshal(msg, &wsCap) error %v %s", err, msg)
+				continue
+			}
+			if len(msg) < 128 {
+				if wsCap.Type == "ack" {
+					select {
+					case w.topicCh <- wsCap.ID:
+					default:
+					}
+				} else if wsCap.Type == "pong" || wsCap.Type == "welcome"{
+				} else if wsCap.Topic == "" {
+					logger.Debugf("other msg %s", msg)
+				}
 				continue
 			}
 			splits := strings.Split(wsCap.Topic, ":")
@@ -189,13 +200,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 				}
 				break
 			default:
-				if wsCap.Type == "welcome" {
-					//logger.Debugf("WELCOME %s", wsCap.ID)
-				} else if wsCap.Type == "pong" {
-					//logger.Debugf("PONG %s", wsCap.ID)
-				} else {
-					logger.Debugf("other msg %s", msg)
-				}
+				logger.Debugf("other msg %s", msg)
 			}
 		}
 	}
@@ -337,8 +342,8 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 		case <-ctx.Done():
 			return
 		case topic := <-w.topicCh:
-			logger.Debugf("topic %s", topic)
 			if _, ok := topicUpdatedTimes[topic]; ok {
+				//logger.Debugf("TOPIC %s add 4 hour", topic)
 				topicUpdatedTimes[topic] = time.Now().Add(time.Hour * 4)
 			}
 		case <-pingTimer.C:
@@ -369,7 +374,7 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 						Type:           "subscribe",
 						Topic:          topic,
 						PrivateChannel: true,
-						Response:       false,
+						Response:       true,
 					}:
 						topicUpdatedTimes[topic] = time.Now().Add(topicCheckInterval * time.Duration(len(topics)*2))
 						break loop

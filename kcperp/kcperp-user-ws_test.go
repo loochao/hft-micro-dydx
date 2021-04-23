@@ -19,12 +19,14 @@ func TestNewUserWebsocket(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ws := NewUserWebsocket(ctx, api, []string{"XBTUSDM"}, "socks5://127.0.0.1:1081")
+	ws := NewUserWebsocket(ctx, api, []string{"XBTUSDTM"}, "socks5://127.0.0.1:1081")
 	for {
 		select {
 		case d := <-ws.OrderCh:
 			logger.Debugf("%v", d)
 		case d := <-ws.BalanceCh:
+			logger.Debugf("%v", d)
+		case d := <-ws.PositionCh:
 			logger.Debugf("%v", d)
 		}
 	}

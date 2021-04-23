@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 )
 
 func init() {
@@ -23,11 +24,11 @@ func TestNewDepth5Websocket(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ws := NewDepth5Websocket(ctx, api, []string{"XRP-USDT"},  "socks5://127.0.0.1:1081" )
+	ws := NewDepth5Websocket(ctx, api, []string{"ENJ-USDT"},  "socks5://127.0.0.1:1081" )
 	for {
 		select {
 		case d := <- ws.DataCh:
-			logger.Debugf("%v", d)
+			logger.Debugf("%v %v", d.EventTime, time.Now().Sub(d.EventTime))
 		}
 	}
 }

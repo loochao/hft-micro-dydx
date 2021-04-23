@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestNewDepth5RoutedWebsocket(t *testing.T) {
@@ -39,8 +40,8 @@ func TestNewDepth5RoutedWebsocket(t *testing.T) {
 		select {
 		case r := <-reportCh:
 			logger.Debugf("%v", r)
-		case <-channels[symbols[0]]:
-			//logger.Debugf("%v", d)
+		case d := <-channels[symbols[0]]:
+			logger.Debugf("%v %v", d.Time, time.Now().Sub(d.Time))
 		case <-channels[symbols[1]]:
 			//logger.Debugf("%v", d)
 		case <-channels[symbols[2]]:

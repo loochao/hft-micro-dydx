@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestNewDepth5Websocket(t *testing.T) {
@@ -24,7 +25,7 @@ func TestNewDepth5Websocket(t *testing.T) {
 	for {
 		select {
 		case d := <-ws.DataCh:
-			logger.Debugf("%v", d)
+			logger.Debugf("%v %v", d.EventTime, time.Now().Sub(d.EventTime))
 		}
 	}
 }
