@@ -262,7 +262,7 @@ func main() {
 		go watchMakerTakerSpread(
 			kcGlobalCtx,
 			makerSymbol, takerSymbol,
-			kcperpMultipliers[makerSymbol],
+			kcperpMultipliers[takerSymbol],
 			*kcConfig.OrderBookMakerImpact,
 			*kcConfig.OrderBookTakerImpact,
 			*kcConfig.OrderBookMaxAgeDiff,
