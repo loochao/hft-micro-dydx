@@ -134,6 +134,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
+			logger.Debugf("%s", msg)
 			var wsCap WsCap
 			err := json.Unmarshal(msg, &wsCap)
 			if err != nil {
@@ -336,6 +337,7 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 		case <-ctx.Done():
 			return
 		case topic := <-w.topicCh:
+			logger.Debugf("topic %s", topic)
 			if _, ok := topicUpdatedTimes[topic]; ok {
 				topicUpdatedTimes[topic] = time.Now().Add(time.Hour * 4)
 			}
