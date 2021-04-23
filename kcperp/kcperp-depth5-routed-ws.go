@@ -209,7 +209,7 @@ func (w *Depth5RoutedWebsocket) readLoop(
 				continue
 			}
 
-			logger.Debugf("SYMBOL %s %v", symbol, time.Unix(0, t*1000000))
+			//logger.Debugf("SYMBOL %s %v", symbol, time.Unix(0, t*1000000))
 
 			if ch, ok = channels[symbol]; ok {
 				select {
