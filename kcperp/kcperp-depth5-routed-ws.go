@@ -424,6 +424,7 @@ func (w *Depth5RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websock
 		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
+					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/contractMarket/level2Depth5:%s", symbol))
 					select {
 					case <-ctx.Done():
 						return
