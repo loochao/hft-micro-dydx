@@ -25,6 +25,9 @@ func handleSave() {
 		}
 		if bnTimeEmaDelta != nil {
 			fields["timeEmaDelta"] = *bnTimeEmaDelta
+			fields["systemOverHeated"] = bnSystemOverHeated
+			fields["enterThreshold"] = *bnConfig.EnterThreshold
+			fields["leaveThreshold"] = *bnConfig.LeaveThreshold
 		}
 		pt, err := client.NewPoint(
 			*bnConfig.InternalInflux.Measurement,
@@ -57,6 +60,7 @@ func handleSave() {
 			fields["quantileBot"] = quantile.Bot
 			fields["quantileMid"] = quantile.Mid
 			fields["quantileMaClose"] = quantile.MaClose
+			fields["quantileDir"] = quantile.Dir
 		}
 		pt, err := client.NewPoint(
 			*bnConfig.InternalInflux.Measurement,

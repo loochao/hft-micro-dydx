@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-
 func updatePositions() {
 
 	if bnAccount == nil || bnAccount.AvailableBalance == nil {
@@ -58,7 +57,9 @@ func updatePositions() {
 			}
 		}
 		bnNextLoopTimes[symbol] = time.Now().Add(*bnConfig.SymbolLoopInterval)
-		if time.Now().Sub(bnEnterSilentTimes[symbol]) < 0 && bnSystemOverHeated {
+		if time.Now().Sub(bnEnterSilentTimes[symbol]) < 0 &&
+			bnSystemOverHeated &&
+			quantile.Dir < 0 {
 			price := math.Floor((bidPrice.Price - *bnTimeEmaDelta / *bnConfig.EnterThreshold * quantile.Top)/tickSize) * tickSize
 			targetValue := position.PositionAmt*position.EntryPrice + entryStep
 			if targetValue > entryTarget {
@@ -151,4 +152,3 @@ func updatePositions() {
 		}
 	}
 }
-
