@@ -26,7 +26,6 @@ type HighLowQuantile struct {
 	Top     float64
 	Mid     float64
 	Bot     float64
-	MaClose float64
 	Dir     float64
 }
 

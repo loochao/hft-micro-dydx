@@ -52,6 +52,7 @@ type Config struct {
 	TimeBias       *float64 `yaml:"timeBias,omitempty"`
 	DepthBatchSize *int     `yaml:"depthBatchSize,omitempty"`
 	DirWindow      *int     `yaml:"dirWindow,omitempty"`
+	ReportCount    *int     `yaml:"reportCount,omitempty"`
 
 	StartValue        *float64           `yaml:"startValue,omitempty"`
 	EnterThreshold    *float64           `yaml:"enterThreshold,omitempty"`

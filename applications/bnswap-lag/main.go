@@ -177,6 +177,7 @@ func main() {
 			*bnConfig.ProxyAddress,
 			bnSymbols[start:end],
 			bnSymbols[:*bnConfig.TradeSymbolIndex],
+			*bnConfig.ReportCount,
 			bnBidPriceCh,
 			bnTimeEmaDeltaCh,
 		)
@@ -304,6 +305,9 @@ func main() {
 			break
 		case takerNewError := <-bnNewOrderErrorCh:
 			bnOrderSilentTimes[takerNewError.Params.Symbol] = time.Now().Add(*bnConfig.OrderSilent * 5)
+			break
+		case bid := <-bnBidPriceCh:
+			bnBidPrices[bid.Symbol] = bid
 			break
 		case <-bnLoopTimer.C:
 			updatePositions()

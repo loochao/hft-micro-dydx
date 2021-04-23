@@ -18,10 +18,10 @@ func handleSave() {
 		fields["startValue"] = *bnConfig.StartValue
 		fields["netWorth"] = netWorth
 		if bnAccount.AvailableBalance != nil {
-			fields["takerAvailable"] = *bnAccount.AvailableBalance
+			fields["availableBalance"] = *bnAccount.AvailableBalance
 		}
 		if bnAccount.UnrealizedProfit != nil {
-			fields["takerUnrealizedProfit"] = *bnAccount.UnrealizedProfit
+			fields["unrealizedProfit"] = *bnAccount.UnrealizedProfit
 		}
 		if bnTimeEmaDelta != nil {
 			fields["timeEmaDelta"] = *bnTimeEmaDelta
@@ -59,7 +59,6 @@ func handleSave() {
 			fields["quantileTop"] = quantile.Top
 			fields["quantileBot"] = quantile.Bot
 			fields["quantileMid"] = quantile.Mid
-			fields["quantileMaClose"] = quantile.MaClose
 			fields["quantileDir"] = quantile.Dir
 		}
 		pt, err := client.NewPoint(

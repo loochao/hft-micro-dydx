@@ -11,6 +11,7 @@ func watchDepthWebsocket(
 	takerDecay, takerBias float64,
 	proxyAddress string,
 	symbols []string, tradeSymbols []string,
+	reportCount int,
 	bidPriceCh chan BidPrice,
 	timeDeltaCh chan float64,
 ) {
@@ -25,6 +26,7 @@ func watchDepthWebsocket(
 		proxyAddress,
 		symbols,
 		tradeSymbols,
+		reportCount,
 		bidPriceCh,
 		timeDeltaCh,
 	)
