@@ -147,6 +147,10 @@ func (w *Depth5RoutedWebsocket) readLoop(
 				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
 				if timeDelta > emaTimeDelta+bias {
 					filterCount++
+					select {
+					case w.symbolCh <- symbol:
+					default:
+					}
 					continue
 				}
 			} else if msg[msgLen-29] == ':' {
@@ -164,6 +168,10 @@ func (w *Depth5RoutedWebsocket) readLoop(
 				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
 				if timeDelta > emaTimeDelta+bias {
 					filterCount++
+					select {
+					case w.symbolCh <- symbol:
+					default:
+					}
 					continue
 				}
 			} else if msg[msgLen-30] == ':' {
@@ -181,6 +189,10 @@ func (w *Depth5RoutedWebsocket) readLoop(
 				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
 				if timeDelta > emaTimeDelta+bias {
 					filterCount++
+					select {
+					case w.symbolCh <- symbol:
+					default:
+					}
 					continue
 				}
 			} else if msg[msgLen-31] == ':' {
@@ -198,6 +210,10 @@ func (w *Depth5RoutedWebsocket) readLoop(
 				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
 				if timeDelta > emaTimeDelta+bias {
 					filterCount++
+					select {
+					case w.symbolCh <- symbol:
+					default:
+					}
 					continue
 				}
 			} else {
