@@ -508,3 +508,149 @@ func WatchPremiumIndexesFromHttp(
 	}
 }
 
+func ParseDepth5(bytes []byte) (*Depth5, error) {
+	var err error
+	orderBook := Depth5{
+		Bids:      [5][2]float64{},
+		Asks:      [5][2]float64{},
+		ParseTime: time.Now(),
+	}
+	offset := 60
+	collectStart := offset
+	bytesLen := len(bytes)
+	currentKey := common.JsonKeyUnknown
+	counter := 0
+	for offset < bytesLen-2 {
+		switch currentKey {
+		case common.JsonKeyBids:
+			if bytes[offset] == '"' {
+				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
+				if err != nil {
+					return nil, fmt.Errorf("JsonKeyBids error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+				}
+				counter += 1
+				if counter >= 10 {
+					currentKey = common.JsonKeyUnknown
+					offset += 4
+				} else if counter%2 == 0 {
+					offset += 5
+					collectStart = offset
+				} else {
+					offset += 3
+					collectStart = offset
+				}
+				continue
+			}
+			break
+		case common.JsonKeyAsks:
+			if bytes[offset] == '"' {
+				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
+				if err != nil {
+					return nil, fmt.Errorf("JsonKeyAsks error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+				}
+				counter += 1
+				if counter >= 10 {
+					currentKey = common.JsonKeyUnknown
+					offset += 4
+				} else if counter%2 == 0 {
+					offset += 5
+					collectStart = offset
+				} else {
+					offset += 3
+					collectStart = offset
+				}
+				continue
+			}
+			break
+		case common.JsonKeyLastUpdateId:
+			if bytes[offset] == ',' {
+				orderBook.LastUpdateId, err = common.ParseInt(bytes[collectStart:offset])
+				if err != nil {
+					return nil, fmt.Errorf("JsonKeyLastUpdateId error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+				}
+				currentKey = common.JsonKeyUnknown
+				offset += 2
+				continue
+			}
+			break
+		case common.JsonKeySymbol:
+			if bytes[offset] == '"' {
+				symbol := bytes[collectStart:offset]
+				orderBook.Symbol = *(*string)(unsafe.Pointer(&symbol))
+				currentKey = common.JsonKeyUnknown
+				offset += 3
+				continue
+			}
+			break
+		case common.JsonKeyUnknown:
+			if bytes[offset] == 'E' && bytes[offset-1] == '"' && bytes[offset+1] == '"' && offset+13 < bytesLen {
+				eventTime, err := common.ParseInt(bytes[offset+3 : offset+16])
+				if err != nil {
+					return nil, fmt.Errorf("EventTime error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+				}
+				orderBook.EventTime = time.Unix(0, eventTime*1000000)
+				offset += 17
+				continue
+			} else if bytes[offset] == 'u' && bytes[offset-1] == '"' && bytes[offset+1] == '"' {
+				currentKey = common.JsonKeyLastUpdateId
+				offset += 3
+				collectStart = offset
+				continue
+			} else if bytes[offset] == 's' && bytes[offset-1] == '"' && bytes[offset+1] == '"' {
+				currentKey = common.JsonKeySymbol
+				offset += 4
+				collectStart = offset
+				offset += 6
+				continue
+			} else if bytes[offset] == 'b' && bytes[offset-1] == '"' && bytes[offset+1] == '"' {
+				currentKey = common.JsonKeyBids
+				offset += 6
+				collectStart = offset
+				counter = 0
+				continue
+			} else if bytes[offset] == 'a' && bytes[offset-1] == '"' && bytes[offset+1] == '"' {
+				currentKey = common.JsonKeyAsks
+				offset += 6
+				collectStart = offset
+				counter = 0
+				continue
+			}
+		}
+		offset += 1
+	}
+	return &orderBook, nil
+}
+
+func HttpPingLoop(
+	ctx context.Context, api *API, interval time.Duration,
+	output chan bool,
+) {
+	logger.Debugf("START HttpPingLoop")
+	defer logger.Debugf("EXIT HttpPingLoop")
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			_, err := api.PingServer(subCtx)
+			if err != nil {
+				logger.Debugf("api.PingServer error %v", err)
+				select {
+				case output <- false:
+				default:
+					logger.Debugf("output <- false failed")
+				}
+			} else {
+				select {
+				case output <- false:
+				default:
+					logger.Debugf("output <- true failed")
+				}
+			}
+			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
+		}
+	}
+}

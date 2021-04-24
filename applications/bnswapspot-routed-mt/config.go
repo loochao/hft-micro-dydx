@@ -60,13 +60,15 @@ type Config struct {
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`
 
+	OrderBookMakerDecay         *float64       `yaml:"orderBookMakerDecay,omitempty"`
+	OrderBookMakerBias          *float64       `yaml:"orderBookMakerBias,omitempty"`
 	OrderBookTakerDecay         *float64       `yaml:"orderBookTakerDecay,omitempty"`
 	OrderBookTakerBias          *float64       `yaml:"orderBookTakerBias,omitempty"`
 	OrderBookTakerImpact        *float64       `yaml:"orderBookTakerImpact,omitempty"`
 	OrderBookMakerImpact        *float64       `yaml:"orderBookMakerImpact,omitempty"`
 	OrderBookBatchSize          *int           `yaml:"orderBookBatchSize,omitempty"`
-	OrderBookMaxAgeDiff         *time.Duration `yaml:"orderBookMaxAgeDiff,omitempty"`
-	OrderBookMaxAge             *time.Duration `yaml:"orderBookMaxAge,omitempty"`
+	ReportCount                 *int           `yaml:"reportCount,omitempty"`
+	OrderBookMaxAgeDiffBias     *time.Duration `yaml:"orderBookMaxAgeDiffBias,omitempty"`
 	SpreadTimeToLive            *time.Duration `yaml:"spreadTimeToLive,omitempty"`
 	SpreadLookbackDuration      *time.Duration `yaml:"spreadLookbackDuration,omitempty"`
 	SpreadLookbackMinimalWindow *int           `yaml:"spreadLookbackMinimalWindow,omitempty"`
@@ -89,6 +91,7 @@ type Config struct {
 	EnterSilent         *time.Duration     `yaml:"enterSilent,omitempty"`
 	StartValues         map[string]float64 `yaml:"startValues,omitempty"`
 	HttpSilent          *time.Duration     `yaml:"httpSilent,omitempty"`
+	RestartSilent       *time.Duration     `yaml:"restartSilent,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

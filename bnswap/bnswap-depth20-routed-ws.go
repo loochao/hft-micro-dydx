@@ -34,19 +34,19 @@ func (w *Depth20RoutedWebsocket) readLoop(conn *websocket.Conn, symbols []string
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
-			logger.Warnf("SetReadDeadline error %v", err)
+			logger.Warnf("conn.SetReadDeadline error %v", err)
 			w.restart()
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
-			logger.Warnf("NextReader error %v", err)
+			logger.Warnf("conn.NextReader error %v", err)
 			w.restart()
 			return
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
-			logger.Warnf("readAll error %v", err)
+			logger.Warnf("w.readAl error %v", err)
 			w.restart()
 			return
 		}
@@ -142,8 +142,7 @@ func (w *Depth20RoutedWebsocket) reconnect(ctx context.Context, wsUrl string, pr
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			logger.Debugf("PARSE PROXY %v", err)
-			return nil, err
+			return nil, fmt.Errorf("url.Parse error %v", err)
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -188,7 +187,7 @@ func (w *Depth20RoutedWebsocket) mainLoop(ctx context.Context, proxy string, cha
 		)
 	}
 	urlStr = urlStr[:len(urlStr)-1]
-	logger.Debugf("START start %s", symbols)
+	logger.Debugf("START mainLoop %s", symbols)
 
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
@@ -197,7 +196,7 @@ func (w *Depth20RoutedWebsocket) mainLoop(ctx context.Context, proxy string, cha
 	defer func() {
 		w.Stop()
 		cancel()
-		logger.Debugf("EXIT start %s", symbols)
+		logger.Debugf("EXIT mainLoop %s", symbols)
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
@@ -244,11 +243,17 @@ func (w *Depth20RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websoc
 		logger.Debugf("EXIT heartbeatLoop %s", symbols)
 		err := conn.Close()
 		if err != nil {
-			logger.Debugf("conn.Close() ERROR %v", err)
+			logger.Debugf("conn.Close() error %v", err)
 		}
 	}()
 
+	trafficCh := make(chan interface{})
+
 	conn.SetPingHandler(func(msg string) error {
+		select {
+		case trafficCh <- nil:
+		default:
+		}
 		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
 			select {
@@ -262,12 +267,20 @@ func (w *Depth20RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websoc
 		return nil
 	})
 
+	timer := time.NewTimer(time.Minute * 15)
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
+		case <-timer.C:
+			logger.Warnf("no traffic in %v, restart ws", time.Minute*15)
+			w.restart()
+			return
+		case <-trafficCh:
+			timer.Reset(time.Minute * 15)
 		}
 	}
 

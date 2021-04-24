@@ -37,7 +37,7 @@ func updateSwapPositions() {
 		if !okSwapPosition || !okSpotBalance || !okSpread {
 			continue
 		}
-		swapOrderBook := spread.SwapOrderBook
+		swapOrderBook := spread.TakerDepth
 
 		swapStepSize := bnswapStepSizes[symbol]
 		swapTickSize := bnswapTickSizes[symbol]
@@ -47,7 +47,7 @@ func updateSwapPositions() {
 		swapSize = math.Round(swapSize/swapStepSize) * swapStepSize
 
 		//只做空SWAP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
-		if swapSize <= 0 && -swapSize*swapOrderBook.BidPrice*(1.0-*bnConfig.EnterSlippage) < swapMinNotional {
+		if swapSize <= 0 && -swapSize*swapOrderBook.TakerBid*(1.0-*bnConfig.EnterSlippage) < swapMinNotional {
 			continue
 		}
 		if swapSize > 0 && swapPosition.PositionAmt >= 0 {
@@ -64,17 +64,17 @@ func updateSwapPositions() {
 		if swapSize*swapPosition.PositionAmt < 0 && math.Abs(swapSize) <= math.Abs(swapPosition.PositionAmt) {
 			reduceOnly = true
 		}
-		price := math.Round(swapOrderBook.AskPrice*(1.0+*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
+		price := math.Round(swapOrderBook.TakerAsk*(1.0+*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 		side := "BUY"
 		if swapSize < 0 {
 			side = "SELL"
 			swapSize = -swapSize
-			price = math.Round(swapOrderBook.BidPrice*(1.0-*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
+			price = math.Round(swapOrderBook.TakerBid*(1.0-*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 		}
 		bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
 		bnswapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
 		bnswapHttpPositionUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
-		bnswapOrderRequestChs[symbol]<-bnswap.NewOrderParams{
+		bnswapOrderRequestChs[symbol] <- bnswap.NewOrderParams{
 			Symbol:           symbol,
 			Side:             side,
 			Type:             "LIMIT",
@@ -137,7 +137,7 @@ func updateMakerNewOrders() {
 		if !okSpread || !okQuantile || !okSpotBalance || !okPremiumIndex {
 			continue
 		}
-		if time.Now().Sub(spread.LastUpdateTime) > *bnConfig.SpreadTimeToLive {
+		if time.Now().Sub(spread.Time) > *bnConfig.SpreadTimeToLive {
 			continue
 		}
 		swapMinNotional := bnswapMinNotional[symbol]
@@ -147,88 +147,11 @@ func updateMakerNewOrders() {
 		mergedStepSize := bnMergedStepSizes[symbol]
 
 		currentSpotSize := spotBalance.Locked + spotBalance.Free
-		if spread.LastEnter > quantile.Top &&
-			spread.MedianEnter > quantile.Top &&
-			premiumIndex.FundingRate > *bnConfig.MinimalEnterFundingRate &&
-			rank >= len(bnSymbols)-*bnConfig.TradeCount {
-			price := spread.SpotOrderBook.MakerBidVWAP
-			price = math.Floor(price/spotTickSize) * spotTickSize
-			targetValue := currentSpotSize*price + entryStep
-			if targetValue > entryTarget {
-				targetValue = entryTarget
-			}
-			entryValue := targetValue - currentSpotSize*price
 
-			if entryValue > bnspotUSDTBalance.Free*0.8 {
-				entryValue = bnspotUSDTBalance.Free * 0.8
-			}
-
-			entryValue = math.Max(entryValue, swapMinNotional)
-			entryValue = math.Max(entryValue, spotMinNotional)
-
-			quantity := entryValue / price
-			quantity = math.Round(quantity/mergedStepSize) * mergedStepSize
-
-			entryValue = quantity*price
-
-			//不及一个0.8*EntryStep, 不操作
-			if entryValue < entryStep*0.8 {
-				if time.Now().Sub(bnOpenLogSilentTimes[symbol]) > 0 {
-					logger.Debugf(
-						"FAILED TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
-						entryValue,
-						entryStep*0.8,
-						symbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
-						quantity,
-					)
-					bnOpenLogSilentTimes[symbol] = time.Now().Add(time.Minute * 5)
-				}
-				continue
-			}
-			if entryValue > bnspotUSDTBalance.Free {
-				if time.Now().Sub(bnOpenLogSilentTimes[symbol]) > 0 {
-					logger.Debugf(
-						"FAILED TOP OPEN, ENTRY VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
-						entryValue,
-						bnspotUSDTBalance.Free,
-						symbol,
-						spread.LastEnter, quantile.Top,
-						spread.MedianEnter, quantile.Top,
-						quantity,
-					)
-					bnOpenLogSilentTimes[symbol] = time.Now().Add(time.Minute * 5)
-				}
-				continue
-			}
-			bnOpenLogSilentTimes[symbol] = time.Now()
-			logger.Debugf(
-				"TOP OPEN %s %f > %f, %f > %f, SIZE %f",
-				symbol,
-				spread.LastEnter, quantile.Top,
-				spread.MedianEnter, quantile.Top,
-				quantity,
-			)
-			order := bnspot.NewOrderParams{
-				Symbol:           symbol,
-				Price:            price,
-				Quantity:         quantity,
-				TimeInForce:      bnspot.OrderTimeInForceGTC,
-				Side:             bnspot.OrderSideBuy,
-				Type:             bnspot.OrderTypeLimit,
-				NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
-			}
-			bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
-			bnspotOrderCancelCounts[symbol] = 0
-			bnspotOpenOrders[symbol] = order
-			bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
-			bnspotOrderRequestChs[symbol] <- SpotOrderRequest{New: &order}
-			return
-		} else if spread.LastExit < quantile.Bot &&
-			spread.MedianExit < quantile.Bot &&
+		if spread.ShortLastLeave < quantile.Bot &&
+			spread.ShortMedianLeave < quantile.Bot &&
 			premiumIndex.FundingRate < *bnConfig.MinimalKeepFundingRate {
-			price := spread.SpotOrderBook.MakerAskVWAP
+			price := spread.MakerDepth.MakerAsk
 			price = math.Ceil(price/spotTickSize) * spotTickSize
 			if spotBalance.Free*price > spotMinNotional {
 				entryValue := math.Min(-4*entryStep, -spotBalance.Free*price*0.5)
@@ -244,8 +167,8 @@ func updateMakerNewOrders() {
 					logger.Debugf(
 						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
 						symbol,
-						spread.LastExit, quantile.Bot,
-						spread.MedianExit, quantile.Bot,
+						spread.ShortLastLeave, quantile.Bot,
+						spread.ShortMedianLeave, quantile.Bot,
 						quantity,
 					)
 					order := bnspot.NewOrderParams{
@@ -265,6 +188,84 @@ func updateMakerNewOrders() {
 					return
 				}
 			}
+		} else if spread.ShortLastEnter > quantile.Top &&
+			spread.ShortMedianEnter > quantile.Top &&
+			premiumIndex.FundingRate > *bnConfig.MinimalEnterFundingRate &&
+			rank >= len(bnSymbols)-*bnConfig.TradeCount {
+			price := spread.MakerDepth.MakerBid
+			price = math.Floor(price/spotTickSize) * spotTickSize
+			targetValue := currentSpotSize*price + entryStep
+			if targetValue > entryTarget {
+				targetValue = entryTarget
+			}
+			entryValue := targetValue - currentSpotSize*price
+
+			if entryValue > bnspotUSDTBalance.Free*0.8 {
+				entryValue = bnspotUSDTBalance.Free * 0.8
+			}
+
+			entryValue = math.Max(entryValue, swapMinNotional)
+			entryValue = math.Max(entryValue, spotMinNotional)
+
+			quantity := entryValue / price
+			quantity = math.Round(quantity/mergedStepSize) * mergedStepSize
+
+			entryValue = quantity * price
+
+			//不及一个0.8*EntryStep, 不操作
+			if entryValue < entryStep*0.8 {
+				if time.Now().Sub(bnOpenLogSilentTimes[symbol]) > 0 {
+					logger.Debugf(
+						"FAILED TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
+						entryValue,
+						entryStep*0.8,
+						symbol,
+						spread.ShortLastEnter, quantile.Top,
+						spread.ShortMedianEnter, quantile.Top,
+						quantity,
+					)
+					bnOpenLogSilentTimes[symbol] = time.Now().Add(time.Minute * 5)
+				}
+				continue
+			}
+			if entryValue > bnspotUSDTBalance.Free {
+				if time.Now().Sub(bnOpenLogSilentTimes[symbol]) > 0 {
+					logger.Debugf(
+						"FAILED TOP OPEN, ENTRY VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
+						entryValue,
+						bnspotUSDTBalance.Free,
+						symbol,
+						spread.ShortLastEnter, quantile.Top,
+						spread.ShortMedianEnter, quantile.Top,
+						quantity,
+					)
+					bnOpenLogSilentTimes[symbol] = time.Now().Add(time.Minute * 5)
+				}
+				continue
+			}
+			bnOpenLogSilentTimes[symbol] = time.Now()
+			logger.Debugf(
+				"TOP OPEN %s %f > %f, %f > %f, SIZE %f",
+				symbol,
+				spread.ShortLastEnter, quantile.Top,
+				spread.ShortMedianEnter, quantile.Top,
+				quantity,
+			)
+			order := bnspot.NewOrderParams{
+				Symbol:           symbol,
+				Price:            price,
+				Quantity:         quantity,
+				TimeInForce:      bnspot.OrderTimeInForceGTC,
+				Side:             bnspot.OrderSideBuy,
+				Type:             bnspot.OrderTypeLimit,
+				NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
+			}
+			bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
+			bnspotOrderCancelCounts[symbol] = 0
+			bnspotOpenOrders[symbol] = order
+			bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
+			bnspotOrderRequestChs[symbol] <- SpotOrderRequest{New: &order}
+			return
 		}
 	}
 }

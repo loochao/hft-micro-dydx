@@ -68,7 +68,7 @@ func main() {
 
 	logger.Debugf("MERGED STEP SIZES %v", bnMergedStepSizes)
 
-	bnInfluxWriter, err = common.NewInfluxWriter(
+	bnInternalInfluxWriter, err = common.NewInfluxWriter(
 		*bnConfig.InternalInflux.Address,
 		*bnConfig.InternalInflux.Username,
 		*bnConfig.InternalInflux.Password,
@@ -93,14 +93,14 @@ func main() {
 	}
 
 	defer func() {
-		err := bnInfluxWriter.Stop()
+		err := bnInternalInfluxWriter.Stop()
 		if err != nil {
 			logger.Warnf("stop influx writer error %v", err)
 		}
 	}()
 
 	defer func() {
-		err := bnInfluxWriter.Stop()
+		err := bnInternalInfluxWriter.Stop()
 		if err != nil {
 			logger.Warnf("stop influx writer error %v", err)
 		}
@@ -238,58 +238,73 @@ func main() {
 		bnQuantilesCh,
 	)
 
+	makerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
+	for start := 0; start < len(bnSymbols); start += *bnConfig.OrderBookBatchSize {
+		end := start + *bnConfig.OrderBookBatchSize
+		if end > len(bnSymbols) {
+			end = len(bnSymbols)
+		}
+		subMakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
+		for _, symbol := range bnSymbols[start:end] {
+			makerRowDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
+			subMakerRowDepthChs[symbol] = makerRowDepthChs[symbol]
+		}
+		go makerDepthWebsocketLoop(
+			bnGlobalCtx,
+			bnGlobalCancel,
+			*bnConfig.ProxyAddress,
+			subMakerRowDepthChs,
+		)
+	}
 
-	spreadCh := make(chan Spread, len(bnSymbols)*10)
-	walkedOrderBookChMap := make(map[string]chan*WalkedOrderBook)
+	takerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
+	for start := 0; start < len(bnSymbols); start += *bnConfig.OrderBookBatchSize {
+		end := start + *bnConfig.OrderBookBatchSize
+		if end > len(bnSymbols) {
+			end = len(bnSymbols)
+		}
+		subTakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
+		for _, symbol := range bnSymbols[start:end] {
+			takerRowDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
+			subTakerRowDepthChs[symbol] = takerRowDepthChs[symbol]
+		}
+		go takerDepthWebsocketLoop(
+			bnGlobalCtx,
+			bnGlobalCancel,
+			*bnConfig.ProxyAddress,
+			subTakerRowDepthChs,
+		)
+	}
+
+	spreadReportCh := make(chan common.SpreadReport, 10000)
+	go reportsSaveLoop(
+		bnGlobalCtx,
+		bnInternalInfluxWriter,
+		*bnConfig.InternalInflux,
+		spreadReportCh,
+	)
+
+	spreadCh := make(chan *common.MakerTakerSpread, len(bnSymbols)*100)
 	for _, symbol := range bnSymbols {
-		walkedOrderBookChMap[symbol] = make(chan *WalkedOrderBook, 10)
-		go watchSingleSpread(
+		go watchMakerTakerSpread(
 			bnGlobalCtx,
 			symbol,
-			*bnConfig.OrderBookMaxAgeDiff,
-			*bnConfig.OrderBookMaxAge,
+			*bnConfig.OrderBookMakerImpact,
+			*bnConfig.OrderBookTakerImpact,
+			*bnConfig.OrderBookMakerDecay,
+			*bnConfig.OrderBookMakerBias,
+			*bnConfig.OrderBookTakerDecay,
+			*bnConfig.OrderBookTakerBias,
+			*bnConfig.OrderBookMaxAgeDiffBias,
+			*bnConfig.ReportCount,
 			*bnConfig.SpreadLookbackDuration,
 			*bnConfig.SpreadLookbackMinimalWindow,
-			walkedOrderBookChMap[symbol],
+			makerRowDepthChs[symbol],
+			takerRowDepthChs[symbol],
+			spreadReportCh,
 			spreadCh,
 		)
 	}
-
-	for start := 0; start < len(bnSymbols); start += *bnConfig.OrderBookBatchSize {
-		end := start + *bnConfig.OrderBookBatchSize
-		if end > len(bnSymbols) {
-			end = len(bnSymbols)
-		}
-		go watchSpotWalkedOrderBooks(
-			bnGlobalCtx,
-			bnGlobalCancel,
-			*bnConfig.ProxyAddress,
-			*bnConfig.OrderBookTakerImpact,
-			*bnConfig.OrderBookMakerImpact,
-			bnSymbols[start:end],
-			walkedOrderBookChMap,
-		)
-	}
-
-	for start := 0; start < len(bnSymbols); start += *bnConfig.OrderBookBatchSize {
-		end := start + *bnConfig.OrderBookBatchSize
-		if end > len(bnSymbols) {
-			end = len(bnSymbols)
-		}
-		go watchSwapWalkedOrderBooks(
-			bnGlobalCtx,
-			bnGlobalCancel,
-			*bnConfig.OrderBookTakerDecay,
-			*bnConfig.OrderBookTakerBias,
-			*bnConfig.ProxyAddress,
-			*bnConfig.OrderBookTakerImpact,
-			*bnConfig.OrderBookMakerImpact,
-			bnSymbols[start:end],
-			walkedOrderBookChMap,
-		)
-	}
-
-
 
 	bnspotCancelOrderResponsesCh = make(chan []bnspot.CancelOrderResponse, len(bnSymbols))
 	bnspotNewOrderResponseCh = make(chan bnspot.NewOrderResponse, len(bnSymbols))
@@ -324,6 +339,20 @@ func main() {
 		)
 	}
 
+	go bnspot.HttpPingLoop(
+		bnGlobalCtx,
+		bnspotAPI,
+		*bnConfig.PullInterval/2,
+		bnspotSystemStatusCh,
+	)
+
+	go bnswap.HttpPingLoop(
+		bnGlobalCtx,
+		bnswapAPI,
+		*bnConfig.PullInterval/2,
+		bnswapSystemStatusCh,
+	)
+
 	if *bnConfig.CpuProfile != "" {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -342,7 +371,30 @@ func main() {
 		case <-bnGlobalCtx.Done():
 			logger.Debugf("EXIT MAIN LOOP")
 			return
+		case bnspotSystemReady = <-bnspotSystemStatusCh:
+			logger.Debugf("bnspotSystemReady %v", bnspotSystemReady)
+			if !bnspotSystemReady {
+				bnGlobalSilent = time.Now().Add(*bnConfig.RestartSilent)
+			}
+			break
+		case bnswapSystemReady = <-bnswapSystemStatusCh:
+			logger.Debugf("bnswapSystemReady %v", bnswapSystemReady)
+			if !bnswapSystemReady {
+				bnGlobalSilent = time.Now().Add(*bnConfig.RestartSilent)
+			}
+			break
+		case <-bnspotUserWebsocket.RestartCh:
+			bnGlobalSilent = time.Now().Add(*bnConfig.RestartSilent)
+			logger.Debugf("<-bnspotUserWebsocket.RestartCh silent in %v", *bnConfig.RestartSilent)
+			break
+		case <-bnswapUserWebsocket.RestartCh:
+			bnGlobalSilent = time.Now().Add(*bnConfig.RestartSilent)
+			logger.Debugf("<-bnswapUserWebsocket.RestartCh silent in %v", *bnConfig.RestartSilent)
+			break
 		case <-reBalanceTimer.C:
+			if time.Now().Sub(bnGlobalSilent) < 0 {
+				break
+			}
 			if bnspotUSDTBalance != nil && bnswapUSDTAsset != nil && bnswapUSDTAsset.AvailableBalance != nil {
 				//SWAP WS ACCOUNT 没有AvailableBalance, 为0 HTTP GET无数据
 				//SWAP的MarginBalance AvailableBalance WS推送缺失，会造成错误判断
@@ -426,7 +478,7 @@ func main() {
 			handleWSOrder(&msg.Order)
 			break
 		case spread := <-spreadCh:
-			bnSpreads[spread.Symbol] = spread
+			bnSpreads[spread.MakerSymbol] = spread
 			break
 		case bnswapPremiumIndexes = <-bnswapPremiumIndexesCh:
 			break
@@ -571,11 +623,22 @@ func main() {
 			bnbReBalanceTimer.Reset(*bnConfig.BnbCheckInterval)
 			break
 		case <-bnLoopTimer.C:
-			updateSwapPositions()
-			updateMakerOldOrders()
-			if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
-				time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
-				updateMakerNewOrders()
+			if bnswapSystemReady && bnspotSystemReady && time.Now().Sub(bnGlobalSilent) > 0 {
+				updateSwapPositions()
+				updateMakerOldOrders()
+				if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
+					time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
+					updateMakerNewOrders()
+				}
+			}else {
+				if len(bnspotOpenOrders) > 0 {
+					for symbol := range bnspotOpenOrders {
+						bnspotOrderRequestChs[symbol] <- SpotOrderRequest{
+							Cancel: &bnspot.CancelAllOrderParams{Symbol: symbol},
+						}
+						delete(bnspotOpenOrders, symbol)
+					}
+				}
 			}
 			bnLoopTimer.Reset(
 				time.Now().Truncate(

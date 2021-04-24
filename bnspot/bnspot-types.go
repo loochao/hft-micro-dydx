@@ -318,3 +318,49 @@ func (fat *FutureAccountTransferParams) ToUrlValues() url.Values {
 	values.Set("type", fmt.Sprintf("%d", fat.Type))
 	return values
 }
+
+type Depth5 struct {
+	Symbol       string        `json:"s,omitempty"`
+	LastUpdateId int64         `json:"lastUpdateId,omitempty"`
+	Bids         [5][2]float64 `json:"-"`
+	Asks         [5][2]float64 `json:"_"`
+	ParseTime    time.Time     `json:"-"`
+}
+
+func (depth Depth5) GetBids() [5][2]float64 { return depth.Bids }
+func (depth Depth5) GetAsks() [5][2]float64 { return depth.Asks }
+func (depth Depth5) GetSymbol() string      { return depth.Symbol }
+func (depth Depth5) GetTime() time.Time     { return depth.ParseTime }
+func (depth *Depth5) UnmarshalJSON(data []byte) error {
+	type Alias Depth5
+	aux := &struct {
+		Bids [5][2]string `json:"bids"`
+		Asks [5][2]string `json:"asks"`
+		*Alias
+	}{
+		Alias: (*Alias)(depth),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	aux.Alias.Bids = [5][2]float64{}
+	aux.Alias.Asks = [5][2]float64{}
+	for i, d := range aux.Bids {
+		aux.Alias.Bids[i][0], _ = strconv.ParseFloat(d[0], 64)
+		aux.Alias.Bids[i][1], _ = strconv.ParseFloat(d[1], 64)
+	}
+	for i, d := range aux.Asks {
+		aux.Alias.Asks[i][0], _ = strconv.ParseFloat(d[0], 64)
+		aux.Alias.Asks[i][1], _ = strconv.ParseFloat(d[1], 64)
+	}
+	return nil
+}
+
+type Depth5Stream struct {
+	Stream string `json:"stream,omitempty"`
+	Data   Depth5 `json:"data,omitempty"`
+}
+
+type Ping struct {
+}
+

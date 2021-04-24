@@ -7,7 +7,7 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 )
 
-func takerDepthWSLoop(
+func takerDepthWebsocketLoop(
 	ctx context.Context,
 	cancel context.CancelFunc,
 	api *kcperp.API,
@@ -18,8 +18,8 @@ func takerDepthWSLoop(
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 	}
-	logger.Debugf("START takerDepthWSLoop %s", symbols)
-	defer logger.Debugf("EXIT takerDepthWSLoop %s", symbols)
+	logger.Debugf("START takerDepthWebsocketLoop %s", symbols)
+	defer logger.Debugf("EXIT takerDepthWebsocketLoop %s", symbols)
 	ws := kcperp.NewDepth5RoutedWebsocket(
 		ctx,
 		api,

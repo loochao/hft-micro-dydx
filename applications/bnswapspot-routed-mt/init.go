@@ -3,19 +3,16 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/getsentry/raven-go"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"os"
 	"time"
 )
 
-var bnInfluxWriter *common.InfluxWriter
+var bnInternalInfluxWriter *common.InfluxWriter
 var bnExternalInfluxWriter *common.InfluxWriter
 var bnLoopTimer *time.Timer
 
@@ -104,7 +101,12 @@ var bnQuantiles = make(map[string]Quantile)
 var bnspotLastFilledBuyPrices = make(map[string]float64)
 var bnspotLastFilledSellPrices = make(map[string]float64)
 var bnRealisedSpread = make(map[string]float64)
-var bnSpreads = make(map[string]Spread)
+var bnSpreads = make(map[string]*common.MakerTakerSpread)
+var bnGlobalSilent time.Time
+var bnspotSystemStatusCh = make(chan bool, 100)
+var bnswapSystemStatusCh = make(chan bool, 100)
+var bnspotSystemReady = false
+var bnswapSystemReady = false
 
 var bnConfig *Config
 
@@ -137,11 +139,6 @@ func init() {
 	}
 	bnConfig = &config
 
-	hostname, err := os.Hostname()
-	if err != nil {
-		logger.Fatal(err)
-	}
-
 	if !common.StringDataContains(bnConfig.Symbols, bnBNBSymbol) {
 		bnConfig.Symbols = append(bnConfig.Symbols, bnBNBSymbol)
 	}
@@ -162,24 +159,9 @@ func init() {
 		bnspotSilentTimes[symbol] = time.Now().Add(time.Minute)
 		bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now()
 		bnswapHttpPositionUpdateSilentTimes[symbol] = time.Now()
+		bnGlobalSilent = time.Now().Add(*bnConfig.RestartSilent)
 	}
 
 	bnBarsMapUpdated["swap"] = false
 	bnBarsMapUpdated["spot"] = false
-
-	err = raven.SetDSN("https://5c318e0f10a349308d2ff86f51de31d8:fa0a8f90a8244c6ea762130cdd6d1bb9@sentry.jilinchen.com/12")
-
-	raven.SetTagsContext(map[string]string{
-		"influxAddress":     *bnConfig.InternalInflux.Address,
-		"influxDatabase":    *bnConfig.InternalInflux.Address,
-		"influxMeasurement": *bnConfig.InternalInflux.Address,
-		"BnApiKey":          *bnConfig.InternalInflux.Address,
-		"symbols":           fmt.Sprintf("%s", bnSymbols),
-		"hostname":          hostname,
-		"name":              *bnConfig.Name,
-	})
-
-	if err != nil {
-		logger.Fatal(err)
-	}
 }

@@ -324,6 +324,16 @@ func (api *API) CancelAllOrder(ctx context.Context, params CancelAllOrderParams)
 	return orders, limits, err
 }
 
+func (api *API) PingServer(ctx context.Context) (*Ping, error) {
+	var ping Ping
+	return &ping, api.SendHTTPRequest(
+		ctx,
+		"/api/v3/ping",
+		nil,
+		&ping,
+	)
+}
+
 func NewAPI(credentials *common.Credentials, proxy string) (*API, error) {
 	var client http.Client
 	if proxy != "" {

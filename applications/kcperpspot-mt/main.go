@@ -238,7 +238,7 @@ func main() {
 			takerRowDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
 			subTakerRowDepthChs[symbol] = takerRowDepthChs[symbol]
 		}
-		go takerDepthWSLoop(
+		go takerDepthWebsocketLoop(
 			kcGlobalCtx,
 			kcGlobalCancel,
 			kcperpAPI,

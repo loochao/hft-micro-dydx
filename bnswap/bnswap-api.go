@@ -204,6 +204,16 @@ func (api *API) GetServerTime(ctx context.Context) (*ServerTime, error) {
 	return &positions, nil
 }
 
+func (api *API) PingServer(ctx context.Context) (*Ping, error) {
+	var ping Ping
+	return &ping, api.SendHTTPRequest(
+		ctx,
+		"/fapi/v1/ping",
+		nil,
+		&ping,
+	)
+}
+
 func (api *API) GetAccount(ctx context.Context) (*Account, error) {
 	var account Account
 	err := api.SendAuthenticatedHTTPRequest(

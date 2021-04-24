@@ -58,6 +58,7 @@ func watchMakerTakerSpread(
 	i := 0
 	matchCount := 0
 	depthCount := 0
+	var eventTime  time.Time
 	var shortLastEnter, shortLastLeave, longLastEnter, longLastLeave float64
 	for {
 		select {
@@ -96,7 +97,7 @@ func watchMakerTakerSpread(
 			longEnterSortedSlice = longEnterSortedSlice.Insert(longLastEnter)
 			longLeaveSortedSlice = longLeaveSortedSlice.Insert(longLastLeave)
 			cutIndex = 0
-			for i, eventTime := range times {
+			for i, eventTime = range times {
 				if spreadTime.Sub(eventTime) > lookbackDuration {
 					cutIndex = i
 				} else {

@@ -74,7 +74,7 @@ func (w *Depth20FilteredWebsocket) readAll(r io.Reader) ([]byte, error) {
 
 func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int, decay, bias float64) {
 	defer func() {
-		logger.Debugf("EXIT startDataHandler %d", id)
+		logger.Debugf("EXIT dataHandleLoop %d", id)
 	}()
 	totalCount := 0
 	filterCount := 0

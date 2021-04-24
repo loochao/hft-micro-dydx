@@ -18,6 +18,7 @@ type Depth20 struct {
 	Asks         [20][2]float64 `json:"a,omitempty"`
 	ParseTime    time.Time      `json:"-"`
 }
+
 func (depth *Depth20) GetBids() [20][2]float64 {
 	return depth.Bids
 }
@@ -36,8 +37,8 @@ func (depth *Depth20) UnmarshalJSON(data []byte) error {
 	aux := &struct {
 		Bids      [20][2]string `json:"b,omitempty"`
 		Asks      [20][2]string `json:"a,omitempty"`
-		EventName string      `json:"e,omitempty"`
-		EventTime int64       `json:"E,omitempty"`
+		EventName string        `json:"e,omitempty"`
+		EventTime int64         `json:"E,omitempty"`
 		*Alias
 	}{
 		Alias: (*Alias)(depth),
@@ -106,9 +107,14 @@ func (depth *DepthFast) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type DepthStream struct {
+type Depth20Stream struct {
 	Stream string  `json:"stream"`
 	Data   Depth20 `json:"data"`
+}
+
+type Depth5Stream struct {
+	Stream string `json:"stream"`
+	Data   Depth5 `json:"data"`
 }
 
 type DepthFastStream struct {
@@ -474,8 +480,8 @@ func (no NewOrderParams) ToString() string {
 
 type Trade struct {
 	//EventType                string  `json:"e,omitempty"`
-	EventTime time.Time  `json:"-"`
-	Symbol    string `json:"s,omitempty"`
+	EventTime time.Time `json:"-"`
+	Symbol    string    `json:"s,omitempty"`
 	//AggregateTradeID         int64   `json:"a,omitempty"`
 	Price    float64 `json:"p,string,omitempty"`
 	Quantity float64 `json:"q,string,omitempty"`
@@ -533,8 +539,8 @@ func (mpu *PremiumIndex) ToString() string {
 func (mpu *PremiumIndex) UnmarshalJSON(data []byte) error {
 	type Alias PremiumIndex
 	aux := &struct {
-		NextFundingTime int64  `json:"nextFundingTime,omitempty"`
-		EventTime       int64  `json:"time,omitempty"`
+		NextFundingTime int64 `json:"nextFundingTime,omitempty"`
+		EventTime       int64 `json:"time,omitempty"`
 		*Alias
 	}{
 		Alias: (*Alias)(mpu),
@@ -543,7 +549,65 @@ func (mpu *PremiumIndex) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	mpu.NextFundingTime = time.Unix(0, aux.NextFundingTime*1000000)
-	mpu.EventTime = time.Unix(0,aux.EventTime*1000000)
+	mpu.EventTime = time.Unix(0, aux.EventTime*1000000)
 	mpu.ParseTime = time.Now()
 	return nil
+}
+
+type Depth5 struct {
+	EventTime    time.Time     `json:"-"`
+	Symbol       string        `json:"s,omitempty"`
+	LastUpdateId int64         `json:"u,omitempty"`
+	Bids         [5][2]float64 `json:"b,omitempty"`
+	Asks         [5][2]float64 `json:"a,omitempty"`
+	ParseTime    time.Time     `json:"-"`
+}
+
+func (depth *Depth5) GetBids() [5][2]float64 {
+	return depth.Bids
+}
+func (depth *Depth5) GetAsks() [5][2]float64 {
+	return depth.Asks
+}
+func (depth *Depth5) GetSymbol() string {
+	return depth.Symbol
+}
+func (depth *Depth5) GetTime() time.Time {
+	return depth.EventTime
+}
+
+func (depth *Depth5) UnmarshalJSON(data []byte) error {
+	type Alias Depth5
+	aux := &struct {
+		Bids      [5][2]string `json:"b,omitempty"`
+		Asks      [5][2]string `json:"a,omitempty"`
+		EventName string       `json:"e,omitempty"`
+		EventTime int64        `json:"E,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(depth),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("ERR %v", err)
+		return err
+	}
+	depth.Bids = [5][2]float64{}
+	depth.Asks = [5][2]float64{}
+	for i, d := range aux.Bids {
+		price, _ := strconv.ParseFloat(d[0], 64)
+		size, _ := strconv.ParseFloat(d[1], 64)
+		depth.Bids[i][0] = price
+		depth.Bids[i][1] = size
+	}
+	for i, d := range aux.Asks {
+		price, _ := strconv.ParseFloat(d[0], 64)
+		size, _ := strconv.ParseFloat(d[1], 64)
+		depth.Asks[i][0] = price
+		depth.Asks[i][1] = size
+	}
+	depth.EventTime = time.Unix(0, aux.EventTime*1000000)
+	return nil
+}
+
+type Ping struct {
 }

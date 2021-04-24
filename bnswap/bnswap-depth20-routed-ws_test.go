@@ -2,6 +2,7 @@ package bnswap
 
 import (
 	"context"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"testing"
 	"time"
@@ -12,12 +13,12 @@ func TestNewDepth20RoutedWebsocket(t *testing.T) {
 	symbols := []string{"BTCUSDT", "LINKUSDT", "WAVESUSDT"}
 	proxy := "socks5://127.0.0.1:1081"
 
-	channels := make(map[string]chan []byte)
+	channels := make(map[string]chan *common.DepthRawMessage)
 	for _, symbol := range symbols {
-		channels[symbol] = make(chan []byte, 100)
+		channels[symbol] = make(chan *common.DepthRawMessage, 100)
 	}
 
-	ws := NewDepth20RoutedWebsocket(ctx, 0.995, 50, proxy, channels, nil)
+	ws := NewDepth20RoutedWebsocket(ctx, proxy, channels)
 	for {
 		select {
 		case <-ctx.Done():
