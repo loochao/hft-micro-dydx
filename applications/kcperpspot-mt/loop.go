@@ -13,10 +13,6 @@ import (
 
 func updatePerpPositions() {
 
-	if time.Now().Sub(kcInitialSilent) < 0 {
-		return
-	}
-
 	unHedgedValue := 0.0
 	for _, spotSymbol := range kcspotSymbols {
 		perpSymbol := kcspSymbolsMap[spotSymbol]

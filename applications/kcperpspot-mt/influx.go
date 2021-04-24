@@ -152,6 +152,11 @@ func handleSave() {
 		fields["netWorth"] = (*totalSpotBalance + *totalPerpUSDTBalance) / *kcConfig.StartValue
 		fields["startValue"] = *kcConfig.StartValue
 		fields["netWorth"] = netWorth
+		if time.Now().Sub(kcGlobalSilent) > 0 {
+			fields["globalSilent"] = 0
+		}else{
+			fields["globalSilent"] = 1
+		}
 		for name, start := range kcConfig.StartValues {
 			if start > 0 {
 				fields["refStartValue_"+strings.ToLower(name)] = start

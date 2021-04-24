@@ -333,21 +333,21 @@ func main() {
 			return
 		case kcspotSystemReady = <-kcSpotSystemStatusCh:
 			if !kcspotSystemReady {
-				kcSystemReadyTime = time.Now().Add(*kcConfig.RestartSilent)
+				kcGlobalSilent = time.Now().Add(*kcConfig.RestartSilent)
 			}
 			break
 		case kcperpSystemReady = <-kcPerpSystemStatusCh:
 			if !kcperpSystemReady {
-				kcSystemReadyTime = time.Now().Add(*kcConfig.RestartSilent)
+				kcGlobalSilent = time.Now().Add(*kcConfig.RestartSilent)
 			}
 			break
 		case <-kcspotUserWebsocket.RestartCh:
 			logger.Debugf("kcspotUserWebsocket restart silent %v", *kcConfig.RestartSilent)
-			handleWebsocketRestart()
+			kcGlobalSilent = time.Now().Add(*kcConfig.RestartSilent)
 			break
 		case <-kcperpUserWebsocket.RestartCh:
 			logger.Debugf("kcperpUserWebsocket restart silent %v", *kcConfig.RestartSilent)
-			handleWebsocketRestart()
+			kcGlobalSilent = time.Now().Add(*kcConfig.RestartSilent)
 			break
 		case p := <-kcperpPositionCh:
 			handlePerpHttpPositions(p)
@@ -500,7 +500,7 @@ func main() {
 			}
 			frRankUpdatedTimer.Reset(time.Minute)
 		case <-kcLoopTimer.C:
-			if kcperpSystemReady && kcspotSystemReady && time.Now().Sub(kcSystemReadyTime) > 0 {
+			if kcperpSystemReady && kcspotSystemReady && time.Now().Sub(kcGlobalSilent) > 0 {
 				updatePerpPositions()
 				updateSpotOldOrders()
 				updateSpotNewOrders()

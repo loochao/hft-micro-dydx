@@ -96,14 +96,13 @@ var kcspotSystemReady = false
 var kcperpSystemReady = false
 var kcSpotSystemStatusCh = make(chan bool, 10)
 var kcPerpSystemStatusCh = make(chan bool, 10)
-var kcSystemReadyTime = time.Now()
 
-var kcInitialSilent  time.Time
+var kcGlobalSilent time.Time
 var kcConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210424 09:26:47  ####")
+	logger.Debug("####  BUILD @ 20210424 09:33:04  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -149,7 +148,7 @@ func init() {
 		kcperpHttpPositionUpdateSilentTimes[perpSymbol] = time.Now()
 	}
 
-	kcInitialSilent = time.Now().Add(*kcConfig.EnterSilent)
+	kcGlobalSilent = time.Now().Add(*kcConfig.EnterSilent)
 	kcBarsMapUpdated["swap"] = false
 	kcBarsMapUpdated["spot"] = false
 }
