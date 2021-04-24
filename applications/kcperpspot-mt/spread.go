@@ -32,7 +32,7 @@ func watchMakerTakerSpread(
 	var makerWalkedDepth, takerWalkedDepth *common.WalkedMakerTakerDepth
 	var spreadTime time.Time
 	var ageDiff time.Duration
-	var maxAgeDiff = time.Duration(takerBias+makerBias)
+	var maxAgeDiff = time.Duration(takerBias + makerBias)
 	var makerDepthFilter = common.NewDepthFilter(makerDecay, makerBias)
 	var takerDepthFilter = common.NewDepthFilter(takerDecay, takerBias)
 	shortEnterWindow := make([]float64, 0)
@@ -224,22 +224,20 @@ func watchMakerTakerSpread(
 			}
 			break
 		case makerRawDepth = <-makerDepthCh:
-			if !makerDepthFilter.Filter(makerRawDepth) {
-				if takerRawDepth != nil {
-					maxAgeDiff = time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma - takerDepthFilter.TimeDeltaEma))*time.Millisecond + maxAgeDiffBias
-					ageDiff = makerRawDepth.Time.Sub(takerRawDepth.Time)
-					//logger.Debugf("%v\t%v\t%.2f\t%.2f", maxAgeDiff, ageDiff, makerDepthFilter.TimeDeltaEma, takerDepthFilter.TimeDeltaEma)
-					if ageDiff > maxAgeDiff {
-						//taker已经过期
-						takerRawDepth = nil
-						takerDepth = nil
-						takerWalkedDepth = nil
-					} else if ageDiff < -maxAgeDiff {
-						//maker已经过期
-						makerRawDepth = nil
-						makerDepth = nil
-						makerWalkedDepth = nil
-					}
+			if !makerDepthFilter.Filter(makerRawDepth) && takerRawDepth != nil {
+				maxAgeDiff = time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma-takerDepthFilter.TimeDeltaEma))*time.Millisecond + maxAgeDiffBias
+				ageDiff = makerRawDepth.Time.Sub(takerRawDepth.Time)
+				logger.Debugf("%v\t%v\t%.2f\t%.2f", maxAgeDiff, ageDiff, makerDepthFilter.TimeDeltaEma, takerDepthFilter.TimeDeltaEma)
+				if ageDiff > maxAgeDiff {
+					//taker已经过期
+					takerRawDepth = nil
+					takerDepth = nil
+					takerWalkedDepth = nil
+				} else if ageDiff < -maxAgeDiff {
+					//maker已经过期
+					makerRawDepth = nil
+					makerDepth = nil
+					makerWalkedDepth = nil
 				}
 			}
 			makerParseTimer.Reset(expectedChanSendingTime)
@@ -249,16 +247,16 @@ func watchMakerTakerSpread(
 				takerDepthFilter.GenerateReport()
 				select {
 				case reportCh <- common.SpreadReport{
-					MaxAgeDiff:  maxAgeDiff,
-					MatchRatio:  float64(matchCount) / float64(depthCount),
-					MakerSymbol: makerSymbol,
-					TakerSymbol: takerSymbol,
-					MakerMsgAvgLen: makerDepthFilter.Report.MsgAvgLen,
-					TakerMsgAvgLen: takerDepthFilter.Report.MsgAvgLen,
-					MakerTimeDeltaEma: makerDepthFilter.TimeDeltaEma,
-					TakerTimeDeltaEma: takerDepthFilter.TimeDeltaEma,
-					MakerTimeDelta: makerDepthFilter.TimeDelta,
-					TakerTimeDelta: takerDepthFilter.TimeDelta,
+					MaxAgeDiff:            maxAgeDiff,
+					MatchRatio:            float64(matchCount) / float64(depthCount),
+					MakerSymbol:           makerSymbol,
+					TakerSymbol:           takerSymbol,
+					MakerMsgAvgLen:        makerDepthFilter.Report.MsgAvgLen,
+					TakerMsgAvgLen:        takerDepthFilter.Report.MsgAvgLen,
+					MakerTimeDeltaEma:     makerDepthFilter.TimeDeltaEma,
+					TakerTimeDeltaEma:     takerDepthFilter.TimeDeltaEma,
+					MakerTimeDelta:        makerDepthFilter.TimeDelta,
+					TakerTimeDelta:        takerDepthFilter.TimeDelta,
 					MakerDepthFilterRatio: makerDepthFilter.Report.FilterRatio,
 					TakerDepthFilterRatio: takerDepthFilter.Report.FilterRatio,
 				}:
@@ -269,22 +267,20 @@ func watchMakerTakerSpread(
 			}
 			break
 		case takerRawDepth = <-takerDepthCh:
-			if !takerDepthFilter.Filter(takerRawDepth) {
-				if makerRawDepth != nil {
-					maxAgeDiff = time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma - takerDepthFilter.TimeDeltaEma))*time.Millisecond + maxAgeDiffBias
-					ageDiff = takerRawDepth.Time.Sub(makerRawDepth.Time)
-					//logger.Debugf("%v\t%v\t%.2f\t%.2f", maxAgeDiff, ageDiff, makerDepthFilter.TimeDeltaEma, takerDepthFilter.TimeDeltaEma)
-					if ageDiff > maxAgeDiff {
-						//maker已经过期
-						makerRawDepth = nil
-						makerDepth = nil
-						makerWalkedDepth = nil
-					} else if ageDiff < -maxAgeDiff {
-						//taker已经过期
-						takerRawDepth = nil
-						takerDepth = nil
-						takerWalkedDepth = nil
-					}
+			if !takerDepthFilter.Filter(takerRawDepth) && makerRawDepth != nil {
+				maxAgeDiff = time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma-takerDepthFilter.TimeDeltaEma))*time.Millisecond + maxAgeDiffBias
+				ageDiff = takerRawDepth.Time.Sub(makerRawDepth.Time)
+				logger.Debugf("%v\t%v\t%.2f\t%.2f", maxAgeDiff, ageDiff, makerDepthFilter.TimeDeltaEma, takerDepthFilter.TimeDeltaEma)
+				if ageDiff > maxAgeDiff {
+					//maker已经过期
+					makerRawDepth = nil
+					makerDepth = nil
+					makerWalkedDepth = nil
+				} else if ageDiff < -maxAgeDiff {
+					//taker已经过期
+					takerRawDepth = nil
+					takerDepth = nil
+					takerWalkedDepth = nil
 				}
 			}
 			takerParseTimer.Reset(expectedChanSendingTime)
@@ -294,16 +290,16 @@ func watchMakerTakerSpread(
 				takerDepthFilter.GenerateReport()
 				select {
 				case reportCh <- common.SpreadReport{
-					MaxAgeDiff:  maxAgeDiff,
-					MatchRatio:  float64(matchCount) / float64(depthCount),
-					MakerSymbol: makerSymbol,
-					TakerSymbol: takerSymbol,
-					MakerMsgAvgLen: makerDepthFilter.Report.MsgAvgLen,
-					TakerMsgAvgLen: takerDepthFilter.Report.MsgAvgLen,
-					MakerTimeDeltaEma: makerDepthFilter.TimeDeltaEma,
-					TakerTimeDeltaEma: takerDepthFilter.TimeDeltaEma,
-					MakerTimeDelta: makerDepthFilter.TimeDelta,
-					TakerTimeDelta: takerDepthFilter.TimeDelta,
+					MaxAgeDiff:            maxAgeDiff,
+					MatchRatio:            float64(matchCount) / float64(depthCount),
+					MakerSymbol:           makerSymbol,
+					TakerSymbol:           takerSymbol,
+					MakerMsgAvgLen:        makerDepthFilter.Report.MsgAvgLen,
+					TakerMsgAvgLen:        takerDepthFilter.Report.MsgAvgLen,
+					MakerTimeDeltaEma:     makerDepthFilter.TimeDeltaEma,
+					TakerTimeDeltaEma:     takerDepthFilter.TimeDeltaEma,
+					MakerTimeDelta:        makerDepthFilter.TimeDelta,
+					TakerTimeDelta:        takerDepthFilter.TimeDelta,
 					MakerDepthFilterRatio: makerDepthFilter.Report.FilterRatio,
 					TakerDepthFilterRatio: takerDepthFilter.Report.FilterRatio,
 				}:
