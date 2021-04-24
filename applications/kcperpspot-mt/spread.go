@@ -227,7 +227,7 @@ func watchMakerTakerSpread(
 			if !makerDepthFilter.Filter(makerRawDepth) && takerRawDepth != nil {
 				maxAgeDiff = time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma-takerDepthFilter.TimeDeltaEma))*time.Millisecond + maxAgeDiffBias
 				ageDiff = makerRawDepth.Time.Sub(takerRawDepth.Time)
-				logger.Debugf("%v\t%v\t%.2f\t%.2f", maxAgeDiff, ageDiff, makerDepthFilter.TimeDeltaEma, takerDepthFilter.TimeDeltaEma)
+				//logger.Debugf("%v\t%v\t%.2f\t%.2f", maxAgeDiff, ageDiff, makerDepthFilter.TimeDeltaEma, takerDepthFilter.TimeDeltaEma)
 				if ageDiff > maxAgeDiff {
 					//taker已经过期
 					takerRawDepth = nil
@@ -270,7 +270,7 @@ func watchMakerTakerSpread(
 			if !takerDepthFilter.Filter(takerRawDepth) && makerRawDepth != nil {
 				maxAgeDiff = time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma-takerDepthFilter.TimeDeltaEma))*time.Millisecond + maxAgeDiffBias
 				ageDiff = takerRawDepth.Time.Sub(makerRawDepth.Time)
-				logger.Debugf("%v\t%v\t%.2f\t%.2f", maxAgeDiff, ageDiff, makerDepthFilter.TimeDeltaEma, takerDepthFilter.TimeDeltaEma)
+				//logger.Debugf("%v\t%v\t%.2f\t%.2f", maxAgeDiff, ageDiff, makerDepthFilter.TimeDeltaEma, takerDepthFilter.TimeDeltaEma)
 				if ageDiff > maxAgeDiff {
 					//maker已经过期
 					makerRawDepth = nil
