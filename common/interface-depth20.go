@@ -80,13 +80,14 @@ type SpreadReport struct {
 
 func (s *SpreadReport) ToString() string {
 	return fmt.Sprintf(
-		"%s-%s MR %f MDFR %f TDFR %f MTD %f TTD %f MTEMA %f TTEMA %f MAL %d TAL %d",
+		"%s-%s MR %f MDFR %f TDFR %f MTD %f TTD %f MTEMA %f TTEMA %f MAL %d TAL %d MAD %v",
 		s.MakerSymbol, s.TakerSymbol,
 		s.MatchRatio,
 		s.MakerDepthFilterRatio, s.TakerDepthFilterRatio,
 		s.MakerTimeDelta, s.TakerTimeDelta,
 		s.MakerTimeDeltaEma, s.TakerTimeDeltaEma,
 		s.MakerMsgAvgLen, s.TakerMsgAvgLen,
+		s.MaxAgeDiff,
 	)
 }
 
