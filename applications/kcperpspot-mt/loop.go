@@ -159,7 +159,51 @@ func updateSpotNewOrders() {
 		spotMinNotional := kcspotMinNotional[spotSymbol]
 
 		currentSpotSize := spotBalance.Available + spotBalance.Holds
-		if spread.ShortLastEnter > quantile.Top &&
+		if spread.ShortLastLeave < quantile.Bot &&
+			spread.ShortMedianLeave < quantile.Bot &&
+			fundingRate.Value < *kcConfig.MinimalKeepFundingRate {
+			price := spread.MakerDepth.MakerAsk
+			price = math.Ceil(price/spotTickSize) * spotTickSize
+			if spotBalance.Available*price > spotMinNotional {
+				entryValue := math.Min(4*entryStep, spotBalance.Available*price*0.5)
+				if fundingRate.Value > *kcConfig.MinimalKeepFundingRate/2 {
+					entryValue = math.Min(2*entryStep, spotBalance.Available*price*0.5)
+				}
+				quantity := entryValue / price
+				quantity = math.Round(quantity/spotStepSize) * spotStepSize
+				quantity = math.Round(quantity/perpStepSize) * perpStepSize
+				entryValue = quantity * price
+				if spotBalance.Available*price-entryValue < entryStep {
+					//quantity = -spotBalance.Available
+					quantity = math.Floor(spotBalance.Available/spotStepSize) * spotStepSize
+					//quantity = math.Ceil(quantity/perpStepSize) * perpStepSize
+				}
+				if quantity > 0 {
+					logger.Debugf(
+						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
+						spotSymbol,
+						spread.ShortLastLeave, quantile.Bot,
+						spread.ShortMedianLeave, quantile.Bot,
+						quantity,
+					)
+					order := kcspot.NewOrderParam{
+						Symbol:      spotSymbol,
+						Price:       common.Float64(price),
+						Size:        common.Float64(quantity),
+						TimeInForce: kcspot.OrderTimeInForceGTC,
+						Side:        kcspot.OrderSideSell,
+						Type:        kcspot.OrderTypeLimit,
+						//PostOnly:    true,
+						Hidden:    true,
+						ClientOid: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+					}
+					kcspotOrderSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.OrderSilent)
+					kcspotOrderCancelCounts[spotSymbol] = 0
+					kcspotOpenOrders[spotSymbol] = order
+					kcspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{New: &order}
+				}
+			}
+		} else if spread.ShortLastEnter > quantile.Top &&
 			spread.ShortMedianEnter > quantile.Top &&
 			fundingRate.Value > *kcConfig.MinimalEnterFundingRate &&
 			rank >= len(kcspotSymbols)-*kcConfig.TradeCount {
@@ -213,8 +257,7 @@ func updateSpotNewOrders() {
 				}
 				continue
 			}
-			if quantity*price < spotMinNotional ||
-				quantity < perpStepSize {
+			if entryValue < spotMinNotional {
 				if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
 					logger.Debugf(
 						"FAILED TOP OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f",
@@ -229,6 +272,7 @@ func updateSpotNewOrders() {
 				}
 				continue
 			}
+			usdtAvailable -= entryValue
 			kcOpenLogSilentTimes[spotSymbol] = time.Now()
 			logger.Debugf(
 				"TOP OPEN %s %f > %f, %f > %f, SIZE %f",
@@ -245,59 +289,13 @@ func updateSpotNewOrders() {
 				Side:        kcspot.OrderSideBuy,
 				Type:        kcspot.OrderTypeLimit,
 				//PostOnly:    true,
-				Hidden:      true,
-				ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+				Hidden:    true,
+				ClientOid: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 			}
 			kcspotOrderSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.OrderSilent)
 			kcspotOrderCancelCounts[spotSymbol] = 0
 			kcspotOpenOrders[spotSymbol] = order
 			kcspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{New: &order}
-			return
-		} else if spread.ShortLastLeave < quantile.Bot &&
-			spread.ShortMedianLeave < quantile.Bot &&
-			fundingRate.Value < *kcConfig.MinimalKeepFundingRate {
-			price := spread.MakerDepth.MakerAsk
-			price = math.Ceil(price/spotTickSize) * spotTickSize
-			if spotBalance.Available*price > spotMinNotional {
-				entryValue := math.Min(4*entryStep, spotBalance.Available*price*0.5)
-				if fundingRate.Value > *kcConfig.MinimalKeepFundingRate/2 {
-					entryValue = math.Min(2*entryStep, spotBalance.Available*price*0.5)
-				}
-				quantity := entryValue / price
-				quantity = math.Round(quantity/spotStepSize) * spotStepSize
-				quantity = math.Round(quantity/perpStepSize) * perpStepSize
-				entryValue = quantity * price
-				if spotBalance.Available*price-entryValue < entryStep {
-					//quantity = -spotBalance.Available
-					quantity = math.Floor(spotBalance.Available/spotStepSize) * spotStepSize
-					//quantity = math.Ceil(quantity/perpStepSize) * perpStepSize
-				}
-				if quantity > 0 {
-					logger.Debugf(
-						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
-						spotSymbol,
-						spread.ShortLastLeave, quantile.Bot,
-						spread.ShortMedianLeave, quantile.Bot,
-						quantity,
-					)
-					order := kcspot.NewOrderParam{
-						Symbol:      spotSymbol,
-						Price:       common.Float64(price),
-						Size:        common.Float64(quantity),
-						TimeInForce: kcspot.OrderTimeInForceGTC,
-						Side:        kcspot.OrderSideSell,
-						Type:        kcspot.OrderTypeLimit,
-						//PostOnly:    true,
-						Hidden:      true,
-						ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
-					}
-					kcspotOrderSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.OrderSilent)
-					kcspotOrderCancelCounts[spotSymbol] = 0
-					kcspotOpenOrders[spotSymbol] = order
-					kcspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{New: &order}
-					return
-				}
-			}
 		}
 	}
 }

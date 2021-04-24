@@ -25,7 +25,7 @@ type UserWebsocket struct {
 
 func (w *UserWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
 	defer func() {
-		logger.Debugf("EXIT startRead")
+		logger.Debugf("EXIT readLoop")
 	}()
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Hour * 4))
@@ -241,7 +241,7 @@ func (w *UserWebsocket) start(ctx context.Context, urlStr string, proxy string) 
 func (w *UserWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn) {
 
 	defer func() {
-		logger.Debugf("EXIT maintainHeartbeat")
+		logger.Debugf("EXIT heartbeatLoop")
 		err := conn.Close()
 		if err != nil {
 			logger.Debugf("conn.Close() ERROR %v", err)

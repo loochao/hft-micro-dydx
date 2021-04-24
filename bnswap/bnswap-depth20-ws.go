@@ -24,7 +24,7 @@ type Depth20Websocket struct {
 
 func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) {
 	defer func() {
-		logger.Debugf("EXIT startRead")
+		logger.Debugf("EXIT readLoop")
 	}()
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -227,7 +227,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn) {
 
 	defer func() {
-		logger.Debugf("EXIT maintainHeartbeat")
+		logger.Debugf("EXIT heartbeatLoop")
 		err := conn.Close()
 		if err != nil {
 			logger.Debugf("conn.Close() ERROR %v", err)
