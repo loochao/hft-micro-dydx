@@ -43,9 +43,6 @@ func updatePerpPositions() {
 		perpSize = math.Round(perpSize / multiplier)
 
 		//只做空PERP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
-		if perpSize <= 0 {
-			continue
-		}
 		if perpSize > 0 && perpPosition.CurrentQty >= 0 {
 			logger.Debugf("%s PERP POSITION ERROR, CAN'T ADD %f TO POS %f", perpSize, perpPosition.CurrentQty)
 			continue
