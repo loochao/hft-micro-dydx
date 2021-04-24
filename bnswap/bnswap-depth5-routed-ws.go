@@ -50,17 +50,25 @@ func (w *Depth5RoutedWebsocket) readLoop(conn *websocket.Conn, symbols []string,
 			w.restart()
 			return
 		}
-		//{"stream":"btcusdt@depth20@100ms","data":{"e":"depthUpdate","E":1616509191577,"T":1616509191571,"s":"CDEFH1INCHUSDT","U":276060537661,"u":276060540084,"pu":276060537525,"b":[["55302.93","1.203"],["55302.33","1.052"],["55302.32","0.036"],["55301.31","0.048"],["55301.30","1.936"],["55299.12","0.036"],["55299.11","0.240"],["55299.06","2.851"],["55299.01","0.124"],["55299.00","1.337"],["55298.52","0.100"],["55298.51","0.008"],["55298.41","0.110"],["55297.71","0.278"],["55297.31","0.292"],["55297.28","0.542"],["55297.18","0.362"],["55295.75","0.136"],["55295.68","0.160"],["55294.81","0.278"]],"a":[["55302.94","0.116"],["55305.98","0.202"],["55306.33","0.001"],["55306.58","0.054"],["55309.34","0.074"],["55309.36","0.090"],["55309.37","0.098"],["55309.52","0.116"],["55309.99","0.033"],["55310.62","0.181"],["55310.72","0.020"],["55311.04","0.217"],["55311.21","0.090"],["55311.41","0.181"],["55311.58","0.180"],["55311.59","0.519"],["55311.76","0.100"],["55311.86","0.243"],["55312.02","0.247"],["55312.42","0.090"]]}}
+		//{"stream":"btcusdt@depth5@100ms","data":{"e":"depthUpdate","E":1619275324545,"T":1619275324532,"s":"BTCUSDT","U":358541352638,"u":358541355184,"pu":358541352355,"b":[["49278.98","0.186"],["49275.64","0.042"],["49275.24","0.080"],["49274.62","0.001"],["49274.60","0.004"]],"a":[["49278.99","1.009"],["49279.54","0.040"],["49282.01","0.025"],["49282.02","0.187"],["49282.89","0.135"]]}}
 		if len(msg) < 128 {
 			continue
 		}
-		if msg[61] == 'E' {
+		if msg[60] == 'E' {
+			timeInt, err = common.ParseInt(msg[63:76])
+			if err != nil {
+				logger.Debugf("common.ParseInt error %v %s", err, msg[63:76])
+				continue
+			}
+			symbolBytes = msg[100:107]
+			symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+		} else if msg[61] == 'E' {
 			timeInt, err = common.ParseInt(msg[64:77])
 			if err != nil {
 				logger.Debugf("common.ParseInt error %v %s", err, msg[64:77])
 				continue
 			}
-			symbolBytes = msg[101:108]
+			symbolBytes = msg[101:109]
 			symbol = *(*string)(unsafe.Pointer(&symbolBytes))
 		} else if msg[62] == 'E' {
 			timeInt, err = common.ParseInt(msg[65:78])
@@ -68,7 +76,7 @@ func (w *Depth5RoutedWebsocket) readLoop(conn *websocket.Conn, symbols []string,
 				logger.Debugf("common.ParseInt error %v %s", err, msg[65:78])
 				continue
 			}
-			symbolBytes = msg[102:110]
+			symbolBytes = msg[102:111]
 			symbol = *(*string)(unsafe.Pointer(&symbolBytes))
 		} else if msg[63] == 'E' {
 			timeInt, err = common.ParseInt(msg[66:79])
@@ -77,14 +85,6 @@ func (w *Depth5RoutedWebsocket) readLoop(conn *websocket.Conn, symbols []string,
 				continue
 			}
 			symbolBytes = msg[103:112]
-			symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		} else if msg[64] == 'E' {
-			timeInt, err = common.ParseInt(msg[67:80])
-			if err != nil {
-				logger.Debugf("common.ParseInt error %v %s", err, msg[67:80])
-				continue
-			}
-			symbolBytes = msg[104:113]
 			symbol = *(*string)(unsafe.Pointer(&symbolBytes))
 		} else {
 			if time.Now().Sub(logSilentTime) > 0 {
@@ -182,7 +182,7 @@ func (w *Depth5RoutedWebsocket) mainLoop(ctx context.Context, proxy string, chan
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 		urlStr += fmt.Sprintf(
-			"%s@depth20@100ms/",
+			"%s@depth5@100ms/",
 			strings.ToLower(symbol),
 		)
 	}
