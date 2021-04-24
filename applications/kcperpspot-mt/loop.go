@@ -43,7 +43,7 @@ func updatePerpPositions() {
 		perpSize = math.Round(perpSize / multiplier)
 
 		//只做空PERP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
-		if perpSize <= 0  {
+		if perpSize <= 0 {
 			continue
 		}
 		if perpSize > 0 && perpPosition.CurrentQty >= 0 {
@@ -125,9 +125,17 @@ func updateSpotNewOrders() {
 		spotSymbol := kcpsSymbolsMap[perpSymbol]
 		//需要保证期货和现货都有仓位更新，才调整现货仓位
 		if time.Now().Sub(kcspotBalancesUpdateTimes[spotSymbol]) > *kcConfig.BalancePositionMaxAge {
+			if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
+				logger.Debugf("%s SPOT POSITION NOT READY", spotSymbol)
+				kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
+			}
 			continue
 		}
 		if time.Now().Sub(kcperpPositionsUpdateTimes[perpSymbol]) > *kcConfig.BalancePositionMaxAge {
+			if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
+				logger.Debugf("%s PERP POSITION NOT READY", spotSymbol)
+				kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
+			}
 			continue
 		}
 		if _, ok := kcspotOpenOrders[spotSymbol]; ok {
@@ -138,6 +146,10 @@ func updateSpotNewOrders() {
 			continue
 		}
 		if time.Now().Sub(kcspotSilentTimes[spotSymbol]) < 0 {
+			if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
+				logger.Debugf("%s ENTRY SILENT", spotSymbol)
+				kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
+			}
 			continue
 		}
 		quantile, okQuantile := kcQuantiles[spotSymbol]
@@ -145,12 +157,20 @@ func updateSpotNewOrders() {
 		spotBalance, okSpotBalance := kcspotBalances[spotSymbol]
 		fundingRate, okFundingRate := kcperpFundingRates[perpSymbol]
 		if !okSpread || !okQuantile || !okSpotBalance || !okFundingRate {
+			if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
+				logger.Debugf("%s NOT READY", spotSymbol)
+				kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
+			}
 			continue
 		}
 		if time.Now().Sub(spread.Time) > *kcConfig.SpreadTimeToLive {
+			if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
+				logger.Debugf("%s SPREAD OUT OF DATE", spotSymbol)
+				kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
+			}
 			continue
 		}
-		perpStepSize :=  kcperpMultipliers[perpSymbol]
+		perpStepSize := kcperpMultipliers[perpSymbol]
 		spotStepSize := kcspotStepSizes[spotSymbol]
 		spotTickSize := kcspotTickSizes[spotSymbol]
 		mergedStepSize := kcMergedStepSizes[spotSymbol]
@@ -262,7 +282,7 @@ func updateSpotNewOrders() {
 				quantity := entryValue / price
 				quantity = math.Round(quantity/spotStepSize) * spotStepSize
 				quantity = math.Round(quantity/perpStepSize) * perpStepSize
-				entryValue = quantity*price
+				entryValue = quantity * price
 				if spotBalance.Available*price-entryValue < entryStep {
 					//quantity = -spotBalance.Available
 					quantity = math.Floor(spotBalance.Available/spotStepSize) * spotStepSize
