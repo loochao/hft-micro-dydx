@@ -96,6 +96,9 @@ func handleSave() {
 		fields := make(map[string]interface{})
 		if position, ok := bnswapPositions[symbol]; ok {
 			fields["swapBalance"] = position.PositionAmt
+			if premiumIndex, ok := bnswapPremiumIndexes[symbol]; ok {
+				fields["swapValue"] = premiumIndex.IndexPrice * position.PositionAmt
+			}
 		}
 		if spotBalance, ok := bnspotBalances[symbol]; ok {
 			fields["spotBalance"] = spotBalance.Free + spotBalance.Locked
