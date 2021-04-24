@@ -138,7 +138,7 @@ func watchSpotBars(
 					case output <- outputMap:
 					}
 					outputResults = false
-					logger.Debugf("OUTPUT MAKER BARS")
+					//logger.Debugf("OUTPUT MAKER BARS")
 				}
 			}
 			loopTimer.Reset(time.Second)
@@ -275,7 +275,7 @@ func watchSwapBars(
 					case output <- outputMap:
 					}
 					outputResults = false
-					logger.Debugf("OUTPUT TAKER BARS")
+					//logger.Debugf("OUTPUT TAKER BARS")
 				}
 			}
 			loopTimer.Reset(time.Second)
