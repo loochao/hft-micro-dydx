@@ -19,7 +19,7 @@ func handleSave() {
 		for _, spotSymbol := range kcspotSymbols {
 			//有可能因为交易系统BUG Spread算不出来，这种时间Balance多半为0,
 			balance, okBalance := kcspotBalances[spotSymbol]
-			if balance.Available+balance.Holds > kcMergedStepSizes[spotSymbol] {
+			if balance.Available+balance.Holds > 0 {
 				spread, okSpread := kcSpreads[spotSymbol]
 				if okBalance && okSpread {
 					spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
@@ -188,7 +188,7 @@ func handleExternalInfluxSave() {
 		getAllBalances := true
 		for _, spotSymbol := range kcspotSymbols {
 			balance, okBalance := kcspotBalances[spotSymbol]
-			if balance.Available+balance.Holds > kcMergedStepSizes[spotSymbol] {
+			if balance.Available+balance.Holds > 0 {
 				spread, okSpread := kcSpreads[spotSymbol]
 				if okBalance && okSpread {
 					spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
