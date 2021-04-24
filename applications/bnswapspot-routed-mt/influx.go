@@ -121,10 +121,10 @@ func handleSave() {
 			if order, ok := bnspotOpenOrders[symbol]; ok {
 				fields["spotOpenOrderPrice"] = order.Price
 			}
-			fields["perpTakerBid"] = spread.TakerDepth.TakerBid
-			fields["perpMakerBid"] = spread.TakerDepth.MakerBid
-			fields["perpTakerAsk"] = spread.TakerDepth.TakerAsk
-			fields["perpMakerAsk"] = spread.TakerDepth.MakerAsk
+			fields["swapTakerBid"] = spread.TakerDepth.TakerBid
+			fields["swapMakerBid"] = spread.TakerDepth.MakerBid
+			fields["swapTakerAsk"] = spread.TakerDepth.TakerAsk
+			fields["swapMakerAsk"] = spread.TakerDepth.MakerAsk
 
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()

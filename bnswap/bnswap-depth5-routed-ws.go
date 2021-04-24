@@ -108,9 +108,7 @@ func (w *Depth5RoutedWebsocket) readLoop(conn *websocket.Conn, symbols []string,
 				}
 			}
 		}
-
 	}
-
 }
 
 func (w *Depth5RoutedWebsocket) readAll(r io.Reader) ([]byte, error) {
