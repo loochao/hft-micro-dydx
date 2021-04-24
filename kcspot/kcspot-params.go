@@ -85,6 +85,7 @@ type NewOrderParam struct {
 	TimeInForce string         `json:"timeInForce,omitempty"`
 	CancelAfter int            `json:"cancelAfter,omitempty"`
 	PostOnly    bool           `json:"postOnly,omitempty"`
+	Hidden      bool           `json:"hidden,omitempty"`
 }
 
 type CancelAllOrdersParam struct {
