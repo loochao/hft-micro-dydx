@@ -127,17 +127,9 @@ func updateSpotNewOrders() {
 		spotSymbol := kcpsSymbolsMap[perpSymbol]
 		//需要保证期货和现货都有仓位更新，才调整现货仓位
 		if time.Now().Sub(kcspotBalancesUpdateTimes[spotSymbol]) > *kcConfig.BalancePositionMaxAge {
-			if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
-				logger.Debugf("%s SPOT POSITION NOT READY", spotSymbol)
-				kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
-			}
 			continue
 		}
 		if time.Now().Sub(kcperpPositionsUpdateTimes[perpSymbol]) > *kcConfig.BalancePositionMaxAge {
-			if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
-				logger.Debugf("%s PERP POSITION NOT READY", spotSymbol)
-				kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
-			}
 			continue
 		}
 		if _, ok := kcspotOpenOrders[spotSymbol]; ok {
@@ -148,10 +140,6 @@ func updateSpotNewOrders() {
 			continue
 		}
 		if time.Now().Sub(kcspotSilentTimes[spotSymbol]) < 0 {
-			if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
-				logger.Debugf("%s ENTRY SILENT", spotSymbol)
-				kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
-			}
 			continue
 		}
 		quantile, okQuantile := kcQuantiles[spotSymbol]
@@ -159,17 +147,9 @@ func updateSpotNewOrders() {
 		spotBalance, okSpotBalance := kcspotBalances[spotSymbol]
 		fundingRate, okFundingRate := kcperpFundingRates[perpSymbol]
 		if !okSpread || !okQuantile || !okSpotBalance || !okFundingRate {
-			if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
-				logger.Debugf("%s NOT READY", spotSymbol)
-				kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
-			}
 			continue
 		}
 		if time.Now().Sub(spread.Time) > *kcConfig.SpreadTimeToLive {
-			if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
-				logger.Debugf("%s SPREAD OUT OF DATE", spotSymbol)
-				kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
-			}
 			continue
 		}
 		perpStepSize := kcperpMultipliers[perpSymbol]
