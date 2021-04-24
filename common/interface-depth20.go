@@ -278,12 +278,12 @@ func (m *DepthFilter) Filter(msg *DepthRawMessage) bool {
 	m.TotalCount++
 	m.msgLen += len(msg.Depth)
 	m.timeDelta = float64(time.Now().Sub(msg.Time) / time.Millisecond)
-	if m.timeDelta > 1000 {
-		m.timeDelta = 1000
-	}
-	if m.timeDelta < -1000 {
-		m.timeDelta = -1000
-	}
+	//if m.timeDelta > 1000 {
+	//	m.timeDelta = 1000
+	//}
+	//if m.timeDelta < -1000 {
+	//	m.timeDelta = -1000
+	//}
 	m.TimeDeltaEma = m.decay1*m.TimeDeltaEma + m.decay2*m.timeDelta
 	if m.timeDelta > m.TimeDeltaEma+m.bias {
 		m.FilterCount++
