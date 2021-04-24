@@ -300,6 +300,8 @@ func watchMakerTakerSpread(
 					TakerMsgAvgLen: takerDepthFilter.Report.MsgAvgLen,
 					MakerTimeDeltaEma: makerDepthFilter.TimeDeltaEma,
 					TakerTimeDeltaEma: takerDepthFilter.TimeDeltaEma,
+					MakerTimeDelta: makerDepthFilter.TimeDelta,
+					TakerTimeDelta: takerDepthFilter.TimeDelta,
 					MakerDepthFilterRatio: makerDepthFilter.Report.FilterRatio,
 					TakerDepthFilterRatio: takerDepthFilter.Report.FilterRatio,
 				}:

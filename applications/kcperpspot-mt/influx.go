@@ -253,6 +253,8 @@ func reportsSaveLoop(
 				fields["maxAgeDiff"] = float64(report.MaxAgeDiff)
 				fields["spotTimeDeltaEma"] = report.MakerTimeDeltaEma
 				fields["perpTimeDeltaEma"] = report.TakerTimeDeltaEma
+				fields["spotTimeDelta"] = report.MakerTimeDelta
+				fields["perpTimeDelta"] = report.TakerTimeDelta
 				fields["spotDepthFilterRatio"] = report.MakerDepthFilterRatio
 				fields["perpDepthFilterRatio"] = report.MakerDepthFilterRatio
 				fields["spotMsgAvgLen"] = report.MakerMsgAvgLen

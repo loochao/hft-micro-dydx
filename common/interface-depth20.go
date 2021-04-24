@@ -70,6 +70,8 @@ type SpreadReport struct {
 	MakerDepthFilterRatio float64
 	TakerTimeDeltaEma     float64
 	MakerTimeDeltaEma     float64
+	MakerTimeDelta        float64
+	TakerTimeDelta        float64
 	TakerMsgAvgLen        int
 	MakerMsgAvgLen        int
 	MakerSymbol           string
@@ -78,10 +80,11 @@ type SpreadReport struct {
 
 func (s *SpreadReport) ToString() string {
 	return fmt.Sprintf(
-		"%s-%s MR %f MDFR %f TDFR %f MTEMA %f TTEMA %f MAL %d TAL %d",
+		"%s-%s MR %f MDFR %f TDFR %f MTD %f TTD %f MTEMA %f TTEMA %f MAL %d TAL %d",
 		s.MakerSymbol, s.TakerSymbol,
 		s.MatchRatio,
 		s.MakerDepthFilterRatio, s.TakerDepthFilterRatio,
+		s.MakerTimeDelta, s.TakerTimeDelta,
 		s.MakerTimeDeltaEma, s.TakerTimeDeltaEma,
 		s.MakerMsgAvgLen, s.TakerMsgAvgLen,
 	)
@@ -265,7 +268,7 @@ type DepthFilter struct {
 	decay1    float64
 	decay2    float64
 	bias      float64
-	timeDelta float64
+	TimeDelta float64
 
 	TimeDeltaEma float64
 	msgLen       int
@@ -277,15 +280,15 @@ type DepthFilter struct {
 func (m *DepthFilter) Filter(msg *DepthRawMessage) bool {
 	m.TotalCount++
 	m.msgLen += len(msg.Depth)
-	m.timeDelta = float64(time.Now().Sub(msg.Time) / time.Millisecond)
-	//if m.timeDelta > 1000 {
-	//	m.timeDelta = 1000
+	m.TimeDelta = float64(time.Now().Sub(msg.Time) / time.Millisecond)
+	//if m.TimeDelta > 1000 {
+	//	m.TimeDelta = 1000
 	//}
-	//if m.timeDelta < -1000 {
-	//	m.timeDelta = -1000
+	//if m.TimeDelta < -1000 {
+	//	m.TimeDelta = -1000
 	//}
-	m.TimeDeltaEma = m.decay1*m.TimeDeltaEma + m.decay2*m.timeDelta
-	if m.timeDelta > m.TimeDeltaEma+m.bias {
+	m.TimeDeltaEma = m.decay1*m.TimeDeltaEma + m.decay2*m.TimeDelta
+	if m.TimeDelta > m.TimeDeltaEma+m.bias {
 		m.FilterCount++
 		//logger.Debugf("FILTER ++ %v", m.FilterCount)
 		return true
@@ -313,7 +316,7 @@ func NewDepthFilter(
 		decay1:    decay,
 		decay2:    1. - decay,
 		bias:      bias,
-		timeDelta: bias,
+		TimeDelta: bias,
 		msgLen:    0,
 
 		TimeDeltaEma: bias,
