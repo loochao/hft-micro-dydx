@@ -24,8 +24,10 @@ func handleSave() {
 				if okBalance && okSpread {
 					spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
 				} else {
-					logger.Debugf("miss balance or spread %s", spotSymbol)
-					getAllBalances = false
+					if balance.Available+balance.Holds > kcMergedStepSizes[spotSymbol] {
+						getAllBalances = false
+						logger.Debugf("miss balance or spread %s", spotSymbol)
+					}
 					break
 				}
 			}
@@ -193,7 +195,9 @@ func handleExternalInfluxSave() {
 				if okBalance && okSpread {
 					spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
 				} else {
-					getAllBalances = false
+					if balance.Available+balance.Holds > kcMergedStepSizes[spotSymbol] {
+						getAllBalances = false
+					}
 					break
 				}
 			}
