@@ -24,10 +24,8 @@ func handleSave() {
 				if okBalance && okSpread {
 					spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
 				} else {
-					if balance.Available+balance.Holds > kcMergedStepSizes[spotSymbol] {
-						getAllBalances = false
-						logger.Debugf("miss balance or spread %s", spotSymbol)
-					}
+					getAllBalances = false
+					logger.Debugf("miss balance or spread %s", spotSymbol)
 					break
 				}
 			}
@@ -156,7 +154,7 @@ func handleSave() {
 		fields["netWorth"] = netWorth
 		if time.Now().Sub(kcGlobalSilent) > 0 {
 			fields["globalSilent"] = 0
-		}else{
+		} else {
 			fields["globalSilent"] = 1
 		}
 		for name, start := range kcConfig.StartValues {
@@ -195,9 +193,7 @@ func handleExternalInfluxSave() {
 				if okBalance && okSpread {
 					spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
 				} else {
-					if balance.Available+balance.Holds > kcMergedStepSizes[spotSymbol] {
-						getAllBalances = false
-					}
+					getAllBalances = false
 					break
 				}
 			}
@@ -274,7 +270,7 @@ func reportsSaveLoop(
 						map[string]string{
 							"spotSymbol": makerSymbol,
 							"perpSymbol": report.TakerSymbol,
-							"type":        "spread-report",
+							"type":       "spread-report",
 						},
 						fields,
 						time.Now().UTC(),
