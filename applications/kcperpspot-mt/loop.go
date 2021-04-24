@@ -193,8 +193,8 @@ func updateSpotNewOrders() {
 						TimeInForce: kcspot.OrderTimeInForceGTC,
 						Side:        kcspot.OrderSideSell,
 						Type:        kcspot.OrderTypeLimit,
-						//PostOnly:    true,
-						Hidden:    true,
+						PostOnly:    true,
+						//Hidden:    true,
 						ClientOid: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 					}
 					kcspotOrderSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.OrderSilent)
@@ -288,8 +288,8 @@ func updateSpotNewOrders() {
 				TimeInForce: kcspot.OrderTimeInForceGTC,
 				Side:        kcspot.OrderSideBuy,
 				Type:        kcspot.OrderTypeLimit,
-				//PostOnly:    true,
-				Hidden:    true,
+				PostOnly:    true,
+				//Hidden:    true,
 				ClientOid: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 			}
 			kcspotOrderSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.OrderSilent)
