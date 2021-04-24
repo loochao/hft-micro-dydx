@@ -64,20 +64,27 @@ type MakerTakerSpread struct {
 }
 
 type SpreadReport struct {
-	MaxAge      time.Duration
-	MaxAgeDiff  time.Duration
-	MatchRatio  float64
-	MakerSymbol string
-	TakerSymbol string
+	MaxAgeDiff            time.Duration
+	MatchRatio            float64
+	TakerDepthFilterRatio float64
+	MakerDepthFilterRatio float64
+	TakerTimeDeltaEma     float64
+	MakerTimeDeltaEma     float64
+	TakerMsgAvgLen        int
+	MakerMsgAvgLen        int
+	MakerSymbol           string
+	TakerSymbol           string
 }
 
-type DepthReport struct {
-	Exchange     string
-	DropRatio    float64
-	EmaTimeDelta float64
-	AvgLen       int
-	Decay        float64
-	Bias         float64
+func (s *SpreadReport) ToString() string {
+	return fmt.Sprintf(
+		"%s-%s MR %f MDFR %f TDFR %f MTEMA %f TTEMA %f MAL %d TAL %d",
+		s.MakerSymbol, s.TakerSymbol,
+		s.MatchRatio,
+		s.MakerDepthFilterRatio, s.TakerDepthFilterRatio,
+		s.MakerTimeDeltaEma, s.TakerTimeDeltaEma,
+		s.MakerMsgAvgLen, s.TakerMsgAvgLen,
+	)
 }
 
 func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) (*WalkedMakerTakerDepth, error) {
@@ -252,4 +259,77 @@ func WalkMakerTakerDepth5(depth20 Depth5, makerImpact, takerImpact float64) (*Wa
 	wd.TakerAsk /= wd.TakerAskSize
 	wd.MakerAsk /= wd.MakerAskSize
 	return wd, nil
+}
+
+type DepthFilter struct {
+	decay1    float64
+	decay2    float64
+	bias      float64
+	timeDelta float64
+
+	TimeDeltaEma float64
+	msgLen       int
+	FilterCount  int
+	TotalCount   int
+	Report       DepthReport
+}
+
+func (m *DepthFilter) Filter(msg *DepthRawMessage) bool {
+	m.TotalCount++
+	m.msgLen += len(msg.Depth)
+	m.timeDelta = float64(time.Now().Sub(msg.Time) / time.Millisecond)
+	if m.timeDelta > 1000 {
+		m.timeDelta = 1000
+	}
+	if m.timeDelta < -1000 {
+		m.timeDelta = -1000
+	}
+	m.TimeDeltaEma = m.decay1*m.TimeDeltaEma + m.decay2*m.timeDelta
+	if m.timeDelta > m.TimeDeltaEma+m.bias {
+		m.FilterCount++
+		//logger.Debugf("FILTER ++ %v", m.FilterCount)
+		return true
+	}
+	return false
+}
+
+func (m *DepthFilter) GenerateReport() DepthReport {
+	if m.TotalCount > 0 {
+		//logger.Debugf("TOTAL COUNT %v FILTER COUNT %v", m.TotalCount, m.FilterCount)
+		m.Report.FilterRatio = float64(m.FilterCount) / float64(m.TotalCount)
+		m.Report.MsgAvgLen = m.msgLen / m.TotalCount
+		m.Report.TimeDeltaEma = m.TimeDeltaEma
+		m.TotalCount = 0
+		m.FilterCount = 0
+		m.msgLen = 0
+	}
+	return m.Report
+}
+
+func NewDepthFilter(
+	decay, bias float64,
+) DepthFilter {
+	return DepthFilter{
+		decay1:    decay,
+		decay2:    1. - decay,
+		bias:      bias,
+		timeDelta: bias,
+		msgLen:    0,
+
+		TimeDeltaEma: bias,
+		FilterCount:  0,
+		TotalCount:   0,
+		Report: DepthReport{
+			Decay: decay,
+			Bias:  bias,
+		},
+	}
+}
+
+type DepthReport struct {
+	FilterRatio  float64
+	TimeDeltaEma float64
+	MsgAvgLen    int
+	Decay        float64
+	Bias         float64
 }

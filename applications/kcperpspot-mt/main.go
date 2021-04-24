@@ -199,13 +199,11 @@ func main() {
 		kcQuantilesCh,
 	)
 
-	depthReportCh := make(chan common.DepthReport, 10000)
 	spreadReportCh := make(chan common.SpreadReport, 10000)
 	go reportsSaveLoop(
 		kcGlobalCtx,
 		kcInternalInfluxWriter,
 		*kcConfig.InternalInflux,
-		depthReportCh,
 		spreadReportCh,
 	)
 
@@ -225,10 +223,6 @@ func main() {
 			kcGlobalCancel,
 			kcspotAPI,
 			*kcConfig.ProxyAddress,
-			*kcConfig.OrderBookMakerDecay,
-			*kcConfig.OrderBookMakerBias,
-			*kcConfig.ReportCount,
-			depthReportCh,
 			subMakerRowDepthChs,
 		)
 	}
@@ -249,10 +243,6 @@ func main() {
 			kcGlobalCancel,
 			kcperpAPI,
 			*kcConfig.ProxyAddress,
-			*kcConfig.OrderBookTakerDecay,
-			*kcConfig.OrderBookTakerBias,
-			*kcConfig.ReportCount,
-			depthReportCh,
 			subTakerRowDepthChs,
 		)
 	}
@@ -265,8 +255,12 @@ func main() {
 			kcperpMultipliers[takerSymbol],
 			*kcConfig.OrderBookMakerImpact,
 			*kcConfig.OrderBookTakerImpact,
-			*kcConfig.OrderBookMaxAgeDiff,
-			*kcConfig.OrderBookMaxAge,
+			*kcConfig.OrderBookMakerDecay,
+			*kcConfig.OrderBookMakerBias,
+			*kcConfig.OrderBookMakerDecay,
+			*kcConfig.OrderBookMakerBias,
+			*kcConfig.OrderBookMaxAgeDiffBias,
+			*kcConfig.ReportCount,
 			*kcConfig.SpreadLookbackDuration,
 			*kcConfig.SpreadLookbackMinimalWindow,
 			makerRowDepthChs[makerSymbol],

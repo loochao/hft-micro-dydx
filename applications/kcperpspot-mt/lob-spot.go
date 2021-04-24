@@ -12,9 +12,6 @@ func makerDepthWSLoop(
 	cancel context.CancelFunc,
 	api *kcspot.API,
 	proxyAddress string,
-	makerDecay, makerBias float64,
-	reportCount int,
-	depthReportCh chan common.DepthReport,
 	channels map[string]chan *common.DepthRawMessage,
 ) {
 	symbols := make([]string, 0)
@@ -27,10 +24,6 @@ func makerDepthWSLoop(
 		ctx,
 		api,
 		proxyAddress,
-		makerDecay,
-		makerBias,
-		reportCount,
-		depthReportCh,
 		channels,
 	)
 	defer ws.Stop()

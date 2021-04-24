@@ -22,7 +22,8 @@ func TestNewDepth5RoutedWebsocket(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	symbols := []string{"XBTUSDTM", "ATOMUSDTM", "WAVESUSDTM"}
+	//symbols := []string{"XBTUSDTM", "ATOMUSDTM", "WAVESUSDTM"}
+	symbols := []string{"CRVUSDTM", "XBTUSDTM"}
 	channels := make(map[string]chan *common.DepthRawMessage)
 	for _, symbol := range symbols {
 		channels[symbol] = make(chan *common.DepthRawMessage, 1000)
@@ -41,10 +42,11 @@ func TestNewDepth5RoutedWebsocket(t *testing.T) {
 		case r := <-reportCh:
 			logger.Debugf("%v", r)
 		case d := <-channels[symbols[0]]:
-			logger.Debugf("%v %v", d.Time, time.Now().Sub(d.Time))
-		case <-channels[symbols[1]]:
+			logger.Debugf("CRV %v %v", d.Time, time.Now().Sub(d.Time))
+		case d := <-channels[symbols[1]]:
+			logger.Debugf("XBT %v %v", d.Time, time.Now().Sub(d.Time))
 			//logger.Debugf("%v", d)
-		case <-channels[symbols[2]]:
+		//case <-channels[symbols[2]]:
 			//logger.Debugf("%v", d)
 		}
 	}

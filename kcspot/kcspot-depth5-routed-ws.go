@@ -67,31 +67,16 @@ func (w *Depth5RoutedWebsocket) writeLoop(ctx context.Context, conn *websocket.C
 
 func (w *Depth5RoutedWebsocket) readLoop(
 	conn *websocket.Conn,
-	decay, bias float64,
-	reportCount int,
-	reportCh chan common.DepthReport,
 	channels map[string]chan *common.DepthRawMessage,
 ) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
-	totalCount := 0
-	totalLen := 0
-	filterCount := 0
-	emaTimeDelta := bias
-	timeDelta := 0.0
-	decay1 := decay
-	decay2 := 1.0 - decay
 	logSilentTime := time.Now()
 	var symbolBytes []byte
 	var symbol string
 	var ch chan *common.DepthRawMessage
 	var ok bool
 	var t int64
-	var report = common.DepthReport{
-		Exchange: "kcspot",
-		Decay:    decay,
-		Bias:     bias,
-	}
 	var msgLen int
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -113,23 +98,6 @@ func (w *Depth5RoutedWebsocket) readLoop(
 			return
 		}
 		msgLen = len(msg)
-		totalCount += 1
-		totalLen += msgLen
-		if totalCount > reportCount {
-			if reportCh != nil {
-				report.DropRatio = float64(filterCount) / float64(totalCount)
-				report.AvgLen = totalLen / totalCount
-				report.EmaTimeDelta = emaTimeDelta
-				select {
-				case reportCh <- report:
-				default:
-				}
-			}
-			totalLen = 0
-			totalCount = 0
-			filterCount = 0
-		}
-
 		//{"data":{"asks":[["55447.5","0.00128653"],["55447.6","0.0040067"],["55447.7","5.26962769"],["55449","0.00016278"],["55451.5","0.00013396"]],"bids":[["55403.1","0.01254575"],["55402.5","0.00005319"],["55279.9","0.201"],["55268.3","0.02406837"],["55233.5","0.0004668"]],"timestamp":1618724853172},"subject":"level2","topic":"/spotMarket/level2Depth5:BTC-USDT","type":"message"}`)
 		if msgLen > 128 {
 			if msg[msgLen-28] == ':' {
@@ -137,20 +105,7 @@ func (w *Depth5RoutedWebsocket) readLoop(
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
 				t, err = common.ParseInt(msg[msgLen-95 : msgLen-82])
 				if err != nil {
-					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-95 : msgLen-82])
-					continue
-				}
-				timeDelta = float64(time.Now().UnixNano()/1000000 - t)
-				if timeDelta > 1000 {
-					timeDelta = 1000
-				}
-				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-				if timeDelta > emaTimeDelta+bias {
-					filterCount++
-					select {
-					case w.symbolCh <- symbol:
-					default:
-					}
+					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-95:msgLen-82])
 					continue
 				}
 			} else if msg[msgLen-29] == ':' {
@@ -158,20 +113,7 @@ func (w *Depth5RoutedWebsocket) readLoop(
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
 				t, err = common.ParseInt(msg[msgLen-96 : msgLen-83])
 				if err != nil {
-					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-96 : msgLen-83])
-					continue
-				}
-				timeDelta = float64(time.Now().UnixNano()/1000000 - t)
-				if timeDelta > 1000 {
-					timeDelta = 1000
-				}
-				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-				if timeDelta > emaTimeDelta+bias {
-					filterCount++
-					select {
-					case w.symbolCh <- symbol:
-					default:
-					}
+					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-96:msgLen-83])
 					continue
 				}
 			} else if msg[msgLen-30] == ':' {
@@ -179,20 +121,7 @@ func (w *Depth5RoutedWebsocket) readLoop(
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
 				t, err = common.ParseInt(msg[msgLen-97 : msgLen-84])
 				if err != nil {
-					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-97 : msgLen-84])
-					continue
-				}
-				timeDelta = float64(time.Now().UnixNano()/1000000 - t)
-				if timeDelta > 1000 {
-					timeDelta = 1000
-				}
-				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-				if timeDelta > emaTimeDelta+bias {
-					filterCount++
-					select {
-					case w.symbolCh <- symbol:
-					default:
-					}
+					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-97:msgLen-84])
 					continue
 				}
 			} else if msg[msgLen-31] == ':' {
@@ -200,20 +129,7 @@ func (w *Depth5RoutedWebsocket) readLoop(
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
 				t, err = common.ParseInt(msg[msgLen-98 : msgLen-85])
 				if err != nil {
-					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-98 : msgLen-85])
-					continue
-				}
-				timeDelta = float64(time.Now().UnixNano()/1000000 - t)
-				if timeDelta > 1000 {
-					timeDelta = 1000
-				}
-				emaTimeDelta = emaTimeDelta*decay1 + timeDelta*decay2
-				if timeDelta > emaTimeDelta+bias {
-					filterCount++
-					select {
-					case w.symbolCh <- symbol:
-					default:
-					}
+					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-98:msgLen-85])
 					continue
 				}
 			} else {
@@ -308,9 +224,6 @@ func (w *Depth5RoutedWebsocket) reconnect(ctx context.Context, wsUrl string, pro
 func (w *Depth5RoutedWebsocket) mainLoop(
 	ctx context.Context, api *API,
 	proxy string,
-	decay, bias float64,
-	reportCount int,
-	reportCh chan common.DepthReport,
 	channels map[string]chan *common.DepthRawMessage,
 ) {
 	logger.Debugf("START mainLoop")
@@ -372,7 +285,7 @@ func (w *Depth5RoutedWebsocket) mainLoop(
 				logger.Debugf("w.reconnect error %v", err)
 				return
 			}
-			go w.readLoop(conn, decay, bias, reportCount, reportCh, channels)
+			go w.readLoop(conn, channels)
 			go w.writeLoop(internalCtx, conn)
 			go w.heartbeatLoop(internalCtx, conn, symbols, time.Millisecond*time.Duration(connectToken.InstanceServers[0].PingInterval))
 		}
@@ -481,9 +394,6 @@ func NewDepth5RoutedWebsocket(
 	ctx context.Context,
 	api *API,
 	proxy string,
-	decay, bias float64,
-	reportCount int,
-	reportCh chan common.DepthReport,
 	channels map[string]chan *common.DepthRawMessage,
 ) *Depth5RoutedWebsocket {
 	ws := Depth5RoutedWebsocket{
@@ -494,7 +404,7 @@ func NewDepth5RoutedWebsocket(
 		symbolCh:    make(chan string, 100*len(channels)),
 		stopped:     0,
 	}
-	go ws.mainLoop(ctx, api, proxy, decay, bias, reportCount, reportCh, channels)
+	go ws.mainLoop(ctx, api, proxy, channels)
 	ws.reconnectCh <- nil
 	return &ws
 }

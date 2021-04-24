@@ -21,7 +21,8 @@ func TestNewDepth5RoutedWebsocket(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	symbols := []string{"BTC-USDT", "ATOM-USDT", "WAVES-USDT"}
+	//symbols := []string{"CRV-USDT", "ATOM-USDT", "WAVES-USDT"}
+	symbols := []string{"CRV-USDT"}
 	channels := make(map[string]chan *common.DepthRawMessage)
 	for _, symbol := range symbols {
 		channels[symbol] = make(chan *common.DepthRawMessage, 1000)

@@ -66,13 +66,14 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
+func (w *UserWebsocket) readLoop(conn *websocket.Conn, pingInterval time.Duration) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	//totalCount := 0
 	//totalLen := 0
+	pingInterval *= 10
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
+		err := conn.SetReadDeadline(time.Now().Add(pingInterval))
 		if err != nil {
 			logger.Debugf("conn.SetReadDeadline error %v", err)
 			w.restart()
@@ -309,7 +310,7 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, api *API, topics []string,
 				w.Stop()
 				return
 			}
-			go w.readLoop(conn)
+			go w.readLoop(conn, time.Duration(connectToken.InstanceServers[0].PingInterval)*time.Millisecond)
 			go w.writeLoop(internalCtx, conn)
 			go w.heartbeatLoop(internalCtx, conn, topics, time.Duration(connectToken.InstanceServers[0].PingInterval)*time.Millisecond)
 		}
@@ -347,7 +348,7 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 				topicUpdatedTimes[topic] = time.Now().Add(time.Hour * 4)
 			}
 		case <-pingTimer.C:
-			pingTimer.Reset(pingInterval)
+			pingTimer.Reset(pingInterval/2)
 			select {
 			case <-ctx.Done():
 				return

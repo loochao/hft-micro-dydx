@@ -17,14 +17,17 @@ func handleSave() {
 		spotBalance := kcspotUSDTBalance.Available + kcspotUSDTBalance.Holds
 		getAllBalances := true
 		for _, spotSymbol := range kcspotSymbols {
+			//有可能因为交易系统BUG Spread算不出来，这种时间Balance多半为0,
 			balance, okBalance := kcspotBalances[spotSymbol]
-			spread, okSpread := kcSpreads[spotSymbol]
-			if okBalance && okSpread {
-				spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
-			} else {
-				logger.Debugf("miss balance or spread %s", spotSymbol)
-				getAllBalances = false
-				break
+			if balance.Available+balance.Holds != 0 {
+				spread, okSpread := kcSpreads[spotSymbol]
+				if okBalance && okSpread {
+					spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
+				} else {
+					logger.Debugf("miss balance or spread %s", spotSymbol)
+					getAllBalances = false
+					break
+				}
 			}
 		}
 		if getAllBalances {
@@ -180,12 +183,14 @@ func handleExternalInfluxSave() {
 		getAllBalances := true
 		for _, spotSymbol := range kcspotSymbols {
 			balance, okBalance := kcspotBalances[spotSymbol]
-			spread, okSpread := kcSpreads[spotSymbol]
-			if okBalance && okSpread {
-				spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
-			} else {
-				getAllBalances = false
-				break
+			if balance.Available+balance.Holds != 0 {
+				spread, okSpread := kcSpreads[spotSymbol]
+				if okBalance && okSpread {
+					spotBalance += spread.MakerDepth.TakerBid * (balance.Available + balance.Holds)
+				} else {
+					getAllBalances = false
+					break
+				}
 			}
 		}
 		if getAllBalances {
@@ -229,10 +234,8 @@ func reportsSaveLoop(
 	ctx context.Context,
 	influxWriter *common.InfluxWriter,
 	influxConfig InfluxConfig,
-	depthReportCh chan common.DepthReport,
 	spreadReportCh chan common.SpreadReport,
 ) {
-	depthReports := make(map[string]common.DepthReport)
 	spreadReports := make(map[string]common.SpreadReport)
 	saveTimer := time.NewTimer(*influxConfig.SaveInterval)
 	for {
@@ -240,44 +243,20 @@ func reportsSaveLoop(
 		case <-ctx.Done():
 			return
 		case spreadReport := <-spreadReportCh:
+			logger.Debugf("%s", spreadReport.ToString())
 			spreadReports[spreadReport.MakerSymbol] = spreadReport
 			break
-		case depthReport := <-depthReportCh:
-			depthReports[depthReport.Exchange] = depthReport
-			break
 		case <-saveTimer.C:
-			for exchange, report := range depthReports {
-				fields := make(map[string]interface{})
-				fields["avgLen"] = report.AvgLen
-				fields["dropRatio"] = report.DropRatio
-				fields["bias"] = report.Bias
-				fields["decay"] = report.Decay
-				fields["emaTimeDelta"] = report.EmaTimeDelta
-				if len(fields) > 0 {
-					pt, err := client.NewPoint(
-						*influxConfig.Measurement,
-						map[string]string{
-							"exchange": exchange,
-							"type":     "depth-report",
-						},
-						fields,
-						time.Now().UTC(),
-					)
-					if err != nil {
-						logger.Debugf("DepthReport NewPoint error %v", err)
-					} else {
-						select {
-						case influxWriter.PushCh <- pt:
-						default:
-						}
-					}
-				}
-			}
 			for makerSymbol, report := range spreadReports {
 				fields := make(map[string]interface{})
 				fields["matchRatio"] = report.MatchRatio
 				fields["maxAgeDiff"] = float64(report.MaxAgeDiff)
-				fields["maxAge"] = float64(report.MaxAge)
+				fields["makerTimeDeltaEma"] = report.MakerTimeDeltaEma
+				fields["takerTimeDeltaEma"] = report.TakerTimeDeltaEma
+				fields["makerDepthFilterRatio"] = report.MakerDepthFilterRatio
+				fields["takerDepthFilterRatio"] = report.MakerDepthFilterRatio
+				fields["makerMsgAvgLen"] = report.MakerMsgAvgLen
+				fields["takerMsgAvgLen"] = report.TakerMsgAvgLen
 				if len(fields) > 0 {
 					pt, err := client.NewPoint(
 						*influxConfig.Measurement,

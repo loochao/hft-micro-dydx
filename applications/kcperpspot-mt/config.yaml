@@ -55,8 +55,14 @@ botBandScale: 1.0
 minimalEnterFundingRate: 0.0001
 minimalKeepFundingRate: 0.005
 
+orderBookMakerDecay: 0.995
+orderBookMakerBias: 0
+orderBookTakerDecay: 0.995
+orderBookTakerBias: 0
 orderBookTakerImpact: 500
 orderBookMakerImpact: 100
+orderBookMaxAgeDiffBias: 50ms
+reportCount: 100
 orderBookType: depth5@100ms
 orderBookMaxAgeDiff: 250ms
 orderBookMaxAge: 500ms
@@ -89,7 +95,8 @@ bnbCheckInterval: 1m
 startValues:
   root: 0
 spotPerpPairs:
-  BTC-USDT: XBTUSDTM
+#  BTC-USDT: XBTUSDTM
+  CRV-USDT: CRVUSDTM
 #  ETH-USDT: ETHUSDTM
 #  BCH-USDT: BCHUSDTM
 #  BCHSV-USDT: BSVUSDTM

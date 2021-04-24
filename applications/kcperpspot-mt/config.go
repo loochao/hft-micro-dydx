@@ -70,8 +70,7 @@ type Config struct {
 	OrderBookTakerImpact        *float64       `yaml:"orderBookTakerImpact,omitempty"`
 	OrderBookMakerImpact        *float64       `yaml:"orderBookMakerImpact,omitempty"`
 	OrderBookBatchSize          *int           `yaml:"orderBookBatchSize,omitempty"`
-	OrderBookMaxAgeDiff         *time.Duration `yaml:"orderBookMaxAgeDiff,omitempty"`
-	OrderBookMaxAge             *time.Duration `yaml:"orderBookMaxAge,omitempty"`
+	OrderBookMaxAgeDiffBias     *time.Duration `yaml:"orderBookMaxAgeDiffBias,omitempty"`
 	SpreadTimeToLive            *time.Duration `yaml:"spreadTimeToLive,omitempty"`
 	SpreadLookbackDuration      *time.Duration `yaml:"spreadLookbackDuration,omitempty"`
 	SpreadLookbackMinimalWindow *int           `yaml:"spreadLookbackMinimalWindow,omitempty"`
