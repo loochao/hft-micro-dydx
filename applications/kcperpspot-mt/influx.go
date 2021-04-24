@@ -243,7 +243,7 @@ func reportsSaveLoop(
 		case <-ctx.Done():
 			return
 		case spreadReport := <-spreadReportCh:
-			logger.Debugf("%s", spreadReport.ToString())
+			//logger.Debugf("%s", spreadReport.ToString())
 			spreadReports[spreadReport.MakerSymbol] = spreadReport
 			break
 		case <-saveTimer.C:
