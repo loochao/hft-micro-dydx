@@ -12,6 +12,11 @@ import (
 )
 
 func updatePerpPositions() {
+
+	if time.Now().Sub(kcInitialSilent) < 0 {
+		return
+	}
+
 	unHedgedValue := 0.0
 	for _, spotSymbol := range kcspotSymbols {
 		perpSymbol := kcspSymbolsMap[spotSymbol]
@@ -41,6 +46,10 @@ func updatePerpPositions() {
 		perpSize := -(spotBalance.Holds + spotBalance.Available) - perpPosition.CurrentQty*multiplier
 		unHedgedValue += math.Abs(perpSize * spread.TakerDepth.MakerAsk)
 		perpSize = math.Round(perpSize / multiplier)
+
+		if perpSize == 0 {
+			continue
+		}
 
 		//只做空PERP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
 		if perpSize > 0 && perpPosition.CurrentQty >= 0 {
