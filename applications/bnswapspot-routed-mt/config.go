@@ -34,6 +34,7 @@ type Config struct {
 	ChangeLeverage *bool    `yaml:"changeLeverage,omitempty"`
 
 	LoopInterval          *time.Duration `yaml:"loopInterval,omitempty"`
+	LogInterval           *time.Duration `yaml:"logInterval,omitempty"`
 	PullInterval          *time.Duration `yaml:"pullInterval,omitempty"`
 	BalancePositionMaxAge *time.Duration `yaml:"balancePositionMaxAge,omitempty"`
 
@@ -90,6 +91,7 @@ type Config struct {
 	EnterSlippage       *float64           `yaml:"enterSlippage,omitempty"`
 	EnterSilent         *time.Duration     `yaml:"enterSilent,omitempty"`
 	StartValues         map[string]float64 `yaml:"startValues,omitempty"`
+	MaxUnHedgeValue     *float64           `yaml:"maxUnHedgeValue,omitempty"`
 	HttpSilent          *time.Duration     `yaml:"httpSilent,omitempty"`
 	RestartSilent       *time.Duration     `yaml:"restartSilent,omitempty"`
 }

@@ -13,6 +13,7 @@ import (
 )
 
 func updateSwapPositions() {
+	unHedgedValue := 0.0
 	for _, symbol := range bnSymbols {
 		if symbol == bnBNBSymbol {
 			hedgeBnb()
@@ -58,6 +59,8 @@ func updateSwapPositions() {
 			swapSize = -swapPosition.PositionAmt
 		}
 
+		unHedgedValue += math.Abs(swapSize * (spread.TakerDepth.MakerAsk + spread.TakerDepth.TakerBid) * 0.5)
+
 		logger.Debugf("updateSwapPositions %s SIZE %f POS %f -> %f", symbol, swapSize, swapPosition.PositionAmt, -(spotBalance.Locked + spotBalance.Free))
 
 		reduceOnly := false
@@ -85,6 +88,7 @@ func updateSwapPositions() {
 			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 		}
 	}
+	bnUnHedgeValue = unHedgedValue
 }
 
 func updateMakerNewOrders() {
@@ -101,11 +105,22 @@ func updateMakerNewOrders() {
 		return
 	}
 
+	if bnUnHedgeValue > *bnConfig.MaxUnHedgeValue {
+		if time.Now().Sub(bnUnHedgeLogSilentTime) > 0 {
+			bnUnHedgeLogSilentTime = time.Now().Add(*bnConfig.LogInterval)
+			logger.Debugf("UN HEDGE VALUE %f > %f", bnUnHedgeValue, *bnConfig.MaxUnHedgeValue)
+		}
+		return
+	}
+
 	entryStep := (*bnswapUSDTAsset.AvailableBalance + bnspotUSDTBalance.Free) * *bnConfig.EnterFreePct
 	if entryStep < *bnConfig.EnterMinimalStep {
 		entryStep = *bnConfig.EnterMinimalStep
 	}
 	entryTarget := entryStep * *bnConfig.EnterTargetFactor
+
+	usdtAvailable := bnspotUSDTBalance.Free
+
 
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单
 	for rank := len(bnSymbols) - 1; rank >= 0; rank-- {
@@ -175,9 +190,10 @@ func updateMakerNewOrders() {
 						Symbol:           symbol,
 						Price:            price,
 						Quantity:         -quantity,
+						IcebergQty:       -quantity,
 						TimeInForce:      bnspot.OrderTimeInForceGTC,
 						Side:             bnspot.OrderSideSell,
-						Type:             bnspot.OrderTypeLimitMarker,
+						Type:             bnspot.OrderTypeLimit,
 						NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 					}
 					bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
@@ -185,7 +201,6 @@ func updateMakerNewOrders() {
 					bnspotOpenOrders[symbol] = order
 					bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
 					bnspotOrderRequestChs[symbol] <- SpotOrderRequest{New: &order}
-					return
 				}
 			}
 		} else if spread.ShortLastEnter > quantile.Top &&
@@ -200,8 +215,8 @@ func updateMakerNewOrders() {
 			}
 			entryValue := targetValue - currentSpotSize*price
 
-			if entryValue > bnspotUSDTBalance.Free*0.8 {
-				entryValue = bnspotUSDTBalance.Free * 0.8
+			if entryValue > usdtAvailable*0.8 {
+				entryValue = usdtAvailable* 0.8
 			}
 
 			entryValue = math.Max(entryValue, swapMinNotional)
@@ -224,22 +239,22 @@ func updateMakerNewOrders() {
 						spread.ShortMedianEnter, quantile.Top,
 						quantity,
 					)
-					bnOpenLogSilentTimes[symbol] = time.Now().Add(time.Minute * 5)
+					bnOpenLogSilentTimes[symbol] = time.Now().Add(*bnConfig.LogInterval)
 				}
 				continue
 			}
-			if entryValue > bnspotUSDTBalance.Free {
+			if entryValue > usdtAvailable {
 				if time.Now().Sub(bnOpenLogSilentTimes[symbol]) > 0 {
 					logger.Debugf(
 						"FAILED TOP OPEN, ENTRY VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
 						entryValue,
-						bnspotUSDTBalance.Free,
+						usdtAvailable,
 						symbol,
 						spread.ShortLastEnter, quantile.Top,
 						spread.ShortMedianEnter, quantile.Top,
 						quantity,
 					)
-					bnOpenLogSilentTimes[symbol] = time.Now().Add(time.Minute * 5)
+					bnOpenLogSilentTimes[symbol] = time.Now().Add(*bnConfig.LogInterval)
 				}
 				continue
 			}
@@ -251,13 +266,15 @@ func updateMakerNewOrders() {
 				spread.ShortMedianEnter, quantile.Top,
 				quantity,
 			)
+			usdtAvailable -= entryValue
 			order := bnspot.NewOrderParams{
 				Symbol:           symbol,
 				Price:            price,
 				Quantity:         quantity,
+				IcebergQty:       quantity,
 				TimeInForce:      bnspot.OrderTimeInForceGTC,
 				Side:             bnspot.OrderSideBuy,
-				Type:             bnspot.OrderTypeLimitMarker,
+				Type:             bnspot.OrderTypeLimit,
 				NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 			}
 			bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
@@ -265,7 +282,6 @@ func updateMakerNewOrders() {
 			bnspotOpenOrders[symbol] = order
 			bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			bnspotOrderRequestChs[symbol] <- SpotOrderRequest{New: &order}
-			return
 		}
 	}
 }

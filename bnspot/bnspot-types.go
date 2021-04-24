@@ -222,6 +222,7 @@ type NewOrderParams struct {
 	TimeInForce      string  `json:"timeInForce,omitempty"`
 	Quantity         float64 `json:"quantity,omitempty"`
 	Price            float64 `json:"price,omitempty"`
+	IcebergQty       float64 `json:"icebergQty,omitempty"`
 	NewClientOrderID string  `json:"newClientOrderId,omitempty"`
 	NewOrderRespType string  `json:"newOrderRespType,omitempty"`
 }
@@ -236,6 +237,9 @@ func (o *NewOrderParams) ToUrlValues() url.Values {
 	values.Set("price", strconv.FormatFloat(o.Price, 'f', 8, 64))
 	values.Set("newClientOrderId", o.NewClientOrderID)
 	values.Set("newOrderRespType", o.NewOrderRespType)
+	if o.IcebergQty != 0 {
+		values.Set("icebergQty", strconv.FormatFloat(o.IcebergQty, 'f', 8, 64))
+	}
 	return values
 }
 
@@ -363,4 +367,3 @@ type Depth5Stream struct {
 
 type Ping struct {
 }
-

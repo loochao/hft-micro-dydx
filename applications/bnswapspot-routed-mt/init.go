@@ -107,6 +107,8 @@ var bnspotSystemStatusCh = make(chan bool, 100)
 var bnswapSystemStatusCh = make(chan bool, 100)
 var bnspotSystemReady = false
 var bnswapSystemReady = false
+var bnUnHedgeValue float64
+var bnUnHedgeLogSilentTime = time.Now()
 
 var bnConfig *Config
 
@@ -114,7 +116,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210424 15:35:30  ####")
+	logger.Debug("####  BUILD @ 20210424 16:00:48  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
