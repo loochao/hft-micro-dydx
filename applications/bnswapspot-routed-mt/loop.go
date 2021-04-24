@@ -177,7 +177,7 @@ func updateMakerNewOrders() {
 						Quantity:         -quantity,
 						TimeInForce:      bnspot.OrderTimeInForceGTC,
 						Side:             bnspot.OrderSideSell,
-						Type:             bnspot.OrderTypeLimit,
+						Type:             bnspot.OrderTypeLimitMarker,
 						NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 					}
 					bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
@@ -257,7 +257,7 @@ func updateMakerNewOrders() {
 				Quantity:         quantity,
 				TimeInForce:      bnspot.OrderTimeInForceGTC,
 				Side:             bnspot.OrderSideBuy,
-				Type:             bnspot.OrderTypeLimit,
+				Type:             bnspot.OrderTypeLimitMarker,
 				NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 			}
 			bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
