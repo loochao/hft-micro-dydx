@@ -232,7 +232,9 @@ func (o *NewOrderParams) ToUrlValues() url.Values {
 	values.Set("symbol", o.Symbol)
 	values.Set("side", o.Side)
 	values.Set("type", o.Type)
-	values.Set("timeInForce", o.TimeInForce)
+	if o.TimeInForce != "" {
+		values.Set("timeInForce", o.TimeInForce)
+	}
 	values.Set("quantity", strconv.FormatFloat(o.Quantity, 'f', 8, 64))
 	values.Set("price", strconv.FormatFloat(o.Price, 'f', 8, 64))
 	values.Set("newClientOrderId", o.NewClientOrderID)
