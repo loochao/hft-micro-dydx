@@ -350,7 +350,7 @@ func HttpPingLoop(
 				}
 			} else {
 				select {
-				case output <- false:
+				case output <- true:
 				default:
 					logger.Debugf("output <- true failed")
 				}
