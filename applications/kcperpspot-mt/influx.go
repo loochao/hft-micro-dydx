@@ -251,18 +251,18 @@ func reportsSaveLoop(
 				fields := make(map[string]interface{})
 				fields["matchRatio"] = report.MatchRatio
 				fields["maxAgeDiff"] = float64(report.MaxAgeDiff)
-				fields["makerTimeDeltaEma"] = report.MakerTimeDeltaEma
-				fields["takerTimeDeltaEma"] = report.TakerTimeDeltaEma
-				fields["makerDepthFilterRatio"] = report.MakerDepthFilterRatio
-				fields["takerDepthFilterRatio"] = report.MakerDepthFilterRatio
-				fields["makerMsgAvgLen"] = report.MakerMsgAvgLen
-				fields["takerMsgAvgLen"] = report.TakerMsgAvgLen
+				fields["spotTimeDeltaEma"] = report.MakerTimeDeltaEma
+				fields["perpTimeDeltaEma"] = report.TakerTimeDeltaEma
+				fields["spotDepthFilterRatio"] = report.MakerDepthFilterRatio
+				fields["perpDepthFilterRatio"] = report.MakerDepthFilterRatio
+				fields["spotMsgAvgLen"] = report.MakerMsgAvgLen
+				fields["perpMsgAvgLen"] = report.TakerMsgAvgLen
 				if len(fields) > 0 {
 					pt, err := client.NewPoint(
 						*influxConfig.Measurement,
 						map[string]string{
-							"makerSymbol": makerSymbol,
-							"takerSymbol": report.TakerSymbol,
+							"spotSymbol": makerSymbol,
+							"perpSymbol": report.TakerSymbol,
 							"type":        "spread-report",
 						},
 						fields,
