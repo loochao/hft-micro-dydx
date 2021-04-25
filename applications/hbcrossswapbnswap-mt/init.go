@@ -98,7 +98,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210425 12:28:18  ####")
+	logger.Debug("####  BUILD @ 20210425 13:07:51  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -146,7 +146,7 @@ func init() {
 	mtDualEnds = make([]int, 0)
 	for i := 0; i < len(mSymbols)/2; i++ {
 		mtDualEnds = append(mtDualEnds, i)
-		mtDualEnds = append(mtDualEnds, len(mSymbols)-i)
+		mtDualEnds = append(mtDualEnds, len(mSymbols)-1-i)
 	}
 	if len(mSymbols) % 2 == 1 {
 		mtDualEnds = append(mtDualEnds, len(mSymbols)/2)

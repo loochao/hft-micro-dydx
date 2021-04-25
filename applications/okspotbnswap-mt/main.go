@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/okspot"
 	"os"
@@ -286,7 +285,6 @@ func main() {
 		go watchMakerTakerSpread(
 			mtGlobalCtx,
 			makerSymbol, takerSymbol,
-			mStepSizes[makerSymbol],
 			*mtConfig.OrderBookMakerImpact,
 			*mtConfig.OrderBookTakerImpact,
 			*mtConfig.OrderBookMakerDecay,
@@ -408,8 +406,8 @@ func main() {
 			logger.Debugf("<-tUserWebsocket.RestartCh restart silent %v", *mtConfig.RestartSilent)
 			mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 			break
-		case account := <-mAccountCh:
-			handleMakerHttpAccounts(account)
+		case balances := <-mBalancesCh:
+			handleMakerHttpBalances(balances)
 			break
 		case account := <-tAccountCh:
 			handleTakerHttpAccount(account)

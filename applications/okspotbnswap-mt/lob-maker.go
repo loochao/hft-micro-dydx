@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
+	"github.com/geometrybase/hft-micro/okspot"
 )
 
 func makerRoutedDepthLoop(
@@ -19,7 +19,7 @@ func makerRoutedDepthLoop(
 	}
 	logger.Debugf("START makerRoutedDepthLoop %s", symbols)
 	defer logger.Debugf("EXIT makerRoutedDepthLoop %s", symbols)
-	ws := hbcrossswap.NewDepth20RoutedWebsocket(
+	ws := okspot.NewDepth5RoutedWebsocket(
 		ctx,
 		proxyAddress,
 		channels,

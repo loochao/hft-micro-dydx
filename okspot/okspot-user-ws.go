@@ -269,10 +269,10 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 					}
 					for _, order := range orders {
 						select {
-						case w.topicCh <- *commonCap.Table + ":" + order.InstrumentId:
+						case w.topicCh <- *commonCap.Table + ":" + order.Symbol:
 						default:
 							if time.Now().Sub(logSilentTime) > 0 {
-								logger.Debugf("w.topicCh <- %s failed ch len %d", *commonCap.Table+":"+order.InstrumentId, len(w.topicCh))
+								logger.Debugf("w.topicCh <- %s failed ch len %d", *commonCap.Table+":"+order.Symbol, len(w.topicCh))
 								logSilentTime = time.Now().Add(time.Minute)
 							}
 						}

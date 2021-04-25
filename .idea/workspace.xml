@@ -2,43 +2,18 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="496705e0-fb99-42ae-81cf-b14d5ea14561" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/config.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/config.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/http-maker.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/http-taker.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/influx.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/init.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/lob-maker.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/lob-taker.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/loop.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/main.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/order-maker.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/order-taker.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/quantile.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/spread.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/sync-bars.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/type.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/ws-maker.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/ws-taker.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/okspot/jsons/depth5.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/okspot/okspot-user-ws.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/okspot/okspot-user-ws_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/okspot/okspot-utils_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-mt/loop.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-mt/loop.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-user-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbcrossswap/hbcrossswap-user-ws.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hbspot/hbspot-user-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/hbspot/hbspot-user-ws.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kcspot/kcspot-types.go" beforeDir="false" afterPath="$PROJECT_DIR$/kcspot/kcspot-types.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kcspot/kcspot-user-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/kcspot/kcspot-user-ws.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-api.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-depth5-routed-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-depth5-routed-ws.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-depth5-routed-ws_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-depth5-routed-ws_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-private-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-private-api.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-public-api.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-public-api.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-types.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-types.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-utils.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-websocket-types.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-websocket-types.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/okspot/okspot-websockt.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/hbcrossswapbnswap-mt/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/hbcrossswapbnswap-mt/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/okspotbnswap-mt/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/config.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/okspotbnswap-mt/http-maker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/http-maker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/okspotbnswap-mt/influx.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/influx.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/okspotbnswap-mt/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/okspotbnswap-mt/lob-maker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/lob-maker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/okspotbnswap-mt/loop.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/loop.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/okspotbnswap-mt/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/okspotbnswap-mt/spread.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/spread.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/applications/okspotbnswap-mt/ws-maker.go" beforeDir="false" afterPath="$PROJECT_DIR$/applications/okspotbnswap-mt/ws-maker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/okspot/okspot-user-ws.go" beforeDir="false" afterPath="$PROJECT_DIR$/okspot/okspot-user-ws.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -98,7 +73,16 @@
       <recent name="$PROJECT_DIR$/kcperp/jsons" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestDepth5 in github.com/geometrybase/hft-micro/okspot">
+  <component name="RunManager" selected="Go Build.go build github.com/geometrybase/hft-micro/applications/okspotbnswap-mt">
+    <configuration name="go build github.com/geometrybase/hft-micro/applications/okspotbnswap-mt" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="hft-micro" />
+      <working_directory value="$PROJECT_DIR$" />
+      <parameters value="-config $PROJECT_DIR$/applications/okspotbnswap-mt/config.yaml" />
+      <kind value="PACKAGE" />
+      <package value="github.com/geometrybase/hft-micro/applications/okspotbnswap-mt" />
+      <directory value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
     <configuration name="TestDepth5 in github.com/geometrybase/hft-micro/okspot" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="hft-micro" />
       <working_directory value="$PROJECT_DIR$/okspot" />
@@ -143,19 +127,8 @@
       <pattern value="^\QTestNewUserWebsocket\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestParseDepth5 in github.com/geometrybase/hft-micro/bnswap" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="hft-micro" />
-      <working_directory value="$PROJECT_DIR$/bnswap" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="github.com/geometrybase/hft-micro/bnswap" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestParseDepth5\E$" />
-      <method v="2" />
-    </configuration>
     <list>
-      <item itemvalue="Go Test.TestParseDepth5 in github.com/geometrybase/hft-micro/bnswap" />
+      <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/okspotbnswap-mt" />
       <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/hbspot" />
       <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/okspot" />
       <item itemvalue="Go Test.TestNewUserWebsocket in github.com/geometrybase/hft-micro/okspot" />
@@ -163,11 +136,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Build.go build github.com/geometrybase/hft-micro/applications/okspotbnswap-mt" />
         <item itemvalue="Go Test.TestDepth5 in github.com/geometrybase/hft-micro/okspot" />
         <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/okspot" />
         <item itemvalue="Go Test.TestNewUserWebsocket in github.com/geometrybase/hft-micro/okspot" />
         <item itemvalue="Go Test.TestNewDepth20RoutedWebsocket in github.com/geometrybase/hft-micro/hbspot" />
-        <item itemvalue="Go Test.TestParseDepth5 in github.com/geometrybase/hft-micro/bnswap" />
       </list>
     </recent_temporary>
   </component>

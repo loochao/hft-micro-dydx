@@ -40,7 +40,6 @@ var tMinNotional = make(map[string]float64)
 var mtStepSizes = make(map[string]float64)
 
 var mAccount *okspot.Balance
-var mAccountCh = make(chan okspot.Balance, 10)
 var mBalancesCh = make(chan []okspot.Balance, 10)
 var mBalances = make(map[string]okspot.Balance)
 var mBalancesUpdateTimes = make(map[string]time.Time)
@@ -144,7 +143,7 @@ func init() {
 	mtDualEnds = make([]int, 0)
 	for i := 0; i < len(mSymbols)/2; i++ {
 		mtDualEnds = append(mtDualEnds, i)
-		mtDualEnds = append(mtDualEnds, len(mSymbols)-i)
+		mtDualEnds = append(mtDualEnds, len(mSymbols)-1-i)
 	}
 	if len(mSymbols) % 2 == 1 {
 		mtDualEnds = append(mtDualEnds, len(mSymbols)/2)

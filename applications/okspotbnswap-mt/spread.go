@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
+	"github.com/geometrybase/hft-micro/okspot"
 	"math"
 	"time"
 )
@@ -13,7 +13,6 @@ import (
 func watchMakerTakerSpread(
 	ctx context.Context,
 	makerSymbol, takerSymbol string,
-	contractSizes,
 	makerImpact, takerImpact float64,
 	makerDecay, makerBias,
 	takerDecay, takerBias float64,
@@ -27,7 +26,7 @@ func watchMakerTakerSpread(
 ) {
 	var err error
 	var makerRawDepth, takerRawDepth *common.DepthRawMessage
-	var makerDepth, newMakerDepth *hbcrossswap.Depth20
+	var makerDepth, newMakerDepth *okspot.Depth5
 	var takerDepth, newTakerDepth *bnswap.Depth5
 	var makerWalkedDepth, takerWalkedDepth *common.WalkedMakerTakerDepth
 	var spreadTime time.Time
@@ -165,7 +164,7 @@ func watchMakerTakerSpread(
 			break
 		case <-makerWalkDepthTimer.C:
 			if makerDepth != nil {
-				makerWalkedDepth, err = common.WalkMakerTakerDepth20(makerDepth, makerImpact, takerImpact)
+				makerWalkedDepth, err = common.WalkMakerTakerDepth5(makerDepth, makerImpact, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						if makerRawDepth == nil {
@@ -201,18 +200,13 @@ func watchMakerTakerSpread(
 			if makerRawDepth == nil {
 				break
 			}
-			newMakerDepth, err = hbcrossswap.ParseDepth20(makerRawDepth.Depth)
+			newMakerDepth, err = okspot.ParseDepth5(makerRawDepth.Depth, &makerRawDepth.Symbol, &makerRawDepth.Time)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("hbcrossswap.ParseDepth20 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
+					logger.Debugf("okspot.ParseDepth5 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
-			} else if makerDepth == nil || newMakerDepth.MRID > makerDepth.MRID {
-				//需要乘以multiplier
-				for i = range newMakerDepth.Bids {
-					newMakerDepth.Bids[i][1] *= contractSizes
-					newMakerDepth.Asks[i][1] *= contractSizes
-				}
+			} else if makerDepth == nil || newMakerDepth.EventTime.Sub(makerDepth.EventTime) > 0 {
 				makerDepth = newMakerDepth
 				makerWalkDepthTimer.Reset(time.Nanosecond)
 			}
