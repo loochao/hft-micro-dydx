@@ -179,24 +179,25 @@ func reportsSaveLoop(
 			spreadReports[spreadReport.MakerSymbol] = spreadReport
 			break
 		case <-saveTimer.C:
-			for symbol, report := range spreadReports {
+			for _, report := range spreadReports {
 				fields := make(map[string]interface{})
 				fields["matchRatio"] = report.MatchRatio
 				fields["maxAgeDiff"] = float64(report.MaxAgeDiff)
-				fields["spotTimeDeltaEma"] = report.MakerTimeDeltaEma
-				fields["swapTimeDeltaEma"] = report.TakerTimeDeltaEma
-				fields["spotTimeDelta"] = report.MakerTimeDelta
-				fields["swapTimeDelta"] = report.TakerTimeDelta
-				fields["spotDepthFilterRatio"] = report.MakerDepthFilterRatio
-				fields["swapDepthFilterRatio"] = report.MakerDepthFilterRatio
-				fields["spotMsgAvgLen"] = report.MakerMsgAvgLen
-				fields["swapMsgAvgLen"] = report.TakerMsgAvgLen
+				fields["makerTimeDeltaEma"] = report.MakerTimeDeltaEma
+				fields["takerTimeDeltaEma"] = report.TakerTimeDeltaEma
+				fields["makerTimeDelta"] = report.MakerTimeDelta
+				fields["takerTimeDelta"] = report.TakerTimeDelta
+				fields["makerDepthFilterRatio"] = report.MakerDepthFilterRatio
+				fields["takerDepthFilterRatio"] = report.MakerDepthFilterRatio
+				fields["makerMsgAvgLen"] = report.MakerMsgAvgLen
+				fields["takerMsgAvgLen"] = report.TakerMsgAvgLen
 				if len(fields) > 0 {
 					pt, err := client.NewPoint(
 						*influxConfig.Measurement,
 						map[string]string{
-							"symbol": symbol,
-							"type":   "spread-report",
+							"makerSymbol": report.MakerSymbol,
+							"takerSymbol": report.TakerSymbol,
+							"type":        "spread-report",
 						},
 						fields,
 						time.Now().UTC(),
@@ -216,5 +217,3 @@ func reportsSaveLoop(
 		}
 	}
 }
-
-
