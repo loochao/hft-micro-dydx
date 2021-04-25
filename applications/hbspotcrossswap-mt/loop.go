@@ -149,7 +149,7 @@ func updateSpotNewOrders() {
 		spotBalance, okSpotBalance := hbspotBalances[spotSymbol]
 		fundingRate, okFundingRate := hbcrossswapFundingRates[swapSymbol]
 		if time.Now().Sub(hbLogSilentTimes[spotSymbol]) > 0 {
-			logger.Debugf("%v %v %v %v %v", okSpread, okQuantile, okSpotBalance, okFundingRate, time.Now().Sub(spread.Time))
+			//logger.Debugf("%v %v %v %v %v", okSpread, okQuantile, okSpotBalance, okFundingRate, time.Now().Sub(spread.Time))
 			hbLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute)
 		}
 		if !okSpread || !okQuantile || !okSpotBalance || !okFundingRate {
