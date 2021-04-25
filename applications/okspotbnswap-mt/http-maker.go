@@ -16,7 +16,7 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 				(balance.Balance != mAccount.Balance ||
 					balance.Available != mAccount.Available ||
 					balance.Hold != mAccount.Hold) {
-				logger.Debugf("SPOT HTTP BALANCE %s", balance.ToString())
+				logger.Debugf("MAKER HTTP BALANCE %s", balance.ToString())
 			}
 			mAccount = &balance
 			continue
@@ -39,8 +39,8 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 
 		if lastBalance == nil ||
 			lastBalance.Balance != balance.Balance {
-			logger.Debugf("SPOT HTTP BALANCE %s", balance.ToString())
-			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
+			logger.Debugf("MAKER HTTP BALANCE %s", balance.ToString())
+			//如果MAKER变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			tOrderSilentTimes[makerSymbol] = time.Now()
 			mtLoopTimer.Reset(time.Nanosecond)
 			if lastBalance != nil && lastBalance.Balance != balance.Balance{
@@ -57,7 +57,7 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 				Hold:      0.0,
 				Balance:   0.0,
 			}
-			logger.Debugf("SPOT HTTP BALANCE %s EMPTY", strings.Replace(makerSymbol, "-USDT", "",-1))
+			logger.Debugf("MAKER HTTP BALANCE %s EMPTY", strings.Replace(makerSymbol, "-USDT", "",-1))
 		}
 		mBalancesUpdateTimes[makerSymbol] = time.Now()
 	}

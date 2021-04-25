@@ -410,13 +410,13 @@ func main() {
 						delete(mOpenOrders, makerOrder.Symbol)
 					}
 					if makerOrder.State == okspot.OrderStateCanceled {
-						logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
+						logger.Debugf("MAKER WS ORDER CANCELED %s %s %s %f %f", makerOrder.Symbol, makerOrder.ClientOID, makerOrder.Side, makerOrder.Size, makerOrder.Price)
 						mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
 						mBalancesUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)
 					} else {
 						logger.Debugf(
-							"MAKER WS ORDER FILLED %s SIDE %s FilledNotional %v FilledSize %f",
-							makerOrder.Symbol, makerOrder.Side, makerOrder.FilledNotional, makerOrder.FilledSize,
+							"MAKER WS ORDER FILLED %s %s SIDE %s FilledNotional %v FilledSize %f",
+							makerOrder.Symbol, makerOrder.ClientOID, makerOrder.Side, makerOrder.FilledNotional, makerOrder.FilledSize,
 						)
 						tOrderSilentTimes[mtSymbolsMap[makerOrder.Symbol]] = time.Now()
 						mtLoopTimer.Reset(time.Nanosecond)
