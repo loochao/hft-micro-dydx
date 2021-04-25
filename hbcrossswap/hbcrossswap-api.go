@@ -26,7 +26,7 @@ type API struct {
 }
 
 func (api *API) GetHeartBeat(ctx context.Context) (*HeartBeat, error) {
-	path := "https://api.hbdm.com/heartbeat"
+	path := "https://api.hbdm.com/heartbeat/"
 	req, err := http.NewRequest(http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
