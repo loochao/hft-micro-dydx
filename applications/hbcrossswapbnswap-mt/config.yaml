@@ -1,4 +1,4 @@
-name: kcperpbnswap-mt
+name: hbcrossswapbnswap-mt
 dryRun: true
 proxyAddress: socks5://127.0.0.1:1081
 cpuProfile: #/Users/chenjilin/Downloads/hbspotcrossswap-mt.prof
@@ -7,7 +7,7 @@ internalInflux:
   username: test
   password: test
   database: test
-  measurement: kcperpbnswap-mt
+  measurement: hbcrossswapbnswap-mt
   batchSize: 0
   saveInterval: 1m0s
 externalInflux:

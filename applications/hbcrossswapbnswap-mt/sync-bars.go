@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"time"
@@ -12,7 +12,7 @@ import (
 
 func watchMakerBars(
 	ctx context.Context,
-	api *kcperp.API,
+	api *hbcrossswap.API,
 	takerSymbols []string,
 	barsLookback int,
 	pullInterval time.Duration,
@@ -29,8 +29,8 @@ func watchMakerBars(
 	for i, takerSymbol := range takerSymbols {
 		nextPullTimes[takerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
 	}
-	klineDuration := kcperp.GranularityDurations[kcperp.Granularity30Min]
-	klineGranularity := kcperp.Granularity30Min
+	klineDuration := hbcrossswap.GranularityDurations[hbcrossswap.Granularity30Min]
+	klineGranularity := hbcrossswap.Granularity30Min
 	globalNextPullTime := time.Now()
 	globalNextRetryTime := time.Now()
 	outputResults := true
@@ -74,7 +74,7 @@ func watchMakerBars(
 					symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
 				}
 				history, err := api.GetKlines(
-					ctx, kcperp.KlinesParam{
+					ctx, hbcrossswap.KlinesParam{
 						Symbol:      symbol,
 						From:        symbolStartTime.Unix() * 1000,
 						To:          symbolEndTime.Unix() * 1000,
