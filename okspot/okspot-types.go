@@ -162,6 +162,7 @@ func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+
 type CancelBatchOrders struct {
 	Symbol string `json:"instrument_id"`
 }

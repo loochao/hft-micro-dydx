@@ -47,7 +47,7 @@ func watchMakerOrderRequest(
 			} else if request.Cancel != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
 				logger.Debugf("MAKER CANCEL ALL %s", request.Cancel.Symbol)
-				resp, err := api.CancelBatchOrders(childCtx, *request.Cancel)
+				resp, err := api.CancelBatchOrders(childCtx, []okspot.CancelBatchOrders{*request.Cancel})
 				if err != nil {
 					logger.Debugf("MAKER SUBMIT ERROR %v", err)
 				} else {
