@@ -29,7 +29,7 @@ func watchMakerOrderRequest(
 			}
 			if request.New != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				logger.Debugf("MAKER SUBMIT %s %s %f %d", request.New.Symbol, request.New.Type, request.New.Price, request.New.Size)
+				logger.Debugf("MAKER SUBMIT %s %s %f %f", request.New.Symbol, request.New.Type, *request.New.Price, *request.New.Size)
 				resp, err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
 					logger.Debugf("MAKER SUBMIT ERROR %v", err)
@@ -121,7 +121,7 @@ func isOrderProfitable(order okspot.NewOrderParam) bool {
 		*order.Price < (1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid {
 		logger.Debugf("%s BUY PRICE %f < MAKER BID MINIMAL PRICE %f",
 			order.Symbol,
-			order.Price,
+			*order.Price,
 			(1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid,
 		)
 		return false
@@ -129,7 +129,7 @@ func isOrderProfitable(order okspot.NewOrderParam) bool {
 		*order.Price > (1.0+2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk {
 		logger.Debugf("%s SELL PRICE %f > MAKER ASK MAXIMAL PRICE %f",
 			order.Symbol,
-			order.Price,
+			*order.Price,
 			(1.0+2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk,
 		)
 		return false
