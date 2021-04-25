@@ -52,7 +52,6 @@ func (w *Depth5RoutedWebsocket) writeLoop(ctx context.Context, conn *websocket.C
 					continue
 				}
 			}
-			logger.Debugf("%s", bytes)
 			err = conn.SetWriteDeadline(time.Now().Add(time.Minute))
 			if err != nil {
 				logger.Debugf("conn.SetWriteDeadline error %v", err)
@@ -177,34 +176,44 @@ func (w *Depth5RoutedWebsocket) readLoop(conn *websocket.Conn, channels map[stri
 				}
 			}
 			continue
-		} else if msg[2] == 't' && len(msg) > 128{
+		} else if msg[2] == 't' && len(msg) > 128 {
 			//{"table":"spot/depth5","data":[{"asks":[["31.605","4.32464","1"],["31.607","85","1"],["31.61","2","1"],["31.612","0.1","1"],["31.614","1.405511","1"]],"bids":[["31.583","302.09312","3"],["31.582","0.9","1"],["31.58","111.30127","1"],["31.579","76","1"],["31.576","31.83446","1"]],"instrument_id":"LINK-USDT","timestamp":"2021-04-25T08:24:33.352Z"}]}
-			timeBytes = msg[msgLen-28:msgLen-4]
+			timeBytes = msg[msgLen-28 : msgLen-4]
 			eventTime, err = time.Parse(okspotTimeLayout, *(*string)(unsafe.Pointer(&timeBytes)))
 			if err != nil {
 				logger.Debugf("time.Parse %s error %v", timeBytes, err)
 				continue
 			}
 			if msg[msgLen-53] == ':' {
-				symbolBytes = msg[msgLen-51:msgLen-43]
+				symbolBytes = msg[msgLen-51 : msgLen-43]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else if msg[msgLen-54] == ':' {
-				symbolBytes = msg[msgLen-52:msgLen-43]
+			} else if msg[msgLen-54] == ':' {
+				symbolBytes = msg[msgLen-52 : msgLen-43]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else if msg[msgLen-55] == ':' {
-				symbolBytes = msg[msgLen-53:msgLen-43]
+			} else if msg[msgLen-55] == ':' {
+				symbolBytes = msg[msgLen-53 : msgLen-43]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else if msg[msgLen-56] == ':' {
-				symbolBytes = msg[msgLen-54:msgLen-43]
+			} else if msg[msgLen-56] == ':' {
+				symbolBytes = msg[msgLen-54 : msgLen-43]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else{
+			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 				continue
 			}
-		}else {
+		} else if msgLen == 4 && msg[2] == 'p' {
+			select {
+			case w.pingCh <- msg:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("w.pongCh <- msg failed %s ch len %d", symbol, len(w.pingCh))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
+			continue
+		} else if msgLen == 4 {
 			if time.Now().Sub(logSilentTime) > 0 {
 				logger.Debugf("other msg %s", msg)
 				logSilentTime = time.Now().Add(time.Minute)
@@ -234,87 +243,6 @@ func (w *Depth5RoutedWebsocket) readLoop(conn *websocket.Conn, channels map[stri
 				}
 			}
 		}
-
-		////{"ch":"market.btcusdt.depth.step1","ts":1618475611868,"tick":{"bids":[[62753.2,2.140127],[62753.1,1.005768],[62751.4,0.01],[62750.2,1.588851],[62750.1,0.132173],[62747.1,1.04731],[62747.0,1.357035],[62746.0,0.001031],[62744.8,0.44207],[62744.6,0.064435],[62743.0,0.051222],[62741.8,8.0E-4],[62739.5,0.450211],[62739.0,0.026874],[62737.6,0.2],[62737.0,0.001401],[62736.9,0.1],[62736.7,0.047803],[62735.4,1.6E-4],[62733.6,0.135775]],"asks":[[62753.3,0.038953],[62754.3,0.03],[62758.0,0.09781],[62758.8,0.045154],[62759.5,0.01],[62760.8,0.134133],[62761.8,0.03],[62761.9,0.132173],[62763.4,8.95E-4],[62763.8,0.123199],[62764.2,0.06],[62765.0,0.010786],[62765.8,0.002],[62766.0,0.162855],[62767.2,0.001596],[62767.6,1.145],[62768.9,2.733775],[62769.1,0.159325],[62770.7,0.017235],[62771.5,0.04]],"version":125019588599,"ts":1618475611865}}
-		//if msg[2] == 'c' && len(msg) > 128 {
-		//	if msg[39] == ':' {
-		//		timeInt, err = common.ParseInt(msg[40:53])
-		//		if err != nil {
-		//			logger.Debugf("common.ParseInt error %v %s", err, msg[40:53])
-		//			continue
-		//		}
-		//		symbolBytes = msg[14:21]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[40] == ':' {
-		//		timeInt, err = common.ParseInt(msg[41:54])
-		//		if err != nil {
-		//			logger.Debugf("common.ParseInt error %v %s", err, msg[41:54])
-		//			continue
-		//		}
-		//		symbolBytes = msg[14:22]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[41] == ':' {
-		//		timeInt, err = common.ParseInt(msg[42:55])
-		//		if err != nil {
-		//			logger.Debugf("common.ParseInt error %v %s", err, msg[42:55])
-		//			continue
-		//		}
-		//		symbolBytes = msg[14:23]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[42] == ':' {
-		//		timeInt, err = common.ParseInt(msg[43:56])
-		//		if err != nil {
-		//			logger.Debugf("common.ParseInt error %v %s", err, msg[43:56])
-		//			continue
-		//		}
-		//		symbolBytes = msg[14:24]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else {
-		//		if time.Now().Sub(logSilentTime) > 0 {
-		//			logger.Debugf("bad msg, can't find timestamp: %s", msg)
-		//			logSilentTime = time.Now().Add(time.Minute)
-		//		}
-		//	}
-		//	if ch, ok = channels[symbol]; ok {
-		//		select {
-		//		case ch <- &common.DepthRawMessage{
-		//			Depth:  msg,
-		//			Symbol: symbol,
-		//			Time:   time.Unix(0, timeInt*1000000),
-		//		}:
-		//		default:
-		//			if time.Now().Sub(logSilentTime) > 0 {
-		//				logger.Debugf("ch <- &common.DepthRawMessage failed %s ch len %d", symbol, len(ch))
-		//				logSilentTime = time.Now().Add(time.Minute)
-		//			}
-		//		}
-		//		select {
-		//		case w.symbolCh <- symbol:
-		//		default:
-		//			if time.Now().Sub(logSilentTime) > 0 {
-		//				logger.Debugf("w.symbolCh <- symbol failed %s ch len %d", symbol, len(w.symbolCh))
-		//				logSilentTime = time.Now().Add(time.Minute)
-		//			}
-		//		}
-		//	}
-		//} else if msg[2] == 'p' {
-		//	msg[3] = 'o'
-		//	select {
-		//	case w.pingCh <- msg:
-		//	default:
-		//		if time.Now().Sub(logSilentTime) > 0 {
-		//			logger.Debugf("w.pingCh <- msg failed %s ch len %d", symbol, len(w.pingCh))
-		//			logSilentTime = time.Now().Add(time.Minute)
-		//		}
-		//	}
-		//}
-
-		//err = gr.Close()
-		//if err != nil {
-		//	logger.Debugf("gr.Close() error %v", err)
-		//	go w.restart()
-		//	return
-		//}
 	}
 }
 
@@ -443,17 +371,6 @@ func (w *Depth5RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websock
 			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
-
-	conn.SetPingHandler(func(msg string) error {
-		logger.Debugf("get ping msg %s", msg)
-		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Second*10))
-		if err != nil {
-			w.restart()
-			return nil
-		}
-		return nil
-	})
-
 	symbolTimeout := time.Minute
 	symbolCheckInterval := time.Second
 	symbolCheckTimer := time.NewTimer(time.Second)
@@ -462,6 +379,10 @@ func (w *Depth5RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websock
 	for _, symbol := range symbols {
 		symbolUpdatedTimes[symbol] = time.Unix(0, 0)
 	}
+	trafficTimeout := time.NewTimer(time.Minute*5)
+	pingTimer := time.NewTimer(time.Second * 15)
+	defer trafficTimeout.Stop()
+	defer pingTimer.Stop()
 
 	for {
 		select {
@@ -469,23 +390,35 @@ func (w *Depth5RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websock
 			return
 		case <-w.done:
 			return
-		case symbol := <-w.symbolCh:
-			symbolUpdatedTimes[symbol] = time.Now()
-			break
-		case msg := <-w.pingCh:
+		case <-trafficTimeout.C:
+			logger.Debugf("traffic timeout in 30s, restart ws")
+			w.restart()
+			return
+		case <-pingTimer.C:
+			pingTimer.Reset(time.Second * 15)
 			select {
-			case w.writeCh <- msg:
+			case w.writeCh <- []byte("ping"):
 				break
 			default:
-				logger.Debugf("w.writeCh <- msg failed, ch len %d", len(w.writeCh))
+				logger.Debugf("w.writeCh <- ping failed, ch len %d", len(w.writeCh))
 			}
+			break
+		case symbol := <-w.symbolCh:
+			pingTimer.Reset(time.Second * 15)
+			trafficTimeout.Reset(time.Second * 30)
+			symbolUpdatedTimes[symbol] = time.Now()
+			break
+		case <-w.pingCh:
+			logger.Debugf("PING MSG")
+			pingTimer.Reset(time.Second * 15)
+			trafficTimeout.Reset(time.Second * 30)
 			break
 		case <-symbolCheckTimer.C:
 			args := make([]string, 0)
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
 					args = append(args, fmt.Sprintf("spot/depth5:%s", symbol))
-					symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval)
+					symbolUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
 				}
 			}
 			if len(args) > 0 {

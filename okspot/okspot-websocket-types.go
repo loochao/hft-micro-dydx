@@ -100,60 +100,7 @@ type WSTrade struct {
 	Timestamp    time.Time `json:"timestamp,string,omitempty"`
 }
 
-type WSDepth5 struct {
-	Asks         [5][3]float64 `json:"-"`
-	Bids         [5][3]float64 `json:"-"`
-	Timestamp    time.Time     `json:"timestamp,string,omitempty"`
-	InstrumentID string        `json:"instrument_id,omitempty"`
-}
 
-func (depth5 *WSDepth5) UnmarshalJSON(data []byte) error {
-	type Alias WSDepth5
-	aux := &struct {
-		Asks [5][3]string `json:"asks"`
-		Bids [5][3]string `json:"bids"`
-		*Alias
-	}{
-		Alias: (*Alias)(depth5),
-	}
-	var err error
-	if err = json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-	depth5.Bids = [5][3]float64{}
-	depth5.Asks = [5][3]float64{}
-	for i, bid := range aux.Bids {
-		price, err := strconv.ParseFloat(bid[0], 64)
-		if err != nil {
-			return err
-		}
-		size, err := strconv.ParseFloat(bid[1], 64)
-		if err != nil {
-			return err
-		}
-		count, err := strconv.ParseFloat(bid[2], 64)
-		if err != nil {
-			return err
-		}
-		depth5.Bids[i] = [3]float64{price, size, count}
-	}
-	for i, ask := range aux.Asks {
-		price, err := strconv.ParseFloat(ask[0], 64)
-		if err != nil {
-			return err
-		}
-		size, err := strconv.ParseFloat(ask[1], 64)
-		if err != nil {
-			return err
-		}
-		count, err := strconv.ParseFloat(ask[2], 64)
-		if err != nil {
-			return err
-		}
-		depth5.Asks[i] = [3]float64{price, size, count}
-	}
-	return nil
-}
 
 //order_id	String	Order ID
 //client_oid	String	Client supplied order ID
@@ -211,7 +158,7 @@ type WSOrder struct {
 	Price           float64   `json:"-"`
 	Size            float64   `json:"-"`
 	Notional        float64   `json:"-"`
-	InstrumentId    string    `json:"instrument_id,omitempty"`
+	Symbol    string    `json:"instrument_id,omitempty"`
 	Side            string    `json:"side,omitempty"`
 	Type            string    `json:"type,omitempty"`
 	Timestamp       time.Time `json:"timestamp,string,omitempty"`
@@ -283,3 +230,4 @@ func (order *WSOrder) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+

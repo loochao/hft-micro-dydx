@@ -1,7 +1,10 @@
 package okspot
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/logger"
+	"strconv"
 	"time"
 )
 
@@ -53,18 +56,18 @@ func (b *Balance) ToString() string {
 //instrument_id	String	Yes	Trading pair symbol
 //order_type	String	No	Specify 0: Normal order (Unfilled and 0 imply normal limit order) 1: Post only 2: Fill or Kill 3: Immediate Or Cancel
 
-type NewOrderParams struct {
-	InstrumentId string   `json:"instrument_id,omitempty"`
-	ClientOID    string   `json:"client_oid,omitempty"`
-	Type         string   `json:"type"`
-	Side         string   `json:"side"`
-	OrderType    string   `json:"order_type"`
-	Price        *float64 `json:"price,string,omitempty"`
-	Size         *float64 `json:"size,string,omitempty"`
-	Notional     *float64 `json:"notional,string,omitempty"`
+type NewOrderParam struct {
+	Symbol    string   `json:"instrument_id,omitempty"`
+	ClientOID string   `json:"client_oid,omitempty"`
+	Type      string   `json:"type"`
+	Side      string   `json:"side"`
+	OrderType string   `json:"order_type"`
+	Price     *float64 `json:"price,string,omitempty"`
+	Size      *float64 `json:"size,string,omitempty"`
+	Notional  *float64 `json:"notional,string,omitempty"`
 }
 
-type NewOrderResponse struct {
+type OrderResponse struct {
 	ClientOID    string `json:"client_oid,omitempty"`
 	OrderId      string `json:"order_id,omitempty"`
 	ErrorMessage string `json:"error_message,omitempty"`
@@ -106,4 +109,81 @@ type Instrument struct {
 	SizeIncrement float64 `json:"size_increment,string"`
 	Category      int     `json:"category,string"`
 	TickSize      float64 `json:"tick_size,string"`
+}
+
+type Depth5 struct {
+	Symbol    string        `json:"-"`
+	Bids      [5][2]float64 `json:"-"`
+	Asks      [5][2]float64 `json:"_"`
+	ParseTime time.Time     `json:"-"`
+	EventTime time.Time     `json:"-"`
+}
+
+func (depth *Depth5) GetBids() [5][2]float64 { return depth.Bids }
+func (depth *Depth5) GetAsks() [5][2]float64 { return depth.Asks }
+func (depth *Depth5) GetSymbol() string      { return depth.Symbol }
+func (depth *Depth5) GetTime() time.Time     { return depth.EventTime }
+func (depth *Depth5) UnmarshalJSON(data []byte) error {
+	type Alias Depth5
+	aux := struct {
+		Data []struct {
+			Bids      [5][3]string `json:"bids"`
+			Asks      [5][3]string `json:"asks"`
+			EventTime string       `json:"timestamp"`
+			Symbol    string       `json:"instrument_id"`
+		} `json:"data"`
+		Table string `json:"table"`
+	}{}
+	var err error
+	if err = json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("ERR %v", err)
+		return err
+	}
+	if len(aux.Data) != 1 {
+		return fmt.Errorf("bad deth5 format %s", data)
+	}
+	depth.Bids = [5][2]float64{}
+	depth.Asks = [5][2]float64{}
+	for i, d := range aux.Data[0].Bids {
+		price, _ := strconv.ParseFloat(d[0], 64)
+		size, _ := strconv.ParseFloat(d[1], 64)
+		depth.Bids[i][0] = price
+		depth.Bids[i][1] = size
+	}
+	for i, d := range aux.Data[0].Asks {
+		price, _ := strconv.ParseFloat(d[0], 64)
+		size, _ := strconv.ParseFloat(d[1], 64)
+		depth.Asks[i][0] = price
+		depth.Asks[i][1] = size
+	}
+	depth.Symbol = aux.Data[0].Symbol
+	depth.EventTime, err = time.Parse(okspotTimeLayout, aux.Data[0].EventTime)
+	depth.ParseTime = time.Now()
+	return nil
+}
+
+type CancelBatchOrders struct {
+	Symbol string `json:"instrument_id"`
+}
+
+//{
+//        "title": "Spot System Optimization",
+//        "href": "",
+//        "product_type": "1",
+//        "status": "2",
+//        "maint_type": "upgrade",
+//        "sche_desc": "",
+//        "start_time": "2020-04-10T04:30:00.000Z",
+//        "end_time": "2020-04-10T04:40:00.000Z"
+//    }
+
+type Status struct {
+	Title        string `json:"title"`
+	Href         string `json:"href"`
+	ProductType  string `json:"product_type"`
+	Status       string `json:"status"`
+	MaintType    string `json:"maint_type"`
+	ScheduleDesc string `json:"sche_desc"`
+	StartTime    string `json:"start_time"`
+	EndTime      string `json:"end_time"`
 }

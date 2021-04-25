@@ -20,12 +20,13 @@ import (
 )
 
 type API struct {
-	client *http.Client
-	apiUrl string
+	client      *http.Client
+	apiUrl      string
+	credentials *Credentials
 }
 
 func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result interface{}) (err error) {
-	path := api.apiUrl + requestPath
+	path := "https://www.okex.com" + requestPath
 	//logger.Debugf("%v", path)
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
@@ -40,7 +41,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 	contentTypeDifferent := false
 	switch resp.Header.Get("Content-Encoding") {
 	case "gzip":
-		reader, err := gzip.NewReader(resp.Body)
+		reader, err = gzip.NewReader(resp.Body)
 		if err != nil {
 			return err
 		}
@@ -84,17 +85,14 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 			return errors.New("unspecified error occurred")
 		}
 	}
-	err =  json.Unmarshal(contents, result)
+	err = json.Unmarshal(contents, result)
 	if err != nil {
 		err = fmt.Errorf("JSON DECODE ERROR: \"%v\" CONTENT: %s", err, string(contents))
 	}
 	return err
 }
 
-func (api *API) SendAuthenticatedHTTPRequest(
-	ctx context.Context, credentials Credentials,
-	httpMethod, requestPath string,
-	data, result interface{}) (err error) {
+func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, requestPath string, data, result interface{}) (err error) {
 
 	utcTime := time.Now().UTC().Format(time.RFC3339)
 	payload := []byte("")
@@ -106,7 +104,7 @@ func (api *API) SendAuthenticatedHTTPRequest(
 		}
 	}
 
-	path := api.apiUrl + requestPath
+	path := "https://www.okex.com" + requestPath
 	req, err := http.NewRequest(httpMethod, path, bytes.NewReader(payload))
 	if err != nil {
 		return err
@@ -114,12 +112,12 @@ func (api *API) SendAuthenticatedHTTPRequest(
 	req.Header.Add("Content-Type", "application/json")
 	hmac := common.GetHMAC(common.HashSHA256,
 		[]byte(utcTime+httpMethod+requestPath+string(payload)),
-		[]byte(credentials.Secret))
-	req.Header.Add("OK-ACCESS-KEY", credentials.Key)
+		[]byte(api.credentials.Secret))
+	req.Header.Add("OK-ACCESS-KEY", api.credentials.Key)
 	req.Header.Add("OK-ACCESS-SIGN", common.Base64Encode(hmac))
 	req.Header.Add("OK-ACCESS-TIMESTAMP", utcTime)
-	req.Header.Add("OK-ACCESS-PASSPHRASE", credentials.Passphrase)
-	req.Header.Add("OK-ACCESS-KEY", credentials.Key)
+	req.Header.Add("OK-ACCESS-PASSPHRASE", api.credentials.Passphrase)
+	req.Header.Add("OK-ACCESS-KEY", api.credentials.Key)
 
 	resp, err := api.client.Do(req.WithContext(ctx))
 	if err != nil {
@@ -182,7 +180,7 @@ func (api *API) SendAuthenticatedHTTPRequest(
 	return err
 }
 
-func NewAPI(apiUrl, proxy string) (*API, error) {
+func NewAPI(credentials *Credentials, proxy string) (*API, error) {
 	var client *http.Client
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
@@ -219,8 +217,8 @@ func NewAPI(apiUrl, proxy string) (*API, error) {
 		}
 	}
 	api := API{
-		client: client,
-		apiUrl: apiUrl,
+		client:      client,
+		credentials: credentials,
 	}
 	return &api, nil
 }

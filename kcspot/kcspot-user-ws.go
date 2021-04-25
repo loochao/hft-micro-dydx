@@ -171,7 +171,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 				case <-w.done:
 					return
 				case <-time.After(time.Second):
-					logger.Debugf("w.OrderCh <- &order timeout in 1s")
+					logger.Debugf("w.OrdersCh <- &order timeout in 1s")
 				case w.OrderCh <- &order:
 				}
 				select {
@@ -192,7 +192,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 				case <-w.done:
 					return
 				case <-time.After(time.Second):
-					logger.Debugf("w.BalanceCh <- &balance timeout in 1s")
+					logger.Debugf("w.BalancesCh <- &balance timeout in 1s")
 				case w.BalanceCh <- &balance:
 				}
 				select {

@@ -180,7 +180,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 						case w.BalanceCh <- &balanceEvent.Balance:
 						default:
 							if time.Now().Sub(logSilentTime) > 0 {
-								logger.Debugf("w.BalanceCh <- &balanceEvent.Balance failed, ch len %d", len(w.BalanceCh))
+								logger.Debugf("w.BalancesCh <- &balanceEvent.Balance failed, ch len %d", len(w.BalanceCh))
 								logSilentTime = time.Now().Add(time.Minute)
 							}
 						}
@@ -203,7 +203,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 						case w.OrderCh <- &orderEvent.Order:
 						default:
 							if time.Now().Sub(logSilentTime) > 0 {
-								logger.Debugf("w.OrderCh <- &orderEvent.Order failed, ch len %d", len(w.OrderCh))
+								logger.Debugf("w.OrdersCh <- &orderEvent.Order failed, ch len %d", len(w.OrderCh))
 								logSilentTime = time.Now().Add(time.Minute)
 							}
 						}

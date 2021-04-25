@@ -3,6 +3,7 @@ package okspot
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"testing"
 )
 
@@ -17,12 +18,13 @@ func TestNewDepth20RoutedWebsocket(t *testing.T) {
 	for {
 		select {
 		case d := <-channels[symbols[0]]:
-			d = d
-			//logger.Debugf("%s %v %s", d.Symbol, d.Time)
-		//case d := <-channels[symbols[1]]:
-		//	logger.Debugf("%s %v %s", d.Symbol, d.Time, d.Depth)
-		//case d := <-channels[symbols[2]]:
-		//	logger.Debugf("%s %v %s", d.Symbol, d.Time, d.Depth)
+			logger.Debugf("%s %v %s", d.Symbol, d.Time, d.Depth)
+		case d := <-channels[symbols[1]]:
+			logger.Debugf("%s %v %s", d.Symbol, d.Time, d.Depth)
+		case d := <-channels[symbols[2]]:
+			logger.Debugf("%s %v %s", d.Symbol, d.Time, d.Depth)
+		case d := <-channels[symbols[3]]:
+			logger.Debugf("%s %v %s", d.Symbol, d.Time, d.Depth)
 		}
 	}
 }

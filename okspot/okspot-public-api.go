@@ -151,3 +151,8 @@ func (api *API) GetTickers(ctx context.Context) ([]WSTicker, error) {
 	var instruments []WSTicker
 	return instruments, api.SendHTTPRequest(ctx, "/api/spot/v3/instruments/ticker", &instruments)
 }
+
+func (api *API) GetStatus(ctx context.Context) ([]Status, error) {
+	var status []Status
+	return status, api.SendHTTPRequest(ctx, "/api/system/v3/status", &status)
+}

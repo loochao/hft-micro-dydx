@@ -122,6 +122,8 @@ func updateMakerNewOrders() {
 	}
 	entryTarget := entryStep * *mtConfig.EnterTargetFactor
 
+	makerUSDTAvailable := mAccount.WithdrawAvailable
+
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单, 优先做空
 	for _, rank := range mtDualEnds {
 		makerSymbol := mtRankSymbolMap[rank]
@@ -170,7 +172,6 @@ func updateMakerNewOrders() {
 		//	mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 		//	logger.Debugf("LOOP %s", makerSymbol)
 		//}
-		makerUSDTAvailable := mAccount.WithdrawAvailable
 
 		if spread.ShortLastLeave < quantile.ShortBot &&
 			spread.ShortMedianLeave < quantile.ShortBot &&

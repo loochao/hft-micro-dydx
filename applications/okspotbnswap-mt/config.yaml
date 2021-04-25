@@ -1,0 +1,147 @@
+name: okspotbnswap-mt-gb-ff03
+dryRun: true
+proxyAddress: socks5://127.0.0.1:1081
+cpuProfile: #/Users/chenjilin/Downloads/hbspotcrossswap-mt.prof
+internalInflux:
+  address: http://tigger.jilinchen.com:18086
+  username: hft
+  password: hft
+  database: hft
+  measurement: okspotbnswap-mt-gb-ff03
+  batchSize: 0
+  saveInterval: 1m0s
+externalInflux:
+  address: http://hehe.jilinchen.com:7003
+  username: hft
+  password: hft
+  database: fund
+  measurement: accounts
+  batchSize: 0
+  saveInterval: 1m0s
+
+bnApiKey: yuJSE8iKP1G08GJhaJ1MKMVGwmWkTrGmAhQ8tK84wVHd3wDWhcvnuT9xyxl0EZcN
+bnApiSecret: Qg8SHiElH1zTFLYGpwe7rPRSpibKYR1WaC6vDhVTCjo10VLSCps5XGaYhlhBjI3R
+okApiKey: 297624eb-1abc-4c45-a13a-250a757bac1d
+okApiSecret: 9589D50C9D0A478C193BEFEBB1912B63
+okApiPassphrase: maodaye
+
+leverage: 10
+changeLeverage: false
+marginType: CROSSED
+loopInterval: 5s
+pullInterval: 1m0s
+logInterval: 1m
+
+balancePositionMaxAge: 3m
+
+pullBarsInterval: 30m
+pullBarsRetryInterval: 3s
+barsLookback: 180
+topQuantile: 0.55
+botQuantile: 0.45
+makerOrderOffset: 0.00111
+minimalBandOffset: 0.000222 #0.00222
+minimalEnterDelta: 0.000666 #0.00444
+maximalExitDelta: -0.000111
+topBandScale: 0.618
+botBandScale: 0.618
+
+minimalEnterFundingRate: 0.00001
+minimalKeepFundingRate: 0.004
+
+orderBookTakerDecay: 0.9999
+orderBookTakerBias: 500
+
+orderBookMakerDecay: 0.9999
+orderBookMakerBias: 500
+
+orderBookTakerImpact: 3000
+orderBookMakerImpact: 300
+orderBookMaxAgeDiff: 50ms
+orderBookMaxAge: 500ms
+orderBookBatchSize: 30
+
+spreadTimeToLive: 500ms
+spreadLookbackMinimalWindow: 3
+spreadLookbackDuration: 1s
+
+enterSlippage: 0.01
+startValue: 779
+enterFreePct: 0.025
+enterMinimalStep: 20
+enterTargetFactor: 4
+maxUnHedgeValue: 30
+startValues:
+  root: 0
+
+orderTimeout: 5s
+orderSilent: 5s
+orderCancelSilent: 5s
+orderMaxCancelCount: 5
+enterSilent: 10m
+restartSilent: 10m
+httpSilent: 10m
+
+requestInterval: 10s
+makerTakerSymbolsMap:
+  BTC-USDT: BTCUSDT
+  ETH-USDT: ETHUSDT
+  BAT-USDT: BATUSDT
+  SRM-USDT: SRMUSDT
+  DOT-USDT: DOTUSDT
+  BAND-USDT: BANDUSDT
+  RENU-USDT: RENUSDT
+  YFI-USDT: YFIUSDT
+  TRB-USDT: TRBUSDT
+  YFII-USDT: YFIIUSDT
+  RSR-USDT: RSRUSDT
+  SUSHI-USDT: SUSHIUSDT
+  KSM-USDT: KSMUSDT
+  UNI-USDT: UNIUSDT
+  AVAX-USDT: AVAXUSDT
+  SOL-USDT: SOLUSDT
+  EGLD-USDT: EGLDUSDT
+  AAVE-USDT: AAVEUSDT
+  FIL-USDT: FILUSDT
+  NEAR-USDT: NEARUSDT
+  GRT-USDT: GRTUSDT
+  1INCH-USDT: 1INCHUSDT
+  BCH-USDT: BCHUSDT
+  DOGE-USDT: DOGEUSDT
+  ADA-USDT: ADAUSDT
+  ALGO-USDT: ALGOUSDT
+  ATOM-USDT: ATOMUSDT
+  BAL-USDT: BALUSDT
+  COMP-USDT: COMPUSDT
+  CRV-USDT: CRVUSDT
+  FLM-USDT: FLMUSDT
+  FTM-USDT: FTMUSDT
+  SNX-USDT: SNXUSDT
+  WAVES-USDT: WAVESUSDT
+  XTZ-USDT: XTZUSDT
+  ZIL-USDT: ZILUSDT
+  DASH-USDT: DASHUSDT
+  LRC-USDT: LRCUSDT
+  XRP-USDT: XRPUSDT
+  ZEC-USDT: ZECUSDT
+  NEO-USDT: NEOUSDT
+  QTUM-USDT: QTUMUSDT
+  IOTA-USDT: IOTAUSDT
+  LTC-USDT: LTCUSDT
+  ETC-USDT: ETCUSDT
+  EOS-USDT: EOSUSDT
+  OMG-USDT: OMGUSDT
+  STORJ-USDT: STORJUSDT
+  LINK-USDT: LINKUSDT
+  ZRX-USDT: ZRXUSDT
+  CVC-USDT: CVCUSDT
+  KNC-USDT: KNCUSDT
+  ICX-USDT: ICXUSDT
+  TRX-USDT: TRXUSDT
+  XMR-USDT: XMRUSDT
+  XLM-USDT: XLMUSDT
+  IOST-USDT: IOSTUSDT
+  THETA-USDT: THETAUSDT
+  MKR-USDT: MKRUSDT
+  ZEN-USDT: ZENUSDT
+  ONT-USDT: ONTUSDT

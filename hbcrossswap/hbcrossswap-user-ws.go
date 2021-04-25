@@ -280,7 +280,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 					case w.OrderCh <- &wsOrder:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("w.OrderCh <- &wsOrder failed, ch len %d", len(w.OrderCh))
+							logger.Debugf("w.OrdersCh <- &wsOrder failed, ch len %d", len(w.OrderCh))
 							logSilentTime = time.Now().Add(time.Minute)
 						}
 					}
