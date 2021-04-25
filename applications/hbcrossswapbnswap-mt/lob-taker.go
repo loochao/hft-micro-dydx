@@ -19,7 +19,7 @@ func takerRoutedDepthLoop(
 	}
 	logger.Debugf("START takerRoutedDepthLoop %s", symbols)
 	defer logger.Debugf("EXIT takerRoutedDepthLoop %s", symbols)
-	ws := bnswap.NewDepth20RoutedWebsocket(
+	ws := bnswap.NewDepth5RoutedWebsocket(
 		ctx,
 		proxyAddress,
 		channels,
