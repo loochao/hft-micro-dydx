@@ -29,7 +29,7 @@ type Quantile struct {
 
 const (
 	WalkedOrderBookTypePerp = "PERP"
-	WalkedOrderBookTypeSpot = "Spot"
+	WalkedOrderBookTypeSpot = "SPOT"
 )
 
 type WalkedOrderBook struct {

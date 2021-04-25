@@ -34,7 +34,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == ',' || bytes[offset] == ']' {
 				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyBids error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 40 {
@@ -56,7 +56,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == ',' || bytes[offset] == ']' {
 				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyAsks error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 40 {
@@ -78,7 +78,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == ',' {
 				orderBook.Version, err = common.ParseInt(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyVersion error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyVersion error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				currentKey = common.JsonKeyEventTime
 				offset += 6
@@ -90,7 +90,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			offset += 13
 			timestamp, err := common.ParseInt(bytes[collectStart:offset])
 			if err != nil {
-				return nil, fmt.Errorf("JsonKeyEventTime error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+				return nil, fmt.Errorf("JsonKeyEventTime error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 			}
 			orderBook.EventTime = time.Unix(0, timestamp*1000000)
 			offset = bytesLen
@@ -241,4 +241,47 @@ func GetOrderLimits(
 		logger.Debugf("MIN  NOTIONAL %v", minNotional)
 	}
 	return
+}
+
+
+func SystemStatusLoop(
+	ctx context.Context,
+	api *API,
+	interval time.Duration,
+	output chan bool,
+) {
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			marketStatus, err := api.GetMarketStatus(subCtx)
+			if err != nil {
+				logger.Debugf("api.GetHeartBeat error %v", err)
+				select {
+				case output <- false:
+				default:
+					logger.Debugf("output <- false failed, ch len %d", len(output))
+				}
+			} else {
+				if marketStatus.MarketStatus == 1 {
+					select {
+					case output <- true:
+					default:
+						logger.Debugf("output <- true failed, ch len %d", len(output))
+					}
+				} else {
+					select {
+					case output <- false:
+					default:
+						logger.Debugf("output <- false failed, ch len %d", len(output))
+					}
+				}
+			}
+			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
+		}
+	}
 }

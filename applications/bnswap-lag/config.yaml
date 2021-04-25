@@ -1,7 +1,7 @@
 name: bnswap-lag-pd01
 dryRun: true
 proxyAddress: socks5://127.0.0.1:1081
-cpuProfile: #/Users/chenjilin/Downloads/hbcrossswapspot-mt.prof
+cpuProfile: #/Users/chenjilin/Downloads/hbspotcrossswap-mt.prof
 internalInflux:
   address: http://tigger.jilinchen.com:18086
   username: hft

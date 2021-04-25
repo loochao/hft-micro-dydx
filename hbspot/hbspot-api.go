@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"io"
@@ -24,6 +25,41 @@ type API struct {
 }
 
 const apiHost = "api-aws.huobi.pro"
+
+
+func (api *API) GetMarketStatus(ctx context.Context) (*MarketStatus, error) {
+	path := "https://api.huobi.pro/v2/market-status"
+	req, err := http.NewRequest(http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.client.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+	reader := resp.Body
+	contents, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	type DataCap struct {
+		Code int `json:"code"`
+		Message string `json:"message"`
+		Data json.RawMessage `json:"data"`
+	}
+	var dataCap DataCap
+	if err := json.Unmarshal(contents, &dataCap); err != nil {
+		return nil, err
+	} else if dataCap.Code != 200 {
+		return nil, errors.New(fmt.Sprintf("%d %s", dataCap.Code, dataCap.Message))
+	}
+	ms := &MarketStatus{}
+	return ms, json.Unmarshal(dataCap.Data, ms)
+}
 
 func (api *API) SendHTTPRequest(ctx context.Context, method, path string, params common.Params, result interface{}) error {
 	path = "https://" + apiHost + path

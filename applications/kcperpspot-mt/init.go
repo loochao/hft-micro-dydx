@@ -96,8 +96,8 @@ var kcspotSystemReady = false
 var kcperpSystemReady = false
 var kcSpotSystemStatusCh = make(chan bool, 10)
 var kcPerpSystemStatusCh = make(chan bool, 10)
-
 var kcGlobalSilent time.Time
+
 var kcConfig *Config
 
 func init() {

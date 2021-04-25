@@ -83,6 +83,11 @@ type Depth20 struct {
 	EventTime time.Time      `json:"-"`
 }
 
+func (depth *Depth20) GetBids() [20][2]float64 { return depth.Bids }
+func (depth *Depth20) GetAsks() [20][2]float64 { return depth.Asks }
+func (depth *Depth20) GetSymbol() string { return depth.Symbol }
+func (depth *Depth20) GetTime() time.Time { return depth.EventTime }
+
 func (depth *Depth20) UnmarshalJSON(data []byte) error {
 	type Alias Depth20
 	aux := struct {
@@ -314,4 +319,8 @@ func (wsCap *WsCap) UnmarshalJSON(data []byte) error {
 	}
 	wsCap.Timestamp = time.Unix(0, aux.Timestamp*1000000)
 	return nil
+}
+
+type MarketStatus struct {
+	MarketStatus int `json:"marketStatus"`
 }

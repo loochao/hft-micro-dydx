@@ -11,24 +11,24 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
 type Depth20FilteredWebsocket struct {
 	messageCh   chan []byte
 	DataCh      chan *Depth20
-	RestartCh   chan interface{}
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
 	symbolCh    chan string
 	pingCh      chan []byte
-	stopped     bool
-	mu          sync.Mutex
+	stopped     int32
 }
 
-func (w *Depth20FilteredWebsocket) startWrite(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth20FilteredWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
+	logger.Debugf("START writeLoop")
+	defer logger.Debugf("EXIT writeLoop")
 	for {
 		select {
 		case <-ctx.Done():
@@ -46,81 +46,56 @@ func (w *Depth20FilteredWebsocket) startWrite(ctx context.Context, conn *websock
 			default:
 				bytes, err = json.Marshal(msg)
 				if err != nil {
-					logger.Warnf("Marshal err %v", err)
+					logger.Debugf("json.Marshal(msg) err %v", err)
 					continue
 				}
 			}
-			err = conn.SetWriteDeadline(time.Now().Add(300 * time.Millisecond))
+			err = conn.SetWriteDeadline(time.Now().Add(time.Minute))
 			if err != nil {
-				select {
-				case <-ctx.Done():
-					break
-				default:
-					w.restart()
-				}
+				logger.Debugf("conn.SetWriteDeadline error %v", err)
+				w.restart()
 				return
 			}
 
 			err = conn.WriteMessage(websocket.TextMessage, bytes)
 			if err != nil {
-				select {
-				case <-ctx.Done():
-					break
-				default:
-					w.restart()
-				}
+				logger.Debugf("conn.WriteMessage error %v", err)
+				w.restart()
 				return
 			}
 		}
 	}
 }
 
-func (w *Depth20FilteredWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth20FilteredWebsocket) readLoop(conn *websocket.Conn) {
+	logger.Debugf("START readLoop")
+	defer logger.Debugf("EXIT readLoop")
 	totalCount := 0
 	totalLen := 0
+	logSilentTime := time.Now()
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
-			logger.Warnf("SetReadDeadline error %v", err)
-			select {
-			case <-ctx.Done():
-				break
-			default:
-				w.restart()
-			}
+			logger.Debugf("conn.SetReadDeadline error %v", err)
+			w.restart()
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
-			logger.Warnf("NextReader error %v", err)
-			select {
-			case <-ctx.Done():
-				break
-			default:
-				w.restart()
-			}
+			logger.Debugf("conn.NextReader error %v", err)
+			w.restart()
 			return
 		}
 		gr, err := gzip.NewReader(r)
 		if err != nil {
-			logger.Warnf("NewReader error %v", err)
-			select {
-			case <-ctx.Done():
-				break
-			default:
-				w.restart()
-			}
+			logger.Debugf("gzip.NewReader error %v", err)
+			w.restart()
 			return
 		}
 		msg, err := w.readAll(gr)
 		if err != nil {
-			logger.Warnf("readAll error %v", err)
-			select {
-			case <-ctx.Done():
-				break
-			default:
-				w.restart()
-			}
+			logger.Debugf("w.readAll error %v", err)
+			w.restart()
 			return
 		}
 		totalCount += 1
@@ -131,13 +106,16 @@ func (w *Depth20FilteredWebsocket) startRead(ctx context.Context, conn *websocke
 			totalCount = 0
 		}
 		select {
-		case <-time.After(time.Millisecond):
-			logger.Debug("HBSPOT DEPTH20 MSG TO MESSAGE CH TIMEOUT IN 1MS")
 		case w.messageCh <- msg:
+		default:
+			if time.Now().Sub(logSilentTime) > 0 {
+				logSilentTime = time.Now().Add(time.Minute)
+				logger.Debugf("w.messageCh <- msg failed ch len %d", len(w.messageCh))
+			}
 		}
 		err = gr.Close()
 		if err != nil {
-			logger.Warnf("gr.Close() error %v", err)
+			logger.Debugf("gr.Close() error %v", err)
 			go w.restart()
 			return
 		}
@@ -162,10 +140,9 @@ func (w *Depth20FilteredWebsocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int, decay, bias float64) {
-	defer func() {
-		logger.Debugf("EXIT startDataHandler %d", id)
-	}()
+func (w *Depth20FilteredWebsocket) dataHandleLoop(ctx context.Context, id int, decay, bias float64) {
+	logger.Debugf("START dataHandleLoop %d", id)
+	defer logger.Debugf("EXIT dataHandleLoop %d", id)
 	totalCount := 0
 	filterCount := 0
 	emaTimeDelta := 50.0
@@ -222,23 +199,34 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 					continue
 				}
 				select {
-				case <-time.After(time.Millisecond):
-					logger.Warn("HBSPOT DEPTH20 TO OUTPUT CH TIME OUT IN 1MS")
 				case w.DataCh <- depth20:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.DataCh <- depth20 failed, ch len %d", len(w.DataCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 				select {
 				case w.symbolCh <- depth20.Symbol:
 				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.symbolCh <- depth20.Symbol failed, ch len %d", len(w.symbolCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 			} else if msg[2] == 'p' {
 				msg[3] = 'o'
 				select {
 				case w.pingCh <- msg:
 				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.pingCh <- msg failed, ch len %d", len(w.pingCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 			} else {
 				if msg[2] != 'i' {
-					logger.Debugf("OTHER MSG %s", msg)
+					logger.Debugf("other msg %s", msg)
 				}
 			}
 		}
@@ -248,7 +236,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 func (w *Depth20FilteredWebsocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
-		logger.Debugf("RECONNECT %s, %d RETRIES", wsUrl, counter)
+		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
 	}
 
 	var dialer *websocket.Dialer
@@ -256,7 +244,7 @@ func (w *Depth20FilteredWebsocket) reconnect(ctx context.Context, wsUrl string, 
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			return nil, fmt.Errorf("PARSE PROXY %v", err)
+			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -277,7 +265,7 @@ func (w *Depth20FilteredWebsocket) reconnect(ctx context.Context, wsUrl string, 
 		},
 	)
 	if err != nil {
-		logger.Warnf("dialer.DialContext ERROR %v", err)
+		logger.Debugf("dialer.DialContext ERROR %v", err)
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("reconnect error: context is done")
@@ -290,8 +278,9 @@ func (w *Depth20FilteredWebsocket) reconnect(ctx context.Context, wsUrl string, 
 	return conn, nil
 }
 
-func (w *Depth20FilteredWebsocket) start(ctx context.Context, symbols []string, proxy string, decay, bias float64) {
-
+func (w *Depth20FilteredWebsocket) mainLoop(ctx context.Context, symbols []string, proxy string, decay, bias float64) {
+	logger.Debugf("START mainLoop")
+	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
@@ -308,6 +297,10 @@ func (w *Depth20FilteredWebsocket) start(ctx context.Context, symbols []string, 
 	for {
 		select {
 		case <-ctx.Done():
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
 			return
 		case <-w.reconnectCh:
 			if internalCancel != nil {
@@ -322,29 +315,22 @@ func (w *Depth20FilteredWebsocket) start(ctx context.Context, symbols []string, 
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			conn, err := w.reconnect(internalCtx, "wss://api-aws.huobi.pro/ws", proxy, 0)
 			if err != nil {
-				logger.Debugf("RECONNECT ERROR %v", err)
+				logger.Debugf("w.reconnect error %v", err)
+				internalCancel()
+				w.Stop()
 				return
 			}
-			go w.startRead(internalCtx, conn)
-			go w.startWrite(internalCtx, conn)
-			go w.maintainHeartbeat(internalCtx, conn, symbols)
-
-			go w.startDataHandler(internalCtx, 0, decay, bias)
-			go w.startDataHandler(internalCtx, 2, decay, bias)
-			go w.startDataHandler(internalCtx, 3, decay, bias)
-			go w.startDataHandler(internalCtx, 4, decay, bias)
-
-			//go w.startDataHandler(internalCtx, 0, decay, bias)
-			//go w.startDataHandler(internalCtx, 0, decay, bias)
-			//go w.startDataHandler(internalCtx, 0, decay, bias)
-			//go w.startDataHandler(internalCtx, 0, decay, bias)
+			go w.readLoop(conn)
+			go w.writeLoop(internalCtx, conn)
+			go w.heartbeatLoop(internalCtx, conn, symbols)
 		}
 	}
 }
 
-func (w *Depth20FilteredWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn, symbols []string) {
-
+func (w *Depth20FilteredWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+	logger.Debugf("START heartbeatLoop")
 	defer func() {
+		logger.Debugf("Exit heartbeatLoop")
 		err := conn.Close()
 		if err != nil {
 			logger.Debugf("conn.Close() ERROR %v", err)
@@ -364,73 +350,56 @@ func (w *Depth20FilteredWebsocket) maintainHeartbeat(ctx context.Context, conn *
 		select {
 		case <-ctx.Done():
 			return
+		case <-w.done:
+			return
 		case symbol := <-w.symbolCh:
 			symbolUpdatedTimes[symbol] = time.Now()
+			break
 		case msg := <-w.pingCh:
 			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(time.Millisecond):
-				logger.Debug("SEND PONG TO WRITE TIMEOUT IN 1MS")
-				break
 			case w.writeCh <- msg:
 				break
+			default:
+				logger.Debugf("w.writeCh <- msg failed, ch len %d", len(w.writeCh))
 			}
 			break
 		case <-symbolCheckTimer.C:
 		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
-					logger.Debugf("HBSPOT SUBSCRIBE %s", fmt.Sprintf("market.%s.depth.step1", symbol))
+					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("market.%s.depth.step1", symbol))
 					select {
-					case <-ctx.Done():
-						return
-					case <-time.After(time.Millisecond):
-						logger.Debugf("SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", fmt.Sprintf("market.%s.depth.step1", symbol))
-						break
 					case w.writeCh <- SubParam{
 						ID:  fmt.Sprintf("market.%s.depth.step1", symbol),
 						Sub: fmt.Sprintf("market.%s.depth.step1", symbol),
 					}:
 						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval * time.Duration(len(symbols)*2))
 						break loop
+					default:
+						logger.Debugf("w.writeCh <- SubParam failed, ch len %d", len(w.writeCh))
 					}
 				}
 			}
 			symbolCheckTimer.Reset(symbolCheckInterval)
 			break
-		case <-w.done:
-			return
 		}
 	}
 
 }
 
 func (w *Depth20FilteredWebsocket) Stop() {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	if !w.stopped {
-		w.stopped = true
+	if atomic.LoadInt32(&w.stopped) == 0 {
+		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
-		logger.Debugf("HBSPOT DEPTH20 WS STOPPED")
+		logger.Debugf("stopped")
 	}
 }
 
 func (w *Depth20FilteredWebsocket) restart() {
-	logger.Infof("HBSPOT DEPTH20 WS RESTART")
 	select {
-	case <-w.done:
-		return
-	case <-time.After(time.Millisecond):
-		logger.Debugf("NIL TO RESTART CH TIMEOUT IN 1MS, EXIT")
-	case w.RestartCh <- nil:
-	}
-	select {
-	case <-w.done:
-		return
-	case <-time.After(time.Millisecond):
-		logger.Debugf("NIL TO RECONNECT CH TIMEOUT IN 1MS, EXIT")
 	case w.reconnectCh <- nil:
+	default:
+		logger.Debugf("w.reconnectCh <- nil failed, ch len %d", len(w.reconnectCh))
 	}
 }
 
@@ -446,17 +415,19 @@ func NewDepth20FilteredWebsocket(
 ) *Depth20FilteredWebsocket {
 	ws := Depth20FilteredWebsocket{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}),
+		reconnectCh: make(chan interface{}, 100),
 		DataCh:      make(chan *Depth20, 100*len(symbols)),
-		RestartCh:   make(chan interface{}, 100),
 		messageCh:   make(chan []byte, 100*len(symbols)),
 		writeCh:     make(chan interface{}, 100*len(symbols)),
 		symbolCh:    make(chan string, 100*len(symbols)),
 		pingCh:      make(chan []byte, 100),
-		stopped:     false,
-		mu:          sync.Mutex{},
+		stopped:     0,
 	}
-	go ws.start(ctx, symbols, proxy, decay, bias)
+	go ws.mainLoop(ctx, symbols, proxy, decay, bias)
+	go ws.dataHandleLoop(ctx, 0, decay, bias)
+	go ws.dataHandleLoop(ctx, 2, decay, bias)
+	go ws.dataHandleLoop(ctx, 3, decay, bias)
+	go ws.dataHandleLoop(ctx, 4, decay, bias)
 	ws.reconnectCh <- nil
 	return &ws
 }
