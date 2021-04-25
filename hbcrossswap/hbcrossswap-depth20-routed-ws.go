@@ -68,8 +68,8 @@ func (w *Depth20RoutedWebsocket) writeLoop(ctx context.Context, conn *websocket.
 func (w *Depth20RoutedWebsocket) readLoop(ctx context.Context, conn *websocket.Conn, symbols []string, channels map[string]chan *common.DepthRawMessage) {
 	logger.Debugf("START readLoop %s", symbols)
 	defer logger.Debugf("EXIT readLoop %s", symbols)
-	totalLen := 0
-	totalCount := 0
+	//totalLen := 0
+	//totalCount := 0
 	logSilentTime := time.Now()
 	var symbolBytes []byte
 	var symbol string
@@ -121,16 +121,16 @@ func (w *Depth20RoutedWebsocket) readLoop(ctx context.Context, conn *websocket.C
 			}
 			return
 		}
-		totalCount += 1
-		totalLen += len(msg)
-		if totalCount > 10000 {
-			logger.Debugf(
-				"AVERAGE MESSAGE LENGTH %d/%d = %d",
-				totalLen, totalCount, totalLen/totalCount,
-			)
-			totalLen = 0
-			totalCount = 0
-		}
+		//totalCount += 1
+		//totalLen += len(msg)
+		//if totalCount > 10000 {
+		//	logger.Debugf(
+		//		"AVERAGE MESSAGE LENGTH %d/%d = %d",
+		//		totalLen, totalCount, totalLen/totalCount,
+		//	)
+		//	totalLen = 0
+		//	totalCount = 0
+		//}
 		//{"ch":"market.FIL-USDT.depth.step6","ts":1618845641135,"tick":{"mrid":18528726394,"id":1618845641,"bids":[[154.423,36],[154.419,214],[154.414,380],[154.407,421],[154.398,64],[154.388,73],[154.386,8],[154.361,171],[154.36,300],[154.359,1],[154.354,175],[154.34,171],[154.339,48],[154.329,283],[154.327,243],[154.323,13],[154.315,50],[154.303,200],[154.302,48],[154.285,806]],"asks":[[154.436,154],[154.459,441],[154.46,58],[154.472,154],[154.473,134],[154.475,380],[154.497,163],[154.499,666],[154.511,88],[154.514,30],[154.515,283],[154.516,715],[154.517,70],[154.52,2],[154.53,222],[154.532,50],[154.557,1297],[154.565,3],[154.609,48],[154.61,4]],"ts":1618845641132,"version":1618845641,"ch":"market.FIL-USDT.depth.step6"}}
 		if msg[2] == 'c' && len(msg) > 57 {
 			if msg[40] == ':' {

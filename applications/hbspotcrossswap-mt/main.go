@@ -366,12 +366,12 @@ func main() {
 
 		case hbcrossswapSystemReady = <-hbcrossswapSystemStatusCh:
 			if !hbcrossswapSystemReady {
-				logger.Debugf("hbcrossswapSystemReady restart silent %v", *hbConfig.RestartSilent)
+				//logger.Debugf("hbcrossswapSystemReady restart silent %v", *hbConfig.RestartSilent)
 				hbGlobalSilent = time.Now().Add(*hbConfig.RestartSilent)
 			}
 		case hbspotSystemReady = <-hbspotSystemStatusCh:
 			if !hbspotSystemReady {
-				logger.Debugf("hbspotSystemReady restart silent %v", *hbConfig.RestartSilent)
+				//logger.Debugf("hbspotSystemReady restart silent %v", *hbConfig.RestartSilent)
 				hbGlobalSilent = time.Now().Add(*hbConfig.RestartSilent)
 			}
 		case <-hbspotUserWebsocket.RestartCh:
