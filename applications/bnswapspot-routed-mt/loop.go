@@ -169,16 +169,17 @@ func updateMakerNewOrders() {
 			price := spread.MakerDepth.MakerAsk
 			price = math.Ceil(price/spotTickSize) * spotTickSize
 			if spotBalance.Free*price > spotMinNotional {
-				entryValue := math.Min(-4*entryStep, -spotBalance.Free*price*0.5)
+				entryValue := math.Min(4*entryStep, spotBalance.Free*price*0.5)
 				if premiumIndex.FundingRate > *bnConfig.MinimalKeepFundingRate/2 {
-					entryValue = math.Min(-2*entryStep, -spotBalance.Free*price*0.5)
+					entryValue = math.Min(2*entryStep, spotBalance.Free*price*0.5)
 				}
 				quantity := entryValue / price
 				quantity = math.Round(quantity/mergedStepSize) * mergedStepSize
+				entryValue = quantity*price
 				if spotBalance.Free*price-entryValue < entryStep {
-					quantity = -math.Floor(spotBalance.Free/spotStepSize) * spotStepSize
+					quantity = math.Floor(spotBalance.Free/spotStepSize) * spotStepSize
 				}
-				if quantity < 0 {
+				if quantity > 0 {
 					logger.Debugf(
 						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
 						symbol,
@@ -189,7 +190,7 @@ func updateMakerNewOrders() {
 					order := bnspot.NewOrderParams{
 						Symbol:           symbol,
 						Price:            price,
-						Quantity:         -quantity,
+						Quantity:         quantity,
 						//TimeInForce:      bnspot.OrderTimeInForceGTC,
 						Side:             bnspot.OrderSideSell,
 						Type:             bnspot.OrderTypeLimitMarker,
