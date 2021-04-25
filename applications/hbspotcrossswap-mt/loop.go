@@ -148,7 +148,10 @@ func updateSpotNewOrders() {
 		spread, okSpread := hbSpreads[spotSymbol]
 		spotBalance, okSpotBalance := hbspotBalances[spotSymbol]
 		fundingRate, okFundingRate := hbcrossswapFundingRates[swapSymbol]
-		//logger.Debugf("%v %v %v %v %v", okSpread, okQuantile, okSpotBalance, okFundingRate, time.Now().Sub(spread.LastUpdateTime))
+		if time.Now().Sub(hbLogSilentTimes[spotSymbol]) > 0 {
+			logger.Debugf("%v %v %v %v %v", okSpread, okQuantile, okSpotBalance, okFundingRate, time.Now().Sub(spread.Time))
+			hbLogSilentTimes[spotSymbol] = time.Now().Add(time.Minute)
+		}
 		if !okSpread || !okQuantile || !okSpotBalance || !okFundingRate {
 			continue
 		}

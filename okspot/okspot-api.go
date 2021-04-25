@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -51,7 +52,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 		reader = resp.Body
 	default:
 		switch {
-		case common.StringContains(resp.Header.Get("Content-Type"), "application/json"):
+		case strings.Contains(resp.Header.Get("Content-Type"), "application/json"):
 			reader = resp.Body
 		default:
 			logger.Warnf("request response content type differs from JSON; received %v", resp.Header.Get("Content-Type"))
@@ -71,7 +72,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 		return err
 	}
 	var errCap ErrorCap
-	if err := common.JSONDecode(contents, &errCap); err == nil {
+	if err := json.Unmarshal(contents, &errCap); err == nil {
 		if errCap.ErrorMessage != "" {
 			return fmt.Errorf("error: %v", errCap.ErrorMessage)
 		}
@@ -83,7 +84,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 			return errors.New("unspecified error occurred")
 		}
 	}
-	err = common.JSONDecode(contents, result)
+	err =  json.Unmarshal(contents, result)
 	if err != nil {
 		err = fmt.Errorf("JSON DECODE ERROR: \"%v\" CONTENT: %s", err, string(contents))
 	}
@@ -140,7 +141,7 @@ func (api *API) SendAuthenticatedHTTPRequest(
 		reader = resp.Body
 	default:
 		switch {
-		case common.StringContains(resp.Header.Get("Content-Type"), "application/json"):
+		case strings.Contains(resp.Header.Get("Content-Type"), "application/json"):
 			reader = resp.Body
 		default:
 			logger.Warnf("request response content type differs from JSON; received %v", resp.Header.Get("Content-Type"))
@@ -160,7 +161,7 @@ func (api *API) SendAuthenticatedHTTPRequest(
 		return err
 	}
 	var errCap ErrorCap
-	if err := common.JSONDecode(contents, &errCap); err == nil {
+	if err := json.Unmarshal(contents, &errCap); err == nil {
 		if errCap.ErrorMessage != "" {
 			logger.Debugf("ERROR CONTENTS %s", string(contents))
 			return fmt.Errorf("error: %d %v", errCap.ErrorCode, errCap.ErrorMessage)
@@ -174,7 +175,7 @@ func (api *API) SendAuthenticatedHTTPRequest(
 			return errors.New("unspecified error occurred")
 		}
 	}
-	err = common.JSONDecode(contents, result)
+	err = json.Unmarshal(contents, result)
 	if err != nil {
 		err = fmt.Errorf("JSON DECODE ERROR: \"%v\" CONTENT: %s", err, string(contents))
 	}

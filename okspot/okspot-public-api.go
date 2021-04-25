@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (api *API) GetRecentCandles(ctx context.Context, params MarketDataParams) ([]common.OHLCV, error) {
+func (api *API) GetRecentCandles(ctx context.Context, params MarketDataParams) ([]common.KLine, error) {
 	candleInterval := time.Second * time.Duration(params.Granularity)
 	if params.Start == nil {
 		return nil, fmt.Errorf("bad nil start time for get history candles")
@@ -25,7 +25,7 @@ func (api *API) GetRecentCandles(ctx context.Context, params MarketDataParams) (
 		*params.Limit = 200
 	}
 	finalEnd := *params.End
-	candles := make([]common.OHLCV, 0)
+	candles := make([]common.KLine, 0)
 	errorCounter := 0
 	for errorCounter < 3 {
 		*params.End = params.Start.Add(candleInterval * time.Duration(*params.Limit-1))
@@ -51,7 +51,7 @@ func (api *API) GetRecentCandles(ctx context.Context, params MarketDataParams) (
 			}
 			//时间是startTime
 			timeData = timeData.Add(candleInterval)
-			ohlcv := common.OHLCV{
+			ohlcv := common.KLine{
 				Timestamp: timeData,
 			}
 			ohlcv.Open, err = strconv.ParseFloat(data[1], 64)
