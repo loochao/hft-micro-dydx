@@ -46,7 +46,7 @@ func watchMakerBars(
 			globalNextPullTime = time.Now().Add(pullInterval)
 			globalNextRetryTime = time.Now()
 			for symbol, nextPullTime := range nextPullTimes {
-				logger.Debugf("MAKER SYMBOL %s", symbol)
+				//logger.Debugf("MAKER SYMBOL %s", symbol)
 				select {
 				case <-ctx.Done():
 					return
