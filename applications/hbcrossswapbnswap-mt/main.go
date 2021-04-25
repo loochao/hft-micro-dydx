@@ -322,7 +322,7 @@ func main() {
 		go watchMakerTakerSpread(
 			mtGlobalCtx,
 			makerSymbol, takerSymbol,
-			mContractSizes[takerSymbol],
+			mContractSizes[makerSymbol],
 			*mtConfig.OrderBookMakerImpact,
 			*mtConfig.OrderBookTakerImpact,
 			*mtConfig.OrderBookMakerDecay,
