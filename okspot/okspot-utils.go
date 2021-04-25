@@ -14,7 +14,7 @@ func WatchBalancesFromHttp(
 	interval time.Duration,
 	output chan []Balance,
 ) {
-	timer := time.NewTimer(time.Second)
+	timer := time.NewTimer(interval)
 	defer timer.Stop()
 	for {
 		select {

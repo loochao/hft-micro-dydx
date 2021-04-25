@@ -14,7 +14,7 @@ func (api *API) SubmitOrder(ctx context.Context, request NewOrderParam) (resp Or
 }
 
 func (api *API) CancelBatchOrders(ctx context.Context, request CancelBatchOrders) (resp map[string][]OrderResponse, _ error) {
-	return resp, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/margin/v3/cancel_batch_orders", request, &resp)
+	return resp, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/api/spot/v3/cancel_batch_orders", request, &resp)
 }
 
 func (api *API) GetFundBalances(ctx context.Context) (accounts []Balance, _ error) {
