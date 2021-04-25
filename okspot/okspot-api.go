@@ -162,11 +162,11 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 	var errCap ErrorCap
 	if err := json.Unmarshal(contents, &errCap); err == nil {
 		if errCap.ErrorMessage != "" {
-			logger.Debugf("ERROR CONTENTS %s", string(contents))
+			logger.Debugf("ERROR CONTENTS %s %s", string(contents), path)
 			return fmt.Errorf("error: %d %v", errCap.ErrorCode, errCap.ErrorMessage)
 		}
 		if errCap.ErrorCode > 0 {
-			logger.Debugf("ERROR CONTENTS %s", string(contents))
+			logger.Debugf("ERROR CONTENTS %s %s", string(contents), path)
 			return fmt.Errorf("sendHTTPRequest error - %s",
 				ErrorCodes[strconv.FormatInt(errCap.ErrorCode, 10)])
 		}

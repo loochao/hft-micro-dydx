@@ -188,7 +188,7 @@ func updateMakerNewOrders() {
 				)
 				order := okspot.NewOrderParam{
 					Symbol:    makerSymbol,
-					ClientOID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
+					ClientOID: fmt.Sprintf("M%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 					Side:      okspot.OrderSideSell,
 					Type:      okspot.OrderLimit,
 					OrderType: okspot.OrderTypePostOnly,
@@ -297,7 +297,7 @@ func updateMakerNewOrders() {
 			makerUSDTAvailable -= entryValue
 			order := okspot.NewOrderParam{
 				Symbol:    makerSymbol,
-				ClientOID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
+				ClientOID: fmt.Sprintf("M%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 				Side:      okspot.OrderSideBuy,
 				Type:      okspot.OrderLimit,
 				OrderType: okspot.OrderTypePostOnly,
