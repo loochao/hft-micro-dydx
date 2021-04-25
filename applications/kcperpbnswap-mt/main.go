@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"os/signal"
@@ -30,13 +30,13 @@ func main() {
 	}
 
 	var err error
-	mAPI, err = kcperp.NewAPI(
+	mAPI, err = hbcrossswap.NewAPI(
 		*mtConfig.HbApiKey,
 		*mtConfig.HbApiSecret,
 		*mtConfig.ProxyAddress,
 	)
 	if err != nil {
-		logger.Debugf("kcperp.NewAPI error %v", err)
+		logger.Debugf("hbcrossswap.NewAPI error %v", err)
 		return
 	}
 	tAPI, err = bnswap.NewAPI(
@@ -109,9 +109,9 @@ func main() {
 		}
 	}
 
-	mTickSizes, mContractSizes, err = kcperp.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
+	mTickSizes, mContractSizes, err = hbcrossswap.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
 	if err != nil {
-		logger.Debugf("kcperp.GetOrderLimits error %v", err)
+		logger.Debugf("hbcrossswap.GetOrderLimits error %v", err)
 		return
 	}
 	tTickSizes, tStepSizes, _, tMinNotional, _, _, err = bnswap.GetOrderLimits(mtGlobalCtx, tAPI, tSymbols)
@@ -177,7 +177,7 @@ func main() {
 	}
 	defer tUserWebsocket.Stop()
 
-	mUserWebsocket = kcperp.NewUserWebsocket(
+	mUserWebsocket = hbcrossswap.NewUserWebsocket(
 		mtGlobalCtx,
 		*mtConfig.HbApiKey,
 		*mtConfig.HbApiSecret,
@@ -205,16 +205,16 @@ func main() {
 	defer mtLoopTimer.Stop()
 	defer externalInfluxSaveTimer.Stop()
 
-	go kcperp.WatchPositionsFromHttp(
+	go hbcrossswap.WatchPositionsFromHttp(
 		mtGlobalCtx, mAPI,
 		mSymbols, *mtConfig.PullInterval,
 		mPositionCh,
 	)
-	go kcperp.WatchAccountFromHttp(
+	go hbcrossswap.WatchAccountFromHttp(
 		mtGlobalCtx, mAPI,
 		*mtConfig.PullInterval, mAccountCh,
 	)
-	go kcperp.WatchFundingRate(
+	go hbcrossswap.WatchFundingRate(
 		mtGlobalCtx, mAPI,
 		mSymbols,
 		*mtConfig.PullInterval*10,
@@ -367,7 +367,7 @@ func main() {
 		)
 	}
 
-	go kcperp.SystemStatusLoop(
+	go hbcrossswap.SystemStatusLoop(
 		mtGlobalCtx,
 		mAPI,
 		*mtConfig.PullInterval/2,
@@ -402,7 +402,7 @@ func main() {
 				case <-mtGlobalCtx.Done():
 					return
 				case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
-					Cancel: &kcperp.CancelAllParam{
+					Cancel: &hbcrossswap.CancelAllParam{
 						Symbol: makerSymbol,
 					},
 				}:
@@ -466,13 +466,13 @@ func main() {
 			handleMakerWSAccount(msg)
 			break
 		case makerOrder := <-mUserWebsocket.OrderCh:
-			if makerOrder.Status == kcperp.OrderStatusFilled ||
-				makerOrder.Status == kcperp.OrderStatusCancelled ||
-				makerOrder.Status == kcperp.OrderStatusPartiallyFilledButCancelledByClient {
+			if makerOrder.Status == hbcrossswap.OrderStatusFilled ||
+				makerOrder.Status == hbcrossswap.OrderStatusCancelled ||
+				makerOrder.Status == hbcrossswap.OrderStatusPartiallyFilledButCancelledByClient {
 				if openOrder, ok := mOpenOrders[makerOrder.Symbol]; ok && openOrder.ClientOrderID == makerOrder.ClientOrderID {
 					delete(mOpenOrders, makerOrder.Symbol)
 				}
-				if makerOrder.Status == kcperp.OrderStatusCancelled {
+				if makerOrder.Status == hbcrossswap.OrderStatusCancelled {
 					logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
 					mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
 					mPositionsUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)
@@ -484,9 +484,9 @@ func main() {
 					tOrderSilentTimes[mtSymbolsMap[makerOrder.Symbol]] = time.Now()
 					mtLoopTimer.Reset(time.Nanosecond)
 					mHttpPositionUpdateSilentTimes[makerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
-					if makerOrder.Direction == kcperp.OrderDirectionSell {
+					if makerOrder.Direction == hbcrossswap.OrderDirectionSell {
 						mLastFilledSellPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
-					} else if makerOrder.Direction == kcperp.OrderDirectionBuy {
+					} else if makerOrder.Direction == hbcrossswap.OrderDirectionBuy {
 						mLastFilledBuyPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
 					}
 				}
@@ -603,7 +603,7 @@ func main() {
 					for makerSymbol := range mOpenOrders {
 						select {
 						case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
-							Cancel: &kcperp.CancelAllParam{
+							Cancel: &hbcrossswap.CancelAllParam{
 								Symbol: makerSymbol,
 							},
 						}:

@@ -483,10 +483,9 @@ func main() {
 			break
 		case qs := <-mtQuantilesCh:
 			if mtQuantiles == nil {
-				//logger.Debugf("QUANTILES %s", d)
+				logger.Debugf("QUANTILES %s", qs)
 			}
 			mtQuantiles = qs
-			//mtLoopTimer.Reset(time.Millisecond)
 			break
 		case <-influxSaveTimer.C:
 			handleSave()

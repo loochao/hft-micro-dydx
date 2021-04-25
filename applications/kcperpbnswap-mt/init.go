@@ -5,7 +5,7 @@ import (
 	"flag"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -22,10 +22,10 @@ var mtGlobalCancel context.CancelFunc
 var mtInfluxWriter *common.InfluxWriter
 var mtExternalInfluxWriter *common.InfluxWriter
 
-var mAPI *kcperp.API
+var mAPI *hbcrossswap.API
 var tAPI *bnswap.API
 
-var mUserWebsocket *kcperp.UserWebsocket
+var mUserWebsocket *hbcrossswap.UserWebsocket
 var tUserWebsocket *bnswap.UserWebsocket
 
 var mHttpPositionUpdateSilentTimes = make(map[string]time.Time)
@@ -38,11 +38,11 @@ var tStepSizes = make(map[string]float64)
 var tMinNotional = make(map[string]float64)
 var mtStepSizes = make(map[string]float64)
 
-var mAccount *kcperp.Account
-var mAccountCh = make(chan kcperp.Account, 10)
-var mPositionCh = make(chan []kcperp.Position, 10)
-var mBuyPositions = make(map[string]kcperp.Position)
-var mSellPositions = make(map[string]kcperp.Position)
+var mAccount *hbcrossswap.Account
+var mAccountCh = make(chan hbcrossswap.Account, 10)
+var mPositionCh = make(chan []hbcrossswap.Position, 10)
+var mBuyPositions = make(map[string]hbcrossswap.Position)
+var mSellPositions = make(map[string]hbcrossswap.Position)
 var mPositionsUpdateTimes = make(map[string]time.Time)
 var mOrderRequestChs = make(map[string]chan MakerOrderRequest)
 var mNewOrderErrorCh chan MakerOrderNewError
@@ -62,8 +62,8 @@ var tNewOrderErrorCh = make(chan TakerOrderNewError, 10)
 var tOrderRequestChs = make(map[string]chan bnswap.NewOrderParams)
 var tOrderSilentTimes = make(map[string]time.Time)
 
-var mFundingRates map[string]kcperp.FundingRate
-var mFundingRatesCh = make(chan map[string]kcperp.FundingRate, 10)
+var mFundingRates map[string]hbcrossswap.FundingRate
+var mFundingRatesCh = make(chan map[string]hbcrossswap.FundingRate, 10)
 var tPremiumIndexes map[string]bnswap.PremiumIndex
 var tPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
 var mtFundingRates = make(map[string]float64)

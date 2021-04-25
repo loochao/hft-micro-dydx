@@ -20,7 +20,7 @@ func watchMakerBars(
 	requestInterval time.Duration,
 	output chan common.KLinesMap,
 ) {
-	loopTimer := time.NewTimer(time.Minute)
+	loopTimer := time.NewTimer(time.Second)
 	defer loopTimer.Stop()
 	outputTimer := time.NewTimer(time.Second)
 	defer outputTimer.Stop()
@@ -29,7 +29,7 @@ func watchMakerBars(
 	for i, makerSymbol := range makerSymbols {
 		nextPullTimes[makerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
 	}
-	candleGranularity := int64(180)
+	candleGranularity := int64(300)
 	candleDuration := time.Duration(candleGranularity)*time.Second
 	globalNextPullTime := time.Now()
 	globalNextRetryTime := time.Now()

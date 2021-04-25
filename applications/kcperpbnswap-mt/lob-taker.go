@@ -2,15 +2,14 @@ package main
 
 import (
 	"context"
+	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
 	"github.com/geometrybase/hft-micro/logger"
 )
 
-func makerRoutedDepthLoop(
+func takerRoutedDepthLoop(
 	ctx context.Context,
 	cancel context.CancelFunc,
-	api *kcperp.API,
 	proxyAddress string,
 	channels map[string]chan *common.DepthRawMessage,
 ) {
@@ -18,11 +17,10 @@ func makerRoutedDepthLoop(
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 	}
-	logger.Debugf("START makerRoutedDepthLoop %s", symbols)
-	defer logger.Debugf("EXIT makerRoutedDepthLoop %s", symbols)
-	ws := kcperp.NewDepth5RoutedWebsocket(
+	logger.Debugf("START takerRoutedDepthLoop %s", symbols)
+	defer logger.Debugf("EXIT takerRoutedDepthLoop %s", symbols)
+	ws := bnswap.NewDepth5RoutedWebsocket(
 		ctx,
-		api,
 		proxyAddress,
 		channels,
 	)

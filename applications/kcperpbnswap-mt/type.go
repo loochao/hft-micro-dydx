@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"time"
 )
 
@@ -14,16 +14,16 @@ type TakerOrderNewError struct {
 
 type MakerOrderNewError struct {
 	Error  error
-	Params kcperp.NewOrderParam
+	Params hbcrossswap.NewOrderParam
 }
 
 type MakerOrderRequest struct {
-	New    *kcperp.NewOrderParam
-	Cancel *kcperp.CancelAllParam
+	New    *hbcrossswap.NewOrderParam
+	Cancel *hbcrossswap.CancelAllParam
 }
 
 type MakerOpenOrder struct {
-	*kcperp.NewOrderParam
+	*hbcrossswap.NewOrderParam
 	ResponseOrderID string
 	Symbol          string
 }

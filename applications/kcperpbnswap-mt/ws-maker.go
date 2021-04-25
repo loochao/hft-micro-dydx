@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"time"
 )
 
-func handleMakerWSAccount(wsBalance *kcperp.WSAccounts) {
+func handleMakerWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 	for _, account := range wsBalance.Accounts {
 		if account.MarginAsset == "USDT" {
 			account := account
@@ -31,10 +31,10 @@ func handleMakerWSAccount(wsBalance *kcperp.WSAccounts) {
 	}
 }
 
-func handleMakerWSPosition(wsPositions *kcperp.WSPositions) {
+func handleMakerWSPosition(wsPositions *hbcrossswap.WSPositions) {
 	for _, nextPos := range wsPositions.Positions {
 		if takerSymbol, ok := mtSymbolsMap[nextPos.Symbol]; ok {
-			if nextPos.Direction == kcperp.PositionDirectionBuy {
+			if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
 				if lastPos, ok := mBuyPositions[nextPos.Symbol]; ok {
 					mHttpPositionUpdateSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 					if nextPos.Volume != lastPos.Volume {

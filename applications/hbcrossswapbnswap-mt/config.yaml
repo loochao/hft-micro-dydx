@@ -1,28 +1,28 @@
-name: hbcrossswapbnswap-mt-gb-ff01
+name: kcperpbnswap-mt
 dryRun: true
 proxyAddress: socks5://127.0.0.1:1081
 cpuProfile: #/Users/chenjilin/Downloads/hbspotcrossswap-mt.prof
 internalInflux:
-  address: http://tigger.jilinchen.com:18086
-  username: hft
-  password: hft
-  database: hft
-  measurement: hbcrossswapbnswap-mt-gb-ff01
+  address: http://localhost:8086
+  username: test
+  password: test
+  database: test
+  measurement: kcperpbnswap-mt
   batchSize: 0
   saveInterval: 1m0s
 externalInflux:
-  address: http://hehe.jilinchen.com:7003
-  username: hft
-  password: hft
-  database: fund
+  address: http://localhost:8086
+  username: test
+  password: test
+  database: test
   measurement: accounts
   batchSize: 0
   saveInterval: 1m0s
 
-hbApiKey: d145d14e-c28e8b45-db057916-b1rkuf4drg
-hbApiSecret: 9a4e9695-2233be75-aa0f8d39-a8de7
-bnApiKey: ksu8ZMYNnhIXbq0KQtEczuZxMQH5eoRAnJGDBGj6BzlMVtvGpQccIN8kmzU4bE52
-bnApiSecret: ZEEI4X5FJ2CoPNwjE05UoJafVl0LM0HtUWIdhxaROvi9StKyihaIZMNEh06JS004
+kcApiKey: xxxxxx
+kcApiSecret: xxxxx
+bnApiKey: xxxxx
+bnApiSecret: xxxx
 
 leverage: 3
 changeLeverage: false

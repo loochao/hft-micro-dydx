@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/hbcrossswap"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"time"
@@ -12,8 +12,8 @@ import (
 
 func watchMakerBars(
 	ctx context.Context,
-	api *kcperp.API,
-	takerSymbols []string,
+	api *hbcrossswap.API,
+	makerSymbols []string,
 	barsLookback int,
 	pullInterval time.Duration,
 	pullRetryInterval time.Duration,
@@ -26,11 +26,11 @@ func watchMakerBars(
 	defer outputTimer.Stop()
 	barsMap := make(common.KLinesMap)
 	nextPullTimes := make(map[string]time.Time)
-	for i, takerSymbol := range takerSymbols {
-		nextPullTimes[takerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
+	for i, makerSymbol := range makerSymbols {
+		nextPullTimes[makerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
 	}
-	klineDuration := kcperp.GranularityDurations[kcperp.Granularity30Min]
-	klineGranularity := kcperp.Granularity30Min
+	klinePeriod := hbcrossswap.KlinePeriod5min
+	klineDuration := hbcrossswap.KlinePeriodDuration[klinePeriod]
 	globalNextPullTime := time.Now()
 	globalNextRetryTime := time.Now()
 	outputResults := true
@@ -74,15 +74,13 @@ func watchMakerBars(
 					symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
 				}
 				history, err := api.GetKlines(
-					ctx, kcperp.KlinesParam{
-						Symbol:      symbol,
-						From:        symbolStartTime.Unix() * 1000,
-						To:          symbolEndTime.Unix() * 1000,
-						Granularity: klineGranularity,
+					ctx, hbcrossswap.KlinesParam{
+						Symbol: symbol,
+						Size:   barsLookback,
+						Period: klinePeriod,
 					})
-				//history, err := api.GetHistoryKLines(ctx, symbol, klineInterval, symbolStartTime)
 				if err != nil {
-					logger.Debugf("api.GetKlines for %s error %v", symbol, err)
+					logger.Debugf("MAKER GetKlines for %s error %v", symbol, err)
 					select {
 					case <-ctx.Done():
 						return
@@ -94,12 +92,12 @@ func watchMakerBars(
 				}
 
 				if len(history) <= 1 {
-					logger.Debugf("TAKER %s BAR LEN <= 1", symbol)
+					logger.Debugf("MAKER %s BAR LEN <= 1", symbol)
 					globalNextRetryTime = globalNextRetryTime.Add(pullRetryInterval)
 					nextPullTimes[symbol] = globalNextRetryTime
 					continue
 				}
-				//logger.Debugf("TAKER GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
+				//logger.Debugf("MAKER GET %s LEN %d LAST CLOSE %f TIME %v", symbol, len(history), history[len(history)-1].Close, history[len(history)-1].Timestamp)
 				if _, ok := barsMap[symbol]; !ok {
 					barsMap[symbol] = history
 				}
@@ -127,7 +125,7 @@ func watchMakerBars(
 
 			if outputResults {
 				allSuccess := true
-				for _, symbol := range takerSymbols {
+				for _, symbol := range makerSymbols {
 					if len(barsMap[symbol]) == 0 {
 						allSuccess = false
 						break
@@ -145,7 +143,7 @@ func watchMakerBars(
 					case output <- outputMap:
 					}
 					outputResults = false
-					logger.Debugf("OUTPUT TAKER BARS")
+					logger.Debugf("OUTPUT MAKER BARS")
 				}
 			}
 			loopTimer.Reset(time.Second)
@@ -153,6 +151,7 @@ func watchMakerBars(
 		}
 	}
 }
+
 func watchTakerBars(
 	ctx context.Context,
 	api *bnswap.API,
@@ -172,8 +171,8 @@ func watchTakerBars(
 	for i, takerSymbol := range takerSymbols {
 		nextPullTimes[takerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
 	}
-	klineInterval := "30m"
-	klineDuration := time.Minute * 30
+	klineInterval := "5m"
+	klineDuration := time.Minute * 5
 	globalNextPullTime := time.Now()
 	globalNextRetryTime := time.Now()
 	outputResults := true
