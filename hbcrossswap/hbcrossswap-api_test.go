@@ -23,7 +23,7 @@ func TestAPI_GetHeartbeat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	hb, err := api.GetHeartbeat(ctx)
+	hb, err := api.GetTimestamp(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}

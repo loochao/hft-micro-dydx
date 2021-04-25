@@ -43,8 +43,6 @@ type MakerTakerDeltaQuantile struct {
 }
 
 const (
-	WalkedOrderBookTypeMaker = "huobi"
-	WalkedOrderBookTypeTaker = "binance"
 	MakerName                = "huobi"
 	TakerName                = "binance"
 )

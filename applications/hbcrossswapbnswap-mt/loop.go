@@ -170,6 +170,7 @@ func updateMakerNewOrders() {
 		//	mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 		//	logger.Debugf("LOOP %s", makerSymbol)
 		//}
+		makerUSDTAvailable := mAccount.WithdrawAvailable
 
 		if spread.ShortLastLeave < quantile.ShortBot &&
 			spread.ShortMedianLeave < quantile.ShortBot &&
@@ -275,8 +276,8 @@ func updateMakerNewOrders() {
 				targetValue = entryTarget
 			}
 			entryValue := targetValue - makerSize*price
-			if entryValue > mAccount.WithdrawAvailable*0.8 {
-				entryValue = mAccount.WithdrawAvailable * 0.8
+			if entryValue > makerUSDTAvailable*0.8 {
+				entryValue = makerUSDTAvailable * 0.8
 			}
 
 			volume := entryValue / price
@@ -301,12 +302,12 @@ func updateMakerNewOrders() {
 				}
 				continue
 			}
-			if entryValue > mAccount.WithdrawAvailable {
+			if entryValue > makerUSDTAvailable {
 				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
 					logger.Debugf(
 						"FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f > %f, %f > %f, SIZE %f",
 						entryValue,
-						mAccount.WithdrawAvailable,
+						makerUSDTAvailable,
 						makerSymbol,
 						spread.ShortLastEnter, quantile.ShortTop,
 						spread.ShortMedianEnter, quantile.ShortTop,
@@ -339,6 +340,7 @@ func updateMakerNewOrders() {
 				spread.ShortMedianEnter, quantile.ShortTop,
 				volume,
 			)
+			makerUSDTAvailable -= entryValue
 			order := hbcrossswap.NewOrderParam{
 				Symbol:        makerSymbol,
 				ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
@@ -358,7 +360,6 @@ func updateMakerNewOrders() {
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 			mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
 			mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
-			return
 		} else if spread.LongLastEnter < quantile.LongBot &&
 			spread.LongMedianEnter < quantile.LongBot &&
 			fundingRate < -*mtConfig.MinimalEnterFundingRate &&
@@ -371,8 +372,8 @@ func updateMakerNewOrders() {
 			}
 			entryValue := targetValue - makerSize*price
 
-			if entryValue > mAccount.WithdrawAvailable*0.8 {
-				entryValue = mAccount.WithdrawAvailable * 0.8
+			if entryValue > makerUSDTAvailable*0.8 {
+				entryValue = makerUSDTAvailable * 0.8
 			}
 
 			volume := entryValue / price
@@ -397,12 +398,12 @@ func updateMakerNewOrders() {
 				}
 				continue
 			}
-			if entryValue > mAccount.WithdrawAvailable {
+			if entryValue > makerUSDTAvailable {
 				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
 					logger.Debugf(
 						"FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f < %f, %f < %f, SIZE %f",
 						entryValue,
-						mAccount.WithdrawAvailable,
+						makerUSDTAvailable,
 						makerSymbol,
 						spread.LongLastEnter, quantile.LongBot,
 						spread.LongMedianEnter, quantile.LongBot,
@@ -435,6 +436,7 @@ func updateMakerNewOrders() {
 				spread.LongMedianEnter, quantile.LongBot,
 				volume,
 			)
+			makerUSDTAvailable -= entryValue
 			order := hbcrossswap.NewOrderParam{
 				Symbol:        makerSymbol,
 				ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
@@ -454,16 +456,10 @@ func updateMakerNewOrders() {
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 			mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
 			mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
-			return
 		}
 	}
+}
 
-}
-func handleRestartSilent() {
-	for _, makerSymbol := range mSymbols {
-		mSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.RestartSilent)
-	}
-}
 
 func handleUpdateFundingRates() {
 	if mFundingRates == nil {
@@ -472,7 +468,6 @@ func handleUpdateFundingRates() {
 	if tPremiumIndexes == nil {
 		return
 	}
-	//logger.Debugf("%v %v", mFundingRates, tPremiumIndexes)
 	frs := make([]float64, len(mSymbols))
 	for i, makerSymbol := range mSymbols {
 		takerSymbol := mtSymbolsMap[makerSymbol]

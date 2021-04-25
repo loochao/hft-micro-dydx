@@ -35,7 +35,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 					return nil, fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
-				if counter >= 40 || bytes[offset+1] == ']'{
+				if counter >= 40 || bytes[offset+1] == ']' {
 					currentKey = common.JsonKeyAsks
 					offset += 12
 					collectStart = offset
@@ -57,7 +57,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 					return nil, fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
-				if counter >= 40 || bytes[offset+1] == ']'{
+				if counter >= 40 || bytes[offset+1] == ']' {
 					currentKey = common.JsonKeyEventTime
 					offset += 8
 					collectStart = offset
@@ -252,3 +252,44 @@ func WatchFundingRate(
 	}
 }
 
+func SystemStatusLoop(
+	ctx context.Context,
+	api *API,
+	interval time.Duration,
+	output chan bool,
+) {
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			heartBeat, err := api.GetHeartBeat(subCtx)
+			if err != nil {
+				logger.Debugf("api.GetHeartBeat error %v", err)
+				select {
+				case output <- false:
+				default:
+					logger.Debugf("output <- false failed, ch len %d", len(output))
+				}
+			} else {
+				if heartBeat.LinearSwapHeartbeat == 0 {
+					select {
+					case output <- false:
+					default:
+						logger.Debugf("output <- false failed, ch len %d", len(output))
+					}
+				} else {
+					select {
+					case output <- true:
+					default:
+						logger.Debugf("output <- true failed, ch len %d", len(output))
+					}
+				}
+			}
+			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
+		}
+	}
+}

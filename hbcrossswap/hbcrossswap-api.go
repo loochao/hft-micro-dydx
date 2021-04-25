@@ -22,7 +22,39 @@ type API struct {
 	client    http.Client
 	accessKey string
 	secretKey string
-	mu sync.Mutex
+	mu        sync.Mutex
+}
+
+func (api *API) GetHeartBeat(ctx context.Context) (*HeartBeat, error) {
+	path := "https://api.hbdm.com/heartbeat"
+	req, err := http.NewRequest(http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.client.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+	reader := resp.Body
+	contents, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	var dataCap DataCap
+	if err := json.Unmarshal(contents, &dataCap); err != nil {
+		return nil, err
+	} else if dataCap.Status != "ok" {
+		return nil, errors.New(fmt.Sprintf("%d %s", dataCap.ErrCode, dataCap.ErrMsg))
+	}
+	hb := &HeartBeat{}
+	if dataCap.Data == nil {
+		return nil, json.Unmarshal(contents, hb)
+	}
+	return hb, json.Unmarshal(dataCap.Data, hb)
 }
 
 func (api *API) SendHTTPRequest(ctx context.Context, method, path string, params common.Params, result interface{}) error {
@@ -119,7 +151,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	return json.Unmarshal(dataCap.Data, result)
 }
 
-func (api *API) GetHeartbeat(ctx context.Context) (*DataCap, error) {
+func (api *API) GetTimestamp(ctx context.Context) (*DataCap, error) {
 	dataCap := &DataCap{}
 	return dataCap, api.SendHTTPRequest(ctx, http.MethodGet, "/api/v1/timestamp", nil, dataCap)
 }
@@ -175,7 +207,6 @@ func (api *API) CancelAllOrders(ctx context.Context, param CancelAllParam) (*Can
 	nor := &CancelAllResponse{}
 	return nor, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/linear-swap-api/v1/swap_cross_cancelall", nil, param, &nor)
 }
-
 
 func NewAPI(key, secret, proxy string) (*API, error) {
 	var client http.Client

@@ -70,7 +70,7 @@ func main() {
 	//requestTime = int64(0)
 	//for i := 0; i < 10; i++ {
 	//	start := time.Now()
-	//	tt, err := mAPI.GetHeartbeat(context.Background())
+	//	tt, err := mAPI.GetTimestamp(context.Background())
 	//	if err != nil {
 	//		logger.Debugf("bnswap.GetServerTime error %v", err)
 	//		return
@@ -271,13 +271,11 @@ func main() {
 		mtBarsMapCh,
 		mtQuantilesCh,
 	)
-	depthReportCh := make(chan common.DepthReport, 10000)
 	spreadReportCh := make(chan common.SpreadReport, 10000)
-	go watchReports(
+	go reportsSaveLoop(
 		mtGlobalCtx,
 		mtInfluxWriter,
 		*mtConfig.InternalInflux,
-		depthReportCh,
 		spreadReportCh,
 	)
 
@@ -324,11 +322,15 @@ func main() {
 		go watchMakerTakerSpread(
 			mtGlobalCtx,
 			makerSymbol, takerSymbol,
-			mContractSizes[makerSymbol],
+			mContractSizes[takerSymbol],
 			*mtConfig.OrderBookMakerImpact,
 			*mtConfig.OrderBookTakerImpact,
-			*mtConfig.OrderBookMaxAgeDiff,
-			*mtConfig.OrderBookMaxAge,
+			*mtConfig.OrderBookMakerDecay,
+			*mtConfig.OrderBookMakerBias,
+			*mtConfig.OrderBookTakerDecay,
+			*mtConfig.OrderBookTakerBias,
+			*mtConfig.OrderBookMaxAgeDiffBias,
+			*mtConfig.ReportCount,
 			*mtConfig.SpreadLookbackDuration,
 			*mtConfig.SpreadLookbackMinimalWindow,
 			makerRowDepthChs[makerSymbol],
@@ -364,6 +366,20 @@ func main() {
 			tNewOrderErrorCh,
 		)
 	}
+
+	go hbcrossswap.SystemStatusLoop(
+		mtGlobalCtx,
+		mAPI,
+		*mtConfig.PullInterval/2,
+		mSystemStatusCh,
+	)
+
+	go bnswap.SystemStatusLoop(
+		mtGlobalCtx,
+		tAPI,
+		*mtConfig.PullInterval/2,
+		tSystemStatusCh,
+	)
 
 	if *mtConfig.CpuProfile != "" {
 		sigs := make(chan os.Signal, 1)
@@ -409,9 +425,25 @@ func main() {
 		case <-tUserWebsocket.Done():
 			logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
 			return
+		case mSystemReady = <-mSystemStatusCh:
+			logger.Debugf("mSystemStatusCh %v", mSystemReady)
+			if !mSystemReady {
+				mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
+			}
+			break
+		case tSystemReady = <-tSystemStatusCh:
+			logger.Debugf("tSystemStatusCh %v", tSystemReady)
+			if !tSystemReady {
+				mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
+			}
+			break
 		case <-mUserWebsocket.RestartCh:
-			logger.Debugf("mUserWebsocket restart silent %v", *mtConfig.RestartSilent)
-			handleRestartSilent()
+			logger.Debugf("<-mUserWebsocket.RestartCh restart silent %v", *mtConfig.RestartSilent)
+			mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
+		case <-tUserWebsocket.RestartCh:
+			logger.Debugf("<-tUserWebsocket.RestartCh restart silent %v", *mtConfig.RestartSilent)
+			mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
+			break
 		case ps := <-mPositionCh:
 			handleMakerHttpPositions(ps)
 			break
@@ -557,13 +589,29 @@ func main() {
 				}
 			}
 		case <-mtLoopTimer.C:
-			updateTakerPositions()
-			if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
-				time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
-				updateMakerOldOrders()
-				updateMakerNewOrders()
+			if mSystemReady && tSystemReady && time.Now().Sub(mtGlobalSilent) > 0 {
+				updateTakerPositions()
+				if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
+					time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
+					updateMakerOldOrders()
+					updateMakerNewOrders()
+				} else {
+					cancelAllMakerOpenOrders()
+				}
 			} else {
-				cancelAllMakerOpenOrders()
+				if len(mOpenOrders) > 0 {
+					for makerSymbol := range mOpenOrders {
+						select {
+						case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
+							Cancel: &hbcrossswap.CancelAllParam{
+								Symbol: makerSymbol,
+							},
+						}:
+							delete(mOpenOrders, makerSymbol)
+						default:
+						}
+					}
+				}
 			}
 			mtLoopTimer.Reset(
 				time.Now().Truncate(

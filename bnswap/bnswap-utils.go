@@ -621,12 +621,12 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 	return &orderBook, nil
 }
 
-func HttpPingLoop(
+func SystemStatusLoop(
 	ctx context.Context, api *API, interval time.Duration,
 	output chan bool,
 ) {
-	logger.Debugf("START HttpPingLoop")
-	defer logger.Debugf("EXIT HttpPingLoop")
+	logger.Debugf("START SystemStatusLoop")
+	defer logger.Debugf("EXIT SystemStatusLoop")
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {

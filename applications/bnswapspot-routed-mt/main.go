@@ -346,7 +346,7 @@ func main() {
 		bnspotSystemStatusCh,
 	)
 
-	go bnswap.HttpPingLoop(
+	go bnswap.SystemStatusLoop(
 		bnGlobalCtx,
 		bnswapAPI,
 		*bnConfig.PullInterval/2,

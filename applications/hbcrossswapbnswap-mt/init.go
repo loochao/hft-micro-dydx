@@ -88,12 +88,17 @@ var mtUnHedgeLogSilentTimes = time.Unix(0, 0)
 var mtLogSilentTimes = make(map[string]time.Time)
 var mtLoopTimer *time.Timer
 var mtDualEnds []int
+var mSystemReady = false
+var tSystemReady = false
+var mSystemStatusCh = make(chan bool, 10)
+var tSystemStatusCh = make(chan bool, 10)
+var mtGlobalSilent = time.Now()
 
 var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210423 01:50:55  ####")
+	logger.Debug("####  BUILD @ 20210425 04:37:26  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
