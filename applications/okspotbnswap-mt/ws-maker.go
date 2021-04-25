@@ -14,12 +14,12 @@ func handleMakerWSAccount(balances []okspot.Balance) {
 				(balance.Balance != mAccount.Balance ||
 					balance.Available != mAccount.Available ||
 					balance.Hold != mAccount.Hold) {
-				logger.Debugf("SPOT WS BALANCE %s", balance.ToString())
+				logger.Debugf("MAKER WS BALANCE %s", balance.ToString())
 			}
 			mAccount = &balance
 			continue
 		}
-		makerSymbol := balance.Currency + "USDT"
+		makerSymbol := balance.Currency + "-USDT"
 		if _, ok := mtSymbolsMap[makerSymbol]; !ok {
 			continue
 		}
@@ -32,9 +32,11 @@ func handleMakerWSAccount(balances []okspot.Balance) {
 		mBalances[makerSymbol] = balance
 		mBalancesUpdateTimes[makerSymbol] = time.Now()
 
+		logger.Debugf("MAKER %s B%f A%f H%f", balance.Currency, balance.Balance, balance.Available, balance.Hold)
+
 		if lastBalance == nil ||
-			lastBalance.Balance != mBalances[makerSymbol].Balance {
-			logger.Debugf("SPOT WS BALANCE %s", balance.ToString())
+			lastBalance.Balance != balance.Balance {
+			logger.Debugf("MAKER WS BALANCE %s", balance.ToString())
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			tOrderSilentTimes[makerSymbol] = time.Now()
 			mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
