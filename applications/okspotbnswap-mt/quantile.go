@@ -95,6 +95,8 @@ func watchDeltaQuantile(
 						q.LongBot = -minimalEnterDelta
 					}
 					quantiles[makerSymbol] = q
+				}else {
+					logger.Debugf("BAR LEN %d %d MATCHED %d", len(takerBars), len(makerBars), counter)
 				}
 			}
 			//logger.Debugf("QUANTILES UPDATED.")
