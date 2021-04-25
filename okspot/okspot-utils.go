@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"strings"
 	"time"
 	"unsafe"
 )
@@ -152,10 +153,12 @@ func SystemStatusHttpLoop(
 			statuses, err := api.GetStatus(subCtx)
 			if err != nil {
 				logger.Debugf("api.GetStatus(subCtx) error %v", err)
-				select {
-				case output <- false:
-				default:
-					logger.Debugf("output <- false, failed ch len %d", len(output))
+				if !strings.Contains(err.Error(), "Too Many Requests") {
+					select {
+					case output <- false:
+					default:
+						logger.Debugf("output <- false, failed ch len %d", len(output))
+					}
 				}
 			} else {
 				ready := true
