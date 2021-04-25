@@ -141,7 +141,7 @@ func SystemStatusHttpLoop(
 	ctx context.Context, api *API, interval time.Duration,
 	output chan bool,
 ) {
-	timer := time.NewTimer(time.Second)
+	timer := time.NewTimer(interval)
 	defer timer.Stop()
 	for {
 		select {
