@@ -21,7 +21,7 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 			mAccount = &balance
 			continue
 		}
-		makerSymbol := balance.Currency + "USDT"
+		makerSymbol := balance.Currency + "-USDT"
 		if _, ok := mtSymbolsMap[makerSymbol]; !ok {
 			continue
 		}
