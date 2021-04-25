@@ -108,6 +108,11 @@ func handleSave() {
 			fields["quantileMid"] = quantile.Mid
 			fields["quantileMaClose"] = quantile.MaClose
 		}
+		if time.Now().Sub(mtGlobalSilent) > 0 {
+			fields["globalSilent"] = 0
+		} else {
+			fields["globalSilent"] = 1
+		}
 		pt, err := client.NewPoint(
 			*mtConfig.InternalInflux.Measurement,
 			map[string]string{

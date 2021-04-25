@@ -98,7 +98,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210425 04:37:26  ####")
+	logger.Debug("####  BUILD @ 20210425 04:44:38  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -155,6 +155,7 @@ func init() {
 
 	mtMapUpdated[TakerName] = false
 	mtMapUpdated[MakerName] = false
+	mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 
 	//hostname, err := os.Hostname()
 	//if err != nil {

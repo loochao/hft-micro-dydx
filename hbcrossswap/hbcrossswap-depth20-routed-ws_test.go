@@ -2,6 +2,7 @@ package hbcrossswap
 
 import (
 	"context"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"testing"
 )
@@ -9,12 +10,12 @@ import (
 func TestNewDepth20RoutedWebsocket(t *testing.T) {
 	var ctx = context.Background()
 	var symbols = []string{"FIL-USDT", "WAVES-USDT", "LINK-USDT"}
-	var channels = make(map[string]chan []byte)
+	var channels = make(map[string]chan *common.DepthRawMessage)
 	for _, symbol := range symbols {
-		channels[symbol] = make(chan []byte, 100)
+		channels[symbol] = make(chan *common.DepthRawMessage, 100)
 	}
 	ws := NewDepth20RoutedWebsocket(
-		ctx, 0.9999, 300, "socks5://127.0.0.1:1081", channels, nil,
+		ctx,  "socks5://127.0.0.1:1081", channels,
 	)
 	for {
 		select {
