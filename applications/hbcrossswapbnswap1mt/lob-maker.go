@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/kcperp"
 	"github.com/geometrybase/hft-micro/logger"
 )
 
 func makerRoutedDepthLoop(
 	ctx context.Context,
 	cancel context.CancelFunc,
+	api *kcperp.API,
 	proxyAddress string,
 	channels map[string]chan *common.DepthRawMessage,
 ) {
@@ -19,8 +20,9 @@ func makerRoutedDepthLoop(
 	}
 	logger.Debugf("START makerRoutedDepthLoop %s", symbols)
 	defer logger.Debugf("EXIT makerRoutedDepthLoop %s", symbols)
-	ws := hbcrossswap.NewDepth20RoutedWebsocket(
+	ws := kcperp.NewDepth5RoutedWebsocket(
 		ctx,
+		api,
 		proxyAddress,
 		channels,
 	)

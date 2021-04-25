@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/kcperp"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/rand"
@@ -198,15 +198,15 @@ func updateMakerNewOrders() {
 					spread.ShortMedianLeave, quantile.ShortBot,
 					volume,
 				)
-				order := hbcrossswap.NewOrderParam{
+				order := kcperp.NewOrderParam{
 					Symbol:        makerSymbol,
 					ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
 					Price:          common.Float64(price),
 					Volume:         int64(volume),
-					Direction:      hbcrossswap.OrderDirectionSell,
-					Offset:         hbcrossswap.OrderOffsetClose,
+					Direction:      kcperp.OrderDirectionSell,
+					Offset:         kcperp.OrderOffsetClose,
 					LeverRate:      *mtConfig.Leverage,
-					OrderPriceType: hbcrossswap.OrderPriceTypePostOnly,
+					OrderPriceType: kcperp.OrderPriceTypePostOnly,
 				}
 
 				mOpenOrders[makerSymbol] = MakerOpenOrder{
@@ -245,15 +245,15 @@ func updateMakerNewOrders() {
 					spread.LongMedianLeave, quantile.LongTop,
 					volume,
 				)
-				order := hbcrossswap.NewOrderParam{
+				order := kcperp.NewOrderParam{
 					Symbol:        makerSymbol,
 					ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
 					Price:          common.Float64(price),
 					Volume:         int64(volume),
-					Direction:      hbcrossswap.OrderDirectionBuy,
-					Offset:         hbcrossswap.OrderOffsetClose,
+					Direction:      kcperp.OrderDirectionBuy,
+					Offset:         kcperp.OrderOffsetClose,
 					LeverRate:      *mtConfig.Leverage,
-					OrderPriceType: hbcrossswap.OrderPriceTypePostOnly,
+					OrderPriceType: kcperp.OrderPriceTypePostOnly,
 				}
 				mOpenOrders[makerSymbol] = MakerOpenOrder{
 					Symbol: makerSymbol,
@@ -342,15 +342,15 @@ func updateMakerNewOrders() {
 				volume,
 			)
 			makerUSDTAvailable -= entryValue
-			order := hbcrossswap.NewOrderParam{
+			order := kcperp.NewOrderParam{
 				Symbol:        makerSymbol,
 				ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
 				Price:          common.Float64(price),
 				Volume:         int64(volume),
-				Direction:      hbcrossswap.OrderDirectionBuy,
-				Offset:         hbcrossswap.OrderOffsetOpen,
+				Direction:      kcperp.OrderDirectionBuy,
+				Offset:         kcperp.OrderOffsetOpen,
 				LeverRate:      *mtConfig.Leverage,
-				OrderPriceType: hbcrossswap.OrderPriceTypePostOnly,
+				OrderPriceType: kcperp.OrderPriceTypePostOnly,
 			}
 			mOpenOrders[makerSymbol] = MakerOpenOrder{
 				Symbol: makerSymbol,
@@ -438,15 +438,15 @@ func updateMakerNewOrders() {
 				volume,
 			)
 			makerUSDTAvailable -= entryValue
-			order := hbcrossswap.NewOrderParam{
+			order := kcperp.NewOrderParam{
 				Symbol:        makerSymbol,
 				ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
 				Price:          common.Float64(price),
 				Volume:         int64(volume),
-				Direction:      hbcrossswap.OrderDirectionSell,
-				Offset:         hbcrossswap.OrderOffsetOpen,
+				Direction:      kcperp.OrderDirectionSell,
+				Offset:         kcperp.OrderOffsetOpen,
 				LeverRate:      *mtConfig.Leverage,
-				OrderPriceType: hbcrossswap.OrderPriceTypePostOnly,
+				OrderPriceType: kcperp.OrderPriceTypePostOnly,
 			}
 			mOpenOrders[makerSymbol] = MakerOpenOrder{
 				Symbol: makerSymbol,

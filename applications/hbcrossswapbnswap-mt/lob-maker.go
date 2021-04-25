@@ -10,7 +10,6 @@ import (
 func makerRoutedDepthLoop(
 	ctx context.Context,
 	cancel context.CancelFunc,
-	api *hbcrossswap.API,
 	proxyAddress string,
 	channels map[string]chan *common.DepthRawMessage,
 ) {
@@ -20,9 +19,8 @@ func makerRoutedDepthLoop(
 	}
 	logger.Debugf("START makerRoutedDepthLoop %s", symbols)
 	defer logger.Debugf("EXIT makerRoutedDepthLoop %s", symbols)
-	ws := hbcrossswap.NewDepth5RoutedWebsocket(
+	ws := hbcrossswap.NewDepth20RoutedWebsocket(
 		ctx,
-		api,
 		proxyAddress,
 		channels,
 	)

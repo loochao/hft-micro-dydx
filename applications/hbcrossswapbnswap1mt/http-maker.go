@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/kcperp"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"time"
 )
 
-func handleMakerHttpPositions(positions []hbcrossswap.Position) {
+func handleMakerHttpPositions(positions []kcperp.Position) {
 	hasBuyPositions := make(map[string]bool)
 	hasSellPositions := make(map[string]bool)
 	for _, makerSymbol := range mSymbols {
@@ -18,7 +18,7 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 		if _, ok := mtSymbolsMap[nextPos.Symbol]; !ok {
 			continue
 		}
-		if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
+		if nextPos.Direction == kcperp.PositionDirectionBuy {
 			hasBuyPositions[nextPos.Symbol] = true
 		}else{
 			hasSellPositions[nextPos.Symbol] = true
@@ -26,8 +26,8 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 		if time.Now().Sub(mHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
 			continue
 		}
-		var lastPosition *hbcrossswap.Position
-		if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
+		var lastPosition *kcperp.Position
+		if nextPos.Direction == kcperp.PositionDirectionBuy {
 			if p, ok := mBuyPositions[nextPos.Symbol]; ok {
 				p := p
 				lastPosition = &p
@@ -69,8 +69,8 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 		if hasPosition {
 			continue
 		}
-		nextPos := hbcrossswap.Position{Symbol: takerSymbol, Direction: hbcrossswap.PositionDirectionBuy}
-		var lastPosition *hbcrossswap.Position
+		nextPos := kcperp.Position{Symbol: takerSymbol, Direction: kcperp.PositionDirectionBuy}
+		var lastPosition *kcperp.Position
 		if p, ok := mBuyPositions[nextPos.Symbol]; ok {
 			p := p
 			lastPosition = &p
@@ -93,8 +93,8 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 		if hasPosition {
 			continue
 		}
-		nextPos := hbcrossswap.Position{Symbol: takerSymbol, Direction: hbcrossswap.PositionDirectionSell}
-		var lastPosition *hbcrossswap.Position
+		nextPos := kcperp.Position{Symbol: takerSymbol, Direction: kcperp.PositionDirectionSell}
+		var lastPosition *kcperp.Position
 		if p, ok := mSellPositions[nextPos.Symbol]; ok {
 			p := p
 			lastPosition = &p
@@ -115,7 +115,7 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 	}
 }
 
-func handleMakerHttpAccount(account hbcrossswap.Account) {
+func handleMakerHttpAccount(account kcperp.Account) {
 	if mAccount == nil {
 		mtLoopTimer.Reset(time.Nanosecond)
 		logger.Debugf("MAKER HTTP USDT CHANGE MB nil -> %f", account.MarginBalance)
