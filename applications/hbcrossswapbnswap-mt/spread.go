@@ -168,7 +168,11 @@ func watchMakerTakerSpread(
 				makerWalkedDepth, err = common.WalkMakerTakerDepth20(makerDepth, makerImpact, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("common.WalkMakerTakerDepth20 error %v %s", err, makerSymbol)
+						if makerRawDepth == nil {
+							logger.Debugf("maker common.WalkMakerTakerDepth20 error %v %s", err, makerSymbol)
+						}else {
+							logger.Debugf("maker common.WalkMakerTakerDepth20 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
+						}
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 					break
@@ -181,7 +185,11 @@ func watchMakerTakerSpread(
 				takerWalkedDepth, err = common.WalkMakerTakerDepth5(takerDepth, makerImpact, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("common.WalkMakerTakerDepth5 error %v %s", err, takerSymbol)
+						if takerRawDepth == nil {
+							logger.Debugf("taker common.WalkMakerTakerDepth5 error %v %s", err, takerSymbol)
+						}else{
+							logger.Debugf("taker common.WalkMakerTakerDepth5 error %v %s %s", err, takerSymbol, takerRawDepth.Depth)
+						}
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 					break
