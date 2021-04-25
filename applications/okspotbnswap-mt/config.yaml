@@ -1,29 +1,29 @@
-name: okspotbnswap-mt-gb-ff03
+name: okspotbnswap-mt
 dryRun: true
 proxyAddress: socks5://127.0.0.1:1081
 cpuProfile: #/Users/chenjilin/Downloads/hbspotcrossswap-mt.prof
 internalInflux:
-  address: http://tigger.jilinchen.com:18086
-  username: hft
-  password: hft
-  database: hft
-  measurement: okspotbnswap-mt-gb-ff03
+  address: http://localhost:8086
+  username: test
+  password: test
+  database: test
+  measurement: okspotbnswap-mt
   batchSize: 0
   saveInterval: 1m0s
 externalInflux:
-  address: http://hehe.jilinchen.com:7003
-  username: hft
-  password: hft
-  database: fund
+  address: http://localhost:8086
+  username: test
+  password: test
+  database: test
   measurement: accounts
   batchSize: 0
   saveInterval: 1m0s
 
-bnApiKey: yuJSE8iKP1G08GJhaJ1MKMVGwmWkTrGmAhQ8tK84wVHd3wDWhcvnuT9xyxl0EZcN
-bnApiSecret: Qg8SHiElH1zTFLYGpwe7rPRSpibKYR1WaC6vDhVTCjo10VLSCps5XGaYhlhBjI3R
-okApiKey: 297624eb-1abc-4c45-a13a-250a757bac1d
-okApiSecret: 9589D50C9D0A478C193BEFEBB1912B63
-okApiPassphrase: maodaye
+bnApiKey: xxxxxxxxxxxxxx
+bnApiSecret: xxxxxxxxxxxxxx
+okApiKey: xxxxxxxxxxxxxx
+okApiSecret: xxxxxxxxxxxxxx
+okApiPassphrase: xxxxxxxxxxxxxx
 
 leverage: 10
 changeLeverage: false
