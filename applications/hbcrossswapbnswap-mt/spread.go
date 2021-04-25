@@ -13,7 +13,7 @@ import (
 func watchMakerTakerSpread(
 	ctx context.Context,
 	makerSymbol, takerSymbol string,
-	multiplier,
+	contractSizes,
 	makerImpact, takerImpact float64,
 	makerDecay, makerBias,
 	takerDecay, takerBias float64,
@@ -208,6 +208,11 @@ func watchMakerTakerSpread(
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if makerDepth == nil || newMakerDepth.MRID > makerDepth.MRID {
+				//需要乘以multiplier
+				for i = range newMakerDepth.Bids {
+					newMakerDepth.Bids[i][1] *= contractSizes
+					newMakerDepth.Asks[i][1] *= contractSizes
+				}
 				makerDepth = newMakerDepth
 				makerWalkDepthTimer.Reset(time.Nanosecond)
 			}
@@ -223,11 +228,6 @@ func watchMakerTakerSpread(
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if takerDepth == nil || newTakerDepth.LastUpdateId > takerDepth.LastUpdateId {
-				//需要乘以multiplier
-				for i = range newTakerDepth.Bids {
-					newTakerDepth.Bids[i][1] *= multiplier
-					newTakerDepth.Asks[i][1] *= multiplier
-				}
 				takerDepth = newTakerDepth
 				takerWalkDepthTimer.Reset(time.Nanosecond)
 			}
