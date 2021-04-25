@@ -333,6 +333,28 @@ func main() {
 		}()
 	}
 
+
+	go func() {
+		for _, spotSymbol := range hbspotSymbols {
+			select {
+			case <-hbGlobalCtx.Done():
+				return
+			case <-time.After(*hbConfig.RequestInterval):
+				logger.Debugf("INITIAL CANCEL ALL %s", spotSymbol)
+				select {
+				case <-hbGlobalCtx.Done():
+					return
+				case hbspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{
+					Cancel: &hbspot.CancelAllParam{
+						Symbol: spotSymbol,
+					},
+				}:
+				}
+			}
+		}
+	}()
+
+
 	logger.Debugf("MAIN LOOP START")
 	fundingInterval := time.Hour * 8
 	fundingSilent := time.Minute * 5
@@ -527,6 +549,18 @@ func main() {
 				if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
 					time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
 					updateSpotNewOrders()
+				}
+			} else {
+				if len(hbspotOpenOrders) > 0 {
+					for spotSymbol := range hbspotOpenOrders {
+						select {
+						case hbspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{
+							Cancel: &hbspot.CancelAllParam{Symbol: spotSymbol},
+						}:
+							delete(hbspotOpenOrders, spotSymbol)
+						default:
+						}
+					}
 				}
 			}
 			hbLoopTimer.Reset(
