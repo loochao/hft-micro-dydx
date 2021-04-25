@@ -20,7 +20,7 @@ func watchMakerBars(
 	requestInterval time.Duration,
 	output chan common.KLinesMap,
 ) {
-	loopTimer := time.NewTimer(time.Second)
+	loopTimer := time.NewTimer(time.Minute)
 	defer loopTimer.Stop()
 	outputTimer := time.NewTimer(time.Second)
 	defer outputTimer.Stop()
@@ -147,7 +147,7 @@ func watchMakerBars(
 					logger.Debugf("OUTPUT MAKER BARS")
 				}
 			}
-			loopTimer.Reset(time.Second)
+			loopTimer.Reset(time.Second*5)
 			break
 		}
 	}
