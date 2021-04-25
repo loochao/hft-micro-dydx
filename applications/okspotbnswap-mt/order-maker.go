@@ -46,7 +46,7 @@ func watchMakerOrderRequest(
 				}
 			} else if request.Cancel != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				logger.Debugf("MAKER CANCEL ALL %s", request.Cancel.Symbol)
+				logger.Debugf("MAKER CANCEL %s %s", request.Cancel.Symbol, request.Cancel.ClientOid)
 				resp, err := api.CancelOrders(childCtx, *request.Cancel)
 				if err != nil {
 					logger.Debugf("MAKER SUBMIT ERROR %v", err)
