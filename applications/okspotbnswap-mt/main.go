@@ -353,26 +353,6 @@ func main() {
 		}()
 	}
 
-	go func() {
-		for _, makerSymbol := range mSymbols {
-			select {
-			case <-mtGlobalCtx.Done():
-				return
-			case <-time.After(*mtConfig.RequestInterval):
-				logger.Debugf("INITIAL CANCEL ALL %s", makerSymbol)
-				select {
-				case <-mtGlobalCtx.Done():
-					return
-				case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
-					Cancel: &okspot.CancelBatchOrders{
-						Symbol: makerSymbol,
-					},
-				}:
-				}
-			}
-		}
-	}()
-
 	logger.Debugf("START MAIN LOOP")
 	fundingInterval := time.Hour * 8
 	fundingSilent := time.Minute * 5
@@ -556,11 +536,12 @@ func main() {
 				}
 			} else {
 				if len(mOpenOrders) > 0 {
-					for makerSymbol := range mOpenOrders {
+					for makerSymbol, order := range mOpenOrders {
 						select {
 						case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
-							Cancel: &okspot.CancelBatchOrders{
-								Symbol: makerSymbol,
+							Cancel: &okspot.CancelOrderParam{
+								Symbol:    makerSymbol,
+								ClientOid: order.ClientOID,
 							},
 						}:
 							delete(mOpenOrders, makerSymbol)

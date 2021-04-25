@@ -47,18 +47,14 @@ func watchMakerOrderRequest(
 			} else if request.Cancel != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
 				logger.Debugf("MAKER CANCEL ALL %s", request.Cancel.Symbol)
-				resp, err := api.CancelBatchOrders(childCtx, []okspot.CancelBatchOrders{*request.Cancel})
+				resp, err := api.CancelOrders(childCtx, *request.Cancel)
 				if err != nil {
 					logger.Debugf("MAKER SUBMIT ERROR %v", err)
 				} else {
-					for _, orders := range resp{
-						for _, order := range orders {
-							outputOrderRespCh <- MakerOpenOrder{
-								NewOrderParam:   nil,
-								ResponseOrderID: order.OrderId,
-								Symbol:          request.Cancel.Symbol,
-							}
-						}
+					outputOrderRespCh <- MakerOpenOrder{
+						NewOrderParam:   nil,
+						ResponseOrderID: resp.OrderId,
+						Symbol:          request.Cancel.Symbol,
 					}
 				}
 			}
@@ -79,7 +75,10 @@ func cancelAllMakerOpenOrders() {
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &okspot.CancelBatchOrders{Symbol: order.Symbol},
+			Cancel: &okspot.CancelOrderParam{
+				Symbol:    order.Symbol,
+				ClientOid: order.ClientOID,
+			},
 		}
 	}
 }
@@ -101,7 +100,10 @@ func updateMakerOldOrders() {
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &okspot.CancelBatchOrders{Symbol: order.Symbol},
+			Cancel: &okspot.CancelOrderParam{
+				Symbol:    order.Symbol,
+				ClientOid: order.ClientOID,
+			},
 		}
 	}
 }
@@ -134,11 +136,11 @@ func isOrderProfitable(order okspot.NewOrderParam) bool {
 	}
 
 	if order.Side == okspot.OrderSideBuy &&
-		(spread.TakerDepth.TakerBid-*order.Price)/ *order.Price > quantile.ShortTop-*mtConfig.MakerOrderOffset {
+		(spread.TakerDepth.TakerBid-*order.Price) / *order.Price > quantile.ShortTop-*mtConfig.MakerOrderOffset {
 		//买入开多, 是开空价差, 参考ShortTop
 		return true
 	} else if order.Side == okspot.OrderSideSell &&
-		(spread.TakerDepth.TakerAsk-*order.Price)/ *order.Price < quantile.ShortBot+*mtConfig.MakerOrderOffset {
+		(spread.TakerDepth.TakerAsk-*order.Price) / *order.Price < quantile.ShortBot+*mtConfig.MakerOrderOffset {
 		//卖出平多, 是平空价, 参考ShortBot
 		return true
 	}

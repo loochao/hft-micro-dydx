@@ -162,6 +162,11 @@ func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type CancelOrderParam struct {
+	Symbol    string `json:"instrument_id"`
+	ClientOid string `json:"client_oid,omitempty"`
+	OrderId string `json:"order_id,omitempty"`
+}
 
 type CancelBatchOrders struct {
 	Symbol string `json:"instrument_id"`

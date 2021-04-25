@@ -19,7 +19,7 @@ type MakerOrderNewError struct {
 
 type MakerOrderRequest struct {
 	New    *okspot.NewOrderParam
-	Cancel *okspot.CancelBatchOrders
+	Cancel *okspot.CancelOrderParam
 }
 
 type MakerOpenOrder struct {
