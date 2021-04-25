@@ -413,3 +413,23 @@ func BenchmarkSelectWithContexts(t *testing.B) {
 		}
 	}
 }
+
+
+func TestSelect(t *testing.T) {
+	ch1 := make(chan interface{}, 100)
+	ch2 := make(chan interface{}, 100)
+	ch3 := make(chan interface{}, 100)
+	for i := 0; i < 10; i ++ {
+		select {
+		case ch1 <- nil:
+			logger.Debugf("LOOP %d ch1", i)
+		case ch2 <- nil:
+			logger.Debugf("LOOP %d ch2", i)
+		case ch3 <- nil:
+			logger.Debugf("LOOP %d ch3", i)
+		default:
+			logger.Debugf("LOOP %d default", i)
+		}
+	}
+}
+

@@ -29,7 +29,7 @@ type Depth20Websocket struct {
 
 func (w *Depth20Websocket) startWrite(ctx context.Context, conn *websocket.Conn) {
 	defer func() {
-		logger.Debugf("EXIT startWrite")
+		logger.Debugf("EXIT writeLoop")
 	}()
 	for {
 		select {
@@ -80,7 +80,7 @@ func (w *Depth20Websocket) startWrite(ctx context.Context, conn *websocket.Conn)
 
 func (w *Depth20Websocket) startRead(ctx context.Context, conn *websocket.Conn) {
 	defer func() {
-		logger.Debugf("EXIT startRead")
+		logger.Debugf("EXIT readLoop")
 	}()
 	totalCount := 0
 	totalLen := 0
@@ -176,7 +176,7 @@ func (w *Depth20Websocket) readAll(r io.Reader) ([]byte, error) {
 
 func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 	defer func() {
-		logger.Debugf("EXIT startDataHandler %d", id)
+		logger.Debugf("EXIT dataHandleLoop %d", id)
 	}()
 	for {
 		select {
@@ -270,7 +270,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 	var internalCancel context.CancelFunc
 
 	defer func() {
-		logger.Debugf("EXIT start")
+		logger.Debugf("EXIT mainLoop")
 		cancel()
 		if internalCancel != nil {
 			internalCancel()
@@ -309,10 +309,10 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 			go w.startDataHandler(internalCtx, 2)
 			go w.startDataHandler(internalCtx, 3)
 
-			//go w.startDataHandler(internalCtx, 4)
-			//go w.startDataHandler(internalCtx, 5)
-			//go w.startDataHandler(internalCtx, 6)
-			//go w.startDataHandler(internalCtx, 7)
+			//go w.dataHandleLoop(internalCtx, 4)
+			//go w.dataHandleLoop(internalCtx, 5)
+			//go w.dataHandleLoop(internalCtx, 6)
+			//go w.dataHandleLoop(internalCtx, 7)
 		}
 	}
 }
@@ -320,7 +320,7 @@ func (w *Depth20Websocket) start(ctx context.Context, symbols []string, proxy st
 func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn, symbols []string) {
 
 	defer func() {
-		logger.Debugf("EXIT maintainHeartbeat")
+		logger.Debugf("EXIT heartbeatLoop")
 		err := conn.Close()
 		if err != nil {
 			logger.Debugf("conn.Close() ERROR %v", err)

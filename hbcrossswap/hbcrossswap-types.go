@@ -76,19 +76,10 @@ type Depth20 struct {
 	ParseTime time.Time      `json:"-"`
 	EventTime time.Time      `json:"-"`
 }
-
-func (depth *Depth20) GetBids() [20][2]float64 {
-	return depth.Bids
-}
-func (depth *Depth20) GetAsks() [20][2]float64 {
-	return depth.Asks
-}
-func (depth *Depth20) GetSymbol() string {
-	return depth.Symbol
-}
-func (depth *Depth20) GetTime() time.Time {
-	return depth.EventTime
-}
+func (depth *Depth20) GetBids() [20][2]float64 { return depth.Bids }
+func (depth *Depth20) GetAsks() [20][2]float64 { return depth.Asks }
+func (depth *Depth20) GetSymbol() string { return depth.Symbol }
+func (depth *Depth20) GetTime() time.Time { return depth.EventTime }
 
 func (depth *Depth20) UnmarshalJSON(data []byte) error {
 	type Alias Depth20
@@ -444,3 +435,4 @@ func (wsAccounts *WSAccounts) UnmarshalJSON(data []byte) error {
 	wsAccounts.Timestamp = time.Unix(0, aux.Timestamp*1000000)
 	return nil
 }
+

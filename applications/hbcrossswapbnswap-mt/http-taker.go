@@ -14,8 +14,8 @@ func handleTakerHttpPositions(positions []bnswap.Position) {
 		if nextPos.PositionSide != "BOTH" {
 			return
 		}
-		if nextPos.UpdateTime.Sub(tLastOrderTimes[nextPos.Symbol]) < *mtConfig.PullInterval {
-			return
+		if time.Now().Sub(tHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
+			continue
 		}
 		var lastPosition *bnswap.Position
 		if p, ok := tPositions[nextPos.Symbol]; ok {
@@ -24,13 +24,13 @@ func handleTakerHttpPositions(positions []bnswap.Position) {
 		}
 		nextPos := nextPos
 		tPositions[nextPos.Symbol] = &nextPos
-		mPositionsUpdateTimes[nextPos.Symbol] = time.Now()
+		tPositionsUpdateTimes[nextPos.Symbol] = time.Now()
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != nextPos.PositionAmt ||
 			lastPosition.EntryPrice != nextPos.EntryPrice {
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			tOrderSilentTimes[nextPos.Symbol] = time.Now()
-			logger.Debugf("MAKER HTTP POSITION %s", nextPos.ToString())
+			logger.Debugf("TAKER HTTP POSITION %s", nextPos.ToString())
 		}
 	}
 }
@@ -39,16 +39,22 @@ func handleTakerHttpAccount(account bnswap.Account) {
 	for _, asset := range account.Assets {
 		if asset.Asset == "USDT" {
 			asset := asset
-			tUSDTAsset = &asset
-			bAssetUpdatedForInflux = true
-			bAssetUpdatedForExternalInflux = true
-			continue
+			if tAccount == nil {
+				logger.Debugf("TAKER HTTP WB CHANGE %v -> %f", nil, *asset.WalletBalance)
+				mtLoopTimer.Reset(time.Nanosecond)
+			} else if tAccount.WalletBalance != nil &&
+				asset.WalletBalance != nil &&
+				*tAccount.WalletBalance != *asset.WalletBalance {
+				mtLoopTimer.Reset(time.Nanosecond)
+				logger.Debugf("TAKER HTTP WB CHANGE %f -> %f", *tAccount.WalletBalance, *asset.WalletBalance)
+			}
+			tAccount = &asset
+			break
 		}
-		if asset.Asset == "BNB" {
-			asset := asset
-			tBNBAsset = &asset
-			continue
-		}
+		//if asset.Asset == "BNB" {
+		//	asset := asset
+		//	tBNBAsset = &asset
+		//	continue
+		//}
 	}
 }
-

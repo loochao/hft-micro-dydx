@@ -1,56 +1,62 @@
-name: hbcrossswapspot-mt-xf
+name: hbcrossswapbnswap-mt-gb-ff01
 dryRun: true
-proxyAddress: socks5://127.0.0.1:1082
+proxyAddress: socks5://127.0.0.1:1081
 cpuProfile: #/Users/chenjilin/Downloads/hbcrossswapspot-mt.prof
 internalInflux:
-  address: http://jilinchen.com:18086
+  address: http://tigger.jilinchen.com:18086
   username: hft
   password: hft
-  database: test
-  measurement: hbcrossswapspot-mt-xf
-  batchSize: 10
+  database: hft
+  measurement: hbcrossswapbnswap-mt-gb-ff01
+  batchSize: 0
   saveInterval: 1m0s
 externalInflux:
-  address: http://jilinchen.com:18086
+  address: http://hehe.jilinchen.com:7003
   username: hft
   password: hft
-  database: test
+  database: fund
   measurement: accounts
   batchSize: 0
   saveInterval: 1m0s
-apiKey: a87ff3b2-3d2xc4v5bu-9b466eb6-33148
-apiSecret: e03cdbc6-6fda4263-c5410355-762fc
 
-leverage: 10
+hbApiKey: d145d14e-c28e8b45-db057916-b1rkuf4drg
+hbApiSecret: 9a4e9695-2233be75-aa0f8d39-a8de7
+bnApiKey: ksu8ZMYNnhIXbq0KQtEczuZxMQH5eoRAnJGDBGj6BzlMVtvGpQccIN8kmzU4bE52
+bnApiSecret: ZEEI4X5FJ2CoPNwjE05UoJafVl0LM0HtUWIdhxaROvi9StKyihaIZMNEh06JS004
+
+leverage: 3
+changeLeverage: false
+marginType: CROSSED
 loopInterval: 5s
 pullInterval: 1m0s
-
-resetUnrealisedPnlInterval: 15m
-resetUnrealisedTriggerPct: -0.5
-resetCount: 5
+logInterval: 1m
 
 balancePositionMaxAge: 3m
 
 pullBarsInterval: 30m
 pullBarsRetryInterval: 3s
 barsLookback: 180
-topQuantile: 0.95
-botQuantile: 0.05
-tradeCount: 40
-makerBandOffset: 0.00222
-minimalBandOffset: 0.00222 #0.00222
-minimalEnterDelta: 0.00666 #0.00444
-maximalExitDelta: -0.00111
-topBandScale: 1.0
-botBandScale: 1.0
+topQuantile: 0.55
+botQuantile: 0.45
+makerOrderOffset: 0.00111
+minimalBandOffset: 0.000222 #0.00222
+minimalEnterDelta: 0.000666 #0.00444
+maximalExitDelta: -0.000111
+topBandScale: 0.618
+botBandScale: 0.618
 
-minimalEnterFundingRate: 0.0001
-minimalKeepFundingRate: 0.005
+minimalEnterFundingRate: 0.00001
+minimalKeepFundingRate: 0.004
 
-orderBookTakerImpact: 500
-orderBookMakerImpact: 100
-orderBookType: depth5@100ms
-orderBookMaxAgeDiff: 250ms
+orderBookTakerDecay: 0.9999
+orderBookTakerBias: 500
+
+orderBookMakerDecay: 0.9999
+orderBookMakerBias: 500
+
+orderBookTakerImpact: 3000
+orderBookMakerImpact: 300
+orderBookMaxAgeDiff: 50ms
 orderBookMaxAge: 500ms
 orderBookBatchSize: 30
 
@@ -58,71 +64,63 @@ spreadTimeToLive: 500ms
 spreadLookbackMinimalWindow: 3
 spreadLookbackDuration: 1s
 
-reBalanceInterval: 1m
-insuranceFundingRatio: 0.25
-reBalanceMinimalNotional: 20
-
 enterSlippage: 0.03
 startValue: 1000
 enterFreePct: 0.025
 enterMinimalStep: 20
 enterTargetFactor: 4
-maxUnHedgeValue: 10
+maxUnHedgeValue: 30
+startValues:
+  root: 0
 
 orderTimeout: 5s
 orderSilent: 5s
 orderCancelSilent: 5s
 orderMaxCancelCount: 5
-enterSilent: 1m
+enterSilent: 10m
+restartSilent: 10m
+httpSilent: 10m
 
-bnbMinSize: 0.1
-bnbCheckInterval: 1m
 requestInterval: 10s
-
-startValues:
-  root: 0
-spotSwapPairs:
-#  btcusdt: BTC-USDT
-#  ethusdt: ETH-USDT
-#  ltcusdt: LTC-USDT
-#  dogeusdt: DOGE-USDT
-#  xrpusdt: XRP-USDT
-#  linkusdt: LINK-USDT
-#  trxusdt: TRX-USDT
-#  dotusdt: DOT-USDT
-#  adausdt: ADA-USDT
-#  eosusdt: EOS-USDT
-#  bchusdt: BCH-USDT
-#  bsvusdt: BSV-USDT
-#  yfiusdt: YFI-USDT
-#  uniusdt: UNI-USDT
-  filusdt: FIL-USDT
-#  yfiiusdt: YFII-USDT
-#  snxusdt: SNX-USDT
-#  bnbusdt: BNB-USDT
-#  zecusdt: ZEC-USDT
-#  dashusdt: DASH-USDT
-#  etcusdt: ETC-USDT
-#  thetausdt: THETA-USDT
-#  ksmusdt: KSM-USDT
-#  atomusdt: ATOM-USDT
-#  aaveusdt: AAVE-USDT
-#  xlmusdt: XLM-USDT
-#  sushiusdt: SUSHI-USDT
-#  grtusdt: GRT-USDT
-#  1inchusdt: 1INCH-USDT
-#  crvusdt: CRV-USDT
-#  xtzusdt: XTZ-USDT
-#  algousdt: ALGO-USDT
-#  neousdt: NEO-USDT
-#  wavesusdt: WAVES-USDT
-#  compusdt: COMP-USDT
-#  zilusdt: ZIL-USDT
-#  qtumusdt: QTUM-USDT
-#  xmrusdt: XMR-USDT
-#  omgusdt: OMG-USDT
-#  ontusdt: ONT-USDT
-#  avaxusdt: AVAX-USDT
-#  zksusdt: ZKS-USDT
-#  mdxusdt: MDX-USDT
-  maticusdt: MATIC-USDT
+makerTakerSymbolsMap:
+    BTC-USDT: BTCUSDT
+    BNB-USDT: BNBUSDT
+    ETH-USDT: ETHUSDT
+  #  LTC-USDT: LTCUSDT
+  #  DOGE-USDT: DOGEUSDT
+    XRP-USDT: XRPUSDT
+  #  LINK-USDT: LINKUSDT
+  #  TRX-USDT: TRXUSDT
+  #  DOT-USDT: DOTUSDT
+  #  ADA-USDT: ADAUSDT
+  #  EOS-USDT: EOSUSDT
+  #  BCH-USDT: BCHUSDT
+  #  YFI-USDT: YFIUSDT
+  #  UNI-USDT: UNIUSDT
+#  FIL-USDT: FILUSDT
+#  YFII-USDT: YFIIUSDT
+#  SNX-USDT: SNXUSDT
+#  ZEC-USDT: ZECUSDT
+#  DASH-USDT: DASHUSDT
+#  ETC-USDT: ETCUSDT
+#  THETA-USDT: THETAUSDT
+#  KSM-USDT: KSMUSDT
+#  ATOM-USDT: ATOMUSDT
+#  AAVE-USDT: AAVEUSDT
+#  XLM-USDT: XLMUSDT
+#  SUSHI-USDT: SUSHIUSDT
+#  GRT-USDT: GRTUSDT
+#  1INCH-USDT: 1INCHUSDT
+#  CRV-USDT: CRVUSDT
+#  XTZ-USDT: XTZUSDT
+#  ALGO-USDT: ALGOUSDT
+#  NEO-USDT: NEOUSDT
+#  WAVES-USDT: WAVEUSDT
+#  COMP-USDT: COMPUSDT
+#  ZIL-USDT: ZILUSDT
+#  QTUM-USDT: QTUMUSDT
+#  XMR-USDT: XMRUSDT
+#  OMG-USDT: OMGUSDT
+#  ONT-USDT: ONTUSDT
+#  AVAX-USDT: AVAXUSDT
+#  MATIC-USDT: MATICUSDT

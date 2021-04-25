@@ -41,6 +41,7 @@ type Config struct {
 	LoopInterval          *time.Duration `yaml:"loopInterval,omitempty"`
 	PullInterval          *time.Duration `yaml:"pullInterval,omitempty"`
 	LogInterval           *time.Duration `yaml:"logInterval,omitempty"`
+	RequestInterval       *time.Duration `yaml:"requestInterval,omitempty"`
 	BalancePositionMaxAge *time.Duration `yaml:"balancePositionMaxAge,omitempty"`
 
 	SpotPerpPairs map[string]string `yaml:"spotPerpPairs,omitempty"`

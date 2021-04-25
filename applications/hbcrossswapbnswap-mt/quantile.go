@@ -9,8 +9,8 @@ import (
 
 func watchDeltaQuantile(
 	ctx context.Context,
-	hSymbols []string,
-	hbSymbolMap map[string]string,
+	makerSymbols []string,
+	makerTakerSymbolMap map[string]string,
 	botQuantile float64,
 	topQuantile float64,
 	topScale float64,
@@ -19,39 +19,43 @@ func watchDeltaQuantile(
 	maximalExitDelta,
 	minimalBandOffset float64,
 	inputCh chan [2]common.KLinesMap,
-	outputCh chan map[string]HBDeltaQuantile,
+	outputCh chan map[string]MakerTakerDeltaQuantile,
 ) {
+	defer func() {
+		logger.Debugf("EXIT watchDeltaQuantile")
+	}()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case data := <-inputCh:
-			logger.Debugf("QUANTILES UPDATING...")
-			hBarsMap := data[0]
-			bBarsMap := data[1]
-			quantiles := make(map[string]HBDeltaQuantile)
-			for _, hSymbol := range hSymbols {
-				hBars, okH := hBarsMap[hSymbol]
-				bBars, okB := bBarsMap[hbSymbolMap[hSymbol]]
-				if !okH || !okB {
+			//logger.Debugf("QUANTILES UPDATING... %v",data)
+			makerBarsMap := data[0]
+			takerBarsMap := data[1]
+			quantiles := make(map[string]MakerTakerDeltaQuantile)
+			for _, makerSymbol := range makerSymbols {
+				makerBars, okMaker := makerBarsMap[makerSymbol]
+				takerBars, okTaker := takerBarsMap[makerTakerSymbolMap[makerSymbol]]
+				if !okMaker || !okTaker {
+					logger.Debugf("%s %s NOT FOUND BARS", makerSymbol, makerTakerSymbolMap[makerSymbol])
 					continue
 				}
 				bIndex := 0
 				quantile, _ := tdigest.New()
 				counter := 0
 				sumClose := 0.0
-				for _, hBar := range hBars {
-					for bIndex < len(bBars)-1 && hBar.Timestamp.Sub(bBars[bIndex].Timestamp).Seconds() > 0 {
+				for _, makerBar := range makerBars {
+					for bIndex < len(takerBars)-1 && makerBar.Timestamp.Sub(takerBars[bIndex].Timestamp).Seconds() > 0 {
 						bIndex++
 					}
-					if hBar.Timestamp.Sub(bBars[bIndex].Timestamp).Seconds() == 0 {
-						delta := bBars[bIndex].Close - hBar.Close
+					if makerBar.Timestamp.Sub(takerBars[bIndex].Timestamp).Seconds() == 0 {
+						delta := takerBars[bIndex].Close - makerBar.Close
 						_ = quantile.Add(delta)
 						counter++
-						sumClose += hBar.Close
+						sumClose += makerBar.Close
 					}
 				}
-				if counter > len(bBars)/2 {
+				if counter > len(takerBars)/2 {
 					maClose := sumClose / float64(counter)
 					top := quantile.Quantile(topQuantile)
 					bot := quantile.Quantile(botQuantile)
@@ -69,11 +73,11 @@ func watchDeltaQuantile(
 					}
 					top = mid + topScale*topBand
 
-					q := HBDeltaQuantile{
-						HSymbol:  hSymbol,
+					q := MakerTakerDeltaQuantile{
+						Symbol:   makerSymbol,
 						ShortTop: top / maClose,
-						ShortBot: bot / maClose,
-						LongTop:  top / maClose,
+						ShortBot: (bot + botScale*botBand*0.5) / maClose,
+						LongTop:  (top - topScale*topBand*0.5) / maClose,
 						LongBot:  bot / maClose,
 						Mid:      mid / maClose,
 						MaClose:  maClose,
@@ -90,11 +94,12 @@ func watchDeltaQuantile(
 					if q.LongBot > -minimalEnterDelta {
 						q.LongBot = -minimalEnterDelta
 					}
-					quantiles[hSymbol] = q
+					quantiles[makerSymbol] = q
 				}
 			}
+			//logger.Debugf("QUANTILES UPDATED.")
 			if len(quantiles) > 0 {
-				logger.Debugf("QUANTILES UPDATED.")
+				//logger.Debugf("QUANTILES UPDATED.")
 				outputCh <- quantiles
 			}
 		}

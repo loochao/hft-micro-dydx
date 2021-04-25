@@ -32,8 +32,9 @@ type Config struct {
 	BnApiKey    *string `yaml:"bnApiKey,omitempty"`
 	BnApiSecret *string `yaml:"bnApiSecret,omitempty"`
 
-	Leverage       *int  `yaml:"leverage,omitempty"`
-	ChangeLeverage *bool `yaml:"changeLeverage,omitempty"`
+	Leverage       *int    `yaml:"leverage,omitempty"`
+	ChangeLeverage *bool   `yaml:"changeLeverage,omitempty"`
+	MarginType     *string `yaml:"marginType,omitempty"`
 
 	LoopInterval          *time.Duration `yaml:"loopInterval,omitempty"`
 	LogInterval           *time.Duration `yaml:"logInterval,omitempty"`
@@ -41,11 +42,7 @@ type Config struct {
 	RequestInterval       *time.Duration `yaml:"requestInterval,omitempty"`
 	BalancePositionMaxAge *time.Duration `yaml:"balancePositionMaxAge,omitempty"`
 
-	//ResetUnrealisedPnlInterval *time.Duration `yaml:"resetUnrealisedPnlInterval,omitempty"`
-	//ResetUnrealisedTriggerPct  *float64       `yaml:"resetUnrealisedTriggerPct,omitempty"`
-	//ResetCount                 *int           `yaml:"resetCount,omitempty"`
-
-	SymbolsMap map[string]string `yaml:"symbolsMap,omitempty"`
+	MakerTakerSymbolsMap map[string]string `yaml:"makerTakerSymbolsMap,omitempty"`
 
 	PullBarsInterval      *time.Duration `yaml:"pullBarsInterval,omitempty"`
 	PullBarsRetryInterval *time.Duration `yaml:"pullBarsRetryInterval,omitempty"`
@@ -56,33 +53,32 @@ type Config struct {
 	MinimalBandOffset *float64 `yaml:"minimalBandOffset,omitempty"`
 	MinimalEnterDelta *float64 `yaml:"minimalEnterDelta,omitempty"`
 	MaximalExitDelta  *float64 `yaml:"maximalExitDelta,omitempty"`
-	MakerBandOffset   *float64 `yaml:"makerBandOffset,omitempty"`
 	TopBandScale      *float64 `yaml:"topBandScale,omitempty"`
 	BotBandScale      *float64 `yaml:"botBandScale,omitempty"`
+	MakerOrderOffset  *float64 `yaml:"makerOrderOffset,omitempty"`
 
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`
 
-	OrderBookTakerImpact        *float64       `yaml:"orderBookTakerImpact,omitempty"`
-	OrderBookMakerImpact        *float64       `yaml:"orderBookMakerImpact,omitempty"`
+	OrderBookTakerDecay         *float64       `yaml:"orderBookTakerDecay,omitempty"`
+	OrderBookMakerDecay         *float64       `yaml:"orderBookMakerDecay,omitempty"`
+	OrderBookTakerBias          *float64       `yaml:"orderBookTakerBias,omitempty"`
+	OrderBookMakerBias          *float64       `yaml:"orderBookMakerBias,omitempty"`
 	OrderBookBatchSize          *int           `yaml:"orderBookBatchSize,omitempty"`
+	OrderBookMakerImpact        *float64       `yaml:"orderBookMakerImpact,omitempty"`
+	OrderBookTakerImpact        *float64       `yaml:"orderBookTakerImpact,omitempty"`
 	OrderBookMaxAgeDiff         *time.Duration `yaml:"orderBookMaxAgeDiff,omitempty"`
 	OrderBookMaxAge             *time.Duration `yaml:"orderBookMaxAge,omitempty"`
 	SpreadTimeToLive            *time.Duration `yaml:"spreadTimeToLive,omitempty"`
 	SpreadLookbackDuration      *time.Duration `yaml:"spreadLookbackDuration,omitempty"`
 	SpreadLookbackMinimalWindow *int           `yaml:"spreadLookbackMinimalWindow,omitempty"`
-	//BnbMinSize                  *float64           `yaml:"bnbMinSize,omitempty"`
-	//BnbCheckInterval            *time.Duration     `yaml:"bnbCheckInterval,omitempty"`
+
 	StartValue        *float64           `yaml:"startValue,omitempty"`
 	EnterFreePct      *float64           `yaml:"enterFreePct,omitempty"`
 	EnterMinimalStep  *float64           `yaml:"enterMinimalStep,omitempty"`
 	EnterTargetFactor *float64           `yaml:"enterTargetFactor,omitempty"`
 	MaxUnHedgeValue   *float64           `yaml:"maxUnHedgeValue,omitempty"`
 	StartValues       map[string]float64 `yaml:"startValues,omitempty"`
-
-	//InsuranceFundingRatio    *float64       `yaml:"insuranceFundingRatio,omitempty"`
-	//ReBalanceInterval        *time.Duration `yaml:"reBalanceInterval,omitempty"`
-	//ReBalanceMinimalNotional *float64       `yaml:"reBalanceMinimalNotional,omitempty"`
 
 	OrderTimeout        *time.Duration `yaml:"orderTimeout,omitempty"`
 	OrderSilent         *time.Duration `yaml:"orderSilent,omitempty"`
@@ -91,6 +87,7 @@ type Config struct {
 	EnterSlippage       *float64       `yaml:"enterSlippage,omitempty"`
 	EnterSilent         *time.Duration `yaml:"enterSilent,omitempty"`
 	RestartSilent       *time.Duration `yaml:"restartSilent,omitempty"`
+	HttpSilent          *time.Duration `yaml:"httpSilent,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

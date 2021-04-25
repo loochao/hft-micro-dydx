@@ -38,40 +38,47 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != tPositions[pos.Symbol].PositionAmt ||
 			lastPosition.EntryPrice != tPositions[pos.Symbol].EntryPrice {
-			logger.Debugf("WS POSITION CHANGED NEW %s", pos.ToString())
+			tHttpPositionUpdateSilentTimes[pos.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
+			mtLoopTimer.Reset(time.Nanosecond)
+			logger.Debugf("TAKER WS POSITION CHANGED NEW %s", pos.ToString())
 		}
 	}
 	for _, balance := range data.Account.Balances {
 		if balance.Asset == "USDT" {
 			wb := balance.WalletBalance
 			cwb := balance.CrossWalletBalance
-			if tUSDTAsset == nil {
-				tUSDTAsset = &bnswap.Asset{
-					Asset:         balance.Asset,
-					WalletBalance: &wb,
+			if tAccount == nil {
+				tAccount = &bnswap.Asset{
+					Asset:              balance.Asset,
+					WalletBalance:      &wb,
 					CrossWalletBalance: &cwb,
 				}
+				logger.Debugf("TAKER WS USDT CHANGE WB nil -> %f", wb)
+				mtLoopTimer.Reset(time.Nanosecond)
 			} else {
-				tUSDTAsset.WalletBalance = &wb
-				tUSDTAsset.CrossWalletBalance = &cwb
+				if tAccount.WalletBalance != nil && *tAccount.WalletBalance != wb {
+					mtLoopTimer.Reset(time.Nanosecond)
+					logger.Debugf("TAKER WS USDT CHANGE WB %f -> %f", *tAccount.WalletBalance, wb)
+				}
+				tAccount.WalletBalance = &wb
+				tAccount.CrossWalletBalance = &cwb
 			}
 			continue
 		}
-		if balance.Asset == "BNB" {
-			wb := balance.WalletBalance
-			cwb := balance.CrossWalletBalance
-			if tBNBAsset == nil {
-				tBNBAsset = &bnswap.Asset{
-					Asset:         balance.Asset,
-					WalletBalance: &wb,
-					CrossWalletBalance: &cwb,
-				}
-			} else {
-				tBNBAsset.WalletBalance = &wb
-				tBNBAsset.CrossWalletBalance = &cwb
-			}
-			continue
-		}
+		//if balance.Asset == "BNB" {
+		//	wb := balance.WalletBalance
+		//	cwb := balance.CrossWalletBalance
+		//	if tBNBAsset == nil {
+		//		tBNBAsset = &bnswap.Asset{
+		//			Asset:         balance.Asset,
+		//			WalletBalance: &wb,
+		//			CrossWalletBalance: &cwb,
+		//		}
+		//	} else {
+		//		tBNBAsset.WalletBalance = &wb
+		//		tBNBAsset.CrossWalletBalance = &cwb
+		//	}
+		//	continue
+		//}
 	}
 }
-

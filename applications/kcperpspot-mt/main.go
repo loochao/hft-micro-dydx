@@ -59,7 +59,7 @@ func main() {
 		logger.Fatal(err)
 	}
 	for _, spotSymbol := range kcspotSymbols {
-		kcMergedStepSizes[spotSymbol] =common.MergedStepSize(kcspotStepSizes[spotSymbol], kcperpMultipliers[kcspSymbolsMap[spotSymbol]])
+		kcMergedStepSizes[spotSymbol] = common.MergedStepSize(kcspotStepSizes[spotSymbol], kcperpMultipliers[kcspSymbolsMap[spotSymbol]])
 	}
 	logger.Debugf("MERGED STEP SIZE %v", kcMergedStepSizes)
 
@@ -171,6 +171,7 @@ func main() {
 		*kcConfig.BarsLookback,
 		*kcConfig.PullBarsInterval,
 		*kcConfig.PullBarsRetryInterval,
+		*kcConfig.RequestInterval,
 		kcperpBarsMapCh,
 	)
 
@@ -181,6 +182,7 @@ func main() {
 		*kcConfig.BarsLookback,
 		*kcConfig.PullBarsInterval,
 		*kcConfig.PullBarsRetryInterval,
+		*kcConfig.RequestInterval,
 		kcspotBarsMapCh,
 	)
 

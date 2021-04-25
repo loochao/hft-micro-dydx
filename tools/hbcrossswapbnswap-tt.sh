@@ -3,9 +3,9 @@
 dt=$(date -u +%Y%m%d)
 version=" BUILD @ $(date -u '+%Y%m%d %H:%M:%S') "
 echo "$version"
-sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/hbcrossswapbnswap-tt/init.go
+sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/hbcrossswapbnswap-mt/init.go
 
-env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-mirco-hbcrossswapbnswap-tt.$dt" ./applications/hbcrossswapbnswap-tt
+env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-mirco-hbcrossswapbnswap-tt.$dt" ./applications/hbcrossswapbnswap-mt
 
 git add -A
 git commit -m "build hft-mirco-hbcrossswapbnswap-tt.$dt"

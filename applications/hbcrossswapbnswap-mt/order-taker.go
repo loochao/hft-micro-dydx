@@ -15,6 +15,9 @@ func watchTakerOrderRequest(
 	orderRequestCh chan bnswap.NewOrderParams,
 	outputOrderErrorCh chan TakerOrderNewError,
 ) {
+	defer func(){
+		logger.Debugf("EXIT watchTakerOrderRequest")
+	}()
 	for {
 		select {
 		case <-ctx.Done():
@@ -24,10 +27,10 @@ func watchTakerOrderRequest(
 				break
 			}
 			childCtx, _ := context.WithTimeout(ctx, timeout)
-			logger.Debugf("B SUBMIT %v", newOrderParam)
+			logger.Debugf("TAKER SUBMIT %v", newOrderParam)
 			_, err := api.SubmitOrder(childCtx, newOrderParam)
 			if err != nil {
-				logger.Debugf("B SUBMIT ERROR %v", err)
+				logger.Debugf("TAKER SUBMIT ERROR %v %v", err, newOrderParam)
 				outputOrderErrorCh <- TakerOrderNewError{
 					Error:  err,
 					Params: newOrderParam,

@@ -21,11 +21,11 @@ func TestNewDepth5Websocket(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ws := NewDepth5Websocket(ctx, api, []string{"BNBUSDTM"}, "socks5://127.0.0.1:1081")
+	ws := NewDepth5Websocket(ctx, api, []string{"THETAUSDTM"}, "socks5://127.0.0.1:1081")
 	for {
 		select {
 		case d := <-ws.DataCh:
-			logger.Debugf("%v %v", d.EventTime, time.Now().Sub(d.EventTime))
+			logger.Debugf("DEPTH TIME %v DELTA %v", d.EventTime, time.Now().Sub(d.EventTime))
 		}
 	}
 }

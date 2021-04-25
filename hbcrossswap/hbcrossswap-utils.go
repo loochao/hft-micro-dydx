@@ -32,7 +32,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == ',' || bytes[offset] == ']' {
 				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyBids error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 40 || bytes[offset+1] == ']'{
@@ -54,7 +54,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == ',' || bytes[offset] == ']' {
 				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyAsks error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 40 || bytes[offset+1] == ']'{
@@ -76,7 +76,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == ',' {
 				orderBook.Version, err = common.ParseInt(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyVersion error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyVersion error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				offset = bytesLen
 				continue
@@ -86,7 +86,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			offset += 13
 			timestamp, err := common.ParseInt(bytes[collectStart:offset])
 			if err != nil {
-				return nil, fmt.Errorf("JsonKeyEventTime error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+				return nil, fmt.Errorf("JsonKeyEventTime error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 			}
 			orderBook.EventTime = time.Unix(0, timestamp*1000000)
 			offset += 11
@@ -97,7 +97,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == ',' {
 				orderBook.ID, err = common.ParseInt(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyID error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyID error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				offset += 10
 				collectStart = offset
@@ -109,7 +109,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == ',' {
 				orderBook.MRID, err = common.ParseInt(bytes[collectStart:offset])
 				if err != nil {
-					return nil, fmt.Errorf("JsonKeyMRID error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("JsonKeyMRID error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				offset += 6
 				collectStart = offset
@@ -251,3 +251,4 @@ func WatchFundingRate(
 		}
 	}
 }
+

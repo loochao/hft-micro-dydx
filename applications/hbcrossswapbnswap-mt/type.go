@@ -12,13 +12,25 @@ type TakerOrderNewError struct {
 	Params bnswap.NewOrderParams
 }
 
-type HOrderNewError struct {
+type MakerOrderNewError struct {
 	Error  error
 	Params hbcrossswap.NewOrderParam
 }
 
-type HBDeltaQuantile struct {
-	HSymbol      string
+type MakerOrderRequest struct {
+	New    *hbcrossswap.NewOrderParam
+	Cancel *hbcrossswap.CancelAllParam
+}
+
+type MakerOpenOrder struct {
+	*hbcrossswap.NewOrderParam
+	ResponseOrderID string
+	Symbol          string
+}
+
+type MakerTakerDeltaQuantile struct {
+	Symbol       string
+	TakerSymbol  string
 	BSymbol      string
 	ShortTop     float64
 	ShortBot     float64
@@ -33,6 +45,8 @@ type HBDeltaQuantile struct {
 const (
 	WalkedOrderBookTypeMaker = "huobi"
 	WalkedOrderBookTypeTaker = "binance"
+	MakerName                = "huobi"
+	TakerName                = "binance"
 )
 
 type WalkedOrderBook struct {
@@ -42,14 +56,10 @@ type WalkedOrderBook struct {
 	BidSize          float64
 	AskPrice         float64
 	AskSize          float64
-	TakerBidVWAP     float64
-	TakerAskVWAP     float64
-	TakerBidFarPrice float64
+	BidVWAP          float64
+	AskVWAP          float64
+	BidFarPrice      float64
 	TakerAskFarPrice float64
-	MakerBidVWAP     float64
-	MakerAskVWAP     float64
-	MakerBidFarPrice float64
-	MakerAskFarPrice float64
 	ImpactValue      float64
 	ParseTime        time.Time
 	EventTime        time.Time
@@ -57,22 +67,20 @@ type WalkedOrderBook struct {
 
 func (wo *WalkedOrderBook) ToString() string {
 	return fmt.Sprintf(
-		"%s %s TAKER BID VWAP %f MAKER BID VWAP %f PRICE %f SIZE %f TAKER ASK VWAP %f MAKER ASK VWAP %f PRICE %f SIZE %f",
+		"%s %s TAKER BID VWAP %f PRICE %f SIZE %f TAKER ASK VWAP %f PRICE %f SIZE %f",
 		wo.Type,
 		wo.Symbol,
-		wo.TakerBidVWAP,
-		wo.MakerBidVWAP,
+		wo.BidVWAP,
 		wo.BidPrice,
 		wo.BidSize,
-		wo.TakerAskVWAP,
-		wo.MakerAskVWAP,
+		wo.AskVWAP,
 		wo.AskPrice,
 		wo.AskSize,
 	)
 }
 
 type Spread struct {
-	HSymbol          string
+	Symbol           string
 	Age              time.Duration
 	AgeDiff          time.Duration
 	ShortLastEnter   float64
@@ -91,7 +99,7 @@ type Spread struct {
 func (s *Spread) ToString() string {
 	return fmt.Sprintf(
 		"SPREAD %s AGE %v AGE DIFF %v LENTER %f MENTER %f LEXIT %f MEXIT %f %v",
-		s.HSymbol,
+		s.Symbol,
 		s.Age,
 		s.AgeDiff,
 		s.ShortLastEnter,
@@ -100,9 +108,4 @@ func (s *Spread) ToString() string {
 		s.ShortMedianExit,
 		s.LastUpdateTime,
 	)
-}
-
-type MakerOrderRequest struct {
-	New    *hbcrossswap.NewOrderParam
-	Cancel *hbcrossswap.CancelAllParam
 }

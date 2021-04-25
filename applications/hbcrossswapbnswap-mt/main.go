@@ -18,11 +18,13 @@ func main() {
 	if *mtConfig.CpuProfile != "" {
 		f, err := os.Create(*mtConfig.CpuProfile)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Debugf("os.Create error %v", err)
+			return
 		}
 		err = pprof.StartCPUProfile(f)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Debugf("pprof.StartCPUProfile error %v", err)
+			return
 		}
 		defer pprof.StopCPUProfile()
 	}
@@ -34,7 +36,8 @@ func main() {
 		*mtConfig.ProxyAddress,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("hbcrossswap.NewAPI error %v", err)
+		return
 	}
 	tAPI, err = bnswap.NewAPI(
 		&common.Credentials{
@@ -44,24 +47,83 @@ func main() {
 		*mtConfig.ProxyAddress,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("bnswap.NewAPI error %v", err)
+		return
 	}
+
+	//totalDiff := int64(0)
+	//requestTime := int64(0)
+	//for i := 0; i < 10; i++ {
+	//	start := time.Now()
+	//	tt, err := tAPI.GetServerTime(context.Background())
+	//	if err != nil {
+	//		logger.Debugf("bnswap.GetServerTime error %v", err)
+	//		return
+	//	}
+	//	requestTime += time.Now().Sub(start).Milliseconds()
+	//	totalDiff += tt.ServerTime - time.Now().UnixNano()/1000000
+	//	time.Sleep(time.Second)
+	//}
+	//logger.Debugf("TAKER ROUTE TIME %d SEVER TIME DIFF %d WITH HALF ROUTE %d", requestTime/10, totalDiff/10, totalDiff/10+requestTime/20)
+	//
+	//totalDiff = int64(0)
+	//requestTime = int64(0)
+	//for i := 0; i < 10; i++ {
+	//	start := time.Now()
+	//	tt, err := mAPI.GetHeartbeat(context.Background())
+	//	if err != nil {
+	//		logger.Debugf("bnswap.GetServerTime error %v", err)
+	//		return
+	//	}
+	//	requestTime += time.Now().Sub(start).Milliseconds()
+	//	totalDiff += tt.Timestamp.Sub(time.Now()).Milliseconds()
+	//	time.Sleep(time.Second)
+	//}
+	//logger.Debugf("MAKER ROUTE TIME %d SEVER TIME DIFF %d WITH HALF ROUTE %d", requestTime/10, totalDiff/10, totalDiff/10+requestTime/20)
 
 	mtGlobalCtx, mtGlobalCancel = context.WithCancel(context.Background())
 	defer mtGlobalCancel()
 
+	if *mtConfig.ChangeLeverage {
+		for _, takerSymbol := range tSymbols {
+			res, err := tAPI.UpdateLeverage(mtGlobalCtx, bnswap.UpdateLeverageParams{
+				Symbol:   takerSymbol,
+				Leverage: int64(*mtConfig.Leverage),
+			})
+			if err != nil {
+				logger.Debugf("UPDATE LEVERAGE FOR %s ERROR %v", takerSymbol, err)
+			} else {
+				logger.Debugf("UPDATE LEVERAGE FOR %s RESPONSE %v", takerSymbol, res)
+			}
+			time.Sleep(time.Second)
+			res, err = tAPI.UpdateMarginType(mtGlobalCtx, bnswap.UpdateMarginTypeParams{
+				Symbol:     takerSymbol,
+				MarginType: *mtConfig.MarginType,
+			})
+			if err != nil {
+				logger.Debugf("UPDATE MARGIN TYPE FOR %s ERROR %v", takerSymbol, err)
+			} else {
+				logger.Debugf("UPDATE MARGIN TYPE FOR %s RESPONSE %v", takerSymbol, res)
+			}
+			time.Sleep(time.Second)
+		}
+	}
+
 	mTickSizes, mContractSizes, err = hbcrossswap.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("hbcrossswap.GetOrderLimits error %v", err)
+		return
 	}
 	tTickSizes, tStepSizes, _, tMinNotional, _, _, err = bnswap.GetOrderLimits(mtGlobalCtx, tAPI, tSymbols)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("bnswap.GetOrderLimits error %v", err)
+		return
 	}
 
 	for makerSymbol, makerStepSize := range mContractSizes {
 		if takerStepSize, ok := tStepSizes[mtSymbolsMap[makerSymbol]]; !ok {
-			logger.Fatalf("TAKER STEP SIZE NOT EXISTS FOR MAKER %s - %s", makerSymbol, mtSymbolsMap[makerSymbol])
+			logger.Debugf("TAKER STEP SIZE NOT EXISTS FOR MAKER %s - %s", makerSymbol, mtSymbolsMap[makerSymbol])
+			return
 		} else {
 			mtStepSizes[makerSymbol] = common.MergedStepSize(makerStepSize, takerStepSize)
 		}
@@ -76,8 +138,15 @@ func main() {
 		*mtConfig.InternalInflux.BatchSize,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("common.NewInfluxWriter error %v", err)
+		return
 	}
+	defer func() {
+		err := mtInfluxWriter.Stop()
+		if err != nil {
+			logger.Warnf("stop influx writer error %v", err)
+		}
+	}()
 
 	mtExternalInfluxWriter, err = common.NewInfluxWriter(
 		*mtConfig.ExternalInflux.Address,
@@ -87,21 +156,25 @@ func main() {
 		*mtConfig.ExternalInflux.BatchSize,
 	)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Debugf("common.NewInfluxWriter error %v", err)
+		return
 	}
-
 	defer func() {
-		err := mtInfluxWriter.Stop()
+		err := mtExternalInfluxWriter.Stop()
 		if err != nil {
 			logger.Warnf("stop influx writer error %v", err)
 		}
 	}()
 
-	tUserWebsocket = bnswap.NewUserWebsocket(
+	tUserWebsocket, err = bnswap.NewUserWebsocket(
 		mtGlobalCtx,
 		tAPI,
 		*mtConfig.ProxyAddress,
 	)
+	if err != nil {
+		logger.Debugf("bnswap.NewUserWebsocket error %v", err)
+		return
+	}
 	defer tUserWebsocket.Stop()
 
 	mUserWebsocket = hbcrossswap.NewUserWebsocket(
@@ -134,7 +207,7 @@ func main() {
 
 	go hbcrossswap.WatchPositionsFromHttp(
 		mtGlobalCtx, mAPI,
-		tSymbols, *mtConfig.PullInterval,
+		mSymbols, *mtConfig.PullInterval,
 		mPositionCh,
 	)
 	go hbcrossswap.WatchAccountFromHttp(
@@ -143,13 +216,13 @@ func main() {
 	)
 	go hbcrossswap.WatchFundingRate(
 		mtGlobalCtx, mAPI,
-		tSymbols,
+		mSymbols,
 		*mtConfig.PullInterval*10,
 		mFundingRatesCh,
 	)
 	go bnswap.WatchAccountFromHttp(
 		mtGlobalCtx, tAPI,
-		*mtConfig.PullInterval, bAccountCh,
+		*mtConfig.PullInterval, tAccountCh,
 	)
 	go bnswap.WatchPositionsFromHttp(
 		mtGlobalCtx, tAPI,
@@ -162,10 +235,10 @@ func main() {
 		*mtConfig.PullInterval*10, tPremiumIndexesCh,
 	)
 
-	go watchHBars(
+	go watchMakerBars(
 		mtGlobalCtx,
 		mAPI,
-		tSymbols,
+		mSymbols,
 		*mtConfig.BarsLookback,
 		*mtConfig.PullBarsInterval,
 		*mtConfig.PullBarsRetryInterval,
@@ -173,10 +246,10 @@ func main() {
 		mBarsMapCh,
 	)
 
-	go watchBBars(
+	go watchTakerBars(
 		mtGlobalCtx,
 		tAPI,
-		mSymbols,
+		tSymbols,
 		*mtConfig.BarsLookback,
 		*mtConfig.PullBarsInterval,
 		*mtConfig.PullBarsRetryInterval,
@@ -196,55 +269,76 @@ func main() {
 		*mtConfig.MaximalExitDelta,
 		*mtConfig.MinimalBandOffset,
 		mtBarsMapCh,
-		hbQuantilesCh,
+		mtQuantilesCh,
+	)
+	depthReportCh := make(chan common.DepthReport, 10000)
+	spreadReportCh := make(chan common.SpreadReport, 10000)
+	go watchReports(
+		mtGlobalCtx,
+		mtInfluxWriter,
+		*mtConfig.InternalInflux,
+		depthReportCh,
+		spreadReportCh,
 	)
 
-	walkedOrderBookCh := make(chan WalkedOrderBook, len(mSymbols)*10)
-	for start := 0; start < len(tSymbols); start += *mtConfig.OrderBookBatchSize {
-		end := start + *mtConfig.OrderBookBatchSize
-		if end > len(tSymbols) {
-			end = len(tSymbols)
-		}
-		go watchBWalkedOrderBooks(
-			mtGlobalCtx,
-			*mtConfig.ProxyAddress,
-			*mtConfig.OrderBookTakerImpact,
-			*mtConfig.OrderBookMakerImpact,
-			tSymbols[start:end],
-			walkedOrderBookCh,
-		)
-	}
-
+	makerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
 	for start := 0; start < len(mSymbols); start += *mtConfig.OrderBookBatchSize {
 		end := start + *mtConfig.OrderBookBatchSize
 		if end > len(mSymbols) {
 			end = len(mSymbols)
 		}
-		go watchHWalkedOrderBooks(
+		subMakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
+		for _, symbol := range mSymbols[start:end] {
+			makerRowDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
+			subMakerRowDepthChs[symbol] = makerRowDepthChs[symbol]
+		}
+		go makerRoutedDepthLoop(
 			mtGlobalCtx,
+			mtGlobalCancel,
 			*mtConfig.ProxyAddress,
-			mContractSizes,
-			*mtConfig.OrderBookTakerImpact,
-			*mtConfig.OrderBookMakerImpact,
-			mSymbols[start:end],
-			walkedOrderBookCh,
+			subMakerRowDepthChs,
 		)
 	}
 
-	spreadCh := make(chan Spread, len(mSymbols)*100)
-	go watchSpread(
-		mtGlobalCtx,
-		mSymbols,
-		mtSymbolsMap,
-		*mtConfig.OrderBookMaxAgeDiff,
-		*mtConfig.OrderBookMaxAge,
-		*mtConfig.SpreadLookbackDuration,
-		*mtConfig.SpreadLookbackMinimalWindow,
-		walkedOrderBookCh,
-		spreadCh,
-	)
+	takerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
+	for start := 0; start < len(tSymbols); start += *mtConfig.OrderBookBatchSize {
+		end := start + *mtConfig.OrderBookBatchSize
+		if end > len(tSymbols) {
+			end = len(tSymbols)
+		}
+		subTakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
+		for _, symbol := range tSymbols[start:end] {
+			takerRowDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
+			subTakerRowDepthChs[symbol] = takerRowDepthChs[symbol]
+		}
+		go takerRoutedDepthLoop(
+			mtGlobalCtx,
+			mtGlobalCancel,
+			*mtConfig.ProxyAddress,
+			subTakerRowDepthChs,
+		)
+	}
 
-	mNewOrderErrorCh = make(chan HOrderNewError, len(mSymbols)*2)
+	spreadCh := make(chan *common.MakerTakerSpread, len(mSymbols)*100)
+	for makerSymbol, takerSymbol := range mtConfig.MakerTakerSymbolsMap {
+		go watchMakerTakerSpread(
+			mtGlobalCtx,
+			makerSymbol, takerSymbol,
+			mContractSizes[makerSymbol],
+			*mtConfig.OrderBookMakerImpact,
+			*mtConfig.OrderBookTakerImpact,
+			*mtConfig.OrderBookMaxAgeDiff,
+			*mtConfig.OrderBookMaxAge,
+			*mtConfig.SpreadLookbackDuration,
+			*mtConfig.SpreadLookbackMinimalWindow,
+			makerRowDepthChs[makerSymbol],
+			takerRowDepthChs[takerSymbol],
+			spreadReportCh,
+			spreadCh,
+		)
+	}
+
+	mNewOrderErrorCh = make(chan MakerOrderNewError, len(mSymbols)*2)
 	for _, makerSymbol := range mSymbols {
 		mOrderRequestChs[makerSymbol] = make(chan MakerOrderRequest, 2)
 		go watchMakerOrderRequest(
@@ -253,11 +347,9 @@ func main() {
 			*mtConfig.OrderTimeout,
 			*mtConfig.DryRun,
 			mOrderRequestChs[makerSymbol],
+			mOpenOrderCh,
 			mNewOrderErrorCh,
 		)
-		mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
-			Cancel: &hbcrossswap.CancelAllParam{Symbol: makerSymbol},
-		}
 	}
 
 	tNewOrderErrorCh = make(chan TakerOrderNewError, len(mSymbols)*2)
@@ -273,23 +365,49 @@ func main() {
 		)
 	}
 
-	done := make(chan bool, 1)
 	if *mtConfig.CpuProfile != "" {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		go func() {
 			sig := <-sigs
-			logger.Debugf("Exit with sig %d, clean *.tmp files", sig)
-			done <- true
+			logger.Debugf("CATCH EXIT SIGNAL %v", sig)
+			mtGlobalCancel()
 		}()
 	}
 
-	logger.Debugf("START")
+	go func() {
+		for _, makerSymbol := range mSymbols {
+			select {
+			case <-mtGlobalCtx.Done():
+				return
+			case <-time.After(*mtConfig.RequestInterval):
+				logger.Debugf("INITIAL CANCEL ALL %s", makerSymbol)
+				select {
+				case <-mtGlobalCtx.Done():
+					return
+				case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
+					Cancel: &hbcrossswap.CancelAllParam{
+						Symbol: makerSymbol,
+					},
+				}:
+				}
+			}
+		}
+	}()
 
+	logger.Debugf("START MAIN LOOP")
+	fundingInterval := time.Hour * 8
+	fundingSilent := time.Minute * 5
 	for {
 		select {
-		case <-done:
-			logger.Debugf("Exit")
+		case <-mtGlobalCtx.Done():
+			logger.Debugf("GLOBAL CTX DONE, EXIT MAIN LOOP")
+			return
+		case <-mUserWebsocket.Done():
+			logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
+			return
+		case <-tUserWebsocket.Done():
+			logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
 			return
 		case <-mUserWebsocket.RestartCh:
 			logger.Debugf("mUserWebsocket restart silent %v", *mtConfig.RestartSilent)
@@ -310,15 +428,18 @@ func main() {
 			handleTakerWSAccount(msg)
 			break
 		case msg := <-mUserWebsocket.PositionCh:
-			handleWSPosition(msg)
+			handleMakerWSPosition(msg)
 			break
 		case msg := <-mUserWebsocket.AccountCh:
-			handleWSAccount(msg)
+			handleMakerWSAccount(msg)
 			break
 		case makerOrder := <-mUserWebsocket.OrderCh:
 			if makerOrder.Status == hbcrossswap.OrderStatusFilled ||
 				makerOrder.Status == hbcrossswap.OrderStatusCancelled ||
 				makerOrder.Status == hbcrossswap.OrderStatusPartiallyFilledButCancelledByClient {
+				if openOrder, ok := mOpenOrders[makerOrder.Symbol]; ok && openOrder.ClientOrderID == makerOrder.ClientOrderID {
+					delete(mOpenOrders, makerOrder.Symbol)
+				}
 				if makerOrder.Status == hbcrossswap.OrderStatusCancelled {
 					logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
 					mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
@@ -328,14 +449,14 @@ func main() {
 						"MAKER WS ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
 						makerOrder.Symbol, makerOrder.Direction, makerOrder.TradeVolume, makerOrder.TradeAvgPrice,
 					)
+					tOrderSilentTimes[mtSymbolsMap[makerOrder.Symbol]] = time.Now()
+					mtLoopTimer.Reset(time.Nanosecond)
+					mHttpPositionUpdateSilentTimes[makerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 					if makerOrder.Direction == hbcrossswap.OrderDirectionSell {
 						mLastFilledSellPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
 					} else if makerOrder.Direction == hbcrossswap.OrderDirectionBuy {
 						mLastFilledBuyPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
 					}
-				}
-				if openOrder, ok := mOpenOrders[makerOrder.Symbol]; ok && openOrder.ClientOrderID == makerOrder.ClientOrderID {
-					delete(mOpenOrders, makerOrder.Symbol)
 				}
 			}
 			break
@@ -347,55 +468,57 @@ func main() {
 				tPositionsUpdateTimes[takerOrder.Symbol] = time.Unix(0, 0)
 			} else if takerOrder.Status == "FILLED" {
 				logger.Debugf("TAKER WS ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)
+				tHttpPositionUpdateSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 				if makerSymbol, ok := tmSymbolsMap[takerOrder.Symbol]; ok {
 					if takerOrder.Side == common.OrderSideSell {
 						if makerPrice, ok := mLastFilledBuyPrices[makerSymbol]; ok {
-							hbRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
-							logger.Debugf("%s REALISED OPEN SPREAD %f", makerSymbol, hbRealisedSpread[makerSymbol])
+							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
+							logger.Debugf("%s REALISED SHORT SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
 						}
 					} else if takerOrder.Side == common.OrderSideBuy {
 						if makerPrice, ok := mLastFilledSellPrices[makerSymbol]; ok {
-							hbRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
-							logger.Debugf("%s REALISED CLOSE SPREAD %f", makerSymbol, hbRealisedSpread[makerSymbol])
+							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
+							logger.Debugf("%s REALISED LONG SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
 						}
 					}
 				}
 			}
 			break
 		case spread := <-spreadCh:
-			mtSpreads[spread.HSymbol] = spread
-			mtLoopTimer.Reset(time.Millisecond)
+			mtSpreads[spread.MakerSymbol] = spread
+			//mtLoopTimer.Reset(time.Millisecond)
 			break
 		case mFundingRates = <-mFundingRatesCh:
-			handleUpdateTradeDirections()
+			handleUpdateFundingRates()
 			break
 		case tPremiumIndexes = <-tPremiumIndexesCh:
-			handleUpdateTradeDirections()
+			//logger.Debugf("%v", tPremiumIndexes)
+			handleUpdateFundingRates()
 			break
 		case mBarsMap = <-mBarsMapCh:
-			if mtMapUpdated[WalkedOrderBookTypeTaker] {
+			if mtMapUpdated[TakerName] {
 				mtBarsMapCh <- [2]common.KLinesMap{mBarsMap, tBarsMap}
-				mtMapUpdated[WalkedOrderBookTypeMaker] = false
-				mtMapUpdated[WalkedOrderBookTypeTaker] = false
+				mtMapUpdated[TakerName] = false
+				mtMapUpdated[MakerName] = false
 			} else {
-				mtMapUpdated[WalkedOrderBookTypeMaker] = true
+				mtMapUpdated[MakerName] = true
 			}
 			break
 		case tBarsMap = <-tBarsMapCh:
-			if mtMapUpdated[WalkedOrderBookTypeMaker] {
+			if mtMapUpdated[MakerName] {
 				mtBarsMapCh <- [2]common.KLinesMap{mBarsMap, tBarsMap}
-				mtMapUpdated[WalkedOrderBookTypeMaker] = false
-				mtMapUpdated[WalkedOrderBookTypeTaker] = false
+				mtMapUpdated[MakerName] = false
+				mtMapUpdated[TakerName] = false
 			} else {
-				mtMapUpdated[WalkedOrderBookTypeTaker] = true
+				mtMapUpdated[TakerName] = true
 			}
 			break
-		case qs := <-hbQuantilesCh:
+		case qs := <-mtQuantilesCh:
 			if mtQuantiles == nil {
-				logger.Debugf("QUANTILES %v", qs)
+				//logger.Debugf("QUANTILES %s", d)
 			}
 			mtQuantiles = qs
-			mtLoopTimer.Reset(time.Millisecond)
+			//mtLoopTimer.Reset(time.Millisecond)
 			break
 		case <-influxSaveTimer.C:
 			handleSave()
@@ -417,20 +540,31 @@ func main() {
 				).Sub(time.Now()),
 			)
 			break
-
 		case takerNewError := <-tNewOrderErrorCh:
-			mOrderSilentTimes[takerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
+			tOrderSilentTimes[takerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
 			break
-
 		case makerNewError := <-mNewOrderErrorCh:
-			if openOrder, ok := mOpenOrders[makerNewError.Params.Symbol]; ok && openOrder.ClientOrderID == makerNewError.Params.ClientOrderID {
-				delete(mOpenOrders, makerNewError.Params.Symbol)
+			mOrderSilentTimes[makerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
+			break
+		case makerOpenOrder := <-mOpenOrderCh:
+			if openOrder, ok := mOpenOrders[makerOpenOrder.Symbol]; ok {
+				if makerOpenOrder.NewOrderParam == nil && openOrder.ResponseOrderID == makerOpenOrder.ResponseOrderID {
+					//Cancel的Http回报
+					delete(mOpenOrders, makerOpenOrder.Symbol)
+				} else if makerOpenOrder.NewOrderParam != nil && openOrder.ClientOrderID == makerOpenOrder.ClientOrderID {
+					//New的Http回报
+					mOpenOrders[makerOpenOrder.Symbol] = makerOpenOrder
+				}
 			}
-			tOrderSilentTimes[makerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
 		case <-mtLoopTimer.C:
 			updateTakerPositions()
-			updateMakerOldOrders()
-			updateMakerNewOrders()
+			if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
+				time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
+				updateMakerOldOrders()
+				updateMakerNewOrders()
+			} else {
+				cancelAllMakerOpenOrders()
+			}
 			mtLoopTimer.Reset(
 				time.Now().Truncate(
 					*mtConfig.LoopInterval,
