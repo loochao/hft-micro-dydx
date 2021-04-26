@@ -12,8 +12,6 @@ func deltaQuantileLoop(
 	spSymbolMap map[string]string,
 	botQuantile float64,
 	topQuantile float64,
-	topScale float64,
-	botScale float64,
 	minimalEnterDelta,
 	maximalExitDelta,
 	minimalBandOffset float64,
@@ -60,20 +58,22 @@ func deltaQuantileLoop(
 					if botBand/maClose < minimalBandOffset {
 						botBand = maClose * minimalBandOffset
 					}
-					bot = mid - botScale*botBand
+					bot = mid - botBand
 
 					topBand := top - mid
 					if topBand/maClose < minimalBandOffset {
 						topBand = maClose * minimalBandOffset
 					}
-					top = mid + topScale*topBand
+					top = mid + topBand
 
 					q := Quantile{
-						Symbol:  symbol,
-						Top:     top / maClose,
-						Bot:     bot / maClose,
-						Mid:     mid / maClose,
-						MaClose: maClose,
+						Symbol:      symbol,
+						Top:         top / maClose,
+						Bot:         bot / maClose,
+						Mid:         mid / maClose,
+						OriginalBot: quantile.Quantile(botQuantile),
+						OriginalTop: quantile.Quantile(topQuantile),
+						MaClose:     maClose,
 					}
 					if q.Top < minimalEnterDelta {
 						q.Top = minimalEnterDelta

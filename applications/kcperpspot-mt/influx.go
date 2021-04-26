@@ -123,6 +123,8 @@ func handleSave() {
 		if quantile, ok := kcQuantiles[spotSymbol]; ok {
 			fields["quantileBot"] = quantile.Bot
 			fields["quantileTop"] = quantile.Top
+			fields["quantileOriginalBot"] = quantile.OriginalBot
+			fields["quantileOriginalTop"] = quantile.OriginalTop
 			fields["quantileMid"] = quantile.Mid
 			fields["quantileMaClose"] = quantile.MaClose
 		}

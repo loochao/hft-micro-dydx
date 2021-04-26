@@ -79,7 +79,7 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 		return false
 	}
 	if order.Side == kcspot.OrderSideBuy &&
-		float64(order.Price) < (1.0-2**kcConfig.MakerBandOffset)*spread.MakerDepth.MakerFarBid{
+		float64(order.Price) < (1.0-4**kcConfig.MakerBandOffset)*spread.MakerDepth.MakerFarBid{
 		logger.Debugf("%s BUY PRICE %f < MINIMAL BID PRICE %f, CANCEL",
 			order.Symbol,
 			order.Price,
@@ -87,7 +87,7 @@ func isOrderProfitable(order kcspot.NewOrderParam) bool {
 		)
 		return false
 	} else if order.Side == kcspot.OrderSideSell &&
-		float64(order.Price) > (1.0+2**kcConfig.MakerBandOffset)*spread.MakerDepth.MakerFarAsk{
+		float64(order.Price) > (1.0+4**kcConfig.MakerBandOffset)*spread.MakerDepth.MakerFarAsk{
 		logger.Debugf("%s SELL PRICE %f > MAXIMAL ASK PRICE %f, CANCEL",
 			order.Symbol,
 			order.Price,

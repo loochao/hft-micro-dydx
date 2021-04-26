@@ -18,13 +18,13 @@ type SpotOrderNewError struct {
 }
 
 type Quantile struct {
-	Symbol       string
-	Top          float64
-	Mid          float64
-	Bot          float64
-	TopBandScale float64
-	BotBandScale float64
-	MaClose      float64
+	Symbol      string
+	Top         float64
+	Mid         float64
+	Bot         float64
+	OriginalTop float64
+	OriginalBot float64
+	MaClose     float64
 }
 
 const (

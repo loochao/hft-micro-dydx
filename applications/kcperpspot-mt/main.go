@@ -192,8 +192,6 @@ func main() {
 		kcspSymbolsMap,
 		*kcConfig.BotQuantile,
 		*kcConfig.TopQuantile,
-		*kcConfig.TopBandScale,
-		*kcConfig.BotBandScale,
 		*kcConfig.MinimalEnterDelta,
 		*kcConfig.MaximalExitDelta,
 		*kcConfig.MinimalBandOffset,
