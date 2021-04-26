@@ -40,7 +40,7 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 			lastPosition.EntryPrice != tPositions[pos.Symbol].EntryPrice {
 			tHttpPositionUpdateSilentTimes[pos.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 			mtLoopTimer.Reset(time.Nanosecond)
-			logger.Debugf("TAKER WS POSITION CHANGED NEW %s", pos.ToString())
+			logger.Debugf("TAKER WS POSITION CHANGED %s", pos.ToString())
 		}
 	}
 	for _, balance := range data.Account.Balances {
@@ -53,12 +53,12 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 					WalletBalance:      &wb,
 					CrossWalletBalance: &cwb,
 				}
-				logger.Debugf("TAKER WS USDT CHANGE WB nil -> %f", wb)
+				logger.Debugf("TAKER WS USDT CHANGE nil -> %f", wb)
 				mtLoopTimer.Reset(time.Nanosecond)
 			} else {
 				if tAccount.WalletBalance != nil && *tAccount.WalletBalance != wb {
 					mtLoopTimer.Reset(time.Nanosecond)
-					logger.Debugf("TAKER WS USDT CHANGE WB %f -> %f", *tAccount.WalletBalance, wb)
+					logger.Debugf("TAKER WS USDT CHANGE WALLET BALANCE %f -> %f", *tAccount.WalletBalance, wb)
 				}
 				tAccount.WalletBalance = &wb
 				tAccount.CrossWalletBalance = &cwb
