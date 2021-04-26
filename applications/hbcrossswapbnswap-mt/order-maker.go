@@ -137,7 +137,7 @@ func isOrderProfitable(order hbcrossswap.NewOrderParam) bool {
 		//买入开多, 是开空价差, 参考ShortTop
 		return true
 	} else if order.Direction == hbcrossswap.OrderDirectionSell &&
-		order.Offset == hbcrossswap.OrderOffsetOpen &&
+		order.Offset == hbcrossswap.OrderOffsetClose &&
 		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.ShortBot+*mtConfig.MakerOrderOffset {
 		//卖出平多, 是平空价, 参考ShortBot
 		return true

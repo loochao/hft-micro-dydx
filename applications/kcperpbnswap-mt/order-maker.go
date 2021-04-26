@@ -29,7 +29,7 @@ func watchMakerOrderRequest(
 			}
 			if request.New != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				logger.Debugf("MAKER SUBMIT %s %s %f %d", request.New.Symbol, request.New.OrderPriceType, request.New.Price, request.New.Volume)
+				logger.Debugf("MAKER SUBMIT %s %s %f %d", request.New.Symbol, request.New.Side, request.New.Price, request.New.Size)
 				resp, err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
 					logger.Debugf("MAKER SUBMIT ERROR %v", err)
@@ -40,7 +40,7 @@ func watchMakerOrderRequest(
 				} else {
 					outputOrderRespCh <- MakerOpenOrder{
 						NewOrderParam:   request.New,
-						ResponseOrderID: resp.OrderIDStr,
+						ResponseOrderID: resp.OrderId,
 						Symbol:          request.New.Symbol,
 					}
 				}
@@ -51,7 +51,7 @@ func watchMakerOrderRequest(
 				if err != nil {
 					logger.Debugf("MAKER SUBMIT ERROR %v", err)
 				} else {
-					for _, s := range resp.Successes {
+					for _, s := range resp.CancelledOrderIds {
 						outputOrderRespCh <- MakerOpenOrder{
 							NewOrderParam:   nil,
 							ResponseOrderID: s,
@@ -77,7 +77,7 @@ func cancelAllMakerOpenOrders() {
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &kcperp.CancelAllParam{Symbol: order.Symbol},
+			Cancel: &kcperp.CancelAllOrdersParam{Symbol: order.Symbol},
 		}
 	}
 }
@@ -99,7 +99,7 @@ func updateMakerOldOrders() {
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &kcperp.CancelAllParam{Symbol: order.Symbol},
+			Cancel: &kcperp.CancelAllOrdersParam{Symbol: order.Symbol},
 		}
 	}
 }
@@ -113,7 +113,7 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 	}
 
 	//检查价格有没有挂太远，太远撤掉
-	if order.Direction == kcperp.OrderDirectionBuy &&
+	if order.Side == kcperp.OrderSideBuy &&
 		float64(order.Price) < (1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid {
 		logger.Debugf("%s BUY PRICE %f < MAKER BID MINIMAL PRICE %f",
 			order.Symbol,
@@ -121,7 +121,7 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 			(1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid,
 		)
 		return false
-	} else if order.Direction == kcperp.OrderDirectionSell &&
+	} else if order.Side == kcperp.OrderSideSell &&
 		float64(order.Price) > (1.0+2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk {
 		logger.Debugf("%s SELL PRICE %f > MAKER ASK MAXIMAL PRICE %f",
 			order.Symbol,
@@ -131,8 +131,8 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 		return false
 	}
 
-	if order.Direction == kcperp.OrderDirectionBuy &&
-		order.Offset == kcperp.OrderOffsetOpen &&
+	if order.Side == kcperp.OrderSideBuy &&
+		!order.CloseOrder &&
 		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.ShortTop-*mtConfig.MakerOrderOffset {
 		//买入开多, 是开空价差, 参考ShortTop
 		return true
