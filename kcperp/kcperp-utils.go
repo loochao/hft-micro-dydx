@@ -236,7 +236,7 @@ func PositionsHttpLoop(
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			positions, err := api.GetPositions(subCtx)
 			if err != nil {
-				logger.Debugf("PositionsHttpLoop GetPositions error %v", err)
+				logger.Debugf("api.GetPositions error %v", err)
 			} else {
 				//有一种情况是有的合约的仓位是拉不到的, 拉不到的都是空仓
 				positionBySymbols := make(map[string]Position)
@@ -276,7 +276,7 @@ func AccountHttpLoop(
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			account, err := api.GetAccountOverView(subCtx, param)
 			if err != nil {
-				logger.Debugf("AccountHttpLoop GetAccountOverView error %v", err)
+				logger.Debugf("api.GetAccountOverView error %v", err)
 			} else {
 				output <- *account
 			}
@@ -299,7 +299,7 @@ func WatchSystemStatusHttp(
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			systemStatus, err := api.GetSystemStatus(subCtx)
 			if err != nil {
-				logger.Debugf("WatchSystemStatusHttp GetSystemStatus error %v", err)
+				logger.Debugf("api.GetSystemStatus error %v", err)
 				select {
 				case output <- false:
 				default:
@@ -378,7 +378,7 @@ func FundingRateLoop(
 				subCtx, _ := context.WithTimeout(ctx, time.Minute)
 				fr, err := api.GetCurrentFundingRate(subCtx, symbol)
 				if err != nil {
-					logger.Debugf("FundingRateLoop GetAccountOverView error %v", err)
+					logger.Debugf("api.GetCurrentFundingRate error %v", err)
 				} else {
 					output <- *fr
 				}

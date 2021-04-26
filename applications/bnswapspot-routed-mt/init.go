@@ -88,6 +88,7 @@ var bnspotOrderCancelCounts = make(map[string]int)
 
 var bnswapPremiumIndexes = make(map[string]bnswap.PremiumIndex)
 var bnswapPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
+var bnswapAvgFundingRate *float64
 var bnRankSymbolMap map[int]string
 
 var bnswapBarsMapCh = make(chan common.KLinesMap)

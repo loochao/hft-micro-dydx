@@ -604,14 +604,18 @@ func main() {
 			bnspotOrderSilentTimes[order.Params.Symbol] = time.Now().Add(*bnConfig.OrderSilent * 3)
 		case <-frRankUpdatedTimer.C:
 			frs := make([]float64, len(bnSymbols))
+			frSum := 0.0
 			for i, symbol := range bnSymbols {
 				if premiumIndex, ok := bnswapPremiumIndexes[symbol]; ok {
 					frs[i] = premiumIndex.FundingRate
+					frSum += premiumIndex.FundingRate
 				} else {
 					logger.Debugf("MISS MARK PRICE %s", symbol)
 					return
 				}
 			}
+			frSum /= float64(len(bnSymbols))
+			bnswapAvgFundingRate = &frSum
 			bnRankSymbolMap, err = common.RankSymbols(bnSymbols, frs)
 			if err != nil {
 				logger.Debugf("RankSymbols error %v", err)

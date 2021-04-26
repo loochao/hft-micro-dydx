@@ -12,7 +12,8 @@ import (
 func handleSave() {
 
 	if !bnswapAssetUpdatedForInflux || !bnspotBalanceUpdatedForInflux ||
-		time.Now().Sub(bnSaveSilentTime).Seconds() < 0 {
+		time.Now().Sub(bnSaveSilentTime).Seconds() < 0 ||
+		time.Now().Sub(bnGlobalSilent).Seconds() < 0 {
 		return
 	}
 	bnswapAssetUpdatedForInflux = false
@@ -68,6 +69,9 @@ func handleSave() {
 		fields["swapUnRealizedProfit"] = *bnswapUSDTAsset.UnrealizedProfit
 		fields["swapInitialMargin"] = *bnswapUSDTAsset.InitialMargin
 		fields["swapMaintMargin"] = *bnswapUSDTAsset.MaintMargin
+		if bnswapAvgFundingRate != nil {
+			fields["avgFundingRate"] = *bnswapAvgFundingRate
+		}
 		if bnswapBNBAsset != nil && bnswapBNBAsset.MarginBalance != nil {
 			if markPrice, ok := bnswapPremiumIndexes[bnBNBSymbol]; ok {
 				balance := *bnswapBNBAsset.MarginBalance * markPrice.IndexPrice
@@ -193,7 +197,8 @@ func handleSave() {
 func handleExternalInfluxSave() {
 	if !bnswapAssetUpdatedForExternalInflux ||
 		!bnspotBalanceUpdatedForExternalInflux ||
-		time.Now().Sub(bnSaveSilentTime).Seconds() < 0 {
+		time.Now().Sub(bnSaveSilentTime).Seconds() < 0 ||
+		time.Now().Sub(bnGlobalSilent).Seconds() < 0 {
 		return
 	}
 	bnswapAssetUpdatedForExternalInflux = false
@@ -257,8 +262,6 @@ func handleExternalInfluxSave() {
 	}
 }
 
-
-
 func reportsSaveLoop(
 	ctx context.Context,
 	influxWriter *common.InfluxWriter,
@@ -313,5 +316,3 @@ func reportsSaveLoop(
 		}
 	}
 }
-
-

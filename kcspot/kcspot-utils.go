@@ -260,7 +260,7 @@ func WatchSystemStatusHttp(
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			systemStatus, err := api.GetSystemStatus(subCtx)
 			if err != nil {
-				logger.Debugf("AccountHttpLoop GetAccountOverView error %v", err)
+				logger.Debugf("api.GetSystemStatus error %v", err)
 				select {
 				case output <- false:
 				default:
