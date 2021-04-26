@@ -11,65 +11,64 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 	hasBuyPositions := make(map[string]bool)
 	hasSellPositions := make(map[string]bool)
 	for _, makerSymbol := range mSymbols {
-		hasBuyPositions[makerSymbol] = 	false
+		hasBuyPositions[makerSymbol] = false
 		hasSellPositions[makerSymbol] = false
 	}
 	for _, nextPos := range positions {
-		if _, ok := mtSymbolsMap[nextPos.Symbol]; !ok {
-			continue
-		}
-		if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
-			hasBuyPositions[nextPos.Symbol] = true
-		}else{
-			hasSellPositions[nextPos.Symbol] = true
-		}
-		if time.Now().Sub(mHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
-			continue
-		}
-		var lastPosition *hbcrossswap.Position
-		if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
-			if p, ok := mBuyPositions[nextPos.Symbol]; ok {
-				p := p
-				lastPosition = &p
+		if takerSymbol, ok := mtSymbolsMap[nextPos.Symbol]; ok {
+			if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
+				hasBuyPositions[nextPos.Symbol] = true
+			} else {
+				hasSellPositions[nextPos.Symbol] = true
 			}
-			mBuyPositions[nextPos.Symbol] = nextPos
-			mPositionsUpdateTimes[nextPos.Symbol] = time.Now()
-			if lastPosition == nil ||
-				lastPosition.Volume != nextPos.Volume ||
-				lastPosition.CostOpen != nextPos.CostOpen {
-				mtLoopTimer.Reset(time.Nanosecond)
-				tOrderSilentTimes[nextPos.Symbol] = time.Now()
-				logger.Debugf("MAKER HTTP BUY POSITION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Volume, nextPos.CostOpen)
-				if lastPosition != nil && nextPos.Volume != 0 {
-					logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
-					mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+			if time.Now().Sub(mHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
+				continue
+			}
+			var lastPosition *hbcrossswap.Position
+			if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
+				if p, ok := mBuyPositions[nextPos.Symbol]; ok {
+					p := p
+					lastPosition = &p
 				}
-			}
-		} else {
-			if p, ok := mSellPositions[nextPos.Symbol]; ok {
-				p := p
-				lastPosition = &p
-			}
-			mSellPositions[nextPos.Symbol] = nextPos
-			mPositionsUpdateTimes[nextPos.Symbol] = time.Now()
-			if lastPosition == nil ||
-				lastPosition.Volume != nextPos.Volume ||
-				lastPosition.CostOpen != nextPos.CostOpen {
-				mtLoopTimer.Reset(time.Nanosecond)
-				tOrderSilentTimes[nextPos.Symbol] = time.Now()
-				logger.Debugf("MAKER HTTP SELL POSITION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Volume, nextPos.CostOpen)
-				if lastPosition != nil && nextPos.Volume != 0 {
-					logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
-					mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+				mBuyPositions[nextPos.Symbol] = nextPos
+				mPositionsUpdateTimes[nextPos.Symbol] = time.Now()
+				if lastPosition == nil ||
+					lastPosition.Volume != nextPos.Volume ||
+					lastPosition.CostOpen != nextPos.CostOpen {
+					mtLoopTimer.Reset(time.Nanosecond)
+					tOrderSilentTimes[takerSymbol] = time.Now()
+					logger.Debugf("MAKER HTTP BUY POSITION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Volume, nextPos.CostOpen)
+					if lastPosition != nil && nextPos.Volume != 0 {
+						logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
+						mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+					}
+				}
+			} else {
+				if p, ok := mSellPositions[nextPos.Symbol]; ok {
+					p := p
+					lastPosition = &p
+				}
+				mSellPositions[nextPos.Symbol] = nextPos
+				mPositionsUpdateTimes[nextPos.Symbol] = time.Now()
+				if lastPosition == nil ||
+					lastPosition.Volume != nextPos.Volume ||
+					lastPosition.CostOpen != nextPos.CostOpen {
+					mtLoopTimer.Reset(time.Nanosecond)
+					tOrderSilentTimes[nextPos.Symbol] = time.Now()
+					logger.Debugf("MAKER HTTP SELL POSITION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Volume, nextPos.CostOpen)
+					if lastPosition != nil && nextPos.Volume != 0 {
+						logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
+						mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+					}
 				}
 			}
 		}
 	}
-	for takerSymbol, hasPosition := range hasBuyPositions {
+	for makerSymbol, hasPosition := range hasBuyPositions {
 		if hasPosition {
 			continue
 		}
-		nextPos := hbcrossswap.Position{Symbol: takerSymbol, Direction: hbcrossswap.PositionDirectionBuy}
+		nextPos := hbcrossswap.Position{Symbol: makerSymbol, Direction: hbcrossswap.PositionDirectionBuy}
 		var lastPosition *hbcrossswap.Position
 		if p, ok := mBuyPositions[nextPos.Symbol]; ok {
 			p := p
@@ -81,7 +80,7 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 			lastPosition.Volume != nextPos.Volume ||
 			lastPosition.CostOpen != nextPos.CostOpen {
 			mtLoopTimer.Reset(time.Nanosecond)
-			tOrderSilentTimes[nextPos.Symbol] = time.Now()
+			tOrderSilentTimes[mtSymbolsMap[makerSymbol]] = time.Now()
 			logger.Debugf("MAKER HTTP BUY POSITION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Volume, nextPos.CostOpen)
 			if lastPosition != nil && nextPos.Volume != 0 {
 				logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
@@ -89,11 +88,11 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 			}
 		}
 	}
-	for takerSymbol, hasPosition := range hasSellPositions {
+	for makerSymbol, hasPosition := range hasSellPositions {
 		if hasPosition {
 			continue
 		}
-		nextPos := hbcrossswap.Position{Symbol: takerSymbol, Direction: hbcrossswap.PositionDirectionSell}
+		nextPos := hbcrossswap.Position{Symbol: makerSymbol, Direction: hbcrossswap.PositionDirectionSell}
 		var lastPosition *hbcrossswap.Position
 		if p, ok := mSellPositions[nextPos.Symbol]; ok {
 			p := p
@@ -105,7 +104,7 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 			lastPosition.Volume != nextPos.Volume ||
 			lastPosition.CostOpen != nextPos.CostOpen {
 			mtLoopTimer.Reset(time.Nanosecond)
-			tOrderSilentTimes[nextPos.Symbol] = time.Now()
+			tOrderSilentTimes[mtSymbolsMap[makerSymbol]] = time.Now()
 			logger.Debugf("MAKER HTTP SELL POSITION %s SIZE %f COST OPEN %f", nextPos.Symbol, nextPos.Volume, nextPos.CostOpen)
 			if lastPosition != nil && nextPos.Volume != 0 {
 				logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
