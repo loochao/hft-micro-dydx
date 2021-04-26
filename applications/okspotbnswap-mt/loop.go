@@ -45,7 +45,7 @@ func updateTakerPositions() {
 			unHedgedValue += math.Abs(takerSizeDiff * takerTakerDepth.TakerBid)
 		}
 		takerSizeDiff = math.Round(takerSizeDiff/takerStepSize) * takerStepSize
-		if takerStepSize == 0 {
+		if math.Abs(takerSizeDiff) < takerStepSize {
 			continue
 		} else if takerSizeDiff < 0 && takerPosition.PositionAmt <= 0 && -takerSizeDiff*takerTakerDepth.TakerBid*(1.0-*mtConfig.EnterSlippage) < takerMinNotional {
 			continue
