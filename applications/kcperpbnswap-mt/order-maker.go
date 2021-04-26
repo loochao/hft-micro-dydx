@@ -114,7 +114,7 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 
 	//检查价格有没有挂太远，太远撤掉
 	if order.Side == kcperp.OrderSideBuy &&
-		float64(order.Price) < (1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid {
+		float64(order.Price) < (1.0-4**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid {
 		logger.Debugf("%s BUY PRICE %f < MAKER BID MINIMAL PRICE %f",
 			order.Symbol,
 			order.Price,
@@ -122,7 +122,7 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 		)
 		return false
 	} else if order.Side == kcperp.OrderSideSell &&
-		float64(order.Price) > (1.0+2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk {
+		float64(order.Price) > (1.0+4**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk {
 		logger.Debugf("%s SELL PRICE %f > MAKER ASK MAXIMAL PRICE %f",
 			order.Symbol,
 			order.Price,
