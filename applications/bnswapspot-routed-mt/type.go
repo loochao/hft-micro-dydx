@@ -18,15 +18,13 @@ type MakerOrderNewError struct {
 }
 
 type Quantile struct {
-	Symbol       string
-	Mid          float64
-	Top          float64
-	Bot          float64
-	FarBot       float64
-	FarTop       float64
-	TopBandScale float64
-	BotBandScale float64
-	MaClose      float64
+	Symbol      string
+	Mid         float64
+	Top         float64
+	Bot         float64
+	OriginalTop float64
+	OriginalBot float64
+	MaClose     float64
 }
 
 const (

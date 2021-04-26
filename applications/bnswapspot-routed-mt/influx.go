@@ -141,9 +141,9 @@ func handleSave() {
 		}
 		if quantile, ok := bnQuantiles[symbol]; ok {
 			fields["quantileBot"] = quantile.Bot
-			fields["quantileFarBot"] = quantile.FarBot
 			fields["quantileTop"] = quantile.Top
-			fields["quantileFarTop"] = quantile.FarTop
+			fields["quantileOriginalTop"] = quantile.OriginalTop
+			fields["quantileOriginalBot"] = quantile.OriginalBot
 			fields["quantileMid"] = quantile.Mid
 			fields["quantileMaClose"] = quantile.MaClose
 		}

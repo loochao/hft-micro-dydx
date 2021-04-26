@@ -95,6 +95,8 @@ func watchDeltaQuantile(
 						Top:     top / maClose,
 						Bot:     bot / maClose,
 						Mid:     mid / maClose,
+						OriginalTop: quantile.Quantile(topQuantile),
+						OriginalBot: quantile.Quantile(botQuantile),
 						MaClose: maClose,
 					}
 					if q.Top < minimalEnterDelta {
@@ -103,8 +105,6 @@ func watchDeltaQuantile(
 					if q.Bot > maximalExitDelta {
 						q.Bot = maximalExitDelta
 					}
-					q.FarBot = (q.Bot-q.Mid)*2 + q.Mid
-					q.FarTop = (q.Top-q.Mid)*2 + q.Mid
 					quantiles[symbol] = q
 				}
 			}
