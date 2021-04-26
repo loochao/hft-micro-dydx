@@ -447,9 +447,13 @@ func (no *NewOrderParams) ToUrlValues() url.Values {
 	values.Set("type", no.Type)
 	values.Set("reduceOnly", strconv.FormatBool(no.ReduceOnly))
 	values.Set("quantity", strconv.FormatFloat(no.Quantity, 'f', 8, 64))
-	values.Set("price", strconv.FormatFloat(no.Price, 'f', 8, 64))
+	if no.Price != 0 {
+		values.Set("price", strconv.FormatFloat(no.Price, 'f', 8, 64))
+	}
 	values.Set("newClientOrderId", no.NewClientOrderId)
-	values.Set("timeInForce", no.TimeInForce)
+	if no.TimeInForce != "" {
+		values.Set("timeInForce", no.TimeInForce)
+	}
 	values.Set("newOrderRespType", no.NewOrderRespType)
 	return values
 }
