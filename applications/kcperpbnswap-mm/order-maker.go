@@ -74,7 +74,7 @@ func cancelAllMakerOpenOrders() {
 		if time.Now().Sub(mOrderCancelSilentTimes[symbol]) < 0 {
 			continue
 		}
-		mOrderSilentTimes[order.Symbol] = time.Now()
+		mOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{

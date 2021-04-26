@@ -74,7 +74,7 @@ func updateTakerOldOrders() {
 		if isTakerOrderOk(*order.NewOrderParams) && time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) < 0{
 			continue
 		}
-		tOrderSilentTimes[order.Symbol] = time.Now()
+		tOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		tOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		tOrderCancelCounts[order.Symbol] += 1
 		tOrderRequestChs[order.Symbol] <- TakerOrderRequest{
