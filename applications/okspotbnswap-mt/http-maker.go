@@ -32,9 +32,7 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 				b := b
 				lastBalance = &b
 			}
-
 			mBalances[makerSymbol] = balance
-
 			if lastBalance == nil ||
 				lastBalance.Balance != balance.Balance {
 				logger.Debugf("MAKER HTTP BALANCE %s", balance.ToString())
