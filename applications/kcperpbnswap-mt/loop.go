@@ -26,7 +26,7 @@ func updateTakerPositions() {
 			continue
 		}
 
-		makerBuyPosition, okMakerBuyPosition := mBuyPositions[makerSymbol]
+		makerBuyPosition, okMakerBuyPosition := mPositions[makerSymbol]
 		makerSellPosition, okMakerSellPosition := mSellPositions[makerSymbol]
 		takerPosition, okTakerBalance := tPositions[takerSymbol]
 		spread, okSpread := mtSpreads[makerSymbol]
@@ -146,7 +146,7 @@ func updateMakerNewOrders() {
 		}
 		quantile, okQuantile := mtQuantiles[makerSymbol]
 		spread, okSpread := mtSpreads[makerSymbol]
-		makerBuyPosition, okMakerBuyPosition := mBuyPositions[makerSymbol]
+		makerBuyPosition, okMakerBuyPosition := mPositions[makerSymbol]
 		makerSellPosition, okMakerSellPosition := mSellPositions[makerSymbol]
 		fundingRate, okFundingRate := mtFundingRates[makerSymbol]
 		//if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {

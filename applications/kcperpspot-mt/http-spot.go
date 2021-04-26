@@ -12,13 +12,15 @@ func handleSpotHttpAccount(accounts []kcspot.Account) {
 	hasAccounts := make(map[string]bool)
 	for _, account := range accounts {
 		if account.Currency == "USDT" {
-			hasUSDT = true
-			balance := account
-			if kcspotUSDTBalance == nil || kcspotUSDTBalance.Available != balance.Available {
-				logger.Debugf("SPOT HTTP USDT BALANCE CHANGE %v", balance)
-				kcLoopTimer.Reset(time.Nanosecond)
+			if account.Type == kcspot.AccountTypeTrade {
+				hasUSDT = true
+				balance := account
+				if kcspotUSDTBalance == nil || kcspotUSDTBalance.Available != balance.Available {
+					logger.Debugf("SPOT HTTP USDT BALANCE CHANGE %v", balance)
+					kcLoopTimer.Reset(time.Nanosecond)
+				}
+				kcspotUSDTBalance = &balance
 			}
-			kcspotUSDTBalance = &balance
 			continue
 		}
 		symbol := account.Currency + "-USDT"

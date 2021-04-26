@@ -35,7 +35,7 @@ func handleMakerWSPosition(wsPositions *kcperp.WSPositions) {
 	for _, nextPos := range wsPositions.Positions {
 		if takerSymbol, ok := mtSymbolsMap[nextPos.Symbol]; ok {
 			if nextPos.Direction == kcperp.PositionDirectionBuy {
-				if lastPos, ok := mBuyPositions[nextPos.Symbol]; ok {
+				if lastPos, ok := mPositions[nextPos.Symbol]; ok {
 					mHttpPositionUpdateSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 					if nextPos.Volume != lastPos.Volume {
 						logger.Debugf("MAKER WS BUY POS %s %f -> %f", nextPos.Symbol, lastPos.Volume, nextPos.Volume)
@@ -47,7 +47,7 @@ func handleMakerWSPosition(wsPositions *kcperp.WSPositions) {
 						mtLoopTimer.Reset(time.Nanosecond)
 					}
 					nextPos := nextPos
-					mBuyPositions[nextPos.Symbol] = nextPos
+					mPositions[nextPos.Symbol] = nextPos
 					mPositionsUpdateTimes[nextPos.Symbol] = time.Now()
 				}
 			} else {

@@ -41,8 +41,7 @@ var mtStepSizes = make(map[string]float64)
 var mAccount *kcperp.Account
 var mAccountCh = make(chan kcperp.Account, 10)
 var mPositionCh = make(chan []kcperp.Position, 10)
-var mBuyPositions = make(map[string]kcperp.Position)
-var mSellPositions = make(map[string]kcperp.Position)
+var mPositions = make(map[string]kcperp.Position)
 var mPositionsUpdateTimes = make(map[string]time.Time)
 var mOrderRequestChs = make(map[string]chan MakerOrderRequest)
 var mNewOrderErrorCh chan MakerOrderNewError

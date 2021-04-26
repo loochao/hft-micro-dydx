@@ -13,7 +13,7 @@ import (
 func watchMakerTakerSpread(
 	ctx context.Context,
 	makerSymbol, takerSymbol string,
-	contractSizes,
+	makerMultiplier,
 	makerImpact, takerImpact float64,
 	makerDecay, makerBias,
 	takerDecay, takerBias float64,
@@ -27,7 +27,7 @@ func watchMakerTakerSpread(
 ) {
 	var err error
 	var makerRawDepth, takerRawDepth *common.DepthRawMessage
-	var makerDepth, newMakerDepth *kcperp.Depth20
+	var makerDepth, newMakerDepth *kcperp.Depth5
 	var takerDepth, newTakerDepth *bnswap.Depth5
 	var makerWalkedDepth, takerWalkedDepth *common.WalkedMakerTakerDepth
 	var spreadTime time.Time
@@ -165,7 +165,7 @@ func watchMakerTakerSpread(
 			break
 		case <-makerWalkDepthTimer.C:
 			if makerDepth != nil {
-				makerWalkedDepth, err = common.WalkMakerTakerDepth20(makerDepth, makerImpact, takerImpact)
+				makerWalkedDepth, err = common.WalkMakerTakerDepth5(makerDepth, makerImpact, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						if makerRawDepth == nil {
@@ -201,17 +201,17 @@ func watchMakerTakerSpread(
 			if makerRawDepth == nil {
 				break
 			}
-			newMakerDepth, err = kcperp.ParseDepth20(makerRawDepth.Depth)
+			newMakerDepth, err = kcperp.ParseDepth5(makerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("kcperp.ParseDepth20 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
-			} else if makerDepth == nil || newMakerDepth.MRID > makerDepth.MRID {
+			} else if makerDepth == nil || newMakerDepth.Sequence > makerDepth.Sequence {
 				//需要乘以multiplier
 				for i = range newMakerDepth.Bids {
-					newMakerDepth.Bids[i][1] *= contractSizes
-					newMakerDepth.Asks[i][1] *= contractSizes
+					newMakerDepth.Bids[i][1] *= makerMultiplier
+					newMakerDepth.Asks[i][1] *= makerMultiplier
 				}
 				makerDepth = newMakerDepth
 				makerWalkDepthTimer.Reset(time.Nanosecond)

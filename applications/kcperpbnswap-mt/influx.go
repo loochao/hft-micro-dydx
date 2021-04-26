@@ -49,7 +49,7 @@ func handleSave() {
 	for _, makerSymbol := range mSymbols {
 		takerSymbol := mtSymbolsMap[makerSymbol]
 		fields := make(map[string]interface{})
-		if buyPosition, ok := mBuyPositions[makerSymbol]; ok {
+		if buyPosition, ok := mPositions[makerSymbol]; ok {
 			if sellPosition, ok := mSellPositions[makerSymbol]; ok {
 				fields["makerSize"] = (buyPosition.Volume - sellPosition.Volume) * mContractSizes[makerSymbol]
 				if spread, ok := mtSpreads[makerSymbol]; ok {
