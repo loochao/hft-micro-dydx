@@ -145,7 +145,7 @@ func watchMakerBars(
 					case output <- outputMap:
 					}
 					outputResults = false
-					logger.Debugf("OUTPUT TAKER BARS")
+					logger.Debugf("OUTPUT MAKER BARS")
 				}
 			}
 			loopTimer.Reset(time.Second)
