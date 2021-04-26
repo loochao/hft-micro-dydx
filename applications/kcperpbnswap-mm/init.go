@@ -52,13 +52,18 @@ var mOrderCancelCounts = make(map[string]int)
 var mOrderCancelSilentTimes = make(map[string]time.Time)
 var mOpenOrderCh = make(chan MakerOpenOrder, 10000)
 
+var tOpenOrders = make(map[string]TakerOpenOrder)
+var tOrderCancelCounts = make(map[string]int)
+var tOrderCancelSilentTimes = make(map[string]time.Time)
+var tOpenOrderCh = make(chan TakerOpenOrder, 10000)
+
 var tPositionsCh = make(chan []bnswap.Position, 10)
 var tPositions = make(map[string]*bnswap.Position)
 var tPositionsUpdateTimes = make(map[string]time.Time)
 var tAccount *bnswap.Asset
 var tAccountCh = make(chan bnswap.Account, 10)
 var tNewOrderErrorCh = make(chan TakerOrderNewError, 10)
-var tOrderRequestChs = make(map[string]chan bnswap.NewOrderParams)
+var tOrderRequestChs = make(map[string]chan TakerOrderRequest)
 var tOrderSilentTimes = make(map[string]time.Time)
 
 var mFundingRates = make(map[string]kcperp.CurrentFundingRate)
@@ -83,6 +88,7 @@ var mLastFilledSellPrices = make(map[string]float64)
 var mtRealisedSpread = make(map[string]float64)
 
 var mtUnHedgeValue float64
+var mtHedgeTimeouts = make(map[string]time.Time)
 var mtUnHedgeLogSilentTimes = time.Unix(0, 0)
 var mtLogSilentTimes = make(map[string]time.Time)
 var mtLoopTimer *time.Timer
@@ -98,7 +104,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210426 13:34:37  ####")
+	logger.Debug("####  BUILD @ 20210426 19:03:44  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -142,6 +148,7 @@ func init() {
 
 		mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
 		tHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
+		mtHedgeTimeouts[makerSymbol] = time.Now()
 	}
 	mtDualEnds = make([]int, 0)
 	for i := 0; i < len(mSymbols)/2; i++ {

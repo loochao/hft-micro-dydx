@@ -38,6 +38,7 @@ const (
 	OrderTimeInForceGTC  = "GTC"
 	OrderTimeInForceIOC  = "IOC"
 	OrderTimeInForceFOK  = "FOK"
+	OrderTimeInForceGTX  = "GTX"
 	OrderRespTypeAck     = "ACK"
 	OrderRespTypeResult  = "RESULT"
 	OrderRespTypeFull    = "FULL"

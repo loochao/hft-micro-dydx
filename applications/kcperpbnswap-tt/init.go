@@ -43,14 +43,11 @@ var mAccountCh = make(chan kcperp.Account, 10)
 var mPositionCh = make(chan []kcperp.Position, 10)
 var mPositions = make(map[string]kcperp.Position)
 var mPositionsUpdateTimes = make(map[string]time.Time)
-var mOrderRequestChs = make(map[string]chan MakerOrderRequest)
+var mOrderRequestChs = make(map[string]chan kcperp.NewOrderParam)
 var mNewOrderErrorCh chan MakerOrderNewError
 var mOrderSilentTimes = make(map[string]time.Time)
 var mSilentTimes = make(map[string]time.Time)
-var mOpenOrders = make(map[string]MakerOpenOrder)
-var mOrderCancelCounts = make(map[string]int)
 var mOrderCancelSilentTimes = make(map[string]time.Time)
-var mOpenOrderCh = make(chan MakerOpenOrder, 10000)
 
 var tPositionsCh = make(chan []bnswap.Position, 10)
 var tPositions = make(map[string]*bnswap.Position)
@@ -60,13 +57,6 @@ var tAccountCh = make(chan bnswap.Account, 10)
 var tNewOrderErrorCh = make(chan TakerOrderNewError, 10)
 var tOrderRequestChs = make(map[string]chan bnswap.NewOrderParams)
 var tOrderSilentTimes = make(map[string]time.Time)
-
-var mFundingRates = make(map[string]kcperp.CurrentFundingRate)
-var mFundingRatesCh = make(chan kcperp.CurrentFundingRate, 10)
-var tPremiumIndexes map[string]bnswap.PremiumIndex
-var tPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
-var mtFundingRates = make(map[string]float64)
-var mtRankSymbolMap map[int]string
 
 var mBarsMapCh = make(chan common.KLinesMap)
 var mBarsMap = make(common.KLinesMap)
@@ -78,8 +68,8 @@ var mtQuantilesCh = make(chan map[string]MakerTakerDeltaQuantile, 10)
 var mtQuantiles map[string]MakerTakerDeltaQuantile
 var mtSpreads = make(map[string]*common.MakerTakerSpread)
 
-var mLastFilledBuyPrices = make(map[string]float64)
-var mLastFilledSellPrices = make(map[string]float64)
+var mLastFilledOrders = make(map[string]*kcperp.WSOrder)
+var tLastFilledOrders = make(map[string]*bnswap.WSOrder)
 var mtRealisedSpread = make(map[string]float64)
 
 var mtUnHedgeValue float64
@@ -93,6 +83,7 @@ var mSystemStatusCh = make(chan bool, 10)
 var tSystemStatusCh = make(chan bool, 10)
 var mtGlobalSilent = time.Now()
 
+var mtTriggerSilentTimes = make(map[string]time.Time)
 
 var mtConfig *Config
 
@@ -139,6 +130,7 @@ func init() {
 
 		tOrderSilentTimes[takerSymbol] = time.Now()
 		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
+		mtTriggerSilentTimes[makerSymbol] = time.Now()
 
 		mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
 		tHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
