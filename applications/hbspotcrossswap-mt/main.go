@@ -398,6 +398,7 @@ func main() {
 			if spotOrder.OrderStatus != nil {
 				if *spotOrder.OrderStatus == hbspot.OrderStatusFilled {
 					hbspotHttpBalanceUpdateSilentTimes[spotOrder.Symbol] = time.Now().Add(*hbConfig.HttpSilent)
+					hbcrossswapOrderSilentTimes[hbSpotSwapSymbolsMap[spotOrder.Symbol]] = time.Now()
 					if spotOrder.TradeVolume != nil && spotOrder.TradePrice != nil && spotOrder.Type != nil {
 						if strings.Contains(*spotOrder.Type, "buy") {
 							hbspotLastFilledBuyPrices[spotOrder.Symbol] = *spotOrder.TradePrice

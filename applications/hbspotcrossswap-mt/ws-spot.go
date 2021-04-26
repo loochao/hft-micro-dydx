@@ -23,33 +23,32 @@ func handleSpotWSBalance(balance *hbspot.WSBalance) {
 		hbspotBalanceUpdatedForExternalInflux = true
 		return
 	}
-	symbol := balance.Currency + "usdt"
-	if _, ok := hbSpotSwapSymbolsMap[symbol]; !ok {
-		return
-	}
-	hasLast := true
-	if _, ok :=  hbspotBalances[symbol]; !ok {
-		hasLast = false
-		hbspotBalances[symbol] = &hbspot.Balance{}
-	}
-	if balance.Available != nil && *balance.Available != hbspotBalances[symbol].Available {
-		//logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> %f", symbol, hbspotBalances[symbol].Available, *balance.Available)
-		nb := hbspotBalances[symbol]
-		nb.Available = *balance.Available
-		hbspotBalances[symbol] = nb
-	}
-	if balance.Balance != nil && *balance.Balance != hbspotBalances[symbol].Balance {
-		logger.Debugf("SPOT WS %s BALANCE CHANGED %f -> %f", symbol, hbspotBalances[symbol].Balance, *balance.Balance)
-		nb := hbspotBalances[symbol]
-		nb.Balance = *balance.Balance
-		hbspotBalances[symbol] = nb
-		hbspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*hbConfig.HttpSilent)
-		hbLoopTimer.Reset(time.Nanosecond)
-		hbcrossswapOrderSilentTimes[symbol] = time.Now().Add(time.Nanosecond)
-		if hasLast {
-			logger.Debugf("SPOT ENTER SILENT %s %v", symbol, *hbConfig.EnterSilent)
-			hbspotSilentTimes[symbol] = time.Now().Add(*hbConfig.EnterSilent)
+	spotSymbol := balance.Currency + "usdt"
+	if swapSymbol, ok := hbSpotSwapSymbolsMap[spotSymbol]; ok {
+		hasLast := true
+		if _, ok := hbspotBalances[spotSymbol]; !ok {
+			hasLast = false
+			hbspotBalances[spotSymbol] = &hbspot.Balance{}
 		}
+		if balance.Available != nil && *balance.Available != hbspotBalances[spotSymbol].Available {
+			//logger.Debugf("SPOT WS %s AVAILABLE CHANGED %f -> %f", spotSymbol, hbspotBalances[spotSymbol].Available, *balance.Available)
+			nb := hbspotBalances[spotSymbol]
+			nb.Available = *balance.Available
+			hbspotBalances[spotSymbol] = nb
+		}
+		if balance.Balance != nil && *balance.Balance != hbspotBalances[spotSymbol].Balance {
+			logger.Debugf("SPOT WS %s BALANCE CHANGED %f -> %f", spotSymbol, hbspotBalances[spotSymbol].Balance, *balance.Balance)
+			nb := hbspotBalances[spotSymbol]
+			nb.Balance = *balance.Balance
+			hbspotBalances[spotSymbol] = nb
+			hbspotHttpBalanceUpdateSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.HttpSilent)
+			hbLoopTimer.Reset(time.Nanosecond)
+			hbcrossswapOrderSilentTimes[swapSymbol] = time.Now().Add(time.Nanosecond)
+			if hasLast {
+				logger.Debugf("SPOT ENTER SILENT %s %v", spotSymbol, *hbConfig.EnterSilent)
+				hbspotSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.EnterSilent)
+			}
+		}
+		hbspotBalancesUpdateTimes[spotSymbol] = time.Now()
 	}
-	hbspotBalancesUpdateTimes[symbol] = time.Now()
 }
