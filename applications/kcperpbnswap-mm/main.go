@@ -377,6 +377,15 @@ func main() {
 					},
 				}:
 				}
+				select {
+				case <-mtGlobalCtx.Done():
+					return
+				case tOrderRequestChs[makerSymbol] <- TakerOrderRequest{
+					Cancel: &bnswap.CancelAllOrderParams{
+						Symbol: mtSymbolsMap[makerSymbol],
+					},
+				}:
+				}
 			}
 		}
 	}()
