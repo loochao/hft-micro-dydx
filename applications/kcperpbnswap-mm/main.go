@@ -458,7 +458,7 @@ func main() {
 						makerOrder.Symbol, makerOrder.Side, makerOrder.MatchSize, makerOrder.MatchPrice,
 					)
 					if takerSymbol, ok := mtSymbolsMap[makerOrder.Symbol]; ok {
-						mtHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
+						mtLimitHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
 					}
 					tOrderSilentTimes[mtSymbolsMap[makerOrder.Symbol]] = time.Now()
 					mtLoopTimer.Reset(time.Nanosecond)

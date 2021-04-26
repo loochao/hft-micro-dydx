@@ -88,7 +88,7 @@ var mLastFilledSellPrices = make(map[string]float64)
 var mtRealisedSpread = make(map[string]float64)
 
 var mtUnHedgeValue float64
-var mtHedgeTimeouts = make(map[string]time.Time)
+var mtLimitHedgeTimeouts = make(map[string]time.Time)
 var mtUnHedgeLogSilentTimes = time.Unix(0, 0)
 var mtLogSilentTimes = make(map[string]time.Time)
 var mtLoopTimer *time.Timer
@@ -104,7 +104,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210426 19:07:58  ####")
+	logger.Debug("####  BUILD @ 20210426 19:20:13  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -148,7 +148,7 @@ func init() {
 
 		mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
 		tHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
-		mtHedgeTimeouts[makerSymbol] = time.Now()
+		mtLimitHedgeTimeouts[makerSymbol] = time.Now()
 	}
 	mtDualEnds = make([]int, 0)
 	for i := 0; i < len(mSymbols)/2; i++ {

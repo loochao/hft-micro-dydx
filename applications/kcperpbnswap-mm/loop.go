@@ -81,7 +81,7 @@ func updateTakerOrders() {
 			ReduceOnly:       reduceOnly,
 			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 		}
-		if time.Now().Sub(mtHedgeTimeouts[takerSymbol]) > 0 {
+		if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) > 0 {
 			takerOrder.Type = common.OrderTypeMarket
 			takerOrder.Price = 0
 			takerOrder.TimeInForce = ""
@@ -216,7 +216,7 @@ func updateMakerNewOrders() {
 				mOrderCancelCounts[makerSymbol] = 0
 				mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 				mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
-				mtHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
+				mtLimitHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
 				return
 			}
 		} else if spread.LongLastLeave > quantile.LongTop &&
@@ -264,7 +264,7 @@ func updateMakerNewOrders() {
 				mOrderCancelCounts[makerSymbol] = 0
 				mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 				mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
-				mtHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
+				mtLimitHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
 				return
 			}
 		} else if spread.ShortLastEnter > quantile.ShortTop &&
@@ -362,7 +362,7 @@ func updateMakerNewOrders() {
 			mOrderCancelCounts[makerSymbol] = 0
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 			mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
-			mtHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
+			mtLimitHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
 		} else if spread.LongLastEnter < quantile.LongBot &&
 			spread.LongMedianEnter < quantile.LongBot &&
 			fundingRate < -*mtConfig.MinimalEnterFundingRate &&
@@ -458,7 +458,7 @@ func updateMakerNewOrders() {
 			mOrderCancelCounts[makerSymbol] = 0
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 			mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
-			mtHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
+			mtLimitHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
 		}
 	}
 }
