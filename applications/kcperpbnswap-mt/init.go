@@ -32,7 +32,7 @@ var mHttpPositionUpdateSilentTimes = make(map[string]time.Time)
 var tHttpPositionUpdateSilentTimes = make(map[string]time.Time)
 
 var mTickSizes = make(map[string]float64)
-var mContractSizes = make(map[string]float64)
+var mMultipliers = make(map[string]float64)
 var tTickSizes = make(map[string]float64)
 var tStepSizes = make(map[string]float64)
 var tMinNotional = make(map[string]float64)
@@ -61,8 +61,8 @@ var tNewOrderErrorCh = make(chan TakerOrderNewError, 10)
 var tOrderRequestChs = make(map[string]chan bnswap.NewOrderParams)
 var tOrderSilentTimes = make(map[string]time.Time)
 
-var mFundingRates map[string]kcperp.FundingRate
-var mFundingRatesCh = make(chan map[string]kcperp.FundingRate, 10)
+var mFundingRates = make(map[string]kcperp.CurrentFundingRate)
+var mFundingRatesCh = make(chan kcperp.CurrentFundingRate, 10)
 var tPremiumIndexes map[string]bnswap.PremiumIndex
 var tPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
 var mtFundingRates = make(map[string]float64)
@@ -97,7 +97,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210425 15:09:13  ####")
+	logger.Debug("####  BUILD @ 20210426 03:38:45  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

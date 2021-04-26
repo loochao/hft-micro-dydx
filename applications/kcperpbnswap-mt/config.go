@@ -27,10 +27,11 @@ type Config struct {
 	InternalInflux *InfluxConfig `yaml:"internalInflux"`
 	ExternalInflux *InfluxConfig `yaml:"externalInflux"`
 
-	HbApiKey    *string `yaml:"hbApiKey,omitempty"`
-	HbApiSecret *string `yaml:"hbApiSecret,omitempty"`
-	BnApiKey    *string `yaml:"bnApiKey,omitempty"`
-	BnApiSecret *string `yaml:"bnApiSecret,omitempty"`
+	KcApiKey        *string `yaml:"kcApiKey,omitempty"`
+	KcApiSecret     *string `yaml:"kcApiSecret,omitempty"`
+	KcApiPassphrase *string `yaml:"kcApiPassphrase,omitempty"`
+	BnApiKey        *string `yaml:"bnApiKey,omitempty"`
+	BnApiSecret     *string `yaml:"bnApiSecret,omitempty"`
 
 	Leverage       *int    `yaml:"leverage,omitempty"`
 	ChangeLeverage *bool   `yaml:"changeLeverage,omitempty"`

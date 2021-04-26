@@ -26,22 +26,21 @@ func updateTakerPositions() {
 			continue
 		}
 
-		makerBuyPosition, okMakerBuyPosition := mPositions[makerSymbol]
-		makerSellPosition, okMakerSellPosition := mSellPositions[makerSymbol]
+		makerPosition, okPosition := mPositions[makerSymbol]
 		takerPosition, okTakerBalance := tPositions[takerSymbol]
 		spread, okSpread := mtSpreads[makerSymbol]
-		if !okMakerBuyPosition || !okMakerSellPosition || !okTakerBalance || !okSpread {
+		if !okPosition || !okTakerBalance || !okSpread {
 			continue
 		}
 		takerTakerDepth := spread.TakerDepth
 
-		makerContractSize := mContractSizes[makerSymbol]
+		makerMultiplier := mMultipliers[makerSymbol]
 
 		takerStepSize := tStepSizes[takerSymbol]
 		takerTickSize := tTickSizes[takerSymbol]
 		takerMinNotional := tMinNotional[takerSymbol]
 
-		makerSize := (makerBuyPosition.Volume - makerSellPosition.Volume) * makerContractSize
+		makerSize := makerPosition.CurrentQty * makerMultiplier
 
 		takerSizeDiff := -makerSize - takerPosition.PositionAmt
 		if takerSizeDiff > 0 {
@@ -116,13 +115,13 @@ func updateMakerNewOrders() {
 		return
 	}
 
-	entryStep := (mAccount.WithdrawAvailable + *tAccount.AvailableBalance) * *mtConfig.EnterFreePct
+	entryStep := (mAccount.AvailableBalance + *tAccount.AvailableBalance) * *mtConfig.EnterFreePct
 	if entryStep < *mtConfig.EnterMinimalStep {
 		entryStep = *mtConfig.EnterMinimalStep
 	}
 	entryTarget := entryStep * *mtConfig.EnterTargetFactor
 
-	makerUSDTAvailable := mAccount.WithdrawAvailable
+	makerUSDTAvailable := mAccount.AvailableBalance
 
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单, 优先做空
 	for _, rank := range mtDualEnds {
@@ -146,14 +145,9 @@ func updateMakerNewOrders() {
 		}
 		quantile, okQuantile := mtQuantiles[makerSymbol]
 		spread, okSpread := mtSpreads[makerSymbol]
-		makerBuyPosition, okMakerBuyPosition := mPositions[makerSymbol]
-		makerSellPosition, okMakerSellPosition := mSellPositions[makerSymbol]
+		makerPosition, okMakerPosition := mPositions[makerSymbol]
 		fundingRate, okFundingRate := mtFundingRates[makerSymbol]
-		//if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
-		//	mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
-		//	logger.Debugf("CHECK %s %v %v %v %v %v", makerSymbol,okSpread, okQuantile, okMakerBuyPosition, okMakerSellPosition, okFundingRate)
-		//}
-		if !okSpread || !okQuantile || !okMakerBuyPosition || !okMakerSellPosition || !okFundingRate {
+		if !okSpread || !okQuantile || !okMakerPosition || !okFundingRate {
 			continue
 		}
 
@@ -161,12 +155,10 @@ func updateMakerNewOrders() {
 			continue
 		}
 		makerDepth := spread.MakerDepth
-		makerContractSize := mContractSizes[makerSymbol]
+		makerMultiplier := mMultipliers[makerSymbol]
 		makerTickSize := mTickSizes[makerSymbol]
 		takerMinNotional := tMinNotional[takerSymbol]
 		makerTakerStepSize := mtStepSizes[makerSymbol]
-		makerStepSize := math.Ceil(makerContractSize/makerTickSize) * makerTickSize
-		makerStepSize = math.Ceil(makerStepSize / makerTickSize)
 
 		//if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
 		//	mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
@@ -176,41 +168,42 @@ func updateMakerNewOrders() {
 		if spread.ShortLastLeave < quantile.ShortBot &&
 			spread.ShortMedianLeave < quantile.ShortBot &&
 			fundingRate < *mtConfig.MinimalKeepFundingRate &&
-			makerBuyPosition.Volume > 0 {
-			makerSize := makerBuyPosition.Volume * makerContractSize
-			price := math.Ceil(makerDepth.MakerAsk /makerTickSize) * makerTickSize
+			makerPosition.CurrentQty > 0 {
+			makerSize := makerPosition.CurrentQty * makerMultiplier
+			price := math.Ceil(makerDepth.MakerAsk/makerTickSize) * makerTickSize
 			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
 			if fundingRate > *mtConfig.MinimalKeepFundingRate*0.5 {
 				entryValue = math.Max(2*entryStep, makerSize*price*0.5)
 			}
-			volume := entryValue / price
-			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
-			volume = math.Round(volume / makerContractSize)
-			entryValue = volume * makerContractSize * price
+			size := entryValue / price
+			size = math.Round(size/makerTakerStepSize) * makerTakerStepSize
+			entryValue = size * makerMultiplier * price
 			if makerSize*price-entryValue < entryStep {
-				volume = makerBuyPosition.Volume
+				size = makerPosition.CurrentQty
 			}
-			if volume > 0 {
+			if size > 0 {
 				logger.Debugf(
 					"SHORT BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
 					makerSymbol,
 					spread.ShortLastLeave, quantile.ShortBot,
 					spread.ShortMedianLeave, quantile.ShortBot,
-					volume,
+					size,
 				)
-				order := kcperp.NewOrderParam{
-					Symbol:        makerSymbol,
-					ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-					Price:          common.Float64(price),
-					Volume:         int64(volume),
-					Direction:      kcperp.OrderDirectionSell,
-					Offset:         kcperp.OrderOffsetClose,
-					LeverRate:      *mtConfig.Leverage,
-					OrderPriceType: kcperp.OrderPriceTypePostOnly,
-				}
 
+				order := kcperp.NewOrderParam{
+					Symbol:      makerSymbol,
+					Side:        kcperp.OrderSideSell,
+					Type:        kcperp.OrderTypeLimit,
+					Price:       common.Float64(price),
+					TimeInForce: kcperp.OrderTimeInForceGTC,
+					Size:        int64(size),
+					PostOnly:    true,
+					ReduceOnly:  true,
+					ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+					Leverage:    *mtConfig.Leverage,
+				}
 				mOpenOrders[makerSymbol] = MakerOpenOrder{
-					Symbol: makerSymbol,
+					Symbol:        makerSymbol,
 					NewOrderParam: &order,
 				}
 				mOrderSilentTimes[makerSymbol] = time.Now()
@@ -223,40 +216,41 @@ func updateMakerNewOrders() {
 		} else if spread.LongLastLeave > quantile.LongTop &&
 			spread.LongMedianLeave > quantile.LongTop &&
 			fundingRate > -*mtConfig.MinimalKeepFundingRate &&
-			makerSellPosition.Volume > 0 {
+			makerPosition.CurrentQty < 0 {
 
-			makerSize := makerSellPosition.Volume * makerContractSize
+			makerSize := -makerPosition.CurrentQty * makerMultiplier
 			price := math.Floor(makerDepth.MakerBid/makerTickSize) * makerTickSize
 			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
 			if fundingRate < -*mtConfig.MinimalKeepFundingRate/2 {
 				entryValue = math.Max(2*entryStep, makerSize*price*0.5)
 			}
-			volume := entryValue / price
-			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
-			volume = math.Round(volume / makerContractSize)
+			size := entryValue / price
+			size = math.Round(size/makerTakerStepSize) * makerTakerStepSize
 			if makerSize*price-entryValue < entryStep {
-				volume = makerSellPosition.Volume
+				size = -makerPosition.CurrentQty
 			}
-			if volume > 0 {
+			if size > 0 {
 				logger.Debugf(
 					"LONG TOP REDUCE %s %f > %f, %f > %f, VOLUME %f",
 					makerSymbol,
 					spread.LongLastLeave, quantile.LongTop,
 					spread.LongMedianLeave, quantile.LongTop,
-					volume,
+					size,
 				)
 				order := kcperp.NewOrderParam{
-					Symbol:        makerSymbol,
-					ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-					Price:          common.Float64(price),
-					Volume:         int64(volume),
-					Direction:      kcperp.OrderDirectionBuy,
-					Offset:         kcperp.OrderOffsetClose,
-					LeverRate:      *mtConfig.Leverage,
-					OrderPriceType: kcperp.OrderPriceTypePostOnly,
+					Symbol:      makerSymbol,
+					Side:        kcperp.OrderSideBuy,
+					Type:        kcperp.OrderTypeLimit,
+					Price:       common.Float64(price),
+					TimeInForce: kcperp.OrderTimeInForceGTC,
+					Size:        int64(size),
+					PostOnly:    true,
+					ReduceOnly:  true,
+					ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+					Leverage:    *mtConfig.Leverage,
 				}
 				mOpenOrders[makerSymbol] = MakerOpenOrder{
-					Symbol: makerSymbol,
+					Symbol:        makerSymbol,
 					NewOrderParam: &order,
 				}
 				mOrderSilentTimes[makerSymbol] = time.Now()
@@ -269,8 +263,8 @@ func updateMakerNewOrders() {
 		} else if spread.ShortLastEnter > quantile.ShortTop &&
 			spread.ShortMedianEnter > quantile.ShortTop &&
 			fundingRate > *mtConfig.MinimalEnterFundingRate &&
-			makerSellPosition.Volume == 0 {
-			makerSize := makerBuyPosition.Volume * makerContractSize
+			makerPosition.CurrentQty >= 0 {
+			makerSize := makerPosition.CurrentQty * makerMultiplier
 			price := math.Floor(makerDepth.MakerBid/makerTickSize) * makerTickSize
 			targetValue := makerSize*price + entryStep
 			if targetValue > entryTarget {
@@ -280,12 +274,11 @@ func updateMakerNewOrders() {
 			if entryValue > makerUSDTAvailable*0.8 {
 				entryValue = makerUSDTAvailable * 0.8
 			}
+			size := entryValue / price
+			size = math.Round(size/makerTakerStepSize) * makerTakerStepSize
+			size = math.Round(size / makerMultiplier)
 
-			volume := entryValue / price
-			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
-			volume = math.Round(volume / makerContractSize)
-
-			entryValue = volume * makerContractSize * price
+			entryValue = size * makerMultiplier * price
 
 			//不及一个0.8*EntryStep, 不操作
 			if entryValue < entryStep*0.8 {
@@ -297,7 +290,7 @@ func updateMakerNewOrders() {
 						makerSymbol,
 						spread.ShortLastEnter, quantile.ShortTop,
 						spread.ShortMedianEnter, quantile.ShortTop,
-						volume,
+						size,
 					)
 					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
@@ -312,7 +305,7 @@ func updateMakerNewOrders() {
 						makerSymbol,
 						spread.ShortLastEnter, quantile.ShortTop,
 						spread.ShortMedianEnter, quantile.ShortTop,
-						volume,
+						size,
 					)
 					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
@@ -327,7 +320,7 @@ func updateMakerNewOrders() {
 						makerSymbol,
 						spread.ShortLastEnter, quantile.ShortTop,
 						spread.ShortMedianEnter, quantile.ShortTop,
-						volume,
+						size,
 					)
 					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
@@ -339,21 +332,23 @@ func updateMakerNewOrders() {
 				makerSymbol,
 				spread.ShortLastEnter, quantile.ShortTop,
 				spread.ShortMedianEnter, quantile.ShortTop,
-				volume,
+				size,
 			)
 			makerUSDTAvailable -= entryValue
 			order := kcperp.NewOrderParam{
-				Symbol:        makerSymbol,
-				ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-				Price:          common.Float64(price),
-				Volume:         int64(volume),
-				Direction:      kcperp.OrderDirectionBuy,
-				Offset:         kcperp.OrderOffsetOpen,
-				LeverRate:      *mtConfig.Leverage,
-				OrderPriceType: kcperp.OrderPriceTypePostOnly,
+				Symbol:      makerSymbol,
+				Side:        kcperp.OrderSideBuy,
+				Type:        kcperp.OrderTypeLimit,
+				Price:       common.Float64(price),
+				TimeInForce: kcperp.OrderTimeInForceGTC,
+				Size:        int64(size),
+				PostOnly:    true,
+				ReduceOnly:  false,
+				ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+				Leverage:    *mtConfig.Leverage,
 			}
 			mOpenOrders[makerSymbol] = MakerOpenOrder{
-				Symbol: makerSymbol,
+				Symbol:        makerSymbol,
 				NewOrderParam: &order,
 			}
 			mOrderSilentTimes[makerSymbol] = time.Now()
@@ -364,24 +359,20 @@ func updateMakerNewOrders() {
 		} else if spread.LongLastEnter < quantile.LongBot &&
 			spread.LongMedianEnter < quantile.LongBot &&
 			fundingRate < -*mtConfig.MinimalEnterFundingRate &&
-			makerBuyPosition.Volume == 0 {
-			makerSize := makerSellPosition.Volume * makerContractSize
+			makerPosition.CurrentQty <= 0 {
+			makerSize := -makerPosition.CurrentQty * makerMultiplier
 			price := math.Ceil(makerDepth.MakerAsk/makerTickSize) * makerTickSize
 			targetValue := makerSize*price + entryStep
 			if targetValue > entryTarget {
 				targetValue = entryTarget
 			}
 			entryValue := targetValue - makerSize*price
-
 			if entryValue > makerUSDTAvailable*0.8 {
 				entryValue = makerUSDTAvailable * 0.8
 			}
-
-			volume := entryValue / price
-			volume = math.Round(volume/makerTakerStepSize) * makerTakerStepSize
-			volume = math.Round(volume / makerContractSize)
-
-			entryValue = volume * makerContractSize * price
+			size := entryValue / price
+			size = math.Round(size/makerTakerStepSize) * makerTakerStepSize
+			entryValue = size * makerMultiplier * price
 
 			//不及一个0.8*EntryStep, 不操作
 			if entryValue < entryStep*0.8 {
@@ -393,7 +384,7 @@ func updateMakerNewOrders() {
 						makerSymbol,
 						spread.LongLastEnter, quantile.LongBot,
 						spread.LongMedianEnter, quantile.LongBot,
-						volume,
+						size,
 					)
 					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
@@ -408,7 +399,7 @@ func updateMakerNewOrders() {
 						makerSymbol,
 						spread.LongLastEnter, quantile.LongBot,
 						spread.LongMedianEnter, quantile.LongBot,
-						volume,
+						size,
 					)
 					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
@@ -423,7 +414,7 @@ func updateMakerNewOrders() {
 						makerSymbol,
 						spread.LongLastEnter, quantile.LongBot,
 						spread.LongMedianEnter, quantile.LongBot,
-						volume,
+						size,
 					)
 					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
@@ -435,21 +426,23 @@ func updateMakerNewOrders() {
 				makerSymbol,
 				spread.LongLastEnter, quantile.LongBot,
 				spread.LongMedianEnter, quantile.LongBot,
-				volume,
+				size,
 			)
 			makerUSDTAvailable -= entryValue
 			order := kcperp.NewOrderParam{
-				Symbol:        makerSymbol,
-				ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
-				Price:          common.Float64(price),
-				Volume:         int64(volume),
-				Direction:      kcperp.OrderDirectionSell,
-				Offset:         kcperp.OrderOffsetOpen,
-				LeverRate:      *mtConfig.Leverage,
-				OrderPriceType: kcperp.OrderPriceTypePostOnly,
+				Symbol:      makerSymbol,
+				Side:        kcperp.OrderSideSell,
+				Type:        kcperp.OrderTypeLimit,
+				Price:       common.Float64(price),
+				TimeInForce: kcperp.OrderTimeInForceGTC,
+				Size:        int64(size),
+				PostOnly:    true,
+				ReduceOnly:  false,
+				ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+				Leverage:    *mtConfig.Leverage,
 			}
 			mOpenOrders[makerSymbol] = MakerOpenOrder{
-				Symbol: makerSymbol,
+				Symbol:        makerSymbol,
 				NewOrderParam: &order,
 			}
 			mOrderSilentTimes[makerSymbol] = time.Now()
@@ -461,7 +454,6 @@ func updateMakerNewOrders() {
 	}
 }
 
-
 func handleUpdateFundingRates() {
 	if mFundingRates == nil {
 		return
@@ -469,12 +461,16 @@ func handleUpdateFundingRates() {
 	if tPremiumIndexes == nil {
 		return
 	}
+	if len(mFundingRates) != len(tPremiumIndexes) {
+		//logger.Debugf("FR M %d T %d", len(mFundingRates), len(tPremiumIndexes))
+		return
+	}
 	frs := make([]float64, len(mSymbols))
 	for i, makerSymbol := range mSymbols {
 		takerSymbol := mtSymbolsMap[makerSymbol]
 		if fr, ok := mFundingRates[makerSymbol]; ok {
 			if pi, ok := tPremiumIndexes[takerSymbol]; ok {
-				frs[i] = pi.FundingRate - fr.FundingRate
+				frs[i] = pi.FundingRate - fr.Value
 				mtFundingRates[makerSymbol] = frs[i]
 			} else {
 				logger.Debugf("MISS PREMIUM INDEX FOR TAKER %s", makerSymbol)
@@ -490,7 +486,7 @@ func handleUpdateFundingRates() {
 		for i, fr := range frs {
 			logger.Debugf(
 				"%s %f %s %f -> %f",
-				mSymbols[i], mFundingRates[mSymbols[i]].FundingRate,
+				mSymbols[i], mFundingRates[mSymbols[i]].Value,
 				mtSymbolsMap[mSymbols[i]], tPremiumIndexes[mtSymbolsMap[mSymbols[i]]].FundingRate,
 				fr,
 			)

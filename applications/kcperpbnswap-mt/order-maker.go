@@ -132,27 +132,27 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 	}
 
 	if order.Side == kcperp.OrderSideBuy &&
-		!order.CloseOrder &&
+		!order.ReduceOnly &&
 		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.ShortTop-*mtConfig.MakerOrderOffset {
 		//买入开多, 是开空价差, 参考ShortTop
 		return true
-	} else if order.Direction == kcperp.OrderDirectionSell &&
-		order.Offset == kcperp.OrderOffsetOpen &&
+	} else if order.Side == kcperp.OrderSideSell &&
+		order.ReduceOnly &&
 		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.ShortBot+*mtConfig.MakerOrderOffset {
 		//卖出平多, 是平空价, 参考ShortBot
 		return true
-	} else if order.Direction == kcperp.OrderDirectionSell &&
-		order.Offset == kcperp.OrderOffsetOpen &&
+	} else if order.Side == kcperp.OrderSideSell &&
+		!order.ReduceOnly &&
 		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.LongBot+*mtConfig.MakerOrderOffset {
 		//卖出开空, 是开多价差, 参考LongBot
 		return true
-	} else if order.Direction == kcperp.OrderDirectionBuy &&
-		order.Offset == kcperp.OrderOffsetClose &&
+	} else if order.Side == kcperp.OrderSideBuy &&
+		order.ReduceOnly &&
 		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.LongTop-*mtConfig.MakerOrderOffset {
 		//买入平空, 是平多价差, 参考LongTop
 		return true
 	}
-	if order.Direction == kcperp.OrderDirectionBuy {
+	if order.Side == kcperp.OrderSideBuy {
 		logger.Debugf(
 			"NOT PROFITABLE %s BUY ORDER, CANCEL", order.Symbol,
 		)

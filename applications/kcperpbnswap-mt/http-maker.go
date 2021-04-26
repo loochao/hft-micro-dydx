@@ -30,7 +30,7 @@ func handleMakerHttpPositions(positions []kcperp.Position) {
 				lastPosition.AvgEntryPrice != nextPos.AvgEntryPrice {
 				tOrderSilentTimes[takerSymbol] = time.Now()
 				mtLoopTimer.Reset(time.Nanosecond)
-				logger.Debugf("MAKER HTTP POSITION SIZE %f PRICE %f", nextPos.CurrentQty, nextPos.AvgEntryPrice)
+				logger.Debugf("MAKER HTTP POSITION %s SIZE %f PRICE %f", nextPos.Symbol, nextPos.CurrentQty, nextPos.AvgEntryPrice)
 				if lastPosition != nil && nextPos.CurrentQty != 0 {
 					logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
 					mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)

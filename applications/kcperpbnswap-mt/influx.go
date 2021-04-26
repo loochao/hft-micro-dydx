@@ -29,8 +29,8 @@ func handleSave() {
 		if tAccount.UnrealizedProfit != nil {
 			fields["takerUnrealizedProfit"] = *tAccount.UnrealizedProfit
 		}
-		fields["makerAvailable"] = mAccount.WithdrawAvailable
-		fields["makerUnrealizedProfit"] = mAccount.ProfitUnreal
+		fields["makerAvailable"] = mAccount.AvailableBalance
+		fields["makerUnrealizedProfit"] = mAccount.UnrealisedPNL
 		pt, err := client.NewPoint(
 			*mtConfig.InternalInflux.Measurement,
 			map[string]string{
@@ -49,12 +49,10 @@ func handleSave() {
 	for _, makerSymbol := range mSymbols {
 		takerSymbol := mtSymbolsMap[makerSymbol]
 		fields := make(map[string]interface{})
-		if buyPosition, ok := mPositions[makerSymbol]; ok {
-			if sellPosition, ok := mSellPositions[makerSymbol]; ok {
-				fields["makerSize"] = (buyPosition.Volume - sellPosition.Volume) * mContractSizes[makerSymbol]
-				if spread, ok := mtSpreads[makerSymbol]; ok {
-					fields["makerValue"] = (buyPosition.Volume - sellPosition.Volume) * mContractSizes[makerSymbol] * spread.MakerDepth.MakerBid
-				}
+		if makerPosition, ok := mPositions[makerSymbol]; ok {
+			fields["makerSize"] = makerPosition.CurrentQty * mMultipliers[makerSymbol]
+			if spread, ok := mtSpreads[makerSymbol]; ok {
+				fields["makerValue"] = makerPosition.CurrentQty * mMultipliers[makerSymbol] * spread.MakerDepth.MakerBid
 			}
 		}
 		if takerPosition, ok := tPositions[takerSymbol]; ok {
@@ -64,7 +62,7 @@ func handleSave() {
 			}
 		}
 		if fr, ok := mFundingRates[makerSymbol]; ok {
-			fields["makerFundingRate"] = fr.FundingRate
+			fields["makerFundingRate"] = fr.Value
 		}
 		if pi, ok := tPremiumIndexes[takerSymbol]; ok {
 			fields["takerFundingRate"] = pi.FundingRate

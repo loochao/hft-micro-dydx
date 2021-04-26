@@ -31,8 +31,9 @@ func main() {
 
 	var err error
 	mAPI, err = kcperp.NewAPI(
-		*mtConfig.HbApiKey,
-		*mtConfig.HbApiSecret,
+		*mtConfig.KcApiKey,
+		*mtConfig.KcApiSecret,
+		*mtConfig.KcApiPassphrase,
 		*mtConfig.ProxyAddress,
 	)
 	if err != nil {
@@ -50,36 +51,6 @@ func main() {
 		logger.Debugf("bnswap.NewAPI error %v", err)
 		return
 	}
-
-	//totalDiff := int64(0)
-	//requestTime := int64(0)
-	//for i := 0; i < 10; i++ {
-	//	start := time.Now()
-	//	tt, err := tAPI.GetServerTime(context.Background())
-	//	if err != nil {
-	//		logger.Debugf("bnswap.GetServerTime error %v", err)
-	//		return
-	//	}
-	//	requestTime += time.Now().Sub(start).Milliseconds()
-	//	totalDiff += tt.ServerTime - time.Now().UnixNano()/1000000
-	//	time.Sleep(time.Second)
-	//}
-	//logger.Debugf("TAKER ROUTE TIME %d SEVER TIME DIFF %d WITH HALF ROUTE %d", requestTime/10, totalDiff/10, totalDiff/10+requestTime/20)
-	//
-	//totalDiff = int64(0)
-	//requestTime = int64(0)
-	//for i := 0; i < 10; i++ {
-	//	start := time.Now()
-	//	tt, err := mAPI.GetTimestamp(context.Background())
-	//	if err != nil {
-	//		logger.Debugf("bnswap.GetServerTime error %v", err)
-	//		return
-	//	}
-	//	requestTime += time.Now().Sub(start).Milliseconds()
-	//	totalDiff += tt.Timestamp.Sub(time.Now()).Milliseconds()
-	//	time.Sleep(time.Second)
-	//}
-	//logger.Debugf("MAKER ROUTE TIME %d SEVER TIME DIFF %d WITH HALF ROUTE %d", requestTime/10, totalDiff/10, totalDiff/10+requestTime/20)
 
 	mtGlobalCtx, mtGlobalCancel = context.WithCancel(context.Background())
 	defer mtGlobalCancel()
@@ -108,8 +79,7 @@ func main() {
 			time.Sleep(time.Second)
 		}
 	}
-
-	mTickSizes, mContractSizes, err = kcperp.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
+	_, mMultipliers, mTickSizes, _, err = kcperp.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
 	if err != nil {
 		logger.Debugf("kcperp.GetOrderLimits error %v", err)
 		return
@@ -120,7 +90,7 @@ func main() {
 		return
 	}
 
-	for makerSymbol, makerStepSize := range mContractSizes {
+	for makerSymbol, makerStepSize := range mMultipliers {
 		if takerStepSize, ok := tStepSizes[mtSymbolsMap[makerSymbol]]; !ok {
 			logger.Debugf("TAKER STEP SIZE NOT EXISTS FOR MAKER %s - %s", makerSymbol, mtSymbolsMap[makerSymbol])
 			return
@@ -179,8 +149,7 @@ func main() {
 
 	mUserWebsocket = kcperp.NewUserWebsocket(
 		mtGlobalCtx,
-		*mtConfig.HbApiKey,
-		*mtConfig.HbApiSecret,
+		mAPI,
 		mSymbols,
 		*mtConfig.ProxyAddress,
 	)
@@ -205,16 +174,17 @@ func main() {
 	defer mtLoopTimer.Stop()
 	defer externalInfluxSaveTimer.Stop()
 
-	go kcperp.WatchPositionsFromHttp(
+	go kcperp.PositionsHttpLoop(
 		mtGlobalCtx, mAPI,
 		mSymbols, *mtConfig.PullInterval,
 		mPositionCh,
 	)
-	go kcperp.WatchAccountFromHttp(
+	go kcperp.AccountHttpLoop(
 		mtGlobalCtx, mAPI,
+		kcperp.AccountParam{Currency: "USDT"},
 		*mtConfig.PullInterval, mAccountCh,
 	)
-	go kcperp.WatchFundingRate(
+	go kcperp.FundingRateLoop(
 		mtGlobalCtx, mAPI,
 		mSymbols,
 		*mtConfig.PullInterval*10,
@@ -293,6 +263,7 @@ func main() {
 		go makerRoutedDepthLoop(
 			mtGlobalCtx,
 			mtGlobalCancel,
+			mAPI,
 			*mtConfig.ProxyAddress,
 			subMakerRowDepthChs,
 		)
@@ -322,7 +293,7 @@ func main() {
 		go watchMakerTakerSpread(
 			mtGlobalCtx,
 			makerSymbol, takerSymbol,
-			mContractSizes[makerSymbol],
+			mMultipliers[makerSymbol],
 			*mtConfig.OrderBookMakerImpact,
 			*mtConfig.OrderBookTakerImpact,
 			*mtConfig.OrderBookMakerDecay,
@@ -367,7 +338,7 @@ func main() {
 		)
 	}
 
-	go kcperp.SystemStatusLoop(
+	go kcperp.WatchSystemStatusHttp(
 		mtGlobalCtx,
 		mAPI,
 		*mtConfig.PullInterval/2,
@@ -402,7 +373,7 @@ func main() {
 				case <-mtGlobalCtx.Done():
 					return
 				case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
-					Cancel: &kcperp.CancelAllParam{
+					Cancel: &kcperp.CancelAllOrdersParam{
 						Symbol: makerSymbol,
 					},
 				}:
@@ -462,32 +433,31 @@ func main() {
 		case msg := <-mUserWebsocket.PositionCh:
 			handleMakerWSPosition(msg)
 			break
-		case msg := <-mUserWebsocket.AccountCh:
+		case msg := <-mUserWebsocket.BalanceCh:
 			handleMakerWSAccount(msg)
 			break
 		case makerOrder := <-mUserWebsocket.OrderCh:
-			if makerOrder.Status == kcperp.OrderStatusFilled ||
-				makerOrder.Status == kcperp.OrderStatusCancelled ||
-				makerOrder.Status == kcperp.OrderStatusPartiallyFilledButCancelledByClient {
-				if openOrder, ok := mOpenOrders[makerOrder.Symbol]; ok && openOrder.ClientOrderID == makerOrder.ClientOrderID {
+			if makerOrder.Type == kcperp.OrderTypeCanceled ||
+				makerOrder.Type == kcperp.OrderTypeMatch {
+				if openOrder, ok := mOpenOrders[makerOrder.Symbol]; ok && openOrder.ClientOid == makerOrder.ClientOid {
 					delete(mOpenOrders, makerOrder.Symbol)
 				}
-				if makerOrder.Status == kcperp.OrderStatusCancelled {
+				if makerOrder.Type == kcperp.OrderTypeCanceled {
 					logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
 					mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
 					mPositionsUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)
 				} else {
 					logger.Debugf(
 						"MAKER WS ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
-						makerOrder.Symbol, makerOrder.Direction, makerOrder.TradeVolume, makerOrder.TradeAvgPrice,
+						makerOrder.Symbol, makerOrder.Side, makerOrder.MatchSize, makerOrder.MatchPrice,
 					)
 					tOrderSilentTimes[mtSymbolsMap[makerOrder.Symbol]] = time.Now()
 					mtLoopTimer.Reset(time.Nanosecond)
 					mHttpPositionUpdateSilentTimes[makerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
-					if makerOrder.Direction == kcperp.OrderDirectionSell {
-						mLastFilledSellPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
-					} else if makerOrder.Direction == kcperp.OrderDirectionBuy {
-						mLastFilledBuyPrices[makerOrder.Symbol] = makerOrder.TradeAvgPrice
+					if makerOrder.Side == kcperp.OrderSideSell {
+						mLastFilledSellPrices[makerOrder.Symbol] = makerOrder.MatchPrice
+					} else if makerOrder.Side == kcperp.OrderSideBuy {
+						mLastFilledBuyPrices[makerOrder.Symbol] = makerOrder.MatchPrice
 					}
 				}
 			}
@@ -520,7 +490,8 @@ func main() {
 			mtSpreads[spread.MakerSymbol] = spread
 			//mtLoopTimer.Reset(time.Millisecond)
 			break
-		case mFundingRates = <-mFundingRatesCh:
+		case fr := <-mFundingRatesCh:
+			mFundingRates[fr.Symbol] = fr
 			handleUpdateFundingRates()
 			break
 		case tPremiumIndexes = <-tPremiumIndexesCh:
@@ -547,10 +518,9 @@ func main() {
 			break
 		case qs := <-mtQuantilesCh:
 			if mtQuantiles == nil {
-				//logger.Debugf("QUANTILES %s", d)
+				logger.Debugf("QUANTILES %v", qs)
 			}
 			mtQuantiles = qs
-			//mtLoopTimer.Reset(time.Millisecond)
 			break
 		case <-influxSaveTimer.C:
 			handleSave()
@@ -583,7 +553,7 @@ func main() {
 				if makerOpenOrder.NewOrderParam == nil && openOrder.ResponseOrderID == makerOpenOrder.ResponseOrderID {
 					//Cancel的Http回报
 					delete(mOpenOrders, makerOpenOrder.Symbol)
-				} else if makerOpenOrder.NewOrderParam != nil && openOrder.ClientOrderID == makerOpenOrder.ClientOrderID {
+				} else if makerOpenOrder.NewOrderParam != nil && openOrder.ClientOid == makerOpenOrder.ClientOid {
 					//New的Http回报
 					mOpenOrders[makerOpenOrder.Symbol] = makerOpenOrder
 				}
@@ -603,7 +573,7 @@ func main() {
 					for makerSymbol := range mOpenOrders {
 						select {
 						case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
-							Cancel: &kcperp.CancelAllParam{
+							Cancel: &kcperp.CancelAllOrdersParam{
 								Symbol: makerSymbol,
 							},
 						}:
