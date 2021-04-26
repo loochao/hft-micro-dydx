@@ -14,22 +14,39 @@ func handleSave() {
 	if tAccount != nil &&
 		tAccount.MarginBalance != nil &&
 		mAccount != nil {
-		totalBalance := *tAccount.MarginBalance + mAccount.Balance
-		netWorth := totalBalance / *mtConfig.StartValue
+
+		mTotalBalance := mAccount.Balance
+		getAll := true
+		for makerSymbol, b := range mBalances {
+			if b.Balance != 0 {
+				if spread, ok := mtSpreads[makerSymbol]; ok {
+					mTotalBalance += b.Balance * spread.MakerDepth.TakerBid
+				} else {
+					logger.Debugf("MISS SPREAD FOR %s", makerSymbol)
+					getAll = false
+					break
+				}
+			}
+		}
+
 		fields := make(map[string]interface{})
-		fields["totalBalance"] = totalBalance
+		if getAll {
+			totalBalance := *tAccount.MarginBalance + mTotalBalance
+			netWorth := totalBalance / *mtConfig.StartValue
+			fields["totalBalance"] = totalBalance
+			fields["makerBalance"] = mTotalBalance
+			fields["netWorth"] = netWorth
+		}
+
 		fields["takerBalance"] = *tAccount.MarginBalance
-		fields["makerBalance"] = mAccount.Available + mAccount.Hold
-		fields["netWorth"] = netWorth
 		fields["startValue"] = *mtConfig.StartValue
-		fields["netWorth"] = netWorth
+		fields["makerAvailable"] = mAccount.Available
 		if tAccount.AvailableBalance != nil {
 			fields["takerAvailable"] = *tAccount.AvailableBalance
 		}
 		if tAccount.UnrealizedProfit != nil {
 			fields["takerUnrealizedProfit"] = *tAccount.UnrealizedProfit
 		}
-		fields["makerAvailable"] = mAccount.Available
 		pt, err := client.NewPoint(
 			*mtConfig.InternalInflux.Measurement,
 			map[string]string{
@@ -126,28 +143,44 @@ func handleExternalInfluxSave() {
 	if tAccount != nil &&
 		tAccount.MarginBalance != nil &&
 		mAccount != nil {
-		totalBalance := *tAccount.MarginBalance + mAccount.Balance
-		netWorth := totalBalance / *mtConfig.StartValue
-		fields := make(map[string]interface{})
-		fields["netWorth"] = netWorth
-		for name, start := range mtConfig.StartValues {
-			if start > 0 {
-				fields["currentValue_"+strings.ToLower(name)] = netWorth * start
+
+		mTotalBalance := mAccount.Balance
+		getAll := true
+		for makerSymbol, b := range mBalances {
+			if b.Balance != 0 {
+				if spread, ok := mtSpreads[makerSymbol]; ok {
+					mTotalBalance += b.Balance * spread.MakerDepth.TakerBid
+				} else {
+					getAll = false
+					break
+				}
 			}
 		}
-		if len(fields) > 0 {
-			pt, err := client.NewPoint(
-				*mtConfig.ExternalInflux.Measurement,
-				map[string]string{
-					"name": *mtConfig.Name,
-				},
-				fields,
-				time.Now().UTC(),
-			)
-			if err != nil {
-				logger.Debugf("Margin NewPoint error %v", err)
-			} else {
-				go mtExternalInfluxWriter.Push(pt)
+
+		if getAll {
+			totalBalance := *tAccount.MarginBalance + mTotalBalance
+			netWorth := totalBalance / *mtConfig.StartValue
+			fields := make(map[string]interface{})
+			fields["netWorth"] = netWorth
+			for name, start := range mtConfig.StartValues {
+				if start > 0 {
+					fields["currentValue_"+strings.ToLower(name)] = netWorth * start
+				}
+			}
+			if len(fields) > 0 {
+				pt, err := client.NewPoint(
+					*mtConfig.ExternalInflux.Measurement,
+					map[string]string{
+						"name": *mtConfig.Name,
+					},
+					fields,
+					time.Now().UTC(),
+				)
+				if err != nil {
+					logger.Debugf("Margin NewPoint error %v", err)
+				} else {
+					go mtExternalInfluxWriter.Push(pt)
+				}
 			}
 		}
 	}
