@@ -51,9 +51,11 @@ func updateTakerPositions() {
 		}
 		takerSizeDiff = math.Round(takerSizeDiff/takerStepSize) * takerStepSize
 
-		if takerSizeDiff <= 0 && -takerSizeDiff*takerTakerDepth.TakerBid*(1.0-*mtConfig.EnterSlippage) < takerMinNotional {
+		if math.Abs(takerSizeDiff) < takerStepSize {
 			continue
-		} else if takerSizeDiff >= 0 && takerSizeDiff*takerTakerDepth.TakerAsk*(1.0+*mtConfig.EnterSlippage) < takerMinNotional {
+		} else if takerSizeDiff < 0 && -takerSizeDiff*takerTakerDepth.TakerBid*(1.0-*mtConfig.EnterSlippage) < takerMinNotional {
+			continue
+		} else if takerSizeDiff > 0 && takerSizeDiff*takerTakerDepth.TakerAsk*(1.0+*mtConfig.EnterSlippage) < takerMinNotional {
 			continue
 		}
 

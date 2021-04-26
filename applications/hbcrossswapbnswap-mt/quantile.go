@@ -13,8 +13,6 @@ func watchDeltaQuantile(
 	makerTakerSymbolMap map[string]string,
 	botQuantile float64,
 	topQuantile float64,
-	topScale float64,
-	botScale float64,
 	minimalEnterDelta,
 	maximalExitDelta,
 	minimalBandOffset float64,
@@ -65,19 +63,19 @@ func watchDeltaQuantile(
 					if botBand/maClose < minimalBandOffset {
 						botBand = maClose * minimalBandOffset
 					}
-					bot = mid - botScale*botBand
+					bot = mid - botBand
 
 					topBand := top - mid
 					if topBand/maClose < minimalBandOffset {
 						topBand = maClose * minimalBandOffset
 					}
-					top = mid + topScale*topBand
+					top = mid + topBand
 
 					q := MakerTakerDeltaQuantile{
 						Symbol:   makerSymbol,
 						ShortTop: top / maClose,
-						ShortBot: (bot + botScale*botBand*0.5) / maClose,
-						LongTop:  (top - topScale*topBand*0.5) / maClose,
+						ShortBot: (bot + botBand*0.5) / maClose,
+						LongTop:  (top - topBand*0.5) / maClose,
 						LongBot:  bot / maClose,
 						Mid:      mid / maClose,
 						MaClose:  maClose,

@@ -148,6 +148,7 @@ func init() {
 		kcperpHttpPositionUpdateSilentTimes[perpSymbol] = time.Now()
 	}
 
+
 	kcGlobalSilent = time.Now().Add(*kcConfig.EnterSilent)
 	kcBarsMapUpdated["swap"] = false
 	kcBarsMapUpdated["spot"] = false
