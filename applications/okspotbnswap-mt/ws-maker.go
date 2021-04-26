@@ -20,29 +20,25 @@ func handleMakerWSAccount(balances []okspot.Balance) {
 			continue
 		}
 		makerSymbol := balance.Currency + "-USDT"
-		if _, ok := mtSymbolsMap[makerSymbol]; !ok {
-			continue
-		}
-		var lastBalance *okspot.Balance
-		if b, ok := mBalances[makerSymbol]; ok {
-			b := b
-			lastBalance = &b
-		}
-
-		mBalances[makerSymbol] = balance
-		mBalancesUpdateTimes[makerSymbol] = time.Now()
-
-		logger.Debugf("MAKER %s B%f A%f H%f", balance.Currency, balance.Balance, balance.Available, balance.Hold)
-
-		if lastBalance == nil ||
-			lastBalance.Balance != balance.Balance {
-			logger.Debugf("MAKER WS BALANCE %s", balance.ToString())
-			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
-			tOrderSilentTimes[makerSymbol] = time.Now()
-			mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
-			if lastBalance != nil && lastBalance.Balance != balance.Balance {
-				mSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.EnterSilent)
-				mtLoopTimer.Reset(time.Nanosecond)
+		if takerSymbol, ok := mtSymbolsMap[makerSymbol]; ok {
+			var lastBalance *okspot.Balance
+			if b, ok := mBalances[makerSymbol]; ok {
+				b := b
+				lastBalance = &b
+			}
+			mBalances[makerSymbol] = balance
+			mBalancesUpdateTimes[makerSymbol] = time.Now()
+			logger.Debugf("MAKER %s B%f A%f H%f", balance.Currency, balance.Balance, balance.Available, balance.Hold)
+			if lastBalance == nil ||
+				lastBalance.Balance != balance.Balance {
+				logger.Debugf("MAKER WS BALANCE %s", balance.ToString())
+				//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
+				tOrderSilentTimes[takerSymbol] = time.Now()
+				mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
+				if lastBalance != nil && lastBalance.Balance != balance.Balance {
+					mSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.EnterSilent)
+					mtLoopTimer.Reset(time.Nanosecond)
+				}
 			}
 		}
 	}

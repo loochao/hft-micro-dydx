@@ -22,30 +22,29 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 			continue
 		}
 		makerSymbol := balance.Currency + "-USDT"
-		if _, ok := mtSymbolsMap[makerSymbol]; !ok {
-			continue
-		}
-		mBalancesUpdateTimes[makerSymbol] = time.Now()
-		if time.Now().Sub(mHttpPositionUpdateSilentTimes[makerSymbol]) < 0 {
-			continue
-		}
-		var lastBalance *okspot.Balance
-		if b, ok := mBalances[makerSymbol]; ok {
-			b := b
-			lastBalance = &b
-		}
+		if takerSymbol, ok := mtSymbolsMap[makerSymbol]; ok {
+			mBalancesUpdateTimes[makerSymbol] = time.Now()
+			if time.Now().Sub(mHttpPositionUpdateSilentTimes[makerSymbol]) < 0 {
+				continue
+			}
+			var lastBalance *okspot.Balance
+			if b, ok := mBalances[makerSymbol]; ok {
+				b := b
+				lastBalance = &b
+			}
 
-		mBalances[makerSymbol] = balance
+			mBalances[makerSymbol] = balance
 
-		if lastBalance == nil ||
-			lastBalance.Balance != balance.Balance {
-			logger.Debugf("MAKER HTTP BALANCE %s", balance.ToString())
-			//如果MAKER变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
-			tOrderSilentTimes[makerSymbol] = time.Now()
-			mtLoopTimer.Reset(time.Nanosecond)
-			if lastBalance != nil && lastBalance.Balance != balance.Balance{
-				mSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.EnterSilent)
+			if lastBalance == nil ||
+				lastBalance.Balance != balance.Balance {
+				logger.Debugf("MAKER HTTP BALANCE %s", balance.ToString())
+				//如果MAKER变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
+				tOrderSilentTimes[takerSymbol] = time.Now()
 				mtLoopTimer.Reset(time.Nanosecond)
+				if lastBalance != nil && lastBalance.Balance != balance.Balance{
+					mSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.EnterSilent)
+					mtLoopTimer.Reset(time.Nanosecond)
+				}
 			}
 		}
 	}
@@ -58,7 +57,7 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 				Balance:   0.0,
 			}
 			logger.Debugf("MAKER HTTP BALANCE %s EMPTY", strings.Replace(makerSymbol, "-USDT", "",-1))
+			mBalancesUpdateTimes[makerSymbol] = time.Now()
 		}
-		mBalancesUpdateTimes[makerSymbol] = time.Now()
 	}
 }

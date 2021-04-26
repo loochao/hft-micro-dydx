@@ -14,28 +14,27 @@ func handleMakerHttpPositions(positions []kcperp.Position) {
 		hasSellPositions[makerSymbol] = false
 	}
 	for _, nextPos := range positions {
-		if _, ok := mtSymbolsMap[nextPos.Symbol]; !ok {
-			continue
-		}
-		if time.Now().Sub(mHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
-			continue
-		}
-		var lastPosition *kcperp.Position
-		if p, ok := mPositions[nextPos.Symbol]; ok {
-			p := p
-			lastPosition = &p
-		}
-		mPositions[nextPos.Symbol] = nextPos
-		mPositionsUpdateTimes[nextPos.Symbol] = time.Now()
-		if lastPosition == nil ||
-			lastPosition.CurrentQty != nextPos.CurrentQty ||
-			lastPosition.AvgEntryPrice != nextPos.AvgEntryPrice {
-			tOrderSilentTimes[nextPos.Symbol] = time.Now()
-			mtLoopTimer.Reset(time.Nanosecond)
-			logger.Debugf("MAKER HTTP POSITION SIZE %f PRICE %f", nextPos.CurrentQty, nextPos.AvgEntryPrice)
-			if lastPosition != nil && nextPos.CurrentQty != 0 {
-				logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
-				mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+		if takerSymbol, ok := mtSymbolsMap[nextPos.Symbol]; ok {
+			if time.Now().Sub(mHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
+				continue
+			}
+			var lastPosition *kcperp.Position
+			if p, ok := mPositions[nextPos.Symbol]; ok {
+				p := p
+				lastPosition = &p
+			}
+			mPositions[nextPos.Symbol] = nextPos
+			mPositionsUpdateTimes[nextPos.Symbol] = time.Now()
+			if lastPosition == nil ||
+				lastPosition.CurrentQty != nextPos.CurrentQty ||
+				lastPosition.AvgEntryPrice != nextPos.AvgEntryPrice {
+				tOrderSilentTimes[takerSymbol] = time.Now()
+				mtLoopTimer.Reset(time.Nanosecond)
+				logger.Debugf("MAKER HTTP POSITION SIZE %f PRICE %f", nextPos.CurrentQty, nextPos.AvgEntryPrice)
+				if lastPosition != nil && nextPos.CurrentQty != 0 {
+					logger.Debugf("MAKER ENTER SILENT %v", *mtConfig.EnterSilent)
+					mSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+				}
 			}
 		}
 	}
@@ -51,4 +50,3 @@ func handleMakerHttpAccount(account kcperp.Account) {
 		mAccount = &account
 	}
 }
-
