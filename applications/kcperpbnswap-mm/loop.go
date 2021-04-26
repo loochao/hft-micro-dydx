@@ -25,6 +25,9 @@ func updateTakerOrders() {
 		if tOrderSilentTimes[takerSymbol].Sub(time.Now()).Seconds() > 0 {
 			continue
 		}
+		if _, ok := tOpenOrders[takerSymbol]; ok {
+			continue
+		}
 
 		makerPosition, okPosition := mPositions[makerSymbol]
 		takerPosition, okTakerBalance := tPositions[takerSymbol]
@@ -98,6 +101,7 @@ func updateTakerOrders() {
 		tOrderSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
 		tOrderRequestChs[takerSymbol] <- TakerOrderRequest{New: &takerOrder}
+		tOpenOrders[takerSymbol] = TakerOpenOrder{NewOrderParams:&takerOrder, Symbol: takerSymbol}
 	}
 	mtUnHedgeValue = unHedgedValue
 }
