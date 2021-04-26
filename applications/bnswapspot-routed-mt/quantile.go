@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/tdigest"
 )
 
@@ -14,14 +15,38 @@ func watchDeltaQuantile(
 	minimalEnterDelta,
 	maximalExitDelta,
 	minimalBandOffset float64,
+	frAvgCh chan float64,
 	inputCh chan [2]common.KLinesMap,
 	outputCh chan map[string]Quantile,
 ) {
+	var bandScale *float64
+	var bearScale = 0.618
+	var normalScale = 1.0
+	var bullScale = 1.0 - 0.618
+	var crazyScale = 2.0
 	for {
 		select {
 		case <-ctx.Done():
 			return
+		case frSum := <-frAvgCh:
+			if frSum < 0.0001 {
+				bandScale = &bearScale
+				logger.Debugf("FR SUM %f BEAR BAND SCALE %f", frSum, *bandScale)
+			} else if frSum < 0.0005 {
+				bandScale = &normalScale
+				logger.Debugf("FR SUM %f NORM BAND SCALE %f", frSum, *bandScale)
+			} else if frSum < 0.001 {
+				bandScale = &bullScale
+				logger.Debugf("FR SUM %f BULL BAND SCALE %f", frSum, *bandScale)
+			} else {
+				bandScale = &crazyScale
+				logger.Debugf("FR SUM %f CRAZY BAND SCALE %f", frSum, *bandScale)
+			}
+			break
 		case data := <-inputCh:
+			if bandScale == nil {
+				continue
+			}
 			//logger.Debugf("QUANTILES UPDATING...")
 			spotBarsMap := data[0]
 			swapBarsMap := data[1]
@@ -63,7 +88,7 @@ func watchDeltaQuantile(
 					if topBand/maClose < minimalBandOffset {
 						topBand = maClose * minimalBandOffset
 					}
-					top = mid + topBand
+					top = mid + *bandScale*topBand
 
 					q := Quantile{
 						Symbol:  symbol,
@@ -78,14 +103,12 @@ func watchDeltaQuantile(
 					if q.Bot > maximalExitDelta {
 						q.Bot = maximalExitDelta
 					}
-					q.FarBot = (q.Bot - q.Mid)*2 + q.Mid
-					q.FarTop = (q.Top - q.Mid)*2 + q.Mid
+					q.FarBot = (q.Bot-q.Mid)*2 + q.Mid
+					q.FarTop = (q.Top-q.Mid)*2 + q.Mid
 					quantiles[symbol] = q
-					//logger.Debugf("%s QUANTILE DONE", symbol)
 				}
 			}
 			if len(quantiles) > 0 {
-				//logger.Debugf("QUANTILES UPDATED.")
 				outputCh <- quantiles
 			}
 		}

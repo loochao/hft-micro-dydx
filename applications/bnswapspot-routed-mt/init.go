@@ -89,12 +89,13 @@ var bnspotOrderCancelCounts = make(map[string]int)
 var bnswapPremiumIndexes = make(map[string]bnswap.PremiumIndex)
 var bnswapPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
 var bnswapAvgFundingRate *float64
+var bnswapAvgFundingRateCh = make(chan float64, 100)
 var bnRankSymbolMap map[int]string
 
 var bnswapBarsMapCh = make(chan common.KLinesMap)
-var bnswapBarsMap = make(common.KLinesMap)
+var bnswapBarsMap common.KLinesMap
 var bnspotBarsMapCh = make(chan common.KLinesMap)
-var bnspotBarsMap = make(common.KLinesMap)
+var bnspotBarsMap common.KLinesMap
 var bnBarsMapUpdated = make(map[string]bool)
 var bnBarsMapCh = make(chan [2]common.KLinesMap, 10)
 var bnQuantilesCh = make(chan map[string]Quantile)
@@ -117,7 +118,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210426 12:05:29  ####")
+	logger.Debug("####  BUILD @ 20210426 12:28:08  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

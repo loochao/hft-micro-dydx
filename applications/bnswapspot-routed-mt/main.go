@@ -232,6 +232,7 @@ func main() {
 		*bnConfig.MinimalEnterDelta,
 		*bnConfig.MaximalExitDelta,
 		*bnConfig.MinimalBandOffset,
+		bnswapAvgFundingRateCh,
 		bnBarsMapCh,
 		bnQuantilesCh,
 	)
@@ -491,22 +492,8 @@ func main() {
 			)
 			break
 		case bnswapBarsMap = <-bnswapBarsMapCh:
-			if bnBarsMapUpdated["spot"] {
-				bnBarsMapCh <- [2]common.KLinesMap{bnspotBarsMap, bnswapBarsMap}
-				bnBarsMapUpdated["spot"] = false
-				bnBarsMapUpdated["swap"] = false
-			} else {
-				bnBarsMapUpdated["swap"] = true
-			}
 			break
 		case bnspotBarsMap = <-bnspotBarsMapCh:
-			if bnBarsMapUpdated["swap"] {
-				bnBarsMapCh <- [2]common.KLinesMap{bnspotBarsMap, bnswapBarsMap}
-				bnBarsMapUpdated["spot"] = false
-				bnBarsMapUpdated["swap"] = false
-			} else {
-				bnBarsMapUpdated["spot"] = true
-			}
 			break
 		case bnQuantiles = <-bnQuantilesCh:
 			//logger.Debugf("QUANTILE %v", bnQuantiles)
@@ -614,11 +601,20 @@ func main() {
 			}
 			frSum /= float64(len(bnSymbols))
 			bnswapAvgFundingRate = &frSum
+			if bnspotBarsMap != nil && bnswapBarsMap != nil {
+				select {
+				case bnswapAvgFundingRateCh <- frSum:
+				default:
+				}
+				select {
+				case bnBarsMapCh <- [2]common.KLinesMap{bnspotBarsMap, bnswapBarsMap}:
+				default:
+				}
+			}
 			bnRankSymbolMap, err = common.RankSymbols(bnSymbols, frs)
 			if err != nil {
 				logger.Debugf("RankSymbols error %v", err)
 			}
-			//logger.Debugf("SYMBOLS FR RANK %v", bnRankSymbolMap)
 			frRankUpdatedTimer.Reset(time.Minute)
 		case <-bnbReBalanceTimer.C:
 			handleReBalanceBnb()
@@ -632,7 +628,7 @@ func main() {
 					time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
 					updateMakerNewOrders()
 				}
-			}else {
+			} else {
 				if len(bnspotOpenOrders) > 0 {
 					for symbol := range bnspotOpenOrders {
 						bnspotOrderRequestChs[symbol] <- SpotOrderRequest{
