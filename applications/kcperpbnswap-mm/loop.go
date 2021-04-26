@@ -65,11 +65,17 @@ func updateTakerOrders() {
 			reduceOnly = true
 		}
 		price := math.Floor(takerTakerDepth.MidPrice/takerTickSize) * takerTickSize
+		if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) < -*mtConfig.HedgeTimeout/2 {
+			price = math.Floor(takerTakerDepth.TakerBid/takerTickSize) * takerTickSize
+		}
 		side := "BUY"
 		if takerSizeDiff < 0 {
 			side = "SELL"
 			takerSizeDiff = -takerSizeDiff
 			price = math.Ceil(takerTakerDepth.MidPrice/takerTickSize) * takerTickSize
+			if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) < -*mtConfig.HedgeTimeout/2 {
+				price = math.Ceil(takerTakerDepth.TakerAsk/takerTickSize) * takerTickSize
+			}
 		}
 		takerOrder := bnswap.NewOrderParams{
 			Symbol:           takerSymbol,
@@ -172,7 +178,7 @@ func updateMakerNewOrders() {
 
 		if spread.ShortLastLeave < quantile.ShortBot &&
 			spread.ShortMedianLeave < quantile.ShortBot &&
-			fundingRate < *mtConfig.MinimalKeepFundingRate &&
+			//fundingRate < *mtConfig.MinimalKeepFundingRate &&
 			makerPosition.CurrentQty > 0 {
 			makerSize := makerPosition.CurrentQty * makerMultiplier
 			price := math.Ceil(makerDepth.MidPrice/makerTickSize) * makerTickSize
@@ -221,7 +227,7 @@ func updateMakerNewOrders() {
 			}
 		} else if spread.LongLastLeave > quantile.LongTop &&
 			spread.LongMedianLeave > quantile.LongTop &&
-			fundingRate > -*mtConfig.MinimalKeepFundingRate &&
+			//fundingRate > -*mtConfig.MinimalKeepFundingRate &&
 			makerPosition.CurrentQty < 0 {
 
 			makerSize := -makerPosition.CurrentQty * makerMultiplier
@@ -269,7 +275,7 @@ func updateMakerNewOrders() {
 			}
 		} else if spread.ShortLastEnter > quantile.ShortTop &&
 			spread.ShortMedianEnter > quantile.ShortTop &&
-			fundingRate > *mtConfig.MinimalEnterFundingRate &&
+			//fundingRate > *mtConfig.MinimalEnterFundingRate &&
 			makerPosition.CurrentQty >= 0 {
 			makerSize := makerPosition.CurrentQty * makerMultiplier
 			price := math.Floor(makerDepth.MidPrice/makerTickSize) * makerTickSize
@@ -365,7 +371,7 @@ func updateMakerNewOrders() {
 			mtLimitHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
 		} else if spread.LongLastEnter < quantile.LongBot &&
 			spread.LongMedianEnter < quantile.LongBot &&
-			fundingRate < -*mtConfig.MinimalEnterFundingRate &&
+			//fundingRate < -*mtConfig.MinimalEnterFundingRate &&
 			makerPosition.CurrentQty <= 0 {
 
 			makerSize := -makerPosition.CurrentQty * makerMultiplier
