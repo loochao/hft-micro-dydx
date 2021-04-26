@@ -226,8 +226,6 @@ func main() {
 		mtSymbolsMap,
 		*mtConfig.BotQuantile,
 		*mtConfig.TopQuantile,
-		*mtConfig.TopBandScale,
-		*mtConfig.BotBandScale,
 		*mtConfig.MinimalEnterDelta,
 		*mtConfig.MaximalExitDelta,
 		*mtConfig.MinimalBandOffset,
