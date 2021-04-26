@@ -95,7 +95,7 @@ func updateMakerOldOrders() {
 		if isOrderProfitable(*order.NewOrderParam) {
 			continue
 		}
-		mOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderSilent)
+		mOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
