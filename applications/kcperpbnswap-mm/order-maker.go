@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/kcperp"
 	"github.com/geometrybase/hft-micro/logger"
-	"math"
 	"time"
 )
 
@@ -111,23 +110,21 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 		logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.Time), order.Symbol)
 		return false
 	}
-	buyMidPrice := math.Floor(spread.MakerDepth.MidPrice/mTickSizes[order.Symbol])*mTickSizes[order.Symbol]
-	sellMidPrice := math.Ceil(spread.MakerDepth.MidPrice/mTickSizes[order.Symbol])*mTickSizes[order.Symbol]
 
 	if order.Side == kcperp.OrderSideBuy &&
-		float64(order.Price) < buyMidPrice {
-		logger.Debugf("%s BUY PRICE %f < BUY MID PRICE %f",
+		float64(order.Price) < spread.MakerDepth.BestBidPrice {
+		logger.Debugf("%s BUY PRICE %f < BEST BID PRICE %f",
 			order.Symbol,
 			order.Price,
-			buyMidPrice,
+			spread.MakerDepth.BestBidPrice,
 		)
 		return false
 	} else if order.Side == kcperp.OrderSideSell &&
-		float64(order.Price) > sellMidPrice {
-		logger.Debugf("%s SELL PRICE %f > SELL MID PRICE %f",
+		float64(order.Price) > spread.MakerDepth.BestAskPrice {
+		logger.Debugf("%s SELL PRICE %f > BEST ASK PRICE %f",
 			order.Symbol,
 			order.Price,
-			sellMidPrice,
+			spread.MakerDepth.BestAskPrice,
 		)
 		return false
 	}

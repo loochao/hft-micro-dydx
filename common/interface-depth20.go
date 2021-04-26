@@ -36,6 +36,9 @@ type WalkedMakerTakerDepth struct {
 	TakerBid    float64
 	TakerFarBid float64
 
+	BestBidPrice float64
+	BestAskPrice float64
+
 	MidPrice float64
 
 	MakerBidSize float64
@@ -180,6 +183,8 @@ func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) (*
 	wd.TakerAsk /= wd.TakerAskSize
 	wd.MakerAsk /= wd.MakerAskSize
 	wd.MidPrice = (depth20.GetBids()[0][0] + depth20.GetAsks()[0][0])*0.5
+	wd.BestBidPrice = depth20.GetBids()[0][0]
+	wd.BestAskPrice = depth20.GetAsks()[0][0]
 	return wd, nil
 }
 
@@ -268,6 +273,8 @@ func WalkMakerTakerDepth5(depth20 Depth5, makerImpact, takerImpact float64) (*Wa
 	wd.TakerAsk /= wd.TakerAskSize
 	wd.MakerAsk /= wd.MakerAskSize
 	wd.MidPrice = (depth20.GetBids()[0][0] + depth20.GetAsks()[0][0])*0.5
+	wd.BestBidPrice = depth20.GetBids()[0][0]
+	wd.BestAskPrice = depth20.GetAsks()[0][0]
 	return wd, nil
 }
 
