@@ -54,8 +54,8 @@ func watchMakerTakerSpread(
 	i := 0
 	matchCount := 0
 	depthCount := 0
-	var eventTime  time.Time
-	var shortLastEnter, shortLastLeave, longLastEnter, longLastLeave float64
+	var eventTime time.Time
+	var shortLastEnter, longLastEnter float64
 	for {
 		select {
 		case <-ctx.Done():
@@ -77,7 +77,7 @@ func watchMakerTakerSpread(
 			}
 			matchCount++
 			shortLastEnter = (takerWalkedDepth.TakerBid - makerWalkedDepth.MakerBid) / makerWalkedDepth.MakerBid
-			longLastLeave = (takerWalkedDepth.TakerBid - makerWalkedDepth.MakerBid) / makerWalkedDepth.MakerBid
+			longLastEnter = (takerWalkedDepth.TakerAsk - makerWalkedDepth.MakerAsk) / makerWalkedDepth.MakerAsk
 
 			times = append(times, takerWalkedDepth.Time)
 			shortEnterWindow = append(shortEnterWindow, shortLastEnter)
@@ -85,6 +85,7 @@ func watchMakerTakerSpread(
 
 			longEnterWindow = append(longEnterWindow, longLastEnter)
 			longEnterSortedSlice = longEnterSortedSlice.Insert(longLastEnter)
+
 			cutIndex = 0
 			for i, eventTime = range times {
 				if spreadTime.Sub(eventTime) > lookbackDuration {
@@ -98,10 +99,12 @@ func watchMakerTakerSpread(
 					shortEnterSortedSlice = shortEnterSortedSlice.Delete(spread)
 				}
 				shortEnterWindow = shortEnterWindow[cutIndex:]
+
 				for _, spread = range longEnterWindow[:cutIndex] {
 					longEnterSortedSlice = longEnterSortedSlice.Delete(spread)
 				}
 				longEnterWindow = longEnterWindow[cutIndex:]
+
 				times = times[cutIndex:]
 			}
 
@@ -122,12 +125,12 @@ func watchMakerTakerSpread(
 				MakerDepth:  *makerWalkedDepth,
 
 				ShortLastEnter:   shortLastEnter,
-				ShortLastLeave:   shortLastLeave,
+				ShortLastLeave:   longLastEnter,
 				ShortMedianEnter: shortEnterSortedSlice.Median(),
 				ShortMedianLeave: longEnterSortedSlice.Median(),
 
 				LongLastEnter:   longLastEnter,
-				LongLastLeave:   longLastLeave,
+				LongLastLeave:   shortLastEnter,
 				LongMedianEnter: longEnterSortedSlice.Median(),
 				LongMedianLeave: shortEnterSortedSlice.Median(),
 
@@ -148,7 +151,7 @@ func watchMakerTakerSpread(
 					if time.Now().Sub(logSilentTime) > 0 {
 						if makerRawDepth == nil {
 							logger.Debugf("maker common.WalkMakerTakerDepth20 error %v %s", err, makerSymbol)
-						}else {
+						} else {
 							logger.Debugf("maker common.WalkMakerTakerDepth20 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
 						}
 						logSilentTime = time.Now().Add(time.Minute)
@@ -165,7 +168,7 @@ func watchMakerTakerSpread(
 					if time.Now().Sub(logSilentTime) > 0 {
 						if takerRawDepth == nil {
 							logger.Debugf("taker common.WalkMakerTakerDepth5 error %v %s", err, takerSymbol)
-						}else{
+						} else {
 							logger.Debugf("taker common.WalkMakerTakerDepth5 error %v %s %s", err, takerSymbol, takerRawDepth.Depth)
 						}
 						logSilentTime = time.Now().Add(time.Minute)
