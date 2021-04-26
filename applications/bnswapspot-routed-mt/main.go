@@ -229,8 +229,6 @@ func main() {
 		bnSymbols,
 		*bnConfig.BotQuantile,
 		*bnConfig.TopQuantile,
-		*bnConfig.TopBandScale,
-		*bnConfig.BotBandScale,
 		*bnConfig.MinimalEnterDelta,
 		*bnConfig.MaximalExitDelta,
 		*bnConfig.MinimalBandOffset,

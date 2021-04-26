@@ -11,8 +11,6 @@ func watchDeltaQuantile(
 	symbols []string,
 	botQuantile float64,
 	topQuantile float64,
-	topScale float64,
-	botScale float64,
 	minimalEnterDelta,
 	maximalExitDelta,
 	minimalBandOffset float64,
@@ -59,13 +57,13 @@ func watchDeltaQuantile(
 					if botBand/maClose < minimalBandOffset {
 						botBand = maClose * minimalBandOffset
 					}
-					bot = mid - botScale*botBand
+					bot = mid - botBand
 
 					topBand := top - mid
 					if topBand/maClose < minimalBandOffset {
 						topBand = maClose * minimalBandOffset
 					}
-					top = mid + topScale*topBand
+					top = mid + topBand
 
 					q := Quantile{
 						Symbol:  symbol,
