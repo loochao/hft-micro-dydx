@@ -71,8 +71,8 @@ func deltaQuantileLoop(
 						Top:         top / maClose,
 						Bot:         bot / maClose,
 						Mid:         mid / maClose,
-						OriginalBot: quantile.Quantile(botQuantile),
-						OriginalTop: quantile.Quantile(topQuantile),
+						OriginalBot: quantile.Quantile(botQuantile) / maClose,
+						OriginalTop: quantile.Quantile(topQuantile) / maClose,
 						MaClose:     maClose,
 					}
 					if q.Top < minimalEnterDelta {
