@@ -475,7 +475,9 @@ func main() {
 			takerOrder := takerOrderEvent.Order
 			if takerOrder.Status == "REJECTED" || takerOrder.Status == "EXPIRED" {
 				tOrderSilentTimes[takerOrder.Symbol] = time.Now()
+				delete(tOpenOrders, takerOrder.Symbol)
 			} else if takerOrder.Status == "FILLED" {
+				delete(tOpenOrders, takerOrder.Symbol)
 				logger.Debugf("TAKER FILLED ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)
 				tHttpPositionUpdateSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 				if makerSymbol, ok := tmSymbolsMap[takerOrder.Symbol]; ok {
