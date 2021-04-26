@@ -10,6 +10,9 @@ import (
 )
 
 func handleSave() {
+	if time.Now().Sub(mtGlobalSilent) < 0 {
+		return
+	}
 
 	if tAccount != nil &&
 		tAccount.MarginBalance != nil &&
@@ -130,6 +133,11 @@ func handleSave() {
 }
 
 func handleExternalInfluxSave() {
+
+	if time.Now().Sub(mtGlobalSilent) < 0 {
+		return
+	}
+
 	if tAccount != nil &&
 		tAccount.MarginBalance != nil &&
 		mAccount != nil {
