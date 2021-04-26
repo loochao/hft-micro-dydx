@@ -449,7 +449,6 @@ func main() {
 					delete(mOpenOrders, makerOrder.Symbol)
 				}
 				if makerOrder.Type == kcperp.OrderTypeCanceled {
-					//logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
 					mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
 					mPositionsUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)
 				} else {
@@ -460,6 +459,7 @@ func main() {
 					if takerSymbol, ok := mtSymbolsMap[makerOrder.Symbol]; ok {
 						mtLimitHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
 					}
+					mtLimitHedgeTimeouts[mtSymbolsMap[makerOrder.Symbol]] = time.Now().Add(*mtConfig.HedgeTimeout)
 					tOrderSilentTimes[mtSymbolsMap[makerOrder.Symbol]] = time.Now()
 					mtLoopTimer.Reset(time.Nanosecond)
 					mHttpPositionUpdateSilentTimes[makerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
@@ -474,7 +474,6 @@ func main() {
 		case takerOrderEvent := <-tUserWebsocket.OrderUpdateEventCh:
 			takerOrder := takerOrderEvent.Order
 			if takerOrder.Status == "REJECTED" || takerOrder.Status == "EXPIRED" {
-				//logger.Debugf("TAKER WS ORDER %s %s", takerOrder.Symbol, takerOrder.Status)
 				tOrderSilentTimes[takerOrder.Symbol] = time.Now()
 			} else if takerOrder.Status == "FILLED" {
 				logger.Debugf("TAKER FILLED ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)

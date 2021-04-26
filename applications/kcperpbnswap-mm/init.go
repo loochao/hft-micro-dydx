@@ -104,7 +104,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210426 20:20:06  ####")
+	logger.Debug("####  BUILD @ 20210426 20:34:24  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -148,7 +148,7 @@ func init() {
 
 		mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
 		tHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
-		mtLimitHedgeTimeouts[makerSymbol] = time.Now()
+		mtLimitHedgeTimeouts[takerSymbol] = time.Now()
 	}
 	mtDualEnds = make([]int, 0)
 	for i := 0; i < len(mSymbols)/2; i++ {

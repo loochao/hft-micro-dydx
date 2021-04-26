@@ -88,6 +88,7 @@ func updateTakerOrders() {
 			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 		}
 		if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) > 0 {
+			logger.Debugf("%s HEDGE TIMEOUT", takerSymbol)
 			takerOrder.Type = common.OrderTypeMarket
 			takerOrder.Price = 0
 			takerOrder.TimeInForce = ""
