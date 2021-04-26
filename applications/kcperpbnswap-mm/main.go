@@ -449,12 +449,12 @@ func main() {
 					delete(mOpenOrders, makerOrder.Symbol)
 				}
 				if makerOrder.Type == kcperp.OrderTypeCanceled {
-					logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
+					//logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
 					mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
 					mPositionsUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)
 				} else {
 					logger.Debugf(
-						"MAKER WS ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
+						"MAKER ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
 						makerOrder.Symbol, makerOrder.Side, makerOrder.MatchSize, makerOrder.MatchPrice,
 					)
 					if takerSymbol, ok := mtSymbolsMap[makerOrder.Symbol]; ok {
@@ -474,10 +474,10 @@ func main() {
 		case takerOrderEvent := <-tUserWebsocket.OrderUpdateEventCh:
 			takerOrder := takerOrderEvent.Order
 			if takerOrder.Status == "REJECTED" || takerOrder.Status == "EXPIRED" {
-				logger.Debugf("TAKER WS ORDER %s %s", takerOrder.Symbol, takerOrder.Status)
+				//logger.Debugf("TAKER WS ORDER %s %s", takerOrder.Symbol, takerOrder.Status)
 				tOrderSilentTimes[takerOrder.Symbol] = time.Now()
 			} else if takerOrder.Status == "FILLED" {
-				logger.Debugf("TAKER WS ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)
+				logger.Debugf("TAKER FILLED ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)
 				tHttpPositionUpdateSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 				if makerSymbol, ok := tmSymbolsMap[takerOrder.Symbol]; ok {
 					if takerOrder.Side == common.OrderSideSell {

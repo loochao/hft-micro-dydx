@@ -92,7 +92,7 @@ func updateTakerOrders() {
 			takerOrder.Price = 0
 			takerOrder.TimeInForce = ""
 		}
-		logger.Debugf("TAKER ORDER %v", takerOrder.ToString())
+		//logger.Debugf("TAKER ORDER %v", takerOrder.ToString())
 		mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 		tOrderSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)

@@ -30,7 +30,7 @@ func watchTakerOrderRequest(
 			}
 			if request.New != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				logger.Debugf("TAKER SUBMIT %v", request.New.ToString())
+				//logger.Debugf("TAKER SUBMIT %v", request.New.ToString())
 				_, err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
 					logger.Debugf("TAKER SUBMIT ERROR %v %v", err, *request.New)
@@ -46,10 +46,10 @@ func watchTakerOrderRequest(
 				}
 			} else if request.Cancel != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				logger.Debugf("TAKER CANCEL %v", *request.Cancel)
+				//logger.Debugf("TAKER CANCEL %v", *request.Cancel)
 				_, err := api.CancelAllOpenOrders(childCtx, *request.Cancel)
 				if err != nil {
-					logger.Debugf("TAKER Cancel ERROR %v %v", err, *request.Cancel)
+					logger.Debugf("TAKER CANCEL ERROR %v %v", err, *request.Cancel)
 				} else {
 					outputOrderRespCh <- TakerOpenOrder{
 						NewOrderParams: nil,
