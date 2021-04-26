@@ -113,7 +113,7 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 
 	if order.Side == kcperp.OrderSideBuy &&
 		float64(order.Price) < spread.MakerDepth.BestBidPrice {
-		logger.Debugf("%s BUY PRICE %f < BEST BID PRICE %f",
+		logger.Debugf("BUY %s %f < BEST BID %f",
 			order.Symbol,
 			order.Price,
 			spread.MakerDepth.BestBidPrice,
@@ -121,7 +121,7 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 		return false
 	} else if order.Side == kcperp.OrderSideSell &&
 		float64(order.Price) > spread.MakerDepth.BestAskPrice {
-		logger.Debugf("%s SELL PRICE %f > BEST ASK PRICE %f",
+		logger.Debugf("SELL %s %f > BEST ASK %f",
 			order.Symbol,
 			order.Price,
 			spread.MakerDepth.BestAskPrice,

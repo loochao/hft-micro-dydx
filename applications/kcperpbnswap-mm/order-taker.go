@@ -91,16 +91,16 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 	}
 	//检查价格有没有挂太远，太远撤掉
 	if order.Side == common.OrderSideBuy &&
-		order.Price < spread.TakerDepth.TakerFarBid {
-		logger.Debugf("TAKER BUY %s PRICE %f < FAR BID %f",
+		order.Price < spread.TakerDepth.BestBidPrice {
+		logger.Debugf("TAKER BUY %s %f < BEST BID %f",
 			order.Symbol,
 			order.Price,
-			spread.TakerDepth.TakerFarBid,
+			spread.TakerDepth.BestBidPrice,
 		)
 		return false
 	} else if order.Side == common.OrderSideSell &&
 		order.Price > spread.TakerDepth.TakerFarAsk {
-		logger.Debugf("TAKER SELL %s PRICE %f > FAR ASK %f",
+		logger.Debugf("TAKER SELL %s %f > BEST ASK %f",
 			order.Symbol,
 			order.Price,
 			spread.TakerDepth.TakerFarBid,
