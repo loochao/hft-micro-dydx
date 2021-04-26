@@ -29,8 +29,8 @@ func watchMakerBars(
 	for i, takerSymbol := range takerSymbols {
 		nextPullTimes[takerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
 	}
-	klineDuration := kcperp.GranularityDurations[kcperp.Granularity30Min]
-	klineGranularity := kcperp.Granularity30Min
+	klineDuration := kcperp.GranularityDurations[kcperp.Granularity5Min]
+	klineGranularity := kcperp.Granularity5Min
 	globalNextPullTime := time.Now()
 	globalNextRetryTime := time.Now()
 	outputResults := true
@@ -172,8 +172,8 @@ func watchTakerBars(
 	for i, takerSymbol := range takerSymbols {
 		nextPullTimes[takerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
 	}
-	klineInterval := "30m"
-	klineDuration := time.Minute * 30
+	klineInterval := "5m"
+	klineDuration := time.Minute * 5
 	globalNextPullTime := time.Now()
 	globalNextRetryTime := time.Now()
 	outputResults := true
