@@ -177,6 +177,7 @@ func updateMakerNewOrders() {
 			}
 			size := entryValue / price
 			size = math.Round(size/makerTakerStepSize) * makerTakerStepSize
+			size = math.Round(size / makerMultiplier)
 			entryValue = size * makerMultiplier * price
 			if makerSize*price-entryValue < entryStep {
 				size = makerPosition.CurrentQty
@@ -226,6 +227,7 @@ func updateMakerNewOrders() {
 			}
 			size := entryValue / price
 			size = math.Round(size/makerTakerStepSize) * makerTakerStepSize
+			size = math.Round(size / makerMultiplier)
 			if makerSize*price-entryValue < entryStep {
 				size = -makerPosition.CurrentQty
 			}
@@ -360,6 +362,7 @@ func updateMakerNewOrders() {
 			spread.LongMedianEnter < quantile.LongBot &&
 			fundingRate < -*mtConfig.MinimalEnterFundingRate &&
 			makerPosition.CurrentQty <= 0 {
+
 			makerSize := -makerPosition.CurrentQty * makerMultiplier
 			price := math.Ceil(makerDepth.MakerAsk/makerTickSize) * makerTickSize
 			targetValue := makerSize*price + entryStep
@@ -372,6 +375,8 @@ func updateMakerNewOrders() {
 			}
 			size := entryValue / price
 			size = math.Round(size/makerTakerStepSize) * makerTakerStepSize
+			size = math.Round(size / makerMultiplier)
+
 			entryValue = size * makerMultiplier * price
 
 			//不及一个0.8*EntryStep, 不操作
