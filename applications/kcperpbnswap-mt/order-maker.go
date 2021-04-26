@@ -118,7 +118,7 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 
 	if order.Side == kcperp.OrderSideBuy &&
 		float64(order.Price) < buyMidPrice {
-		logger.Debugf("%s BUY PRICE %f < MID PRICE %f",
+		logger.Debugf("%s BUY PRICE %f < BUY MID PRICE %f",
 			order.Symbol,
 			order.Price,
 			buyMidPrice,
@@ -126,7 +126,7 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 		return false
 	} else if order.Side == kcperp.OrderSideSell &&
 		float64(order.Price) > sellMidPrice {
-		logger.Debugf("%s SELL PRICE %f > MAKER ASK MAXIMAL PRICE %f",
+		logger.Debugf("%s SELL PRICE %f > SELL MID PRICE %f",
 			order.Symbol,
 			order.Price,
 			sellMidPrice,
