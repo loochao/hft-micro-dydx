@@ -83,7 +83,7 @@ func isOrderProfitable(order bnspot.NewOrderParams) bool {
 		return false
 	}
 	if order.Side == bnspot.OrderSideBuy &&
-		order.Price < (1.0-2**bnConfig.MakerBandOffset)*spread.MakerDepth.MakerBid-bnspotTickSizes[order.Symbol] {
+		order.Price < (1.0-4**bnConfig.MakerBandOffset)*spread.MakerDepth.MakerBid-bnspotTickSizes[order.Symbol] {
 		logger.Debugf("%s BUY PRICE %f < MAKER MINMAL BID PRICE %f",
 			order.Symbol,
 			order.Price,
@@ -91,7 +91,7 @@ func isOrderProfitable(order bnspot.NewOrderParams) bool {
 		)
 		return false
 	} else if order.Side == bnspot.OrderSideSell &&
-		order.Price > (1.0+2**bnConfig.MakerBandOffset)*spread.MakerDepth.MakerAsk+bnspotTickSizes[order.Symbol] {
+		order.Price > (1.0+4**bnConfig.MakerBandOffset)*spread.MakerDepth.MakerAsk+bnspotTickSizes[order.Symbol] {
 		logger.Debugf("%s SELL PRICE %f > MAKER MAXIMAL ASK PRICE %f",
 			order.Symbol,
 			order.Price,
