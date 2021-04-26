@@ -12,6 +12,7 @@ func handleSpotHttpAccount(accounts []kcspot.Account) {
 	hasAccounts := make(map[string]bool)
 	for _, account := range accounts {
 		if account.Currency == "USDT" {
+			//only spot account
 			if account.Type == kcspot.AccountTypeTrade {
 				hasUSDT = true
 				balance := account
