@@ -67,7 +67,6 @@ func updateTakerOldOrders() {
 		if isTakerOrderOk(*order.NewOrderParams) && time.Now().Sub(tCloseTimeouts[takerSymbol]) < 0 {
 			continue
 		}
-		logger.Debugf("CANCEL %s", order.Symbol)
 		tOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		tOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		tOrderCancelCounts[order.Symbol] += 1
