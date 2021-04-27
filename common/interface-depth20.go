@@ -182,7 +182,7 @@ func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) (*
 	}
 	wd.TakerAsk /= wd.TakerAskSize
 	wd.MakerAsk /= wd.MakerAskSize
-	wd.MidPrice = (depth20.GetBids()[0][0] + depth20.GetAsks()[0][0])*0.5
+	wd.MidPrice = (depth20.GetBids()[0][0] + depth20.GetAsks()[0][0]) * 0.5
 	wd.BestBidPrice = depth20.GetBids()[0][0]
 	wd.BestAskPrice = depth20.GetAsks()[0][0]
 	return wd, nil
@@ -272,7 +272,7 @@ func WalkMakerTakerDepth5(depth20 Depth5, makerImpact, takerImpact float64) (*Wa
 	}
 	wd.TakerAsk /= wd.TakerAskSize
 	wd.MakerAsk /= wd.MakerAskSize
-	wd.MidPrice = (depth20.GetBids()[0][0] + depth20.GetAsks()[0][0])*0.5
+	wd.MidPrice = (depth20.GetBids()[0][0] + depth20.GetAsks()[0][0]) * 0.5
 	wd.BestBidPrice = depth20.GetBids()[0][0]
 	wd.BestAskPrice = depth20.GetAsks()[0][0]
 	return wd, nil
@@ -349,4 +349,87 @@ type DepthReport struct {
 	MsgAvgLen    int
 	Decay        float64
 	Bias         float64
+}
+
+type ShortSpread struct {
+	MakerSymbol string
+	TakerSymbol string
+	Age         time.Duration
+	AgeDiff     time.Duration
+	LastEnter   float64
+	LastLeave   float64
+	MedianEnter float64
+	MedianLeave float64
+	MakerDepth  WalkedTakerDepth
+	TakerDepth  WalkedTakerDepth
+	Time        time.Time
+}
+
+type WalkedTakerDepth struct {
+	TakerFarAsk float64
+	TakerAsk    float64
+	TakerBid    float64
+	TakerFarBid float64
+
+	BestBidPrice float64
+	BestAskPrice float64
+
+	MidPrice float64
+
+	TakerBidSize float64
+	TakerAskSize float64
+
+	Time   time.Time
+	Symbol string
+}
+
+func WalkTakerDepth5(depth20 Depth5, takerImpact float64) (*WalkedTakerDepth, error) {
+
+	wd := &WalkedTakerDepth{
+		Symbol:       depth20.GetSymbol(),
+		Time:         depth20.GetTime(),
+		TakerAsk:     0,
+		TakerBid:     0,
+		TakerBidSize: 0,
+		TakerAskSize: 0,
+	}
+
+	for _, bid := range depth20.GetBids() {
+		value := bid[0] * bid[1]
+
+		wd.TakerFarBid = bid[0]
+		if wd.TakerBid+value >= takerImpact {
+			wd.TakerBidSize += (takerImpact - wd.TakerBid) / bid[0]
+			wd.TakerBid = takerImpact
+			break
+		} else {
+			wd.TakerBidSize += bid[1]
+			wd.TakerBid += value
+		}
+	}
+	if wd.TakerBidSize == 0 {
+		return nil, fmt.Errorf("bad depth bids %v", depth20.GetBids())
+	}
+	wd.TakerBid /= wd.TakerBidSize
+	for _, ask := range depth20.GetAsks() {
+		value := ask[0] * ask[1]
+		wd.TakerFarAsk = ask[0]
+		if wd.TakerAsk+value >= takerImpact {
+			wd.TakerAskSize += (takerImpact - wd.TakerAsk) / ask[0]
+			wd.TakerAsk = takerImpact
+			break
+		} else {
+			wd.TakerAskSize += ask[1]
+			wd.TakerAsk += value
+		}
+
+	}
+	if wd.TakerAskSize == 0 {
+		return nil, fmt.Errorf("bad depth ask %v", depth20.GetAsks())
+	}
+	wd.TakerAsk /= wd.TakerAskSize
+	wd.MidPrice = (depth20.GetBids()[0][0] + depth20.GetAsks()[0][0]) * 0.5
+	wd.BestBidPrice = depth20.GetBids()[0][0]
+	wd.BestAskPrice = depth20.GetAsks()[0][0]
+	return wd, nil
 }
