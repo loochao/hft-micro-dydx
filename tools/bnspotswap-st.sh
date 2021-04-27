@@ -10,7 +10,7 @@ env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-mirco-bnspotswap-st.$dt" ./a
 
 git add -A
 git commit -m "build hft-mirco-bnspotswap-st.$dt"
-git push origin master
+#git push origin master
 
 chmod 755 "./dist/hft-mirco-bnspotswap-st.$dt"
 
