@@ -136,7 +136,6 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 		return false
 	}
 
-
 	if order.Side == kcperp.OrderSideBuy &&
 		!order.ReduceOnly &&
 		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.ShortTop-*mtConfig.MakerOrderOffset {
@@ -160,11 +159,11 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 	}
 	if order.Side == kcperp.OrderSideBuy {
 		logger.Debugf(
-			"NOT PROFITABLE %s BUY ORDER, CANCEL", order.Symbol,
+			"NOT PROFITABLE %s SPREAD %f BUY ORDER, CANCEL", (spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price), order.Symbol,
 		)
 	} else {
 		logger.Debugf(
-			"NOT PROFITABLE %s SELL ORDER, CANCEL", order.Symbol,
+			"NOT PROFITABLE %s SPREAD %f SELL ORDER, CANCEL", (spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price), order.Symbol,
 		)
 	}
 	return false
