@@ -328,7 +328,7 @@ func main() {
 			takerOrder := takerOrderEvent.Order
 			logger.Debugf("ORDER %v", takerOrder)
 			if openOrder, ok := tOpenOrders[takerOrder.Symbol]; ok {
-				logger.Debugf("OPEN ORDERS %s %s", openOrder.Symbol, openOrder.NewClientOrderId)
+				logger.Debugf("OPEN ORDER %s %s", openOrder.Symbol, openOrder.NewClientOrderId)
 			}
 			if takerOrder.Status == "REJECTED" || takerOrder.Status == "EXPIRED" {
 				if openOrder, ok := tOpenOrders[takerOrder.Symbol]; ok && openOrder.NewClientOrderId == takerOrder.ClientOrderId {
