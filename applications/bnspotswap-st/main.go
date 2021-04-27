@@ -399,10 +399,10 @@ func main() {
 							//	tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
 							//	logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
 							//}
-							logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
 							if takerPosition.PositionAmt >= 0 {
 								tEnterSilentTimes[spread.TakerSymbol] = time.Now()
 							}
+							logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
 							tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
 							tOrderCancelSilentTimes[spread.TakerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 							mtTriggeredDirection[spread.TakerSymbol] = -1
