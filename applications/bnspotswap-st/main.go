@@ -327,6 +327,7 @@ func main() {
 		case takerOrderEvent := <-tUserWebsocket.OrderUpdateEventCh:
 			takerOrder := takerOrderEvent.Order
 			logger.Debugf("ORDER %v", takerOrder)
+			logger.Debugf("OPEN ORDERS %v", tOpenOrders)
 			if takerOrder.Status == "REJECTED" || takerOrder.Status == "EXPIRED" {
 				if openOrder, ok := tOpenOrders[takerOrder.Symbol]; ok && openOrder.NewClientOrderId == takerOrder.ClientOrderId {
 					tOrderSilentTimes[takerOrder.Symbol] = time.Now()
