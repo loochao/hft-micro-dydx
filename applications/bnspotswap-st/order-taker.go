@@ -113,7 +113,7 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 			if tCloseTimeouts[order.Symbol].Sub(time.Now()) > 0 {
 				takerPrice := (1.0 + float64(tCloseTimeouts[order.Symbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)**mtConfig.CloseProfitPct) * takerPosition.EntryPrice
 				takerPrice = math.Ceil(takerPrice/tTickSizes[order.Symbol]) * tTickSizes[order.Symbol]
-				if order.Price > takerPrice*1.0005 {
+				if order.Price > takerPrice*(1.0 + *mtConfig.CloseUpdateStep) {
 					logger.Debugf("TAKER BUY %s %f > TARGET SELL PRICE %f",
 						order.Symbol,
 						order.Price,
@@ -128,7 +128,7 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 			if tCloseTimeouts[order.Symbol].Sub(time.Now()) > 0 {
 				takerPrice := (1.0 - float64(tCloseTimeouts[order.Symbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)**mtConfig.CloseProfitPct) * takerPosition.EntryPrice
 				takerPrice = math.Floor(takerPrice/tTickSizes[order.Symbol]) * tTickSizes[order.Symbol]
-				if order.Price < takerPrice*0.9995 {
+				if order.Price < takerPrice*(1.0 - *mtConfig.CloseUpdateStep) {
 					logger.Debugf("TAKER BUY %s %f < TARGET BUY PRICE %f",
 						order.Symbol,
 						order.Price,

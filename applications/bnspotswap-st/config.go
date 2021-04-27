@@ -27,8 +27,8 @@ type Config struct {
 	InternalInflux *InfluxConfig `yaml:"internalInflux"`
 	ExternalInflux *InfluxConfig `yaml:"externalInflux"`
 
-	BnApiKey        *string `yaml:"bnApiKey,omitempty"`
-	BnApiSecret     *string `yaml:"bnApiSecret,omitempty"`
+	BnApiKey    *string `yaml:"bnApiKey,omitempty"`
+	BnApiSecret *string `yaml:"bnApiSecret,omitempty"`
 
 	Leverage       *int    `yaml:"leverage,omitempty"`
 	ChangeLeverage *bool   `yaml:"changeLeverage,omitempty"`
@@ -67,9 +67,10 @@ type Config struct {
 	EnterSilent         *time.Duration `yaml:"enterSilent,omitempty"`
 	EnterTimeout        *time.Duration `yaml:"enterTimeout,omitempty"`
 	RestartSilent       *time.Duration `yaml:"restartSilent,omitempty"`
-	CloseProfitPct      *float64       `yaml:"closeProfitPct,omitempty"`
 	CloseTimeout        *time.Duration `yaml:"closeTimeout,omitempty"`
 	HttpSilent          *time.Duration `yaml:"httpSilent,omitempty"`
+	CloseProfitPct      *float64       `yaml:"closeProfitPct,omitempty"`
+	CloseUpdateStep     *float64       `yaml:"closeUpdateStep,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
