@@ -172,7 +172,8 @@ func updateTakerNewOrders() {
 			reduceOnly = true
 		}
 		side := "BUY"
-		if takerPrice > takerTakerDepth.BestBidPrice {
+
+		if takerSizeDiff > 0 && takerPrice > takerTakerDepth.BestBidPrice {
 			takerPrice = takerTakerDepth.BestBidPrice
 		}
 		if takerSizeDiff < 0 {
