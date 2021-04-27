@@ -106,11 +106,14 @@ func updateMakerOldOrders() {
 
 func isOrderProfitable(order kcperp.NewOrderParam) bool {
 	spread, ok1 := mtSpreads[order.Symbol]
-	if !ok1 || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
+	quantile, ok2 := mtQuantiles[order.Symbol]
+	if !ok1 || !ok2 || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
 		if !ok1 {
-			logger.Debugf("SPREAD IS NOT READY")
+			logger.Debugf("%s SPREAD IS NOT READY, CANCEL", order.Symbol)
+		} else if !ok2 {
+			logger.Debugf("%s QUANTILE IS NOT READY, CANCEL", order.Symbol)
 		} else {
-			logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.Time), order.Symbol)
+			logger.Debugf("%s SPREAD IS OUT OF DATE %v, CANCEL", order.Symbol, time.Now().Sub(spread.Time))
 		}
 		return false
 	}
@@ -133,56 +136,36 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 		return false
 	}
 
-	return true
 
-	////检查价格有没有挂太远，太远撤掉
-	//if order.Side == kcperp.OrderSideBuy &&
-	//	float64(order.Price) < (1.0-4**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid {
-	//	logger.Debugf("%s BUY PRICE %f < MAKER BID MINIMAL PRICE %f",
-	//		order.Symbol,
-	//		order.Price,
-	//		(1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid,
-	//	)
-	//	return false
-	//} else if order.Side == kcperp.OrderSideSell &&
-	//	float64(order.Price) > (1.0+4**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk {
-	//	logger.Debugf("%s SELL PRICE %f > MAKER ASK MAXIMAL PRICE %f",
-	//		order.Symbol,
-	//		order.Price,
-	//		(1.0+2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk,
-	//	)
-	//	return false
-	//}
-	//
-	//if order.Side == kcperp.OrderSideBuy &&
-	//	!order.ReduceOnly &&
-	//	(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.ShortTop-*mtConfig.MakerOrderOffset {
-	//	//买入开多, 是开空价差, 参考ShortTop
-	//	return true
-	//} else if order.Side == kcperp.OrderSideSell &&
-	//	order.ReduceOnly &&
-	//	(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.ShortBot+*mtConfig.MakerOrderOffset {
-	//	//卖出平多, 是平空价, 参考ShortBot
-	//	return true
-	//} else if order.Side == kcperp.OrderSideSell &&
-	//	!order.ReduceOnly &&
-	//	(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.LongBot+*mtConfig.MakerOrderOffset {
-	//	//卖出开空, 是开多价差, 参考LongBot
-	//	return true
-	//} else if order.Side == kcperp.OrderSideBuy &&
-	//	order.ReduceOnly &&
-	//	(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.LongTop-*mtConfig.MakerOrderOffset {
-	//	//买入平空, 是平多价差, 参考LongTop
-	//	return true
-	//}
-	//if order.Side == kcperp.OrderSideBuy {
-	//	logger.Debugf(
-	//		"NOT PROFITABLE %s BUY ORDER, CANCEL", order.Symbol,
-	//	)
-	//} else {
-	//	logger.Debugf(
-	//		"NOT PROFITABLE %s SELL ORDER, CANCEL", order.Symbol,
-	//	)
-	//}
-	//return false
+	if order.Side == kcperp.OrderSideBuy &&
+		!order.ReduceOnly &&
+		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.ShortTop-*mtConfig.MakerOrderOffset {
+		//买入开多, 是开空价差, 参考ShortTop
+		return true
+	} else if order.Side == kcperp.OrderSideSell &&
+		order.ReduceOnly &&
+		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.ShortBot+*mtConfig.MakerOrderOffset {
+		//卖出平多, 是平空价, 参考ShortBot
+		return true
+	} else if order.Side == kcperp.OrderSideSell &&
+		!order.ReduceOnly &&
+		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.LongBot+*mtConfig.MakerOrderOffset {
+		//卖出开空, 是开多价差, 参考LongBot
+		return true
+	} else if order.Side == kcperp.OrderSideBuy &&
+		order.ReduceOnly &&
+		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.LongTop-*mtConfig.MakerOrderOffset {
+		//买入平空, 是平多价差, 参考LongTop
+		return true
+	}
+	if order.Side == kcperp.OrderSideBuy {
+		logger.Debugf(
+			"NOT PROFITABLE %s BUY ORDER, CANCEL", order.Symbol,
+		)
+	} else {
+		logger.Debugf(
+			"NOT PROFITABLE %s SELL ORDER, CANCEL", order.Symbol,
+		)
+	}
+	return false
 }
