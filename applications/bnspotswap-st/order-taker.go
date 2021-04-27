@@ -5,6 +5,7 @@ import (
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"time"
 )
 
@@ -75,7 +76,7 @@ func updateTakerOldOrders() {
 		if time.Now().Sub(tOrderCancelSilentTimes[takerSymbol]) < 0 {
 			continue
 		}
-		if isTakerOrderOk(*order.NewOrderParams) && time.Now().Sub(mtCloseTimeouts[takerSymbol]) < 0{
+		if isTakerOrderOk(*order.NewOrderParams) && time.Now().Sub(mtCloseTimeouts[takerSymbol]) < 0 {
 			continue
 		}
 		tOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
@@ -88,32 +89,68 @@ func updateTakerOldOrders() {
 }
 
 func isTakerOrderOk(order bnswap.NewOrderParams) bool {
-	spread, ok := mtSpreads[tmSymbolsMap[order.Symbol]]
-	if !ok || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
-		if !ok {
-			logger.Debugf("SPREAD IS NOT READY")
-		}else{
+	spread, ok1 := mtSpreads[order.Symbol]
+	takerPosition, ok2 := tPositions[order.Symbol]
+	if !ok1 || !ok2 || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
+		if !ok1 || !ok2  {
+			logger.Debugf("SPREAD OR POSITION IS NOT READY")
+		} else {
 			logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.Time), order.Symbol)
 		}
 		return false
 	}
-	//检查价格有没有挂太远，太远撤掉
-	if order.Side == common.OrderSideBuy &&
-		order.Price < spread.TakerDepth.BestBidPrice {
-		logger.Debugf("TAKER BUY %s %f < BEST BID %f",
-			order.Symbol,
-			order.Price,
-			spread.TakerDepth.BestBidPrice,
-		)
-		return false
-	} else if order.Side == common.OrderSideSell &&
-		order.Price > spread.TakerDepth.TakerFarAsk {
-		logger.Debugf("TAKER SELL %s %f > BEST ASK %f",
-			order.Symbol,
-			order.Price,
-			spread.TakerDepth.TakerFarBid,
-		)
-		return false
+
+	if mtEnterTimeouts[order.Symbol].Sub(time.Now()) > 0 {
+		//检查价格有没有挂太远，太远撤掉
+		if order.Side == common.OrderSideBuy &&
+			order.Price < spread.TakerDepth.BestBidPrice {
+			logger.Debugf("TAKER BUY %s %f < BEST BID %f",
+				order.Symbol,
+				order.Price,
+				spread.TakerDepth.BestBidPrice,
+			)
+			return false
+		} else if order.Side == common.OrderSideSell &&
+			order.Price > spread.TakerDepth.TakerFarAsk {
+			logger.Debugf("TAKER SELL %s %f > BEST ASK %f",
+				order.Symbol,
+				order.Price,
+				spread.TakerDepth.TakerFarBid,
+			)
+			return false
+		}
+	} else {
+		if order.Side == common.OrderSideSell {
+			if mtCloseTimeouts[order.Symbol].Sub(time.Now()) > 0 {
+				takerPrice := (1.0 + float64(mtCloseTimeouts[order.Symbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)) * takerPosition.EntryPrice
+				takerPrice = math.Ceil(takerPrice/tTickSizes[order.Symbol]) * tTickSizes[order.Symbol]
+				if order.Price > takerPrice {
+					logger.Debugf("TAKER BUY %s %f > TARGET SELL PRICE %f",
+						order.Symbol,
+						order.Price,
+						spread.TakerDepth.TakerFarBid,
+					)
+					return false
+				}
+			}else{
+				return false
+			}
+		} else if order.Side == common.OrderSideBuy	 {
+			if mtCloseTimeouts[order.Symbol].Sub(time.Now()) > 0 {
+				takerPrice := (1.0 - float64(mtCloseTimeouts[order.Symbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)) * takerPosition.EntryPrice
+				takerPrice = math.Floor(takerPrice/tTickSizes[order.Symbol]) * tTickSizes[order.Symbol]
+				if order.Price < takerPrice {
+					logger.Debugf("TAKER BUY %s %f < TARGET BUY PRICE %f",
+						order.Symbol,
+						order.Price,
+						spread.TakerDepth.TakerFarBid,
+					)
+					return false
+				}
+			}else {
+				return false
+			}
+		}
 	}
 	return true
 }

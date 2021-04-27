@@ -93,6 +93,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 			//{"e":"ACCOUNT_UPDATE","T":1616821544492,"E":1616821544496,"a":{"B":[{"a":"BNB","wb":"0.06858897","cw":"0"}],"P":[],"m":"DEPOSIT"}}
 			if msg[0] == '{' && len(msg) > 14 {
 				if msg[2] == 'e' && msg[6] == 'A' && msg[14] == 'U' {
+					logger.Debugf("%s", msg)
 					balanceAndPositionUpdateEvent := BalanceAndPositionUpdateEvent{}
 					err := json.Unmarshal(msg, &balanceAndPositionUpdateEvent)
 					if err != nil {

@@ -80,7 +80,7 @@ func main() {
 			time.Sleep(time.Second)
 		}
 	}
-	_, mMultipliers, mTickSizes, _, err = bnspot.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
+	_, _, _, _, err = bnspot.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
 	if err != nil {
 		logger.Debugf("bnspot.GetOrderLimits error %v", err)
 		return
@@ -90,16 +90,6 @@ func main() {
 		logger.Debugf("bnswap.GetOrderLimits error %v", err)
 		return
 	}
-
-	for makerSymbol, makerStepSize := range mMultipliers {
-		if takerStepSize, ok := tStepSizes[mtSymbolsMap[makerSymbol]]; !ok {
-			logger.Debugf("TAKER STEP SIZE NOT EXISTS FOR MAKER %s - %s", makerSymbol, mtSymbolsMap[makerSymbol])
-			return
-		} else {
-			mtStepSizes[makerSymbol] = common.MergedStepSize(makerStepSize, takerStepSize)
-		}
-	}
-	logger.Debugf("MERGED STEP SIZES: %v", mtStepSizes)
 
 	mtInfluxWriter, err = common.NewInfluxWriter(
 		*mtConfig.InternalInflux.Address,
@@ -199,7 +189,6 @@ func main() {
 		go makerRoutedDepthLoop(
 			mtGlobalCtx,
 			mtGlobalCancel,
-			mAPI,
 			*mtConfig.ProxyAddress,
 			subMakerRowDepthChs,
 		)
@@ -225,7 +214,8 @@ func main() {
 	}
 
 	spreadCh := make(chan *common.ShortSpread, len(mSymbols)*100)
-	for makerSymbol, takerSymbol := range mtConfig.MakerTakerSymbolsMap {
+	for _, takerSymbol := range mtConfig.Symbols {
+		makerSymbol := takerSymbol
 		go watchMakerTakerSpread(
 			mtGlobalCtx,
 			makerSymbol, takerSymbol,
@@ -284,18 +274,18 @@ func main() {
 	}
 
 	go func() {
-		for _, makerSymbol := range mSymbols {
+		for _, takerSymbol := range tSymbols {
 			select {
 			case <-mtGlobalCtx.Done():
 				return
 			case <-time.After(*mtConfig.RequestInterval):
-				logger.Debugf("INITIAL CANCEL ALL %s", makerSymbol)
+				logger.Debugf("INITIAL CANCEL ALL %s", takerSymbol)
 				select {
 				case <-mtGlobalCtx.Done():
 					return
-				case tOrderRequestChs[makerSymbol] <- TakerOrderRequest{
+				case tOrderRequestChs[takerSymbol] <- TakerOrderRequest{
 					Cancel: &bnswap.CancelAllOrderParams{
-						Symbol: mtSymbolsMap[makerSymbol],
+						Symbol: takerSymbol,
 					},
 				}:
 				}
@@ -344,24 +334,31 @@ func main() {
 				delete(tOpenOrders, takerOrder.Symbol)
 				logger.Debugf("TAKER FILLED ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)
 				tHttpPositionUpdateSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
-				if makerSymbol, ok := tmSymbolsMap[takerOrder.Symbol]; ok {
-					if takerOrder.Side == common.OrderSideSell {
-						if makerPrice, ok := mLastFilledBuyPrices[makerSymbol]; ok {
-							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
-							if takerOrder.ReduceOnly {
-								logger.Debugf("%s REALISED CLOSE LONG SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
-							} else {
-								logger.Debugf("%s REALISED OPEN SHORT SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
-							}
+				if _, ok := tmSymbolsMap[takerOrder.Symbol]; ok {
+					if takerOrder.Side == common.OrderSideSell &&
+						!takerOrder.ReduceOnly {
+						mLastFilledSellPrices[takerOrder.Symbol] = takerOrder.AveragePrice
+						mtEnterTimeouts[takerOrder.Symbol] = time.Now()
+						mtCloseTimeouts[takerOrder.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
+						mtEnterSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+						logger.Debugf("SET TIMEOUTS %v", mtCloseTimeouts[takerOrder.Symbol])
+					} else if takerOrder.Side == common.OrderSideBuy &&
+						!takerOrder.ReduceOnly {
+						mLastFilledBuyPrices[takerOrder.Symbol] = takerOrder.AveragePrice
+						mtEnterTimeouts[takerOrder.Symbol] = time.Now()
+						mtCloseTimeouts[takerOrder.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
+						mtEnterSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+					} else if takerOrder.Side == common.OrderSideSell &&
+						takerOrder.ReduceOnly {
+						if buyPrice, ok := mLastFilledBuyPrices[takerOrder.Symbol]; ok {
+							mtRealisedSpread[takerOrder.Symbol] = (takerOrder.AveragePrice - buyPrice) / buyPrice
+							logger.Debugf("%s REALISED CLOSE LONG SPREAD %f", takerOrder.Symbol, mtRealisedSpread[takerOrder.Symbol])
 						}
-					} else if takerOrder.Side == common.OrderSideBuy {
-						if makerPrice, ok := mLastFilledSellPrices[makerSymbol]; ok {
-							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
-							if takerOrder.ReduceOnly {
-								logger.Debugf("%s REALISED CLOSE SHORT SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
-							} else {
-								logger.Debugf("%s REALISED OPEN LONG SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
-							}
+					} else if takerOrder.Side == common.OrderSideBuy &&
+						takerOrder.ReduceOnly {
+						if sellPrice, ok := mLastFilledSellPrices[takerOrder.Symbol]; ok {
+							mtRealisedSpread[takerOrder.Symbol] = (sellPrice - takerOrder.AveragePrice) / sellPrice
+							logger.Debugf("%s REALISED CLOSE SHORT SPREAD %f", takerOrder.Symbol, mtRealisedSpread[takerOrder.Symbol])
 						}
 					}
 				}
@@ -375,10 +372,12 @@ func main() {
 						mtTriggeredDirection[spread.TakerSymbol] = 1
 						mtEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
 					} else if spread.MedianEnter < 0 {
-						logger.Debugf("TRIGGER LONG %s", spread.TakerSymbol)
-						mtTriggeredDirection[spread.TakerSymbol] = 1
+						logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
+						mtTriggeredDirection[spread.TakerSymbol] = -1
 						mtEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
 					}
+				} else {
+					//logger.Debugf("%s %f", spread.TakerSymbol, spread.MedianEnter)
 				}
 			}
 			mtSpreads[spread.TakerSymbol] = spread

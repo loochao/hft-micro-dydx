@@ -27,9 +27,6 @@ type Config struct {
 	InternalInflux *InfluxConfig `yaml:"internalInflux"`
 	ExternalInflux *InfluxConfig `yaml:"externalInflux"`
 
-	KcApiKey        *string `yaml:"kcApiKey,omitempty"`
-	KcApiSecret     *string `yaml:"kcApiSecret,omitempty"`
-	KcApiPassphrase *string `yaml:"kcApiPassphrase,omitempty"`
 	BnApiKey        *string `yaml:"bnApiKey,omitempty"`
 	BnApiSecret     *string `yaml:"bnApiSecret,omitempty"`
 
@@ -37,34 +34,19 @@ type Config struct {
 	ChangeLeverage *bool   `yaml:"changeLeverage,omitempty"`
 	MarginType     *string `yaml:"marginType,omitempty"`
 
-	LoopInterval          *time.Duration `yaml:"loopInterval,omitempty"`
-	LogInterval           *time.Duration `yaml:"logInterval,omitempty"`
-	PullInterval          *time.Duration `yaml:"pullInterval,omitempty"`
-	RequestInterval       *time.Duration `yaml:"requestInterval,omitempty"`
-	BalancePositionMaxAge *time.Duration `yaml:"balancePositionMaxAge,omitempty"`
+	LoopInterval    *time.Duration `yaml:"loopInterval,omitempty"`
+	LogInterval     *time.Duration `yaml:"logInterval,omitempty"`
+	PullInterval    *time.Duration `yaml:"pullInterval,omitempty"`
+	RequestInterval *time.Duration `yaml:"requestInterval,omitempty"`
+	PositionMaxAge  *time.Duration `yaml:"positionMaxAge,omitempty"`
 
-	MakerTakerSymbolsMap map[string]string `yaml:"makerTakerSymbolsMap,omitempty"`
-
-	PullBarsInterval      *time.Duration `yaml:"pullBarsInterval,omitempty"`
-	PullBarsRetryInterval *time.Duration `yaml:"pullBarsRetryInterval,omitempty"`
-	BarsLookback          *int           `yaml:"barsLookback,omitempty"`
-
-	TopQuantile       *float64 `yaml:"topQuantile,omitempty"`
-	BotQuantile       *float64 `yaml:"botQuantile,omitempty"`
-	MinimalBandOffset *float64 `yaml:"minimalBandOffset,omitempty"`
-	MinimalEnterDelta *float64 `yaml:"minimalEnterDelta,omitempty"`
-	MaximalExitDelta  *float64 `yaml:"maximalExitDelta,omitempty"`
-	MakerOrderOffset  *float64 `yaml:"makerOrderOffset,omitempty"`
-
-	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
-	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`
+	Symbols []string `yaml:"symbols,omitempty"`
 
 	OrderBookTakerDecay         *float64       `yaml:"orderBookTakerDecay,omitempty"`
 	OrderBookMakerDecay         *float64       `yaml:"orderBookMakerDecay,omitempty"`
 	OrderBookTakerBias          *float64       `yaml:"orderBookTakerBias,omitempty"`
 	OrderBookMakerBias          *float64       `yaml:"orderBookMakerBias,omitempty"`
 	OrderBookBatchSize          *int           `yaml:"orderBookBatchSize,omitempty"`
-	OrderBookMakerImpact        *float64       `yaml:"orderBookMakerImpact,omitempty"`
 	OrderBookTakerImpact        *float64       `yaml:"orderBookTakerImpact,omitempty"`
 	OrderBookMaxAgeDiffBias     *time.Duration `yaml:"orderBookMaxAgeDiffBias,omitempty"`
 	ReportCount                 *int           `yaml:"reportCount,omitempty"`
@@ -76,10 +58,8 @@ type Config struct {
 	EnterFreePct      *float64           `yaml:"enterFreePct,omitempty"`
 	EnterMinimalStep  *float64           `yaml:"enterMinimalStep,omitempty"`
 	EnterTargetFactor *float64           `yaml:"enterTargetFactor,omitempty"`
-	MaxUnHedgeValue   *float64           `yaml:"maxUnHedgeValue,omitempty"`
 	StartValues       map[string]float64 `yaml:"startValues,omitempty"`
 
-	HedgeTimeout        *time.Duration `yaml:"hedgeTimeout,omitempty"`
 	OrderTimeout        *time.Duration `yaml:"orderTimeout,omitempty"`
 	OrderSilent         *time.Duration `yaml:"orderSilent,omitempty"`
 	OrderCancelSilent   *time.Duration `yaml:"orderCancelSilent,omitempty"`

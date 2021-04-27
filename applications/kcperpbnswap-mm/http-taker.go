@@ -20,10 +20,10 @@ func handleTakerHttpPositions(positions []bnswap.Position) {
 		var lastPosition *bnswap.Position
 		if p, ok := tPositions[nextPos.Symbol]; ok {
 			p := p
-			lastPosition = p
+			lastPosition = &p
 		}
 		nextPos := nextPos
-		tPositions[nextPos.Symbol] = &nextPos
+		tPositions[nextPos.Symbol] = nextPos
 		tPositionsUpdateTimes[nextPos.Symbol] = time.Now()
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != nextPos.PositionAmt ||

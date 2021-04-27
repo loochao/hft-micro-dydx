@@ -10,7 +10,6 @@ import (
 func makerRoutedDepthLoop(
 	ctx context.Context,
 	cancel context.CancelFunc,
-	api *bnspot.API,
 	proxyAddress string,
 	channels map[string]chan *common.DepthRawMessage,
 ) {
@@ -22,7 +21,6 @@ func makerRoutedDepthLoop(
 	defer logger.Debugf("EXIT makerRoutedDepthLoop %s", symbols)
 	ws := bnspot.NewDepth5RoutedWebsocket(
 		ctx,
-		api,
 		proxyAddress,
 		channels,
 	)

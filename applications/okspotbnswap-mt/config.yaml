@@ -3,18 +3,18 @@ dryRun: true
 proxyAddress: socks5://127.0.0.1:1081
 cpuProfile: #/Users/chenjilin/Downloads/hbspotcrossswap-mt.prof
 internalInflux:
-  address: http://localhost:8086
-  username: test
-  password: test
-  database: test
+  address: http://tigger.jilinchen.com:18086
+  username: hft
+  password: hft
+  database: hft
   measurement: okspotbnswap-mt
   batchSize: 0
   saveInterval: 1m0s
 externalInflux:
-  address: http://localhost:8086
-  username: test
-  password: test
-  database: test
+  address: http://tigger.jilinchen.com:18086
+  username: hft
+  password: hft
+  database: fund
   measurement: accounts
   batchSize: 0
   saveInterval: 1m0s

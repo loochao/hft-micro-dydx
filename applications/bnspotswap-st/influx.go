@@ -15,14 +15,12 @@ func handleSave() {
 	}
 
 	if tAccount != nil &&
-		tAccount.MarginBalance != nil &&
-		mAccount != nil {
-		totalBalance := *tAccount.MarginBalance + mAccount.MarginBalance + mAccount.UnrealisedPNL
+		tAccount.MarginBalance != nil {
+		totalBalance := *tAccount.MarginBalance
 		netWorth := totalBalance / *mtConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalBalance"] = totalBalance
 		fields["takerBalance"] = *tAccount.MarginBalance
-		fields["makerBalance"] = mAccount.MarginBalance + mAccount.UnrealisedPNL
 		fields["netWorth"] = netWorth
 		fields["startValue"] = *mtConfig.StartValue
 		fields["netWorth"] = netWorth
@@ -32,8 +30,6 @@ func handleSave() {
 		if tAccount.UnrealizedProfit != nil {
 			fields["takerUnrealizedProfit"] = *tAccount.UnrealizedProfit
 		}
-		fields["makerAvailable"] = mAccount.AvailableBalance
-		fields["makerUnrealizedProfit"] = mAccount.UnrealisedPNL
 		pt, err := client.NewPoint(
 			*mtConfig.InternalInflux.Measurement,
 			map[string]string{
@@ -49,65 +45,33 @@ func handleSave() {
 		}
 	}
 
-	for _, makerSymbol := range mSymbols {
-		takerSymbol := mtSymbolsMap[makerSymbol]
+	for _, takerSymbol := range tSymbols {
 		fields := make(map[string]interface{})
-		if makerPosition, ok := mPositions[makerSymbol]; ok {
-			fields["makerSize"] = makerPosition.CurrentQty * mMultipliers[makerSymbol]
-			if spread, ok := mtSpreads[makerSymbol]; ok {
-				fields["makerValue"] = makerPosition.CurrentQty * mMultipliers[makerSymbol] * spread.MakerDepth.MakerBid
-			}
-		}
 		if takerPosition, ok := tPositions[takerSymbol]; ok {
 			fields["takerSize"] = takerPosition.PositionAmt
-			if spread, ok := mtSpreads[makerSymbol]; ok {
+			if spread, ok := mtSpreads[takerSymbol]; ok {
 				fields["takerValue"] = spread.TakerDepth.TakerBid * takerPosition.PositionAmt
 			}
 		}
-		if fr, ok := mFundingRates[makerSymbol]; ok {
-			fields["makerFundingRate"] = fr.Value
-		}
-		if pi, ok := tPremiumIndexes[takerSymbol]; ok {
-			fields["takerFundingRate"] = pi.FundingRate
-		}
-		if fr, ok := mtFundingRates[makerSymbol]; ok {
-			fields["fundingRate"] = fr
-		}
-		if spread, ok := mtSpreads[makerSymbol]; ok {
+		if spread, ok := mtSpreads[takerSymbol]; ok {
 
-			fields["spreadShortLastEnter"] = spread.ShortLastEnter
-			fields["spreadShortLastLeave"] = spread.ShortLastLeave
-			fields["spreadShortMedianEnter"] = spread.ShortMedianEnter
-			fields["spreadShortMedianLeave"] = spread.ShortMedianLeave
+			fields["spreadShortLastEnter"] = spread.LastEnter
+			fields["spreadShortLastLeave"] = spread.LastLeave
+			fields["spreadShortMedianEnter"] = spread.MedianEnter
+			fields["spreadShortMedianLeave"] = spread.MedianLeave
 
-			fields["spreadLongLastEnter"] = spread.LongLastEnter
-			fields["spreadLongLastLeave"] = spread.LongLastLeave
-			fields["spreadLongMedianEnter"] = spread.LongMedianEnter
-			fields["spreadLongMedianLeave"] = spread.LongMedianLeave
 
-			fields["takerMakerBid"] = spread.TakerDepth.MakerBid
-			fields["takerMakerAsk"] = spread.TakerDepth.MakerAsk
 			fields["takerTakerBid"] = spread.TakerDepth.TakerBid
 			fields["takerTakerAsk"] = spread.TakerDepth.TakerAsk
 
-			fields["makerMakerBid"] = spread.MakerDepth.MakerBid
-			fields["makerMakerAsk"] = spread.MakerDepth.MakerAsk
 			fields["makerTakerBid"] = spread.MakerDepth.TakerBid
 			fields["makerTakerAsk"] = spread.MakerDepth.TakerAsk
 
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
 		}
-		if realisedSpread, ok := mtRealisedSpread[makerSymbol]; ok {
+		if realisedSpread, ok := mtRealisedSpread[takerSymbol]; ok {
 			fields["realisedSpread"] = realisedSpread
-		}
-		if quantile, ok := mtQuantiles[makerSymbol]; ok {
-			fields["quantileShortBot"] = quantile.ShortBot
-			fields["quantileShortTop"] = quantile.ShortTop
-			fields["quantileLongBot"] = quantile.LongBot
-			fields["quantileLongTop"] = quantile.LongTop
-			fields["quantileMid"] = quantile.Mid
-			fields["quantileMaClose"] = quantile.MaClose
 		}
 		if time.Now().Sub(mtGlobalSilent) > 0 {
 			fields["globalSilent"] = 0
@@ -118,7 +82,6 @@ func handleSave() {
 			*mtConfig.InternalInflux.Measurement,
 			map[string]string{
 				"takerSymbol": takerSymbol,
-				"makerSymbol": makerSymbol,
 				"type":        "symbol",
 			},
 			fields,
@@ -139,9 +102,8 @@ func handleExternalInfluxSave() {
 	}
 
 	if tAccount != nil &&
-		tAccount.MarginBalance != nil &&
-		mAccount != nil {
-		totalBalance := *tAccount.MarginBalance + mAccount.MarginBalance+ mAccount.UnrealisedPNL
+		tAccount.MarginBalance != nil {
+		totalBalance := *tAccount.MarginBalance
 		netWorth := totalBalance / *mtConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["netWorth"] = netWorth

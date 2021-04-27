@@ -15,7 +15,6 @@ import (
 var mSymbols = make([]string, 0)
 var tSymbols = make([]string, 0)
 var tmSymbolsMap = make(map[string]string, 0)
-var mtSymbolsMap = make(map[string]string, 0)
 
 var mtGlobalCtx context.Context
 var mtGlobalCancel context.CancelFunc
@@ -25,18 +24,13 @@ var mtExternalInfluxWriter *common.InfluxWriter
 var mAPI *bnspot.API
 var tAPI *bnswap.API
 
-var mUserWebsocket *bnspot.UserWebsocket
 var tUserWebsocket *bnswap.UserWebsocket
 
-var mHttpPositionUpdateSilentTimes = make(map[string]time.Time)
 var tHttpPositionUpdateSilentTimes = make(map[string]time.Time)
 
-var mTickSizes = make(map[string]float64)
-var mMultipliers = make(map[string]float64)
 var tTickSizes = make(map[string]float64)
 var tStepSizes = make(map[string]float64)
 var tMinNotional = make(map[string]float64)
-var mtStepSizes = make(map[string]float64)
 
 var tOpenOrders = make(map[string]TakerOpenOrder)
 var tOrderCancelCounts = make(map[string]int)
@@ -51,9 +45,7 @@ var tNewOrderErrorCh = make(chan TakerOrderNewError, 10)
 var tOrderRequestChs = make(map[string]chan TakerOrderRequest)
 var tOrderSilentTimes = make(map[string]time.Time)
 var mtEnterSilentTimes = make(map[string]time.Time)
-
 var mtSpreads = make(map[string]*common.ShortSpread)
-
 var mLastFilledBuyPrices = make(map[string]float64)
 var mLastFilledSellPrices = make(map[string]float64)
 var mtRealisedSpread = make(map[string]float64)
@@ -99,21 +91,17 @@ func init() {
 	}
 	mtConfig = &config
 
-	for makerSymbol, takerSymbol := range mtConfig.MakerTakerSymbolsMap {
-		mSymbols = append(mSymbols, makerSymbol)
+	for _, takerSymbol := range mtConfig.Symbols {
+		mSymbols = append(mSymbols, takerSymbol)
 		tSymbols = append(tSymbols, takerSymbol)
-		tmSymbolsMap[takerSymbol] = makerSymbol
-		mtSymbolsMap[makerSymbol] = takerSymbol
-		mtLogSilentTimes[makerSymbol] = time.Now()
+		tmSymbolsMap[takerSymbol] = takerSymbol
 
+		mtLogSilentTimes[takerSymbol] = time.Now()
 		tOrderSilentTimes[takerSymbol] = time.Now()
 		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
-
-		mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
-		tHttpPositionUpdateSilentTimes[makerSymbol] = time.Now()
-
+		tHttpPositionUpdateSilentTimes[takerSymbol] = time.Now()
 		mtCloseTimeouts[takerSymbol] = time.Now()
 		mtEnterSilentTimes[takerSymbol] = time.Now()
-		mtEnterTimeouts[takerSymbol] = time.Now()
+		mtEnterTimeouts[takerSymbol] = time.Now().Add(*mtConfig.CloseTimeout)
 	}
 }
