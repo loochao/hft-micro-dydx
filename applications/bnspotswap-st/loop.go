@@ -57,7 +57,7 @@ func updateTakerNewOrders() {
 			}
 			entryValue -= takerPosition.PositionAmt * takerPosition.EntryPrice
 			if takerPosition.PositionAmt < 0 {
-				takerSizeDiff = -takerPosition.PositionAmt + math.Floor(entryStep/takerStepSize)*takerStepSize
+				takerSizeDiff = -takerPosition.PositionAmt + math.Floor(entryStep/takerPrice/takerStepSize)*takerStepSize
 				entryValue = takerSizeDiff*takerPrice
 				//补偿, 这一部分不占仓位
 				takerUSDTAvailable += -takerPosition.PositionAmt*takerPrice
@@ -117,7 +117,7 @@ func updateTakerNewOrders() {
 			}
 			entryValue -= takerPosition.PositionAmt * takerPosition.EntryPrice
 			if takerPosition.PositionAmt > 0 {
-				takerSizeDiff = -takerPosition.PositionAmt - math.Floor(entryStep/takerStepSize)*takerStepSize
+				takerSizeDiff = -takerPosition.PositionAmt - math.Floor(entryStep/takerPrice/takerStepSize)*takerStepSize
 				entryValue = takerSizeDiff*takerPrice
 				//补偿, 这一部分不占仓位
 				takerUSDTAvailable += takerPosition.PositionAmt*takerPrice
