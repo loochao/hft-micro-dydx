@@ -326,7 +326,7 @@ func main() {
 			break
 		case takerOrderEvent := <-tUserWebsocket.OrderUpdateEventCh:
 			takerOrder := takerOrderEvent.Order
-			logger.Debugf("%s %s %s", takerOrder.Status, takerOrder.Symbol, takerOrder.ClientOrderId)
+			//logger.Debugf("%s %s %s", takerOrder.Status, takerOrder.Symbol, takerOrder.ClientOrderId)
 			if takerOrder.Status == "REJECTED" ||
 				takerOrder.Status == "EXPIRED" ||
 				takerOrder.Status == "CANCELED" {
@@ -378,12 +378,12 @@ func main() {
 					if spread.MedianEnter > 0 {
 						logger.Debugf("TRIGGER LONG %s", spread.TakerSymbol)
 						tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
-						tOrderCancelSilentTimes[spread.TakerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+						tOrderSilentTimes[spread.TakerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 						mtTriggeredDirection[spread.TakerSymbol] = 1
 					} else if spread.MedianEnter < 0 {
 						logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
 						tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
-						tOrderCancelSilentTimes[spread.TakerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+						tOrderSilentTimes[spread.TakerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 						mtTriggeredDirection[spread.TakerSymbol] = -1
 					}
 				}

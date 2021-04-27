@@ -92,19 +92,19 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 		//检查价格有没有挂太远，太远撤掉
 		if order.Side == common.OrderSideBuy &&
 			order.Price < spread.TakerDepth.BestBidPrice {
-			logger.Debugf("TAKER BUY %s %f < BEST BID %f",
-				order.Symbol,
-				order.Price,
-				spread.TakerDepth.BestBidPrice,
-			)
+			//logger.Debugf("TAKER BUY %s %f < BEST BID %f",
+			//	order.Symbol,
+			//	order.Price,
+			//	spread.TakerDepth.BestBidPrice,
+			//)
 			return false
 		} else if order.Side == common.OrderSideSell &&
 			order.Price > spread.TakerDepth.TakerFarAsk {
-			logger.Debugf("TAKER SELL %s %f > BEST ASK %f",
-				order.Symbol,
-				order.Price,
-				spread.TakerDepth.TakerFarBid,
-			)
+			//logger.Debugf("TAKER SELL %s %f > BEST ASK %f",
+			//	order.Symbol,
+			//	order.Price,
+			//	spread.TakerDepth.TakerFarBid,
+			//)
 			return false
 		}
 	} else {
@@ -113,11 +113,11 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 				takerPrice := (1.0 + float64(tCloseTimeouts[order.Symbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)**mtConfig.CloseProfitPct) * takerPosition.EntryPrice
 				takerPrice = math.Ceil(takerPrice/tTickSizes[order.Symbol]) * tTickSizes[order.Symbol]
 				if order.Price > takerPrice*(1.0 + *mtConfig.CloseUpdateStep) {
-					logger.Debugf("TAKER BUY %s %f > TARGET SELL PRICE %f",
-						order.Symbol,
-						order.Price,
-						spread.TakerDepth.TakerFarBid,
-					)
+					//logger.Debugf("TAKER BUY %s %f > TARGET SELL PRICE %f",
+					//	order.Symbol,
+					//	order.Price,
+					//	spread.TakerDepth.TakerFarBid,
+					//)
 					return false
 				}
 			}else{
@@ -128,11 +128,11 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 				takerPrice := (1.0 - float64(tCloseTimeouts[order.Symbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)**mtConfig.CloseProfitPct) * takerPosition.EntryPrice
 				takerPrice = math.Floor(takerPrice/tTickSizes[order.Symbol]) * tTickSizes[order.Symbol]
 				if order.Price < takerPrice*(1.0 - *mtConfig.CloseUpdateStep) {
-					logger.Debugf("TAKER BUY %s %f < TARGET BUY PRICE %f",
-						order.Symbol,
-						order.Price,
-						spread.TakerDepth.TakerFarBid,
-					)
+					//logger.Debugf("TAKER BUY %s %f < TARGET BUY PRICE %f",
+					//	order.Symbol,
+					//	order.Price,
+					//	spread.TakerDepth.TakerFarBid,
+					//)
 					return false
 				}
 			}else {
