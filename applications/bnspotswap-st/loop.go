@@ -172,9 +172,15 @@ func updateTakerNewOrders() {
 			reduceOnly = true
 		}
 		side := "BUY"
+		if takerPrice > takerTakerDepth.BestBidPrice {
+			takerPrice = takerTakerDepth.BestBidPrice
+		}
 		if takerSizeDiff < 0 {
 			side = "SELL"
 			takerSizeDiff = -takerSizeDiff
+			if takerPrice < takerTakerDepth.BestAskPrice {
+				takerPrice = takerTakerDepth.BestAskPrice
+			}
 		}
 		takerOrder := bnswap.NewOrderParams{
 			Symbol:           takerSymbol,
