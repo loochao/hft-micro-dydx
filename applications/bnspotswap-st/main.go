@@ -330,7 +330,9 @@ func main() {
 			if openOrder, ok := tOpenOrders[takerOrder.Symbol]; ok {
 				logger.Debugf("OPEN ORDER %s %s", openOrder.Symbol, openOrder.NewClientOrderId)
 			}
-			if takerOrder.Status == "REJECTED" || takerOrder.Status == "EXPIRED" {
+			if takerOrder.Status == "REJECTED" ||
+				takerOrder.Status == "EXPIRED" ||
+				takerOrder.Status == "CANCELED" {
 				if openOrder, ok := tOpenOrders[takerOrder.Symbol]; ok && openOrder.NewClientOrderId == takerOrder.ClientOrderId {
 					tOrderSilentTimes[takerOrder.Symbol] = time.Now()
 					tOrderCancelSilentTimes[takerOrder.Symbol] = time.Now()
