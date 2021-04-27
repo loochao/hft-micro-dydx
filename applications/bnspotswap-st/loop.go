@@ -48,6 +48,7 @@ func updateTakerNewOrders() {
 		if mtTriggeredDirection[takerSymbol] > 0 &&
 			tEnterTimeouts[takerSymbol].Sub(time.Now()) > 0 &&
 			tEnterSilentTimes[takerSymbol].Sub(time.Now()) < 0 {
+			logger.Debugf("OPEN LONG %s", takerSymbol)
 
 			takerPrice = math.Floor(takerTakerDepth.MidPrice/takerTickSize) * takerTickSize
 
@@ -109,6 +110,7 @@ func updateTakerNewOrders() {
 		} else if mtTriggeredDirection[takerSymbol] < 0 &&
 			tEnterTimeouts[takerSymbol].Sub(time.Now()) > 0 &&
 			tEnterSilentTimes[takerSymbol].Sub(time.Now()) < 0 {
+			logger.Debugf("OPEN SHORT %s", takerSymbol)
 
 			takerPrice = math.Ceil(takerTakerDepth.MidPrice/takerTickSize) * takerTickSize
 			entryValue := takerPosition.PositionAmt*takerPosition.EntryPrice - entryStep
@@ -168,12 +170,14 @@ func updateTakerNewOrders() {
 				takerUSDTAvailable -= -entryValue
 			}
 		}else if takerPosition.PositionAmt > 0 {
+			logger.Debugf("CLOSE LONG %s", takerSymbol)
 			if tCloseTimeouts[takerSymbol].Sub(time.Now()) > 0 {
 				takerPrice =  (1.0 + float64(tCloseTimeouts[takerSymbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)**mtConfig.CloseProfitPct)*takerPosition.EntryPrice
 				takerPrice = math.Ceil(takerPrice/takerTickSize)*takerTickSize
 			}
 			takerSizeDiff = -takerPosition.PositionAmt
 		}else if takerPosition.PositionAmt < 0 {
+			logger.Debugf("CLOSE SHORT %s", takerSymbol)
 			if tCloseTimeouts[takerSymbol].Sub(time.Now()) > 0 {
 				takerPrice =  (1.0 - float64(tCloseTimeouts[takerSymbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)**mtConfig.CloseProfitPct)*takerPosition.EntryPrice
 				takerPrice = math.Floor(takerPrice/takerTickSize)*takerTickSize
