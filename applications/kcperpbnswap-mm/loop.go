@@ -61,23 +61,38 @@ func updateTakerOrders() {
 			continue
 		}
 
-		logger.Debugf("updateTakerOrders %s SIZE DIFF %f POS %f -> %f", takerSymbol, takerSizeDiff, takerPosition.PositionAmt, -makerSize)
 
 		reduceOnly := false
 		if takerSizeDiff*takerPosition.PositionAmt < 0 && math.Abs(takerSizeDiff) <= math.Abs(takerPosition.PositionAmt) {
 			reduceOnly = true
 		}
 		price := math.Floor(takerTakerDepth.MidPrice/takerTickSize) * takerTickSize
-		if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) < -*mtConfig.HedgeTimeout/2 {
+		if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) < -*mtConfig.HedgeTimeout*4/6 {
+			continue
+		}else if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) < -*mtConfig.HedgeTimeout*3/6 {
+			logger.Debugf("updateTakerOrders %s TAKER BID SIZE DIFF %f POS %f -> %f", takerSymbol, takerSizeDiff, takerPosition.PositionAmt, -makerSize*makerMultiplier)
 			price = math.Floor(takerTakerDepth.TakerBid/takerTickSize) * takerTickSize
+		} else if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) < -*mtConfig.HedgeTimeout*2/6 {
+			logger.Debugf("updateTakerOrders %s MAKER BID SIZE DIFF %f POS %f -> %f", takerSymbol, takerSizeDiff, takerPosition.PositionAmt, -makerSize*makerMultiplier)
+			price = math.Floor(takerTakerDepth.MakerBid/takerTickSize) * takerTickSize
+		}else{
+			logger.Debugf("updateTakerOrders %s MID PRICE SIZE DIFF %f POS %f -> %f", takerSymbol, takerSizeDiff, takerPosition.PositionAmt, -makerSize*makerMultiplier)
 		}
 		side := "BUY"
 		if takerSizeDiff < 0 {
 			side = "SELL"
 			takerSizeDiff = -takerSizeDiff
 			price = math.Ceil(takerTakerDepth.MidPrice/takerTickSize) * takerTickSize
-			if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) < -*mtConfig.HedgeTimeout/2 {
+			if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) < -*mtConfig.HedgeTimeout*4/6 {
+				continue
+			}else if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) < -*mtConfig.HedgeTimeout*3/6 {
+				logger.Debugf("updateTakerOrders %s TAKER ASK SIZE DIFF %f POS %f -> %f", takerSymbol, takerSizeDiff, takerPosition.PositionAmt, -makerSize*makerMultiplier)
 				price = math.Ceil(takerTakerDepth.TakerAsk/takerTickSize) * takerTickSize
+			} else if time.Now().Sub(mtLimitHedgeTimeouts[takerSymbol]) < -*mtConfig.HedgeTimeout*2/6 {
+				logger.Debugf("updateTakerOrders %s MAKER Ask SIZE DIFF %f POS %f -> %f", takerSymbol, takerSizeDiff, takerPosition.PositionAmt, -makerSize*makerMultiplier)
+				price = math.Ceil(takerTakerDepth.MakerAsk/takerTickSize) * takerTickSize
+			}else{
+				logger.Debugf("updateTakerOrders %s MID PRICE SIZE DIFF %f POS %f -> %f", takerSymbol, takerSizeDiff, takerPosition.PositionAmt, -makerSize*makerMultiplier)
 			}
 		}
 		takerOrder := bnswap.NewOrderParams{
@@ -96,12 +111,11 @@ func updateTakerOrders() {
 			takerOrder.Price = 0
 			takerOrder.TimeInForce = ""
 		}
-		//logger.Debugf("TAKER ORDER %v", takerOrder.ToString())
+		tOpenOrders[takerSymbol] = TakerOpenOrder{NewOrderParams: &takerOrder, Symbol: takerSymbol}
 		mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 		tOrderSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
 		tOrderRequestChs[takerSymbol] <- TakerOrderRequest{New: &takerOrder}
-		tOpenOrders[takerSymbol] = TakerOpenOrder{NewOrderParams:&takerOrder, Symbol: takerSymbol}
 	}
 	mtUnHedgeValue = unHedgedValue
 }

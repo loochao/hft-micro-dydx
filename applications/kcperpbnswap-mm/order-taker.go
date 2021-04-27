@@ -68,6 +68,10 @@ func updateTakerOldOrders() {
 			tOrderCancelCounts[order.Symbol] = 0
 			continue
 		}
+		//非挂单不用管
+		if order.Type != common.OrderTypeLimit {
+			continue
+		}
 		if time.Now().Sub(tOrderCancelSilentTimes[takerSymbol]) < 0 {
 			continue
 		}
