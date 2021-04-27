@@ -84,9 +84,13 @@ func updateTakerOldOrders() {
 }
 
 func isTakerOrderOk(order bnswap.NewOrderParams) bool {
-	spread, ok := mtSpreads[order.Symbol]
+	spread, ok := mtSpreads[tmSymbolsMap[order.Symbol]]
 	if !ok || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
-		logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.Time), order.Symbol)
+		if !ok {
+			logger.Debugf("SPREAD IS NOT READY")
+		}else{
+			logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.Time), order.Symbol)
+		}
 		return false
 	}
 	//检查价格有没有挂太远，太远撤掉

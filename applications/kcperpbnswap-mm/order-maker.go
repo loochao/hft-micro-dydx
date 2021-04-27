@@ -106,8 +106,12 @@ func updateMakerOldOrders() {
 
 func isOrderProfitable(order kcperp.NewOrderParam) bool {
 	spread, ok1 := mtSpreads[order.Symbol]
-	if !ok1 ||  time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
-		logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.Time), order.Symbol)
+	if !ok1 || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
+		if !ok1 {
+			logger.Debugf("SPREAD IS NOT READY")
+		} else {
+			logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.Time), order.Symbol)
+		}
 		return false
 	}
 
