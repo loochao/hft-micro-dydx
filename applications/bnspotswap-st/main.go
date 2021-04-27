@@ -382,7 +382,7 @@ func main() {
 							//logger.Debugf("TRIGGER LONG %s IN SILENT", spread.TakerSymbol)
 						} else {
 							tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
-							//logger.Debugf("TRIGGER LONG %s", spread.TakerSymbol)
+							logger.Debugf("TRIGGER LONG %s", spread.TakerSymbol)
 						}
 						mtTriggeredDirection[spread.TakerSymbol] = 1
 					} else if spread.MedianEnter < 0 {
@@ -390,7 +390,7 @@ func main() {
 							//logger.Debugf("TRIGGER SHORT %s IN SILENT", spread.TakerSymbol)
 						} else {
 							tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
-							//logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
+							logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
 						}
 						mtTriggeredDirection[spread.TakerSymbol] = -1
 					}
