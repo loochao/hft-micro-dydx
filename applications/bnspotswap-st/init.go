@@ -62,7 +62,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210427 16:09:41  ####")
+	logger.Debug("####  BUILD @ 20210427 16:09:55  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

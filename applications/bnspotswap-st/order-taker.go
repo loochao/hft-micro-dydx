@@ -30,7 +30,7 @@ func watchTakerOrderRequest(
 			}
 			if request.New != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				logger.Debugf("SUBMIT %s %s %f %f", request.New.Symbol, request.New.NewClientOrderId, request.New.Price, request.New.Quantity)
+				//logger.Debugf("SUBMIT %s %s %f %f", request.New.Symbol, request.New.NewClientOrderId, request.New.Price, request.New.Quantity)
 				_, err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
 					logger.Debugf("SUBMIT ERROR %s %s %v", request.New.Symbol, request.New.NewClientOrderId, err)
