@@ -391,8 +391,6 @@ func main() {
 	}()
 
 	logger.Debugf("START MAIN LOOP")
-	fundingInterval := time.Hour * 8
-	fundingSilent := time.Minute * 5
 	for {
 		select {
 		case <-mtGlobalCtx.Done():
@@ -486,7 +484,7 @@ func main() {
 							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
 							if takerOrder.ReduceOnly {
 								logger.Debugf("%s REALISED CLOSE LONG SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
-							}else{
+							} else {
 								logger.Debugf("%s REALISED OPEN SHORT SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
 							}
 						}
@@ -495,7 +493,7 @@ func main() {
 							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
 							if takerOrder.ReduceOnly {
 								logger.Debugf("%s REALISED CLOSE SHORT SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
-							}else{
+							} else {
 								logger.Debugf("%s REALISED OPEN LONG SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
 							}
 						}
@@ -587,13 +585,8 @@ func main() {
 			if mSystemReady && tSystemReady && time.Now().Sub(mtGlobalSilent) > 0 {
 				updateTakerOldOrders()
 				updateTakerOrders()
-				if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
-					time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
-					updateMakerOldOrders()
-					updateMakerNewOrders()
-				} else {
-					cancelAllMakerOpenOrders()
-				}
+				updateMakerOldOrders()
+				updateMakerNewOrders()
 			} else {
 				if len(mOpenOrders) > 0 {
 					for makerSymbol := range mOpenOrders {
