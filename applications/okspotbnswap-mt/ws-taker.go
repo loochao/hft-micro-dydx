@@ -17,10 +17,10 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 		var lastPosition *bnswap.Position
 		if p, ok := tPositions[pos.Symbol]; ok {
 			p := p
-			lastPosition = p
+			lastPosition = &p
 		}
 		if takerPosition, ok := tPositions[pos.Symbol]; !ok {
-			tPositions[pos.Symbol] = &bnswap.Position{
+			tPositions[pos.Symbol] = bnswap.Position{
 				Symbol:           pos.Symbol,
 				EntryPrice:       pos.EntryPrice,
 				PositionAmt:      pos.PositionAmt,

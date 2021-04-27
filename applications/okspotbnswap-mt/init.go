@@ -53,7 +53,7 @@ var mOrderCancelSilentTimes = make(map[string]time.Time)
 var mOpenOrderCh = make(chan MakerOpenOrder, 10000)
 
 var tPositionsCh = make(chan []bnswap.Position, 10)
-var tPositions = make(map[string]*bnswap.Position)
+var tPositions = make(map[string]bnswap.Position)
 var tPositionsUpdateTimes = make(map[string]time.Time)
 var tAccount *bnswap.Asset
 var tAccountCh = make(chan bnswap.Account, 10)
@@ -95,7 +95,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210427 07:00:48  ####")
+	logger.Debug("####  BUILD @ 20210427 09:52:22  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
