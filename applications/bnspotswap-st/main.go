@@ -80,7 +80,7 @@ func main() {
 			time.Sleep(time.Second)
 		}
 	}
-	_, _, _, _, err = bnspot.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
+	_, _, _, _, err = bnspot.GetOrderLimits(mtGlobalCtx, mAPI, tSymbols)
 	if err != nil {
 		logger.Debugf("bnspot.GetOrderLimits error %v", err)
 		return
@@ -176,13 +176,13 @@ func main() {
 	)
 
 	makerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
-	for start := 0; start < len(mSymbols); start += *mtConfig.OrderBookBatchSize {
+	for start := 0; start < len(tSymbols); start += *mtConfig.OrderBookBatchSize {
 		end := start + *mtConfig.OrderBookBatchSize
-		if end > len(mSymbols) {
-			end = len(mSymbols)
+		if end > len(tSymbols) {
+			end = len(tSymbols)
 		}
 		subMakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
-		for _, symbol := range mSymbols[start:end] {
+		for _, symbol := range tSymbols[start:end] {
 			makerRowDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
 			subMakerRowDepthChs[symbol] = makerRowDepthChs[symbol]
 		}
@@ -213,7 +213,7 @@ func main() {
 		)
 	}
 
-	spreadCh := make(chan *common.ShortSpread, len(mSymbols)*100)
+	spreadCh := make(chan *common.ShortSpread, len(tSymbols)*100)
 	for _, takerSymbol := range mtConfig.Symbols {
 		makerSymbol := takerSymbol
 		go watchMakerTakerSpread(
@@ -235,7 +235,7 @@ func main() {
 		)
 	}
 
-	tNewOrderErrorCh = make(chan TakerOrderNewError, len(mSymbols)*2)
+	tNewOrderErrorCh = make(chan TakerOrderNewError, len(tSymbols)*2)
 	for _, takerSymbol := range tSymbols {
 		tOrderRequestChs[takerSymbol] = make(chan TakerOrderRequest, 2)
 		go watchTakerOrderRequest(
@@ -244,7 +244,6 @@ func main() {
 			*mtConfig.OrderTimeout,
 			*mtConfig.DryRun,
 			tOrderRequestChs[takerSymbol],
-			tOpenOrderCh,
 			tNewOrderErrorCh,
 		)
 	}
@@ -328,26 +327,35 @@ func main() {
 		case takerOrderEvent := <-tUserWebsocket.OrderUpdateEventCh:
 			takerOrder := takerOrderEvent.Order
 			if takerOrder.Status == "REJECTED" || takerOrder.Status == "EXPIRED" {
-				tOrderSilentTimes[takerOrder.Symbol] = time.Now()
-				delete(tOpenOrders, takerOrder.Symbol)
+				if openOrder, ok := tOpenOrders[takerOrder.Symbol]; ok && openOrder.NewClientOrderId == takerOrder.ClientOrderId {
+					tOrderSilentTimes[takerOrder.Symbol] = time.Now()
+					tOrderCancelSilentTimes[takerOrder.Symbol] = time.Now()
+					tPositionsUpdateTimes[takerOrder.Symbol] = time.Now()
+					logger.Debugf("%s %s %s", takerOrder.Status, takerOrder.Symbol, takerOrder.ClientOrderId)
+					delete(tOpenOrders, takerOrder.Symbol)
+				}
 			} else if takerOrder.Status == "FILLED" {
-				delete(tOpenOrders, takerOrder.Symbol)
-				logger.Debugf("TAKER FILLED ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)
+				if openOrder, ok := tOpenOrders[takerOrder.Symbol]; ok && openOrder.NewClientOrderId == takerOrder.ClientOrderId {
+					delete(tOpenOrders, takerOrder.Symbol)
+					logger.Debugf("%s %s %s", takerOrder.Status, takerOrder.Symbol, takerOrder.ClientOrderId)
+				}
+				tOrderSilentTimes[takerOrder.Symbol] = time.Now()
+				tOrderCancelSilentTimes[takerOrder.Symbol] = time.Now()
 				tHttpPositionUpdateSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
-				if _, ok := tmSymbolsMap[takerOrder.Symbol]; ok {
+				if _, ok := mtSymbolsMap[takerOrder.Symbol]; ok {
 					if takerOrder.Side == common.OrderSideSell &&
 						!takerOrder.ReduceOnly {
 						mLastFilledSellPrices[takerOrder.Symbol] = takerOrder.AveragePrice
-						mtEnterTimeouts[takerOrder.Symbol] = time.Now()
-						mtCloseTimeouts[takerOrder.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
-						mtEnterSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
-						logger.Debugf("SET TIMEOUTS %v", mtCloseTimeouts[takerOrder.Symbol])
+						tEnterTimeouts[takerOrder.Symbol] = time.Now()
+						tCloseTimeouts[takerOrder.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
+						tEnterSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+						logger.Debugf("SET TIMEOUTS %v", tCloseTimeouts[takerOrder.Symbol])
 					} else if takerOrder.Side == common.OrderSideBuy &&
 						!takerOrder.ReduceOnly {
 						mLastFilledBuyPrices[takerOrder.Symbol] = takerOrder.AveragePrice
-						mtEnterTimeouts[takerOrder.Symbol] = time.Now()
-						mtCloseTimeouts[takerOrder.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
-						mtEnterSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+						tEnterTimeouts[takerOrder.Symbol] = time.Now()
+						tCloseTimeouts[takerOrder.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
+						tEnterSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
 					} else if takerOrder.Side == common.OrderSideSell &&
 						takerOrder.ReduceOnly {
 						if buyPrice, ok := mLastFilledBuyPrices[takerOrder.Symbol]; ok {
@@ -368,13 +376,21 @@ func main() {
 			if lastSpread, ok := mtSpreads[spread.TakerSymbol]; ok {
 				if lastSpread.MedianEnter*spread.MedianEnter <= 0 {
 					if spread.MedianEnter > 0 {
-						logger.Debugf("TRIGGER LONG %s", spread.TakerSymbol)
+						if tEnterSilentTimes[spread.TakerSymbol].Sub(time.Now()) > 0 {
+							//logger.Debugf("TRIGGER LONG %s IN SILENT", spread.TakerSymbol)
+						} else {
+							tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
+							//logger.Debugf("TRIGGER LONG %s", spread.TakerSymbol)
+						}
 						mtTriggeredDirection[spread.TakerSymbol] = 1
-						mtEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
 					} else if spread.MedianEnter < 0 {
-						logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
+						if tEnterSilentTimes[spread.TakerSymbol].Sub(time.Now()) > 0 {
+							//logger.Debugf("TRIGGER SHORT %s IN SILENT", spread.TakerSymbol)
+						} else {
+							tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
+							//logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
+						}
 						mtTriggeredDirection[spread.TakerSymbol] = -1
-						mtEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
 					}
 				} else {
 					//logger.Debugf("%s %f", spread.TakerSymbol, spread.MedianEnter)
@@ -405,16 +421,6 @@ func main() {
 		case takerNewError := <-tNewOrderErrorCh:
 			tOrderSilentTimes[takerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
 			break
-		case takerOpenOrder := <-tOpenOrderCh:
-			if openOrder, ok := tOpenOrders[takerOpenOrder.Symbol]; ok {
-				if takerOpenOrder.NewOrderParams == nil {
-					//Cancel的Http回报
-					delete(tOpenOrders, takerOpenOrder.Symbol)
-				} else if takerOpenOrder.NewOrderParams != nil && openOrder.NewClientOrderId == takerOpenOrder.NewClientOrderId {
-					//New的Http回报
-					tOpenOrders[takerOpenOrder.Symbol] = takerOpenOrder
-				}
-			}
 		case <-mtLoopTimer.C:
 			if mSystemReady && tSystemReady && time.Now().Sub(mtGlobalSilent) > 0 {
 				updateTakerOldOrders()

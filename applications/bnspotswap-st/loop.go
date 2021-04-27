@@ -22,7 +22,6 @@ func updateTakerNewOrders() {
 	takerUSDTAvailable := *tAccount.AvailableBalance
 
 	for _, takerSymbol := range tSymbols {
-		makerSymbol := tmSymbolsMap[takerSymbol]
 		if time.Now().Sub(tPositionsUpdateTimes[takerSymbol]) > *mtConfig.PositionMaxAge {
 			continue
 		}
@@ -33,7 +32,7 @@ func updateTakerNewOrders() {
 			continue
 		}
 		takerPosition, okTakerPositions := tPositions[takerSymbol]
-		spread, okSpread := mtSpreads[makerSymbol]
+		spread, okSpread := mtSpreads[takerSymbol]
 		if !okTakerPositions || !okSpread {
 			continue
 		}
@@ -47,8 +46,8 @@ func updateTakerNewOrders() {
 
 		//还在加多档期
 		if mtTriggeredDirection[takerSymbol] > 0 &&
-			mtEnterTimeouts[takerSymbol].Sub(time.Now()) > 0 &&
-			mtEnterSilentTimes[takerSymbol].Sub(time.Now()) < 0 {
+			tEnterTimeouts[takerSymbol].Sub(time.Now()) > 0 &&
+			tEnterSilentTimes[takerSymbol].Sub(time.Now()) < 0 {
 			takerPrice = math.Floor(takerTakerDepth.MidPrice/takerTickSize) * takerTickSize
 			entryValue := takerPosition.PositionAmt*takerPosition.EntryPrice + entryStep
 			if entryValue > entryTarget {
@@ -58,7 +57,7 @@ func updateTakerNewOrders() {
 			takerSizeDiff = math.Floor(entryValue/takerPrice/takerStepSize) * takerStepSize
 			entryValue = takerPrice * takerSizeDiff
 			if entryValue < 0.8*entryStep {
-				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+				if time.Now().Sub(mtLogSilentTimes[takerSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED LONG OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, SIZE %f",
 						takerSymbol,
@@ -66,12 +65,12 @@ func updateTakerNewOrders() {
 						entryStep*0.8,
 						takerSizeDiff,
 					)
-					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					mtLogSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
 			}
 			if entryValue > takerUSDTAvailable {
-				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+				if time.Now().Sub(mtLogSilentTimes[takerSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED LONG OPEN, ENTRY VALUE %f MORE THAN takerUSDTAvailable %f, SIZE %f",
 						takerSymbol,
@@ -79,12 +78,12 @@ func updateTakerNewOrders() {
 						takerUSDTAvailable,
 						takerSizeDiff,
 					)
-					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					mtLogSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
 			}
 			if entryValue < takerMinNotional {
-				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+				if time.Now().Sub(mtLogSilentTimes[takerSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED LONG OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, SIZE %f",
 						takerSymbol,
@@ -92,13 +91,13 @@ func updateTakerNewOrders() {
 						takerMinNotional,
 						takerSizeDiff,
 					)
-					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					mtLogSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
 			}
 		} else if mtTriggeredDirection[takerSymbol] < 0 &&
-			mtEnterTimeouts[takerSymbol].Sub(time.Now()) > 0 &&
-			mtEnterSilentTimes[takerSymbol].Sub(time.Now()) < 0 {
+			tEnterTimeouts[takerSymbol].Sub(time.Now()) > 0 &&
+			tEnterSilentTimes[takerSymbol].Sub(time.Now()) < 0 {
 
 			takerPrice = math.Ceil(takerTakerDepth.MidPrice/takerTickSize) * takerTickSize
 			entryValue := takerPosition.PositionAmt*takerPosition.EntryPrice - entryStep
@@ -109,7 +108,7 @@ func updateTakerNewOrders() {
 			takerSizeDiff = math.Ceil(entryValue/takerPrice/takerStepSize) * takerStepSize
 			entryValue = takerPrice * takerSizeDiff
 			if -entryValue < 0.8*entryStep {
-				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+				if time.Now().Sub(mtLogSilentTimes[takerSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED SHORT OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, SIZE %f",
 						takerSymbol,
@@ -117,12 +116,12 @@ func updateTakerNewOrders() {
 						entryStep*0.8,
 						takerSizeDiff,
 					)
-					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					mtLogSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
 			}
 			if -entryValue > takerUSDTAvailable {
-				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+				if time.Now().Sub(mtLogSilentTimes[takerSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED SHORT OPEN, ENTRY VALUE %f MORE THAN takerUSDTAvailable %f, SIZE %f",
 						takerSymbol,
@@ -130,12 +129,12 @@ func updateTakerNewOrders() {
 						takerUSDTAvailable,
 						takerSizeDiff,
 					)
-					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					mtLogSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
 			}
 			if -entryValue < takerMinNotional {
-				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+				if time.Now().Sub(mtLogSilentTimes[takerSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED SHORT TOP OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, SIZE %f",
 						takerSymbol,
@@ -143,19 +142,19 @@ func updateTakerNewOrders() {
 						takerMinNotional,
 						takerSizeDiff,
 					)
-					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					mtLogSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
 			}
 		}else if takerPosition.PositionAmt > 0 {
-			if mtCloseTimeouts[takerSymbol].Sub(time.Now()) > 0 {
-				takerPrice =  (1.0 + float64(mtCloseTimeouts[takerSymbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout))*takerPosition.EntryPrice
+			if tCloseTimeouts[takerSymbol].Sub(time.Now()) > 0 {
+				takerPrice =  (1.0 + float64(tCloseTimeouts[takerSymbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)**mtConfig.CloseProfitPct)*takerPosition.EntryPrice
 				takerPrice = math.Ceil(takerPrice/takerTickSize)*takerTickSize
 			}
 			takerSizeDiff = -takerPosition.PositionAmt
 		}else if takerPosition.PositionAmt < 0 {
-			if mtCloseTimeouts[takerSymbol].Sub(time.Now()) > 0 {
-				takerPrice =  (1.0 - float64(mtCloseTimeouts[takerSymbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout))*takerPosition.EntryPrice
+			if tCloseTimeouts[takerSymbol].Sub(time.Now()) > 0 {
+				takerPrice =  (1.0 - float64(tCloseTimeouts[takerSymbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)**mtConfig.CloseProfitPct)*takerPosition.EntryPrice
 				takerPrice = math.Floor(takerPrice/takerTickSize)*takerTickSize
 			}
 			takerSizeDiff = -takerPosition.PositionAmt
@@ -188,14 +187,13 @@ func updateTakerNewOrders() {
 			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 		}
 		if takerPrice == 0 {
-			logger.Debugf("%s CLOSE TIMEOUT", takerSymbol)
+			logger.Debugf("%s CLOSE TIMEOUT %v", takerSymbol, time.Now().Sub(tCloseTimeouts[takerSymbol]))
 			takerOrder.Type = common.OrderTypeMarket
 			takerOrder.Price = 0
 			takerOrder.TimeInForce = ""
 		}
 		tOpenOrders[takerSymbol] = TakerOpenOrder{NewOrderParams: &takerOrder, Symbol: takerSymbol}
 		tOrderSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
-		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
 		tOrderRequestChs[takerSymbol] <- TakerOrderRequest{New: &takerOrder}
 	}
 }

@@ -15,7 +15,6 @@ func watchTakerOrderRequest(
 	timeout time.Duration,
 	dryRun bool,
 	orderRequestCh chan TakerOrderRequest,
-	outputOrderRespCh chan TakerOpenOrder,
 	outputOrderErrorCh chan TakerOrderNewError,
 ) {
 	defer func() {
@@ -31,31 +30,20 @@ func watchTakerOrderRequest(
 			}
 			if request.New != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				//logger.Debugf("TAKER SUBMIT %v", request.New.ToString())
+				logger.Debugf("SUBMIT %s %s %f %f", request.New.Symbol, request.New.NewClientOrderId, request.New.Price, request.New.Quantity)
 				_, err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
-					logger.Debugf("TAKER SUBMIT ERROR %v %v", err, *request.New)
+					logger.Debugf("SUBMIT ERROR %s %s %v", request.New.Symbol, request.New.NewClientOrderId, err)
 					outputOrderErrorCh <- TakerOrderNewError{
 						Error:  err,
 						Params: *request.New,
 					}
-				} else {
-					outputOrderRespCh <- TakerOpenOrder{
-						NewOrderParams: request.New,
-						Symbol:         request.New.Symbol,
-					}
 				}
 			} else if request.Cancel != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				//logger.Debugf("TAKER CANCEL %v", *request.Cancel)
 				_, err := api.CancelAllOpenOrders(childCtx, *request.Cancel)
 				if err != nil {
-					logger.Debugf("TAKER CANCEL ERROR %v %v", err, *request.Cancel)
-				} else {
-					outputOrderRespCh <- TakerOpenOrder{
-						NewOrderParams: nil,
-						Symbol:         request.Cancel.Symbol,
-					}
+					logger.Debugf("CANCEL ERROR %s %v", request.Cancel.Symbol, err)
 				}
 			}
 		}
@@ -76,9 +64,10 @@ func updateTakerOldOrders() {
 		if time.Now().Sub(tOrderCancelSilentTimes[takerSymbol]) < 0 {
 			continue
 		}
-		if isTakerOrderOk(*order.NewOrderParams) && time.Now().Sub(mtCloseTimeouts[takerSymbol]) < 0 {
+		if isTakerOrderOk(*order.NewOrderParams) && time.Now().Sub(tCloseTimeouts[takerSymbol]) < 0 {
 			continue
 		}
+		logger.Debugf("CANCEL %s", order.Symbol)
 		tOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		tOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		tOrderCancelCounts[order.Symbol] += 1
@@ -100,7 +89,7 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 		return false
 	}
 
-	if mtEnterTimeouts[order.Symbol].Sub(time.Now()) > 0 {
+	if tEnterTimeouts[order.Symbol].Sub(time.Now()) > 0 {
 		//检查价格有没有挂太远，太远撤掉
 		if order.Side == common.OrderSideBuy &&
 			order.Price < spread.TakerDepth.BestBidPrice {
@@ -121,10 +110,10 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 		}
 	} else {
 		if order.Side == common.OrderSideSell {
-			if mtCloseTimeouts[order.Symbol].Sub(time.Now()) > 0 {
-				takerPrice := (1.0 + float64(mtCloseTimeouts[order.Symbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)) * takerPosition.EntryPrice
+			if tCloseTimeouts[order.Symbol].Sub(time.Now()) > 0 {
+				takerPrice := (1.0 + float64(tCloseTimeouts[order.Symbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)**mtConfig.CloseProfitPct) * takerPosition.EntryPrice
 				takerPrice = math.Ceil(takerPrice/tTickSizes[order.Symbol]) * tTickSizes[order.Symbol]
-				if order.Price > takerPrice {
+				if order.Price > takerPrice*1.0005 {
 					logger.Debugf("TAKER BUY %s %f > TARGET SELL PRICE %f",
 						order.Symbol,
 						order.Price,
@@ -136,10 +125,10 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 				return false
 			}
 		} else if order.Side == common.OrderSideBuy	 {
-			if mtCloseTimeouts[order.Symbol].Sub(time.Now()) > 0 {
-				takerPrice := (1.0 - float64(mtCloseTimeouts[order.Symbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)) * takerPosition.EntryPrice
+			if tCloseTimeouts[order.Symbol].Sub(time.Now()) > 0 {
+				takerPrice := (1.0 - float64(tCloseTimeouts[order.Symbol].Sub(time.Now()))/float64(*mtConfig.CloseTimeout)**mtConfig.CloseProfitPct) * takerPosition.EntryPrice
 				takerPrice = math.Floor(takerPrice/tTickSizes[order.Symbol]) * tTickSizes[order.Symbol]
-				if order.Price < takerPrice {
+				if order.Price < takerPrice*0.9995 {
 					logger.Debugf("TAKER BUY %s %f < TARGET BUY PRICE %f",
 						order.Symbol,
 						order.Price,

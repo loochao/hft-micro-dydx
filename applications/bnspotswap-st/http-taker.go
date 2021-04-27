@@ -8,7 +8,7 @@ import (
 
 func handleTakerHttpPositions(positions []bnswap.Position) {
 	for _, nextPos := range positions {
-		if _, ok := tmSymbolsMap[nextPos.Symbol]; !ok {
+		if _, ok := mtSymbolsMap[nextPos.Symbol]; !ok {
 			return
 		}
 		if nextPos.PositionSide != "BOTH" {
@@ -30,8 +30,12 @@ func handleTakerHttpPositions(positions []bnswap.Position) {
 			lastPosition.EntryPrice != nextPos.EntryPrice {
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			tOrderSilentTimes[nextPos.Symbol] = time.Now()
-			mtEnterTimeouts[nextPos.Symbol] = time.Now()
+			tEnterTimeouts[nextPos.Symbol] = time.Now()
 			logger.Debugf("TAKER HTTP POSITION %s", nextPos.ToString())
+			if nextPos.PositionAmt != 0 {
+				tCloseTimeouts[nextPos.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
+				logger.Debugf("SET CLOSE TIMEOUT FOR %s", nextPos.Symbol)
+			}
 		}
 	}
 }
@@ -42,11 +46,11 @@ func handleTakerHttpAccount(account bnswap.Account) {
 			asset := asset
 			if tAccount == nil {
 				logger.Debugf("TAKER HTTP WB CHANGE %v -> %f", nil, *asset.WalletBalance)
-				mtLoopTimer.Reset(time.Nanosecond)
+				//mtLoopTimer.Reset(time.Nanosecond)
 			} else if tAccount.WalletBalance != nil &&
 				asset.WalletBalance != nil &&
 				*tAccount.WalletBalance != *asset.WalletBalance {
-				mtLoopTimer.Reset(time.Nanosecond)
+				//mtLoopTimer.Reset(time.Nanosecond)
 				logger.Debugf("TAKER HTTP WB CHANGE %f -> %f", *tAccount.WalletBalance, *asset.WalletBalance)
 			}
 			tAccount = &asset
