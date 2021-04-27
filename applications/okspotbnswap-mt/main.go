@@ -278,12 +278,11 @@ func main() {
 		)
 	}
 
-	spreadCh := make(chan *common.MakerTakerSpread, len(mSymbols)*100)
+	spreadCh := make(chan *common.ShortSpread, len(mSymbols)*100)
 	for makerSymbol, takerSymbol := range mtConfig.MakerTakerSymbolsMap {
 		go watchMakerTakerSpread(
 			mtGlobalCtx,
 			makerSymbol, takerSymbol,
-			*mtConfig.OrderBookMakerImpact,
 			*mtConfig.OrderBookTakerImpact,
 			*mtConfig.OrderBookMakerDecay,
 			*mtConfig.OrderBookMakerBias,

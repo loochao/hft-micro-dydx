@@ -74,7 +74,7 @@ var mtMapUpdated = make(map[string]bool)
 var mtBarsMapCh = make(chan [2]common.KLinesMap, 10)
 var mtQuantilesCh = make(chan map[string]MakerTakerDeltaQuantile, 10)
 var mtQuantiles map[string]MakerTakerDeltaQuantile
-var mtSpreads = make(map[string]*common.MakerTakerSpread)
+var mtSpreads = make(map[string]*common.ShortSpread)
 
 var mLastFilledBuyPrices = make(map[string]float64)
 var mLastFilledSellPrices = make(map[string]float64)
@@ -95,7 +95,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210426 13:03:57  ####")
+	logger.Debug("####  BUILD @ 20210427 04:44:50  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

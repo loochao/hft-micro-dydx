@@ -72,7 +72,7 @@ func handleSave() {
 		if makerBalance, ok := mBalances[makerSymbol]; ok {
 			fields["makerSize"] = makerBalance.Balance
 			if spread, ok := mtSpreads[makerSymbol]; ok {
-				fields["makerValue"] = makerBalance.Balance * spread.MakerDepth.MakerBid
+				fields["makerValue"] = makerBalance.Balance * spread.MakerDepth.MidPrice
 			}
 		}
 		if takerPosition, ok := tPositions[takerSymbol]; ok {
@@ -86,23 +86,14 @@ func handleSave() {
 		}
 		if spread, ok := mtSpreads[makerSymbol]; ok {
 
-			fields["spreadShortLastEnter"] = spread.ShortLastEnter
-			fields["spreadShortLastLeave"] = spread.ShortLastLeave
-			fields["spreadShortMedianEnter"] = spread.ShortMedianEnter
-			fields["spreadShortMedianLeave"] = spread.ShortMedianLeave
+			fields["spreadShortLastEnter"] = spread.LastEnter
+			fields["spreadShortLastLeave"] = spread.LastLeave
+			fields["spreadShortMedianEnter"] = spread.MedianEnter
+			fields["spreadShortMedianLeave"] = spread.MedianLeave
 
-			fields["spreadLongLastEnter"] = spread.LongLastEnter
-			fields["spreadLongLastLeave"] = spread.LongLastLeave
-			fields["spreadLongMedianEnter"] = spread.LongMedianEnter
-			fields["spreadLongMedianLeave"] = spread.LongMedianLeave
-
-			fields["takerMakerBid"] = spread.TakerDepth.MakerBid
-			fields["takerMakerAsk"] = spread.TakerDepth.MakerAsk
 			fields["takerTakerBid"] = spread.TakerDepth.TakerBid
 			fields["takerTakerAsk"] = spread.TakerDepth.TakerAsk
 
-			fields["makerMakerBid"] = spread.MakerDepth.MakerBid
-			fields["makerMakerAsk"] = spread.MakerDepth.MakerAsk
 			fields["makerTakerBid"] = spread.MakerDepth.TakerBid
 			fields["makerTakerAsk"] = spread.MakerDepth.TakerAsk
 

@@ -13,7 +13,7 @@ import (
 func watchMakerTakerSpread(
 	ctx context.Context,
 	makerSymbol, takerSymbol string,
-	makerImpact, takerImpact float64,
+	takerImpact float64,
 	makerDecay, makerBias,
 	takerDecay, takerBias float64,
 	maxAgeDiffBias time.Duration,
@@ -22,13 +22,13 @@ func watchMakerTakerSpread(
 	lookbackMinimalWindow int,
 	makerDepthCh, takerDepthCh chan *common.DepthRawMessage,
 	reportCh chan common.SpreadReport,
-	outputCh chan *common.MakerTakerSpread,
+	outputCh chan *common.ShortSpread,
 ) {
 	var err error
 	var makerRawDepth, takerRawDepth *common.DepthRawMessage
 	var makerDepth, newMakerDepth *okspot.Depth5
 	var takerDepth, newTakerDepth *bnswap.Depth5
-	var makerWalkedDepth, takerWalkedDepth *common.WalkedMakerTakerDepth
+	var makerWalkedDepth, takerWalkedDepth *common.WalkedTakerDepth
 	var spreadTime time.Time
 	var ageDiff time.Duration
 	var maxAgeDiff = time.Duration(takerBias + makerBias)
@@ -38,10 +38,6 @@ func watchMakerTakerSpread(
 	shortLeaveWindow := make([]float64, 0)
 	shortEnterSortedSlice := common.SortedFloatSlice{}
 	shortLeaveSortedSlice := common.SortedFloatSlice{}
-	longEnterWindow := make([]float64, 0)
-	longLeaveWindow := make([]float64, 0)
-	longEnterSortedSlice := common.SortedFloatSlice{}
-	longLeaveSortedSlice := common.SortedFloatSlice{}
 	times := make([]time.Time, 0)
 
 	logSilentTime := time.Now()
@@ -57,8 +53,8 @@ func watchMakerTakerSpread(
 	i := 0
 	matchCount := 0
 	depthCount := 0
-	var eventTime  time.Time
-	var shortLastEnter, shortLastLeave, longLastEnter, longLastLeave float64
+	var eventTime time.Time
+	var shortLastEnter, shortLastLeave float64
 	for {
 		select {
 		case <-ctx.Done():
@@ -79,11 +75,8 @@ func watchMakerTakerSpread(
 				break
 			}
 			matchCount++
-			shortLastEnter = (takerWalkedDepth.TakerBid - makerWalkedDepth.MakerBid) / makerWalkedDepth.MakerBid
-			shortLastLeave = (takerWalkedDepth.TakerAsk - makerWalkedDepth.MakerAsk) / makerWalkedDepth.MakerAsk
-
-			longLastEnter = (takerWalkedDepth.TakerAsk - makerWalkedDepth.MakerAsk) / makerWalkedDepth.MakerAsk
-			longLastLeave = (takerWalkedDepth.TakerBid - makerWalkedDepth.MakerBid) / makerWalkedDepth.MakerBid
+			shortLastEnter = (takerWalkedDepth.TakerBid - makerWalkedDepth.MidPrice) / makerWalkedDepth.MidPrice
+			shortLastLeave = (takerWalkedDepth.TakerAsk - makerWalkedDepth.MidPrice) / makerWalkedDepth.MidPrice
 
 			times = append(times, takerWalkedDepth.Time)
 			shortEnterWindow = append(shortEnterWindow, shortLastEnter)
@@ -91,10 +84,6 @@ func watchMakerTakerSpread(
 			shortEnterSortedSlice = shortEnterSortedSlice.Insert(shortLastEnter)
 			shortLeaveSortedSlice = shortLeaveSortedSlice.Insert(shortLastLeave)
 
-			longEnterWindow = append(longEnterWindow, longLastEnter)
-			longLeaveWindow = append(longLeaveWindow, longLastLeave)
-			longEnterSortedSlice = longEnterSortedSlice.Insert(longLastEnter)
-			longLeaveSortedSlice = longLeaveSortedSlice.Insert(longLastLeave)
 			cutIndex = 0
 			for i, eventTime = range times {
 				if spreadTime.Sub(eventTime) > lookbackDuration {
@@ -113,15 +102,6 @@ func watchMakerTakerSpread(
 				shortEnterWindow = shortEnterWindow[cutIndex:]
 				shortLeaveWindow = shortLeaveWindow[cutIndex:]
 
-				for _, spread = range longEnterWindow[:cutIndex] {
-					longEnterSortedSlice = longEnterSortedSlice.Delete(spread)
-				}
-				for _, spread = range longLeaveWindow[:cutIndex] {
-					longLeaveSortedSlice = longLeaveSortedSlice.Delete(spread)
-				}
-				longEnterWindow = longEnterWindow[cutIndex:]
-				longLeaveWindow = longLeaveWindow[cutIndex:]
-
 				times = times[cutIndex:]
 			}
 
@@ -136,21 +116,16 @@ func watchMakerTakerSpread(
 
 			select {
 			case <-ctx.Done():
-			case outputCh <- &common.MakerTakerSpread{
+			case outputCh <- &common.ShortSpread{
 				TakerSymbol: takerSymbol,
 				MakerSymbol: makerSymbol,
 				TakerDepth:  *takerWalkedDepth,
 				MakerDepth:  *makerWalkedDepth,
 
-				ShortLastEnter:   shortLastEnter,
-				ShortLastLeave:   shortLastLeave,
-				ShortMedianEnter: shortEnterSortedSlice.Median(),
-				ShortMedianLeave: shortLeaveSortedSlice.Median(),
-
-				LongLastEnter:   longLastEnter,
-				LongLastLeave:   longLastLeave,
-				LongMedianEnter: longEnterSortedSlice.Median(),
-				LongMedianLeave: longLeaveSortedSlice.Median(),
+				LastEnter:   shortLastEnter,
+				LastLeave:   shortLastLeave,
+				MedianEnter: shortEnterSortedSlice.Median(),
+				MedianLeave: shortLeaveSortedSlice.Median(),
 
 				AgeDiff: ageDiff,
 				Time:    spreadTime,
@@ -164,12 +139,12 @@ func watchMakerTakerSpread(
 			break
 		case <-makerWalkDepthTimer.C:
 			if makerDepth != nil {
-				makerWalkedDepth, err = common.WalkMakerTakerDepth5(makerDepth, makerImpact, takerImpact)
+				makerWalkedDepth, err = common.WalkTakerDepth5(makerDepth, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						if makerRawDepth == nil {
 							logger.Debugf("maker common.WalkMakerTakerDepth20 error %v %s", err, makerSymbol)
-						}else {
+						} else {
 							logger.Debugf("maker common.WalkMakerTakerDepth20 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
 						}
 						logSilentTime = time.Now().Add(time.Minute)
@@ -181,12 +156,12 @@ func watchMakerTakerSpread(
 			break
 		case <-takerWalkDepthTimer.C:
 			if takerDepth != nil {
-				takerWalkedDepth, err = common.WalkMakerTakerDepth5(takerDepth, makerImpact, takerImpact)
+				takerWalkedDepth, err = common.WalkTakerDepth5(takerDepth, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						if takerRawDepth == nil {
 							logger.Debugf("taker common.WalkMakerTakerDepth5 error %v %s", err, takerSymbol)
-						}else{
+						} else {
 							logger.Debugf("taker common.WalkMakerTakerDepth5 error %v %s %s", err, takerSymbol, takerRawDepth.Depth)
 						}
 						logSilentTime = time.Now().Add(time.Minute)

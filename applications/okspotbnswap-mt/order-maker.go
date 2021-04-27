@@ -112,25 +112,25 @@ func isOrderProfitable(order okspot.NewOrderParam) bool {
 	spread, ok1 := mtSpreads[order.Symbol]
 	quantile, ok2 := mtQuantiles[order.Symbol]
 	if !ok1 || !ok2 || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
-		logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.Time), order.Symbol)
+		logger.Debugf("SPREAD OR QUANTILE NOT READY, CANCEL %s", order.Symbol)
 		return false
 	}
 
 	//检查价格有没有挂太远，太远撤掉
 	if order.Side == okspot.OrderSideBuy &&
-		*order.Price < (1.0-4**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid {
-		logger.Debugf("%s BUY PRICE %f < MAKER BID MINIMAL PRICE %f",
+		*order.Price < spread.MakerDepth.BestBidPrice {
+		logger.Debugf("%s BUY PRICE %f < BEST BID PRICE %f",
 			order.Symbol,
 			*order.Price,
-			(1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid,
+			spread.MakerDepth.BestBidPrice,
 		)
 		return false
 	} else if order.Side == okspot.OrderSideSell &&
-		*order.Price > (1.0+4**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk {
-		logger.Debugf("%s SELL PRICE %f > MAKER ASK MAXIMAL PRICE %f",
+		*order.Price > spread.MakerDepth.BestAskPrice {
+		logger.Debugf("%s SELL PRICE %f > BEST ASK PRICE %f",
 			order.Symbol,
 			*order.Price,
-			(1.0+2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk,
+			spread.MakerDepth.BestAskPrice,
 		)
 		return false
 	}
