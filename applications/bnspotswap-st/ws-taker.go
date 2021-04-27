@@ -51,13 +51,10 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 			if pos.PositionAmt != 0 {
 				tCloseTimeouts[pos.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
 				logger.Debugf("WS POS SET TIMEOUT FOR %s", pos.Symbol)
-			}else{
-				tEnterSilentTimes[pos.Symbol] = time.Now()
-				logger.Debugf("WS POS CLEAN ENTER SILENT %s %v",pos.Symbol, *mtConfig.EnterSilent)
 			}
 			tEnterTimeouts[pos.Symbol] = time.Now()
 			//mtLoopTimer.Reset(time.Nanosecond)
-			logger.Debugf("WS POS %s %f %f", pos.Symbol, pos.PositionAmt, pos.EntryPrice)
+			//logger.Debugf("WS POS %s %f %f", pos.Symbol, pos.PositionAmt, pos.EntryPrice)
 		}
 	}
 	for _, balance := range data.Account.Balances {
@@ -70,12 +67,12 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 					WalletBalance:      &wb,
 					CrossWalletBalance: &cwb,
 				}
-				logger.Debugf("WS USDT WB nil -> %f", wb)
+				//logger.Debugf("WS USDT WB nil -> %f", wb)
 				//mtLoopTimer.Reset(time.Nanosecond)
 			} else {
 				if tAccount.WalletBalance != nil && *tAccount.WalletBalance != wb {
 					//mtLoopTimer.Reset(time.Nanosecond)
-					logger.Debugf("WS USDT WB %f -> %f", *tAccount.WalletBalance, wb)
+					//logger.Debugf("WS USDT WB %f -> %f", *tAccount.WalletBalance, wb)
 				}
 				tAccount.WalletBalance = &wb
 				tAccount.CrossWalletBalance = &cwb

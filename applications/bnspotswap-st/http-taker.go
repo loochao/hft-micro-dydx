@@ -31,13 +31,10 @@ func handleTakerHttpPositions(positions []bnswap.Position) {
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			tOrderSilentTimes[nextPos.Symbol] = time.Now()
 			tEnterTimeouts[nextPos.Symbol] = time.Now()
-			logger.Debugf("TAKER HTTP POSITION %s", nextPos.ToString())
+			//logger.Debugf("TAKER HTTP POSITION %s", nextPos.ToString())
 			if nextPos.PositionAmt != 0 {
 				tCloseTimeouts[nextPos.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
 				logger.Debugf("SET CLOSE TIMEOUT FOR %s", nextPos.Symbol)
-			} else {
-				tEnterSilentTimes[nextPos.Symbol] = time.Now()
-				logger.Debugf("WS POS CLEAN ENTER SILENT %s %v", nextPos.Symbol, *mtConfig.EnterSilent)
 			}
 
 		}
