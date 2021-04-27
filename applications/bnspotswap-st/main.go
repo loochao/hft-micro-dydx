@@ -326,6 +326,7 @@ func main() {
 			break
 		case takerOrderEvent := <-tUserWebsocket.OrderUpdateEventCh:
 			takerOrder := takerOrderEvent.Order
+			logger.Debugf("%s %s %s", takerOrder.Status, takerOrder.Symbol, takerOrder.ClientOrderId)
 			if takerOrder.Status == "REJECTED" ||
 				takerOrder.Status == "EXPIRED" ||
 				takerOrder.Status == "CANCELED" {
@@ -333,13 +334,11 @@ func main() {
 					tOrderSilentTimes[takerOrder.Symbol] = time.Now()
 					tOrderCancelSilentTimes[takerOrder.Symbol] = time.Now()
 					tPositionsUpdateTimes[takerOrder.Symbol] = time.Now()
-					logger.Debugf("%s %s %s", takerOrder.Status, takerOrder.Symbol, takerOrder.ClientOrderId)
 					delete(tOpenOrders, takerOrder.Symbol)
 				}
 			} else if takerOrder.Status == "FILLED" {
 				if openOrder, ok := tOpenOrders[takerOrder.Symbol]; ok && openOrder.NewClientOrderId == takerOrder.ClientOrderId {
 					delete(tOpenOrders, takerOrder.Symbol)
-					logger.Debugf("%s %s %s", takerOrder.Status, takerOrder.Symbol, takerOrder.ClientOrderId)
 				}
 				tOrderSilentTimes[takerOrder.Symbol] = time.Now()
 				tOrderCancelSilentTimes[takerOrder.Symbol] = time.Now()
@@ -351,7 +350,6 @@ func main() {
 						tEnterTimeouts[takerOrder.Symbol] = time.Now()
 						tCloseTimeouts[takerOrder.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
 						tEnterSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
-						logger.Debugf("SET TIMEOUTS %v", tCloseTimeouts[takerOrder.Symbol])
 					} else if takerOrder.Side == common.OrderSideBuy &&
 						!takerOrder.ReduceOnly {
 						mLastFilledBuyPrices[takerOrder.Symbol] = takerOrder.AveragePrice
@@ -362,13 +360,13 @@ func main() {
 						takerOrder.ReduceOnly {
 						if buyPrice, ok := mLastFilledBuyPrices[takerOrder.Symbol]; ok {
 							mtRealisedSpread[takerOrder.Symbol] = (takerOrder.AveragePrice - buyPrice) / buyPrice
-							logger.Debugf("%s REALISED CLOSE LONG SPREAD %f", takerOrder.Symbol, mtRealisedSpread[takerOrder.Symbol])
+							logger.Debugf("%s CLOSE LONG SPREAD %f", takerOrder.Symbol, mtRealisedSpread[takerOrder.Symbol])
 						}
 					} else if takerOrder.Side == common.OrderSideBuy &&
 						takerOrder.ReduceOnly {
 						if sellPrice, ok := mLastFilledSellPrices[takerOrder.Symbol]; ok {
 							mtRealisedSpread[takerOrder.Symbol] = (sellPrice - takerOrder.AveragePrice) / sellPrice
-							logger.Debugf("%s REALISED CLOSE SHORT SPREAD %f", takerOrder.Symbol, mtRealisedSpread[takerOrder.Symbol])
+							logger.Debugf("%s CLOSE SHORT SPREAD %f", takerOrder.Symbol, mtRealisedSpread[takerOrder.Symbol])
 						}
 					}
 				}
@@ -376,31 +374,17 @@ func main() {
 			break
 		case spread := <-spreadCh:
 			if lastSpread, ok := mtSpreads[spread.TakerSymbol]; ok {
-				if takerPosition, ok := tPositions[spread.TakerSymbol]; ok {
-					if lastSpread.MedianEnter*spread.MedianEnter <= 0 {
-						if spread.MedianEnter > 0 {
-							if takerPosition.PositionAmt < 0 {
-								tEnterSilentTimes[spread.TakerSymbol] = time.Now()
-								logger.Debugf("TRIGGER LONG %s CHANGE POS", spread.TakerSymbol)
-							}else{
-								logger.Debugf("TRIGGER LONG %s", spread.TakerSymbol)
-							}
-							tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
-							tOrderCancelSilentTimes[spread.TakerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
-							mtTriggeredDirection[spread.TakerSymbol] = 1
-						} else if spread.MedianEnter < 0 {
-							if takerPosition.PositionAmt > 0 {
-								tEnterSilentTimes[spread.TakerSymbol] = time.Now()
-								logger.Debugf("TRIGGER SHORT %s CHANGE POS", spread.TakerSymbol)
-							}else{
-								logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
-							}
-							tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
-							tOrderCancelSilentTimes[spread.TakerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
-							mtTriggeredDirection[spread.TakerSymbol] = -1
-						}
-					} else {
-						//logger.Debugf("%s %f", spread.TakerSymbol, spread.MedianEnter)
+				if lastSpread.MedianEnter*spread.MedianEnter <= 0 {
+					if spread.MedianEnter > 0 {
+						logger.Debugf("TRIGGER LONG %s", spread.TakerSymbol)
+						tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
+						tOrderCancelSilentTimes[spread.TakerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+						mtTriggeredDirection[spread.TakerSymbol] = 1
+					} else if spread.MedianEnter < 0 {
+						logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
+						tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
+						tOrderCancelSilentTimes[spread.TakerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+						mtTriggeredDirection[spread.TakerSymbol] = -1
 					}
 				}
 			}
