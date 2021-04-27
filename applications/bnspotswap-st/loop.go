@@ -95,6 +95,9 @@ func updateTakerNewOrders() {
 				}
 				continue
 			}
+			if takerPosition.PositionAmt >= 0 {
+				takerUSDTAvailable -= entryValue
+			}
 		} else if mtTriggeredDirection[takerSymbol] < 0 &&
 			tEnterTimeouts[takerSymbol].Sub(time.Now()) > 0 &&
 			tEnterSilentTimes[takerSymbol].Sub(time.Now()) < 0 {
@@ -145,6 +148,9 @@ func updateTakerNewOrders() {
 					mtLogSilentTimes[takerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
+			}
+			if takerPosition.PositionAmt >= 0 {
+				takerUSDTAvailable -= -entryValue
 			}
 		}else if takerPosition.PositionAmt > 0 {
 			if tCloseTimeouts[takerSymbol].Sub(time.Now()) > 0 {
