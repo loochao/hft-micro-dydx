@@ -62,7 +62,7 @@ func updateSpotOldOrders() {
 		if isOrderProfitable(order) {
 			continue
 		}
-		kcspotOrderSilentTimes[order.Symbol] = time.Now().Add(*kcConfig.OrderSilent)
+		kcspotOrderSilentTimes[order.Symbol] = time.Now().Add(*kcConfig.OrderCancelSilent)
 		kcspotCancelSilentTimes[order.Symbol] = time.Now().Add(*kcConfig.OrderCancelSilent)
 		kcspotOrderCancelCounts[order.Symbol] += 1
 		kcspotOrderRequestChs[order.Symbol] <- SpotOrderRequest{
