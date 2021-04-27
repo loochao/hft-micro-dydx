@@ -378,20 +378,28 @@ func main() {
 			if lastSpread, ok := mtSpreads[spread.TakerSymbol]; ok {
 				if lastSpread.MedianEnter*spread.MedianEnter <= 0 {
 					if spread.MedianEnter > 0 {
-						if tEnterSilentTimes[spread.TakerSymbol].Sub(time.Now()) > 0 {
-							logger.Debugf("TRIGGER LONG %s IN SILENT", spread.TakerSymbol)
-						} else {
-							tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
-							logger.Debugf("TRIGGER LONG %s", spread.TakerSymbol)
-						}
+						//if tEnterSilentTimes[spread.TakerSymbol].Sub(time.Now()) > 0 {
+						//	logger.Debugf("TRIGGER LONG %s IN SILENT", spread.TakerSymbol)
+						//} else {
+						//	tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
+						//	logger.Debugf("TRIGGER LONG %s", spread.TakerSymbol)
+						//}
+						logger.Debugf("TRIGGER LONG %s", spread.TakerSymbol)
+						tEnterSilentTimes[spread.TakerSymbol] = time.Now()
+						tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
+						tOrderCancelSilentTimes[spread.TakerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 						mtTriggeredDirection[spread.TakerSymbol] = 1
 					} else if spread.MedianEnter < 0 {
-						if tEnterSilentTimes[spread.TakerSymbol].Sub(time.Now()) > 0 {
-							logger.Debugf("TRIGGER SHORT %s IN SILENT", spread.TakerSymbol)
-						} else {
-							tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
-							logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
-						}
+						//if tEnterSilentTimes[spread.TakerSymbol].Sub(time.Now()) > 0 {
+						//	logger.Debugf("TRIGGER SHORT %s IN SILENT", spread.TakerSymbol)
+						//} else {
+						//	tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
+						//	logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
+						//}
+						logger.Debugf("TRIGGER SHORT %s", spread.TakerSymbol)
+						tEnterSilentTimes[spread.TakerSymbol] = time.Now()
+						tEnterTimeouts[spread.TakerSymbol] = time.Now().Add(*mtConfig.EnterTimeout)
+						tOrderCancelSilentTimes[spread.TakerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 						mtTriggeredDirection[spread.TakerSymbol] = -1
 					}
 				} else {
