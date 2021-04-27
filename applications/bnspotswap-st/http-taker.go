@@ -35,7 +35,11 @@ func handleTakerHttpPositions(positions []bnswap.Position) {
 			if nextPos.PositionAmt != 0 {
 				tCloseTimeouts[nextPos.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
 				logger.Debugf("SET CLOSE TIMEOUT FOR %s", nextPos.Symbol)
+			} else {
+				tEnterSilentTimes[nextPos.Symbol] = time.Now()
+				logger.Debugf("WS POS CLEAN ENTER SILENT %s %v", nextPos.Symbol, *mtConfig.EnterSilent)
 			}
+
 		}
 	}
 }

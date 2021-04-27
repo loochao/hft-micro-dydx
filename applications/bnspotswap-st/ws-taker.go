@@ -45,12 +45,15 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 			if lastPosition != nil && lastPosition.PositionAmt*pos.PositionAmt >= 0 {
 				if math.Abs(lastPosition.PositionAmt) < math.Abs(pos.PositionAmt) {
 					tEnterSilentTimes[pos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
-					logger.Debugf("WS POS ENTER SILENT %v", *mtConfig.EnterSilent)
+					logger.Debugf("WS POS ENTER SILENT %s %v",pos.Symbol, *mtConfig.EnterSilent)
 				}
 			}
 			if pos.PositionAmt != 0 {
 				tCloseTimeouts[pos.Symbol] = time.Now().Add(*mtConfig.CloseTimeout)
 				logger.Debugf("WS POS SET TIMEOUT FOR %s", pos.Symbol)
+			}else{
+				tEnterSilentTimes[pos.Symbol] = time.Now()
+				logger.Debugf("WS POS CLEAN ENTER SILENT %s %v",pos.Symbol, *mtConfig.EnterSilent)
 			}
 			tEnterTimeouts[pos.Symbol] = time.Now()
 			//mtLoopTimer.Reset(time.Nanosecond)
