@@ -48,12 +48,20 @@ func updateTakerNewOrders() {
 		if mtTriggeredDirection[takerSymbol] > 0 &&
 			tEnterTimeouts[takerSymbol].Sub(time.Now()) > 0 &&
 			tEnterSilentTimes[takerSymbol].Sub(time.Now()) < 0 {
+
 			takerPrice = math.Floor(takerTakerDepth.MidPrice/takerTickSize) * takerTickSize
+
 			entryValue := takerPosition.PositionAmt*takerPosition.EntryPrice + entryStep
 			if entryValue > entryTarget {
 				entryValue = entryTarget
 			}
 			entryValue -= takerPosition.PositionAmt * takerPosition.EntryPrice
+			if takerPosition.PositionAmt < 0 {
+				takerSizeDiff = -takerPosition.PositionAmt + math.Floor(entryStep/takerStepSize)*takerStepSize
+				entryValue = takerSizeDiff*takerPrice
+				//补偿, 这一部分不占仓位
+				takerUSDTAvailable += -takerPosition.PositionAmt*takerPrice
+			}
 			takerSizeDiff = math.Floor(entryValue/takerPrice/takerStepSize) * takerStepSize
 			entryValue = takerPrice * takerSizeDiff
 			if entryValue < 0.8*entryStep {
@@ -108,6 +116,13 @@ func updateTakerNewOrders() {
 				entryValue = -entryTarget
 			}
 			entryValue -= takerPosition.PositionAmt * takerPosition.EntryPrice
+			if takerPosition.PositionAmt > 0 {
+				takerSizeDiff = -takerPosition.PositionAmt - math.Floor(entryStep/takerStepSize)*takerStepSize
+				entryValue = takerSizeDiff*takerPrice
+				//补偿, 这一部分不占仓位
+				takerUSDTAvailable += takerPosition.PositionAmt*takerPrice
+			}
+
 			takerSizeDiff = math.Ceil(entryValue/takerPrice/takerStepSize) * takerStepSize
 			entryValue = takerPrice * takerSizeDiff
 			if -entryValue < 0.8*entryStep {
