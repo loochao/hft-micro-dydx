@@ -57,7 +57,7 @@ func updatePerpPositions() {
 		if swapSize*positionVolume < 0 && math.Abs(swapSize) <= math.Abs(positionVolume) {
 			offset = hbcrossswap.OrderOffsetClose
 		}
-		//price := math.Round(swapOrderBook.AskPrice*(1.0+*hbConfig.EnterSlippage)/swapTickSize) * swapTickSize
+		//price := math.Round(swapOrderBook.AskPrice*(1.0+*hbConfig.CloseProfitPct)/swapTickSize) * swapTickSize
 		direction := hbcrossswap.OrderDirectionBuy
 		id, _ := common.GenerateShortId()
 		clOrdID := fmt.Sprintf(
@@ -69,7 +69,7 @@ func updatePerpPositions() {
 		if swapSize < 0 {
 			direction = hbcrossswap.OrderDirectionSell
 			swapSize = -swapSize
-			//price = math.Round(swapOrderBook.BidPrice*(1.0-*hbConfig.EnterSlippage)/swapTickSize) * swapTickSize
+			//price = math.Round(swapOrderBook.BidPrice*(1.0-*hbConfig.CloseProfitPct)/swapTickSize) * swapTickSize
 		}
 		order := hbcrossswap.NewOrderParam{
 			Symbol:        swapSymbol,

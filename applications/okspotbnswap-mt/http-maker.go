@@ -40,6 +40,7 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 				tOrderSilentTimes[takerSymbol] = time.Now()
 				mtLoopTimer.Reset(time.Nanosecond)
 				if lastBalance != nil && lastBalance.Balance != balance.Balance{
+					logger.Debugf("ENTER SILENT %s", makerSymbol)
 					mSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.EnterSilent)
 					mtLoopTimer.Reset(time.Nanosecond)
 				}
