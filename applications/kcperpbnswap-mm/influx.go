@@ -17,12 +17,12 @@ func handleSave() {
 	if tAccount != nil &&
 		tAccount.MarginBalance != nil &&
 		mAccount != nil {
-		totalBalance := *tAccount.MarginBalance + mAccount.MarginBalance
+		totalBalance := *tAccount.MarginBalance + mAccount.MarginBalance + mAccount.UnrealisedPNL
 		netWorth := totalBalance / *mtConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalBalance"] = totalBalance
 		fields["takerBalance"] = *tAccount.MarginBalance
-		fields["makerBalance"] = mAccount.MarginBalance
+		fields["makerBalance"] = mAccount.MarginBalance + mAccount.UnrealisedPNL
 		fields["netWorth"] = netWorth
 		fields["startValue"] = *mtConfig.StartValue
 		fields["netWorth"] = netWorth
@@ -141,7 +141,7 @@ func handleExternalInfluxSave() {
 	if tAccount != nil &&
 		tAccount.MarginBalance != nil &&
 		mAccount != nil {
-		totalBalance := *tAccount.MarginBalance + mAccount.MarginBalance
+		totalBalance := *tAccount.MarginBalance + mAccount.MarginBalance+ mAccount.UnrealisedPNL
 		netWorth := totalBalance / *mtConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["netWorth"] = netWorth
