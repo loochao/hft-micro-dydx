@@ -3,10 +3,10 @@
 dt=$(date -u +%Y%m%d)
 version=" BUILD @ $(date -u '+%Y%m%d %H:%M:%S') "
 echo "$version"
-sed -i "" -E "s/####.+####/#### $version ####/g" ./recorders/bnswap-depth20/init.go
+#sed -i "" -E "s/####.+####/#### $version ####/g" ./recorders/bnswap-depth20/init.go
 
 
-env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-recorder-bnswap-depth20.$dt" ./applications/bnswap-mm
+env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-recorder-bnswap-depth20.$dt" ./applications/bnswap-depth20
 
 git add -A
 git commit -m "build hft-recorder-bnswap-depth20.$dt"
