@@ -13,9 +13,9 @@ import (
 
 func main() {
 	symbolsStr := flag.String("symbols", "BTCUSDT", "symbols, separate by comma")
-	savePath := flag.String("path", "/Users/chenjilin/Downloads/depth20", "data save folder")
+	savePath := flag.String("path", "", "data save folder")
 	batchSize := flag.Int("batch", 20, "symbols group batch size")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1081", "symbols group batch size")
+	proxyAddress := flag.String("proxy", "", "symbols group batch size")
 	flag.Parse()
 	symbols := strings.Split(*symbolsStr, ",")
 	ctx, cancel := context.WithCancel(context.Background())
