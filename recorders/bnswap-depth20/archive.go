@@ -43,7 +43,7 @@ func archiveFiles(ctx context.Context, savePath string) {
 				}
 
 			}
-			timer.Reset(time.Minute)
+			timer.Reset(time.Minute*5)
 		}
 	}
 }
