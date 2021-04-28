@@ -6,7 +6,7 @@ echo "$version"
 #sed -i "" -E "s/####.+####/#### $version ####/g" ./recorders/bnswap-depth20/init.go
 
 
-env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-recorder-bnswap-depth20.$dt" ./applications/bnswap-depth20
+env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-recorder-bnswap-depth20.$dt" ./recorders/bnswap-depth20
 
 git add -A
 git commit -m "build hft-recorder-bnswap-depth20.$dt"
