@@ -47,7 +47,7 @@ func handleSave() {
 			if err != nil {
 				logger.Debugf("Spot Balance NewPoint error %v", err)
 			} else {
-				go kcInternalInfluxWriter.Push(pt)
+				go kcInternalInfluxWriter.PushPoint(pt)
 			}
 		}
 	}
@@ -69,7 +69,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("Perp Balance NewPoint error %v", err)
 		} else {
-			go kcInternalInfluxWriter.Push(pt)
+			go kcInternalInfluxWriter.PushPoint(pt)
 		}
 		tp := kcperpUSDTAccount.MarginBalance + kcperpUSDTAccount.UnrealisedPNL
 		totalPerpUSDTBalance = &tp
@@ -137,7 +137,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("new position point error %v", err)
 		} else {
-			go kcInternalInfluxWriter.Push(pt)
+			go kcInternalInfluxWriter.PushPoint(pt)
 		}
 	}
 
@@ -172,7 +172,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("Total Balance NewPoint error %v", err)
 		} else {
-			go kcInternalInfluxWriter.Push(pt)
+			go kcInternalInfluxWriter.PushPoint(pt)
 		}
 	}
 }
@@ -227,7 +227,7 @@ func handleExternalInfluxSave() {
 			if err != nil {
 				logger.Debugf("Margin NewPoint error %v", err)
 			} else {
-				go kcExternalInfluxWriter.Push(pt)
+				go kcExternalInfluxWriter.PushPoint(pt)
 			}
 		}
 	}
@@ -277,7 +277,7 @@ func reportsSaveLoop(
 						logger.Debugf("SpreadReport NewPoint error %v", err)
 					} else {
 						select {
-						case influxWriter.PushCh <- pt:
+						case influxWriter.pushCh <- pt:
 						default:
 						}
 					}

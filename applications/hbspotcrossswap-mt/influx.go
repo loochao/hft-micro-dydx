@@ -50,7 +50,7 @@ func handleSave() {
 			if err != nil {
 				logger.Debugf("Spot Balance NewPoint error %v", err)
 			} else {
-				go hbInternalInfluxWriter.Push(pt)
+				go hbInternalInfluxWriter.PushPoint(pt)
 			}
 		}
 	}
@@ -72,7 +72,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("Perp Balance NewPoint error %v", err)
 		} else {
-			go hbInternalInfluxWriter.Push(pt)
+			go hbInternalInfluxWriter.PushPoint(pt)
 		}
 		tp := hbcrossswapAccount.MarginBalance
 		totalPerpUSDTBalance = &tp
@@ -143,7 +143,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("new position point error %v", err)
 		} else {
-			go hbInternalInfluxWriter.Push(pt)
+			go hbInternalInfluxWriter.PushPoint(pt)
 		}
 	}
 
@@ -174,7 +174,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("Total Balance NewPoint error %v", err)
 		} else {
-			go hbInternalInfluxWriter.Push(pt)
+			go hbInternalInfluxWriter.PushPoint(pt)
 		}
 	}
 }
@@ -233,7 +233,7 @@ func handleExternalInfluxSave() {
 			if err != nil {
 				logger.Debugf("Margin NewPoint error %v", err)
 			} else {
-				go hbExternalInfluxWriter.Push(pt)
+				go hbExternalInfluxWriter.PushPoint(pt)
 			}
 		}
 	}
@@ -283,7 +283,7 @@ func reportsSaveLoop(
 						logger.Debugf("SpreadReport NewPoint error %v", err)
 					} else {
 						select {
-						case influxWriter.PushCh <- pt:
+						case influxWriter.pushCh <- pt:
 						default:
 						}
 					}

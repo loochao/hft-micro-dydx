@@ -338,8 +338,8 @@ func (w *Depth20RoutedWebsocket) saveLoop(ctx context.Context, savePath, symbol 
 					return
 				}
 			}
-			dayTime = time.Now().Truncate(time.Hour)
-			outPath = fmt.Sprintf("%s/%s-%s.depth20.jl.gzip", savePath, dayTime.Format("2006010215"), symbol)
+			dayTime = time.Now().Truncate(time.Hour*24)
+			outPath = fmt.Sprintf("%s/%s-%s.depth20.jl.gzip", savePath, dayTime.Format("20060102"), symbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				w.Stop()
@@ -352,14 +352,14 @@ func (w *Depth20RoutedWebsocket) saveLoop(ctx context.Context, savePath, symbol 
 				logger.Debugf("gzip.NewWriterLevel error %v, stop ws", err)
 				return
 			}
-			gw.Name = fmt.Sprintf("%s-%s.depth20.jl",  dayTime.Format("2006010215"), symbol)
+			gw.Name = fmt.Sprintf("%s-%s.depth20.jl",  dayTime.Format("20060102"), symbol)
 			gw.ModTime = time.Now()
-			gw.Comment = fmt.Sprintf("depth20 raw json line for %s@%s", symbol, dayTime.Format("2006010215"))
+			gw.Comment = fmt.Sprintf("depth20 raw json line for %s@%s", symbol, dayTime.Format("20060102"))
 			hourUpdateTimer.Reset(
 				time.Now().Truncate(
-					time.Hour,
+					time.Hour*24,
 				).Add(
-					time.Hour,
+					time.Hour*24,
 				).Add(
 					time.Duration(rand.Intn(60)) * time.Second,
 				).Sub(time.Now()),

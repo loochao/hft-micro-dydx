@@ -21,11 +21,11 @@ func archiveFiles(ctx context.Context, savePath string) {
 			if err != nil {
 				logger.Debugf("ioutil.ReadDir error %v", err)
 			} else {
-				hourTime := time.Now().Truncate(time.Hour)
+				hourTime := time.Now().Truncate(time.Hour*24)
 				for _, file := range files {
 					parts := strings.Split(file.Name(), "-")
-					if len(parts) > 0 && len(parts[0]) == 10 {
-						fileTime, err := time.Parse("2006010215", parts[0])
+					if len(parts) > 0 && len(parts[0]) == 8 {
+						fileTime, err := time.Parse("20060102", parts[0])
 						if err != nil {
 							logger.Debugf("time.Parse error %v", err)
 						} else if hourTime.Sub(fileTime) > time.Hour*2 {

@@ -41,7 +41,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("Spot Balance NewPoint error %v", err)
 		} else {
-			go mtInfluxWriter.Push(pt)
+			go mtInfluxWriter.PushPoint(pt)
 		}
 	}
 
@@ -90,7 +90,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("new buyPosition point error %v", err)
 		} else {
-			go mtInfluxWriter.Push(pt)
+			go mtInfluxWriter.PushPoint(pt)
 		}
 	}
 }
@@ -124,7 +124,7 @@ func handleExternalInfluxSave() {
 			if err != nil {
 				logger.Debugf("Margin NewPoint error %v", err)
 			} else {
-				go mtExternalInfluxWriter.Push(pt)
+				go mtExternalInfluxWriter.PushPoint(pt)
 			}
 		}
 	}
@@ -174,7 +174,7 @@ func reportsSaveLoop(
 						logger.Debugf("SpreadReport NewPoint error %v", err)
 					} else {
 						select {
-						case influxWriter.PushCh <- pt:
+						case influxWriter.pushCh <- pt:
 						default:
 						}
 					}

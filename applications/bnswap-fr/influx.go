@@ -48,7 +48,7 @@ func handleSave() {
 				select {
 				case <-time.After(time.Millisecond):
 					logger.Debugf("PUSH TO INTERNAL INFLUX WRITER TIMEOUT IN 1MS")
-				case bnInternalInfluxWriter.PushCh <- pt:
+				case bnInternalInfluxWriter.pushCh <- pt:
 				}
 			}
 		}
@@ -86,7 +86,7 @@ func handleSave() {
 			select {
 			case <-time.After(time.Millisecond):
 				logger.Debugf("PUSH TO INTERNAL INFLUX WRITER TIMEOUT IN 1MS")
-			case bnInternalInfluxWriter.PushCh <- pt:
+			case bnInternalInfluxWriter.pushCh <- pt:
 			}
 		}
 	}
@@ -111,7 +111,7 @@ func handleExternalInfluxSave() {
 			select {
 			case <-time.After(time.Millisecond):
 				logger.Debugf("PUSH TO EXTERNAL INFLUX WRITER TIMEOUT IN 1MS")
-			case bnExternalInfluxWriter.PushCh <- pt:
+			case bnExternalInfluxWriter.pushCh <- pt:
 			}
 		}
 	}

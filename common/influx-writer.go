@@ -1,9 +1,11 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
+	"sync/atomic"
 	"time"
 )
 
@@ -17,46 +19,44 @@ type InfluxWriter struct {
 	influxClient client.Client
 
 	done  chan interface{}
-	stop  chan interface{}
-	saved chan error
 
-	PushCh chan *client.Point
-	saveCh chan []*client.Point
-	points []*client.Point
+	PointCh  chan *client.Point
+	PointsCh chan []*client.Point
+	points   []*client.Point
+	stopped  int32
 }
 
 func (iw *InfluxWriter) Done() chan interface{} {
 	return iw.done
 }
 
-func (iw *InfluxWriter) Stop() error {
-	select {
-	case iw.stop <- nil:
+func (iw *InfluxWriter) Stop() {
+	if atomic.LoadInt32(&iw.stopped) == 0 {
 		close(iw.done)
-		return <-iw.saved
+		atomic.StoreInt32(&iw.stopped, 1)
+		err := iw.save()
+		if err != nil {
+			logger.Debugf("iw.save() error from stop event, %v", err)
+		}
+		logger.Debugf("stopped")
+	}
+}
+
+func (iw *InfluxWriter) PushPoint(pt *client.Point) error {
+	select {
+	case iw.PointCh <- pt:
+		return nil
 	default:
-		return fmt.Errorf("already stopped")
+		return fmt.Errorf("iw.PointCh <- pt failed, len(iw.PointCh) %d", len(iw.PointCh))
 	}
 }
-
-func (iw *InfluxWriter) Push(pt *client.Point) {
+func (iw *InfluxWriter) PushPoints(pts []*client.Point) error {
 	select {
-	case <-iw.done:
-		return
-	case iw.PushCh <- pt:
+	case iw.PointsCh <- pts:
+		return nil
+	default:
+		return fmt.Errorf("iw.PointsCh <- pts <- pt failed, len(iw.PointCh) %d", len(iw.PointCh))
 	}
-}
-func (iw *InfluxWriter) Save(pts []*client.Point) {
-	logger.Debugf("Save %d", len(pts))
-	select {
-	case <-iw.done:
-		return
-	case iw.saveCh <- pts:
-	}
-}
-
-func (iw *InfluxWriter) watchStop() {
-	<-iw.stop
 }
 
 func (iw *InfluxWriter) save() error {
@@ -72,22 +72,18 @@ func (iw *InfluxWriter) save() error {
 	}
 	if len(iw.points) <= 100 {
 		bp.AddPoints(iw.points)
-		//logger.Debugf("SAVING %d POINTS", len(bp.Points()))
-		err := iw.influxClient.Write(bp)
+		err = iw.influxClient.Write(bp)
 		if err != nil {
 			return err
 		}
-		//logger.Debugf("SAVED %d POINTS", len(bp.Points()))
 		iw.points = make([]*client.Point, 0)
 		return nil
 	} else {
-		//logger.Debugf("SAVING %d POINTS", 300)
 		bp.AddPoints(iw.points[:100])
-		err := iw.influxClient.Write(bp)
+		err = iw.influxClient.Write(bp)
 		if err != nil {
 			return err
 		}
-		//logger.Debugf("SAVED %d POINTS", 300)
 		iw.points = iw.points[100:]
 		return iw.save()
 	}
@@ -99,7 +95,7 @@ func (iw *InfluxWriter) savePoints(points []*client.Point) error {
 	}
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  iw.database,
-		Precision: "s",
+		Precision: "ns",
 	})
 	if err != nil {
 		return err
@@ -112,51 +108,45 @@ func (iw *InfluxWriter) savePoints(points []*client.Point) error {
 	return nil
 }
 
-func (iw *InfluxWriter) watchPoints() {
+func (iw *InfluxWriter) watchPoints(ctx context.Context) {
+	defer logger.Debugf("START watchPoints")
 	defer func() {
 		logger.Debugf("EXIT watchPoints")
 	}()
-	// 控制save的频率
-	timer := time.NewTimer(time.Second * 3)
-	defer timer.Stop()
+
+	saveTimer := time.NewTimer(time.Second * 3)
+	defer saveTimer.Stop()
+	defer iw.Stop()
 	saveSilent := false
 	for {
 		select {
-		case <-iw.done:
-			//logger.Debugf("watchPoints writer is DONE, exit")
-			//time.Sleep(time.Second * 3)
-			close(iw.PushCh)
-			for pt := range iw.PushCh {
-				iw.points = append(iw.points, pt)
-			}
-			iw.saved <- iw.save()
+		case <-ctx.Done():
 			return
-		case pts := <-iw.saveCh:
-			logger.Debugf("savingPoints %d", len(pts))
+		case <-iw.done:
+			return
+		case pts := <-iw.PointsCh:
 			err := iw.savePoints(pts)
 			if err != nil {
-				logger.Debugf("save points error %v", err)
-			} else {
-				logger.Debugf("savedPoints %d", len(pts))
+				logger.Debugf("iw.savePoints(pts) %v", err)
 			}
-			//time.Sleep(time.Second * 10)
-		case <-timer.C:
+			break
+		case <-saveTimer.C:
 			saveSilent = false
-		case pt := <-iw.PushCh:
+		case pt := <-iw.PointCh:
 			iw.points = append(iw.points, pt)
 			if len(iw.points) > iw.batchSize && !saveSilent {
 				saveSilent = true
-				timer.Reset(time.Minute)
+				saveTimer.Reset(time.Minute)
 				err := iw.save()
 				if err != nil {
-					logger.Debugf("save %d points error %v", len(iw.points), err)
+					logger.Debugf("iw.save() error %v", len(iw.points), err)
 				}
 			}
 		}
 	}
 }
 
-func NewInfluxWriter(address, username, password, database string, batchSize int) (*InfluxWriter, error) {
+func NewInfluxWriter(ctx context.Context, address, username, password, database string, batchSize int) (*InfluxWriter, error) {
 	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     address,
 		Username: username,
@@ -173,14 +163,12 @@ func NewInfluxWriter(address, username, password, database string, batchSize int
 		database:     database,
 		batchSize:    batchSize,
 		influxClient: influxClient,
-		stop:         make(chan interface{}, 1),
 		done:         make(chan interface{}, 1),
-		saved:        make(chan error, 1),
-		PushCh:       make(chan *client.Point, 1000000),
-		saveCh:       make(chan []*client.Point, 100),
+		PointCh:      make(chan *client.Point, 1000000),
+		PointsCh:     make(chan []*client.Point, 100),
 		points:       make([]*client.Point, 0),
+		stopped:      0,
 	}
-	go iw.watchStop()
-	go iw.watchPoints()
+	go iw.watchPoints(ctx)
 	return iw, nil
 }

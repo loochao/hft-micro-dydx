@@ -38,7 +38,7 @@ func (st Strategy) handleInternalInfluxSave() {
 	if err != nil {
 		logger.Debugf("Swap Balance NewPoint error %v", err)
 	} else {
-		go st.InternalInfluxWriter.Push(pt)
+		go st.InternalInfluxWriter.PushPoint(pt)
 	}
 
 
@@ -78,7 +78,7 @@ func (st Strategy) handleInternalInfluxSave() {
 		if err != nil {
 			logger.Debugf("new position point error %v", err)
 		} else {
-			go st.InternalInfluxWriter.Push(pt)
+			go st.InternalInfluxWriter.PushPoint(pt)
 		}
 	}
 }
@@ -104,6 +104,6 @@ func (st Strategy) handleExternalInfluxSave() {
 	if err != nil {
 		logger.Debugf("Swap Balance NewPoint error %v", err)
 	} else {
-		go st.InternalInfluxWriter.Push(pt)
+		go st.InternalInfluxWriter.PushPoint(pt)
 	}
 }
