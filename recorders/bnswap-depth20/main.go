@@ -34,12 +34,13 @@ func main() {
 			}
 		}(ctx, cancel, *proxyAddress, *savePath, symbols[start:end], fileSavedCh)
 	}
+	go archiveFiles(context.Background(), *savePath)
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 		go func() {
 			sig := <-sigs
-			logger.Debugf("CATCH SIG %v", sig)
+			logger.Debugf("catch signal %v", sig)
 			cancel()
 		}()
 	}()
@@ -55,7 +56,7 @@ func main() {
 				logger.Debugf("all symbols' file saved")
 				return
 			}
-		case <-time.After(time.Second*88):
+		case <-time.After(time.Second * 88):
 			logger.Debugf("save timeout in 88s")
 		}
 	}
