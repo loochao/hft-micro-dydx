@@ -44,19 +44,19 @@ func main() {
 		}()
 	}()
 	<-ctx.Done()
-	logger.Debugf("exit waiting 88s to write files")
+	logger.Debugf("waiting 88s to write files")
 	counter := 0
 	for {
 		select {
 		case symbol := <-fileSavedCh:
-			logger.Debugf("%s SAVED", symbol)
+			logger.Debugf("%s saved", symbol)
 			counter++
 			if counter == len(symbols) {
-				logger.Debugf("ALL FILES SAVED")
+				logger.Debugf("all symbols' file saved")
 				return
 			}
 		case <-time.After(time.Second*88):
-			logger.Debugf("ALL FILES SAVE FAILED, TIMEOUT IN 88s")
+			logger.Debugf("save timeout in 88s")
 		}
 	}
 }
