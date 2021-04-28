@@ -12,5 +12,5 @@ git push origin master
 
 chmod 755 "./dist/hft-recorder-bnswap-trade.$dt"
 
-echo "tokyo1"
-rsync -avx --progress "./dist/hft-recorder-bnswap-trade.$dt" tokyo3:/usr/local/bin/
+echo "tokyo2"
+rsync -avx --progress "./dist/hft-recorder-bnswap-trade.$dt" tokyo2:/usr/local/bin/
