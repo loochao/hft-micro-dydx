@@ -150,12 +150,12 @@ func updateTakerNewOrders() {
 			}
 			logger.Debugf("%s OPEN SHORT@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaAskBidRatio)
 		} else if swapPosition.PositionAmt > 0 &&
-			swapTakerDepth.EmaBidAskRatio < 1.0 {
+			swapTakerDepth.EmaBidAskRatio < 2.0 {
 			swapOrderPrice = math.Ceil(swapTakerDepth.MidPrice/swapTickSize) * swapTickSize
 			swapSizeDiff = -swapPosition.PositionAmt
 			logger.Debugf("%s CLOSE LONG@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaBidAskRatio)
 		} else if swapPosition.PositionAmt < 0 &&
-			swapTakerDepth.EmaAskBidRatio < 1.0 {
+			swapTakerDepth.EmaAskBidRatio < 2.0 {
 			swapOrderPrice = math.Floor(swapTakerDepth.MidPrice/swapTickSize) * swapTickSize
 			swapSizeDiff = -swapPosition.PositionAmt
 			logger.Debugf("%s CLOSE SHORT@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaAskBidRatio)
