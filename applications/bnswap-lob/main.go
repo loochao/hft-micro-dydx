@@ -309,7 +309,7 @@ func main() {
 				mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 			}
 			break
-		case spotSystemReady = <-swapSystemStatusCh:
+		case spotSystemReady = <-spotSystemStatusCh:
 			if !spotSystemReady {
 				mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 			}
