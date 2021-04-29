@@ -38,6 +38,7 @@ var swapAccountCh = make(chan bnswap.Account, 10)
 var swapNewOrderErrorCh = make(chan TakerOrderNewError, 10)
 var swapOrderRequestChs = make(map[string]chan TakerOrderRequest)
 var swapWalkedDepths = make(map[string]WalkedDepth20)
+var spotWalkedDepths = make(map[string]WalkedDepth20)
 
 var swapLastFilledBuyPrices = make(map[string]float64)
 var swapLastFilledSellPrices = make(map[string]float64)
@@ -47,15 +48,17 @@ var tOrderSilentTimes = make(map[string]time.Time)
 
 var mtLogSilentTimes = make(map[string]time.Time)
 var mtLoopTimer *time.Timer
-var tSystemReady = false
-var tSystemStatusCh = make(chan bool, 10)
+var swapSystemReady = false
+var spotSystemReady = false
+var swapSystemStatusCh = make(chan bool, 10)
+var spotSystemStatusCh = make(chan bool, 10)
 var mtGlobalSilent = time.Now()
 
 var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210429 05:12:37  ####")
+	logger.Debug("####  BUILD @ 20210429 12:46:35  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

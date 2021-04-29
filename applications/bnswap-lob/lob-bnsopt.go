@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/geometrybase/hft-micro/bnswap"
+	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 )
 
-func takerRoutedDepthLoop(
+func bnspotDepthLoop(
 	ctx context.Context,
 	cancel context.CancelFunc,
 	proxyAddress string,
@@ -17,9 +17,9 @@ func takerRoutedDepthLoop(
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 	}
-	logger.Debugf("START takerRoutedDepthLoop %s", symbols)
-	defer logger.Debugf("EXIT takerRoutedDepthLoop %s", symbols)
-	ws := bnswap.NewDepth20RoutedWebsocket(
+	logger.Debugf("START bnswapDepthLoop %s", symbols)
+	defer logger.Debugf("EXIT bnswapDepthLoop %s", symbols)
+	ws := bnspot.NewDepth20RoutedWebsocket(
 		ctx,
 		proxyAddress,
 		channels,

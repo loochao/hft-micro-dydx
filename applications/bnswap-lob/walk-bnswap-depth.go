@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func watchDepthSignal(
+func bnswapDepthWalkingLoop(
 	ctx context.Context,
 	symbol string,
 	levelDecay,

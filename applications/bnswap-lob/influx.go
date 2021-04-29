@@ -134,7 +134,7 @@ func handleExternalInfluxSave() {
 	}
 }
 
-func reportsSaveLoop(
+func swapReportsSaveLoop(
 	ctx context.Context,
 	influxWriter *common.InfluxWriter,
 	influxConfig InfluxConfig,
@@ -161,7 +161,55 @@ func reportsSaveLoop(
 						*influxConfig.Measurement,
 						map[string]string{
 							"symbol": report.Symbol,
-							"type":   "depth-report",
+							"type":   "swap-report",
+						},
+						fields,
+						time.Now().UTC(),
+					)
+					if err != nil {
+						logger.Debugf("client.NewPoint() error %v", err)
+					} else {
+						err = influxWriter.PushPoint(pt)
+						if err != nil {
+							logger.Debugf("influxWriter.PushPoint(pt) error %v", err)
+						}
+					}
+				}
+			}
+			saveTimer.Reset(*influxConfig.SaveInterval)
+			break
+		}
+	}
+}
+
+func spotReportsSaveLoop(
+	ctx context.Context,
+	influxWriter *common.InfluxWriter,
+	influxConfig InfluxConfig,
+	depthReportCh chan DepthReport,
+) {
+	depthReports := make(map[string]DepthReport)
+	saveTimer := time.NewTimer(*influxConfig.SaveInterval)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case spreadReport := <-depthReportCh:
+			depthReports[spreadReport.Symbol] = spreadReport
+			break
+		case <-saveTimer.C:
+			for _, report := range depthReports {
+				fields := make(map[string]interface{})
+				fields["filterRatio"] = report.FilterRatio
+				fields["timeDeltaEma"] = report.TimeDeltaEma
+				fields["timeDelta"] = report.TimeDelta
+				fields["msgAvgLen"] = report.MsgAvgLen
+				if len(fields) > 0 {
+					pt, err := client.NewPoint(
+						*influxConfig.Measurement,
+						map[string]string{
+							"symbol": report.Symbol,
+							"type":   "spot-report",
 						},
 						fields,
 						time.Now().UTC(),

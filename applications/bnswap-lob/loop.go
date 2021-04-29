@@ -31,8 +31,9 @@ func updateTakerNewOrders() {
 			continue
 		}
 		swapPosition, okTakerPositions := swapPositions[swapSymbol]
-		swapTakerDepth, okSpread := swapWalkedDepths[swapSymbol]
-		if !okTakerPositions || !okSpread {
+		swapDepth, okSpread := swapWalkedDepths[swapSymbol]
+		spotDepth, okSpotDepth := spotWalkedDepths[swapSymbol]
+		if !okTakerPositions || !okSpread || !okSpotDepth {
 			continue
 		}
 		takerStepSize := swapStepSizes[swapSymbol]
@@ -44,9 +45,10 @@ func updateTakerNewOrders() {
 		entryValue := 0.0
 
 		//还在加多档期
-		if swapTakerDepth.EmaBidAskRatio > 4 &&
+		if swapDepth.EmaBidAskRatio > 4 &&
+			spotDepth.EmaBidAskRatio > 1 &&
 			swapPosition.PositionAmt <= 0 {
-			swapOrderPrice = math.Floor(swapTakerDepth.MidPrice/swapTickSize) * swapTickSize
+			swapOrderPrice = math.Floor(swapDepth.MidPrice/swapTickSize) * swapTickSize
 			swapSizeDiff = -swapPosition.PositionAmt + math.Floor(entryStep/swapOrderPrice/takerStepSize)*takerStepSize
 			entryValue = swapSizeDiff * swapOrderPrice
 			takerUSDTAvailable += -swapPosition.PositionAmt * swapOrderPrice //补偿, 这一部分不占仓位
@@ -94,11 +96,12 @@ func updateTakerNewOrders() {
 			if swapPosition.PositionAmt <= 0 {
 				takerUSDTAvailable -= entryValue
 			}
-			logger.Debugf("%s OPEN LONG@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaBidAskRatio)
-		} else if swapTakerDepth.EmaAskBidRatio > 4 &&
+			logger.Debugf("%s OPEN LONG@%f %f %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapDepth.EmaBidAskRatio)
+		} else if swapDepth.EmaAskBidRatio > 4 &&
+			spotDepth.EmaAskBidRatio > 1 &&
 			swapPosition.PositionAmt >= 0 {
 
-			swapOrderPrice = math.Ceil(swapTakerDepth.MidPrice/swapTickSize) * swapTickSize
+			swapOrderPrice = math.Ceil(swapDepth.MidPrice/swapTickSize) * swapTickSize
 
 			swapSizeDiff = -swapPosition.PositionAmt - math.Floor(entryStep/swapOrderPrice/takerStepSize)*takerStepSize
 			entryValue = swapSizeDiff * swapOrderPrice
@@ -148,17 +151,19 @@ func updateTakerNewOrders() {
 			if swapPosition.PositionAmt >= 0 {
 				takerUSDTAvailable -= -entryValue
 			}
-			logger.Debugf("%s OPEN SHORT@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaAskBidRatio)
+			logger.Debugf("%s OPEN SHORT@%f %f %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapDepth.EmaAskBidRatio)
 		} else if swapPosition.PositionAmt > 0 &&
-			swapTakerDepth.EmaBidAskRatio < 1.0 {
-			swapOrderPrice = math.Ceil(swapTakerDepth.MidPrice/swapTickSize) * swapTickSize
+			spotDepth.EmaBidAskRatio < 1.0 &&
+			swapDepth.EmaBidAskRatio < 1.0 {
+			swapOrderPrice = math.Ceil(swapDepth.MidPrice/swapTickSize) * swapTickSize
 			swapSizeDiff = -swapPosition.PositionAmt
-			logger.Debugf("%s CLOSE LONG@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaBidAskRatio)
+			logger.Debugf("%s CLOSE LONG@%f %f %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapDepth.EmaBidAskRatio)
 		} else if swapPosition.PositionAmt < 0 &&
-			swapTakerDepth.EmaAskBidRatio < 1.0 {
-			swapOrderPrice = math.Floor(swapTakerDepth.MidPrice/swapTickSize) * swapTickSize
+			spotDepth.EmaAskBidRatio < 1.0 &&
+			swapDepth.EmaAskBidRatio < 1.0 {
+			swapOrderPrice = math.Floor(swapDepth.MidPrice/swapTickSize) * swapTickSize
 			swapSizeDiff = -swapPosition.PositionAmt
-			logger.Debugf("%s CLOSE SHORT@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaAskBidRatio)
+			logger.Debugf("%s CLOSE SHORT@%f %f %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapDepth.EmaAskBidRatio)
 		}
 
 		if math.Abs(swapSizeDiff) < takerStepSize {
@@ -174,14 +179,14 @@ func updateTakerNewOrders() {
 		}
 		side := "BUY"
 
-		if swapSizeDiff > 0 && swapOrderPrice > swapTakerDepth.BidPrice {
-			swapOrderPrice = swapTakerDepth.BidPrice
+		if swapSizeDiff > 0 && swapOrderPrice > swapDepth.BidPrice {
+			swapOrderPrice = swapDepth.BidPrice
 		}
 		if swapSizeDiff < 0 {
 			side = "SELL"
 			swapSizeDiff = -swapSizeDiff
-			if swapOrderPrice < swapTakerDepth.AskPrice{
-				swapOrderPrice = swapTakerDepth.AskPrice
+			if swapOrderPrice < swapDepth.AskPrice {
+				swapOrderPrice = swapDepth.AskPrice
 			}
 		}
 		takerOrder := bnswap.NewOrderParams{

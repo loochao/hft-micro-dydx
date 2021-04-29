@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
@@ -38,6 +39,15 @@ func main() {
 	)
 	if err != nil {
 		logger.Debugf("bnswap.NewAPI error %v", err)
+		return
+	}
+
+	spotAPI, err := bnspot.NewAPI(&common.Credentials{
+		Key:    *mtConfig.BnApiKey,
+		Secret: *mtConfig.BnApiSecret,
+	}, *mtConfig.ProxyAddress)
+	if err != nil {
+		logger.Debugf("bnspot.NewAPI error %v", err)
 		return
 	}
 
@@ -143,15 +153,23 @@ func main() {
 		*mtConfig.PullInterval, swapPositionsCh,
 	)
 
-	depthReportCh := make(chan DepthReport, 10000)
-	go reportsSaveLoop(
+	swapDepthReportCh := make(chan DepthReport, 10000)
+	go swapReportsSaveLoop(
 		swapGlobalCtx,
 		swapInternalInfluxWriter,
 		*mtConfig.InternalInflux,
-		depthReportCh,
+		swapDepthReportCh,
 	)
 
-	takerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
+	spotDepthReportCh := make(chan DepthReport, 10000)
+	go swapReportsSaveLoop(
+		swapGlobalCtx,
+		swapInternalInfluxWriter,
+		*mtConfig.InternalInflux,
+		spotDepthReportCh,
+	)
+
+	bnswapRawDepthChs := make(map[string]chan *common.DepthRawMessage)
 	for start := 0; start < len(swapSymbols); start += *mtConfig.OrderBookBatchSize {
 		end := start + *mtConfig.OrderBookBatchSize
 		if end > len(swapSymbols) {
@@ -159,10 +177,10 @@ func main() {
 		}
 		subTakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
 		for _, symbol := range swapSymbols[start:end] {
-			takerRowDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
-			subTakerRowDepthChs[symbol] = takerRowDepthChs[symbol]
+			bnswapRawDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
+			subTakerRowDepthChs[symbol] = bnswapRawDepthChs[symbol]
 		}
-		go takerRoutedDepthLoop(
+		go bnswapDepthLoop(
 			swapGlobalCtx,
 			swapGlobalCancel,
 			*mtConfig.ProxyAddress,
@@ -170,9 +188,9 @@ func main() {
 		)
 	}
 
-	depthCh := make(chan WalkedDepth20, len(swapSymbols)*100)
+	bnswapWalkedDepth20Ch := make(chan WalkedDepth20, len(swapSymbols)*100)
 	for _, takerSymbol := range mtConfig.Symbols {
-		go watchDepthSignal(
+		go bnswapDepthWalkingLoop(
 			swapGlobalCtx,
 			takerSymbol,
 			*mtConfig.OrderBookLevelDecay,
@@ -180,9 +198,44 @@ func main() {
 			*mtConfig.OrderBookTimeBias,
 			*mtConfig.DepthLookbackDuration,
 			*mtConfig.ReportCount,
-			takerRowDepthChs[takerSymbol],
-			depthReportCh,
-			depthCh,
+			bnswapRawDepthChs[takerSymbol],
+			swapDepthReportCh,
+			bnswapWalkedDepth20Ch,
+		)
+	}
+
+	bnspotRawDepthChs := make(map[string]chan *common.DepthRawMessage)
+	for start := 0; start < len(swapSymbols); start += *mtConfig.OrderBookBatchSize {
+		end := start + *mtConfig.OrderBookBatchSize
+		if end > len(swapSymbols) {
+			end = len(swapSymbols)
+		}
+		subTakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
+		for _, symbol := range swapSymbols[start:end] {
+			bnspotRawDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
+			subTakerRowDepthChs[symbol] = bnswapRawDepthChs[symbol]
+		}
+		go bnspotDepthLoop(
+			swapGlobalCtx,
+			swapGlobalCancel,
+			*mtConfig.ProxyAddress,
+			subTakerRowDepthChs,
+		)
+	}
+
+	bnspotWalkedDepth20Ch := make(chan WalkedDepth20, len(swapSymbols)*100)
+	for _, takerSymbol := range mtConfig.Symbols {
+		go bnspotDepthWalkingLoop(
+			swapGlobalCtx,
+			takerSymbol,
+			*mtConfig.OrderBookLevelDecay,
+			*mtConfig.OrderBookTimeDecay,
+			*mtConfig.OrderBookTimeBias,
+			*mtConfig.DepthLookbackDuration,
+			*mtConfig.ReportCount,
+			bnspotRawDepthChs[takerSymbol],
+			spotDepthReportCh,
+			bnspotWalkedDepth20Ch,
 		)
 	}
 
@@ -203,7 +256,14 @@ func main() {
 		swapGlobalCtx,
 		swapAPI,
 		*mtConfig.PullInterval/2,
-		tSystemStatusCh,
+		swapSystemStatusCh,
+	)
+
+	go bnspot.HttpPingLoop(
+		swapGlobalCtx,
+		spotAPI,
+		*mtConfig.PullInterval/2,
+		spotSystemStatusCh,
 	)
 
 	sigs := make(chan os.Signal, 1)
@@ -244,8 +304,13 @@ func main() {
 			logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
 			return
 
-		case tSystemReady = <-tSystemStatusCh:
-			if !tSystemReady {
+		case swapSystemReady = <-swapSystemStatusCh:
+			if !swapSystemReady {
+				mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
+			}
+			break
+		case spotSystemReady = <-swapSystemStatusCh:
+			if !spotSystemReady {
 				mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 			}
 			break
@@ -303,8 +368,11 @@ func main() {
 				}
 			}
 			break
-		case depth := <-depthCh:
+		case depth := <-bnswapWalkedDepth20Ch:
 			swapWalkedDepths[depth.Symbol] = depth
+			break
+		case depth := <-bnspotWalkedDepth20Ch:
+			spotWalkedDepths[depth.Symbol] = depth
 			break
 		case <-internalInfluxSaveTimer.C:
 			handleSave()
@@ -330,7 +398,7 @@ func main() {
 			tOrderSilentTimes[takerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
 			break
 		case <-mtLoopTimer.C:
-			if tSystemReady && time.Now().Sub(mtGlobalSilent) > 0 {
+			if spotSystemReady && swapSystemReady && time.Now().Sub(mtGlobalSilent) > 0 {
 				updateTakerOldOrders()
 				updateTakerNewOrders()
 			} else {
