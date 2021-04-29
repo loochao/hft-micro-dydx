@@ -45,7 +45,7 @@ func updateTakerNewOrders() {
 		entryValue := 0.0
 
 		//还在加多档期
-		if swapDepth.EmaBidAskRatio > 4 &&
+		if swapDepth.EmaBidAskRatio > 1 &&
 			spotDepth.EmaBidAskRatio > 1 &&
 			swapPosition.PositionAmt <= 0 {
 			swapOrderPrice = math.Floor(swapDepth.MidPrice/swapTickSize) * swapTickSize
@@ -97,7 +97,7 @@ func updateTakerNewOrders() {
 				takerUSDTAvailable -= entryValue
 			}
 			logger.Debugf("%s OPEN LONG@%f %f %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapDepth.EmaBidAskRatio)
-		} else if swapDepth.EmaAskBidRatio > 4 &&
+		} else if swapDepth.EmaAskBidRatio > 1 &&
 			spotDepth.EmaAskBidRatio > 1 &&
 			swapPosition.PositionAmt >= 0 {
 
