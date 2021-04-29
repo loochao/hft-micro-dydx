@@ -149,7 +149,7 @@ func (iw *InfluxWriter) watchPoints(ctx context.Context) {
 }
 
 func NewInfluxWriter(ctx context.Context, address, username, password, database string, batchSize int) (*InfluxWriter, error) {
-	if batchSize < 0 {
+	if batchSize <= 0 {
 		batchSize = 1
 	}
 	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
