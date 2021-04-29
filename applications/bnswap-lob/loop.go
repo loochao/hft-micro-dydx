@@ -94,7 +94,7 @@ func updateTakerNewOrders() {
 			if swapPosition.PositionAmt <= 0 {
 				takerUSDTAvailable -= entryValue
 			}
-			logger.Debugf("%s OPEN LONG@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaAskBidRatio)
+			logger.Debugf("%s OPEN LONG@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaBidAskRatio)
 		} else if swapTakerDepth.EmaAskBidRatio > 4 &&
 			swapPosition.PositionAmt >= 0 {
 
@@ -150,12 +150,12 @@ func updateTakerNewOrders() {
 			}
 			logger.Debugf("%s OPEN SHORT@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaAskBidRatio)
 		} else if swapPosition.PositionAmt > 0 &&
-			swapTakerDepth.EmaBidAskRatio < 1{
+			swapTakerDepth.EmaBidAskRatio < 0.5{
 			swapOrderPrice = math.Ceil(swapTakerDepth.MidPrice/swapTickSize) * swapTickSize
 			swapSizeDiff = -swapPosition.PositionAmt
-			logger.Debugf("%s CLOSE LONG@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaAskBidRatio)
+			logger.Debugf("%s CLOSE LONG@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaBidAskRatio)
 		} else if swapPosition.PositionAmt < 0 &&
-			swapTakerDepth.EmaAskBidRatio < 1{
+			swapTakerDepth.EmaAskBidRatio < 0.5{
 			swapOrderPrice = math.Floor(swapTakerDepth.MidPrice/swapTickSize) * swapTickSize
 			swapSizeDiff = -swapPosition.PositionAmt
 			logger.Debugf("%s CLOSE SHORT@%f %f %f", swapSymbol, swapOrderPrice,swapPosition.PositionAmt, swapTakerDepth.EmaAskBidRatio)
