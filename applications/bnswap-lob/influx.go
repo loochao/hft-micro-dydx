@@ -57,16 +57,28 @@ func handleSave() {
 			}
 		}
 		if walkedDepth, ok := swapWalkedDepths[symbol]; ok {
-			fields["MidPrice"] = walkedDepth.MidPrice
-			fields["MircoPrice"] = walkedDepth.MircoPrice
-			fields["AskPrice"] = walkedDepth.AskPrice
-			fields["BidPrice"] = walkedDepth.BidPrice
-			fields["AskSize"] = walkedDepth.AskSize
-			fields["BidSize"] = walkedDepth.BidSize
-			fields["AskBidRatio"] = walkedDepth.AskBidRatio
-			fields["BidAskRatio"] = walkedDepth.BidAskRatio
-			fields["EmaBidAskRatio"] = walkedDepth.EmaBidAskRatio
-			fields["EmaAskBidRatio"] = walkedDepth.EmaAskBidRatio
+			fields["swapMidPrice"] = walkedDepth.MidPrice
+			fields["swapMircoPrice"] = walkedDepth.MircoPrice
+			fields["swapAskPrice"] = walkedDepth.AskPrice
+			fields["swapBidPrice"] = walkedDepth.BidPrice
+			fields["swapAskSize"] = walkedDepth.AskSize
+			fields["swapBidSize"] = walkedDepth.BidSize
+			fields["swapAskBidRatio"] = walkedDepth.AskBidRatio
+			fields["swapBidAskRatio"] = walkedDepth.BidAskRatio
+			fields["swapEmaBidAskRatio"] = walkedDepth.EmaBidAskRatio
+			fields["swapEmaAskBidRatio"] = walkedDepth.EmaAskBidRatio
+		}
+		if walkedDepth, ok := spotWalkedDepths[symbol]; ok {
+			fields["spotMidPrice"] = walkedDepth.MidPrice
+			fields["spotMircoPrice"] = walkedDepth.MircoPrice
+			fields["spotAskPrice"] = walkedDepth.AskPrice
+			fields["spotBidPrice"] = walkedDepth.BidPrice
+			fields["spotAskSize"] = walkedDepth.AskSize
+			fields["spotBidSize"] = walkedDepth.BidSize
+			fields["spotAskBidRatio"] = walkedDepth.AskBidRatio
+			fields["spotBidAskRatio"] = walkedDepth.BidAskRatio
+			fields["spotEmaBidAskRatio"] = walkedDepth.EmaBidAskRatio
+			fields["spotEmaAskBidRatio"] = walkedDepth.EmaAskBidRatio
 		}
 		if realisedSpread, ok := swapRealisedSpread[symbol]; ok {
 			fields["realisedSpread"] = realisedSpread
