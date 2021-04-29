@@ -302,10 +302,13 @@ func NewTradeRoutedWS(
 		stopped:     0,
 	}
 	go ws.mainLoop(ctx, proxy, channels)
-	go ws.dataHandleLoop(ctx, 1)
-	go ws.dataHandleLoop(ctx, 2)
-	go ws.dataHandleLoop(ctx, 3)
-	go ws.dataHandleLoop(ctx, 4)
+	for i := 0; i < 4; i++ {
+		cs := make(map[string]chan *Trade)
+		for symbol, ch := range channels {
+			cs[symbol] = ch
+		}
+		go ws.dataHandleLoop(ctx, i, cs)
+	}
 	ws.reconnectCh <- nil
 	return &ws
 }
