@@ -7,7 +7,6 @@ import (
 )
 
 func handleSwapHttpPositions(positions []bnswap.Position) {
-	//logger.Debugf("%v", positions)
 	for _, nextPos := range positions {
 		if _, ok := bnSymbolsMap[nextPos.Symbol]; !ok {
 			return

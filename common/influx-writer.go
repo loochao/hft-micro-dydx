@@ -32,6 +32,7 @@ func (iw *InfluxWriter) Done() chan interface{} {
 
 func (iw *InfluxWriter) Stop() {
 	if atomic.LoadInt32(&iw.stopped) == 0 {
+		logger.Debugf("stop influx")
 		close(iw.done)
 		atomic.StoreInt32(&iw.stopped, 1)
 		err := iw.save()
@@ -70,7 +71,7 @@ func (iw *InfluxWriter) save() error {
 	if err != nil {
 		return err
 	}
-	if len(iw.points) <= 100 {
+	if len(iw.points) <= 100*iw.batchSize {
 		bp.AddPoints(iw.points)
 		err = iw.influxClient.Write(bp)
 		if err != nil {
@@ -79,12 +80,12 @@ func (iw *InfluxWriter) save() error {
 		iw.points = make([]*client.Point, 0)
 		return nil
 	} else {
-		bp.AddPoints(iw.points[:100])
+		bp.AddPoints(iw.points[:100*iw.batchSize])
 		err = iw.influxClient.Write(bp)
 		if err != nil {
 			return err
 		}
-		iw.points = iw.points[100:]
+		iw.points = iw.points[100*iw.batchSize:]
 		return iw.save()
 	}
 }
@@ -147,6 +148,9 @@ func (iw *InfluxWriter) watchPoints(ctx context.Context) {
 }
 
 func NewInfluxWriter(ctx context.Context, address, username, password, database string, batchSize int) (*InfluxWriter, error) {
+	if batchSize < 0 {
+		batchSize = 1
+	}
 	influxClient, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     address,
 		Username: username,
