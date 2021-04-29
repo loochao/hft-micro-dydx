@@ -213,7 +213,7 @@ func main() {
 		subTakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
 		for _, symbol := range swapSymbols[start:end] {
 			bnspotRawDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
-			subTakerRowDepthChs[symbol] = bnswapRawDepthChs[symbol]
+			subTakerRowDepthChs[symbol] = bnspotRawDepthChs[symbol]
 		}
 		go bnspotDepthLoop(
 			swapGlobalCtx,
