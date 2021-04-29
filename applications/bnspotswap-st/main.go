@@ -92,6 +92,7 @@ func main() {
 	}
 
 	mtInfluxWriter, err = common.NewInfluxWriter(
+		mtGlobalCtx,
 		*mtConfig.InternalInflux.Address,
 		*mtConfig.InternalInflux.Username,
 		*mtConfig.InternalInflux.Password,
@@ -102,14 +103,10 @@ func main() {
 		logger.Debugf("common.NewInfluxWriter error %v", err)
 		return
 	}
-	defer func() {
-		err := mtInfluxWriter.Stop()
-		if err != nil {
-			logger.Warnf("stop influx writer error %v", err)
-		}
-	}()
+	defer mtInfluxWriter.Stop()
 
 	mtExternalInfluxWriter, err = common.NewInfluxWriter(
+		mtGlobalCtx,
 		*mtConfig.ExternalInflux.Address,
 		*mtConfig.ExternalInflux.Username,
 		*mtConfig.ExternalInflux.Password,
@@ -120,12 +117,7 @@ func main() {
 		logger.Debugf("common.NewInfluxWriter error %v", err)
 		return
 	}
-	defer func() {
-		err := mtExternalInfluxWriter.Stop()
-		if err != nil {
-			logger.Warnf("stop influx writer error %v", err)
-		}
-	}()
+	defer mtExternalInfluxWriter.Stop()
 
 	tUserWebsocket, err = bnswap.NewUserWebsocket(
 		mtGlobalCtx,
