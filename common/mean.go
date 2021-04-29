@@ -9,9 +9,9 @@ type TimedMedian struct {
 	sortedFloatSlice SortedFloatSlice
 }
 
-func (tm *TimedMedian) Insert(value float64, timestamp time.Time) float64{
-	tm.times = append(tm.times, timestamp)
-}
+//func (tm *TimedMedian) Insert(value float64, timestamp time.Time) float64{
+//	tm.times = append(tm.times, timestamp)
+//}
 
 func NewTimedMedian(lookback time.Duration) *TimedMedian {
 	return &TimedMedian{
