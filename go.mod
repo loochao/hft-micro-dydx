@@ -1,10 +1,10 @@
 module github.com/geometrybase/hft-micro
 
-replace github.com/geometrybase/hft-micro/bnspot => ./bnspot
-
-replace github.com/geometrybase/hft-micro/common => ./common
-
-replace github.com/geometrybase/hft-micro/logger => ./logger
+//replace github.com/geometrybase/hft-micro/bnspot => ./bnspot
+//
+//replace github.com/geometrybase/hft-micro/common => ./common
+//
+//replace github.com/geometrybase/hft-micro/logger => ./logger
 
 go 1.16
 

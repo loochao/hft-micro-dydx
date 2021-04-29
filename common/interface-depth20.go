@@ -25,6 +25,12 @@ type DepthRawMessage struct {
 	Time   time.Time
 }
 
+type TradeRaw struct {
+	Data   []byte
+	Symbol string
+	Time   time.Time
+}
+
 type WalkedMakerTakerDepth struct {
 	MakerFarAsk float64
 	MakerAsk    float64
