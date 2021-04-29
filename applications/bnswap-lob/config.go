@@ -61,7 +61,6 @@ type Config struct {
 	OrderSilent         *time.Duration `yaml:"orderSilent,omitempty"`
 	OrderCancelSilent   *time.Duration `yaml:"orderCancelSilent,omitempty"`
 	OrderMaxCancelCount *int           `yaml:"orderMaxCancelCount,omitempty"`
-	EnterSilent         *time.Duration `yaml:"enterSilent,omitempty"`
 	RestartSilent       *time.Duration `yaml:"restartSilent,omitempty"`
 	HttpSilent          *time.Duration `yaml:"httpSilent,omitempty"`
 }
