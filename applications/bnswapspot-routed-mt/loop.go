@@ -23,15 +23,12 @@ func updateSwapPositions() {
 		if time.Now().Sub(bnspotBalancesUpdateTimes[symbol]) > *bnConfig.BalancePositionMaxAge {
 			continue
 		}
-
 		if time.Now().Sub(bnswapPositionsUpdateTimes[symbol]) > *bnConfig.BalancePositionMaxAge {
 			continue
 		}
-
 		if bnswapOrderSilentTimes[symbol].Sub(time.Now()).Seconds() > 0 {
 			continue
 		}
-
 		swapPosition, okSwapPosition := bnswapPositions[symbol]
 		spotBalance, okSpotBalance := bnspotBalances[symbol]
 		spread, okSpread := bnSpreads[symbol]
@@ -46,6 +43,10 @@ func updateSwapPositions() {
 
 		swapSize := -(spotBalance.Locked + spotBalance.Free) - swapPosition.PositionAmt
 		swapSize = math.Round(swapSize/swapStepSize) * swapStepSize
+
+		if symbol == "FILUSDT" {
+			logger.Debugf("SIZE DIFF %f, %f %f", swapSize, spotBalance.Locked + spotBalance.Free, swapPosition.PositionAmt)
+		}
 
 		//只做空SWAP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
 		if swapSize <= 0 && -swapSize*swapOrderBook.TakerBid*(1.0-*bnConfig.EnterSlippage) < swapMinNotional {
