@@ -96,7 +96,7 @@ func watchMakerTakerSpread(
 			longLeaveWindow = append(longLeaveWindow, longLastLeave)
 			longEnterSortedSlice = longEnterSortedSlice.Insert(longLastEnter)
 			longLeaveSortedSlice = longLeaveSortedSlice.Insert(longLastLeave)
-			cutIndex = 0
+			cutIndex = -1
 			for i, eventTime = range times {
 				if spreadTime.Sub(eventTime) > lookbackDuration {
 					cutIndex = i

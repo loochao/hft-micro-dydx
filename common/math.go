@@ -13,7 +13,7 @@ func (tm *TimedSum) Insert(timestamp time.Time, value float64) float64 {
 	tm.times = append(tm.times, timestamp)
 	tm.values = append(tm.values, value)
 	tm.sum += value
-	cutIndex := 0
+	cutIndex := -1
 	for i, t := range tm.times {
 		if timestamp.Sub(t) > tm.lookback {
 			cutIndex = i
@@ -66,7 +66,7 @@ func (tm *TimedMean) Insert(timestamp time.Time, value float64) float64 {
 	tm.times = append(tm.times, timestamp)
 	tm.values = append(tm.values, value)
 	tm.sum += value
-	cutIndex := 0
+	cutIndex := -1
 	for i, t := range tm.times {
 		if timestamp.Sub(t) > tm.lookback {
 			cutIndex = i
@@ -129,7 +129,7 @@ func (tm *TimedWeightedMean) Insert(timestamp time.Time, weight, value float64) 
 	tm.values = append(tm.values, value)
 	tm.sum += value * weight
 	tm.weight += weight
-	cutIndex := 0
+	cutIndex := -1
 	for i, t := range tm.times {
 		if timestamp.Sub(t) > tm.lookback {
 			cutIndex = i
