@@ -31,16 +31,16 @@ func watchDeltaQuantile(
 		case frSum := <-frAvgCh:
 			if frSum < 0.0000 {
 				bandScale = &bearScale
-				logger.Debugf("FR SUM %f BEAR BAND SCALE %f", frSum, *bandScale)
+				//logger.Debugf("FR SUM %f BEAR BAND SCALE %f", frSum, *bandScale)
 			} else if frSum < 0.0003 {
 				bandScale = &normalScale
-				logger.Debugf("FR SUM %f NORM BAND SCALE %f", frSum, *bandScale)
+				//logger.Debugf("FR SUM %f NORM BAND SCALE %f", frSum, *bandScale)
 			} else if frSum < 0.000618 {
 				bandScale = &bullScale
-				logger.Debugf("FR SUM %f BULL BAND SCALE %f", frSum, *bandScale)
+				//logger.Debugf("FR SUM %f BULL BAND SCALE %f", frSum, *bandScale)
 			} else {
 				bandScale = &crazyScale
-				logger.Debugf("FR SUM %f CRAZY BAND SCALE %f", frSum, *bandScale)
+				//logger.Debugf("FR SUM %f CRAZY BAND SCALE %f", frSum, *bandScale)
 			}
 			break
 		case data := <-inputCh:
