@@ -20,7 +20,6 @@ func handleSpotWSOutboundAccountPosition(account *bnspot.AccountUpdateEvent) {
 					bnspotUSDTBalance.Locked, balance.Locked,
 				)
 			}
-
 			bnspotUSDTBalance = &balance
 			bnspotBalanceUpdatedForInflux = true
 			bnspotBalanceUpdatedForExternalInflux = true

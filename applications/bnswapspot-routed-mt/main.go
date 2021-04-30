@@ -435,6 +435,7 @@ func main() {
 			handleSpotWSOutboundAccountPosition(msg)
 			break
 		case data := <-bnspotUserWebsocket.OrderUpdateEventCh:
+			logger.Debugf("SPOT WS ORDER %v", data)
 			if data.CurrentOrderStatus == bnspot.OrderStatusFilled {
 				if data.CumulativeFilledQuantity > 0 && data.CumulativeQuoteAssetTransactedQuantity > 0 {
 					logger.Debugf("SPOT WS ORDER FILLED %s %s CumulativeFilledQuantity %f CumulativeQuoteAssetTransactedQuantity %f", data.Symbol, data.Side, data.CumulativeFilledQuantity, data.CumulativeQuoteAssetTransactedQuantity)
