@@ -222,7 +222,7 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, urlStr string, proxy strin
 				internalCancel()
 				return
 			}
-			go w.readLoop(ctx, conn)
+			go w.readLoop(conn)
 			go w.heartbeatLoop(internalCtx, conn)
 		}
 	}
