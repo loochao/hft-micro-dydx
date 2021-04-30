@@ -78,8 +78,6 @@ func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
 func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 	logger.Debugf("START dataHandleLoop %d", id)
 	defer logger.Debugf("EXIT dataHandleLoop %d", id)
-	totalLen := 0
-	totalCount := 0
 	logSilentTime := time.Now()
 	for {
 		select {
@@ -88,13 +86,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			totalCount += 1
-			totalLen += len(msg)
-			if totalLen > 1000000 {
-				logger.Debugf("BNSPOT %d AVERAGE LENGTH %d", id, totalLen/totalCount)
-				totalLen = 0
-				totalCount = 0
-			}
+			logger.Debugf("%s", msg)
 			if msg[0] == '{' && len(msg) > 14 {
 				if msg[2] == 'e' && msg[6] == 'o' {
 					accountUpdateEvent := AccountUpdateEvent{}
@@ -135,6 +127,11 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 						logger.Debugf("other msg %s", msg)
 						logSilentTime = time.Now().Add(time.Minute / 2)
 					}
+				}
+			}else{
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("other msg %s", msg)
+					logSilentTime = time.Now().Add(time.Minute / 2)
 				}
 			}
 		}
