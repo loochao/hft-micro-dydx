@@ -334,7 +334,7 @@ func NewUserWebsocket(
 			case <-timer.C:
 				var resp interface{}
 				ctx, _ := context.WithTimeout(ctx, time.Minute)
-				_, err := api.SendAuthenticatedHTTPRequest(
+				resp, err := api.SendAuthenticatedHTTPRequest(
 					ctx,
 					http.MethodPut,
 					"/api/v3/userDataStream",
@@ -345,6 +345,8 @@ func NewUserWebsocket(
 					logger.Debugf("api.SendAuthenticatedHTTPRequest error %v", err)
 					ws.Stop()
 					return
+				}else{
+					logger.Debugf("%v", resp)
 				}
 				timer.Reset(time.Minute * 20)
 			}
