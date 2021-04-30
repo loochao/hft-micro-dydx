@@ -23,7 +23,7 @@ type UserWebsocket struct {
 	stopped              int32
 }
 
-func (w *UserWebsocket) readLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
