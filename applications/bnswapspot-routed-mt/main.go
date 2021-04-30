@@ -361,14 +361,14 @@ func main() {
 			logger.Debugf("EXIT MAIN LOOP")
 			return
 		case bnspotSystemReady = <-bnspotSystemStatusCh:
-			//logger.Debugf("bnspotSystemReady %v", bnspotSystemReady)
 			if !bnspotSystemReady {
+				logger.Debugf("bnspotSystemReady %v", bnspotSystemReady)
 				bnGlobalSilent = time.Now().Add(*bnConfig.RestartSilent)
 			}
 			break
 		case bnswapSystemReady = <-bnswapSystemStatusCh:
-			//logger.Debugf("bnswapSystemReady %v", bnswapSystemReady)
 			if !bnswapSystemReady {
+				logger.Debugf("bnswapSystemReady %v", bnswapSystemReady)
 				bnGlobalSilent = time.Now().Add(*bnConfig.RestartSilent)
 			}
 			break

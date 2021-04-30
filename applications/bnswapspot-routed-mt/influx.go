@@ -12,8 +12,7 @@ import (
 func handleSave() {
 
 	if !bnswapAssetUpdatedForInflux || !bnspotBalanceUpdatedForInflux ||
-		time.Now().Sub(bnSaveSilentTime).Seconds() < 0 ||
-		time.Now().Sub(bnGlobalSilent).Seconds() < 0 {
+		time.Now().Sub(bnSaveSilentTime).Seconds() < 0 {
 		return
 	}
 	bnswapAssetUpdatedForInflux = false
@@ -52,7 +51,7 @@ func handleSave() {
 			if err != nil {
 				logger.Debugf("client.NewPoint() error %v", err)
 			} else {
-				err =  bnInternalInfluxWriter.PushPoint(pt)
+				err = bnInternalInfluxWriter.PushPoint(pt)
 				if err != nil {
 					logger.Debugf("bnExternalInfluxWriter.PushPoint(pt) error %v", err)
 				}
@@ -94,7 +93,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("client.NewPoint() error %v", err)
 		} else {
-			err =  bnInternalInfluxWriter.PushPoint(pt)
+			err = bnInternalInfluxWriter.PushPoint(pt)
 			if err != nil {
 				logger.Debugf("bnExternalInfluxWriter.PushPoint(pt) error %v", err)
 			}
@@ -167,7 +166,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("client.NewPoint() error %v", err)
 		} else {
-			err =  bnInternalInfluxWriter.PushPoint(pt)
+			err = bnInternalInfluxWriter.PushPoint(pt)
 			if err != nil {
 				logger.Debugf("bnExternalInfluxWriter.PushPoint(pt) error %v", err)
 			}
@@ -183,6 +182,11 @@ func handleSave() {
 		fields["netWorth"] = (*totalSpotBalance + *totalSwapUSDTBalance + *totalSwapBnBBalance) / *bnConfig.StartValue
 		fields["startValue"] = *bnConfig.StartValue
 		fields["netWorth"] = netWorth
+		if bnGlobalSilent.Sub(time.Now()) > 0 {
+			fields["globalSilent"] = 1.0
+		}else {
+			fields["globalSilent"] = 0.0
+		}
 		for name, start := range bnConfig.StartValues {
 			if start > 0 {
 				fields["refStartValue_"+strings.ToLower(name)] = start
@@ -200,7 +204,7 @@ func handleSave() {
 		if err != nil {
 			logger.Debugf("client.NewPoint() error %v", err)
 		} else {
-			err =  bnInternalInfluxWriter.PushPoint(pt)
+			err = bnInternalInfluxWriter.PushPoint(pt)
 			if err != nil {
 				logger.Debugf("bnExternalInfluxWriter.PushPoint(pt) error %v", err)
 			}
@@ -211,8 +215,7 @@ func handleSave() {
 func handleExternalInfluxSave() {
 	if !bnswapAssetUpdatedForExternalInflux ||
 		!bnspotBalanceUpdatedForExternalInflux ||
-		time.Now().Sub(bnSaveSilentTime).Seconds() < 0 ||
-		time.Now().Sub(bnGlobalSilent).Seconds() < 0 {
+		time.Now().Sub(bnSaveSilentTime).Seconds() < 0 {
 		return
 	}
 	bnswapAssetUpdatedForExternalInflux = false
