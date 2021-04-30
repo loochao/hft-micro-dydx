@@ -11,13 +11,14 @@ func watchTakerOrderRequest(
 	ctx context.Context,
 	api *bnswap.API,
 	timeout time.Duration,
+	symbol string,
 	dryRun bool,
 	orderRequestCh chan bnswap.NewOrderParams,
 	outputOrderCh chan bnswap.Order,
 	outputOrderErrorCh chan TakerOrderNewError,
 ) {
-	logger.Debugf("START watchTakerOrderRequest")
-	defer logger.Debugf("EXIT watchTakerOrderRequest")
+	logger.Debugf("START watchTakerOrderRequest %s", symbol)
+	defer logger.Debugf("EXIT watchTakerOrderRequest %s", symbol)
 	for {
 		select {
 		case <-ctx.Done():

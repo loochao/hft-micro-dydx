@@ -11,12 +11,15 @@ func watchSpotOrderRequest(
 	ctx context.Context,
 	api *bnspot.API,
 	timeout time.Duration,
+	symbol string,
 	dryRun bool,
 	orderRequestCh chan SpotOrderRequest,
 	outputOrderErrorCh chan MakerOrderNewError,
 	outputNewOrderResponseCh chan bnspot.NewOrderResponse,
 	cancelAllOrderResponsesCh chan []bnspot.CancelOrderResponse,
 ) {
+	logger.Debugf("START watchSpotOrderRequest %s", symbol)
+	defer logger.Debugf("EXIT watchSpotOrderRequest %s", symbol)
 	for {
 		select {
 		case <-ctx.Done():
