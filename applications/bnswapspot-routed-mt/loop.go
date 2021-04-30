@@ -32,20 +32,20 @@ func updateSwapPositions() {
 		swapPosition, okSwapPosition := bnswapPositions[symbol]
 		spotBalance, okSpotBalance := bnspotBalances[symbol]
 		spread, okSpread := bnSpreads[symbol]
-		if !okSwapPosition || !okSpotBalance || !okSpread {
+		if !okSwapPosition || !okSpotBalance {
 			continue
 		}
 		swapOrderBook := spread.TakerDepth
 
 		swapStepSize := bnswapStepSizes[symbol]
-		swapTickSize := bnswapTickSizes[symbol]
 		swapMinNotional := bnswapMinNotional[symbol]
 
 		swapSize := -(spotBalance.Locked + spotBalance.Free) - swapPosition.PositionAmt
 		swapSize = math.Round(swapSize/swapStepSize) * swapStepSize
 
 		//只做空SWAP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
-		if swapSize <= 0 && -swapSize*swapOrderBook.TakerBid*(1.0-*bnConfig.EnterSlippage) < swapMinNotional {
+		//有spread才计算, 没有直接干
+		if okSpread && swapSize <= 0 && -swapSize*swapOrderBook.TakerBid*(1.0-*bnConfig.EnterSlippage) < swapMinNotional {
 			continue
 		}
 		if swapSize > 0 && swapPosition.PositionAmt >= 0 {
@@ -56,7 +56,9 @@ func updateSwapPositions() {
 			swapSize = -swapPosition.PositionAmt
 		}
 
-		unHedgedValue += math.Abs(swapSize * (spread.TakerDepth.MakerAsk + spread.TakerDepth.TakerBid) * 0.5)
+		if okSpread {
+			unHedgedValue += math.Abs(swapSize * (spread.TakerDepth.MakerAsk + spread.TakerDepth.TakerBid) * 0.5)
+		}
 
 		logger.Debugf("updateSwapPositions %s SIZE %f POS %f -> %f", symbol, swapSize, swapPosition.PositionAmt, -(spotBalance.Locked + spotBalance.Free))
 
@@ -64,12 +66,10 @@ func updateSwapPositions() {
 		if swapSize*swapPosition.PositionAmt < 0 && math.Abs(swapSize) <= math.Abs(swapPosition.PositionAmt) {
 			reduceOnly = true
 		}
-		price := math.Round(swapOrderBook.TakerAsk*(1.0+*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 		side := "BUY"
 		if swapSize < 0 {
 			side = "SELL"
 			swapSize = -swapSize
-			price = math.Round(swapOrderBook.TakerBid*(1.0-*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 		}
 		bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
 		bnswapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
@@ -77,9 +77,7 @@ func updateSwapPositions() {
 		bnswapOrderRequestChs[symbol] <- bnswap.NewOrderParams{
 			Symbol:           symbol,
 			Side:             side,
-			Type:             "LIMIT",
-			Price:            price,
-			TimeInForce:      "FOK",
+			Type:             common.OrderTypeMarket,
 			Quantity:         swapSize,
 			ReduceOnly:       reduceOnly,
 			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
