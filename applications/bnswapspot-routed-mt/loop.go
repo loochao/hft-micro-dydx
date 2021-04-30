@@ -32,6 +32,10 @@ func updateSwapPositions() {
 		swapPosition, okSwapPosition := bnswapPositions[symbol]
 		spotBalance, okSpotBalance := bnspotBalances[symbol]
 		spread, okSpread := bnSpreads[symbol]
+		if symbol == "FILUSDT" && bnGlobalLogSilentTime.Sub(time.Now()) < 0{
+			bnGlobalLogSilentTime = time.Now().Add(time.Second*5)
+			logger.Debugf("FILUSDT %v %v %v")
+		}
 		if !okSwapPosition || !okSpotBalance || !okSpread {
 			continue
 		}
@@ -44,7 +48,8 @@ func updateSwapPositions() {
 		swapSize := -(spotBalance.Locked + spotBalance.Free) - swapPosition.PositionAmt
 		swapSize = math.Round(swapSize/swapStepSize) * swapStepSize
 
-		if symbol == "FILUSDT" {
+		if symbol == "FILUSDT" && bnGlobalLogSilentTime.Sub(time.Now()) < 0{
+			bnGlobalLogSilentTime = time.Now().Add(time.Second*5)
 			logger.Debugf("SIZE DIFF %f, %f %f", swapSize, spotBalance.Locked + spotBalance.Free, swapPosition.PositionAmt)
 		}
 

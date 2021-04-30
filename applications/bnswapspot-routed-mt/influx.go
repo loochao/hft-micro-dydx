@@ -308,7 +308,7 @@ func reportsSaveLoop(
 				fields["spotTimeDelta"] = report.MakerTimeDelta
 				fields["swapTimeDelta"] = report.TakerTimeDelta
 				fields["spotDepthFilterRatio"] = report.MakerDepthFilterRatio
-				fields["swapDepthFilterRatio"] = report.MakerDepthFilterRatio
+				fields["swapDepthFilterRatio"] = report.TakerDepthFilterRatio
 				fields["spotMsgAvgLen"] = report.MakerMsgAvgLen
 				fields["swapMsgAvgLen"] = report.TakerMsgAvgLen
 				if len(fields) > 0 {

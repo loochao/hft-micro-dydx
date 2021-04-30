@@ -484,6 +484,9 @@ func main() {
 			}
 			break
 		case spread := <-spreadCh:
+			if _, ok := bnSpreads[spread.MakerSymbol]; !ok {
+				logger.Debugf("%s SPREAD READY %v", spread.MakerSymbol, spread)
+			}
 			bnSpreads[spread.MakerSymbol] = spread
 			break
 		case bnswapPremiumIndexes = <-bnswapPremiumIndexesCh:
