@@ -34,7 +34,7 @@ func updateSwapPositions() {
 		spread, okSpread := bnSpreads[symbol]
 		if symbol == "FILUSDT" && bnGlobalLogSilentTime.Sub(time.Now()) < 0{
 			bnGlobalLogSilentTime = time.Now().Add(time.Second*5)
-			logger.Debugf("FILUSDT %v %v %v")
+			logger.Debugf("FILUSDT %v %v %v", okSwapPosition, okSpotBalance, okSpread)
 		}
 		if !okSwapPosition || !okSpotBalance || !okSpread {
 			continue

@@ -24,6 +24,8 @@ func watchMakerTakerSpread(
 	reportCh chan common.SpreadReport,
 	outputCh chan *common.MakerTakerSpread,
 ) {
+	logger.Debugf("START watchMakerTakerSpread")
+	defer logger.Debugf("EXIT watchMakerTakerSpread")
 	var err error
 	var makerRawDepth, takerRawDepth *common.DepthRawMessage
 	var makerDepth, newMakerDepth *bnspot.Depth5
@@ -125,7 +127,6 @@ func watchMakerTakerSpread(
 			}
 
 			select {
-			case <-ctx.Done():
 			case outputCh <- &common.MakerTakerSpread{
 				TakerSymbol: symbol,
 				MakerSymbol: symbol,
