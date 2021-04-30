@@ -106,8 +106,8 @@ func updateMakerNewOrders() {
 	}
 
 	if bnUnHedgeValue > *bnConfig.MaxUnHedgeValue {
-		if time.Now().Sub(bnUnHedgeLogSilentTime) > 0 {
-			bnUnHedgeLogSilentTime = time.Now().Add(*bnConfig.LogInterval)
+		if time.Now().Sub(bnGlobalLogSilentTime) > 0 {
+			bnGlobalLogSilentTime = time.Now().Add(*bnConfig.LogInterval)
 			logger.Debugf("UN HEDGE VALUE %f > %f", bnUnHedgeValue, *bnConfig.MaxUnHedgeValue)
 		}
 		return

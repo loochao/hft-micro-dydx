@@ -639,6 +639,12 @@ func main() {
 					updateMakerNewOrders()
 				}
 			} else {
+				if time.Now().Sub(bnGlobalLogSilentTime) > 0 {
+					logger.Debugf("SYSTEM NOT READY SPOT %v SWAP %v SILENT TIME %v",
+						bnswapSystemReady, bnspotSystemReady, time.Now().Sub(bnGlobalSilent),
+					)
+					bnGlobalSilent = time.Now().Add(time.Second*5)
+				}
 				if len(bnspotOpenOrders) > 0 {
 					for symbol := range bnspotOpenOrders {
 						bnspotOrderRequestChs[symbol] <- SpotOrderRequest{
