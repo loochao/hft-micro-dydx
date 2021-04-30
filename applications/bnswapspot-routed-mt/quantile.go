@@ -41,7 +41,7 @@ func watchDeltaQuantile(
 			} else if meanFr < 0.0003 {
 				//横盘，下移BAND，降低BAND高度，减小持仓时间
 				topOffset = -0.00111
-				botOffset = -0.00055
+				botOffset = -0.00000
 				bandScale = &normalScale
 				//logger.Debugf("MEAN FR %f NORM BAND SCALE %f", meanFr, *bandScale)
 			} else if meanFr < 0.0005 {
@@ -52,7 +52,7 @@ func watchDeltaQuantile(
 				//logger.Debugf("MEAN FR %f BULL BAND SCALE %f", meanFr, *bandScale)
 			} else {
 				//疯牛有费率，可以长期持仓, 回归波动大，上移并加宽BAND
-				topOffset = 0.002222
+				topOffset = +0.00222
 				botOffset = -0.00111
 				bandScale = &crazyScale
 				//logger.Debugf("MEAN FR %f CRAZY BAND SCALE %f", meanFr, *bandScale)
