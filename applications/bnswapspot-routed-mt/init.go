@@ -31,7 +31,7 @@ var bnspotSilentTimes = make(map[string]time.Time)
 
 var bnspotBalancesUpdateTimes = make(map[string]time.Time)
 var bnswapOrderNewErrorCh = make(chan TakerOrderNewError, 10)
-var bnswapOrderResponseCh = make(chan bnswap.Order, 10000)
+var bnswapOrderResponseCh = make(chan bnswap.Order, 10)
 
 var bnspotHttpBalanceUpdateSilentTimes = make(map[string]time.Time)
 var bnswapHttpPositionUpdateSilentTimes = make(map[string]time.Time)
@@ -92,13 +92,13 @@ var bnswapAvgFundingRate *float64
 var bnswapAvgFundingRateCh = make(chan float64, 100)
 var bnRankSymbolMap map[int]string
 
-var bnswapBarsMapCh = make(chan common.KLinesMap)
+var bnswapBarsMapCh = make(chan common.KLinesMap, 10)
 var bnswapBarsMap common.KLinesMap
-var bnspotBarsMapCh = make(chan common.KLinesMap)
+var bnspotBarsMapCh = make(chan common.KLinesMap, 10)
 var bnspotBarsMap common.KLinesMap
 var bnBarsMapUpdated = make(map[string]bool)
-var bnBarsMapCh = make(chan [2]common.KLinesMap, 10)
-var bnQuantilesCh = make(chan map[string]Quantile)
+var bnBarsMapCh = make(chan [2]common.KLinesMap, 100)
+var bnQuantilesCh = make(chan map[string]Quantile, 100)
 var bnQuantiles = make(map[string]Quantile)
 var bnspotLastLimitBuyPrices = make(map[string]float64)
 var bnspotLastLimitSellPrices = make(map[string]float64)
@@ -118,7 +118,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210430 02:19:13  ####")
+	logger.Debug("####  BUILD @ 20210430 02:22:00  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
