@@ -86,7 +86,6 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			logger.Debugf("%s", msg)
 			if msg[0] == '{' && len(msg) > 14 {
 				if msg[2] == 'e' && msg[6] == 'o' {
 					accountUpdateEvent := AccountUpdateEvent{}
