@@ -31,7 +31,7 @@ var bnspotSilentTimes = make(map[string]time.Time)
 
 var bnspotBalancesUpdateTimes = make(map[string]time.Time)
 var bnswapOrderNewErrorCh = make(chan TakerOrderNewError, 10)
-var bnswapOrderFinishCh = make(chan bnswap.Order, 10000)
+var bnswapOrderResponseCh = make(chan bnswap.Order, 10000)
 
 var bnspotHttpBalanceUpdateSilentTimes = make(map[string]time.Time)
 var bnswapHttpPositionUpdateSilentTimes = make(map[string]time.Time)
@@ -100,8 +100,8 @@ var bnBarsMapUpdated = make(map[string]bool)
 var bnBarsMapCh = make(chan [2]common.KLinesMap, 10)
 var bnQuantilesCh = make(chan map[string]Quantile)
 var bnQuantiles = make(map[string]Quantile)
-var bnspotLastFilledBuyPrices = make(map[string]float64)
-var bnspotLastFilledSellPrices = make(map[string]float64)
+var bnspotLastLimitBuyPrices = make(map[string]float64)
+var bnspotLastLimitSellPrices = make(map[string]float64)
 var bnRealisedSpread = make(map[string]float64)
 var bnSpreads = make(map[string]*common.MakerTakerSpread)
 var bnGlobalSilent time.Time
@@ -118,7 +118,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210426 13:40:50  ####")
+	logger.Debug("####  BUILD @ 20210430 02:04:04  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

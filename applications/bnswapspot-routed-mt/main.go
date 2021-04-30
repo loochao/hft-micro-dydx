@@ -69,6 +69,7 @@ func main() {
 	logger.Debugf("MERGED STEP SIZES %v", bnMergedStepSizes)
 
 	bnInternalInfluxWriter, err = common.NewInfluxWriter(
+		bnGlobalCtx,
 		*bnConfig.InternalInflux.Address,
 		*bnConfig.InternalInflux.Username,
 		*bnConfig.InternalInflux.Password,
@@ -81,6 +82,7 @@ func main() {
 	}
 
 	bnExternalInfluxWriter, err = common.NewInfluxWriter(
+		bnGlobalCtx,
 		*bnConfig.ExternalInflux.Address,
 		*bnConfig.ExternalInflux.Username,
 		*bnConfig.ExternalInflux.Password,
@@ -91,20 +93,8 @@ func main() {
 		logger.Debugf("common.NewInfluxWriter %v", err)
 		return
 	}
-
-	defer func() {
-		err := bnInternalInfluxWriter.Stop()
-		if err != nil {
-			logger.Warnf("stop influx writer error %v", err)
-		}
-	}()
-
-	defer func() {
-		err := bnInternalInfluxWriter.Stop()
-		if err != nil {
-			logger.Warnf("stop influx writer error %v", err)
-		}
-	}()
+	defer bnInternalInfluxWriter.Stop()
+	defer bnExternalInfluxWriter.Stop()
 
 	if *bnConfig.ChangeLeverage {
 		for _, symbol := range bnSymbols {
@@ -333,7 +323,7 @@ func main() {
 			*bnConfig.OrderTimeout,
 			*bnConfig.DryRun,
 			bnswapOrderRequestChs[symbol],
-			bnswapOrderFinishCh,
+			bnswapOrderResponseCh,
 			bnswapNewOrderErrorCh,
 		)
 	}
@@ -447,13 +437,7 @@ func main() {
 		case data := <-bnspotUserWebsocket.OrderUpdateEventCh:
 			if data.CurrentOrderStatus == bnspot.OrderStatusFilled {
 				if data.CumulativeFilledQuantity > 0 && data.CumulativeQuoteAssetTransactedQuantity > 0 {
-					filledPrice := data.CumulativeQuoteAssetTransactedQuantity / data.CumulativeFilledQuantity
-					if data.Side == bnspot.OrderSideBuy {
-						bnspotLastFilledBuyPrices[data.Symbol] = filledPrice
-					} else {
-						bnspotLastFilledSellPrices[data.Symbol] = filledPrice
-					}
-					logger.Debugf("SPOT WS ORDER FILLED %s %s SIZE %f PRICE %f", data.Symbol, data.Side, data.CumulativeFilledQuantity, filledPrice)
+					logger.Debugf("SPOT WS ORDER FILLED %s %s CumulativeFilledQuantity %f CumulativeQuoteAssetTransactedQuantity %f", data.Symbol, data.Side, data.CumulativeFilledQuantity, data.CumulativeQuoteAssetTransactedQuantity)
 				}
 				if openOrder, ok := bnspotOpenOrders[data.Symbol]; ok && openOrder.NewClientOrderID == data.ClientOrderID {
 					delete(bnspotOpenOrders, data.Symbol)
@@ -473,8 +457,26 @@ func main() {
 		case msg := <-bnswapUserWebsocket.BalanceAndPositionUpdateEventCh:
 			handleWSAccountEvent(msg)
 			break
-		case msg := <-bnswapUserWebsocket.OrderUpdateEventCh:
-			handleWSOrder(&msg.Order)
+		case orderEvent := <-bnswapUserWebsocket.OrderUpdateEventCh:
+			wsOrder := orderEvent.Order
+			if wsOrder.Status == common.OrderStatusExpired ||
+				wsOrder.Status == common.OrderStatusReject ||
+				wsOrder.Status == common.OrderStatusCancelled {
+				logger.Debugf("SWAP WS ORDER %s %s %s", wsOrder.Symbol, wsOrder.ClientOrderId, wsOrder.Status)
+			} else if wsOrder.Status == common.OrderStatusFilled {
+				logger.Debugf("SWAP WS ORDER %s %s %s %f %f", wsOrder.Symbol, wsOrder.ClientOrderId, wsOrder.Status, wsOrder.FilledAccumulatedQuantity, wsOrder.AveragePrice)
+				if wsOrder.Side == common.OrderSideBuy {
+					if spotPrice, ok := bnspotLastLimitSellPrices[wsOrder.Symbol]; ok {
+						bnRealisedSpread[wsOrder.Symbol] = (wsOrder.AveragePrice - spotPrice) / spotPrice
+						logger.Debugf("%s REALISED OPEN SPREAD %f", wsOrder.Symbol, bnRealisedSpread[wsOrder.Symbol])
+					}
+				} else {
+					if spotPrice, ok := bnspotLastLimitBuyPrices[wsOrder.Symbol]; ok {
+						bnRealisedSpread[wsOrder.Symbol] = (wsOrder.AveragePrice - spotPrice) / spotPrice
+						logger.Debugf("%s REALISED OPEN SPREAD %f", wsOrder.Symbol, bnRealisedSpread[wsOrder.Symbol])
+					}
+				}
+			}
 			break
 		case spread := <-spreadCh:
 			bnSpreads[spread.MakerSymbol] = spread
@@ -496,7 +498,6 @@ func main() {
 		case bnspotBarsMap = <-bnspotBarsMapCh:
 			break
 		case bnQuantiles = <-bnQuantilesCh:
-			//logger.Debugf("QUANTILE %v", bnQuantiles)
 			bnLoopTimer.Reset(time.Second)
 			break
 		case <-influxSaveTimer.C:
@@ -524,27 +525,42 @@ func main() {
 			bnswapOrderSilentTimes[newError.Params.Symbol] = time.Now().Add(time.Second * 15)
 			break
 
-		case order := <-bnswapOrderFinishCh:
-			logStr := fmt.Sprintf("SWAP ORDER %s", order.ToString())
-			if order.Status == "REJECTED" || order.Status == "EXPIRED" {
-				logStr = fmt.Sprintf("%s RESET TIMEOUT", logStr)
+		case order := <-bnswapOrderResponseCh:
+			if order.Status == common.OrderStatusReject ||
+				order.Status == common.OrderStatusExpired ||
+				order.Status == common.OrderStatusCancelled {
+				logger.Debugf("SWAP ORDER %s %s %s", order.Symbol, order.Status, order.ClientOrderId)
 				bnswapOrderSilentTimes[order.Symbol] = time.Now().Add(time.Second)
 				bnswapPositionsUpdateTimes[order.Symbol] = time.Unix(0, 0)
-			}
-			if order.Side == common.OrderSideSell && order.Status == "FILLED" {
-				if spotPrice, ok := bnspotLastFilledBuyPrices[order.Symbol]; ok {
-					bnRealisedSpread[order.Symbol] = (order.CumQuote - spotPrice) / spotPrice
+			} else if order.Side == common.OrderSideSell &&
+				order.Status == common.OrderStatusFilled &&
+				order.CumQuote != 0 && order.CumQty != 0 {
+				filledPrice := order.CumQuote / order.CumQty
+				logger.Debugf(
+					"SWAP ORDER %s %s %s %f %f %f",
+					order.Symbol, order.Status, order.ClientOrderId,
+					order.CumQty, order.CumQuote, filledPrice,
+				)
+				if spotPrice, ok := bnspotLastLimitBuyPrices[order.Symbol]; ok {
+					bnRealisedSpread[order.Symbol] = (filledPrice - spotPrice) / spotPrice
 					logger.Debugf("%s REALISED OPEN SPREAD %f", order.Symbol, bnRealisedSpread[order.Symbol])
 				}
 				bnswapHttpPositionUpdateSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
-			} else if order.Side == common.OrderSideBuy && order.Status == "FILLED" {
-				if spotPrice, ok := bnspotLastFilledSellPrices[order.Symbol]; ok {
-					bnRealisedSpread[order.Symbol] = (order.CumQuote - spotPrice) / spotPrice
+			} else if order.Side == common.OrderSideBuy &&
+				order.Status == common.OrderStatusFilled &&
+				order.CumQuote != 0 && order.CumQty != 0 {
+				filledPrice := order.CumQuote / order.CumQty
+				logger.Debugf(
+					"SWAP ORDER %s %s %s %f %f %f",
+					order.Symbol, order.Status, order.ClientOrderId,
+					order.CumQty, order.CumQuote, filledPrice,
+				)
+				if spotPrice, ok := bnspotLastLimitSellPrices[order.Symbol]; ok {
+					bnRealisedSpread[order.Symbol] = (filledPrice - spotPrice) / spotPrice
 					logger.Debugf("%s REALISED CLOSE SPREAD %f", order.Symbol, bnRealisedSpread[order.Symbol])
 				}
 				bnswapHttpPositionUpdateSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			}
-			logger.Debug(logStr)
 			break
 
 		case orders := <-bnspotCancelOrderResponsesCh:
@@ -566,17 +582,7 @@ func main() {
 					delete(bnspotOpenOrders, order.Symbol)
 				}
 			} else if order.Status == bnspot.OrderStatusFilled {
-				sumQty := 0.0
-				sumVal := 0.0
-				for _, f := range order.Fills {
-					sumQty += f.Qty
-					sumVal += f.Price * f.Qty
-				}
-				if sumQty != 0 && sumVal != 0 {
-					filledPrice := sumVal / sumQty
-					bnspotLastFilledBuyPrices[order.Symbol] = filledPrice
-					logStr = fmt.Sprintf("%s FILLED PRICE %f", logStr, filledPrice)
-				}
+				logStr = fmt.Sprintf("%s FILLED PRICE %f", logStr, order.Price)
 				if openOrder, ok := bnspotOpenOrders[order.Symbol]; ok && openOrder.NewClientOrderID == order.ClientOrderID {
 					delete(bnspotOpenOrders, order.Symbol)
 				}

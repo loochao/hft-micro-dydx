@@ -196,6 +196,7 @@ func updateMakerNewOrders() {
 						Type:             bnspot.OrderTypeLimitMarker,
 						NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 					}
+					bnspotLastLimitSellPrices[symbol] = price
 					bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
 					bnspotOrderCancelCounts[symbol] = 0
 					bnspotOpenOrders[symbol] = order
@@ -276,6 +277,7 @@ func updateMakerNewOrders() {
 				Type:             bnspot.OrderTypeLimitMarker,
 				NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 			}
+			bnspotLastLimitBuyPrices[symbol] = price
 			bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
 			bnspotOrderCancelCounts[symbol] = 0
 			bnspotOpenOrders[symbol] = order

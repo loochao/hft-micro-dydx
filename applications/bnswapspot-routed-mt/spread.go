@@ -53,11 +53,10 @@ func watchMakerTakerSpread(
 
 	expectedChanSendingTime := time.Nanosecond * 300
 	cutIndex := 0
-	spread := 0.0
 	i := 0
 	matchCount := 0
 	depthCount := 0
-	var eventTime  time.Time
+	var eventTime time.Time
 	var shortLastEnter, shortLastLeave, longLastEnter, longLastLeave float64
 	for {
 		select {
@@ -79,11 +78,11 @@ func watchMakerTakerSpread(
 				break
 			}
 			matchCount++
-			shortLastEnter = (takerWalkedDepth.TakerBid - makerWalkedDepth.MakerBid) / makerWalkedDepth.MakerBid
-			shortLastLeave = (takerWalkedDepth.TakerAsk - makerWalkedDepth.MakerAsk) / makerWalkedDepth.MakerAsk
+			shortLastEnter = (takerWalkedDepth.TakerBid - makerWalkedDepth.MidPrice) / makerWalkedDepth.MidPrice
+			shortLastLeave = (takerWalkedDepth.TakerAsk - makerWalkedDepth.MidPrice) / makerWalkedDepth.MidPrice
 
-			longLastEnter = (takerWalkedDepth.TakerAsk - makerWalkedDepth.MakerAsk) / makerWalkedDepth.MakerAsk
-			longLastLeave = (takerWalkedDepth.TakerBid - makerWalkedDepth.MakerBid) / makerWalkedDepth.MakerBid
+			longLastEnter = (takerWalkedDepth.TakerAsk - makerWalkedDepth.MidPrice) / makerWalkedDepth.MidPrice
+			longLastLeave = (takerWalkedDepth.TakerBid - makerWalkedDepth.MidPrice) / makerWalkedDepth.MidPrice
 
 			times = append(times, takerWalkedDepth.Time)
 			shortEnterWindow = append(shortEnterWindow, shortLastEnter)
@@ -99,32 +98,23 @@ func watchMakerTakerSpread(
 			for i, eventTime = range times {
 				if spreadTime.Sub(eventTime) > lookbackDuration {
 					cutIndex = i
+					shortEnterSortedSlice = shortEnterSortedSlice.Delete(shortEnterWindow[i])
+					shortLeaveSortedSlice = shortLeaveSortedSlice.Delete(shortLeaveWindow[i])
+					longEnterSortedSlice = longEnterSortedSlice.Delete(longEnterWindow[i])
+					longLeaveSortedSlice = longLeaveSortedSlice.Delete(longLeaveWindow[i])
 				} else {
 					break
 				}
 			}
+			//需要offset 1
+			cutIndex += 1
 			if cutIndex > 0 {
-				for _, spread = range shortEnterWindow[:cutIndex] {
-					shortEnterSortedSlice = shortEnterSortedSlice.Delete(spread)
-				}
-				for _, spread = range shortLeaveWindow[:cutIndex] {
-					shortLeaveSortedSlice = shortLeaveSortedSlice.Delete(spread)
-				}
 				shortEnterWindow = shortEnterWindow[cutIndex:]
 				shortLeaveWindow = shortLeaveWindow[cutIndex:]
-
-				for _, spread = range longEnterWindow[:cutIndex] {
-					longEnterSortedSlice = longEnterSortedSlice.Delete(spread)
-				}
-				for _, spread = range longLeaveWindow[:cutIndex] {
-					longLeaveSortedSlice = longLeaveSortedSlice.Delete(spread)
-				}
 				longEnterWindow = longEnterWindow[cutIndex:]
 				longLeaveWindow = longLeaveWindow[cutIndex:]
-
 				times = times[cutIndex:]
 			}
-
 			if len(shortEnterWindow) < lookbackMinimalWindow ||
 				len(shortLeaveWindow) < lookbackMinimalWindow {
 				break
@@ -307,5 +297,3 @@ func watchMakerTakerSpread(
 		}
 	}
 }
-
-

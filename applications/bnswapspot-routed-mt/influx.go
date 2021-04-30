@@ -129,6 +129,7 @@ func handleSave() {
 			fields["spotMakerBid"] = spread.MakerDepth.MakerBid
 			fields["spotTakerAsk"] = spread.MakerDepth.TakerAsk
 			fields["spotMakerAsk"] = spread.MakerDepth.MakerAsk
+			fields["spotMidPrice"] = spread.MakerDepth.MidPrice
 			fields["spotTakerFarAsk"] = spread.MakerDepth.TakerFarAsk
 			fields["spotTakerFarBid"] = spread.MakerDepth.TakerFarBid
 			if order, ok := bnspotOpenOrders[symbol]; ok {
@@ -138,6 +139,7 @@ func handleSave() {
 			fields["swapMakerBid"] = spread.TakerDepth.MakerBid
 			fields["swapTakerAsk"] = spread.TakerDepth.TakerAsk
 			fields["swapMakerAsk"] = spread.TakerDepth.MakerAsk
+			fields["swapMidPrice"] = spread.TakerDepth.MidPrice
 
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()

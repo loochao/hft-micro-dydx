@@ -29,25 +29,33 @@ func watchSpotOrderRequest(
 				childCtx, _ := context.WithTimeout(ctx, timeout)
 				orders, _, err := api.CancelAllOrder(childCtx, *request.Cancel)
 				if err != nil {
-					logger.Debugf("SPOT CANCEL ALL %v", err)
+					logger.Debugf("api.CancelAllOrder(childCtx, *request.Cancel) error %v", err)
 				} else {
-					cancelAllOrderResponsesCh <- orders
+					select {
+					case cancelAllOrderResponsesCh <- orders:
+					default:
+						logger.Debugf("cancelAllOrderResponsesCh <- orders failed, ch len %d", len(cancelAllOrderResponsesCh))
+					}
 				}
 			} else if request.New != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				logger.Debugf("SPOT SUBMIT %s", request.New.ToUrlValues().Encode())
 				order, _, err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
-					logger.Debugf("SPOT SUBMIT ERROR %v", err)
-					outputOrderErrorCh <- MakerOrderNewError{
+					logger.Debugf("api.SubmitOrder(childCtx, *request.New) error %v", err)
+					select {
+					case outputOrderErrorCh <- MakerOrderNewError{
 						Error:  err,
 						Params: *request.New,
+					}:
+					default:
+						logger.Debugf("outputOrderErrorCh <- MakerOrderNewError failed, ch len %d", len(outputOrderErrorCh))
 					}
-				} else if order.Status == bnspot.OrderStatusFilled ||
-					order.Status == bnspot.OrderStatusCancelled ||
-					order.Status == bnspot.OrderStatusReject ||
-					order.Status == bnspot.OrderStatusExpired {
-					outputNewOrderResponseCh <- *order
+				} else {
+					select {
+					case outputNewOrderResponseCh <- *order:
+					default:
+						logger.Debugf("outputNewOrderResponseCh <- *order failed, ch len %d", len(outputNewOrderResponseCh))
+					}
 				}
 			}
 		}
@@ -63,7 +71,7 @@ func updateMakerOldOrders() {
 		if time.Now().Sub(bnspotCancelSilentTimes[symbol]) < 0 {
 			continue
 		}
-		if isOrderProfitable(order) {
+		if isOrderOK(order) {
 			continue
 		}
 		bnspotOrderSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderSilent)
@@ -75,27 +83,34 @@ func updateMakerOldOrders() {
 	}
 }
 
-func isOrderProfitable(order bnspot.NewOrderParams) bool {
+func isOrderOK(order bnspot.NewOrderParams) bool {
 	spread, ok1 := bnSpreads[order.Symbol]
 	quantile, ok2 := bnQuantiles[order.Symbol]
-	if !ok1 || !ok2 || time.Now().Sub(spread.Time) > *bnConfig.SpreadTimeToLive {
-		logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.Time), order.Symbol)
+	if !ok1 {
+		logger.Debugf("%s spread is not ready", order.Symbol)
+		return false
+	}
+	if !ok2 {
+		logger.Debugf("%s quantile is not ready", order.Symbol)
+	}
+	if time.Now().Sub(spread.Time) > *bnConfig.SpreadTimeToLive {
+		logger.Debugf("%s spread is out of date %v > %v", order.Symbol, time.Now().Sub(spread.Time), *bnConfig.SpreadTimeToLive)
 		return false
 	}
 	if order.Side == bnspot.OrderSideBuy &&
-		order.Price < (1.0-4**bnConfig.MakerBandOffset)*spread.MakerDepth.MakerBid-bnspotTickSizes[order.Symbol] {
-		logger.Debugf("%s BUY PRICE %f < MAKER MINMAL BID PRICE %f",
+		order.Price < spread.MakerDepth.BestBidPrice {
+		logger.Debugf("%s buy price %f < best bid price %f",
 			order.Symbol,
 			order.Price,
-			(1.0-2**bnConfig.MakerBandOffset)*spread.MakerDepth.MakerBid-bnspotTickSizes[order.Symbol],
+			spread.MakerDepth.BestBidPrice,
 		)
 		return false
 	} else if order.Side == bnspot.OrderSideSell &&
-		order.Price > (1.0+4**bnConfig.MakerBandOffset)*spread.MakerDepth.MakerAsk+bnspotTickSizes[order.Symbol] {
-		logger.Debugf("%s SELL PRICE %f > MAKER MAXIMAL ASK PRICE %f",
+		order.Price > spread.MakerDepth.BestAskPrice {
+		logger.Debugf("%s sell price %f > best ask price %f",
 			order.Symbol,
 			order.Price,
-			(1.0+2**bnConfig.MakerBandOffset)*spread.MakerDepth.MakerAsk+bnspotTickSizes[order.Symbol],
+			spread.MakerDepth.BestAskPrice,
 		)
 		return false
 	}

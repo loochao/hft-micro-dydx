@@ -1,4 +1,4 @@
-package cbspot
+package hbspot
 
 import (
 	"context"
@@ -15,9 +15,9 @@ func WatchTimedTradeImbalances(
 	lookback time.Duration,
 	channels map[string]chan *common.Signal,
 ) {
-	matchesCh := make(map[string]chan *Match)
+	matchesCh := make(map[string]chan TradeDetail)
 	for symbol, output := range channels {
-		matchesCh[symbol] = make(chan *Match, 10000)
+		matchesCh[symbol] = make(chan TradeDetail, 10000)
 		go WatchTimedTradeImbalance(
 			ctx,
 			symbol,
@@ -26,7 +26,7 @@ func WatchTimedTradeImbalances(
 			output,
 		)
 	}
-	ws := NewMatchRoutedWS(
+	ws := NewTradeRoutedWS(
 		ctx,
 		proxyAddress,
 		matchesCh,
@@ -48,27 +48,41 @@ func WatchTimedTradeImbalance(
 	ctx context.Context,
 	symbol string,
 	lookback time.Duration,
-	inputCh chan *Match,
+	inputCh chan TradeDetail,
 	output chan *common.Signal,
 ) {
 	updateImbalanceTimer := time.NewTimer(time.Hour * 999)
 	buyVolume := common.NewTimedSum(lookback)
 	sellVolume := common.NewTimedSum(lookback)
-	var lastMatch, newMatch *Match
-	signalName := fmt.Sprintf("%s-cbspot-timed-trade-imbalance-%v", symbol, lookback)
+	var lastTrade, newTrade *TradeDetail
+	newTrade = &TradeDetail{}
+	signalName := fmt.Sprintf("%s-hbspot-timed-trade-imbalance-%v", symbol, lookback)
 	logSilentTime := time.Now()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-updateImbalanceTimer.C:
-			if lastMatch != nil {
-				if lastMatch.Side == MatchSideBuy {
-					buyVolume.Insert(lastMatch.Time, lastMatch.Size)
+			if lastTrade != nil {
+				logger.Debugf("%v", lastTrade.EventTime)
+				if lastTrade.Direction == TradeSideBuy {
+					buyVolume.Insert(lastTrade.EventTime, lastTrade.Amount)
 				} else {
-					sellVolume.Insert(lastMatch.Time, lastMatch.Size)
+					sellVolume.Insert(lastTrade.EventTime, lastTrade.Amount)
 				}
-				logger.Debugf("%s %s %f", lastMatch.ProductId, lastMatch.Side, lastMatch.Size)
+				if buyVolume.Sum() < 0 {
+					logger.Debugf("negative buy %v", buyVolume)
+				}
+				if sellVolume.Sum() < 0 {
+					logger.Debugf("negative sell %v", sellVolume)
+				}
+				if (buyVolume.Sum() - sellVolume.Sum()) / (buyVolume.Sum() + sellVolume.Sum()) > 1 {
+					logger.Debugf("bad > 1 buy %v", sellVolume)
+					logger.Debugf("bad > 1 sell %v", buyVolume)
+				}else if (buyVolume.Sum() - sellVolume.Sum()) / (buyVolume.Sum() + sellVolume.Sum()) < -1 {
+					logger.Debugf("bad < -1 buy %v", sellVolume)
+					logger.Debugf("bad < -1 sell %v", buyVolume)
+				}
 				if buyVolume.Range() > lookback/2 &&
 					sellVolume.Range() > lookback/2 &&
 					buyVolume.Sum()+sellVolume.Sum() != 0 {
@@ -76,7 +90,7 @@ func WatchTimedTradeImbalance(
 					case output <- &common.Signal{
 						Name:  signalName,
 						Value: (buyVolume.Sum() - sellVolume.Sum()) / (buyVolume.Sum() + sellVolume.Sum()),
-						Time:  lastMatch.Time,
+						Time:  lastTrade.EventTime,
 					}:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
@@ -86,9 +100,9 @@ func WatchTimedTradeImbalance(
 					}
 				}
 			}
-		case newMatch = <-inputCh:
-			if lastMatch == nil || newMatch.Sequence > lastMatch.Sequence {
-				lastMatch = newMatch
+		case *newTrade = <-inputCh:
+			if lastTrade == nil || newTrade.EventTime.Sub(lastTrade.EventTime) >= 0 {
+				lastTrade = newTrade
 				updateImbalanceTimer.Reset(time.Nanosecond * 300)
 			}
 		}

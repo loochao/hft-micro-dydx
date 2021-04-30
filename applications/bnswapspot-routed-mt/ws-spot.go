@@ -23,7 +23,6 @@ func handleSpotWSOutboundAccountPosition(account *bnspot.AccountUpdateEvent) {
 		if _, ok := bnSymbolsMap[symbol]; !ok {
 			continue
 		}
-
 		var lastBalance *bnspot.Balance
 		if b, ok := bnspotBalances[symbol]; ok {
 			b := b

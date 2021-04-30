@@ -3,6 +3,7 @@ package bnspot
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"net/url"
 	"strconv"
 	"time"
@@ -368,4 +369,68 @@ type Depth5Stream struct {
 }
 
 type Ping struct {
+}
+
+//{
+//  "e": "trade",     // Event type
+//  "E": 123456789,   // Event time
+//  "s": "BNBBTC",    // Symbol
+//  "t": 12345,       // Trade ID
+//  "p": "0.001",     // Price
+//  "q": "100",       // Quantity
+//  "b": 88,          // Buyer order ID
+//  "a": 50,          // Seller order ID
+//  "T": 123456785,   // Trade time
+//  "m": true,        // Is the buyer the market maker?
+//  "M": true         // Ignore
+//}
+
+type Trade struct {
+	EventType                string    `json:"e"`
+	EventTime                time.Time `json:"-"`
+	Symbol                   string    `json:"s"`
+	Price                    float64   `json:"-"`
+	Quantity                 float64   `json:"-"`
+	TradeTime                time.Time `json:"-"`
+	IsTheBuyerTheMarketMaker bool      `json:"m"`
+	Ignore                   bool      `json:"M"`
+}
+
+func (trade *Trade) UnmarshalJSON(data []byte) error {
+	type Alias Trade
+	aux := struct {
+		EventTime json.RawMessage `json:"E"`
+		TradeTime json.RawMessage `json:"T"`
+		Price     json.RawMessage `json:"p"`
+		Quantity  json.RawMessage `json:"q"`
+		*Alias
+	}{Alias: (*Alias)(trade)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	} else {
+		eventTime, err := common.ParseInt(aux.EventTime)
+		if err != nil {
+			return err
+		}
+		tradeTime, err := common.ParseInt(aux.TradeTime)
+		if err != nil {
+			return err
+		}
+		trade.Price, err = common.ParseFloat(aux.Price[1 : len(aux.Price)-1])
+		if err != nil {
+			return err
+		}
+		trade.Quantity, err = common.ParseFloat(aux.Quantity[1 : len(aux.Quantity)-1])
+		if err != nil {
+			return err
+		}
+		trade.EventTime = time.Unix(0, eventTime*1000000)
+		trade.TradeTime = time.Unix(0, tradeTime*1000000)
+		return nil
+	}
+}
+
+type WSTrade struct {
+	Stream string `json:"stream"`
+	Data   Trade `json:"data"`
 }

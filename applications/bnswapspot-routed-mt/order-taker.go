@@ -16,9 +16,8 @@ func watchTakerOrderRequest(
 	outputOrderCh chan bnswap.Order,
 	outputOrderErrorCh chan TakerOrderNewError,
 ) {
-	defer func() {
-		logger.Debugf("EXIT watchTakerOrderRequest")
-	}()
+	logger.Debugf("START watchTakerOrderRequest")
+	defer logger.Debugf("EXIT watchTakerOrderRequest")
 	for {
 		select {
 		case <-ctx.Done():
@@ -28,24 +27,22 @@ func watchTakerOrderRequest(
 				break
 			}
 			childCtx, _ := context.WithTimeout(ctx, timeout)
-			logger.Debugf("TAKER SUBMIT %v", newOrderParam)
 			order, err := api.SubmitOrder(childCtx, newOrderParam)
 			if err != nil {
-				logger.Debugf("TAKER SUBMIT ERROR %v %v", err, newOrderParam)
-				outputOrderErrorCh <- TakerOrderNewError{
+				logger.Debugf("api.SubmitOrder(childCtx, newOrderParam) error %v %v", err, newOrderParam)
+				select {
+				case outputOrderErrorCh <- TakerOrderNewError{
 					Error:  err,
 					Params: newOrderParam,
+				}:
+				default:
+					logger.Debugf("outputOrderErrorCh <- TakerOrderNewError failed, ch len %d", len(outputOrderErrorCh))
 				}
-			} else if order.Status == "FILLED" ||
-				order.Status == "CANCELED" ||
-				order.Status == "REJECTED" ||
-				order.Status == "EXPIRED" {
-				bnswapOrderFinishCh <- *order
+			} else {
 				select {
-				case <-ctx.Done():
-				case <-time.After(time.Second):
-					logger.Debugf("SEND ORDER RESP OUT TIMEOUT IN 1S")
 				case outputOrderCh <- *order:
+				default:
+					logger.Debugf("outputOrderCh <- *order failed ch len %d", len(orderRequestCh))
 				}
 			}
 		}

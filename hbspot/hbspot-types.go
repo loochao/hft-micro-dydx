@@ -2,7 +2,9 @@ package hbspot
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/geometrybase/hft-micro/logger"
+	"strings"
 	"time"
 )
 
@@ -85,8 +87,8 @@ type Depth20 struct {
 
 func (depth *Depth20) GetBids() [20][2]float64 { return depth.Bids }
 func (depth *Depth20) GetAsks() [20][2]float64 { return depth.Asks }
-func (depth *Depth20) GetSymbol() string { return depth.Symbol }
-func (depth *Depth20) GetTime() time.Time { return depth.EventTime }
+func (depth *Depth20) GetSymbol() string       { return depth.Symbol }
+func (depth *Depth20) GetTime() time.Time      { return depth.EventTime }
 
 func (depth *Depth20) UnmarshalJSON(data []byte) error {
 	type Alias Depth20
@@ -323,4 +325,35 @@ func (wsCap *WsCap) UnmarshalJSON(data []byte) error {
 
 type MarketStatus struct {
 	MarketStatus int `json:"marketStatus"`
+}
+
+type WsTrade struct {
+	Ch   string `json:"ch"`
+	Tick struct {
+		Data []*TradeDetail `json:"data"`
+	} `json:"tick"`
+	Timestamp time.Time `json:"-"`
+}
+
+func (wsCap *WsTrade) UnmarshalJSON(data []byte) error {
+	type Alias WsTrade
+	aux := struct {
+		Timestamp int64 `json:"ts,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(wsCap),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	wsCap.Timestamp = time.Unix(0, aux.Timestamp*1000000)
+	strs := strings.Split(wsCap.Ch, ".")
+	if len(strs) == 4 {
+		for i := range wsCap.Tick.Data {
+			wsCap.Tick.Data[i].Symbol = strs[1]
+		}
+	}else{
+		return fmt.Errorf("bad ch %s, can't find symbol", wsCap.Ch)
+	}
+	return nil
 }

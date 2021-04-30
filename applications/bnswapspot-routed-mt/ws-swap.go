@@ -7,40 +7,40 @@ import (
 )
 
 func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
-	for _, pos := range data.Account.Positions {
-		if _, ok := bnSymbolsMap[pos.Symbol]; !ok {
+	for _, nextPos := range data.Account.Positions {
+		if _, ok := bnSymbolsMap[nextPos.Symbol]; !ok {
 			continue
 		}
-		if pos.PositionSide != "BOTH" {
+		if nextPos.PositionSide != "BOTH" {
 			continue
 		}
 		var lastPosition *bnswap.Position
-		if p, ok := bnswapPositions[pos.Symbol]; ok {
+		if p, ok := bnswapPositions[nextPos.Symbol]; ok {
 			p := p
 			lastPosition = &p
 		}
-		if futuresPosition, ok := bnswapPositions[pos.Symbol]; !ok {
-			bnswapPositions[pos.Symbol] = bnswap.Position{
-				Symbol:           pos.Symbol,
-				EntryPrice:       pos.EntryPrice,
-				PositionAmt:      pos.PositionAmt,
-				UnRealizedProfit: pos.UnRealizedProfit,
+		if currentPosition, ok := bnswapPositions[nextPos.Symbol]; !ok {
+			bnswapPositions[nextPos.Symbol] = bnswap.Position{
+				Symbol:           nextPos.Symbol,
+				EntryPrice:       nextPos.EntryPrice,
+				PositionAmt:      nextPos.PositionAmt,
+				UnRealizedProfit: nextPos.UnRealizedProfit,
+				PositionSide:     "BOTH",
 			}
 		} else {
-			futuresPosition.EntryPrice = pos.EntryPrice
-			futuresPosition.PositionAmt = pos.PositionAmt
-			futuresPosition.UnRealizedProfit = pos.UnRealizedProfit
-			bnswapPositions[pos.Symbol] = futuresPosition
+			currentPosition.EntryPrice = nextPos.EntryPrice
+			currentPosition.PositionAmt = nextPos.PositionAmt
+			currentPosition.UnRealizedProfit = nextPos.UnRealizedProfit
+			bnswapPositions[nextPos.Symbol] = currentPosition
 		}
 
-		bnswapPositionsUpdateTimes[pos.Symbol] = time.Now()
+		bnswapPositionsUpdateTimes[nextPos.Symbol] = time.Now()
 
 		if lastPosition == nil ||
-			lastPosition.PositionAmt != bnswapPositions[pos.Symbol].PositionAmt ||
-			lastPosition.EntryPrice != bnswapPositions[pos.Symbol].EntryPrice {
-			//bnswapOrderSilentTimes[pos.Symbol] = time.Now()
-			logger.Debugf("WS POSITION CHANGED NEW %s", pos.ToString())
-			bnswapHttpPositionUpdateSilentTimes[pos.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
+			lastPosition.PositionAmt != bnswapPositions[nextPos.Symbol].PositionAmt ||
+			lastPosition.EntryPrice != bnswapPositions[nextPos.Symbol].EntryPrice {
+			logger.Debugf("WS POSITION CHANGED NEW %s", nextPos.ToString())
+			bnswapHttpPositionUpdateSilentTimes[nextPos.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			bnLoopTimer.Reset(time.Nanosecond)
 		}
 	}
@@ -50,8 +50,8 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			cwb := balance.CrossWalletBalance
 			if bnswapUSDTAsset == nil {
 				bnswapUSDTAsset = &bnswap.Asset{
-					Asset:         balance.Asset,
-					WalletBalance: &wb,
+					Asset:              balance.Asset,
+					WalletBalance:      &wb,
 					CrossWalletBalance: &cwb,
 				}
 			} else {
@@ -65,8 +65,8 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			cwb := balance.CrossWalletBalance
 			if bnswapBNBAsset == nil {
 				bnswapBNBAsset = &bnswap.Asset{
-					Asset:         balance.Asset,
-					WalletBalance: &wb,
+					Asset:              balance.Asset,
+					WalletBalance:      &wb,
 					CrossWalletBalance: &cwb,
 				}
 			} else {
@@ -75,14 +75,5 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			}
 			continue
 		}
-	}
-}
-
-func handleWSOrder(wsOrder *bnswap.WSOrder) {
-	if wsOrder.Status == "FILLED" ||
-		wsOrder.Status == "CANCELED" ||
-		wsOrder.Status == "REJECTED" ||
-		wsOrder.Status == "EXPIRED" {
-		bnswapOrderFinishCh <- *wsOrder.ToOrder()
 	}
 }

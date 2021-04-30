@@ -22,9 +22,11 @@ func (tm *TimedSum) Insert(timestamp time.Time, value float64) float64 {
 			break
 		}
 	}
+	//需要offset 1
+	cutIndex += 1
 	if cutIndex > 0 {
-		tm.values = tm.values[cutIndex+1:]
-		tm.times = tm.times[cutIndex+1:]
+		tm.values = tm.values[cutIndex:]
+		tm.times = tm.times[cutIndex:]
 	}
 	return tm.sum
 }
@@ -73,9 +75,11 @@ func (tm *TimedMean) Insert(timestamp time.Time, value float64) float64 {
 			break
 		}
 	}
+	//需要offset 1
+	cutIndex += 1
 	if cutIndex > 0 {
-		tm.values = tm.values[cutIndex+1:]
-		tm.times = tm.times[cutIndex+1:]
+		tm.values = tm.values[cutIndex:]
+		tm.times = tm.times[cutIndex:]
 	}
 	if len(tm.values) > 0 {
 		tm.mean = tm.sum / float64(len(tm.values))
@@ -134,10 +138,12 @@ func (tm *TimedWeightedMean) Insert(timestamp time.Time, weight, value float64) 
 			break
 		}
 	}
+	//需要offset 1
+	cutIndex += 1
 	if cutIndex > 0 {
-		tm.values = tm.values[cutIndex+1:]
-		tm.weights = tm.weights[cutIndex+1:]
-		tm.times = tm.times[cutIndex+1:]
+		tm.values = tm.values[cutIndex:]
+		tm.weights = tm.weights[cutIndex:]
+		tm.times = tm.times[cutIndex:]
 	}
 	if tm.weight > 0 {
 		tm.mean = tm.sum / tm.weight
@@ -161,3 +167,5 @@ func (tm *TimedWeightedMean) Range() time.Duration {
 		return time.Duration(0)
 	}
 }
+
+

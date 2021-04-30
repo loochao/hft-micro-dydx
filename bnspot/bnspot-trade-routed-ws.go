@@ -1,7 +1,8 @@
-package bnswap
+package bnspot
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
@@ -14,10 +15,9 @@ import (
 )
 
 type TradeRoutedWS struct {
+	messageCh   chan []byte
 	done        chan interface{}
 	reconnectCh chan interface{}
-	messageCh   chan []byte
-	api         *API
 	stopped     int32
 }
 
@@ -40,7 +40,7 @@ func (w *TradeRoutedWS) readLoop(conn *websocket.Conn) {
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
-			logger.Warnf("w.readAl error %v", err)
+			logger.Warnf("w.readAll error %v", err)
 			w.restart()
 			return
 		}
@@ -49,14 +49,14 @@ func (w *TradeRoutedWS) readLoop(conn *websocket.Conn) {
 		default:
 			if time.Now().Sub(logSilentTime) > 0 {
 				logSilentTime = time.Now().Add(time.Minute)
-				logger.Debugf("w.messageCh <- msg failed, ch len %d", len(w.messageCh))
+				logger.Debugf("w.messageCh <- msg, ch len %d", len(w.messageCh))
 			}
 		}
 	}
 }
 
 func (w *TradeRoutedWS) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 1024)
+	b := make([]byte, 0, 2048)
 	for {
 		if len(b) == cap(b) {
 			// Add more capacity (let append pick how much).
@@ -76,7 +76,7 @@ func (w *TradeRoutedWS) readAll(r io.Reader) ([]byte, error) {
 func (w *TradeRoutedWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
-		logger.Debugf("RECONNECT %s, %d RETRIES", wsUrl, counter)
+		logger.Debugf("reconnect %s, %d retries", wsUrl, counter)
 	}
 
 	var dialer *websocket.Dialer
@@ -84,7 +84,7 @@ func (w *TradeRoutedWS) reconnect(ctx context.Context, wsUrl string, proxy strin
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			return nil, fmt.Errorf("url.Parse error %v", err)
+			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -105,7 +105,7 @@ func (w *TradeRoutedWS) reconnect(ctx context.Context, wsUrl string, proxy strin
 		},
 	)
 	if err != nil {
-		logger.Warnf("dialer.DialContext ERROR %v", err)
+		logger.Warnf("dialer.DialContext error %v", err)
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("reconnect error: context is done")
@@ -119,32 +119,36 @@ func (w *TradeRoutedWS) reconnect(ctx context.Context, wsUrl string, proxy strin
 }
 
 func (w *TradeRoutedWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *Trade) {
-	urlStr := "wss://fstream.binance.com/stream?streams="
-	symbols := make([]string, 0)
+	logger.Debugf("START mainLoop")
+	urlStr := "wss://stream.binance.com:9443/stream?streams="
 	for symbol := range channels {
-		symbols = append(symbols, symbol)
 		urlStr += fmt.Sprintf(
-			"%s@aggTrade/",
+			"%s@trade/",
 			strings.ToLower(symbol),
 		)
 	}
 	urlStr = urlStr[:len(urlStr)-1]
-	logger.Debugf("START mainLoop")
 
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 
 	defer func() {
-		w.Stop()
 		cancel()
-		logger.Debugf("EXIT mainLoop %s", symbols)
+		w.Stop()
+		logger.Debugf("EXIT mainLoop")
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
+			return
+		case <-w.done:
 			if internalCancel != nil {
 				internalCancel()
 				internalCancel = nil
@@ -169,12 +173,10 @@ func (w *TradeRoutedWS) mainLoop(ctx context.Context, proxy string, channels map
 					internalCancel()
 					internalCancel = nil
 				}
-				w.Stop()
 				return
 			}
 			go w.readLoop(conn)
 			go w.heartbeatLoop(internalCtx, conn)
-
 		}
 	}
 }
@@ -185,12 +187,11 @@ func (w *TradeRoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn)
 		logger.Debugf("EXIT heartbeatLoop")
 		err := conn.Close()
 		if err != nil {
-			logger.Debugf("conn.Close() error %v", err)
+			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
 
-	trafficCh := make(chan interface{})
-
+	trafficCh := make(chan interface{}, 100)
 	conn.SetPingHandler(func(msg string) error {
 		select {
 		case trafficCh <- nil:
@@ -198,19 +199,13 @@ func (w *TradeRoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn)
 		}
 		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
-			select {
-			case <-ctx.Done():
-				return nil
-			default:
-				w.restart()
-			}
-			return nil
+			w.restart()
+			return err
 		}
 		return nil
 	})
 
 	timer := time.NewTimer(time.Minute * 15)
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -239,16 +234,11 @@ func (w *TradeRoutedWS) Stop() {
 func (w *TradeRoutedWS) restart() {
 	select {
 	case <-w.done:
-		return
-	default:
-	}
-	select {
-	case <-time.After(time.Second):
-		w.Stop()
-		logger.Debugf("w.reconnectCh <- nil timeout in 1s, stop ws")
 	case w.reconnectCh <- nil:
-		logger.Debugf("restart ws")
-		return
+		logger.Debugf("restart")
+	default:
+		logger.Debugf("w.reconnectCh <- nil failed, stop ws")
+		w.Stop()
 	}
 }
 
@@ -261,6 +251,7 @@ func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map
 	defer logger.Debugf("EXIT dataHandleLoop %d", id)
 	logSilentTime := time.Now()
 	var ch chan *Trade
+	var err error
 	var ok bool
 	for {
 		select {
@@ -269,21 +260,22 @@ func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			trade, err := ParseTrade(msg)
+			var trade WSTrade
+			err = json.Unmarshal(msg, &trade)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("json.Unmarshal(msg, &trade) error %v %s", err, msg)
 					logSilentTime = time.Now().Add(time.Minute)
-					logger.Debugf("ParseTrade(msg) error %v", err)
-					continue
 				}
+				continue
 			}
-			if ch, ok = channels[trade.Symbol]; ok {
+			if ch, ok = channels[trade.Data.Symbol]; ok {
 				select {
-				case ch <- trade:
+				case ch <- &trade.Data:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("ch <- &trade failed ch len %d", len(ch))
 						logSilentTime = time.Now().Add(time.Minute)
-						logger.Debugf("ch <- trade failed, ch len %d", len(ch))
 					}
 				}
 			}
@@ -298,8 +290,8 @@ func NewTradeRoutedWS(
 ) *TradeRoutedWS {
 	ws := TradeRoutedWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}),
-		messageCh: make(chan []byte, 100*len(channels)),
+		reconnectCh: make(chan interface{}, 100),
+		messageCh:   make(chan []byte, 10*len(channels)),
 		stopped:     0,
 	}
 	go ws.mainLoop(ctx, proxy, channels)

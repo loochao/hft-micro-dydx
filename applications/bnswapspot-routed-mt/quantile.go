@@ -47,7 +47,6 @@ func watchDeltaQuantile(
 			if bandScale == nil {
 				continue
 			}
-			//logger.Debugf("QUANTILES UPDATING...")
 			spotBarsMap := data[0]
 			swapBarsMap := data[1]
 			quantiles := make(map[string]Quantile)
@@ -91,13 +90,13 @@ func watchDeltaQuantile(
 					top = mid + *bandScale*topBand
 
 					q := Quantile{
-						Symbol:  symbol,
-						Top:     top / maClose,
-						Bot:     bot / maClose,
-						Mid:     mid / maClose,
+						Symbol:      symbol,
+						Top:         top / maClose,
+						Bot:         bot / maClose,
+						Mid:         mid / maClose,
 						OriginalTop: quantile.Quantile(topQuantile) / maClose,
 						OriginalBot: quantile.Quantile(botQuantile) / maClose,
-						MaClose: maClose,
+						MaClose:     maClose,
 					}
 					if q.Top < minimalEnterDelta {
 						q.Top = minimalEnterDelta
@@ -109,7 +108,11 @@ func watchDeltaQuantile(
 				}
 			}
 			if len(quantiles) > 0 {
-				outputCh <- quantiles
+				select {
+				case outputCh <- quantiles:
+				default:
+					logger.Debugf("outputCh <- quantiles failed ch len %d", len(outputCh))
+				}
 			}
 		}
 	}

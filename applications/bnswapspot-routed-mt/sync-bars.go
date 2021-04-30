@@ -136,6 +136,8 @@ func watchSpotBars(
 					case <-ctx.Done():
 						return
 					case output <- outputMap:
+					default:
+						logger.Debugf("output <- outputMap failed ch len %d", len(output))
 					}
 					outputResults = false
 					//logger.Debugf("OUTPUT MAKER BARS")
@@ -273,6 +275,8 @@ func watchSwapBars(
 					case <-ctx.Done():
 						return
 					case output <- outputMap:
+					default:
+						logger.Debugf("output <- outputMap failed ch len %d", len(output))
 					}
 					outputResults = false
 					//logger.Debugf("OUTPUT TAKER BARS")

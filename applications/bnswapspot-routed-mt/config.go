@@ -36,6 +36,7 @@ type Config struct {
 	LoopInterval          *time.Duration `yaml:"loopInterval,omitempty"`
 	LogInterval           *time.Duration `yaml:"logInterval,omitempty"`
 	PullInterval          *time.Duration `yaml:"pullInterval,omitempty"`
+
 	BalancePositionMaxAge *time.Duration `yaml:"balancePositionMaxAge,omitempty"`
 
 	ResetUnrealisedPnlInterval *time.Duration `yaml:"resetUnrealisedPnlInterval,omitempty"`

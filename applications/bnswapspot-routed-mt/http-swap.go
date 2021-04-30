@@ -75,6 +75,6 @@ func handleSwapHttpAccount(account bnswap.Account) {
 //		order.Status == "CANCELED" ||
 //		order.Status == "REJECTED" ||
 //		order.Status == "EXPIRED" {
-//		bnswapOrderFinishCh <- *order
+//		bnswapOrderResponseCh <- *order
 //	}
 //}
