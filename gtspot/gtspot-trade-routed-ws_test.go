@@ -1,4 +1,4 @@
-package cbspot
+package gtspot
 
 import (
 	"context"
@@ -7,22 +7,18 @@ import (
 	"testing"
 )
 
-func TestNewMatchRoutedWS(t *testing.T) {
+func TestNewTradeRoutedWS(t *testing.T) {
 	var ctx = context.Background()
-	symbols := []string{"BTC-USD"}
+	symbols := []string{"FIL_USDT"}
 	channels := make(map[string]chan common.Trade)
 	for _, symbol := range symbols {
 		channels[symbol] = make(chan common.Trade, 1000)
 	}
-	_ = NewMatchRoutedWS(
-		ctx,
-		"socks5://127.0.0.1:1080",
-		channels,
-	)
+	_ = NewTradeRoutedWS(ctx, "socks5://127.0.0.1:1080", channels)
 	for {
 		select {
 		case d := <-channels[symbols[0]]:
-			logger.Debugf("FIL-USD %v %f %f", d.GetTime(), d.GetPrice(), d.GetSize())
+			logger.Debugf("%v", d)
 		}
 	}
 }

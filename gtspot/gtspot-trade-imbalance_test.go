@@ -1,4 +1,4 @@
-package bnspot
+package gtspot
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 func TestWatchTimedTradeImbalances(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	symbols := []string{"FILUSDT"}
+	symbols := []string{"FIL_USDT"}
 	channels := make(map[string]chan *common.Signal)
 	for _, symbol := range symbols {
 		channels[symbol] = make(chan *common.Signal, 1000)
@@ -19,7 +19,7 @@ func TestWatchTimedTradeImbalances(t *testing.T) {
 		ctx,
 		cancel,
 		"socks5://127.0.0.1:1080",
-		time.Second*300,
+		time.Second*30,
 		channels,
 	)
 	for {

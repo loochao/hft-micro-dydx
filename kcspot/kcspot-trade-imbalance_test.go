@@ -1,4 +1,4 @@
-package bnspot
+package kcspot
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 func TestWatchTimedTradeImbalances(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	symbols := []string{"FILUSDT"}
+	symbols := []string{"FIL-USDT"}
 	channels := make(map[string]chan *common.Signal)
 	for _, symbol := range symbols {
 		channels[symbol] = make(chan *common.Signal, 1000)

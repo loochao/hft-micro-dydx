@@ -3,6 +3,7 @@ package bnswap
 import (
 	"context"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -118,7 +119,7 @@ func (w *TradeRoutedWS) reconnect(ctx context.Context, wsUrl string, proxy strin
 	return conn, nil
 }
 
-func (w *TradeRoutedWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *Trade) {
+func (w *TradeRoutedWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan common.Trade) {
 	urlStr := "wss://fstream.binance.com/stream?streams="
 	symbols := make([]string, 0)
 	for symbol := range channels {
@@ -256,11 +257,11 @@ func (w *TradeRoutedWS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map[string]chan *Trade) {
+func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map[string]chan common.Trade) {
 	logger.Debugf("START dataHandleLoop %d", id)
 	defer logger.Debugf("EXIT dataHandleLoop %d", id)
 	logSilentTime := time.Now()
-	var ch chan *Trade
+	var ch chan common.Trade
 	var ok bool
 	for {
 		select {
@@ -294,7 +295,7 @@ func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map
 func NewTradeRoutedWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan *Trade,
+	channels map[string]chan common.Trade,
 ) *TradeRoutedWS {
 	ws := TradeRoutedWS{
 		done:        make(chan interface{}),
@@ -304,7 +305,7 @@ func NewTradeRoutedWS(
 	}
 	go ws.mainLoop(ctx, proxy, channels)
 	for i := 0; i < 4; i++ {
-		cs := make(map[string]chan *Trade)
+		cs := make(map[string]chan common.Trade)
 		for symbol, ch := range channels {
 			cs[symbol] = ch
 		}

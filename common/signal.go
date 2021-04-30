@@ -3,7 +3,8 @@ package common
 import "time"
 
 type Signal struct {
-	Name  string
-	Value float64
-	Time  time.Time
+	Value  float64
+	Weight float64
+	Name   string
+	Time   time.Time
 }

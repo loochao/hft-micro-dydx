@@ -1,4 +1,4 @@
-package bnswap
+package okspot
 
 import (
 	"context"
@@ -19,7 +19,7 @@ func StreamTimedTradeImbalances(
 		matchesCh[symbol] = make(chan common.Trade, 10000)
 		go common.StreamTimedTradeImbalance(
 			ctx,
-			fmt.Sprintf("bnswap-trade-imbalance-%s", symbol),
+			fmt.Sprintf("okspot-trade-imbalance-%s", symbol),
 			lookback,
 			matchesCh[symbol],
 			output,

@@ -3,9 +3,15 @@ package okspot
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"strconv"
 	"time"
+)
+
+var (
+	TradeSideSell = "sell"
+	TradeSideBuy  = "buy"
 )
 
 type Credentials struct {
@@ -165,7 +171,7 @@ func (depth *Depth5) UnmarshalJSON(data []byte) error {
 type CancelOrderParam struct {
 	Symbol    string `json:"instrument_id"`
 	ClientOid string `json:"client_oid,omitempty"`
-	OrderId string `json:"order_id,omitempty"`
+	OrderId   string `json:"order_id,omitempty"`
 }
 
 type CancelBatchOrders struct {
@@ -193,3 +199,70 @@ type Status struct {
 	StartTime    string `json:"start_time"`
 	EndTime      string `json:"end_time"`
 }
+
+//{
+//    "table": "spot/trade",
+//    "data": [{
+//        "instrument_id": "ETH-USDT",
+//        "price": "162.12",
+//        "side": "buy",
+//        "size": "11.085",
+//        "timestamp": "2019-05-06T06:51:24.389Z",
+//        "trade_id": "1210447366"
+//    }]
+//}
+
+type WSTrades struct {
+	Table string  `json:"table"`
+	Data  []Trade `json:"data"`
+}
+
+type Trade struct {
+	Symbol    string    `json:"instrument_id"`
+	Price     float64   `json:"-"`
+	Side      string    `json:"side"`
+	Size      float64   `json:"-"`
+	TradeId   int64     `json:"-"`
+	EventTime time.Time `json:"-"`
+}
+
+func (trade *Trade) UnmarshalJSON(data []byte) error {
+	type Alias Trade
+	aux := struct {
+		Price     json.RawMessage `json:"price"`
+		Size      json.RawMessage `json:"size"`
+		TradeId   json.RawMessage `json:"trade_id"`
+		Timestamp string          `json:"timestamp"`
+		*Alias
+	}{
+		Alias: (*Alias)(trade),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	} else {
+		trade.EventTime, err = time.Parse(okspotTimeLayout, aux.Timestamp)
+		if err != nil {
+			return err
+		}
+		trade.TradeId, err = common.ParseInt(aux.TradeId[1 : len(aux.TradeId)-1])
+		if err != nil {
+			return err
+		}
+		trade.Price, err = common.ParseFloat(aux.Price[1 : len(aux.Price)-1])
+		if err != nil {
+			return err
+		}
+		trade.Size, err = common.ParseFloat(aux.Size[1 : len(aux.Size)-1])
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func (trade *Trade) GetSymbol() string  { return trade.Symbol }
+func (trade *Trade) GetSize() float64   { return trade.Size }
+func (trade *Trade) GetPrice() float64  { return trade.Price }
+func (trade *Trade) GetTime() time.Time { return trade.EventTime }
+func (trade *Trade) IsBuy() bool { return trade.Side == TradeSideBuy }
+

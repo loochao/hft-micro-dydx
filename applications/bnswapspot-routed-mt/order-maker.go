@@ -67,19 +67,20 @@ func watchSpotOrderRequest(
 
 func updateMakerOldOrders() {
 	for symbol, order := range bnspotOpenOrders {
-		if bnspotOrderCancelCounts[symbol] > *bnConfig.OrderMaxCancelCount {
-			delete(bnspotOpenOrders, symbol)
-			continue
-		}
+		//if bnspotOrderCancelCounts[symbol] > *bnConfig.OrderMaxCancelCount {
+		//	delete(bnspotOpenOrders, symbol)
+		//	continue
+		//}
 		if time.Now().Sub(bnspotCancelSilentTimes[symbol]) < 0 {
 			continue
 		}
 		if isOrderOK(order) {
 			continue
 		}
-		bnspotOrderSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderSilent)
 		bnspotCancelSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent)
-		bnspotOrderCancelCounts[order.Symbol] += 1
+		//bnspotOrderCancelCounts[order.Symbol] += 1
+		bnspotOrderSilentTimes[order.Symbol] = time.Now()
+		delete(bnspotOpenOrders, symbol)
 		bnspotOrderRequestChs[order.Symbol] <- SpotOrderRequest{
 			Cancel: &bnspot.CancelAllOrderParams{Symbol: order.Symbol},
 		}

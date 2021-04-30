@@ -24,8 +24,8 @@ func watchMakerTakerSpread(
 	reportCh chan common.SpreadReport,
 	outputCh chan *common.MakerTakerSpread,
 ) {
-	logger.Debugf("START watchMakerTakerSpread")
-	defer logger.Debugf("EXIT watchMakerTakerSpread")
+	logger.Debugf("START watchMakerTakerSpread %s", symbol)
+	defer logger.Debugf("EXIT watchMakerTakerSpread %s", symbol)
 	var err error
 	var makerRawDepth, takerRawDepth *common.DepthRawMessage
 	var makerDepth, newMakerDepth *bnspot.Depth5

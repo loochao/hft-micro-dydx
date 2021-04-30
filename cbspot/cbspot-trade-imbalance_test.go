@@ -15,7 +15,7 @@ func TestWatchTimedTradeImbalances(t *testing.T) {
 	for _, symbol := range symbols {
 		channels[symbol] = make(chan *common.Signal, 1000)
 	}
-	go WatchTimedTradeImbalances(
+	go StreamTimedTradeImbalances(
 		ctx,
 		cancel,
 		"socks5://127.0.0.1:1080",

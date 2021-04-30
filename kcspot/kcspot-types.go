@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"strconv"
 	"strings"
@@ -39,6 +40,9 @@ const (
 	SystemStatusOpen       = "open"
 	SystemStatusCancelOnly = "cancelonly"
 	SystemStatusClose      = "close"
+
+	TradeSideBuy  = "buy"
+	TradeSideSell = "sell"
 )
 
 var CandleTypeDurations = map[string]time.Duration{
@@ -149,8 +153,8 @@ type Depth5 struct {
 
 func (depth *Depth5) GetBids() [5][2]float64 { return depth.Bids }
 func (depth *Depth5) GetAsks() [5][2]float64 { return depth.Asks }
-func (depth *Depth5) GetSymbol() string { return depth.Symbol }
-func (depth *Depth5) GetTime() time.Time { return depth.EventTime }
+func (depth *Depth5) GetSymbol() string      { return depth.Symbol }
+func (depth *Depth5) GetTime() time.Time     { return depth.EventTime }
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	type Alias Depth5
 	aux := struct {
@@ -372,3 +376,83 @@ type SystemStatus struct {
 	Msg    string
 	Status string
 }
+
+//{
+//    "type":"message",
+//    "topic":"/market/match:BTC-USDT",
+//    "subject":"trade.l3match",
+//    "data":{
+//
+//        "sequence":"1545896669145",
+//        "type":"match",
+//        "symbol":"BTC-USDT",
+//        "side":"buy",
+//        "price":"0.08200000000000000000",
+//        "size":"0.01022222000000000000",
+//        "tradeId":"5c24c5da03aa673885cd67aa",
+//        "takerOrderId":"5c24c5d903aa6772d55b371e",
+//        "makerOrderId":"5c2187d003aa677bd09d5c93",
+//        "time":"1545913818099033203"
+//    }
+//}
+
+type WSTrade struct {
+	Type    string `json:"type"`
+	Topic   string `json:"topic"`
+	Subject string `json:"subject"`
+	Data    Trade  `json:"data"`
+}
+
+type Trade struct {
+	Sequence     int64     `json:"-"`
+	Type         string    `json:"type"`
+	Symbol       string    `json:"symbol"`
+	Side         string    `json:"side"`
+	Price        float64   `json:"-"`
+	Size         float64   `json:"-"`
+	TradeId      string    `json:"tradeId"`
+	TakerOrderId string    `json:"takerOrderId"`
+	MakerOrderId string    `json:"makerOrderId"`
+	Time         time.Time `json:"-"`
+}
+
+func (trade *Trade) UnmarshalJSON(data []byte) error {
+	type Alias Trade
+	aux := struct {
+		Sequence json.RawMessage `json:"Sequence"`
+		Price    json.RawMessage `json:"price"`
+		Size     json.RawMessage `json:"size"`
+		Time     json.RawMessage `json:"time"`
+		*Alias
+	}{
+		Alias: (*Alias)(trade),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	} else {
+		timestamp, err := common.ParseInt(aux.Time[1:len(aux.Time)-1])
+		if err != nil {
+			return err
+		}
+		trade.Time = time.Unix(0, timestamp*1000000)
+		trade.Price, err = common.ParseFloat(aux.Price[1 : len(aux.Price)-1])
+		if err != nil {
+			return err
+		}
+		trade.Size, err = common.ParseFloat(aux.Size[1 : len(aux.Size)-1])
+		if err != nil {
+			return err
+		}
+		trade.Sequence, err = common.ParseInt(aux.Sequence[1 : len(aux.Sequence)-1])
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func (trade *Trade) GetSymbol() string  { return trade.Symbol }
+func (trade *Trade) GetSize() float64   { return trade.Size }
+func (trade *Trade) GetPrice() float64  { return trade.Price }
+func (trade *Trade) GetTime() time.Time { return trade.Time }
+func (trade *Trade) IsBuy() bool        { return trade.Side == TradeSideBuy }

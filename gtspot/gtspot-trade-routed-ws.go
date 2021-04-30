@@ -1,4 +1,4 @@
-package bnspot
+package gtspot
 
 import (
 	"context"
@@ -10,16 +10,59 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync/atomic"
 	"time"
 )
 
 type TradeRoutedWS struct {
-	messageCh   chan []byte
+	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
+	messageCh   chan []byte
+	symbolCh    chan string
+	pingCh      chan []byte
 	stopped     int32
+}
+
+func (w *TradeRoutedWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+	logger.Debugf("START writeLoop")
+	defer logger.Debugf("EXIT writeLoop")
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-w.done:
+			return
+		case msg := <-w.writeCh:
+			var bytes []byte
+			var err error
+			switch d := msg.(type) {
+			case []byte:
+				bytes = d
+			case string:
+				bytes = ([]byte)(d)
+			default:
+				bytes, err = json.Marshal(msg)
+				if err != nil {
+					logger.Debugf("json.Marshal(msg) err %v", err)
+					continue
+				}
+			}
+			err = conn.SetWriteDeadline(time.Now().Add(time.Minute))
+			if err != nil {
+				logger.Debugf("conn.SetWriteDeadline error %v", err)
+				w.restart()
+				return
+			}
+
+			err = conn.WriteMessage(websocket.TextMessage, bytes)
+			if err != nil {
+				logger.Debugf("conn.WriteMessage error %v", err)
+				w.restart()
+				return
+			}
+		}
+	}
 }
 
 func (w *TradeRoutedWS) readLoop(conn *websocket.Conn) {
@@ -29,35 +72,36 @@ func (w *TradeRoutedWS) readLoop(conn *websocket.Conn) {
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
-			logger.Warnf("conn.SetReadDeadline error %v", err)
+			logger.Debugf("conn.SetReadDeadline error %v", err)
 			w.restart()
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
-			logger.Warnf("conn.NextReader error %v", err)
+			logger.Debugf("conn.NextReader error %v", err)
 			w.restart()
 			return
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
-			logger.Warnf("w.readAll error %v", err)
+			logger.Debugf("w.readAll error %v", err)
 			w.restart()
 			return
 		}
+
 		select {
 		case w.messageCh <- msg:
 		default:
 			if time.Now().Sub(logSilentTime) > 0 {
 				logSilentTime = time.Now().Add(time.Minute)
-				logger.Debugf("w.messageCh <- msg, ch len %d", len(w.messageCh))
+				logger.Debugf("w.messageCh <- msg failed ch len %d", len(w.messageCh))
 			}
 		}
 	}
 }
 
 func (w *TradeRoutedWS) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 2048)
+	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
 			// Add more capacity (let append pick how much).
@@ -77,7 +121,7 @@ func (w *TradeRoutedWS) readAll(r io.Reader) ([]byte, error) {
 func (w *TradeRoutedWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
-		logger.Debugf("reconnect %s, %d retries", wsUrl, counter)
+		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
 	}
 
 	var dialer *websocket.Dialer
@@ -106,7 +150,7 @@ func (w *TradeRoutedWS) reconnect(ctx context.Context, wsUrl string, proxy strin
 		},
 	)
 	if err != nil {
-		logger.Warnf("dialer.DialContext error %v", err)
+		logger.Debugf("dialer.DialContext ERROR %v", err)
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("reconnect error: context is done")
@@ -121,35 +165,26 @@ func (w *TradeRoutedWS) reconnect(ctx context.Context, wsUrl string, proxy strin
 
 func (w *TradeRoutedWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan common.Trade) {
 	logger.Debugf("START mainLoop")
-	urlStr := "wss://stream.binance.com:9443/stream?streams="
-	for symbol := range channels {
-		urlStr += fmt.Sprintf(
-			"%s@trade/",
-			strings.ToLower(symbol),
-		)
-	}
-	urlStr = urlStr[:len(urlStr)-1]
-
+	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
-
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
 	defer func() {
 		cancel()
+		if internalCancel != nil {
+			internalCancel()
+		}
 		w.Stop()
-		logger.Debugf("EXIT mainLoop")
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			if internalCancel != nil {
-				internalCancel()
-				internalCancel = nil
-			}
-			return
-		case <-w.done:
 			if internalCancel != nil {
 				internalCancel()
 				internalCancel = nil
@@ -164,61 +199,87 @@ func (w *TradeRoutedWS) mainLoop(ctx context.Context, proxy string, channels map
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
 				internalCancel()
-				internalCancel = nil
 			}
 			internalCtx, internalCancel = context.WithCancel(ctx)
-			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
+			conn, err := w.reconnect(internalCtx, "wss://api.gateio.ws/ws/v4/", proxy, 0)
 			if err != nil {
-				logger.Debugf("w.reconnect error %v, stop ws", err)
-				if internalCancel != nil {
-					internalCancel()
-					internalCancel = nil
-				}
+				logger.Debugf("w.reconnect error %v", err)
+				internalCancel()
+				w.Stop()
 				return
 			}
 			go w.readLoop(conn)
-			go w.heartbeatLoop(internalCtx, conn)
+			go w.writeLoop(internalCtx, conn)
+			go w.heartbeatLoop(internalCtx, conn, symbols)
 		}
 	}
 }
 
-func (w *TradeRoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *TradeRoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
-		logger.Debugf("EXIT heartbeatLoop")
+		logger.Debugf("Exit heartbeatLoop")
 		err := conn.Close()
 		if err != nil {
 			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
 
-	trafficCh := make(chan interface{}, 100)
-	conn.SetPingHandler(func(msg string) error {
-		select {
-		case trafficCh <- nil:
-		default:
-		}
-		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
-		if err != nil {
-			w.restart()
-			return err
-		}
-		return nil
-	})
+	symbolTimeout := time.Minute
+	symbolCheckInterval := time.Second
+	symbolCheckTimer := time.NewTimer(time.Second)
+	defer symbolCheckTimer.Stop()
+	symbolUpdatedTimes := make(map[string]time.Time)
+	for _, symbol := range symbols {
+		symbolUpdatedTimes[symbol] = time.Unix(0, 0)
+	}
 
-	timer := time.NewTimer(time.Minute * 15)
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case <-timer.C:
-			logger.Warnf("no traffic in %v, restart ws", time.Minute*15)
-			w.restart()
-			return
-		case <-trafficCh:
-			timer.Reset(time.Minute * 15)
+		case symbol := <-w.symbolCh:
+			symbolUpdatedTimes[symbol] = time.Now()
+			break
+		case msg := <-w.pingCh:
+			select {
+			case w.writeCh <- msg:
+				break
+			default:
+				logger.Debugf("w.writeCh <- msg failed, ch len %d", len(w.writeCh))
+			}
+			break
+		case <-symbolCheckTimer.C:
+			payloads := make([]string, 0)
+			for symbol, updateTime := range symbolUpdatedTimes {
+				if time.Now().Sub(updateTime) > symbolTimeout {
+					payloads = append(payloads, symbol)
+					symbolUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
+				}
+			}
+			if len(payloads) > 0 {
+				logger.Debugf("SUBSCRIBE %s", payloads)
+				for start := 0; start < len(payloads); start += 20 {
+					end := start + 20
+					if end > len(payloads) {
+						end = len(payloads)
+					}
+					select {
+					case w.writeCh <- WSRequest{
+						Time:    time.Now().Unix(),
+						Channel: "spot.trades",
+						Payload: payloads[start:end],
+						Event:   "subscribe",
+					}:
+					default:
+						logger.Debugf("w.writeCh <- WSRequest failed, ch len %d", len(w.writeCh))
+					}
+				}
+			}
+			symbolCheckTimer.Reset(symbolCheckInterval)
+			break
 		}
 	}
 
@@ -234,12 +295,9 @@ func (w *TradeRoutedWS) Stop() {
 
 func (w *TradeRoutedWS) restart() {
 	select {
-	case <-w.done:
 	case w.reconnectCh <- nil:
-		logger.Debugf("restart")
 	default:
-		logger.Debugf("w.reconnectCh <- nil failed, stop ws")
-		w.Stop()
+		logger.Debugf("w.reconnectCh <- nil failed, ch len %d", len(w.reconnectCh))
 	}
 }
 
@@ -254,6 +312,7 @@ func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map
 	var ch chan common.Trade
 	var err error
 	var ok bool
+	var wsTrade WSTrade
 	for {
 		select {
 		case <-ctx.Done():
@@ -261,23 +320,46 @@ func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			var trade WSTrade
-			err = json.Unmarshal(msg, &trade)
-			if err != nil {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("json.Unmarshal(msg, &trade) error %v %s", err, msg)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-				continue
-			}
-			if ch, ok = channels[trade.Data.Symbol]; ok {
-				select {
-				case ch <- &trade.Data:
-				default:
+			if len(msg) > 52 && msg[52] == 'u' {
+				err = json.Unmarshal(msg, &wsTrade)
+				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- &trade failed ch len %d", len(ch))
+						logger.Debugf("json.Unmarshal(msg, &wsTrade) error %v", err)
 						logSilentTime = time.Now().Add(time.Minute)
+						continue
 					}
+				}
+				if ch, ok = channels[wsTrade.Result.CurrencyPair]; ok {
+					select {
+					case ch <- &wsTrade.Result:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("ch <- &wsTrade.Result failed, ch len %d", len(ch))
+							logSilentTime = time.Now().Add(time.Minute)
+							continue
+						}
+					}
+					select {
+					case w.symbolCh <- wsTrade.Result.CurrencyPair:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("w.symbolCh <- wsTrade.Result.CurrencyPair failed, ch len %d", len(w.symbolCh))
+							logSilentTime = time.Now().Add(time.Minute)
+							continue
+						}
+					}
+				}
+			} else if msg[52] == 's'{
+				//if time.Now().Sub(logSilentTime) > 0 {
+				//	logger.Debugf("subscribe msg %s", msg)
+				//	logSilentTime = time.Now().Add(time.Minute)
+				//	continue
+				//}
+			} else {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("other msg %s", msg)
+					logSilentTime = time.Now().Add(time.Minute)
+					continue
 				}
 			}
 		}
@@ -292,7 +374,10 @@ func NewTradeRoutedWS(
 	ws := TradeRoutedWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}, 100),
-		messageCh:   make(chan []byte, 10*len(channels)),
+		writeCh:     make(chan interface{}, 100*len(channels)),
+		symbolCh:    make(chan string, 100*len(channels)),
+		messageCh:   make(chan []byte, 100*len(channels)),
+		pingCh:      make(chan []byte, 100),
 		stopped:     0,
 	}
 	go ws.mainLoop(ctx, proxy, channels)

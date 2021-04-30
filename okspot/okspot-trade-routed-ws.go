@@ -13,10 +13,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync/atomic"
 	"time"
-	"unsafe"
 )
 
 type TradeRoutedWS struct {
@@ -24,7 +22,8 @@ type TradeRoutedWS struct {
 	done        chan interface{}
 	reconnectCh chan interface{}
 	symbolCh    chan string
-	pingCh      chan []byte
+	pongCh      chan []byte
+	messageCh   chan []byte
 	stopped     int32
 }
 
@@ -38,15 +37,15 @@ func (w *TradeRoutedWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 		case <-w.done:
 			return
 		case msg := <-w.writeCh:
-			var bytes []byte
+			var msgBytes []byte
 			var err error
 			switch d := msg.(type) {
 			case []byte:
-				bytes = d
+				msgBytes = d
 			case string:
-				bytes = ([]byte)(d)
+				msgBytes = ([]byte)(d)
 			default:
-				bytes, err = json.Marshal(msg)
+				msgBytes, err = json.Marshal(msg)
 				if err != nil {
 					logger.Debugf("json.Marshal(msg) err %v", err)
 					continue
@@ -59,7 +58,7 @@ func (w *TradeRoutedWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 				return
 			}
 
-			err = conn.WriteMessage(websocket.TextMessage, bytes)
+			err = conn.WriteMessage(websocket.TextMessage, msgBytes)
 			if err != nil {
 				logger.Debugf("conn.WriteMessage error %v", err)
 				w.restart()
@@ -68,6 +67,7 @@ func (w *TradeRoutedWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 		}
 	}
 }
+
 func (w *TradeRoutedWS) parseBinaryResponse(resp []byte) ([]byte, error) {
 	var standardMessage []byte
 	var err error
@@ -101,25 +101,14 @@ func (w *TradeRoutedWS) parseBinaryResponse(resp []byte) ([]byte, error) {
 	return standardMessage, nil
 }
 
-func (w *TradeRoutedWS) readLoop(conn *websocket.Conn, channels map[string]chan *common.DepthRawMessage) {
+func (w *TradeRoutedWS) readLoop(conn *websocket.Conn) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
-	totalCount := 0
-	totalLen := 0
 	logSilentTime := time.Now()
-	var symbolBytes []byte
-	var symbol string
-	var timeBytes []byte
-	var eventTime time.Time
-	var ch chan *common.DepthRawMessage
-	var ok bool
 	var msg []byte
-	var msgLen int
 	var mType int
 	var resp []byte
 	var err error
-	var subscribeEvent SubscribeEvent
-	var segs []string
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -148,101 +137,16 @@ func (w *TradeRoutedWS) readLoop(conn *websocket.Conn, channels map[string]chan 
 				continue
 			}
 		}
-		msgLen = len(msg)
-		totalCount += 1
-		totalLen += msgLen
-		if totalCount > 1000000 {
-			logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
-			totalLen = 0
-			totalCount = 0
-		}
-		if msg[2] == 'e' {
-			err = json.Unmarshal(msg, &subscribeEvent)
-			if err != nil {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("json.Unmarshal(msg, &subscribeEvent) error %v", err)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-			}
-			segs = strings.Split(subscribeEvent.Channel, ":")
-			if len(segs) == 2 {
-				select {
-				case w.symbolCh <- segs[1]:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("w.symbolCh <- symbol failed %s ch len %d", segs[2], len(w.symbolCh))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
-				}
-			}
-			continue
-		} else if msg[2] == 't' && len(msg) > 128 {
-			//{"table":"spot/depth5","data":[{"asks":[["31.605","4.32464","1"],["31.607","85","1"],["31.61","2","1"],["31.612","0.1","1"],["31.614","1.405511","1"]],"bids":[["31.583","302.09312","3"],["31.582","0.9","1"],["31.58","111.30127","1"],["31.579","76","1"],["31.576","31.83446","1"]],"instrument_id":"LINK-USDT","timestamp":"2021-04-25T08:24:33.352Z"}]}
-			timeBytes = msg[msgLen-28 : msgLen-4]
-			eventTime, err = time.Parse(okspotTimeLayout, *(*string)(unsafe.Pointer(&timeBytes)))
-			if err != nil {
-				logger.Debugf("time.Parse %s error %v", timeBytes, err)
-				continue
-			}
-			if msg[msgLen-53] == ':' {
-				symbolBytes = msg[msgLen-51 : msgLen-43]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[msgLen-54] == ':' {
-				symbolBytes = msg[msgLen-52 : msgLen-43]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[msgLen-55] == ':' {
-				symbolBytes = msg[msgLen-53 : msgLen-43]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[msgLen-56] == ':' {
-				symbolBytes = msg[msgLen-54 : msgLen-43]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("other msg %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-				continue
-			}
-		} else if msgLen == 4 && msg[2] == 'p' {
-			select {
-			case w.pingCh <- msg:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("w.pongCh <- msg failed %s ch len %d", symbol, len(w.pingCh))
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-			}
-			continue
-		} else if msgLen == 4 {
+
+		select {
+		case w.messageCh <- msg:
+		default:
 			if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("other msg %s", msg)
+				logger.Debugf("w.messageCh <- msg error %v", err)
 				logSilentTime = time.Now().Add(time.Minute)
 			}
-			continue
 		}
-		//logger.Debugf("%s %v ",symbol, eventTime)
-		if ch, ok = channels[symbol]; ok {
-			select {
-			case ch <- &common.DepthRawMessage{
-				Depth:  msg,
-				Symbol: symbol,
-				Time:   eventTime,
-			}:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("ch <- &common.DepthRawMessage failed %s ch len %d", symbol, len(ch))
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-			}
-			select {
-			case w.symbolCh <- symbol:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("w.symbolCh <- symbol failed %s ch len %d", symbol, len(w.symbolCh))
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-			}
-		}
+
 	}
 }
 
@@ -309,7 +213,7 @@ func (w *TradeRoutedWS) reconnect(ctx context.Context, wsUrl string, proxy strin
 	return conn, nil
 }
 
-func (w *TradeRoutedWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.DepthRawMessage) {
+func (w *TradeRoutedWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan common.Trade) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -355,7 +259,7 @@ func (w *TradeRoutedWS) mainLoop(ctx context.Context, proxy string, channels map
 				w.Stop()
 				return
 			}
-			go w.readLoop(conn, channels)
+			go w.readLoop(conn)
 			go w.writeLoop(internalCtx, conn)
 			go w.heartbeatLoop(internalCtx, conn, symbols)
 		}
@@ -379,7 +283,7 @@ func (w *TradeRoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 	for _, symbol := range symbols {
 		symbolUpdatedTimes[symbol] = time.Unix(0, 0)
 	}
-	trafficTimeout := time.NewTimer(time.Minute*5)
+	trafficTimeout := time.NewTimer(time.Minute * 5)
 	pingTimer := time.NewTimer(time.Second * 15)
 	defer trafficTimeout.Stop()
 	defer pingTimer.Stop()
@@ -408,7 +312,7 @@ func (w *TradeRoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 			trafficTimeout.Reset(time.Second * 30)
 			symbolUpdatedTimes[symbol] = time.Now()
 			break
-		case <-w.pingCh:
+		case <-w.pongCh:
 			logger.Debugf("PING MSG")
 			pingTimer.Reset(time.Second * 15)
 			trafficTimeout.Reset(time.Second * 30)
@@ -417,7 +321,7 @@ func (w *TradeRoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 			args := make([]string, 0)
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
-					args = append(args, fmt.Sprintf("spot/depth5:%s", symbol))
+					args = append(args, fmt.Sprintf("spot/trade:%s", symbol))
 					symbolUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
 				}
 			}
@@ -465,20 +369,88 @@ func (w *TradeRoutedWS) Done() chan interface{} {
 	return w.done
 }
 
+func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map[string]chan common.Trade) {
+	logger.Debugf("START dataHandleLoop %d", id)
+	defer logger.Debugf("EXIT dataHandleLoop %d", id)
+	logSilentTime := time.Now()
+	var err error
+	var wsTrades WSTrades
+	var ch chan common.Trade
+	var ok bool
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-w.done:
+			return
+		case msg := <-w.messageCh:
+			if len(msg) == 4 && msg[0] == 'p' {
+				select {
+				case w.pongCh <- msg:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.pongCh <- msg failed ch len %d", len(w.pongCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
+				continue
+			}
+
+			err = json.Unmarshal(msg, &wsTrades)
+			if err != nil {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("json.Unmarshal(msg, &wsTrades) error %v %s", err, msg)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+				continue
+			}
+			for _, trade := range wsTrades.Data {
+				if ch, ok = channels[trade.Symbol]; ok {
+					trade := trade
+					select {
+					case ch <- &trade:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logSilentTime = time.Now().Add(time.Minute)
+							logger.Debugf("ch <- trade failed, ch len %d", len(ch))
+						}
+					}
+					select {
+					case w.symbolCh <- trade.Symbol:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logSilentTime = time.Now().Add(time.Minute)
+							logger.Debugf("w.symbolCh <- trade.Symbol failed, ch len %d", len(w.symbolCh))
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 func NewTradeRoutedWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan *common.DepthRawMessage,
+	channels map[string]chan common.Trade,
 ) *TradeRoutedWS {
 	ws := TradeRoutedWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}, 100),
 		writeCh:     make(chan interface{}, 100*len(channels)),
 		symbolCh:    make(chan string, 100*len(channels)),
-		pingCh:      make(chan []byte, 100),
+		pongCh:      make(chan []byte, 100),
+		messageCh:   make(chan []byte, 100*len(channels)),
 		stopped:     0,
 	}
 	go ws.mainLoop(ctx, proxy, channels)
+	for i := 0; i < 4; i++ {
+		cs := make(map[string]chan common.Trade)
+		for symbol, ch := range channels {
+			cs[symbol] = ch
+		}
+		go ws.dataHandleLoop(ctx, i, cs)
+	}
 	ws.reconnectCh <- nil
 	return &ws
 }

@@ -495,6 +495,15 @@ type Trade struct {
 	IsTheBuyerTheMarketMaker bool `json:"m,omitempty"`
 }
 
+
+func (trade *Trade) GetSymbol() string  { return trade.Symbol }
+func (trade *Trade) GetSize() float64   { return trade.Quantity }
+func (trade *Trade) GetPrice() float64  { return trade.Price }
+func (trade *Trade) GetTime() time.Time { return trade.EventTime }
+func (trade *Trade) IsBuy() bool        { return !trade.IsTheBuyerTheMarketMaker }
+
+
+
 //{
 //"code": "200",
 //"msg": "The operation of cancel all open order is done."

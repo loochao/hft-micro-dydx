@@ -31,9 +31,6 @@ func TestNewDepth5RoutedWebsocket(t *testing.T) {
 	_ = NewDepth5RoutedWebsocket(
 		ctx, api,
 		"socks5://127.0.0.1:1081",
-		0.9999, 1000,
-		50,
-		reportCh,
 		channels,
 	)
 	for {

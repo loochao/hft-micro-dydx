@@ -170,7 +170,7 @@ func (w *MatchesRoutedWS) reconnect(ctx context.Context, wsUrl string, proxy str
 func (w *MatchesRoutedWS) mainLoop(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan *Match,
+	channels map[string]chan common.Trade,
 ) {
 
 	logger.Debugf("START mainLoop")
@@ -321,11 +321,11 @@ func (w *MatchesRoutedWS) restart() {
 	}
 }
 
-func (w *MatchesRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map[string]chan *Match) {
+func (w *MatchesRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map[string]chan common.Trade) {
 	logger.Debugf("START dataHandleLoop %d", id)
 	defer logger.Debugf("EXIT dataHandleLoop %d", id)
 	logSilentTime := time.Now()
-	var ch chan *Match
+	var ch chan common.Trade
 	var err error
 	var ok bool
 	for {
@@ -374,7 +374,7 @@ func (w *MatchesRoutedWS) Done() chan interface{} {
 func NewMatchRoutedWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan *Match,
+	channels map[string]chan common.Trade,
 ) *MatchesRoutedWS {
 	ws := MatchesRoutedWS{
 		done:        make(chan interface{}),
@@ -387,7 +387,7 @@ func NewMatchRoutedWS(
 	}
 	go ws.mainLoop(ctx, proxy, channels)
 	for i := 0; i < 4; i++ {
-		cs := make(map[string]chan *Match)
+		cs := make(map[string]chan common.Trade)
 		for symbol, ch := range channels {
 			cs[symbol] = ch
 		}
@@ -463,3 +463,9 @@ func (match *Match) UnmarshalJSON(data []byte) error {
 
 var MatchSideSell = "sell"
 var MatchSideBuy = "buy"
+
+func (match *Match) GetSymbol() string  { return match.ProductId }
+func (match *Match) GetSize() float64   { return match.Size }
+func (match *Match) GetPrice() float64  { return match.Price }
+func (match *Match) GetTime() time.Time { return match.Time }
+func (match *Match) IsBuy() bool        { return match.Side == MatchSideBuy }

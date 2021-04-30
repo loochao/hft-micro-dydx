@@ -202,3 +202,7 @@ type StringFloat string
 func (f StringFloat) MarshalJSON() ([]byte, error) {
 	return []byte(f), nil
 }
+
+
+
+
