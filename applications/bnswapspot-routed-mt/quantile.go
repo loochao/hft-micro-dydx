@@ -24,23 +24,34 @@ func watchDeltaQuantile(
 	var normalScale = 1.0
 	var bullScale = 1.0 - 0.618
 	var crazyScale = 2.0
+	var topOffset = 0.0
+	var botOffset = 0.0
+	var meanFr = 0.0
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case frSum := <-frAvgCh:
-			if frSum < 0.0000 {
+		case meanFr = <-frAvgCh:
+			if meanFr < 0.0000 {
 				bandScale = &bearScale
-				//logger.Debugf("FR SUM %f BEAR BAND SCALE %f", frSum, *bandScale)
-			} else if frSum < 0.0003 {
+				topOffset = -0.00111
+				botOffset = -0.00111
+				//logger.Debugf("FR SUM %f BEAR BAND SCALE %f", meanFr, *bandScale)
+			} else if meanFr < 0.0003 {
+				topOffset = -0.00055
+				botOffset = -0.00055
 				bandScale = &normalScale
-				//logger.Debugf("FR SUM %f NORM BAND SCALE %f", frSum, *bandScale)
-			} else if frSum < 0.000618 {
+				//logger.Debugf("FR SUM %f NORM BAND SCALE %f", meanFr, *bandScale)
+			} else if meanFr < 0.000618 {
+				topOffset = 0.00111
+				botOffset = 0.00055
 				bandScale = &bullScale
-				//logger.Debugf("FR SUM %f BULL BAND SCALE %f", frSum, *bandScale)
+				//logger.Debugf("FR SUM %f BULL BAND SCALE %f", meanFr, *bandScale)
 			} else {
 				bandScale = &crazyScale
-				//logger.Debugf("FR SUM %f CRAZY BAND SCALE %f", frSum, *bandScale)
+				topOffset = 0.00333
+				botOffset = 0.00055
+				//logger.Debugf("FR SUM %f CRAZY BAND SCALE %f", meanFr, *bandScale)
 			}
 			break
 		case data := <-inputCh:
@@ -94,15 +105,16 @@ func watchDeltaQuantile(
 						Top:         top / maClose,
 						Bot:         bot / maClose,
 						Mid:         mid / maClose,
+						MeanFr:      meanFr,
 						OriginalTop: quantile.Quantile(topQuantile) / maClose,
 						OriginalBot: quantile.Quantile(botQuantile) / maClose,
 						MaClose:     maClose,
 					}
-					if q.Top < minimalEnterDelta {
-						q.Top = minimalEnterDelta
+					if q.Top < minimalEnterDelta+topOffset {
+						q.Top = minimalEnterDelta + topOffset
 					}
-					if q.Bot > maximalExitDelta {
-						q.Bot = maximalExitDelta
+					if q.Bot > maximalExitDelta+botOffset {
+						q.Bot = maximalExitDelta + topOffset
 					}
 					quantiles[symbol] = q
 				}

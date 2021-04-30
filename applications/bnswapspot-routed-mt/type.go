@@ -23,8 +23,8 @@ type Quantile struct {
 	OriginalTop float64
 	OriginalBot float64
 	MaClose     float64
+	MeanFr      float64
 }
-
 
 type SpotOrderRequest struct {
 	New    *bnspot.NewOrderParams

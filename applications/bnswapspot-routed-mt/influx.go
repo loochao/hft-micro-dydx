@@ -153,6 +153,7 @@ func handleSave() {
 			fields["quantileOriginalBot"] = quantile.OriginalBot
 			fields["quantileMid"] = quantile.Mid
 			fields["quantileMaClose"] = quantile.MaClose
+			fields["quantileMeanFr"] = quantile.MeanFr
 		}
 		pt, err := client.NewPoint(
 			*bnConfig.InternalInflux.Measurement,
