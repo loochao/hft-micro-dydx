@@ -50,7 +50,7 @@ func watchDeltaQuantile(
 			} else {
 				bandScale = &crazyScale
 				topOffset = 0.00222
-				botOffset = 0.00055
+				botOffset = 0.00000
 				//logger.Debugf("FR SUM %f CRAZY BAND SCALE %f", meanFr, *bandScale)
 			}
 			break
@@ -114,7 +114,7 @@ func watchDeltaQuantile(
 						q.Top = minimalEnterDelta + topOffset
 					}
 					if q.Bot > maximalExitDelta+botOffset {
-						q.Bot = maximalExitDelta + topOffset
+						q.Bot = maximalExitDelta + botOffset
 					}
 					quantiles[symbol] = q
 				}
