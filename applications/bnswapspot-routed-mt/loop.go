@@ -32,10 +32,6 @@ func updateSwapPositions() {
 		swapPosition, okSwapPosition := bnswapPositions[symbol]
 		spotBalance, okSpotBalance := bnspotBalances[symbol]
 		spread, okSpread := bnSpreads[symbol]
-		if symbol == "FILUSDT" && bnGlobalLogSilentTime.Sub(time.Now()) < 0{
-			bnGlobalLogSilentTime = time.Now().Add(time.Second*5)
-			logger.Debugf("FILUSDT %v %v %v", okSwapPosition, okSpotBalance, okSpread)
-		}
 		if !okSwapPosition || !okSpotBalance || !okSpread {
 			continue
 		}
@@ -48,17 +44,12 @@ func updateSwapPositions() {
 		swapSize := -(spotBalance.Locked + spotBalance.Free) - swapPosition.PositionAmt
 		swapSize = math.Round(swapSize/swapStepSize) * swapStepSize
 
-		if symbol == "FILUSDT" && bnGlobalLogSilentTime.Sub(time.Now()) < 0{
-			bnGlobalLogSilentTime = time.Now().Add(time.Second*5)
-			logger.Debugf("SIZE DIFF %f, %f %f", swapSize, spotBalance.Locked + spotBalance.Free, swapPosition.PositionAmt)
-		}
-
 		//只做空SWAP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
 		if swapSize <= 0 && -swapSize*swapOrderBook.TakerBid*(1.0-*bnConfig.EnterSlippage) < swapMinNotional {
 			continue
 		}
 		if swapSize > 0 && swapPosition.PositionAmt >= 0 {
-			logger.Debugf("%s SWAP POSITION ERROR, CAN'T ADD %f TO POS %f", swapSize, swapPosition.PositionAmt)
+			logger.Debugf("swap hedge error %s, can't add %f to pos %f", symbol, swapSize, swapPosition.PositionAmt)
 			continue
 		}
 		if swapSize > 0 && swapSize > -swapPosition.PositionAmt {
@@ -127,7 +118,6 @@ func updateMakerNewOrders() {
 
 	usdtAvailable := bnspotUSDTBalance.Free
 
-
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单
 	for rank := len(bnSymbols) - 1; rank >= 0; rank-- {
 		symbol := bnRankSymbolMap[rank]
@@ -181,7 +171,7 @@ func updateMakerNewOrders() {
 				}
 				quantity := entryValue / price
 				quantity = math.Round(quantity/mergedStepSize) * mergedStepSize
-				entryValue = quantity*price
+				entryValue = quantity * price
 				if spotBalance.Free*price-entryValue < entryStep {
 					quantity = math.Floor(spotBalance.Free/spotStepSize) * spotStepSize
 				}
@@ -194,9 +184,9 @@ func updateMakerNewOrders() {
 						quantity,
 					)
 					order := bnspot.NewOrderParams{
-						Symbol:           symbol,
-						Price:            price,
-						Quantity:         quantity,
+						Symbol:   symbol,
+						Price:    price,
+						Quantity: quantity,
 						//TimeInForce:      bnspot.OrderTimeInForceGTC,
 						Side:             bnspot.OrderSideSell,
 						Type:             bnspot.OrderTypeLimitMarker,
@@ -223,7 +213,7 @@ func updateMakerNewOrders() {
 			entryValue := targetValue - currentSpotSize*price
 
 			if entryValue > usdtAvailable*0.8 {
-				entryValue = usdtAvailable* 0.8
+				entryValue = usdtAvailable * 0.8
 			}
 
 			entryValue = math.Max(entryValue, swapMinNotional)
@@ -275,9 +265,9 @@ func updateMakerNewOrders() {
 			)
 			usdtAvailable -= entryValue
 			order := bnspot.NewOrderParams{
-				Symbol:           symbol,
-				Price:            price,
-				Quantity:         quantity,
+				Symbol:   symbol,
+				Price:    price,
+				Quantity: quantity,
 				//TimeInForce:      bnspot.OrderTimeInForceGTC,
 				Side:             bnspot.OrderSideBuy,
 				Type:             bnspot.OrderTypeLimitMarker,
