@@ -33,11 +33,13 @@ func watchDeltaQuantile(
 			return
 		case meanFr = <-frAvgCh:
 			if meanFr < 0.0000 {
-				bandScale = &bearScale
+				//不牛，费率低，降低BAND高度，减小持仓时间
 				topOffset = -0.00222
-				botOffset = -0.00222
+				botOffset = -0.00111
+				bandScale = &bearScale
 				//logger.Debugf("FR SUM %f BEAR BAND SCALE %f", meanFr, *bandScale)
 			} else if meanFr < 0.0003 {
+				//不牛，费率低，降低BAND高度，减小持仓时间
 				topOffset = -0.00111
 				botOffset = -0.00055
 				bandScale = &normalScale
@@ -48,9 +50,10 @@ func watchDeltaQuantile(
 				bandScale = &bullScale
 				//logger.Debugf("FR SUM %f BULL BAND SCALE %f", meanFr, *bandScale)
 			} else {
+				//牛市有费率，可以长期持仓, BAND可以宽
+				topOffset = 0.002222
+				botOffset = -0.00055
 				bandScale = &crazyScale
-				topOffset = 0.00222
-				botOffset = 0.00000
 				//logger.Debugf("FR SUM %f CRAZY BAND SCALE %f", meanFr, *bandScale)
 			}
 			break
