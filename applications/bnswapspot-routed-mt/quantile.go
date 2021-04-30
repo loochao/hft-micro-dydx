@@ -34,22 +34,22 @@ func watchDeltaQuantile(
 		case meanFr = <-frAvgCh:
 			if meanFr < 0.0000 {
 				bandScale = &bearScale
-				topOffset = -0.00111
-				botOffset = -0.00111
+				topOffset = -0.00222
+				botOffset = -0.00222
 				//logger.Debugf("FR SUM %f BEAR BAND SCALE %f", meanFr, *bandScale)
 			} else if meanFr < 0.0003 {
-				topOffset = -0.00055
+				topOffset = -0.00111
 				botOffset = -0.00055
 				bandScale = &normalScale
 				//logger.Debugf("FR SUM %f NORM BAND SCALE %f", meanFr, *bandScale)
-			} else if meanFr < 0.000618 {
-				topOffset = 0.00111
-				botOffset = 0.00055
+			} else if meanFr < 0.0005 {
+				topOffset = 0.0
+				botOffset = 0.0
 				bandScale = &bullScale
 				//logger.Debugf("FR SUM %f BULL BAND SCALE %f", meanFr, *bandScale)
 			} else {
 				bandScale = &crazyScale
-				topOffset = 0.00333
+				topOffset = 0.00222
 				botOffset = 0.00055
 				//logger.Debugf("FR SUM %f CRAZY BAND SCALE %f", meanFr, *bandScale)
 			}
