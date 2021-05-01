@@ -278,7 +278,7 @@ func main() {
 				if _, ok := swapSymbolsMap[swapOrder.Symbol]; ok {
 					logger.Debugf("%s FILLED %s %f %f", swapOrder.Symbol, swapOrder.Side, swapOrder.FilledAccumulatedQuantity, swapOrder.AveragePrice)
 					if lastEnterPrice, ok := swapLastEnterPrices[swapOrder.Symbol]; ok {
-						swapEnterOffset[swapOrder.Symbol] = (lastEnterPrice - swapOrder.AveragePrice)/ lastEnterPrice
+						swapEnterOffset[swapOrder.Symbol] = (swapOrder.AveragePrice - lastEnterPrice)/ lastEnterPrice
 						logger.Debugf("%s ENTER OFFSET %f", swapOrder.Symbol, swapEnterOffset[swapOrder.Symbol])
 					}
 					swapLastEnterPrices[swapOrder.Symbol] = swapOrder.AveragePrice

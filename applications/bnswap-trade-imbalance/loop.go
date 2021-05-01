@@ -65,7 +65,7 @@ func updateNewOrders() {
 				okLastEnterPrice &&
 				lastEnterPrice+swapDepth.TakerFarAsk-swapDepth.TakerFarBid > swapOrderPrice {
 				if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
-					logger.Debugf("%s LONG FAILED, TAKER ASK %f > LAST ENTER PRICE %f", swapSymbol, swapDepth.TakerAsk, lastEnterPrice)
+					logger.Debugf("%s LONG FAILED, TAKER ASK %f < LAST ENTER PRICE %f", swapSymbol, swapDepth.TakerAsk, lastEnterPrice)
 				}
 				//已有多仓，且上次加仓成本比现在高，不加仓
 				continue
@@ -101,7 +101,7 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			if enterValue > swapUSDTAvailable*float64(*swapConfig.Leverage) {
+			if math.Abs(openValue) > swapUSDTAvailable*float64(*swapConfig.Leverage) {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED LONG OPEN, ENTRY VALUE %f MORE THAN swapUSDTAvailable %f, SIZE %f",
@@ -172,7 +172,7 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			if -enterValue > swapUSDTAvailable*float64(*swapConfig.Leverage) {
+			if math.Abs(openValue) > swapUSDTAvailable*float64(*swapConfig.Leverage) {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED SHORT OPEN, ENTRY VALUE %f MORE THAN swapUSDTAvailable %f, SIZE %f",
