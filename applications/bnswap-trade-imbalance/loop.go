@@ -48,7 +48,8 @@ func updateNewOrders() {
 		swapSizeDiff := 0.0
 		targetValue := 0.0
 		swapOrderPrice := 0.0
-		entryValue := 0.0
+		enterValue := 0.0
+		openValue := 0.0
 
 		//还在加多档期
 		if mergedSignal.Value > *mtConfig.EnterThreshold &&
@@ -64,24 +65,24 @@ func updateNewOrders() {
 					targetValue = enterTarget
 				}
 				swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
-				swapUSDTAvailable -= math.Abs(swapSizeDiff) * swapOrderPrice
+				openValue = swapSizeDiff * swapOrderPrice
 			} else {
 				if -swapPosition.PositionAmt*swapPosition.EntryPrice > enterTarget/4 {
 					//超过一半目标仓位，减半仓
-					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize)* swapStepSize
-				}else{
+					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize) * swapStepSize
+				} else {
 					//直接换仓
-					swapSizeDiff = math.Floor((enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize)*swapStepSize
-					swapUSDTAvailable -= math.Abs(swapSizeDiff) * swapOrderPrice
+					swapSizeDiff = math.Floor((enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize) * swapStepSize
+					openValue = enterStep
 				}
 			}
-			entryValue = swapSizeDiff * swapOrderPrice
-			if entryValue < 0.8*enterStep {
+			enterValue = swapSizeDiff * swapOrderPrice
+			if enterValue < 0.8*enterStep {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED LONG OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, SIZE %f",
 						swapSymbol,
-						entryValue,
+						enterValue,
 						enterStep*0.8,
 						swapSizeDiff,
 					)
@@ -89,12 +90,12 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			if entryValue > swapUSDTAvailable {
+			if enterValue > swapUSDTAvailable {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED LONG OPEN, ENTRY VALUE %f MORE THAN swapUSDTAvailable %f, SIZE %f",
 						swapSymbol,
-						entryValue,
+						enterValue,
 						swapUSDTAvailable,
 						swapSizeDiff,
 					)
@@ -102,12 +103,12 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			if entryValue < takerMinNotional {
+			if enterValue < takerMinNotional {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED LONG OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, SIZE %f",
 						swapSymbol,
-						entryValue,
+						enterValue,
 						takerMinNotional,
 						swapSizeDiff,
 					)
@@ -130,24 +131,24 @@ func updateNewOrders() {
 					targetValue = -enterTarget
 				}
 				swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
-				swapUSDTAvailable -= math.Abs(swapSizeDiff) * swapOrderPrice
+				openValue = swapSizeDiff * swapOrderPrice
 			} else {
 				if swapPosition.PositionAmt*swapPosition.EntryPrice > enterTarget/4 {
 					//超过一半目标仓位，减半仓
-					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize)* swapStepSize
-				}else{
+					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize) * swapStepSize
+				} else {
 					//直接换仓
-					swapSizeDiff = math.Floor((enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize)*swapStepSize
-					swapUSDTAvailable -= math.Abs(swapSizeDiff) * swapOrderPrice
+					swapSizeDiff = math.Floor((enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize) * swapStepSize
+					openValue = enterStep
 				}
 			}
-			entryValue = swapSizeDiff * swapOrderPrice
-			if -entryValue < 0.8*enterStep {
+			enterValue = swapSizeDiff * swapOrderPrice
+			if -enterValue < 0.8*enterStep {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED SHORT OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, SIZE %f",
 						swapSymbol,
-						-entryValue,
+						-enterValue,
 						enterStep*0.8,
 						swapSizeDiff,
 					)
@@ -155,12 +156,12 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			if -entryValue > swapUSDTAvailable {
+			if -enterValue > swapUSDTAvailable {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED SHORT OPEN, ENTRY VALUE %f MORE THAN swapUSDTAvailable %f, SIZE %f",
 						swapSymbol,
-						-entryValue,
+						-enterValue,
 						swapUSDTAvailable,
 						swapSizeDiff,
 					)
@@ -168,12 +169,12 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			if -entryValue < takerMinNotional {
+			if -enterValue < takerMinNotional {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED SHORT TOP OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, SIZE %f",
 						swapSymbol,
-						-entryValue,
+						-enterValue,
 						takerMinNotional,
 						swapSizeDiff,
 					)
@@ -191,6 +192,7 @@ func updateNewOrders() {
 		} else if swapSizeDiff > 0 && swapPosition.PositionAmt >= 0 && swapSizeDiff*swapOrderPrice < takerMinNotional {
 			continue
 		}
+		swapUSDTAvailable -= math.Abs(openValue)
 		reduceOnly := false
 		if swapSizeDiff*swapPosition.PositionAmt < 0 && math.Abs(swapSizeDiff) <= math.Abs(swapPosition.PositionAmt) {
 			reduceOnly = true
