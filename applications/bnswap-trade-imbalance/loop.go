@@ -32,9 +32,9 @@ func updateNewOrders() {
 			continue
 		}
 		swapPosition, okTakerPositions := swapPositions[swapSymbol]
-		swapDepth, okSpread := swapWalkedDepths[swapSymbol]
+		swapDepth, okDepth := swapWalkedDepths[swapSymbol]
 		mergedSignal, okSignal := swapMergedSignals[swapSymbol]
-		if !okTakerPositions || !okSpread || !okSignal {
+		if !okTakerPositions || !okDepth || !okSignal {
 			continue
 		}
 
