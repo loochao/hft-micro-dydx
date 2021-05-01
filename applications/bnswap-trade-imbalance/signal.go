@@ -86,7 +86,9 @@ func StreamMergedSignals(
 					Value:    dir/ weight,
 					Signals: values,
 				}:
-					logger.Debugf("%s %f", symbol, dir/weight)
+					if time.Now().Truncate(time.Second*5).Add(updateInterval).Sub(time.Now()) > 0 {
+						logger.Debugf("%s %f", symbol, dir/weight)
+					}
 				default:
 					logger.Debugf("outputCh <- MergedSignal failed, ch len %d", len(outputCh))
 				}
