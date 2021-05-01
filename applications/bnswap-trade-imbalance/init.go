@@ -27,15 +27,13 @@ var swapTickSizes = make(map[string]float64)
 var swapStepSizes = make(map[string]float64)
 var swapMinNotional = make(map[string]float64)
 
-var swapOpenOrders = make(map[string]TakerOpenOrder)
-var swapOrderCancelSilentTimes = make(map[string]time.Time)
 var swapPositionsCh = make(chan []bnswap.Position, 10)
 var swapPositions = make(map[string]*bnswap.Position)
 var swapPositionsUpdateTimes = make(map[string]time.Time)
 var swapAccount *bnswap.Asset
 var swapAccountCh = make(chan bnswap.Account, 10)
 var swapNewOrderErrorCh = make(chan TakerOrderNewError, 10)
-var swapOrderRequestChs = make(map[string]chan TakerOrderRequest)
+var swapOrderRequestChs = make(map[string]chan bnswap.NewOrderParams)
 var swapWalkedDepths = make(map[string]common.WalkedMakerTakerDepth)
 
 var swapOrderSilentTimes = make(map[string]time.Time)
@@ -57,7 +55,7 @@ var swapConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210501 14:42:54  ####")
+	logger.Debug("####  BUILD @ 20210501 15:07:46  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

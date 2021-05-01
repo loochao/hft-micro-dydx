@@ -34,12 +34,6 @@ func updateNewOrders() {
 			}
 			continue
 		}
-		if _, ok := swapOpenOrders[swapSymbol]; ok {
-			if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
-				logger.Debugf("%s HAS OPEN ORDER", swapSymbol)
-			}
-			continue
-		}
 		swapPosition, okTakerPositions := swapPositions[swapSymbol]
 		swapDepth, okDepth := swapWalkedDepths[swapSymbol]
 		mergedSignal, okSignal := swapMergedSignals[swapSymbol]
@@ -74,23 +68,12 @@ func updateNewOrders() {
 				//已有多仓，且上次加仓成本比现在高，不加仓
 				continue
 			}
-			if swapPosition.PositionAmt >= 0 {
-				targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice + enterStep
-				if targetValue > enterTarget {
-					targetValue = enterTarget
-				}
-				swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
-				openValue = swapSizeDiff * swapOrderPrice
-			} else {
-				if -swapPosition.PositionAmt*swapPosition.EntryPrice > enterTarget/4 {
-					//超过一半目标仓位，减半仓
-					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize) * swapStepSize
-				} else {
-					//直接换仓
-					swapSizeDiff = math.Floor((enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize) * swapStepSize
-					openValue = enterStep
-				}
+			targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice + enterStep
+			if targetValue > enterTarget {
+				targetValue = enterTarget
 			}
+			swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
+			openValue = swapSizeDiff * swapOrderPrice
 			enterValue = swapSizeDiff * swapOrderPrice
 			if enterValue < 0.8*enterStep {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
@@ -143,23 +126,12 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			if swapPosition.PositionAmt <= 0 {
-				targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice - enterStep
-				if targetValue < -enterTarget {
-					targetValue = -enterTarget
-				}
-				swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
-				openValue = swapSizeDiff * swapOrderPrice
-			} else {
-				if swapPosition.PositionAmt*swapPosition.EntryPrice > enterTarget/4 {
-					//超过一半目标仓位，减半仓
-					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize) * swapStepSize
-				} else {
-					//直接换仓
-					swapSizeDiff = math.Floor((-enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize) * swapStepSize
-					openValue = -enterStep
-				}
+			targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice - enterStep
+			if targetValue < -enterTarget {
+				targetValue = -enterTarget
 			}
+			swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
+			openValue = swapSizeDiff * swapOrderPrice
 			enterValue = swapSizeDiff * swapOrderPrice
 			if -enterValue < 0.8*enterStep {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
@@ -231,14 +203,11 @@ func updateNewOrders() {
 			Symbol:           swapSymbol,
 			Side:             side,
 			Type:             common.OrderTypeMarket,
-			//Price:            swapOrderPrice,
-			//TimeInForce:      common.OrderTimeInForceGTX,
 			Quantity:         swapSizeDiff,
 			ReduceOnly:       reduceOnly,
 			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 		}
-		//swapOpenOrders[swapSymbol] = TakerOpenOrder{NewOrderParams: &takerOrder, Symbol: swapSymbol}
 		swapOrderSilentTimes[swapSymbol] = time.Now().Add(*swapConfig.OrderSilent)
-		swapOrderRequestChs[swapSymbol] <- TakerOrderRequest{New: &takerOrder}
+		swapOrderRequestChs[swapSymbol] <- takerOrder
 	}
 }

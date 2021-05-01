@@ -19,7 +19,7 @@ func StreamDepth5(
 	}
 	logger.Debugf("START StreamDepth5 %s", symbols)
 	defer logger.Debugf("EXIT StreamDepth5 %s", symbols)
-	ws := bnswap.NewDepth20RoutedWebsocket(
+	ws := bnswap.NewDepth5RoutedWebsocket(
 		ctx,
 		proxyAddress,
 		channels,

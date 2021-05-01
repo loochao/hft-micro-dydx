@@ -12,16 +12,16 @@ func StreamWalkedDepth(
 	ctx context.Context,
 	symbol string,
 	timeDecay, timeBias,
-	makerImpact, takerImpact float64,
+	takerImpact float64,
 	reportCount int,
 	rawDepthCh chan *common.DepthRawMessage,
 	reportCh chan DepthReport,
-	outputCh chan common.WalkedMakerTakerDepth,
+	outputCh chan common.WalkedTakerDepth,
 ) {
 	var err error
 	var takerRawDepth *common.DepthRawMessage
-	var takerDepth, newTakerDepth *bnswap.Depth20
-	var takerWalkedDepth *common.WalkedMakerTakerDepth
+	var takerDepth, newTakerDepth *bnswap.Depth5
+	var takerWalkedDepth *common.WalkedTakerDepth
 	var takerDepthFilter = common.NewDepthFilter(timeDecay, timeBias)
 
 	logSilentTime := time.Now()
@@ -38,7 +38,7 @@ func StreamWalkedDepth(
 			return
 		case <-takerWalkDepthTimer.C:
 			if takerDepth != nil {
-				takerWalkedDepth, err = common.WalkMakerTakerDepth20(takerDepth, makerImpact, takerImpact)
+				takerWalkedDepth, err = common.WalkTakerDepth5(takerDepth,  takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						if takerRawDepth == nil {
@@ -66,7 +66,7 @@ func StreamWalkedDepth(
 			if takerRawDepth == nil {
 				break
 			}
-			newTakerDepth, err = bnswap.ParseDepth20(takerRawDepth.Depth)
+			newTakerDepth, err = bnswap.ParseDepth5(takerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("bnswap.ParseDepth20 error %v %s %s", err, symbol, takerRawDepth.Depth)
@@ -101,4 +101,3 @@ func StreamWalkedDepth(
 		}
 	}
 }
-
