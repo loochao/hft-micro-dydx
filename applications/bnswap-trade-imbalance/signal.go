@@ -68,7 +68,8 @@ func StreamMergedSignals(
 				for _, name := range signals {
 					if s, ok := maps[name]; ok {
 						if time.Now().Sub(s.Time) < signalTimeToLive {
-							values[name] = s.Value*s.Weight
+							dir += s.Value*s.Weight
+							values[name] = s.Value
 							weight += s.Weight
 						}
 					} else {
