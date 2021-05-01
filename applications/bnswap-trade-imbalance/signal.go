@@ -73,9 +73,9 @@ func StreamMergedSignals(
 							//} else if s.Value < 0 {
 							//	dir -= 1
 							//}
-							dir += s.Value*s.Weight
+							dir += s.Value
 							values[name] = s.Value
-							weight += s.Weight
+							weight += 1.0
 						}
 					} else {
 						logger.Debugf("%s not found", name)

@@ -39,8 +39,6 @@ func updateNewOrders() {
 		}
 
 		lastEnterPrice, okLastEnterPrice := swapLastEnterPrices[swapSymbol]
-		lastLongSignal, okLastLongSignal := swapLastLongSignals[swapSymbol]
-		lastShortSignal, okLastShortSignal := swapLastShortSignals[swapSymbol]
 
 		//logger.Debugf("%v", mergedSignal)
 		swapStepSize := swapStepSizes[swapSymbol]
@@ -61,10 +59,6 @@ func updateNewOrders() {
 				//已有多仓，且上次加仓成本比现在高，不加仓
 				continue
 			}
-			if okLastLongSignal && lastLongSignal > mergedSignal.Value {
-				//上次加仓信号比现在强
-				continue
-			}
 			if swapPosition.PositionAmt >= 0 {
 				targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice + enterStep
 				if targetValue > enterTarget {
@@ -82,9 +76,6 @@ func updateNewOrders() {
 					openValue = enterStep
 				}
 			}
-			//重置ShortSignal
-			delete(swapLastShortSignals, swapSymbol)
-			swapLastLongSignals[swapSymbol] = mergedSignal.Value
 			enterValue = swapSizeDiff * swapOrderPrice
 			if enterValue < 0.8*enterStep {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
@@ -134,10 +125,6 @@ func updateNewOrders() {
 				//已有多仓，且上次加仓成本比现在高，不加仓
 				continue
 			}
-			if okLastShortSignal && lastShortSignal < mergedSignal.Value {
-				//上次开仓信号比这次强
-				continue
-			}
 			if swapPosition.PositionAmt <= 0 {
 				targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice - enterStep
 				if targetValue < -enterTarget {
@@ -155,9 +142,6 @@ func updateNewOrders() {
 					openValue = -enterStep
 				}
 			}
-			//重置LongSignal
-			delete(swapLastLongSignals, swapSymbol)
-			swapLastShortSignals[swapSymbol] = mergedSignal.Value
 			enterValue = swapSizeDiff * swapOrderPrice
 			if -enterValue < 0.8*enterStep {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
