@@ -14,8 +14,8 @@ import (
 
 func main() {
 
-	if *mtConfig.CpuProfile != "" {
-		f, err := os.Create(*mtConfig.CpuProfile)
+	if *swapConfig.CpuProfile != "" {
+		f, err := os.Create(*swapConfig.CpuProfile)
 		if err != nil {
 			logger.Debugf("os.Create error %v", err)
 			return
@@ -31,10 +31,10 @@ func main() {
 	var err error
 	swapAPI, err = bnswap.NewAPI(
 		&common.Credentials{
-			Key:    *mtConfig.BnApiKey,
-			Secret: *mtConfig.BnApiSecret,
+			Key:    *swapConfig.BnApiKey,
+			Secret: *swapConfig.BnApiSecret,
 		},
-		*mtConfig.ProxyAddress,
+		*swapConfig.ProxyAddress,
 	)
 	if err != nil {
 		logger.Debugf("bnswap.NewAPI error %v", err)
@@ -44,11 +44,11 @@ func main() {
 	swapGlobalCtx, swapGlobalCancel = context.WithCancel(context.Background())
 	defer swapGlobalCancel()
 
-	if *mtConfig.ChangeLeverage {
+	if *swapConfig.ChangeLeverage {
 		for _, takerSymbol := range swapSymbols {
 			res, err := swapAPI.UpdateLeverage(swapGlobalCtx, bnswap.UpdateLeverageParams{
 				Symbol:   takerSymbol,
-				Leverage: int64(*mtConfig.Leverage),
+				Leverage: int64(*swapConfig.Leverage),
 			})
 			if err != nil {
 				logger.Debugf("UPDATE LEVERAGE FOR %s ERROR %v", takerSymbol, err)
@@ -58,7 +58,7 @@ func main() {
 			time.Sleep(time.Second)
 			res, err = swapAPI.UpdateMarginType(swapGlobalCtx, bnswap.UpdateMarginTypeParams{
 				Symbol:     takerSymbol,
-				MarginType: *mtConfig.MarginType,
+				MarginType: *swapConfig.MarginType,
 			})
 			if err != nil {
 				logger.Debugf("UPDATE MARGIN TYPE FOR %s ERROR %v", takerSymbol, err)
@@ -77,11 +77,11 @@ func main() {
 
 	swapInternalInfluxWriter, err = common.NewInfluxWriter(
 		swapGlobalCtx,
-		*mtConfig.InternalInflux.Address,
-		*mtConfig.InternalInflux.Username,
-		*mtConfig.InternalInflux.Password,
-		*mtConfig.InternalInflux.Database,
-		*mtConfig.InternalInflux.BatchSize,
+		*swapConfig.InternalInflux.Address,
+		*swapConfig.InternalInflux.Username,
+		*swapConfig.InternalInflux.Password,
+		*swapConfig.InternalInflux.Database,
+		*swapConfig.InternalInflux.BatchSize,
 	)
 	if err != nil {
 		logger.Debugf("common.NewInfluxWriter error %v", err)
@@ -91,11 +91,11 @@ func main() {
 
 	swapExternalInfluxWriter, err = common.NewInfluxWriter(
 		swapGlobalCtx,
-		*mtConfig.ExternalInflux.Address,
-		*mtConfig.ExternalInflux.Username,
-		*mtConfig.ExternalInflux.Password,
-		*mtConfig.ExternalInflux.Database,
-		*mtConfig.ExternalInflux.BatchSize,
+		*swapConfig.ExternalInflux.Address,
+		*swapConfig.ExternalInflux.Username,
+		*swapConfig.ExternalInflux.Password,
+		*swapConfig.ExternalInflux.Database,
+		*swapConfig.ExternalInflux.BatchSize,
 	)
 	if err != nil {
 		logger.Debugf("common.NewInfluxWriter error %v", err)
@@ -106,7 +106,7 @@ func main() {
 	swapUserWebsocket, err = bnswap.NewUserWebsocket(
 		swapGlobalCtx,
 		swapAPI,
-		*mtConfig.ProxyAddress,
+		*swapConfig.ProxyAddress,
 	)
 	if err != nil {
 		logger.Debugf("bnswap.NewUserWebsocket error %v", err)
@@ -116,16 +116,16 @@ func main() {
 
 	internalInfluxSaveTimer := time.NewTimer(
 		time.Now().Truncate(
-			*mtConfig.InternalInflux.SaveInterval,
+			*swapConfig.InternalInflux.SaveInterval,
 		).Add(
-			*mtConfig.InternalInflux.SaveInterval * 3,
+			*swapConfig.InternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
 	externalInfluxSaveTimer := time.NewTimer(
 		time.Now().Truncate(
-			*mtConfig.ExternalInflux.SaveInterval,
+			*swapConfig.ExternalInflux.SaveInterval,
 		).Add(
-			*mtConfig.ExternalInflux.SaveInterval * 3,
+			*swapConfig.ExternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
 	swapLoopTimer = time.NewTimer(time.Second) //先等1分钟
@@ -135,19 +135,19 @@ func main() {
 
 	go bnswap.WatchAccountFromHttp(
 		swapGlobalCtx, swapAPI,
-		*mtConfig.PullInterval, swapAccountCh,
+		*swapConfig.PullInterval, swapAccountCh,
 	)
 	go bnswap.WatchPositionsFromHttp(
 		swapGlobalCtx, swapAPI,
 		swapSymbols,
-		*mtConfig.PullInterval, swapPositionsCh,
+		*swapConfig.PullInterval, swapPositionsCh,
 	)
 
 	swapDepthReportCh := make(chan DepthReport, 10000)
 	go swapReportsSaveLoop(
 		swapGlobalCtx,
 		swapInternalInfluxWriter,
-		*mtConfig.InternalInflux,
+		*swapConfig.InternalInflux,
 		swapDepthReportCh,
 	)
 
@@ -155,13 +155,13 @@ func main() {
 	go swapReportsSaveLoop(
 		swapGlobalCtx,
 		swapInternalInfluxWriter,
-		*mtConfig.InternalInflux,
+		*swapConfig.InternalInflux,
 		spotDepthReportCh,
 	)
 
 	bnswapRawDepthChs := make(map[string]chan *common.DepthRawMessage)
-	for start := 0; start < len(swapSymbols); start += *mtConfig.OrderBookBatchSize {
-		end := start + *mtConfig.OrderBookBatchSize
+	for start := 0; start < len(swapSymbols); start += *swapConfig.OrderBookBatchSize {
+		end := start + *swapConfig.OrderBookBatchSize
 		if end > len(swapSymbols) {
 			end = len(swapSymbols)
 		}
@@ -173,21 +173,21 @@ func main() {
 		go StreamDepth5(
 			swapGlobalCtx,
 			swapGlobalCancel,
-			*mtConfig.ProxyAddress,
+			*swapConfig.ProxyAddress,
 			subTakerRowDepthChs,
 		)
 	}
 
 	bnswapWalkedDepth5Ch := make(chan WalkedDepth5, len(swapSymbols)*100)
-	for takerSymbol := range mtConfig.SymbolsMap {
+	for takerSymbol := range swapConfig.SymbolsMap {
 		go StreamWalkedDepth(
 			swapGlobalCtx,
 			takerSymbol,
-			*mtConfig.OrderBookLevelDecay,
-			*mtConfig.OrderBookTimeDecay,
-			*mtConfig.OrderBookTimeBias,
-			*mtConfig.DepthLookbackDuration,
-			*mtConfig.ReportCount,
+			*swapConfig.OrderBookLevelDecay,
+			*swapConfig.OrderBookTimeDecay,
+			*swapConfig.OrderBookTimeBias,
+			*swapConfig.DepthLookbackDuration,
+			*swapConfig.ReportCount,
 			bnswapRawDepthChs[takerSymbol],
 			swapDepthReportCh,
 			bnswapWalkedDepth5Ch,
@@ -200,8 +200,8 @@ func main() {
 		go watchTakerOrderRequest(
 			swapGlobalCtx,
 			swapAPI,
-			*mtConfig.OrderTimeout,
-			*mtConfig.DryRun,
+			*swapConfig.OrderTimeout,
+			*swapConfig.DryRun,
 			swapOrderRequestChs[takerSymbol],
 			swapNewOrderErrorCh,
 		)
@@ -210,19 +210,19 @@ func main() {
 	go bnswap.SystemStatusLoop(
 		swapGlobalCtx,
 		swapAPI,
-		*mtConfig.PullInterval/2,
+		*swapConfig.PullInterval/2,
 		swapSystemStatusCh,
 	)
 
 	go StreamMergedSignals(
 		swapGlobalCtx,
 		swapGlobalCancel,
-		*mtConfig.ProxyAddress,
-		mtConfig.Exchanges,
-		mtConfig.SymbolsMap,
-		*mtConfig.ImbalanceLookback,
-		*mtConfig.ImbalanceTimeToLive,
-		*mtConfig.ImbalanceUpdateInterval,
+		*swapConfig.ProxyAddress,
+		swapConfig.Exchanges,
+		swapConfig.SymbolsMap,
+		*swapConfig.ImbalanceLookback,
+		*swapConfig.ImbalanceTimeToLive,
+		*swapConfig.ImbalanceUpdateInterval,
 		swapMergedSignalCh,
 	)
 
@@ -239,7 +239,7 @@ func main() {
 			select {
 			case <-swapGlobalCtx.Done():
 				return
-			case <-time.After(*mtConfig.RequestInterval):
+			case <-time.After(*swapConfig.RequestInterval):
 				logger.Debugf("INITIAL CANCEL ALL %s", takerSymbol)
 				select {
 				case <-swapGlobalCtx.Done():
@@ -266,12 +266,12 @@ func main() {
 
 		case swapSystemReady = <-swapSystemStatusCh:
 			if !swapSystemReady {
-				swapGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
+				swapGlobalSilent = time.Now().Add(*swapConfig.RestartSilent)
 			}
 			break
 		case <-swapUserWebsocket.RestartCh:
-			logger.Debugf("<-swapUserWebsocket.RestartCh restart silent %v", *mtConfig.RestartSilent)
-			swapGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
+			logger.Debugf("<-swapUserWebsocket.RestartCh restart silent %v", *swapConfig.RestartSilent)
+			swapGlobalSilent = time.Now().Add(*swapConfig.RestartSilent)
 			break
 
 		case s := <-swapMergedSignalCh:
@@ -303,7 +303,7 @@ func main() {
 				}
 				swapOrderSilentTimes[swapOrder.Symbol] = time.Now()
 				swapOrderCancelSilentTimes[swapOrder.Symbol] = time.Now()
-				swapHttpPositionUpdateSilentTimes[swapOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
+				swapHttpPositionUpdateSilentTimes[swapOrder.Symbol] = time.Now().Add(*swapConfig.HttpSilent)
 				if _, ok := swapSymbolsMap[swapOrder.Symbol]; ok {
 					if lastEneterPrice, ok := swapLastEnterPrices[swapOrder.Symbol]; ok {
 						swapEnterOffset[swapOrder.Symbol] = (lastEneterPrice - swapOrder.AveragePrice)/ lastEneterPrice
@@ -319,9 +319,9 @@ func main() {
 			handleSave()
 			internalInfluxSaveTimer.Reset(
 				time.Now().Truncate(
-					*mtConfig.InternalInflux.SaveInterval,
+					*swapConfig.InternalInflux.SaveInterval,
 				).Add(
-					*mtConfig.InternalInflux.SaveInterval,
+					*swapConfig.InternalInflux.SaveInterval,
 				).Sub(time.Now()),
 			)
 			break
@@ -329,20 +329,25 @@ func main() {
 			handleExternalInfluxSave()
 			externalInfluxSaveTimer.Reset(
 				time.Now().Truncate(
-					*mtConfig.ExternalInflux.SaveInterval,
+					*swapConfig.ExternalInflux.SaveInterval,
 				).Add(
-					*mtConfig.ExternalInflux.SaveInterval,
+					*swapConfig.ExternalInflux.SaveInterval,
 				).Sub(time.Now()),
 			)
 			break
 		case takerNewError := <-swapNewOrderErrorCh:
-			swapOrderSilentTimes[takerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
+			swapOrderSilentTimes[takerNewError.Params.Symbol] = time.Now().Add(*swapConfig.OrderSilent * 5)
 			break
 		case <-swapLoopTimer.C:
 			if swapSystemReady && time.Now().Sub(swapGlobalSilent) > 0 {
 				updateOldOrders()
 				updateNewOrders()
 			} else {
+				if time.Now().Second()%10 == 0 {
+					logger.Debugf("SYSTEM NOT READY SWAP %v SILENT TIME %v",
+						swapSystemReady,  time.Now().Sub(swapGlobalSilent),
+					)
+				}
 				if len(swapOpenOrders) > 0 {
 					for takerSymbol := range swapOpenOrders {
 						select {
@@ -359,9 +364,9 @@ func main() {
 			}
 			swapLoopTimer.Reset(
 				time.Now().Truncate(
-					*mtConfig.LoopInterval,
+					*swapConfig.LoopInterval,
 				).Add(
-					*mtConfig.LoopInterval,
+					*swapConfig.LoopInterval,
 				).Sub(time.Now()),
 			)
 			break

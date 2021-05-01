@@ -14,15 +14,15 @@ func updateNewOrders() {
 	if swapAccount == nil || swapAccount.AvailableBalance == nil {
 		return
 	}
-	enterStep := *swapAccount.AvailableBalance * *mtConfig.EnterFreePct
-	if enterStep < *mtConfig.EnterMinimalStep {
-		enterStep = *mtConfig.EnterMinimalStep
+	enterStep := *swapAccount.AvailableBalance * *swapConfig.EnterFreePct
+	if enterStep < *swapConfig.EnterMinimalStep {
+		enterStep = *swapConfig.EnterMinimalStep
 	}
-	enterTarget := *mtConfig.EnterTargetFactor * enterStep
+	enterTarget := *swapConfig.EnterTargetFactor * enterStep
 	swapUSDTAvailable := *swapAccount.AvailableBalance
 
 	for _, swapSymbol := range swapSymbols {
-		if time.Now().Sub(swapPositionsUpdateTimes[swapSymbol]) > *mtConfig.PositionMaxAge {
+		if time.Now().Sub(swapPositionsUpdateTimes[swapSymbol]) > *swapConfig.PositionMaxAge {
 			continue
 		}
 		if swapOrderSilentTimes[swapSymbol].Sub(time.Now()).Seconds() > 0 {
@@ -52,7 +52,7 @@ func updateNewOrders() {
 		openValue := 0.0
 
 		//还在加多档期
-		if mergedSignal.Value > *mtConfig.EnterThreshold &&
+		if mergedSignal.Value > *swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
 			swapOrderPrice = math.Floor(swapDepth.MidPrice/swapTickSize) * swapTickSize
 			if swapPosition.PositionAmt > 0 && okLastEnterPrice && lastEnterPrice > swapOrderPrice {
@@ -86,11 +86,11 @@ func updateNewOrders() {
 						enterStep*0.8,
 						swapSizeDiff,
 					)
-					swapLogSilentTimes[swapSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					swapLogSilentTimes[swapSymbol] = time.Now().Add(*swapConfig.LogInterval)
 				}
 				continue
 			}
-			if enterValue > swapUSDTAvailable*float64(*mtConfig.Leverage) {
+			if enterValue > swapUSDTAvailable*float64(*swapConfig.Leverage) {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED LONG OPEN, ENTRY VALUE %f MORE THAN swapUSDTAvailable %f, SIZE %f",
@@ -99,7 +99,7 @@ func updateNewOrders() {
 						swapUSDTAvailable,
 						swapSizeDiff,
 					)
-					swapLogSilentTimes[swapSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					swapLogSilentTimes[swapSymbol] = time.Now().Add(*swapConfig.LogInterval)
 				}
 				continue
 			}
@@ -112,12 +112,12 @@ func updateNewOrders() {
 						takerMinNotional,
 						swapSizeDiff,
 					)
-					swapLogSilentTimes[swapSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					swapLogSilentTimes[swapSymbol] = time.Now().Add(*swapConfig.LogInterval)
 				}
 				continue
 			}
 			logger.Debugf("%s OPEN LONG@%f %f -> %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapPosition.PositionAmt+swapSizeDiff)
-		} else if mergedSignal.Value <= -*mtConfig.EnterThreshold &&
+		} else if mergedSignal.Value <= -*swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
 
 			swapOrderPrice = math.Ceil(swapDepth.MidPrice/swapTickSize) * swapTickSize
@@ -152,11 +152,11 @@ func updateNewOrders() {
 						enterStep*0.8,
 						swapSizeDiff,
 					)
-					swapLogSilentTimes[swapSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					swapLogSilentTimes[swapSymbol] = time.Now().Add(*swapConfig.LogInterval)
 				}
 				continue
 			}
-			if -enterValue > swapUSDTAvailable*float64(*mtConfig.Leverage) {
+			if -enterValue > swapUSDTAvailable*float64(*swapConfig.Leverage) {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED SHORT OPEN, ENTRY VALUE %f MORE THAN swapUSDTAvailable %f, SIZE %f",
@@ -165,7 +165,7 @@ func updateNewOrders() {
 						swapUSDTAvailable,
 						swapSizeDiff,
 					)
-					swapLogSilentTimes[swapSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					swapLogSilentTimes[swapSymbol] = time.Now().Add(*swapConfig.LogInterval)
 				}
 				continue
 			}
@@ -178,7 +178,7 @@ func updateNewOrders() {
 						takerMinNotional,
 						swapSizeDiff,
 					)
-					swapLogSilentTimes[swapSymbol] = time.Now().Add(*mtConfig.LogInterval)
+					swapLogSilentTimes[swapSymbol] = time.Now().Add(*swapConfig.LogInterval)
 				}
 				continue
 			}
@@ -192,7 +192,7 @@ func updateNewOrders() {
 		} else if swapSizeDiff > 0 && swapPosition.PositionAmt >= 0 && swapSizeDiff*swapOrderPrice < takerMinNotional {
 			continue
 		}
-		swapUSDTAvailable -= math.Abs(openValue)/ float64(*mtConfig.Leverage)
+		swapUSDTAvailable -= math.Abs(openValue)/ float64(*swapConfig.Leverage)
 		reduceOnly := false
 		if swapSizeDiff*swapPosition.PositionAmt < 0 && math.Abs(swapSizeDiff) <= math.Abs(swapPosition.PositionAmt) {
 			reduceOnly = true
@@ -220,7 +220,7 @@ func updateNewOrders() {
 			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 		}
 		swapOpenOrders[swapSymbol] = TakerOpenOrder{NewOrderParams: &takerOrder, Symbol: swapSymbol}
-		swapOrderSilentTimes[swapSymbol] = time.Now().Add(*mtConfig.OrderSilent)
+		swapOrderSilentTimes[swapSymbol] = time.Now().Add(*swapConfig.OrderSilent)
 		swapOrderRequestChs[swapSymbol] <- TakerOrderRequest{New: &takerOrder}
 	}
 }

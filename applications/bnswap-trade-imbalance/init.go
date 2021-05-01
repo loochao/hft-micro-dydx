@@ -53,11 +53,11 @@ var swapEnterSilentTimes = make(map[string]time.Time)
 var swapMergedSignalCh = make(chan MergedSignal, 10000)
 var swapMergedSignals = make(map[string]MergedSignal)
 
-var mtConfig *Config
+var swapConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210501 11:39:28  ####")
+	logger.Debug("####  BUILD @ 20210501 11:45:09  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -80,16 +80,16 @@ func init() {
 	if !valid {
 		logger.Fatalf("CONFIG IS NOT VALID:\n%s\n", reason)
 	}
-	mtConfig = &config
+	swapConfig = &config
 
-	for symbol := range mtConfig.SymbolsMap {
+	for symbol := range swapConfig.SymbolsMap {
 		swapSymbols = append(swapSymbols, symbol)
 		swapSymbolsMap[symbol] = symbol
 		swapLogSilentTimes[symbol] = time.Now()
 
 		swapOrderSilentTimes[symbol] = time.Now()
 		swapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
-		swapGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
+		swapGlobalSilent = time.Now().Add(*swapConfig.RestartSilent)
 		swapHttpPositionUpdateSilentTimes[symbol] = time.Now()
 	}
 }

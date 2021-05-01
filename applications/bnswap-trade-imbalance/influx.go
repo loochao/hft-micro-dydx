@@ -17,12 +17,12 @@ func handleSave() {
 	if swapAccount != nil &&
 		swapAccount.MarginBalance != nil {
 		totalBalance := *swapAccount.MarginBalance
-		netWorth := totalBalance / *mtConfig.StartValue
+		netWorth := totalBalance / *swapConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalBalance"] = totalBalance
 		fields["takerBalance"] = *swapAccount.MarginBalance
 		fields["netWorth"] = netWorth
-		fields["startValue"] = *mtConfig.StartValue
+		fields["startValue"] = *swapConfig.StartValue
 		fields["netWorth"] = netWorth
 		if swapAccount.AvailableBalance != nil {
 			fields["takerAvailable"] = *swapAccount.AvailableBalance
@@ -31,7 +31,7 @@ func handleSave() {
 			fields["takerUnrealizedProfit"] = *swapAccount.UnrealizedProfit
 		}
 		pt, err := client.NewPoint(
-			*mtConfig.InternalInflux.Measurement,
+			*swapConfig.InternalInflux.Measurement,
 			map[string]string{
 				"type": "balance",
 			},
@@ -80,7 +80,7 @@ func handleSave() {
 			fields["globalSilent"] = 1
 		}
 		pt, err := client.NewPoint(
-			*mtConfig.InternalInflux.Measurement,
+			*swapConfig.InternalInflux.Measurement,
 			map[string]string{
 				"symbol": symbol,
 				"type":   "symbol",
@@ -106,7 +106,7 @@ func handleSave() {
 	}
 	if len(fields) > 0 {
 		pt, err := client.NewPoint(
-			*mtConfig.InternalInflux.Measurement,
+			*swapConfig.InternalInflux.Measurement,
 			map[string]string{
 				"type": "signal",
 			},
@@ -133,19 +133,19 @@ func handleExternalInfluxSave() {
 	if swapAccount != nil &&
 		swapAccount.MarginBalance != nil {
 		totalBalance := *swapAccount.MarginBalance
-		netWorth := totalBalance / *mtConfig.StartValue
+		netWorth := totalBalance / *swapConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["netWorth"] = netWorth
-		for name, start := range mtConfig.StartValues {
+		for name, start := range swapConfig.StartValues {
 			if start > 0 {
 				fields["currentValue_"+strings.ToLower(name)] = netWorth * start
 			}
 		}
 		if len(fields) > 0 {
 			pt, err := client.NewPoint(
-				*mtConfig.ExternalInflux.Measurement,
+				*swapConfig.ExternalInflux.Measurement,
 				map[string]string{
-					"name": *mtConfig.Name,
+					"name": *swapConfig.Name,
 				},
 				fields,
 				time.Now().UTC(),

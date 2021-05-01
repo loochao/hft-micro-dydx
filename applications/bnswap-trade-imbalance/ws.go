@@ -40,9 +40,9 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != swapPositions[pos.Symbol].PositionAmt ||
 			lastPosition.EntryPrice != swapPositions[pos.Symbol].EntryPrice {
-			swapHttpPositionUpdateSilentTimes[pos.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
+			swapHttpPositionUpdateSilentTimes[pos.Symbol] = time.Now().Add(*swapConfig.HttpSilent)
 			if lastPosition != nil {
-				swapEnterSilentTimes[pos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
+				swapEnterSilentTimes[pos.Symbol] = time.Now().Add(*swapConfig.EnterSilent)
 				logger.Debugf("%s WS POS %f -> %f", pos.Symbol, lastPosition.PositionAmt, pos.PositionAmt)
 			} else {
 				logger.Debugf("%s WS POS nil -> %f", pos.Symbol, pos.PositionAmt)

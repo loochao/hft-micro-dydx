@@ -61,8 +61,8 @@ func updateOldOrders() {
 		if isTakerOrderOk(*order.NewOrderParams) {
 			continue
 		}
-		swapOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
-		swapOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
+		swapOrderSilentTimes[order.Symbol] = time.Now().Add(*swapConfig.OrderCancelSilent)
+		swapOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*swapConfig.OrderCancelSilent)
 		delete(swapOpenOrders, takerSymbol)
 		swapOrderRequestChs[order.Symbol] <- TakerOrderRequest{
 			Cancel: &bnswap.CancelAllOrderParams{Symbol: order.Symbol},
@@ -72,7 +72,7 @@ func updateOldOrders() {
 
 func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 	takerDepth, ok := swapWalkedDepths[order.Symbol]
-	if !ok || time.Now().Sub(takerDepth.Time) > *mtConfig.DepthTimeToLive {
+	if !ok || time.Now().Sub(takerDepth.Time) > *swapConfig.DepthTimeToLive {
 		if !ok {
 			logger.Debugf("SPREAD IS NOT READY")
 		} else {
