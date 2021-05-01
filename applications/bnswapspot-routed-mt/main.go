@@ -437,7 +437,7 @@ func main() {
 			handleSpotWSOutboundAccountPosition(msg)
 			break
 		case spotWSOrder := <-bnspotUserWebsocket.OrderUpdateEventCh:
-			logger.Debugf("SPOT WS ORDER %v", spotWSOrder)
+			//logger.Debugf("SPOT WS ORDER %v", spotWSOrder)
 			if spotWSOrder.CurrentOrderStatus == bnspot.OrderStatusFilled {
 				logger.Debugf("SPOT WS ORDER %s %s %s", spotWSOrder.Symbol, spotWSOrder.CurrentOrderStatus, spotWSOrder.ClientOrderID)
 				if spotWSOrder.CumulativeFilledQuantity > 0 && spotWSOrder.CumulativeQuoteAssetTransactedQuantity > 0 {
@@ -571,7 +571,7 @@ func main() {
 			break
 
 		case orders := <-bnspotCancelOrderResponsesCh:
-			logger.Debugf("CANCEL ALL %v", orders)
+			//logger.Debugf("CANCEL ALL %v", orders)
 			for _, o := range orders {
 				if openOrder, ok := bnspotOpenOrders[o.Symbol]; ok && openOrder.NewClientOrderID == o.OrigClientOrderID {
 					delete(bnspotOpenOrders, o.Symbol)
