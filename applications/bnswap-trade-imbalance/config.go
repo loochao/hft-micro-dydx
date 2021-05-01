@@ -58,7 +58,7 @@ type Config struct {
 	EnterTargetFactor *float64           `yaml:"enterTargetFactor,omitempty"`
 	StartValues       map[string]float64 `yaml:"startValues,omitempty"`
 	EnterThreshold    *float64           `yaml:"enterThreshold,omitempty"`
-	CloseThreshold    *float64           `yaml:"enterThreshold,omitempty"`
+	CloseThreshold    *float64           `yaml:"closeThreshold,omitempty"`
 
 	OrderTimeout *time.Duration `yaml:"orderTimeout,omitempty"`
 	OrderSilent  *time.Duration `yaml:"orderSilent,omitempty"`
