@@ -86,7 +86,7 @@ func StreamMergedSignals(
 					Value:    dir/ weight,
 					Signals: values,
 				}:
-					logger.Debugf("%s %f %v", symbol, dir/weight, values)
+					logger.Debugf("%s %f", symbol, dir/weight)
 				default:
 					logger.Debugf("outputCh <- MergedSignal failed, ch len %d", len(outputCh))
 				}
