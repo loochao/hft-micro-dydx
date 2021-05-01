@@ -44,6 +44,9 @@ func updateNewOrders() {
 		swapDepth, okDepth := swapWalkedDepths[swapSymbol]
 		mergedSignal, okSignal := swapMergedSignals[swapSymbol]
 		if !okTakerPositions || !okDepth || !okSignal {
+			if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
+				logger.Debugf("%s POS %v DEPTH %v SIGNAL %v", swapSymbol, okTakerPositions, okDepth, okSignal)
+			}
 			continue
 		}
 
