@@ -51,7 +51,6 @@ type Config struct {
 	OrderBookBatchSize    *int           `yaml:"orderBookBatchSize,omitempty"`
 	ReportCount           *int           `yaml:"reportCount,omitempty"`
 	DepthTimeToLive       *time.Duration `yaml:"depthTimeToLive,omitempty"`
-	DepthLookbackDuration *time.Duration `yaml:"depthLookbackDuration,omitempty"`
 
 	StartValue        *float64           `yaml:"startValue,omitempty"`
 	EnterFreePct      *float64           `yaml:"enterFreePct,omitempty"`
