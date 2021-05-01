@@ -183,10 +183,10 @@ func main() {
 		go StreamWalkedDepth(
 			swapGlobalCtx,
 			takerSymbol,
-			*swapConfig.OrderBookMakerImpact,
-			*swapConfig.OrderBookTakerImpact,
 			*swapConfig.OrderBookTimeDecay,
 			*swapConfig.OrderBookTimeBias,
+			*swapConfig.OrderBookMakerImpact,
+			*swapConfig.OrderBookTakerImpact,
 			*swapConfig.ReportCount,
 			bnswapRawDepthChs[takerSymbol],
 			swapDepthReportCh,
