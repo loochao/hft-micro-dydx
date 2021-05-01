@@ -50,7 +50,7 @@ func updateNewOrders() {
 			continue
 		}
 
-		//lastEnterPrice, okLastEnterPrice := swapLastEnterPrices[swapSymbol]
+		lastEnterPrice, okLastEnterPrice := swapLastEnterPrices[swapSymbol]
 
 		//logger.Debugf("%v", mergedSignal)
 		swapStepSize := swapStepSizes[swapSymbol]
@@ -66,11 +66,14 @@ func updateNewOrders() {
 		//还在加多档期
 		if mergedSignal.Value > *swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
-			swapOrderPrice = math.Floor(swapDepth.MakerBid/swapTickSize) * swapTickSize
-			//if swapPosition.PositionAmt > 0 && okLastEnterPrice && lastEnterPrice > swapOrderPrice {
-			//	//已有多仓，且上次加仓成本比现在高，不加仓
-			//	continue
-			//}
+			swapOrderPrice = math.Floor(swapDepth.TakerAsk/swapTickSize) * swapTickSize
+			if swapPosition.PositionAmt > 0 && okLastEnterPrice && lastEnterPrice > swapOrderPrice {
+				if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
+					logger.Debugf("%s LONG FAILED, TAKER ASK %f > LAST ENTER PRICE %f", swapSymbol, swapDepth.TakerAsk, lastEnterPrice)
+				}
+				//已有多仓，且上次加仓成本比现在高，不加仓
+				continue
+			}
 			if swapPosition.PositionAmt >= 0 {
 				targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice + enterStep
 				if targetValue > enterTarget {
@@ -133,10 +136,13 @@ func updateNewOrders() {
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
 
 			swapOrderPrice = math.Ceil(swapDepth.MakerAsk/swapTickSize) * swapTickSize
-			//if swapPosition.PositionAmt < 0 && okLastEnterPrice && lastEnterPrice < swapOrderPrice {
-			//	//已有多仓，且上次加仓成本比现在高，不加仓
-			//	continue
-			//}
+			if swapPosition.PositionAmt < 0 && okLastEnterPrice && lastEnterPrice < swapOrderPrice {
+				//已有多仓，且上次加仓成本比现在高，不加仓
+				if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
+					logger.Debugf("%s SHORT FAILED, TAKER BID %f > LAST ENTER PRICE %f", swapSymbol, swapDepth.TakerAsk, lastEnterPrice)
+				}
+				continue
+			}
 			if swapPosition.PositionAmt <= 0 {
 				targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice - enterStep
 				if targetValue < -enterTarget {
@@ -224,14 +230,14 @@ func updateNewOrders() {
 		takerOrder := bnswap.NewOrderParams{
 			Symbol:           swapSymbol,
 			Side:             side,
-			Type:             common.OrderTypeLimit,
-			Price:            swapOrderPrice,
-			TimeInForce:      common.OrderTimeInForceGTX,
+			Type:             common.OrderTypeMarket,
+			//Price:            swapOrderPrice,
+			//TimeInForce:      common.OrderTimeInForceGTX,
 			Quantity:         swapSizeDiff,
 			ReduceOnly:       reduceOnly,
 			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
 		}
-		swapOpenOrders[swapSymbol] = TakerOpenOrder{NewOrderParams: &takerOrder, Symbol: swapSymbol}
+		//swapOpenOrders[swapSymbol] = TakerOpenOrder{NewOrderParams: &takerOrder, Symbol: swapSymbol}
 		swapOrderSilentTimes[swapSymbol] = time.Now().Add(*swapConfig.OrderSilent)
 		swapOrderRequestChs[swapSymbol] <- TakerOrderRequest{New: &takerOrder}
 	}
