@@ -36,7 +36,7 @@ var swapAccount *bnswap.Asset
 var swapAccountCh = make(chan bnswap.Account, 10)
 var swapNewOrderErrorCh = make(chan TakerOrderNewError, 10)
 var swapOrderRequestChs = make(map[string]chan TakerOrderRequest)
-var swapWalkedDepths = make(map[string]WalkedDepth5)
+var swapWalkedDepths = make(map[string]common.WalkedMakerTakerDepth)
 
 var swapOrderSilentTimes = make(map[string]time.Time)
 
@@ -57,7 +57,7 @@ var swapConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210501 13:38:12  ####")
+	logger.Debug("####  BUILD @ 20210501 13:51:32  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

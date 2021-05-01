@@ -54,7 +54,7 @@ func updateNewOrders() {
 		//还在加多档期
 		if mergedSignal.Value > *swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
-			swapOrderPrice = math.Floor(swapDepth.MidPrice/swapTickSize) * swapTickSize
+			swapOrderPrice = math.Floor(swapDepth.MakerBid/swapTickSize) * swapTickSize
 			if swapPosition.PositionAmt > 0 && okLastEnterPrice && lastEnterPrice > swapOrderPrice {
 				//已有多仓，且上次加仓成本比现在高，不加仓
 				continue
@@ -120,7 +120,7 @@ func updateNewOrders() {
 		} else if mergedSignal.Value <= -*swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
 
-			swapOrderPrice = math.Ceil(swapDepth.MidPrice/swapTickSize) * swapTickSize
+			swapOrderPrice = math.Ceil(swapDepth.MakerAsk/swapTickSize) * swapTickSize
 			if swapPosition.PositionAmt < 0 && okLastEnterPrice && lastEnterPrice < swapOrderPrice {
 				//已有多仓，且上次加仓成本比现在高，不加仓
 				continue
@@ -182,7 +182,7 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			logger.Debugf("%s OPEN SHORT@%f %f %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapDepth.EmaAskBidRatio)
+			logger.Debugf("%s OPEN SHORT@%f %f -> %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapPosition.PositionAmt+swapSizeDiff)
 		}
 
 		if math.Abs(swapSizeDiff) < swapStepSize {
@@ -199,14 +199,14 @@ func updateNewOrders() {
 		}
 		side := "BUY"
 
-		if swapSizeDiff > 0 && swapOrderPrice > swapDepth.BidPrice {
-			swapOrderPrice = swapDepth.BidPrice
+		if swapSizeDiff > 0 && swapOrderPrice > swapDepth.BestBidPrice {
+			swapOrderPrice = swapDepth.BestBidPrice
 		}
 		if swapSizeDiff < 0 {
 			side = "SELL"
 			swapSizeDiff = -swapSizeDiff
-			if swapOrderPrice < swapDepth.AskPrice {
-				swapOrderPrice = swapDepth.AskPrice
+			if swapOrderPrice < swapDepth.BestAskPrice {
+				swapOrderPrice = swapDepth.BestAskPrice
 			}
 		}
 		takerOrder := bnswap.NewOrderParams{

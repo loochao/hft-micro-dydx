@@ -178,15 +178,15 @@ func main() {
 		)
 	}
 
-	bnswapWalkedDepth5Ch := make(chan WalkedDepth5, len(swapSymbols)*100)
+	bnswapWalkedDepth5Ch := make(chan common.WalkedMakerTakerDepth, len(swapSymbols)*100)
 	for takerSymbol := range swapConfig.SymbolsMap {
 		go StreamWalkedDepth(
 			swapGlobalCtx,
 			takerSymbol,
-			*swapConfig.OrderBookLevelDecay,
+			*swapConfig.OrderBookMakerImpact,
+			*swapConfig.OrderBookTakerImpact,
 			*swapConfig.OrderBookTimeDecay,
 			*swapConfig.OrderBookTimeBias,
-			*swapConfig.DepthLookbackDuration,
 			*swapConfig.ReportCount,
 			bnswapRawDepthChs[takerSymbol],
 			swapDepthReportCh,

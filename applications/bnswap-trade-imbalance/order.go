@@ -82,10 +82,10 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 	}
 
 	if order.Side == common.OrderSideSell &&
-		order.Price > takerDepth.AskPrice {
+		order.Price > takerDepth.TakerFarAsk {
 		return false
 	} else if order.Side == common.OrderSideBuy &&
-		order.Price < takerDepth.BidPrice {
+		order.Price < takerDepth.TakerFarBid {
 		return false
 	}
 	return true

@@ -59,14 +59,10 @@ func handleSave() {
 		if walkedDepth, ok := swapWalkedDepths[symbol]; ok {
 			fields["swapMidPrice"] = walkedDepth.MidPrice
 			fields["swapMircoPrice"] = walkedDepth.MircoPrice
-			fields["swapAskPrice"] = walkedDepth.AskPrice
-			fields["swapBidPrice"] = walkedDepth.BidPrice
-			fields["swapAskSize"] = walkedDepth.AskSize
-			fields["swapBidSize"] = walkedDepth.BidSize
-			fields["swapAskBidRatio"] = walkedDepth.AskBidRatio
-			fields["swapBidAskRatio"] = walkedDepth.BidAskRatio
-			fields["swapEmaBidAskRatio"] = walkedDepth.EmaBidAskRatio
-			fields["swapEmaAskBidRatio"] = walkedDepth.EmaAskBidRatio
+			fields["swapMakerBid"] = walkedDepth.MakerBid
+			fields["swapMakerAsk"] = walkedDepth.MakerAsk
+			fields["swapTakerBid"] = walkedDepth.TakerBid
+			fields["swapTakerAsk"] = walkedDepth.TakerAsk
 		}
 		if mergedSignal, ok := swapMergedSignals[symbol]; ok {
 			fields["mergedSignalValue"] = mergedSignal.Value

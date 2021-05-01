@@ -48,7 +48,6 @@ type Config struct {
 
 	OrderBookTimeDecay   *float64 `yaml:"orderBookTimeDecay,omitempty"`
 	OrderBookTimeBias    *float64 `yaml:"orderBookTimeBias,omitempty"`
-	OrderBookLevelDecay  *float64 `yaml:"orderBookLevelDecay,omitempty"`
 	OrderBookTakerImpact *float64 `yaml:"orderBookTakerImpact,omitempty"`
 	OrderBookMakerImpact *float64 `yaml:"orderBookMakerImpact,omitempty"`
 
