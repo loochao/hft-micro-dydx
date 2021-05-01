@@ -58,7 +58,7 @@ func updateNewOrders() {
 		openValue := 0.0
 
 		//还在加多档期
-		if mergedSignal.Value > *swapConfig.EnterThreshold &&
+		if mergedSignal.Value < -*swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
 			swapOrderPrice = math.Floor(swapDepth.TakerAsk/swapTickSize) * swapTickSize
 			if swapPosition.PositionAmt > 0 &&
@@ -128,7 +128,7 @@ func updateNewOrders() {
 				continue
 			}
 			logger.Debugf("%s OPEN LONG@%f %f -> %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapPosition.PositionAmt+swapSizeDiff)
-		} else if mergedSignal.Value <= -*swapConfig.EnterThreshold &&
+		} else if mergedSignal.Value > *swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
 
 			swapOrderPrice = math.Ceil(swapDepth.TakerBid/swapTickSize) * swapTickSize
