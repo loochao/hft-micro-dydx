@@ -68,16 +68,13 @@ func StreamMergedSignals(
 				for _, name := range signals {
 					if s, ok := maps[name]; ok {
 						if time.Now().Sub(s.Time) < signalTimeToLive {
-							if s.Value > 0 {
-								dir += 1
-							}else if s.Value < 0{
-								dir += -1
-							}
-							values[name] = s.Value
-							weight += 1.0
+							values[name] = s.Value*s.Weight
+							weight += s.Weight
 						}
 					} else {
-						logger.Debugf("%s not found", name)
+						if time.Now().Truncate(time.Second*5).Add(updateInterval).Sub(time.Now()) > 0 {
+							logger.Debugf("%s not found", name)
+						}
 					}
 				}
 				select {
