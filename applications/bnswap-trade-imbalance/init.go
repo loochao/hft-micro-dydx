@@ -47,6 +47,8 @@ var swapSystemStatusCh = make(chan bool, 10)
 var swapGlobalSilent = time.Now()
 
 var swapLastEnterPrices = make(map[string]float64)
+var swapLastLongSignals = make(map[string]float64)
+var swapLastShortSignals = make(map[string]float64)
 var swapEnterOffset = make(map[string]float64)
 var swapEnterSilentTimes = make(map[string]time.Time)
 
@@ -57,7 +59,7 @@ var swapConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210501 11:54:37  ####")
+	logger.Debug("####  BUILD @ 20210501 12:25:06  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
