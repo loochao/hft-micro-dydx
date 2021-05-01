@@ -14,11 +14,12 @@ func updateNewOrders() {
 	if swapAccount == nil || swapAccount.AvailableBalance == nil {
 		return
 	}
-	entryStep := *swapAccount.AvailableBalance * *mtConfig.EnterFreePct
-	if entryStep < *mtConfig.EnterMinimalStep {
-		entryStep = *mtConfig.EnterMinimalStep
+	enterStep := *swapAccount.AvailableBalance * *mtConfig.EnterFreePct
+	if enterStep < *mtConfig.EnterMinimalStep {
+		enterStep = *mtConfig.EnterMinimalStep
 	}
-	takerUSDTAvailable := *swapAccount.AvailableBalance
+	enterTarget := *mtConfig.EnterTargetFactor * enterStep
+	swapUSDTAvailable := *swapAccount.AvailableBalance
 
 	for _, swapSymbol := range swapSymbols {
 		if time.Now().Sub(swapPositionsUpdateTimes[swapSymbol]) > *mtConfig.PositionMaxAge {
@@ -36,45 +37,65 @@ func updateNewOrders() {
 		if !okTakerPositions || !okSpread || !okSignal {
 			continue
 		}
+
+		lastEnterPrice, okLastEnterPrice := swapLastEnterPrices[swapSymbol]
+
 		//logger.Debugf("%v", mergedSignal)
-		takerStepSize := swapStepSizes[swapSymbol]
+		swapStepSize := swapStepSizes[swapSymbol]
 		swapTickSize := swapTickSizes[swapSymbol]
 		takerMinNotional := swapMinNotional[swapSymbol]
 
 		swapSizeDiff := 0.0
+		targetValue := 0.0
 		swapOrderPrice := 0.0
 		entryValue := 0.0
 
 		//还在加多档期
-		if mergedSignal.Value >= *mtConfig.EnterThreshold &&
-			swapPosition.PositionAmt <= 0 {
+		if mergedSignal.Value > *mtConfig.EnterThreshold &&
+			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
 			swapOrderPrice = math.Floor(swapDepth.MidPrice/swapTickSize) * swapTickSize
-
-			swapSizeDiff = -swapPosition.PositionAmt + math.Floor(entryStep/swapOrderPrice/takerStepSize)*takerStepSize
+			if swapPosition.PositionAmt > 0 && okLastEnterPrice && lastEnterPrice > swapOrderPrice {
+				//已有多仓，且上次加仓成本比现在高，不加仓
+				continue
+			}
+			if swapPosition.PositionAmt >= 0 {
+				targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice + enterStep
+				if targetValue > enterTarget {
+					targetValue = enterTarget
+				}
+				swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
+				swapUSDTAvailable -= math.Abs(swapSizeDiff) * swapOrderPrice
+			} else {
+				if -swapPosition.PositionAmt*swapPosition.EntryPrice > enterTarget/4 {
+					//超过一半目标仓位，减半仓
+					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize)* swapStepSize
+				}else{
+					//直接换仓
+					swapSizeDiff = math.Floor((enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize)*swapStepSize
+					swapUSDTAvailable -= math.Abs(swapSizeDiff) * swapOrderPrice
+				}
+			}
 			entryValue = swapSizeDiff * swapOrderPrice
-			takerUSDTAvailable += -swapPosition.PositionAmt * swapOrderPrice //补偿, 这一部分不占仓位
-			swapSizeDiff = math.Floor(entryValue/swapOrderPrice/takerStepSize) * takerStepSize
-			entryValue = swapOrderPrice * swapSizeDiff
-			if entryValue < 0.8*entryStep {
+			if entryValue < 0.8*enterStep {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED LONG OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, SIZE %f",
 						swapSymbol,
 						entryValue,
-						entryStep*0.8,
+						enterStep*0.8,
 						swapSizeDiff,
 					)
 					swapLogSilentTimes[swapSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
 			}
-			if entryValue > takerUSDTAvailable {
+			if entryValue > swapUSDTAvailable {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
-						"%s FAILED LONG OPEN, ENTRY VALUE %f MORE THAN takerUSDTAvailable %f, SIZE %f",
+						"%s FAILED LONG OPEN, ENTRY VALUE %f MORE THAN swapUSDTAvailable %f, SIZE %f",
 						swapSymbol,
 						entryValue,
-						takerUSDTAvailable,
+						swapUSDTAvailable,
 						swapSizeDiff,
 					)
 					swapLogSilentTimes[swapSymbol] = time.Now().Add(*mtConfig.LogInterval)
@@ -94,42 +115,53 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			if swapPosition.PositionAmt <= 0 {
-				takerUSDTAvailable -= entryValue
-			}
-			logger.Debugf("%s OPEN LONG@%f %f %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapDepth.EmaBidAskRatio)
-
+			logger.Debugf("%s OPEN LONG@%f %f -> %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapPosition.PositionAmt+swapSizeDiff)
 		} else if mergedSignal.Value <= -*mtConfig.EnterThreshold &&
-			swapPosition.PositionAmt >= 0 {
+			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
 
 			swapOrderPrice = math.Ceil(swapDepth.MidPrice/swapTickSize) * swapTickSize
-
-			swapSizeDiff = -swapPosition.PositionAmt - math.Floor(entryStep/swapOrderPrice/takerStepSize)*takerStepSize
+			if swapPosition.PositionAmt < 0 && okLastEnterPrice && lastEnterPrice < swapOrderPrice {
+				//已有多仓，且上次加仓成本比现在高，不加仓
+				continue
+			}
+			if swapPosition.PositionAmt <= 0 {
+				targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice - enterStep
+				if targetValue < -enterTarget {
+					targetValue = -enterTarget
+				}
+				swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
+				swapUSDTAvailable -= math.Abs(swapSizeDiff) * swapOrderPrice
+			} else {
+				if swapPosition.PositionAmt*swapPosition.EntryPrice > enterTarget/4 {
+					//超过一半目标仓位，减半仓
+					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize)* swapStepSize
+				}else{
+					//直接换仓
+					swapSizeDiff = math.Floor((enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize)*swapStepSize
+					swapUSDTAvailable -= math.Abs(swapSizeDiff) * swapOrderPrice
+				}
+			}
 			entryValue = swapSizeDiff * swapOrderPrice
-			takerUSDTAvailable += swapPosition.PositionAmt * swapOrderPrice //补偿, 这一部分不占仓位
-			swapSizeDiff = math.Ceil(entryValue/swapOrderPrice/takerStepSize) * takerStepSize
-			entryValue = swapOrderPrice * swapSizeDiff
-
-			if -entryValue < 0.8*entryStep {
+			if -entryValue < 0.8*enterStep {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED SHORT OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, SIZE %f",
 						swapSymbol,
 						-entryValue,
-						entryStep*0.8,
+						enterStep*0.8,
 						swapSizeDiff,
 					)
 					swapLogSilentTimes[swapSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
 				continue
 			}
-			if -entryValue > takerUSDTAvailable {
+			if -entryValue > swapUSDTAvailable {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
-						"%s FAILED SHORT OPEN, ENTRY VALUE %f MORE THAN takerUSDTAvailable %f, SIZE %f",
+						"%s FAILED SHORT OPEN, ENTRY VALUE %f MORE THAN swapUSDTAvailable %f, SIZE %f",
 						swapSymbol,
 						-entryValue,
-						takerUSDTAvailable,
+						swapUSDTAvailable,
 						swapSizeDiff,
 					)
 					swapLogSilentTimes[swapSymbol] = time.Now().Add(*mtConfig.LogInterval)
@@ -149,23 +181,10 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			if swapPosition.PositionAmt >= 0 {
-				takerUSDTAvailable -= -entryValue
-			}
 			logger.Debugf("%s OPEN SHORT@%f %f %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapDepth.EmaAskBidRatio)
-		} else if mergedSignal.Value <= -*mtConfig.CloseThreshold &&
-			swapPosition.PositionAmt > 0 {
-			swapOrderPrice = math.Ceil(swapDepth.MidPrice/swapTickSize) * swapTickSize
-			swapSizeDiff = -swapPosition.PositionAmt
-			logger.Debugf("%s CLOSE LONG@%f %f %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapDepth.EmaBidAskRatio)
-		} else if mergedSignal.Value >= *mtConfig.CloseThreshold &&
-			swapPosition.PositionAmt < 0 {
-			swapOrderPrice = math.Floor(swapDepth.MidPrice/swapTickSize) * swapTickSize
-			swapSizeDiff = -swapPosition.PositionAmt
-			logger.Debugf("%s CLOSE SHORT@%f %f %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapDepth.EmaAskBidRatio)
 		}
 
-		if math.Abs(swapSizeDiff) < takerStepSize {
+		if math.Abs(swapSizeDiff) < swapStepSize {
 			continue
 		} else if swapSizeDiff < 0 && swapPosition.PositionAmt <= 0 && -swapSizeDiff*swapOrderPrice < takerMinNotional {
 			continue

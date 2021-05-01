@@ -49,13 +49,8 @@ func watchTakerOrderRequest(
 	}
 }
 
-func updateTakerOldOrders() {
+func updateOldOrders() {
 	for takerSymbol, order := range swapOpenOrders {
-		if swapOrderCancelCounts[takerSymbol] > *mtConfig.OrderMaxCancelCount {
-			delete(swapOpenOrders, takerSymbol)
-			swapOrderCancelCounts[order.Symbol] = 0
-			continue
-		}
 		//非挂单不用管
 		if order.Type != common.OrderTypeLimit {
 			continue

@@ -42,6 +42,7 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 			lastPosition.EntryPrice != swapPositions[pos.Symbol].EntryPrice {
 			swapHttpPositionUpdateSilentTimes[pos.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 			if lastPosition != nil {
+				swapEnterSilentTimes[pos.Symbol] = time.Now().Add(*mtConfig.EnterSilent)
 				logger.Debugf("%s WS POS %f -> %f", pos.Symbol, lastPosition.PositionAmt, pos.PositionAmt)
 			} else {
 				logger.Debugf("%s WS POS nil -> %f", pos.Symbol, pos.PositionAmt)

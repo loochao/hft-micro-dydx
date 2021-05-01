@@ -32,30 +32,26 @@ func watchDeltaQuantile(
 		case <-ctx.Done():
 			return
 		case meanFr = <-frAvgCh:
-			if meanFr < 0.0000 {
+			if meanFr < 0.0005 {
 				//熊市，费率低或者负，大幅下移BAND, 降低BAND高度，减小持仓时间
 				topOffset = -0.00222
 				botOffset = -0.00111
 				bandScale = &bearScale
-				//logger.Debugf("MEAN FR %f BEAR BAND SCALE %f", meanFr, *bandScale)
-			} else if meanFr < 0.0003 {
+			} else if meanFr < 0.001 {
 				//横盘，下移BAND，降低BAND高度，减小持仓时间
 				topOffset = -0.00111
-				botOffset = -0.00000
+				botOffset = -0.00055
 				bandScale = &normalScale
-				//logger.Debugf("MEAN FR %f NORM BAND SCALE %f", meanFr, *bandScale)
-			} else if meanFr < 0.0005 {
+			} else if meanFr < 0.002 {
 				//牛市，正常参数
-				topOffset = 0.0
-				botOffset = 0.0
+				topOffset = 0.00000
+				botOffset = 0.00000
 				bandScale = &bullScale
-				//logger.Debugf("MEAN FR %f BULL BAND SCALE %f", meanFr, *bandScale)
 			} else {
 				//疯牛有费率，可以长期持仓, 回归波动大，上移并加宽BAND
 				topOffset = +0.00222
 				botOffset = -0.00111
 				bandScale = &crazyScale
-				//logger.Debugf("MEAN FR %f CRAZY BAND SCALE %f", meanFr, *bandScale)
 			}
 			break
 		case data := <-inputCh:

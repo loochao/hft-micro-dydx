@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func depthWalkLoop(
+func StreamWalkedDepth(
 	ctx context.Context,
 	symbol string,
 	levelDecay,

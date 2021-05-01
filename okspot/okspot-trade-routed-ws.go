@@ -313,7 +313,6 @@ func (w *TradeRoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 			symbolUpdatedTimes[symbol] = time.Now()
 			break
 		case <-w.pongCh:
-			logger.Debugf("PING MSG")
 			pingTimer.Reset(time.Second * 15)
 			trafficTimeout.Reset(time.Second * 30)
 			break

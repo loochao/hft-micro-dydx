@@ -16,6 +16,37 @@ import (
 	"time"
 )
 
+const (
+	OrderTimeInForceGTC  = "GTC"
+	OrderTimeInForceIOC  = "IOC"
+	OrderTimeInForceFOK  = "FOK"
+	OrderTimeInForceGTX  = "GTX"
+	OrderRespTypeAck     = "ACK"
+	OrderRespTypeResult  = "RESULT"
+	OrderRespTypeFull    = "FULL"
+	OrderIsIsolatedTrue  = "TRUE"
+	OrderIsIsolatedFalse = "FALSE"
+
+	OrderSideBuy  = "BUY"
+	OrderSideSell = "SELL"
+
+	OrderTypeLimit           = "LIMIT"
+	OrderTypeMarket          = "MARKET"
+	OrderTypeStopLoss        = "STOP_LOSS"
+	OrderTypeStopLossLimit   = "STOP_LOSS_LIMIT"
+	OrderTypeTakeProfit      = "TAKE_PROFIT"
+	OrderTypeTakeProfitLimit = "TAKE_PROFIT_LIMIT"
+	OrderTypeLimitMarker     = "LIMIT_MAKER"
+
+	OrderStatusNew             = "NEW"
+	OrderStatusPartiallyFilled = "PARTIALLY_FILLED"
+	OrderStatusFilled          = "FILLED"
+	OrderStatusCancelled       = "CANCELED"
+	OrderStatusPendingCancel   = "PENDING_CANCEL"
+	OrderStatusReject          = "REJECTED"
+	OrderStatusExpired         = "EXPIRED"
+)
+
 type API struct {
 	client      *http.Client
 	credentials *common.Credentials

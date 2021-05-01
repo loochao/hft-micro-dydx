@@ -71,8 +71,8 @@ func handleSave() {
 		if mergedSignal, ok := swapMergedSignals[symbol]; ok {
 			fields["mergedSignalValue"] = mergedSignal.Value
 		}
-		if realisedSpread, ok := swapRealisedSpread[symbol]; ok {
-			fields["realisedSpread"] = realisedSpread
+		if enterOffset, ok := swapEnterOffset[symbol]; ok {
+			fields["enterOffset"] = enterOffset
 		}
 		if time.Now().Sub(swapGlobalSilent) > 0 {
 			fields["globalSilent"] = 0

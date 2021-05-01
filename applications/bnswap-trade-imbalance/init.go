@@ -39,10 +39,6 @@ var swapNewOrderErrorCh = make(chan TakerOrderNewError, 10)
 var swapOrderRequestChs = make(map[string]chan TakerOrderRequest)
 var swapWalkedDepths = make(map[string]WalkedDepth5)
 
-var swapLastFilledBuyPrices = make(map[string]float64)
-var swapLastFilledSellPrices = make(map[string]float64)
-var swapRealisedSpread = make(map[string]float64)
-
 var swapOrderSilentTimes = make(map[string]time.Time)
 
 var swapLogSilentTimes = make(map[string]time.Time)
@@ -50,6 +46,10 @@ var swapLoopTimer *time.Timer
 var swapSystemReady = false
 var swapSystemStatusCh = make(chan bool, 10)
 var swapGlobalSilent = time.Now()
+
+var swapLastEnterPrices = make(map[string]float64)
+var swapEnterOffset = make(map[string]float64)
+var swapEnterSilentTimes = make(map[string]time.Time)
 
 var swapMergedSignalCh = make(chan MergedSignal, 10000)
 var swapMergedSignals = make(map[string]MergedSignal)

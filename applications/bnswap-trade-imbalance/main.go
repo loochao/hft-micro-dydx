@@ -180,7 +180,7 @@ func main() {
 
 	bnswapWalkedDepth5Ch := make(chan WalkedDepth5, len(swapSymbols)*100)
 	for takerSymbol := range mtConfig.SymbolsMap {
-		go depthWalkLoop(
+		go StreamWalkedDepth(
 			swapGlobalCtx,
 			takerSymbol,
 			*mtConfig.OrderBookLevelDecay,
@@ -286,43 +286,28 @@ func main() {
 		case msg := <-swapUserWebsocket.BalanceAndPositionUpdateEventCh:
 			handleTakerWSAccount(msg)
 			break
-		case takerOrderEvent := <-swapUserWebsocket.OrderUpdateEventCh:
-			takerOrder := takerOrderEvent.Order
-			if takerOrder.Status == "REJECTED" ||
-				takerOrder.Status == "EXPIRED" ||
-				takerOrder.Status == "CANCELED" {
-				if openOrder, ok := swapOpenOrders[takerOrder.Symbol]; ok && openOrder.NewClientOrderId == takerOrder.ClientOrderId {
-					swapOrderSilentTimes[takerOrder.Symbol] = time.Now()
-					swapOrderCancelSilentTimes[takerOrder.Symbol] = time.Now()
-					swapPositionsUpdateTimes[takerOrder.Symbol] = time.Now()
-					delete(swapOpenOrders, takerOrder.Symbol)
+		case swapOrderEvent := <-swapUserWebsocket.OrderUpdateEventCh:
+			swapOrder := swapOrderEvent.Order
+			if swapOrder.Status == "REJECTED" ||
+				swapOrder.Status == "EXPIRED" ||
+				swapOrder.Status == "CANCELED" {
+				if openOrder, ok := swapOpenOrders[swapOrder.Symbol]; ok && openOrder.NewClientOrderId == swapOrder.ClientOrderId {
+					swapOrderSilentTimes[swapOrder.Symbol] = time.Now()
+					swapOrderCancelSilentTimes[swapOrder.Symbol] = time.Now()
+					swapPositionsUpdateTimes[swapOrder.Symbol] = time.Now()
+					delete(swapOpenOrders, swapOrder.Symbol)
 				}
-			} else if takerOrder.Status == "FILLED" {
-				if openOrder, ok := swapOpenOrders[takerOrder.Symbol]; ok && openOrder.NewClientOrderId == takerOrder.ClientOrderId {
-					delete(swapOpenOrders, takerOrder.Symbol)
+			} else if swapOrder.Status == "FILLED" {
+				if openOrder, ok := swapOpenOrders[swapOrder.Symbol]; ok && openOrder.NewClientOrderId == swapOrder.ClientOrderId {
+					delete(swapOpenOrders, swapOrder.Symbol)
 				}
-				swapOrderSilentTimes[takerOrder.Symbol] = time.Now()
-				swapOrderCancelSilentTimes[takerOrder.Symbol] = time.Now()
-				swapHttpPositionUpdateSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
-				if _, ok := swapSymbolsMap[takerOrder.Symbol]; ok {
-					if takerOrder.Side == common.OrderSideSell &&
-						!takerOrder.ReduceOnly {
-						swapLastFilledSellPrices[takerOrder.Symbol] = takerOrder.AveragePrice
-					} else if takerOrder.Side == common.OrderSideBuy &&
-						!takerOrder.ReduceOnly {
-						swapLastFilledBuyPrices[takerOrder.Symbol] = takerOrder.AveragePrice
-					} else if takerOrder.Side == common.OrderSideSell &&
-						takerOrder.ReduceOnly {
-						if buyPrice, ok := swapLastFilledBuyPrices[takerOrder.Symbol]; ok {
-							swapRealisedSpread[takerOrder.Symbol] = (takerOrder.AveragePrice - buyPrice) / buyPrice
-							logger.Debugf("%s CLOSE LONG SPREAD %f", takerOrder.Symbol, swapRealisedSpread[takerOrder.Symbol])
-						}
-					} else if takerOrder.Side == common.OrderSideBuy &&
-						takerOrder.ReduceOnly {
-						if sellPrice, ok := swapLastFilledSellPrices[takerOrder.Symbol]; ok {
-							swapRealisedSpread[takerOrder.Symbol] = (sellPrice - takerOrder.AveragePrice) / sellPrice
-							logger.Debugf("%s CLOSE SHORT SPREAD %f", takerOrder.Symbol, swapRealisedSpread[takerOrder.Symbol])
-						}
+				swapOrderSilentTimes[swapOrder.Symbol] = time.Now()
+				swapOrderCancelSilentTimes[swapOrder.Symbol] = time.Now()
+				swapHttpPositionUpdateSilentTimes[swapOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
+				if _, ok := swapSymbolsMap[swapOrder.Symbol]; ok {
+					if lastEneterPrice, ok := swapLastEnterPrices[swapOrder.Symbol]; ok {
+						swapEnterOffset[swapOrder.Symbol] = (lastEneterPrice - swapOrder.AveragePrice)/ lastEneterPrice
+						logger.Debugf("%s ENTER OFFSET %f", swapOrder.Symbol, swapEnterOffset[swapOrder.Symbol])
 					}
 				}
 			}
@@ -355,7 +340,7 @@ func main() {
 			break
 		case <-swapLoopTimer.C:
 			if swapSystemReady && time.Now().Sub(swapGlobalSilent) > 0 {
-				updateTakerOldOrders()
+				updateOldOrders()
 				updateNewOrders()
 			} else {
 				if len(swapOpenOrders) > 0 {

@@ -66,9 +66,10 @@ type Config struct {
 	OrderTimeout        *time.Duration `yaml:"orderTimeout,omitempty"`
 	OrderSilent         *time.Duration `yaml:"orderSilent,omitempty"`
 	OrderCancelSilent   *time.Duration `yaml:"orderCancelSilent,omitempty"`
-	OrderMaxCancelCount *int           `yaml:"orderMaxCancelCount,omitempty"`
+
 	RestartSilent       *time.Duration `yaml:"restartSilent,omitempty"`
 	HttpSilent          *time.Duration `yaml:"httpSilent,omitempty"`
+	EnterSilent         *time.Duration `yaml:"enterSilent,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
