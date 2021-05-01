@@ -192,7 +192,7 @@ func updateNewOrders() {
 		} else if swapSizeDiff > 0 && swapPosition.PositionAmt >= 0 && swapSizeDiff*swapOrderPrice < takerMinNotional {
 			continue
 		}
-		swapUSDTAvailable -= math.Abs(openValue)
+		swapUSDTAvailable -= math.Abs(openValue)/ float64(*mtConfig.Leverage)
 		reduceOnly := false
 		if swapSizeDiff*swapPosition.PositionAmt < 0 && math.Abs(swapSizeDiff) <= math.Abs(swapPosition.PositionAmt) {
 			reduceOnly = true
