@@ -58,9 +58,6 @@ func handleSave() {
 		}
 		if walkedDepth, ok := swapWalkedDepths[symbol]; ok {
 			fields["swapMidPrice"] = walkedDepth.MidPrice
-			fields["swapMircoPrice"] = walkedDepth.MircoPrice
-			fields["swapMakerBid"] = walkedDepth.MakerBid
-			fields["swapMakerAsk"] = walkedDepth.MakerAsk
 			fields["swapTakerBid"] = walkedDepth.TakerBid
 			fields["swapTakerAsk"] = walkedDepth.TakerAsk
 			fields["swapTakerFarBid"] = walkedDepth.TakerFarBid

@@ -117,8 +117,7 @@ func updateNewOrders() {
 			logger.Debugf("%s OPEN LONG@%f %f -> %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapPosition.PositionAmt+swapSizeDiff)
 		} else if mergedSignal.Value <= -*swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
-
-			swapOrderPrice = math.Ceil(swapDepth.MakerAsk/swapTickSize) * swapTickSize
+			swapOrderPrice = math.Ceil(swapDepth.TakerBid/swapTickSize) * swapTickSize
 			if swapPosition.PositionAmt < 0 && okLastEnterPrice && lastEnterPrice < swapOrderPrice {
 				//已有多仓，且上次加仓成本比现在高，不加仓
 				if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {

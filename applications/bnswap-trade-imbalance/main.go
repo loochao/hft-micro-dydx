@@ -178,14 +178,13 @@ func main() {
 		)
 	}
 
-	bnswapWalkedDepth5Ch := make(chan common.WalkedMakerTakerDepth, len(swapSymbols)*100)
+	bnswapWalkedDepth5Ch := make(chan common.WalkedTakerDepth, len(swapSymbols)*100)
 	for takerSymbol := range swapConfig.SymbolsMap {
 		go StreamWalkedDepth(
 			swapGlobalCtx,
 			takerSymbol,
 			*swapConfig.OrderBookTimeDecay,
 			*swapConfig.OrderBookTimeBias,
-			*swapConfig.OrderBookMakerImpact,
 			*swapConfig.OrderBookTakerImpact,
 			*swapConfig.ReportCount,
 			bnswapRawDepthChs[takerSymbol],
@@ -196,7 +195,7 @@ func main() {
 
 	swapNewOrderErrorCh = make(chan TakerOrderNewError, len(swapSymbols)*2)
 	for _, takerSymbol := range swapSymbols {
-		swapOrderRequestChs[takerSymbol] = make(chan TakerOrderRequest, 2)
+		swapOrderRequestChs[takerSymbol] = make(chan bnswap.NewOrderParams, 2)
 		go watchTakerOrderRequest(
 			swapGlobalCtx,
 			swapAPI,
@@ -234,25 +233,6 @@ func main() {
 		swapGlobalCancel()
 	}()
 
-	go func() {
-		for _, takerSymbol := range swapSymbols {
-			select {
-			case <-swapGlobalCtx.Done():
-				return
-			case <-time.After(*swapConfig.RequestInterval):
-				logger.Debugf("INITIAL CANCEL ALL %s", takerSymbol)
-				select {
-				case <-swapGlobalCtx.Done():
-					return
-				case swapOrderRequestChs[takerSymbol] <- TakerOrderRequest{
-					Cancel: &bnswap.CancelAllOrderParams{
-						Symbol: takerSymbol,
-					},
-				}:
-				}
-			}
-		}
-	}()
 
 	logger.Debugf("START MAIN LOOP")
 	for {
@@ -291,18 +271,9 @@ func main() {
 			if swapOrder.Status == "REJECTED" ||
 				swapOrder.Status == "EXPIRED" ||
 				swapOrder.Status == "CANCELED" {
-				if openOrder, ok := swapOpenOrders[swapOrder.Symbol]; ok && openOrder.NewClientOrderId == swapOrder.ClientOrderId {
-					swapOrderSilentTimes[swapOrder.Symbol] = time.Now()
-					swapOrderCancelSilentTimes[swapOrder.Symbol] = time.Now()
-					swapPositionsUpdateTimes[swapOrder.Symbol] = time.Now()
-					delete(swapOpenOrders, swapOrder.Symbol)
-				}
+				logger.Debugf("%s %s %s %s", swapOrder.Symbol, swapOrder.Status, swapOrder.Side, swapOrder.ClientOrderId)
 			} else if swapOrder.Status == "FILLED" {
-				if openOrder, ok := swapOpenOrders[swapOrder.Symbol]; ok && openOrder.NewClientOrderId == swapOrder.ClientOrderId {
-					delete(swapOpenOrders, swapOrder.Symbol)
-				}
 				swapOrderSilentTimes[swapOrder.Symbol] = time.Now()
-				swapOrderCancelSilentTimes[swapOrder.Symbol] = time.Now()
 				swapHttpPositionUpdateSilentTimes[swapOrder.Symbol] = time.Now().Add(*swapConfig.HttpSilent)
 				if _, ok := swapSymbolsMap[swapOrder.Symbol]; ok {
 					logger.Debugf("%s FILLED %s %f %f", swapOrder.Symbol, swapOrder.Side, swapOrder.FilledAccumulatedQuantity, swapOrder.AveragePrice)
@@ -342,26 +313,12 @@ func main() {
 			break
 		case <-swapLoopTimer.C:
 			if swapSystemReady && time.Now().Sub(swapGlobalSilent) > 0 {
-				updateOldOrders()
 				updateNewOrders()
 			} else {
 				if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
 					logger.Debugf("SYSTEM NOT READY SWAP %v SILENT TIME %v",
 						swapSystemReady,  time.Now().Sub(swapGlobalSilent),
 					)
-				}
-				if len(swapOpenOrders) > 0 {
-					for takerSymbol := range swapOpenOrders {
-						select {
-						case swapOrderRequestChs[takerSymbol] <- TakerOrderRequest{
-							Cancel: &bnswap.CancelAllOrderParams{
-								Symbol: takerSymbol,
-							},
-						}:
-							delete(swapOpenOrders, takerSymbol)
-						default:
-						}
-					}
 				}
 			}
 			swapLoopTimer.Reset(

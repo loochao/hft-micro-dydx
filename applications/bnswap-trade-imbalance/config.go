@@ -45,12 +45,9 @@ type Config struct {
 	ImbalanceLookback       *time.Duration      `yaml:"imbalanceLookback,omitempty"`
 	ImbalanceUpdateInterval *time.Duration      `yaml:"imbalanceUpdateInterval,omitempty"`
 	ImbalanceTimeToLive     *time.Duration      `yaml:"imbalanceTimeToLive,omitempty"`
-
 	OrderBookTimeDecay   *float64 `yaml:"orderBookTimeDecay,omitempty"`
 	OrderBookTimeBias    *float64 `yaml:"orderBookTimeBias,omitempty"`
 	OrderBookTakerImpact *float64 `yaml:"orderBookTakerImpact,omitempty"`
-	OrderBookMakerImpact *float64 `yaml:"orderBookMakerImpact,omitempty"`
-
 	OrderBookBatchSize    *int           `yaml:"orderBookBatchSize,omitempty"`
 	ReportCount           *int           `yaml:"reportCount,omitempty"`
 	DepthTimeToLive       *time.Duration `yaml:"depthTimeToLive,omitempty"`
@@ -62,7 +59,6 @@ type Config struct {
 	EnterTargetFactor *float64           `yaml:"enterTargetFactor,omitempty"`
 	StartValues       map[string]float64 `yaml:"startValues,omitempty"`
 	EnterThreshold    *float64           `yaml:"enterThreshold,omitempty"`
-	CloseThreshold    *float64           `yaml:"closeThreshold,omitempty"`
 
 	OrderTimeout      *time.Duration `yaml:"orderTimeout,omitempty"`
 	OrderSilent       *time.Duration `yaml:"orderSilent,omitempty"`
