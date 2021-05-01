@@ -400,7 +400,7 @@ func (trade *Trade) GetSymbol() string  { return trade.Symbol }
 func (trade *Trade) GetSize() float64   { return trade.Quantity }
 func (trade *Trade) GetPrice() float64  { return trade.Price }
 func (trade *Trade) GetTime() time.Time { return trade.EventTime }
-func (trade *Trade) IsBuy() bool        { return !trade.IsTheBuyerTheMarketMaker }
+func (trade *Trade) IsUpTick() bool        { return !trade.IsTheBuyerTheMarketMaker }
 
 
 func (trade *Trade) UnmarshalJSON(data []byte) error {

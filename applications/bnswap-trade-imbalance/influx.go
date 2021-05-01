@@ -10,7 +10,7 @@ import (
 )
 
 func handleSave() {
-	if time.Now().Sub(mtGlobalSilent) < 0 {
+	if time.Now().Sub(swapGlobalSilent) < 0 {
 		return
 	}
 
@@ -68,22 +68,13 @@ func handleSave() {
 			fields["swapEmaBidAskRatio"] = walkedDepth.EmaBidAskRatio
 			fields["swapEmaAskBidRatio"] = walkedDepth.EmaAskBidRatio
 		}
-		if walkedDepth, ok := spotWalkedDepths[symbol]; ok {
-			fields["spotMidPrice"] = walkedDepth.MidPrice
-			fields["spotMircoPrice"] = walkedDepth.MircoPrice
-			fields["spotAskPrice"] = walkedDepth.AskPrice
-			fields["spotBidPrice"] = walkedDepth.BidPrice
-			fields["spotAskSize"] = walkedDepth.AskSize
-			fields["spotBidSize"] = walkedDepth.BidSize
-			fields["spotAskBidRatio"] = walkedDepth.AskBidRatio
-			fields["spotBidAskRatio"] = walkedDepth.BidAskRatio
-			fields["spotEmaBidAskRatio"] = walkedDepth.EmaBidAskRatio
-			fields["spotEmaAskBidRatio"] = walkedDepth.EmaAskBidRatio
+		if mergedSignal, ok := swapMergedSignals[symbol]; ok {
+			fields["mergedSignalValue"] = mergedSignal.Value
 		}
 		if realisedSpread, ok := swapRealisedSpread[symbol]; ok {
 			fields["realisedSpread"] = realisedSpread
 		}
-		if time.Now().Sub(mtGlobalSilent) > 0 {
+		if time.Now().Sub(swapGlobalSilent) > 0 {
 			fields["globalSilent"] = 0
 		} else {
 			fields["globalSilent"] = 1
@@ -106,11 +97,36 @@ func handleSave() {
 			}
 		}
 	}
+
+	fields := make(map[string]interface{})
+	for _, ms := range swapMergedSignals {
+		for key, value := range ms.Signals {
+			fields[key] = value
+		}
+	}
+	if len(fields) > 0 {
+		pt, err := client.NewPoint(
+			*mtConfig.InternalInflux.Measurement,
+			map[string]string{
+				"type": "signal",
+			},
+			fields,
+			time.Now().UTC(),
+		)
+		if err != nil {
+			logger.Debugf("client.NewPoint() error %v", err)
+		} else {
+			err = swapInternalInfluxWriter.PushPoint(pt)
+			if err != nil {
+				logger.Debugf("swapInternalInfluxWriter.PushPoint(pt) error %v", err)
+			}
+		}
+	}
 }
 
 func handleExternalInfluxSave() {
 
-	if time.Now().Sub(mtGlobalSilent) < 0 {
+	if time.Now().Sub(swapGlobalSilent) < 0 {
 		return
 	}
 

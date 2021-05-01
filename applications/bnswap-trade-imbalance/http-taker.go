@@ -29,7 +29,7 @@ func handleTakerHttpPositions(positions []bnswap.Position) {
 			lastPosition.PositionAmt != nextPos.PositionAmt ||
 			lastPosition.EntryPrice != nextPos.EntryPrice {
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
-			tOrderSilentTimes[nextPos.Symbol] = time.Now()
+			swapOrderSilentTimes[nextPos.Symbol] = time.Now()
 		}
 	}
 }
@@ -40,11 +40,11 @@ func handleTakerHttpAccount(account bnswap.Account) {
 			asset := asset
 			if swapAccount == nil {
 				logger.Debugf("TAKER HTTP WB CHANGE %v -> %f", nil, *asset.WalletBalance)
-				//mtLoopTimer.Reset(time.Nanosecond)
+				//swapLoopTimer.Reset(time.Nanosecond)
 			} else if swapAccount.WalletBalance != nil &&
 				asset.WalletBalance != nil &&
 				*swapAccount.WalletBalance != *asset.WalletBalance {
-				//mtLoopTimer.Reset(time.Nanosecond)
+				//swapLoopTimer.Reset(time.Nanosecond)
 				logger.Debugf("TAKER HTTP WB CHANGE %f -> %f", *swapAccount.WalletBalance, *asset.WalletBalance)
 			}
 			swapAccount = &asset

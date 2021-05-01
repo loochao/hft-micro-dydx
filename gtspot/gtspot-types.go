@@ -54,7 +54,7 @@ func (trade *Trade) GetSymbol() string  { return trade.CurrencyPair }
 func (trade *Trade) GetSize() float64   { return trade.Amount }
 func (trade *Trade) GetPrice() float64  { return trade.Price }
 func (trade *Trade) GetTime() time.Time { return trade.CreateTime }
-func (trade *Trade) IsBuy() bool { return trade.Side == TradeSideBuy }
+func (trade *Trade) IsUpTick() bool { return trade.Side == TradeSideBuy }
 
 func (trade *Trade) UnmarshalJSON(data []byte) error {
 	type Alias Trade

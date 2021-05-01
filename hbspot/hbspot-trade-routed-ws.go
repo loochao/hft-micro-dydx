@@ -347,7 +347,7 @@ func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map
 						case w.symbolCh <- t.Symbol:
 						default:
 							if time.Now().Sub(logSilentTime) > 0 {
-								logger.Debugf("w.symbolCh <- t.Symbol failed ch len %d", len(ch))
+								logger.Debugf("w.symbolCh <- t.Symbol failed ch len %d", len(w.symbolCh))
 								logSilentTime = time.Now().Add(time.Minute)
 							}
 						}
@@ -363,6 +363,7 @@ func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
+			} else if msg[2] == 'i' {
 			} else {
 				logger.Debugf("other msg %s", msg)
 			}
@@ -455,4 +456,4 @@ func (trade *TradeDetail) GetSymbol() string  { return trade.Symbol }
 func (trade *TradeDetail) GetSize() float64   { return trade.Amount }
 func (trade *TradeDetail) GetPrice() float64  { return trade.Price }
 func (trade *TradeDetail) GetTime() time.Time { return trade.EventTime }
-func (trade *TradeDetail) IsBuy() bool        { return trade.Direction == TradeSideBuy }
+func (trade *TradeDetail) IsUpTick() bool        { return trade.Direction == TradeSideBuy }

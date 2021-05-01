@@ -108,7 +108,7 @@ func (st *Strategy) handleSignal(signal Signal) {
 	}
 
 	//totalDir := 0.0
-	//for _, s := range st.Signals {
+	//for _, s := range st.SymbolsMap {
 	//	totalDir += s.Value
 	//}
 

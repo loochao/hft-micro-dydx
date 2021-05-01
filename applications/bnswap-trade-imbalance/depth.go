@@ -7,7 +7,7 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 )
 
-func bnswapDepthLoop(
+func StreamDepth5(
 	ctx context.Context,
 	cancel context.CancelFunc,
 	proxyAddress string,
@@ -17,9 +17,9 @@ func bnswapDepthLoop(
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 	}
-	logger.Debugf("START bnswapDepthLoop %s", symbols)
-	defer logger.Debugf("EXIT bnswapDepthLoop %s", symbols)
-	ws := bnswap.NewDepth20RoutedWebsocket(
+	logger.Debugf("START StreamDepth5 %s", symbols)
+	defer logger.Debugf("EXIT StreamDepth5 %s", symbols)
+	ws := bnswap.NewDepth5RoutedWebsocket(
 		ctx,
 		proxyAddress,
 		channels,

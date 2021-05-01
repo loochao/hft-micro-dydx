@@ -286,7 +286,7 @@ func (w *TradeRoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
-					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol))
+					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/market/match:%s", symbol))
 					select {
 					case <-ctx.Done():
 					case <-time.After(time.Millisecond):

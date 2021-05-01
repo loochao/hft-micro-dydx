@@ -2,6 +2,7 @@ package bnswap
 
 import (
 	"context"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"testing"
 	"time"
@@ -12,9 +13,9 @@ func TestNewTradeRoutedWS(t *testing.T) {
 	symbols := []string{"BTCUSDT", "LINKUSDT", "WAVESUSDT"}
 	proxy := "socks5://127.0.0.1:1080"
 
-	channels := make(map[string]chan *Trade)
+	channels := make(map[string]chan common.Trade)
 	for _, symbol := range symbols {
-		channels[symbol] = make(chan *Trade, 100)
+		channels[symbol] = make(chan common.Trade, 100)
 	}
 
 	ws := NewTradeRoutedWS(ctx, proxy, channels)
@@ -25,11 +26,11 @@ func TestNewTradeRoutedWS(t *testing.T) {
 		case <-ws.Done():
 			return
 		case msg := <-channels[symbols[0]]:
-			logger.Debugf("%s %v %f", msg.Symbol, msg.Price, msg.Quantity)
+			logger.Debugf("%s %v %f", msg.GetSymbol(), msg.GetPrice(), msg.GetSize())
 		case msg := <-channels[symbols[1]]:
-			logger.Debugf("%s %v %f", msg.Symbol, msg.Price, msg.Quantity)
+			logger.Debugf("%s %v %f", msg.GetSymbol(), msg.GetPrice(), msg.GetSize())
 		case msg := <-channels[symbols[2]]:
-			logger.Debugf("%s %v %f", msg.Symbol, msg.Price, msg.Quantity)
+			logger.Debugf("%s %v %f", msg.GetSymbol(), msg.GetPrice(), msg.GetSize())
 		}
 	}
 }

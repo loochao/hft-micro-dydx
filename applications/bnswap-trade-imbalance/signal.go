@@ -19,9 +19,9 @@ func StreamMergedSignals(
 	ctx context.Context,
 	cancel context.CancelFunc,
 	proxy string,
-	lookback time.Duration,
 	exchanges map[string]string,
 	symbolSignalMap map[string][]string,
+	lookback time.Duration,
 	signalTimeToLive time.Duration,
 	updateInterval time.Duration,
 	outputCh chan MergedSignal,
@@ -62,17 +62,20 @@ func StreamMergedSignals(
 			maps[s.Name] = s
 		case <-updateTimer.C:
 			for symbol, signals := range symbolSignalMap {
-				dir := 0
+				dir := 0.0
 				values := make(map[string]float64)
+				weight := 0.0
 				for _, name := range signals {
 					if s, ok := maps[name]; ok {
 						if time.Now().Sub(s.Time) < signalTimeToLive {
-							if s.Value > 0 {
-								dir += 1
-							} else if s.Value < 0 {
-								dir -= 1
-							}
+							//if s.Value > 0 {
+							//	dir += 1
+							//} else if s.Value < 0 {
+							//	dir -= 1
+							//}
+							dir += s.Value*s.Weight
 							values[name] = s.Value
+							weight += s.Weight
 						}
 					} else {
 						logger.Debugf("%s not found", name)
@@ -81,9 +84,10 @@ func StreamMergedSignals(
 				select {
 				case outputCh <- MergedSignal{
 					Symbol: symbol,
-					Dir:    dir,
+					Value:    dir/ weight,
 					Signals: values,
 				}:
+					logger.Debugf("%s %f %v", symbol, dir/weight, values)
 				default:
 					logger.Debugf("outputCh <- MergedSignal failed, ch len %d", len(outputCh))
 				}

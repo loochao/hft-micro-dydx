@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
@@ -39,15 +38,6 @@ func main() {
 	)
 	if err != nil {
 		logger.Debugf("bnswap.NewAPI error %v", err)
-		return
-	}
-
-	spotAPI, err := bnspot.NewAPI(&common.Credentials{
-		Key:    *mtConfig.BnApiKey,
-		Secret: *mtConfig.BnApiSecret,
-	}, *mtConfig.ProxyAddress)
-	if err != nil {
-		logger.Debugf("bnspot.NewAPI error %v", err)
 		return
 	}
 
@@ -138,9 +128,9 @@ func main() {
 			*mtConfig.ExternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
-	mtLoopTimer = time.NewTimer(time.Second) //先等1分钟
+	swapLoopTimer = time.NewTimer(time.Second) //先等1分钟
 	defer internalInfluxSaveTimer.Stop()
-	defer mtLoopTimer.Stop()
+	defer swapLoopTimer.Stop()
 	defer externalInfluxSaveTimer.Stop()
 
 	go bnswap.WatchAccountFromHttp(
@@ -180,7 +170,7 @@ func main() {
 			bnswapRawDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
 			subTakerRowDepthChs[symbol] = bnswapRawDepthChs[symbol]
 		}
-		go bnswapDepthLoop(
+		go StreamDepth5(
 			swapGlobalCtx,
 			swapGlobalCancel,
 			*mtConfig.ProxyAddress,
@@ -188,9 +178,9 @@ func main() {
 		)
 	}
 
-	bnswapWalkedDepth20Ch := make(chan WalkedDepth20, len(swapSymbols)*100)
-	for _, takerSymbol := range mtConfig.Symbols {
-		go bnswapDepthWalkingLoop(
+	bnswapWalkedDepth5Ch := make(chan WalkedDepth5, len(swapSymbols)*100)
+	for takerSymbol := range mtConfig.SymbolsMap {
+		go depthWalkLoop(
 			swapGlobalCtx,
 			takerSymbol,
 			*mtConfig.OrderBookLevelDecay,
@@ -200,42 +190,7 @@ func main() {
 			*mtConfig.ReportCount,
 			bnswapRawDepthChs[takerSymbol],
 			swapDepthReportCh,
-			bnswapWalkedDepth20Ch,
-		)
-	}
-
-	bnspotRawDepthChs := make(map[string]chan *common.DepthRawMessage)
-	for start := 0; start < len(swapSymbols); start += *mtConfig.OrderBookBatchSize {
-		end := start + *mtConfig.OrderBookBatchSize
-		if end > len(swapSymbols) {
-			end = len(swapSymbols)
-		}
-		subTakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
-		for _, symbol := range swapSymbols[start:end] {
-			bnspotRawDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
-			subTakerRowDepthChs[symbol] = bnspotRawDepthChs[symbol]
-		}
-		go bnspotDepthLoop(
-			swapGlobalCtx,
-			swapGlobalCancel,
-			*mtConfig.ProxyAddress,
-			subTakerRowDepthChs,
-		)
-	}
-
-	bnspotWalkedDepth20Ch := make(chan WalkedDepth20, len(swapSymbols)*100)
-	for _, takerSymbol := range mtConfig.Symbols {
-		go bnspotDepthWalkingLoop(
-			swapGlobalCtx,
-			takerSymbol,
-			*mtConfig.OrderBookLevelDecay,
-			*mtConfig.OrderBookTimeDecay,
-			*mtConfig.OrderBookTimeBias,
-			*mtConfig.DepthLookbackDuration,
-			*mtConfig.ReportCount,
-			bnspotRawDepthChs[takerSymbol],
-			spotDepthReportCh,
-			bnspotWalkedDepth20Ch,
+			bnswapWalkedDepth5Ch,
 		)
 	}
 
@@ -259,20 +214,16 @@ func main() {
 		swapSystemStatusCh,
 	)
 
-	go bnspot.HttpPingLoop(
-		swapGlobalCtx,
-		spotAPI,
-		*mtConfig.PullInterval/2,
-		spotSystemStatusCh,
-	)
-
-	StreamMergedSignals(
+	go StreamMergedSignals(
 		swapGlobalCtx,
 		swapGlobalCancel,
 		*mtConfig.ProxyAddress,
-		*mtConfig.ImbalanceLookback,
 		mtConfig.Exchanges,
-		swapSignalCh,
+		mtConfig.SymbolsMap,
+		*mtConfig.ImbalanceLookback,
+		*mtConfig.ImbalanceTimeToLive,
+		*mtConfig.ImbalanceUpdateInterval,
+		swapMergedSignalCh,
 	)
 
 	sigs := make(chan os.Signal, 1)
@@ -315,21 +266,16 @@ func main() {
 
 		case swapSystemReady = <-swapSystemStatusCh:
 			if !swapSystemReady {
-				mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
-			}
-			break
-		case spotSystemReady = <-spotSystemStatusCh:
-			if !spotSystemReady {
-				mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
+				swapGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 			}
 			break
 		case <-swapUserWebsocket.RestartCh:
 			logger.Debugf("<-swapUserWebsocket.RestartCh restart silent %v", *mtConfig.RestartSilent)
-			mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
+			swapGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 			break
 
-		case s := <-swapSignalCh:
-			swapSignalsMap[s.Name] = s
+		case s := <-swapMergedSignalCh:
+			swapMergedSignals[s.Symbol] = s
 
 		case account := <-swapAccountCh:
 			handleTakerHttpAccount(account)
@@ -346,7 +292,7 @@ func main() {
 				takerOrder.Status == "EXPIRED" ||
 				takerOrder.Status == "CANCELED" {
 				if openOrder, ok := swapOpenOrders[takerOrder.Symbol]; ok && openOrder.NewClientOrderId == takerOrder.ClientOrderId {
-					tOrderSilentTimes[takerOrder.Symbol] = time.Now()
+					swapOrderSilentTimes[takerOrder.Symbol] = time.Now()
 					swapOrderCancelSilentTimes[takerOrder.Symbol] = time.Now()
 					swapPositionsUpdateTimes[takerOrder.Symbol] = time.Now()
 					delete(swapOpenOrders, takerOrder.Symbol)
@@ -355,7 +301,7 @@ func main() {
 				if openOrder, ok := swapOpenOrders[takerOrder.Symbol]; ok && openOrder.NewClientOrderId == takerOrder.ClientOrderId {
 					delete(swapOpenOrders, takerOrder.Symbol)
 				}
-				tOrderSilentTimes[takerOrder.Symbol] = time.Now()
+				swapOrderSilentTimes[takerOrder.Symbol] = time.Now()
 				swapOrderCancelSilentTimes[takerOrder.Symbol] = time.Now()
 				swapHttpPositionUpdateSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 				if _, ok := swapSymbolsMap[takerOrder.Symbol]; ok {
@@ -381,11 +327,8 @@ func main() {
 				}
 			}
 			break
-		case depth := <-bnswapWalkedDepth20Ch:
+		case depth := <-bnswapWalkedDepth5Ch:
 			swapWalkedDepths[depth.Symbol] = depth
-			break
-		case depth := <-bnspotWalkedDepth20Ch:
-			spotWalkedDepths[depth.Symbol] = depth
 			break
 		case <-internalInfluxSaveTimer.C:
 			handleSave()
@@ -408,12 +351,12 @@ func main() {
 			)
 			break
 		case takerNewError := <-swapNewOrderErrorCh:
-			tOrderSilentTimes[takerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
+			swapOrderSilentTimes[takerNewError.Params.Symbol] = time.Now().Add(*mtConfig.OrderSilent * 5)
 			break
-		case <-mtLoopTimer.C:
-			if spotSystemReady && swapSystemReady && time.Now().Sub(mtGlobalSilent) > 0 {
+		case <-swapLoopTimer.C:
+			if swapSystemReady && time.Now().Sub(swapGlobalSilent) > 0 {
 				updateTakerOldOrders()
-				updateTakerNewOrders()
+				updateNewOrders()
 			} else {
 				if len(swapOpenOrders) > 0 {
 					for takerSymbol := range swapOpenOrders {
@@ -429,7 +372,7 @@ func main() {
 					}
 				}
 			}
-			mtLoopTimer.Reset(
+			swapLoopTimer.Reset(
 				time.Now().Truncate(
 					*mtConfig.LoopInterval,
 				).Add(

@@ -360,6 +360,10 @@ func (w *MatchesRoutedWS) dataHandleLoop(ctx context.Context, id int, channels m
 					default:
 					}
 				}
+			case 's':
+				break
+			case 'l':
+				break
 			default:
 				logger.Debugf("other msg %s", msg)
 			}
@@ -461,11 +465,11 @@ func (match *Match) UnmarshalJSON(data []byte) error {
 }
 
 
-var MatchSideSell = "sell"
-var MatchSideBuy = "buy"
+var MatchMakerSideSell = "sell"
+var MatchMakerSideBuy = "buy"
 
 func (match *Match) GetSymbol() string  { return match.ProductId }
 func (match *Match) GetSize() float64   { return match.Size }
 func (match *Match) GetPrice() float64  { return match.Price }
 func (match *Match) GetTime() time.Time { return match.Time }
-func (match *Match) IsBuy() bool        { return match.Side == MatchSideBuy }
+func (match *Match) IsUpTick() bool        { return match.Side == MatchMakerSideSell }

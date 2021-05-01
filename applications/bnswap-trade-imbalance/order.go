@@ -66,9 +66,10 @@ func updateTakerOldOrders() {
 		if isTakerOrderOk(*order.NewOrderParams) {
 			continue
 		}
-		tOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
+		swapOrderSilentTimes[order.Symbol] = time.Now()
 		swapOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		swapOrderCancelCounts[order.Symbol] += 1
+		delete(swapOpenOrders, takerSymbol)
 		swapOrderRequestChs[order.Symbol] <- TakerOrderRequest{
 			Cancel: &bnswap.CancelAllOrderParams{Symbol: order.Symbol},
 		}

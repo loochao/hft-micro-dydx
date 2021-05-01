@@ -32,9 +32,9 @@ func (iw *InfluxWriter) Done() chan interface{} {
 
 func (iw *InfluxWriter) Stop() {
 	if atomic.LoadInt32(&iw.stopped) == 0 {
+		atomic.StoreInt32(&iw.stopped, 1)
 		logger.Debugf("stop influx")
 		close(iw.done)
-		atomic.StoreInt32(&iw.stopped, 1)
 		err := iw.save()
 		if err != nil {
 			logger.Debugf("iw.save() error from stop event, %v", err)

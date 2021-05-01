@@ -29,6 +29,6 @@ type DepthReport struct {
 
 type MergedSignal struct {
 	Symbol  string
-	Dir     int
+	Value  float64
 	Signals map[string]float64
 }

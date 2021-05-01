@@ -37,22 +37,19 @@ var swapAccount *bnswap.Asset
 var swapAccountCh = make(chan bnswap.Account, 10)
 var swapNewOrderErrorCh = make(chan TakerOrderNewError, 10)
 var swapOrderRequestChs = make(map[string]chan TakerOrderRequest)
-var swapWalkedDepths = make(map[string]WalkedDepth20)
-var spotWalkedDepths = make(map[string]WalkedDepth20)
+var swapWalkedDepths = make(map[string]WalkedDepth5)
 
 var swapLastFilledBuyPrices = make(map[string]float64)
 var swapLastFilledSellPrices = make(map[string]float64)
 var swapRealisedSpread = make(map[string]float64)
 
-var tOrderSilentTimes = make(map[string]time.Time)
+var swapOrderSilentTimes = make(map[string]time.Time)
 
-var mtLogSilentTimes = make(map[string]time.Time)
-var mtLoopTimer *time.Timer
+var swapLogSilentTimes = make(map[string]time.Time)
+var swapLoopTimer *time.Timer
 var swapSystemReady = false
-var spotSystemReady = false
 var swapSystemStatusCh = make(chan bool, 10)
-var spotSystemStatusCh = make(chan bool, 10)
-var mtGlobalSilent = time.Now()
+var swapGlobalSilent = time.Now()
 
 var swapMergedSignalCh = make(chan MergedSignal, 10000)
 var swapMergedSignals = make(map[string]MergedSignal)
@@ -86,14 +83,14 @@ func init() {
 	}
 	mtConfig = &config
 
-	for _, symbol := range mtConfig.Symbols {
+	for symbol := range mtConfig.SymbolsMap {
 		swapSymbols = append(swapSymbols, symbol)
 		swapSymbolsMap[symbol] = symbol
-		mtLogSilentTimes[symbol] = time.Now()
+		swapLogSilentTimes[symbol] = time.Now()
 
-		tOrderSilentTimes[symbol] = time.Now()
+		swapOrderSilentTimes[symbol] = time.Now()
 		swapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
-		mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
+		swapGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 		swapHttpPositionUpdateSilentTimes[symbol] = time.Now()
 	}
 }

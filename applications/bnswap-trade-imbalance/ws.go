@@ -59,10 +59,10 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 					CrossWalletBalance: &cwb,
 				}
 				//logger.Debugf("WS USDT WB nil -> %f", wb)
-				//mtLoopTimer.Reset(time.Nanosecond)
+				//swapLoopTimer.Reset(time.Nanosecond)
 			} else {
 				if swapAccount.WalletBalance != nil && *swapAccount.WalletBalance != wb {
-					//mtLoopTimer.Reset(time.Nanosecond)
+					//swapLoopTimer.Reset(time.Nanosecond)
 					//logger.Debugf("WS USDT WB %f -> %f", *swapAccount.WalletBalance, wb)
 				}
 				swapAccount.WalletBalance = &wb

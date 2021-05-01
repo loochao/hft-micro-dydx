@@ -40,11 +40,11 @@ type Config struct {
 	RequestInterval *time.Duration `yaml:"requestInterval,omitempty"`
 	PositionMaxAge  *time.Duration `yaml:"positionMaxAge,omitempty"`
 
-	Symbols           []string                     `yaml:"symbols,omitempty"`
-	Exchanges         map[string]string            `yaml:"exchanges,omitempty"`
-	Signals           map[string]map[string]string `yaml:"symbolsMap,omitempty"`
-	ImbalanceLookback *time.Duration               `yaml:"imbalanceLookback,omitempty"`
-	ImbalanceLookback *time.Duration               `yaml:"imbalanceLookback,omitempty"`
+	Exchanges               map[string]string   `yaml:"exchanges,omitempty"`
+	SymbolsMap              map[string][]string `yaml:"symbolsMap,omitempty"`
+	ImbalanceLookback       *time.Duration      `yaml:"imbalanceLookback,omitempty"`
+	ImbalanceUpdateInterval *time.Duration      `yaml:"imbalanceUpdateInterval,omitempty"`
+	ImbalanceTimeToLive     *time.Duration      `yaml:"imbalanceTimeToLive,omitempty"`
 
 	OrderBookTimeDecay  *float64 `yaml:"orderBookTimeDecay,omitempty"`
 	OrderBookTimeBias   *float64 `yaml:"orderBookTimeBias,omitempty"`
@@ -60,6 +60,8 @@ type Config struct {
 	EnterMinimalStep  *float64           `yaml:"enterMinimalStep,omitempty"`
 	EnterTargetFactor *float64           `yaml:"enterTargetFactor,omitempty"`
 	StartValues       map[string]float64 `yaml:"startValues,omitempty"`
+	EnterThreshold    *float64           `yaml:"enterThreshold,omitempty"`
+	CloseThreshold    *float64           `yaml:"closeThreshold,omitempty"`
 
 	OrderTimeout        *time.Duration `yaml:"orderTimeout,omitempty"`
 	OrderSilent         *time.Duration `yaml:"orderSilent,omitempty"`

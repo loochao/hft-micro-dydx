@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func bnswapDepthWalkingLoop(
+func depthWalkLoop(
 	ctx context.Context,
 	symbol string,
 	levelDecay,
@@ -18,12 +18,12 @@ func bnswapDepthWalkingLoop(
 	reportCount int,
 	rawDepthCh chan *common.DepthRawMessage,
 	reportCh chan DepthReport,
-	outputCh chan WalkedDepth20,
+	outputCh chan WalkedDepth5,
 ) {
 	var err error
 	var takerRawDepth *common.DepthRawMessage
-	var takerDepth, newTakerDepth *bnswap.Depth20
-	var takerWalkedDepth *WalkedDepth20
+	var takerDepth, newTakerDepth *bnswap.Depth5
+	var takerWalkedDepth *WalkedDepth5
 	var takerDepthFilter = common.NewDepthFilter(timeDecay, timeBias)
 
 	logSilentTime := time.Now()
@@ -108,13 +108,13 @@ func bnswapDepthWalkingLoop(
 
 		case <-takerWalkDepthTimer.C:
 			if takerDepth != nil {
-				takerWalkedDepth, err = WalkDepth20(takerDepth, levelDecay)
+				takerWalkedDepth, err = WalkDepth5(takerDepth, levelDecay)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						if takerRawDepth == nil {
-							logger.Debugf("WalkDepth20 error %v %s", err, symbol)
+							logger.Debugf("WalkDepth5 error %v %s", err, symbol)
 						} else {
-							logger.Debugf("WalkDepth20 error %v %s %s", err, symbol, takerRawDepth.Depth)
+							logger.Debugf("WalkDepth5 error %v %s %s", err, symbol, takerRawDepth.Depth)
 						}
 						logSilentTime = time.Now().Add(time.Minute)
 					}
@@ -128,7 +128,7 @@ func bnswapDepthWalkingLoop(
 			if takerRawDepth == nil {
 				break
 			}
-			newTakerDepth, err = bnswap.ParseDepth20(takerRawDepth.Depth)
+			newTakerDepth, err = bnswap.ParseDepth5(takerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("bnswap.ParseDepth20 error %v %s %s", err, symbol, takerRawDepth.Depth)
@@ -164,13 +164,13 @@ func bnswapDepthWalkingLoop(
 	}
 }
 
-func WalkDepth20(depth20 *bnswap.Depth20, decay float64) (*WalkedDepth20, error) {
+func WalkDepth5(depth20 *bnswap.Depth5, decay float64) (*WalkedDepth5, error) {
 	bidSize := 0.0
 	askSize := 0.0
 	bidValue := 0.0
 	askValue := 0.0
 	factor := 1.0
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 5; i++ {
 		bidSize += factor * depth20.Bids[i][1]
 		askSize += factor * depth20.Asks[i][1]
 		bidValue += factor * depth20.Asks[i][1] * depth20.Bids[i][0]
@@ -180,7 +180,7 @@ func WalkDepth20(depth20 *bnswap.Depth20, decay float64) (*WalkedDepth20, error)
 	if bidSize == 0 || askSize == 0 {
 		return nil, fmt.Errorf("bad size bid %f ask %f", bidSize, askSize)
 	}
-	return &WalkedDepth20{
+	return &WalkedDepth5{
 		Symbol:         depth20.Symbol,
 		Time:           depth20.EventTime,
 		BidAskRatio:    bidSize / askSize,
@@ -196,7 +196,7 @@ func WalkDepth20(depth20 *bnswap.Depth20, decay float64) (*WalkedDepth20, error)
 	}, nil
 }
 
-type WalkedDepth20 struct {
+type WalkedDepth5 struct {
 	Symbol         string
 	Time           time.Time
 	BidAskRatio    float64

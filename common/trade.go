@@ -10,7 +10,7 @@ type Trade interface {
 	GetPrice() float64
 	GetSize() float64
 	GetTime() time.Time
-	IsBuy() bool
+	IsUpTick() bool
 	GetSymbol() string
 }
 
@@ -32,7 +32,7 @@ func StreamTimedTradeImbalance(
 			return
 		case <-updateImbalanceTimer.C:
 			if lastTrade != nil {
-				if lastTrade.IsBuy()  {
+				if lastTrade.IsUpTick()  {
 					buyVolume.Insert(lastTrade.GetTime(), lastTrade.GetSize())
 				} else {
 					sellVolume.Insert(lastTrade.GetTime(), lastTrade.GetSize())
