@@ -55,7 +55,7 @@ var swapConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210501 15:54:15  ####")
+	logger.Debug("####  BUILD @ 20210501 15:56:14  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

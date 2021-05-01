@@ -58,14 +58,14 @@ func updateNewOrders() {
 		openValue := 0.0
 
 		//还在加多档期
-		if mergedSignal.Value < -*swapConfig.EnterThreshold &&
+		if mergedSignal.Value >= *swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
 			swapOrderPrice = math.Floor(swapDepth.TakerAsk/swapTickSize) * swapTickSize
 			if swapPosition.PositionAmt > 0 &&
 				okLastEnterPrice &&
-				lastEnterPrice-(swapDepth.TakerFarAsk-swapDepth.TakerFarBid) < swapOrderPrice {
+				lastEnterPrice+swapDepth.TakerFarAsk-swapDepth.TakerFarBid > swapOrderPrice {
 				if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
-					logger.Debugf("%s LONG FAILED, TAKER ASK %f < LAST ENTER PRICE %f", swapSymbol, swapDepth.TakerAsk, lastEnterPrice)
+					logger.Debugf("%s LONG FAILED, TAKER ASK %f > LAST ENTER PRICE %f", swapSymbol, swapDepth.TakerAsk, lastEnterPrice)
 				}
 				//已有多仓，且上次加仓成本比现在高，不加仓
 				continue
@@ -128,16 +128,16 @@ func updateNewOrders() {
 				continue
 			}
 			logger.Debugf("%s OPEN LONG@%f %f -> %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapPosition.PositionAmt+swapSizeDiff)
-		} else if mergedSignal.Value > *swapConfig.EnterThreshold &&
+		} else if mergedSignal.Value <= -*swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
 
 			swapOrderPrice = math.Ceil(swapDepth.TakerBid/swapTickSize) * swapTickSize
 			if swapPosition.PositionAmt < 0 &&
 				okLastEnterPrice &&
-				lastEnterPrice+(swapDepth.TakerFarAsk-swapDepth.TakerFarBid) > swapOrderPrice {
-				//逆向加仓
+				lastEnterPrice-(swapDepth.TakerFarAsk-swapDepth.TakerFarBid) < swapOrderPrice {
+				//已有多仓，且上次加仓成本比现在高，不加仓
 				if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
-					logger.Debugf("%s SHORT FAILED, TAKER BID %f < LAST ENTER PRICE %f", swapSymbol, swapDepth.TakerAsk, lastEnterPrice)
+					logger.Debugf("%s SHORT FAILED, TAKER BID %f > LAST ENTER PRICE %f", swapSymbol, swapDepth.TakerAsk, lastEnterPrice)
 				}
 				continue
 			}
