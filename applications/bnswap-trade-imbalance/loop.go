@@ -61,19 +61,32 @@ func updateNewOrders() {
 		if mergedSignal.Value > *swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
 			swapOrderPrice = math.Floor(swapDepth.TakerAsk/swapTickSize) * swapTickSize
-			if swapPosition.PositionAmt > 0 && okLastEnterPrice && lastEnterPrice > swapOrderPrice {
+			if swapPosition.PositionAmt > 0 &&
+				okLastEnterPrice &&
+				lastEnterPrice+swapDepth.TakerFarAsk-swapDepth.TakerFarBid > swapOrderPrice {
 				if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
 					logger.Debugf("%s LONG FAILED, TAKER ASK %f > LAST ENTER PRICE %f", swapSymbol, swapDepth.TakerAsk, lastEnterPrice)
 				}
 				//已有多仓，且上次加仓成本比现在高，不加仓
 				continue
 			}
-			targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice + enterStep
-			if targetValue > enterTarget {
-				targetValue = enterTarget
+			if swapPosition.PositionAmt >= 0 {
+				targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice + enterStep
+				if targetValue > enterTarget {
+					targetValue = enterTarget
+				}
+				swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
+				openValue = swapSizeDiff * swapOrderPrice
+			} else {
+				if -swapPosition.PositionAmt*swapPosition.EntryPrice > enterTarget/4 {
+					//超过一半目标仓位，减半仓
+					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize) * swapStepSize
+				} else {
+					//直接换仓
+					swapSizeDiff = math.Floor((enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize) * swapStepSize
+					openValue = enterStep
+				}
 			}
-			swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
-			openValue = swapSizeDiff * swapOrderPrice
 			enterValue = swapSizeDiff * swapOrderPrice
 			if enterValue < 0.8*enterStep {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
@@ -117,20 +130,34 @@ func updateNewOrders() {
 			logger.Debugf("%s OPEN LONG@%f %f -> %f", swapSymbol, swapOrderPrice, swapPosition.PositionAmt, swapPosition.PositionAmt+swapSizeDiff)
 		} else if mergedSignal.Value <= -*swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
+
 			swapOrderPrice = math.Ceil(swapDepth.TakerBid/swapTickSize) * swapTickSize
-			if swapPosition.PositionAmt < 0 && okLastEnterPrice && lastEnterPrice < swapOrderPrice {
+			if swapPosition.PositionAmt < 0 &&
+				okLastEnterPrice &&
+				lastEnterPrice-(swapDepth.TakerFarAsk-swapDepth.TakerFarBid) < swapOrderPrice {
 				//已有多仓，且上次加仓成本比现在高，不加仓
 				if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
 					logger.Debugf("%s SHORT FAILED, TAKER BID %f > LAST ENTER PRICE %f", swapSymbol, swapDepth.TakerAsk, lastEnterPrice)
 				}
 				continue
 			}
-			targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice - enterStep
-			if targetValue < -enterTarget {
-				targetValue = -enterTarget
+			if swapPosition.PositionAmt <= 0 {
+				targetValue = swapPosition.PositionAmt*swapPosition.EntryPrice - enterStep
+				if targetValue < -enterTarget {
+					targetValue = -enterTarget
+				}
+				swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
+				openValue = swapSizeDiff * swapOrderPrice
+			} else {
+				if swapPosition.PositionAmt*swapPosition.EntryPrice > enterTarget/4 {
+					//减半仓
+					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize) * swapStepSize
+				} else {
+					//直接换仓
+					swapSizeDiff = math.Floor((-enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize) * swapStepSize
+					openValue = -enterStep
+				}
 			}
-			swapSizeDiff = math.Floor((targetValue-swapPosition.PositionAmt*swapPosition.EntryPrice)/swapOrderPrice/swapStepSize) * swapStepSize
-			openValue = swapSizeDiff * swapOrderPrice
 			enterValue = swapSizeDiff * swapOrderPrice
 			if -enterValue < 0.8*enterStep {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
