@@ -305,10 +305,12 @@ func main() {
 				swapOrderCancelSilentTimes[swapOrder.Symbol] = time.Now()
 				swapHttpPositionUpdateSilentTimes[swapOrder.Symbol] = time.Now().Add(*swapConfig.HttpSilent)
 				if _, ok := swapSymbolsMap[swapOrder.Symbol]; ok {
-					if lastEneterPrice, ok := swapLastEnterPrices[swapOrder.Symbol]; ok {
-						swapEnterOffset[swapOrder.Symbol] = (lastEneterPrice - swapOrder.AveragePrice)/ lastEneterPrice
+					logger.Debugf("%s FILLED %s %f %f", swapOrder.Symbol, swapOrder.Side, swapOrder.FilledAccumulatedQuantity, swapOrder.AveragePrice)
+					if lastEnterPrice, ok := swapLastEnterPrices[swapOrder.Symbol]; ok {
+						swapEnterOffset[swapOrder.Symbol] = (lastEnterPrice - swapOrder.AveragePrice)/ lastEnterPrice
 						logger.Debugf("%s ENTER OFFSET %f", swapOrder.Symbol, swapEnterOffset[swapOrder.Symbol])
 					}
+					swapLastEnterPrices[swapOrder.Symbol] = swapOrder.AveragePrice
 				}
 			}
 			break
