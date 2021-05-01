@@ -90,7 +90,7 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			if enterValue > swapUSDTAvailable {
+			if enterValue > swapUSDTAvailable*float64(*mtConfig.Leverage) {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED LONG OPEN, ENTRY VALUE %f MORE THAN swapUSDTAvailable %f, SIZE %f",
@@ -156,7 +156,7 @@ func updateNewOrders() {
 				}
 				continue
 			}
-			if -enterValue > swapUSDTAvailable {
+			if -enterValue > swapUSDTAvailable*float64(*mtConfig.Leverage) {
 				if time.Now().Sub(swapLogSilentTimes[swapSymbol]) > 0 {
 					logger.Debugf(
 						"%s FAILED SHORT OPEN, ENTRY VALUE %f MORE THAN swapUSDTAvailable %f, SIZE %f",
