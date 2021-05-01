@@ -82,9 +82,8 @@ func updateNewOrders() {
 					//超过一半目标仓位，减半仓
 					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize) * swapStepSize
 				} else {
-					//直接换仓
-					swapSizeDiff = math.Floor((enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize) * swapStepSize
-					openValue = enterStep
+					//直接平仓
+					swapSizeDiff = -swapPosition.PositionAmt
 				}
 			}
 			enterValue = swapSizeDiff * swapOrderPrice
@@ -153,9 +152,8 @@ func updateNewOrders() {
 					//减半仓
 					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize) * swapStepSize
 				} else {
-					//直接换仓
-					swapSizeDiff = math.Floor((-enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize) * swapStepSize
-					openValue = -enterStep
+					//直接平仓
+					swapSizeDiff = -swapPosition.PositionAmt
 				}
 			}
 			enterValue = swapSizeDiff * swapOrderPrice
