@@ -63,6 +63,8 @@ func handleSave() {
 			fields["swapMakerAsk"] = walkedDepth.MakerAsk
 			fields["swapTakerBid"] = walkedDepth.TakerBid
 			fields["swapTakerAsk"] = walkedDepth.TakerAsk
+			fields["swapTakerFarBid"] = walkedDepth.TakerFarBid
+			fields["swapTakerFarAsk"] = walkedDepth.TakerFarAsk
 		}
 		if mergedSignal, ok := swapMergedSignals[symbol]; ok {
 			fields["mergedSignalValue"] = mergedSignal.Value
