@@ -28,7 +28,6 @@ var swapStepSizes = make(map[string]float64)
 var swapMinNotional = make(map[string]float64)
 
 var swapOpenOrders = make(map[string]TakerOpenOrder)
-var swapOrderCancelCounts = make(map[string]int)
 var swapOrderCancelSilentTimes = make(map[string]time.Time)
 var swapPositionsCh = make(chan []bnswap.Position, 10)
 var swapPositions = make(map[string]*bnswap.Position)
@@ -58,7 +57,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210501 11:28:28  ####")
+	logger.Debug("####  BUILD @ 20210501 11:39:28  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

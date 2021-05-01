@@ -138,8 +138,8 @@ func updateNewOrders() {
 					swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize) * swapStepSize
 				} else {
 					//直接换仓
-					swapSizeDiff = math.Floor((enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize) * swapStepSize
-					openValue = enterStep
+					swapSizeDiff = math.Floor((-enterStep/swapOrderPrice-swapPosition.PositionAmt)/swapStepSize) * swapStepSize
+					openValue = -enterStep
 				}
 			}
 			enterValue = swapSizeDiff * swapOrderPrice
