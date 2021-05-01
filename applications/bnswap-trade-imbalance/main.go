@@ -345,7 +345,7 @@ func main() {
 				updateOldOrders()
 				updateNewOrders()
 			} else {
-				if time.Now().Second()%10 == 0 {
+				if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
 					logger.Debugf("SYSTEM NOT READY SWAP %v SILENT TIME %v",
 						swapSystemReady,  time.Now().Sub(swapGlobalSilent),
 					)
