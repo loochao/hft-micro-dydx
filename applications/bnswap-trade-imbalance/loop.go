@@ -57,9 +57,27 @@ func updateNewOrders() {
 		enterValue := 0.0
 		openValue := 0.0
 
-		//还在加多档期
-		if mergedSignal.Value >= *swapConfig.EnterThreshold &&
+		if mergedSignal.Value <= -*swapConfig.CloseThreshold &&
+			swapPosition.PositionAmt > 0 {
+			if swapPosition.PositionAmt*swapPosition.EntryPrice > enterTarget/2 {
+				//减半仓
+				swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize) * swapStepSize
+			} else {
+				//直接平仓
+				swapSizeDiff = -swapPosition.PositionAmt
+			}
+		} else if mergedSignal.Value >= *swapConfig.CloseThreshold &&
+			swapPosition.PositionAmt < 0 {
+			if -swapPosition.PositionAmt*swapPosition.EntryPrice > enterTarget/2 {
+				//超过一半目标仓位，减半仓
+				swapSizeDiff = math.Floor(-swapPosition.PositionAmt/2/swapStepSize) * swapStepSize
+			} else {
+				//直接平仓
+				swapSizeDiff = -swapPosition.PositionAmt
+			}
+		} else if mergedSignal.Value >= *swapConfig.EnterThreshold &&
 			time.Now().Sub(swapEnterSilentTimes[swapSymbol]) > 0 {
+			//还在加多档期
 			swapOrderPrice = math.Floor(swapDepth.TakerAsk/swapTickSize) * swapTickSize
 			if swapPosition.PositionAmt > 0 &&
 				okLastEnterPrice &&

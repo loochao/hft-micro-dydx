@@ -45,12 +45,12 @@ type Config struct {
 	ImbalanceLookback       *time.Duration      `yaml:"imbalanceLookback,omitempty"`
 	ImbalanceUpdateInterval *time.Duration      `yaml:"imbalanceUpdateInterval,omitempty"`
 	ImbalanceTimeToLive     *time.Duration      `yaml:"imbalanceTimeToLive,omitempty"`
-	OrderBookTimeDecay   *float64 `yaml:"orderBookTimeDecay,omitempty"`
-	OrderBookTimeBias    *float64 `yaml:"orderBookTimeBias,omitempty"`
-	OrderBookTakerImpact *float64 `yaml:"orderBookTakerImpact,omitempty"`
-	OrderBookBatchSize    *int           `yaml:"orderBookBatchSize,omitempty"`
-	ReportCount           *int           `yaml:"reportCount,omitempty"`
-	DepthTimeToLive       *time.Duration `yaml:"depthTimeToLive,omitempty"`
+	OrderBookTimeDecay      *float64            `yaml:"orderBookTimeDecay,omitempty"`
+	OrderBookTimeBias       *float64            `yaml:"orderBookTimeBias,omitempty"`
+	OrderBookTakerImpact    *float64            `yaml:"orderBookTakerImpact,omitempty"`
+	OrderBookBatchSize      *int                `yaml:"orderBookBatchSize,omitempty"`
+	ReportCount             *int                `yaml:"reportCount,omitempty"`
+	DepthTimeToLive         *time.Duration      `yaml:"depthTimeToLive,omitempty"`
 
 	StartValue        *float64           `yaml:"startValue,omitempty"`
 	EnterFreePct      *float64           `yaml:"enterFreePct,omitempty"`
@@ -58,9 +58,10 @@ type Config struct {
 	EnterTargetFactor *float64           `yaml:"enterTargetFactor,omitempty"`
 	StartValues       map[string]float64 `yaml:"startValues,omitempty"`
 	EnterThreshold    *float64           `yaml:"enterThreshold,omitempty"`
+	CloseThreshold    *float64           `yaml:"enterThreshold,omitempty"`
 
-	OrderTimeout      *time.Duration `yaml:"orderTimeout,omitempty"`
-	OrderSilent       *time.Duration `yaml:"orderSilent,omitempty"`
+	OrderTimeout *time.Duration `yaml:"orderTimeout,omitempty"`
+	OrderSilent  *time.Duration `yaml:"orderSilent,omitempty"`
 
 	RestartSilent *time.Duration `yaml:"restartSilent,omitempty"`
 	HttpSilent    *time.Duration `yaml:"httpSilent,omitempty"`
