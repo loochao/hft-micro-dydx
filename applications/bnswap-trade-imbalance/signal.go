@@ -52,7 +52,7 @@ func StreamMergedSignals(
 			logger.Debugf("unknown trade imbalance exchange %s", exchange)
 		}
 	}
-	updateTimer := time.NewTimer(lookback + updateInterval)
+	updateTimer := time.NewTimer(lookback/2)
 	maps := make(map[string]*common.Signal)
 	for {
 		select {
@@ -78,17 +78,19 @@ func StreamMergedSignals(
 						}
 					}
 				}
-				select {
-				case outputCh <- MergedSignal{
-					Symbol: symbol,
-					Value:    dir/ weight,
-					Signals: values,
-				}:
-					if time.Now().Truncate(time.Second*5).Add(updateInterval).Sub(time.Now()) > 0 {
-						logger.Debugf("%s %f", symbol, dir/weight)
+				if weight > 0 {
+					select {
+					case outputCh <- MergedSignal{
+						Symbol: symbol,
+						Value:    dir/ weight,
+						Signals: values,
+					}:
+						if time.Now().Truncate(time.Second*5).Add(updateInterval).Sub(time.Now()) > 0 {
+							logger.Debugf("%s %f", symbol, dir/weight)
+						}
+					default:
+						logger.Debugf("outputCh <- MergedSignal failed, ch len %d", len(outputCh))
 					}
-				default:
-					logger.Debugf("outputCh <- MergedSignal failed, ch len %d", len(outputCh))
 				}
 			}
 			updateTimer.Reset(updateInterval)
