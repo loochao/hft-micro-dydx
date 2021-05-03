@@ -83,7 +83,7 @@ func main() {
 		swapStepSize := hbcrossswapContractSizes[hbSpotSwapSymbolsMap[spotSymbol]]
 		hbMergedStepSizes[spotSymbol] = common.MergedStepSize(spotStepSize, swapStepSize)
 	}
-	logger.Debugf("MERGED SIZE %v", hbMergedStepSizes)
+	logger.Debugf("MERGED STEP SIZE %v", hbMergedStepSizes)
 
 	hbInternalInfluxWriter, err = common.NewInfluxWriter(
 		hbGlobalCtx,
