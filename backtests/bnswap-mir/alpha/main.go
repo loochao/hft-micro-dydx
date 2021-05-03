@@ -21,15 +21,15 @@ func main() {
 		"",
 		"",
 		"hft",
-		5000,
+		500,
 	)
 	if err != nil {
 		panic(err)
 	}
 	defer iw.Stop()
 
-	//symbolsStr := "BTCUSDT,ETHUSDT,FILUSDT,DOGEUSDT,XRPUSDT,MATICUSDT,LTCUSDT,EOSUSDT,LINKUSDT,MKRUSDT"
-	symbolsStr := "LINKUSDT,FILUSDT"
+	symbolsStr := "BTCUSDT,ETHUSDT,FILUSDT,DOGEUSDT,XRPUSDT,MATICUSDT,LTCUSDT,EOSUSDT,LINKUSDT,MKRUSDT"
+	//symbolsStr := "LINKUSDT,FILUSDT"
 
 	symbols := strings.Split(symbolsStr, ",")
 	//symbols = symbols[:2]
