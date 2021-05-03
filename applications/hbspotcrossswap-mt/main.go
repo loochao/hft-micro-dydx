@@ -85,6 +85,7 @@ func main() {
 	}
 
 	hbInternalInfluxWriter, err = common.NewInfluxWriter(
+		hbGlobalCtx,
 		*hbConfig.InternalInflux.Address,
 		*hbConfig.InternalInflux.Username,
 		*hbConfig.InternalInflux.Password,
@@ -97,6 +98,7 @@ func main() {
 	}
 
 	hbExternalInfluxWriter, err = common.NewInfluxWriter(
+		hbGlobalCtx,
 		*hbConfig.ExternalInflux.Address,
 		*hbConfig.ExternalInflux.Username,
 		*hbConfig.ExternalInflux.Password,
