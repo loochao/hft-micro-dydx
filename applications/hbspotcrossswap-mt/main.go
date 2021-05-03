@@ -110,12 +110,7 @@ func main() {
 		return
 	}
 
-	defer func() {
-		err := hbInternalInfluxWriter.Stop()
-		if err != nil {
-			logger.Warnf("stop influx writer error %v", err)
-		}
-	}()
+	defer hbInternalInfluxWriter.Stop()
 
 	spreadReportCh := make(chan common.SpreadReport, 10000)
 	go reportsSaveLoop(
