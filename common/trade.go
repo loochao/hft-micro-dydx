@@ -14,6 +14,52 @@ type Trade interface {
 	GetSymbol() string
 }
 
+type MIR struct {
+	Symbol    string
+	Time      time.Time
+	Value     float64
+	LastPrice float64
+}
+
+func StreamMIR(
+	ctx context.Context,
+	Symbol string,
+	lookback time.Duration,
+	minTradeValue float64,
+	updateInterval time.Duration,
+	tradeCh chan Trade,
+	mirCh chan MIR,
+) {
+	var trade Trade
+	updateTimer := time.NewTimer(time.Now().Truncate(updateInterval).Add(updateInterval).Sub(time.Now()))
+	defer updateTimer.Stop()
+	tf := NewTimedFloat64s(lookback)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-updateTimer.C:
+			if tf.Range() > lookback*3/4 {
+				select {
+				case mirCh <- MIR{
+					Value:     ComputeMIR(tf.Values()),
+					Symbol:    Symbol,
+					Time:      time.Now().Truncate(lookback),
+					LastPrice: tf.Values()[len(tf.Values())-1],
+				}:
+				default:
+					logger.Debugf("mirCh <- MIR failed, ch len %d", len(mirCh))
+				}
+			}
+			updateTimer.Reset(time.Now().Truncate(lookback).Add(lookback).Sub(time.Now()))
+		case trade = <-tradeCh:
+			if trade.GetPrice()*trade.GetSize() > minTradeValue {
+				tf.Insert(trade.GetTime(), trade.GetPrice())
+			}
+		}
+	}
+}
+
 func StreamTimedTradeImbalance(
 	ctx context.Context,
 	signalName string,
@@ -32,7 +78,7 @@ func StreamTimedTradeImbalance(
 			return
 		case <-updateImbalanceTimer.C:
 			if lastTrade != nil {
-				if lastTrade.IsUpTick()  {
+				if lastTrade.IsUpTick() {
 					buyVolume.Insert(lastTrade.GetTime(), lastTrade.GetSize())
 				} else {
 					sellVolume.Insert(lastTrade.GetTime(), lastTrade.GetSize())
@@ -42,10 +88,10 @@ func StreamTimedTradeImbalance(
 					buyVolume.Sum()+sellVolume.Sum() != 0 {
 					select {
 					case signalCh <- &Signal{
-						Name:  signalName,
-						Value: (buyVolume.Sum() - sellVolume.Sum()) / (buyVolume.Sum() + sellVolume.Sum()),
-						Weight: buyVolume.Sum()+sellVolume.Sum(),
-						Time:  lastTrade.GetTime(),
+						Name:   signalName,
+						Value:  (buyVolume.Sum() - sellVolume.Sum()) / (buyVolume.Sum() + sellVolume.Sum()),
+						Weight: buyVolume.Sum() + sellVolume.Sum(),
+						Time:   lastTrade.GetTime(),
 					}:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {

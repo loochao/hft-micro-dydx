@@ -50,7 +50,7 @@ func (w *Depth20RoutedWebsocket) readLoop(conn *websocket.Conn, symbols []string
 			w.restart()
 			return
 		}
-		//{"stream":"btcusdt@trade","data":{"e":"trade","E":1620011599983,"s":"BTCUSDT","t":804764023,"p":"58095.95000000","q":"0.02123000","b":5757184069,"a":5757184083,"T":1620011599982,"m":true,"M":true}}
+		// {"stream":"btcusdt@aggTrade","data":{"e":"aggTrade","E":1616945754086,"a":405295371,"s":"BTCUSDT","p":"56183.31","q":"0.003","f":649066620,"l":649066620,"T":1616945753931,"m":false}}
 		if len(msg) < 128 {
 			continue
 		}
@@ -150,12 +150,12 @@ func (w *Depth20RoutedWebsocket) reconnect(ctx context.Context, wsUrl string, pr
 }
 
 func (w *Depth20RoutedWebsocket) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
-	urlStr := "wss://stream.binance.com:9443/stream?streams="
+	urlStr := "wss://fstream.binance.com/stream?streams="
 	symbols := make([]string, 0)
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 		urlStr += fmt.Sprintf(
-			"%s@trade/",
+			"%s@aggTrade/",
 			strings.ToLower(symbol),
 		)
 	}
@@ -339,7 +339,7 @@ func (w *Depth20RoutedWebsocket) saveLoop(ctx context.Context, savePath, symbol 
 				}
 			}
 			dayTime = time.Now().Truncate(time.Hour * 24)
-			outPath = fmt.Sprintf("%s/%s-%s.bnspot.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
+			outPath = fmt.Sprintf("%s/%s-%s.bnswap.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				w.Stop()
@@ -352,9 +352,9 @@ func (w *Depth20RoutedWebsocket) saveLoop(ctx context.Context, savePath, symbol 
 				logger.Debugf("gzip.NewWriterLevel error %v, stop ws", err)
 				return
 			}
-			gw.Name = fmt.Sprintf("%s-%s.trade.jl", dayTime.Format("20060102"), symbol)
+			gw.Name = fmt.Sprintf("%s-%s.depth20.jl", dayTime.Format("20060102"), symbol)
 			gw.ModTime = time.Now()
-			gw.Comment = fmt.Sprintf("trade raw json line for %s@%s", symbol, dayTime.Format("20060102"))
+			gw.Comment = fmt.Sprintf("depth20 raw json line for %s@%s", symbol, dayTime.Format("20060102"))
 			hourUpdateTimer.Reset(
 				time.Now().Truncate(
 					time.Hour * 24,
@@ -383,7 +383,7 @@ func (w *Depth20RoutedWebsocket) saveLoop(ctx context.Context, savePath, symbol 
 	}
 }
 
-func NewTradeRoutedWS(
+func NewDepth20RoutedWebsocket(
 	ctx context.Context,
 	proxy string,
 	savePath string,

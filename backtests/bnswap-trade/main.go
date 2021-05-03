@@ -51,8 +51,8 @@ func main() {
 		scanner := bufio.NewScanner(gr)
 		var lastSellPrice, lastBuyPrice float64
 		var midPrice float64
-		var buyTWM = common.NewTimedWeightedMean(time.Second * 60)
-		var sellTWM = common.NewTimedWeightedMean(time.Second * 60)
+		var buyVolume = common.NewTimedSum(time.Second * 30)
+		var sellVolume = common.NewTimedSum(time.Second * 30)
 		entrySize := 0.0
 		entryPrice := 0.0
 		netWorth := 1.0
@@ -73,20 +73,28 @@ func main() {
 			}
 			if d.IsTheBuyerTheMarketMaker {
 				lastSellPrice = d.Price
-				sellTWM.Insert(d.EventTime, d.Quantity, d.Price)
+				sellVolume.Insert(d.EventTime, d.Quantity)
 			} else {
 				lastBuyPrice = d.Price
-				buyTWM.Insert(d.EventTime, d.Quantity, d.Price)
+				buyVolume.Insert(d.EventTime, d.Quantity)
 			}
 
 			if lastBuyPrice == 0 || lastSellPrice == 0 {
 				continue
 			}
 
-			if buyTWM.TotalWeight > sellTWM.TotalWeight &&
-				buyTWM.TotalWeight < 1.25*sellTWM.TotalWeight &&
+			if buyVolume.Sum() > sellVolume.Sum() &&
 				d.EventTime.Sub(tradeSilentTime) > 0 {
-				if entrySize < 0 {
+				if entrySize < -entryTarget/2 {
+					pnlPct := -(lastBuyPrice - entryPrice) / entryPrice
+					netWorth += pnlPct*-entrySize/2 + (-entrySize/2)*commission
+					entryPrice = lastBuyPrice
+					lastEntryPrice = lastBuyPrice
+					lastTradeTime = d.EventTime
+					logger.Debugf("CLOSE SHORT %f %f", entrySize/2, pnlPct)
+					entrySize /= 2
+					tradeSilentTime = d.EventTime.Add(tradeSilent)
+				} else if entrySize < -entryTarget/2 {
 					pnlPct := -(lastBuyPrice - entryPrice) / entryPrice
 					netWorth += pnlPct*-entrySize + (-entrySize)*commission
 					netWorth += entryStep * commission
@@ -131,8 +139,7 @@ func main() {
 					//	entrySize = entryStep
 					//	lastTradeTime = d.EventTime.Add(time.Hour*999)
 				}
-			} else if sellTWM.TotalWeight > buyTWM.TotalWeight &&
-				sellTWM.TotalWeight < 1.5*buyTWM.TotalWeight &&
+			} else if buyVolume.Sum() < sellVolume.Sum() &&
 				d.EventTime.Sub(tradeSilentTime) > 0 {
 				if entrySize > 0 {
 					pnlPct := (lastSellPrice - entryPrice) / entryPrice
@@ -186,15 +193,15 @@ func main() {
 			fields["netWorth"] = netWorth + unRealisedPnl
 			fields["entrySize"] = entrySize
 			fields["unRealisedPnl"] = unRealisedPnl
-			fields["spread"] = (buyTWM.Median() - sellTWM.Median()) / midPrice
+			fields["spread"] = (buyVolume.Median() - sellVolume.Median()) / midPrice
 			fields["lastSellPrice"] = lastSellPrice
 			fields["lastBuyPrice"] = lastBuyPrice
-			fields["vMeanSellPrice"] = sellTWM.Median()
-			fields["vMeanBuyPrice"] = buyTWM.Median()
-			fields["totalBuyValue"] = buyTWM.TotalValue
-			fields["totalBuyWeight"] = buyTWM.TotalWeight
-			fields["totalSellValue"] = sellTWM.TotalValue
-			fields["totalSellWeight"] = sellTWM.TotalWeight
+			fields["vMeanSellPrice"] = sellVolume.Median()
+			fields["vMeanBuyPrice"] = buyVolume.Median()
+			fields["totalBuyValue"] = buyVolume.TotalValue
+			fields["totalBuyWeight"] = buyVolume.TotalWeight
+			fields["totalSellValue"] = sellVolume.TotalValue
+			fields["totalSellWeight"] = sellVolume.TotalWeight
 			pt, err := client.NewPoint(
 				"bnswap-trade",
 				map[string]string{

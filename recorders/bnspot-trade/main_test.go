@@ -9,7 +9,11 @@ import (
 )
 
 func TestGzipFile(t *testing.T) {
-	file, err := os.Open("/Users/chenjilin/Downloads/20210503-BTCUSDT.bnspot.trade.jl.gz")
+
+	//archiveFiles(context.Background(), "/Users/chenjilin/MarketData/bnswap-depth20/")
+
+
+	file, err := os.Open("/Users/chenjilin/Downloads/bnswap-trade/20210428-BTCUSDT.bnswap.trade.jl.gzip")
 	if err != nil {
 		t.Fatal(err)
 	}
