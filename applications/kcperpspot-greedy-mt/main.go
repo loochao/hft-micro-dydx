@@ -64,6 +64,7 @@ func main() {
 	logger.Debugf("MERGED STEP SIZE %v", kcMergedStepSizes)
 
 	kcInternalInfluxWriter, err = common.NewInfluxWriter(
+		kcGlobalCtx,
 		*kcConfig.InternalInflux.Address,
 		*kcConfig.InternalInflux.Username,
 		*kcConfig.InternalInflux.Password,
@@ -73,8 +74,10 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
+	defer kcInternalInfluxWriter.Stop()
 
 	kcExternalInfluxWriter, err = common.NewInfluxWriter(
+		kcGlobalCtx,
 		*kcConfig.ExternalInflux.Address,
 		*kcConfig.ExternalInflux.Username,
 		*kcConfig.ExternalInflux.Password,
@@ -84,13 +87,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-
-	defer func() {
-		err := kcInternalInfluxWriter.Stop()
-		if err != nil {
-			logger.Warnf("stop influx writer error %v", err)
-		}
-	}()
+	defer kcInternalInfluxWriter.Stop()
 
 	if *kcConfig.ChangeAutoDepositStatus {
 		for _, symbol := range kcperpSymbols {
