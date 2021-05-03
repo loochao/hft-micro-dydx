@@ -7,6 +7,7 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"os"
 	"strings"
 	"time"
@@ -27,8 +28,7 @@ func main() {
 		panic(err)
 	}
 	defer iw.Stop()
-
-	symbolsStr := "BTCUSDT,ETHUSDT,FILUSDT,DOGEUSDT,XRPUSDT,MATICUSDT,LTCUSDT,EOSUSDT,LINKUSDT,MKRUSDT"
+	symbolsStr := `BTCUSDT,LTCUSDT,ETHUSDT,NEOUSDT,QTUMUSDT,EOSUSDT,ZRXUSDT,OMGUSDT,LRCUSDT,TRXUSDT,KNCUSDT,IOTAUSDT,LINKUSDT,CVCUSDT,ETCUSDT,ZECUSDT,BATUSDT,DASHUSDT,XMRUSDT,ENJUSDT,XRPUSDT,STORJUSDT,BTSUSDT,ADAUSDT,XLMUSDT,WAVESUSDT,ICXUSDT,RLCUSDT,IOSTUSDT,BLZUSDT,ONTUSDT,ZILUSDT,ZENUSDT,THETAUSDT,VETUSDT,RENUSDT,MATICUSDT,ATOMUSDT,FTMUSDT,CHZUSDT,ALGOUSDT,DOGEUSDT,ANKRUSDT,TOMOUSDT,BANDUSDT,XTZUSDT,KAVAUSDT,BCHUSDT,SOLUSDT,HNTUSDT,COMPUSDT,MKRUSDT,SXPUSDT,SNXUSDT,DOTUSDT,RUNEUSDT,BALUSDT,YFIUSDT,SRMUSDT,CRVUSDT,SANDUSDT,OCEANUSDT,LUNAUSDT,RSRUSDT,TRBUSDT,EGLDUSDT,BZRXUSDT,KSMUSDT,SUSHIUSDT,YFIIUSDT,BELUSDT,UNIUSDT,AVAXUSDT,FLMUSDT,ALPHAUSDT,NEARUSDT,AAVEUSDT,FILUSDT,CTKUSDT,AXSUSDT,AKROUSDT,SKLUSDT,GRTUSDT,1INCHUSDT,LITUSDT,RVNUSDT,SFPUSDT,REEFUSDT,DODOUSDT,COTIUSDT,CHRUSDT,ALICEUSDT,HBARUSDT,MANAUSDT,STMXUSDT,UNFIUSDT,XEMUSDT,CELRUSDT,HOTUSDT,ONEUSDT,LINAUSDT,DENTUSDT,MTLUSDT,OGNUSDT,NKNUSDT,DGBUSDT`
 	//symbolsStr := "LINKUSDT,FILUSDT"
 
 	symbols := strings.Split(symbolsStr, ",")
@@ -40,7 +40,7 @@ func main() {
 		mirsMap[symbol] = make(map[time.Time][2]float64)
 
 		file, err := os.Open(
-			fmt.Sprintf("/Users/chenjilin/MarketData/mir/4h.mir.%s.csv", symbol),
+			fmt.Sprintf("/Users/chenjilin/MarketData/mir/8h.mir.%s.csv", symbol),
 		)
 		if err != nil {
 			logger.Debugf("os.Open() error %v", err)
@@ -67,7 +67,7 @@ func main() {
 			}
 			price, err := common.ParseFloat([]byte(splits[3]))
 			if err != nil {
-				logger.Debugf("%v %s", err, splits[3])
+				logger.Debugf("%v %s %s", err, splits[3], scanner.Text())
 				return
 			}
 			mirsMap[symbol][ts] = [2]float64{mir, price}
@@ -88,9 +88,12 @@ func main() {
 	commission := -0.000
 timeLoop:
 	for _, t := range times {
-		if t.Truncate(time.Minute*5).Sub(t) != 0 {
+		if t.Sub(t.Truncate(time.Hour)) != time.Minute*55 {
 			continue
 		}
+		//if t.Truncate(time.Hour*4).Sub(t) != 0{
+		//	continue
+		//}
 		alphas := make([]float64, len(symbols))
 		prices := make(map[string]float64)
 		mirs := make(map[string]float64)
@@ -123,7 +126,7 @@ timeLoop:
 					sizes[symbol] = -entryValue
 					costs[symbol] = prices[symbol]
 				}
-			} else {
+			} else if rank >= len(symbols)/2  {
 				if sizes[symbol] == 0 {
 					netWorth += entryValue * commission
 					sizes[symbol] = entryValue
@@ -135,9 +138,14 @@ timeLoop:
 					sizes[symbol] = entryValue
 					costs[symbol] = prices[symbol]
 				}
+			} else if sizes[symbol] != 0 {
+				netWorth += sizes[symbol] * (prices[symbol] - costs[symbol]) / costs[symbol]
+				netWorth += math.Abs(sizes[symbol]) * commission
+				sizes[symbol] = 0
+				costs[symbol] = prices[symbol]
 			}
 		}
-		logger.Debugf("%v %f", t, netWorth)
+		logger.Debugf("%v %f %v", t, netWorth, t.Sub(t.Truncate(time.Hour)))
 		fields := make(map[string]interface{})
 		fields["netWorth"] = netWorth
 		pt, err := client.NewPoint(
@@ -161,5 +169,9 @@ timeLoop:
 			iw.PointCh <- pt
 		}
 	}
+
+	defer func() {
+		time.Sleep(time.Second * 3)
+	}()
 
 }
