@@ -80,7 +80,7 @@ func main() {
 	}
 
 	for spotSymbol, spotStepSize := range hbspotStepSizes {
-		swapStepSize := hbcrossswapContractSizes[hbSwapSpotSymbolsMap[spotSymbol]]
+		swapStepSize := hbcrossswapContractSizes[hbSpotSwapSymbolsMap[spotSymbol]]
 		hbMergedStepSizes[spotSymbol] = common.MergedStepSize(spotStepSize, swapStepSize)
 	}
 	logger.Debugf("MERGED SIZE %v", hbMergedStepSizes)
