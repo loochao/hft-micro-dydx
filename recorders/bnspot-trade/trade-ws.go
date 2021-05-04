@@ -339,7 +339,7 @@ func (w *Depth20RoutedWebsocket) saveLoop(ctx context.Context, savePath, symbol 
 				}
 			}
 			dayTime = time.Now().Truncate(time.Hour * 24)
-			outPath = fmt.Sprintf("%s/%s-%s.bnswap.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
+			outPath = fmt.Sprintf("%s/%s-%s.bnspot.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				w.Stop()

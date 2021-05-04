@@ -113,6 +113,9 @@ func handleSave() {
 			fields["spotBalance"] = spotBalance.Free + spotBalance.Locked
 			if premiumIndex, ok := bnswapPremiumIndexes[symbol]; ok {
 				fields["spotValue"] = premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)
+				if position, ok := bnswapPositions[symbol]; ok {
+					fields["unHedgeValue"] = (position.PositionAmt + spotBalance.Free + spotBalance.Locked)*premiumIndex.IndexPrice
+				}
 			}
 		}
 		if markPrice, ok := bnswapPremiumIndexes[symbol]; ok {
