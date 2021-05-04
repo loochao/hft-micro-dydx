@@ -177,3 +177,4 @@ func NewInfluxWriter(ctx context.Context, address, username, password, database 
 	go iw.watchPoints(ctx)
 	return iw, nil
 }
+

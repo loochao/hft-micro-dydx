@@ -37,7 +37,6 @@ var bnspotHttpBalanceUpdateSilentTimes = make(map[string]time.Time)
 var bnswapHttpPositionUpdateSilentTimes = make(map[string]time.Time)
 
 var bnSymbols = make([]string, 0)
-var bnSymbolsMap = make(map[string]bool, 0)
 
 var bnOpenLogSilentTimes = make(map[string]time.Time)
 
@@ -111,6 +110,8 @@ var bnspotSystemReady = false
 var bnswapSystemReady = false
 var bnUnHedgeValue float64
 var bnGlobalLogSilentTime = time.Now()
+var bnspotOffsets = make(map[string]Offset)
+var bnExpectedInsuranceFund float64
 
 var bnConfig *Config
 
@@ -118,7 +119,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210504 16:01:14  ####")
+	logger.Debug("####  BUILD @ 20210501 11:09:54  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -143,15 +144,13 @@ func init() {
 	}
 	bnConfig = &config
 
-	if !common.StringDataContains(bnConfig.Symbols, bnBNBSymbol) {
-		bnConfig.Symbols = append(bnConfig.Symbols, bnBNBSymbol)
-	}
-
-	//symbol输入的顺序，先写的合约比较重要，RANK的话是从小到大，所以得Reverse
-	for i := len(bnConfig.Symbols) - 1; i >= 0; i-- {
-		symbol := bnConfig.Symbols[i]
+	for symbol, offsets := range bnConfig.OrderOffsets {
 		bnSymbols = append(bnSymbols, symbol)
-		bnSymbolsMap[symbol] = true
+		bnspotOffsets[symbol], err = NewOffset(offsets)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		logger.Debugf("%s %s", symbol, bnspotOffsets[symbol].ToString())
 		bnswapOrderSilentTimes[symbol] = time.Now()
 		bnswapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
 		bnspotOrderSilentTimes[symbol] = time.Now()
@@ -165,6 +164,13 @@ func init() {
 		bnswapHttpPositionUpdateSilentTimes[symbol] = time.Now()
 		bnGlobalSilent = time.Now().Add(*bnConfig.RestartSilent)
 	}
+	if !common.StringDataContains(bnSymbols, bnBNBSymbol) {
+		bnSymbols = append(bnSymbols, bnBNBSymbol)
+		bnspotOffsets[bnBNBSymbol] = Offset{}
+	}
+
+	bnExpectedInsuranceFund = *bnConfig.StartValue * (1 - *bnConfig.InsuranceFundingRatio) * *bnConfig.Leverage / (*bnConfig.Leverage + 1) * *bnConfig.InsuranceFundingRatio
+	logger.Debugf("bnExpectedInsuranceFund %f", bnExpectedInsuranceFund)
 
 	bnBarsMapUpdated["swap"] = false
 	bnBarsMapUpdated["spot"] = false

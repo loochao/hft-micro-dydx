@@ -2,9 +2,11 @@ package bnspot
 
 import (
 	"encoding/json"
+	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestParseDepth20(t *testing.T) {
@@ -47,5 +49,37 @@ func BenchmarkParseDepth20ByStdJson(t *testing.B) {
 		if err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestParseTrade(t *testing.T) {
+	strs := []string {
+		`{"stream":"btcusdt@trade","data":{"e":"trade","E":1620122147230,"s":"BTCUSDT","t":807525136,"p":"56130.97000000","q":"0.00441000","b":5771974561,"a":5771974540,"T":1620122147229,"m":false,"M":true}}`,
+		`{"stream":"linkusdt@trade","data":{"e":"trade","E":1620122147432,"s":"LINKUSDT","t":105708580,"p":"41.30400000","q":"0.84800000","b":1929303003,"a":1929302993,"T":1620122147431,"m":false,"M":true}}`,
+		`{"stream":"btcusdt@trade","data":{"e":"trade","E":1620122147983,"s":"BTCUSDT","t":807525155,"p":"56130.97000000","q":"0.00174000","b":5771974609,"a":5771974542,"T":1620122147982,"m":false,"M":true}}`,
+		`{"stream":"btcusdt@trade","data":{"e":"trade","E":1620122148316,"s":"BTCUSDT","t":807525164,"p":"56130.96000000","q":"0.01391500","b":5771974591,"a":5771974631,"T":1620122148315,"m":true,"M":true}}`,
+		`{"stream":"wavesusdt@trade","data":{"e":"trade","E":1620122148729,"s":"WAVESUSDT","t":23395866,"p":"37.70000000","q":"2.60500000","b":419305044,"a":419304981,"T":1620122148728,"m":false,"M":true}}`,
+	}
+	strs = []string {
+		`{"stream":"lunausdt@aggTrade","data":{"e":"aggTrade","E":1620086356274,"a":21096353,"s":"LUNAUSDT","p":"17.2640","q":"74","f":26114`,
+	}
+	for _, s := range strs {
+		str := []byte(s)
+		trade, err := ParseTrade(str)
+		if err != nil {
+			t.Fatal(err)
+		}
+		wsTrade := WSTrade{}
+		err = json.Unmarshal(str, &wsTrade)
+		if err != nil {
+			t.Fatal(err)
+		}
+		logger.Debugf("%v", trade.EventTime)
+		logger.Debugf("%v", wsTrade.Data.EventTime)
+		assert.Equal(t, wsTrade.Data.EventTime.Sub(trade.EventTime), time.Duration(0))
+		assert.Equal(t, wsTrade.Data.Symbol, trade.Symbol)
+		assert.Equal(t, wsTrade.Data.Quantity, trade.Quantity)
+		assert.Equal(t, wsTrade.Data.Price, trade.Price)
+		assert.Equal(t, wsTrade.Data.IsTheBuyerTheMarketMaker, trade.IsTheBuyerTheMarketMaker)
 	}
 }

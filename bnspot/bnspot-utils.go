@@ -7,6 +7,7 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"strings"
 	"time"
+	"unsafe"
 )
 
 func ParseDepth20(bytes []byte) (*Depth20, error) {
@@ -358,4 +359,88 @@ func HttpPingLoop(
 			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
 		}
 	}
+}
+
+func ParseTrade(msg []byte) (*Trade, error) {
+	//{"stream":"wavesusdt@trade","data":{"e":"trade","E":1620120764377,"s":"WAVESUSDT","t":23385964,"p":"37.84900000","q":"1.85300000","b":419242349,"a":419242185,"T":1620120764376,"m":false,"M":true}}
+	var err error
+	trade := Trade{}
+	offset := 46
+	collectStart := offset
+	bytesLen := len(msg)
+	currentKey := common.JsonKeyUnknown
+	for offset < bytesLen-2 {
+		switch currentKey {
+		case common.JsonKeyPrice:
+			if msg[offset] == '"' {
+				trade.Price, err = common.ParseFloat(msg[collectStart:offset])
+				if err != nil {
+					return nil, fmt.Errorf("JsonKeyPrice error %v start %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
+				}
+				currentKey = common.JsonKeyUnknown
+				offset += 3
+				continue
+			}
+			break
+		case common.JsonKeyQuantity:
+			if msg[offset] == '"' {
+				trade.Quantity, err = common.ParseFloat(msg[collectStart:offset])
+				if err != nil {
+					return nil, fmt.Errorf("JsonKeyQuantity error %v start %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
+				}
+				currentKey = common.JsonKeyUnknown
+				if offset < bytesLen - 20 {
+					offset = bytesLen - 20
+				}else{
+					return nil, fmt.Errorf("JsonKeyQuantity bad msg, can't locate IsTheBuyerTheMarketMaker, %s", msg)
+				}
+				continue
+			}
+			break
+		case common.JsonKeySymbol:
+			if msg[offset] == '"' {
+				symbol := msg[collectStart:offset]
+				trade.Symbol = *(*string)(unsafe.Pointer(&symbol))
+				currentKey = common.JsonKeyUnknown
+				offset += 3
+				continue
+			}
+			break
+		case common.JsonKeyUnknown:
+			if msg[offset] == 'E' && msg[offset-1] == '"' && msg[offset+1] == '"' && offset+13 < bytesLen {
+				eventTime, err := common.ParseInt(msg[offset+3 : offset+16])
+				if err != nil {
+					return nil, fmt.Errorf("EventTime error %v start %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
+				}
+				trade.EventTime = time.Unix(0, eventTime*1000000)
+				offset += 18
+				continue
+			} else if msg[offset] == 's' && msg[offset-1] == '"' && msg[offset+1] == '"' {
+				currentKey = common.JsonKeySymbol
+				offset += 4
+				collectStart = offset
+				offset += 6
+				continue
+			} else if msg[offset] == 'p' && msg[offset-1] == '"' && msg[offset+1] == '"' {
+				currentKey = common.JsonKeyPrice
+				offset += 4
+				collectStart = offset
+				continue
+			} else if msg[offset] == 'q' && msg[offset-1] == '"' && msg[offset+1] == '"' {
+				currentKey = common.JsonKeyQuantity
+				offset += 4
+				collectStart = offset
+				continue
+			} else if msg[offset] == 'm' && msg[offset+1] == '"' {
+				if msg[offset+3] == 'f' {
+					trade.IsTheBuyerTheMarketMaker = false
+				}else{
+					trade.IsTheBuyerTheMarketMaker = true
+				}
+			}
+
+		}
+		offset += 1
+	}
+	return &trade, nil
 }

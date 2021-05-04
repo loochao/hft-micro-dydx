@@ -261,6 +261,7 @@ func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
+			logger.Debugf("%s", msg)
 			var trade WSTrade
 			err = json.Unmarshal(msg, &trade)
 			if err != nil {
