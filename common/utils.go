@@ -154,7 +154,7 @@ loop:
 	if mantissa != 0 {
 		exp = dp - nd
 	}
-	if -exp <= 0 || -exp > 23 {
+	if -exp < 0 || -exp > 23 {
 		return 0, fmt.Errorf("bad -exp %d %s", -exp, s)
 	}
 	if !negative {
