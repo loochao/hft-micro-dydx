@@ -128,7 +128,7 @@ func isOrderOK(order bnspot.NewOrderParams) bool {
 		return false
 	} else if order.Side == bnspot.OrderSideSell &&
 		order.Price < spread.MakerDepth.MakerAsk*(1.0+offset.NearTop) {
-		logger.Debugf("%s sell price %f > near top %f",
+		logger.Debugf("%s sell price %f < near top %f",
 			order.Symbol,
 			order.Price,
 			spread.MakerDepth.MakerAsk*(1.0+offset.NearTop),
