@@ -101,6 +101,8 @@ func handleSave() {
 		totalSwapUSDTBalance = bnswapUSDTAsset.MarginBalance
 	}
 
+	totalUnHedgeValue := 0.0
+
 	for _, symbol := range bnSymbols {
 		fields := make(map[string]interface{})
 		if position, ok := bnswapPositions[symbol]; ok {
@@ -114,7 +116,8 @@ func handleSave() {
 			if premiumIndex, ok := bnswapPremiumIndexes[symbol]; ok {
 				fields["spotValue"] = premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)
 				if position, ok := bnswapPositions[symbol]; ok {
-					fields["unHedgeValue"] = (position.PositionAmt + spotBalance.Free + spotBalance.Locked)*premiumIndex.IndexPrice
+					fields["unHedgeValue"] = (position.PositionAmt + spotBalance.Free + spotBalance.Locked) * premiumIndex.IndexPrice
+					totalUnHedgeValue += (position.PositionAmt + spotBalance.Free + spotBalance.Locked) * premiumIndex.IndexPrice
 				}
 			}
 		}
@@ -181,6 +184,7 @@ func handleSave() {
 		netWorth := (*totalSpotBalance + *totalSwapUSDTBalance + *totalSwapBnBBalance) / *bnConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalBalance"] = *totalSpotBalance + *totalSwapUSDTBalance + *totalSwapBnBBalance
+		fields["totalUnHedgeValue"] = totalUnHedgeValue
 		fields["swapBalance"] = *totalSwapUSDTBalance + *totalSwapBnBBalance
 		fields["spotBalance"] = *totalSpotBalance
 		fields["netWorth"] = (*totalSpotBalance + *totalSwapUSDTBalance + *totalSwapBnBBalance) / *bnConfig.StartValue
@@ -188,7 +192,7 @@ func handleSave() {
 		fields["netWorth"] = netWorth
 		if bnGlobalSilent.Sub(time.Now()) > 0 {
 			fields["globalSilent"] = 1.0
-		}else {
+		} else {
 			fields["globalSilent"] = 0.0
 		}
 		for name, start := range bnConfig.StartValues {
