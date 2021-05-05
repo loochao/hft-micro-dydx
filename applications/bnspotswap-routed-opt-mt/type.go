@@ -36,12 +36,14 @@ type SpotOrderRequest struct {
 
 type Offset struct {
 	FarTop  float64
+	Top     float64
 	NearTop float64
 	NearBot float64
+	Bot     float64
 	FarBot  float64
 }
 
-func (o Offset) ToString() string{
+func (o Offset) ToString() string {
 	return fmt.Sprintf(
 		"FarBot %f NearBot %f NearTop %f FarTop %f", o.FarBot, o.NearBot, o.NearTop, o.FarTop)
 }
@@ -61,8 +63,10 @@ func NewOffset(msg string) (Offset, error) {
 	}
 	return Offset{
 		FarTop:  offsets[9],
-		NearTop: offsets[8],
-		NearBot: offsets[1],
+		Top: offsets[8],
+		NearTop: offsets[7],
+		NearBot: offsets[3],
+		Bot: offsets[1],
 		FarBot:  offsets[0],
 	}, nil
 }

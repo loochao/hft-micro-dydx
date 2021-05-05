@@ -161,7 +161,7 @@ func updateMakerNewOrders() {
 		if spread.ShortLastLeave < quantile.Bot &&
 			spread.ShortMedianLeave < quantile.Bot &&
 			premiumIndex.FundingRate < *bnConfig.MinimalKeepFundingRate {
-			price := spread.MakerDepth.MakerAsk * (1 + offset.FarTop)
+			price := spread.MakerDepth.MakerAsk * (1 + offset.Top)
 			price = math.Ceil(price/spotTickSize) * spotTickSize
 			if spotBalance.Free*price > spotMinNotional {
 				entryValue := math.Min(4*entryStep, spotBalance.Free*price*0.5)
@@ -203,7 +203,7 @@ func updateMakerNewOrders() {
 			spread.ShortMedianEnter > quantile.Top &&
 			premiumIndex.FundingRate > *bnConfig.MinimalEnterFundingRate &&
 			rank >= len(bnSymbols)-*bnConfig.TradeCount {
-			price := spread.MakerDepth.MakerBid*(1+offset.FarBot)
+			price := spread.MakerDepth.MakerBid*(1+offset.Bot)
 			price = math.Floor(price/spotTickSize) * spotTickSize
 			targetValue := currentSpotSize*price + entryStep
 			if targetValue > entryTarget {

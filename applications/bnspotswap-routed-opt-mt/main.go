@@ -449,6 +449,8 @@ func main() {
 				bnspotHttpBalanceUpdateSilentTimes[spotWSOrder.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			} else if spotWSOrder.CurrentOrderStatus == bnspot.OrderStatusCancelled {
 				logger.Debugf("SPOT WS ORDER %s %s %s", spotWSOrder.Symbol, spotWSOrder.CurrentOrderStatus, spotWSOrder.ClientOrderID)
+				bnspotBalancesUpdateTimes[spotWSOrder.Symbol] = time.Now()
+				bnswapPositionsUpdateTimes[spotWSOrder.Symbol] = time.Now()
 				if openOrder, ok := bnspotOpenOrders[spotWSOrder.Symbol]; ok && openOrder.NewClientOrderID == spotWSOrder.OriginalClientOrderID {
 					delete(bnspotOpenOrders, spotWSOrder.Symbol)
 				}
