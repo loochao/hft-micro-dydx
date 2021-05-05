@@ -207,12 +207,6 @@ func handleSave() {
 		fields["netWorth"] = (*totalSpotBalance + *totalSwapUSDTBalance + *totalSwapBnBBalance) / *bnConfig.StartValue
 		fields["startValue"] = *bnConfig.StartValue
 		fields["netWorth"] = netWorth
-		if bnEnterDelta != 0 {
-			fields["enterDelta"] = bnEnterDelta
-		}
-		if bnEnterDelta != 0 {
-			fields["exitDelta"] = bnExitDelta
-		}
 		if bnGlobalSilent.Sub(time.Now()) > 0 {
 			fields["globalSilent"] = 1.0
 		} else {
