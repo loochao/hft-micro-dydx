@@ -13,4 +13,4 @@ git push origin master
 chmod 755 "./dist/hft-recorder-kcperp-trade.$dt"
 
 echo "tokyo3"
-rsync -avx --progress "./dist/hft-recorder-kcperp-trade.$dt" lochao:/usr/local/bin/
+rsync -avx --progress "./dist/hft-recorder-kcperp-trade.$dt" luchao:/usr/local/bin/
