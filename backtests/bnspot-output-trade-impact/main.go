@@ -133,16 +133,16 @@ func main() {
 		fmt.Printf(
 			"%s:\t%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
 			symbol,
-			sellImpactTD.Quantile(0.00005),
 			sellImpactTD.Quantile(0.0005),
 			sellImpactTD.Quantile(0.005),
 			sellImpactTD.Quantile(0.05),
+			sellImpactTD.Quantile(0.2),
 			sellImpactTD.Quantile(0.5),
 			buyImpactTD.Quantile(0.5),
+			buyImpactTD.Quantile(0.8),
 			buyImpactTD.Quantile(0.95),
 			buyImpactTD.Quantile(0.995),
 			buyImpactTD.Quantile(0.9995),
-			buyImpactTD.Quantile(0.99995),
 		)
 	}
 	//output, err := yaml.Marshal(quantiles)
