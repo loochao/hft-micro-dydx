@@ -12,10 +12,10 @@ import (
 )
 
 func main() {
-	symbolsStr := flag.String("symbols", "XBTUSDTM,LINKUSDTM,WAVESUSDTM", "symbols, separate by comma")
-	savePath := flag.String("path", "/Users/chenjilin/Downloads/kcperp-trade", "data save folder")
+	symbolsStr := flag.String("symbols", "XBTUSDTM", "symbols, separate by comma")
+	savePath := flag.String("path", "", "data save folder")
 	batchSize := flag.Int("batch", 20, "symbols group batch size")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
+	proxyAddress := flag.String("proxy", "", "symbols group batch size")
 	flag.Parse()
 	symbols := strings.Split(*symbolsStr, ",")
 	ctx, cancel := context.WithCancel(context.Background())
