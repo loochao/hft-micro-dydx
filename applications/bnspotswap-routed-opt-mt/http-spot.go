@@ -118,13 +118,15 @@ func reBalanceUSDT(
 	}
 	if change != 0 {
 		childCtx, _ := context.WithTimeout(ctx, timeout)
-		_, _, err := api.NewFutureAccountTransfer(childCtx, bnspot.FutureAccountTransferParams{
+		resp, _, err := api.NewFutureAccountTransfer(childCtx, bnspot.FutureAccountTransferParams{
 			Asset:  "USDT",
 			Type:   tType,
 			Amount: change,
 		})
 		if err != nil {
 			logger.Debugf("NewFutureAccountTransfer error %v", err)
+		}else{
+			logger.Debugf("%v", *resp)
 		}
 	}
 }
