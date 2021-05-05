@@ -45,9 +45,9 @@ type Config struct {
 
 	OrderOffsets map[string]string `yaml:"orderOffsets,omitempty"`
 
-	PullBarsInterval      *time.Duration `yaml:"pullBarsInterval,omitempty"`
-	PullBarsRetryInterval *time.Duration `yaml:"pullBarsRetryInterval,omitempty"`
-	BarsLookback          *int           `yaml:"barsLookback,omitempty"`
+	//PullBarsInterval      *time.Duration `yaml:"pullBarsInterval,omitempty"`
+	//PullBarsRetryInterval *time.Duration `yaml:"pullBarsRetryInterval,omitempty"`
+	//BarsLookback          *int           `yaml:"barsLookback,omitempty"`
 
 	//TopQuantile       *float64 `yaml:"topQuantile,omitempty"`
 	//BotQuantile       *float64 `yaml:"botQuantile,omitempty"`
