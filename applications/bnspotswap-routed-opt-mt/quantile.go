@@ -101,9 +101,11 @@ func watchDeltaQuantile(
 					top = mid + *bandScale*topBand
 
 					q := Quantile{
-						Symbol:      symbol,
-						Top:         top / maClose,
-						Bot:         bot / maClose,
+						Symbol: symbol,
+						//Top:         top / maClose,
+						//Bot:         bot / maClose,
+						Top:         minimalEnterDelta,
+						Bot:         maximalExitDelta,
 						Mid:         mid / maClose,
 						MeanFr:      meanFr,
 						OriginalTop: quantile.Quantile(topQuantile) / maClose,
