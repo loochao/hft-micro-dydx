@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/kcperp"
 	"github.com/geometrybase/hft-micro/kcspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
@@ -124,6 +125,7 @@ func (w *TradeWS) readLoop(
 				}
 				continue
 			}
+			logger.Debugf("%s", symbol)
 		}else{
 			if time.Now().Sub(logSilentTime) > 0 {
 				logger.Debugf("other msg %s", msg)
@@ -241,7 +243,7 @@ func (w *TradeWS) mainLoop(
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 
-	api, err := kcspot.NewAPI("", "", "", proxy)
+	api, err := kcperp.NewAPI("", "", "", proxy)
 	if err != nil {
 		logger.Debugf("NewAPI error %v", err)
 		return
@@ -332,12 +334,12 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)
 			select {
-			case w.writeCh <- kcspot.Ping{
+			case w.writeCh <- kcperp.Ping{
 				ID:   fmt.Sprintf("%d", time.Now().Nanosecond()/1000000),
 				Type: "ping",
 			}:
 			default:
-				logger.Debugf("w.writeCh <- kcspot.Ping failed ch len %d", len(w.writeCh))
+				logger.Debugf("w.writeCh <- kcperp.Ping failed ch len %d", len(w.writeCh))
 
 			}
 			break
@@ -345,19 +347,20 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
-					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/contractMarket/execution:%s", symbol))
+					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/market/match:%s", symbol))
 					select {
+					case <-ctx.Done():
+					case <-time.After(time.Millisecond):
+						logger.Debugf("w.writeCh <- SubscribeMsg timeout in 1ms, %s", fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol))
 					case w.writeCh <- kcspot.SubscribeMsg{
-						ID:             fmt.Sprintf("/contractMarket/execution:%s", symbol),
+						ID:             fmt.Sprintf("/market/match:%s", symbol),
 						Type:           "subscribe",
-						Topic:          fmt.Sprintf("/contractMarket/execution:%s", symbol),
+						Topic:          fmt.Sprintf("/market/match:%s", symbol),
 						PrivateChannel: false,
 						Response:       false,
 					}:
 						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval * time.Duration(len(symbols)*2))
 						break loop
-					default:
-						logger.Debugf("w.writeCh <- kcspot.SubscribeMsg failed, ch len %d", len(w.writeCh))
 					}
 				}
 			}
@@ -443,7 +446,7 @@ func (w *TradeWS) saveLoop(ctx context.Context, savePath, symbol string, inputCh
 				}
 			}
 			dayTime = time.Now().Truncate(time.Hour * 24)
-			outPath = fmt.Sprintf("%s/%s-%s.kcspot.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
+			outPath = fmt.Sprintf("%s/%s-%s.kcperp.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				w.Stop()
