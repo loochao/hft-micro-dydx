@@ -361,15 +361,15 @@ func main() {
 			if spotOrder.Type == kcspot.OrderTypeFilled {
 				kcLoopTimer.Reset(time.Nanosecond)
 				kcspotHttpBalanceUpdateSilentTimes[spotOrder.Symbol] = time.Now().Add(*kcConfig.HttpSilent)
-				if spotOrder.FilledSize > 0 {
-					if spotOrder.Side == kcspot.OrderSideBuy {
-						kcspotLastFilledBuyPrices[spotOrder.Symbol] = spotOrder.Price
-					} else {
-						kcspotLastFilledSellPrices[spotOrder.Symbol] = spotOrder.Price
-					}
-					logger.Debugf("SPOT WS ORDER FILLED %s %s SIZE %f PRICE %f", spotOrder.Symbol, spotOrder.Side, spotOrder.FilledSize, spotOrder.Price)
-				}
+				logger.Debugf("SPOT WS ORDER FILLED %s %s SIZE %f PRICE %f", spotOrder.Symbol, spotOrder.Side, spotOrder.FilledSize, spotOrder.Price)
 				if openOrder, ok := kcspotOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOid == spotOrder.ClientOid {
+					if spotOrder.FilledSize > 0 {
+						if spotOrder.Side == kcspot.OrderSideBuy {
+							kcspotLastFilledBuyPrices[spotOrder.Symbol] = spotOrder.Price
+						} else {
+							kcspotLastFilledSellPrices[spotOrder.Symbol] = spotOrder.Price
+						}
+					}
 					delete(kcspotOpenOrders, spotOrder.Symbol)
 				}
 			} else if spotOrder.Type == kcspot.OrderTypeCanceled {
