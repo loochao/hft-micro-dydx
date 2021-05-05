@@ -104,29 +104,31 @@ func (w *TradeWS) readLoop(
 		msgLen := len(msg)
 		if len(msg) > 256 {
 			if msg[msgLen-28] == ':' {
-				symbolBytes = msg[msgLen-27:msgLen-19]
+				symbolBytes = msg[msgLen-27 : msgLen-19]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else if msg[msgLen-29] == ':' {
-				symbolBytes = msg[msgLen-28:msgLen-19]
+			} else if msg[msgLen-29] == ':' {
+				symbolBytes = msg[msgLen-28 : msgLen-19]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else if msg[msgLen-30] == ':' {
-				symbolBytes = msg[msgLen-29:msgLen-19]
+			} else if msg[msgLen-30] == ':' {
+				symbolBytes = msg[msgLen-29 : msgLen-19]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else if msg[msgLen-31] == ':' {
-				symbolBytes = msg[msgLen-30:msgLen-19]
+			} else if msg[msgLen-31] == ':' {
+				symbolBytes = msg[msgLen-30 : msgLen-19]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else if msg[msgLen-32] == ':' {
-				symbolBytes = msg[msgLen-31:msgLen-19]
+			} else if msg[msgLen-32] == ':' {
+				symbolBytes = msg[msgLen-31 : msgLen-19]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else{
+			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
+					logSilentTime = time.Now().Add(time.Minute)
 				}
 				continue
 			}
-		}else{
-			if time.Now().Sub(logSilentTime) > 0 {
+		} else {
+			if time.Now().Sub(logSilentTime) > 0 && len(msg) > 128 {
 				logger.Debugf("other msg %s", msg)
+				logSilentTime = time.Now().Add(time.Minute)
 			}
 			continue
 		}

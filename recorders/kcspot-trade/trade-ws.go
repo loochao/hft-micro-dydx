@@ -121,13 +121,15 @@ func (w *TradeWS) readLoop(
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
 			}else{
 				if time.Now().Sub(logSilentTime) > 0 {
+					logSilentTime = time.Now().Add(time.Minute)
 					logger.Debugf("other msg %s", msg)
 				}
 				continue
 			}
 			logger.Debugf("%s", symbol)
 		}else{
-			if time.Now().Sub(logSilentTime) > 0 {
+			if time.Now().Sub(logSilentTime) > 0 && len(msg) > 128{
+				logSilentTime = time.Now().Add(time.Minute)
 				logger.Debugf("other msg %s", msg)
 			}
 			continue
