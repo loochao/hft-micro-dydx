@@ -64,7 +64,6 @@ func (iw *InfluxWriter) save() error {
 	if len(iw.points) == 0 {
 		return nil
 	}
-	logger.Debugf("save %d %d", len(iw.points), iw.batchSize)
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  iw.database,
 		Precision: "ns",

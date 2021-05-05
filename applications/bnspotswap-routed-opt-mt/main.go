@@ -387,11 +387,9 @@ func main() {
 				reBalanceTimer.Reset(*bnConfig.ReBalanceInterval)
 				break
 			}
-			logger.Debugf("rebalance %v %v ", bnspotUSDTBalance, bnswapUSDTAsset)
 			if bnspotUSDTBalance != nil && bnswapUSDTAsset != nil && bnswapUSDTAsset.AvailableBalance != nil {
 				//SWAP WS ACCOUNT 没有AvailableBalance, 为0 HTTP GET无数据
 				//SWAP的MarginBalance AvailableBalance WS推送缺失，会造成错误判断
-				logger.Debugf("rebalance 2 %v %v", bnswapAssetUpdatedForReBalance, bnspotBalanceUpdatedForReBalance)
 				if bnswapAssetUpdatedForReBalance && bnspotBalanceUpdatedForReBalance {
 					bnswapAssetUpdatedForReBalance = false
 					bnspotBalanceUpdatedForReBalance = false
@@ -400,7 +398,6 @@ func main() {
 					totalFree := (bnspotUSDTBalance.Free + *bnswapUSDTAsset.AvailableBalance) - expectedInsuranceFund
 					targetSwap := totalFree/(*bnConfig.Leverage+1) + expectedInsuranceFund
 					change := targetSwap - *bnswapUSDTAsset.AvailableBalance
-					logger.Debugf("CHANGE %s", change)
 					if change > 0 && change > bnspotUSDTBalance.Free {
 						change = bnspotUSDTBalance.Free
 					}
