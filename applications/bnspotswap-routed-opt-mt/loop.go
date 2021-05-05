@@ -114,11 +114,6 @@ func updateMakerNewOrders() {
 	}
 	entryTarget := entryStep * *bnConfig.EnterTargetFactor
 
-	bnEnterDelta = *bnConfig.EnterDelta + *bnConfig.OffsetDelta*(-(bnspotUSDTBalance.Free+*bnswapUSDTAsset.AvailableBalance)/
-		(bnspotUSDTBalance.Free+bnspotUSDTBalance.Locked+*bnswapUSDTAsset.MarginBalance))
-	bnExitDelta = *bnConfig.ExitDelta + *bnConfig.OffsetDelta*(-(bnspotUSDTBalance.Free+*bnswapUSDTAsset.AvailableBalance)/
-		(bnspotUSDTBalance.Free+bnspotUSDTBalance.Locked+*bnswapUSDTAsset.MarginBalance))
-
 	usdtAvailable := math.Min(bnspotUSDTBalance.Free, (*bnswapUSDTAsset.AvailableBalance-bnExpectedInsuranceFund)**bnConfig.Leverage)
 
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单
@@ -161,10 +156,14 @@ func updateMakerNewOrders() {
 		mergedStepSize := bnMergedStepSizes[symbol]
 
 		currentSpotSize := spotBalance.Locked + spotBalance.Free
+		currentSpotValue := currentSpotSize * premiumIndex.IndexPrice
 		offset := bnspotOffsets[symbol]
 
-		if spread.ShortLastLeave < bnExitDelta &&
-			spread.ShortMedianLeave < bnExitDelta &&
+		enterDelta := *bnConfig.EnterDelta + *bnConfig.OffsetDelta*(currentSpotValue/entryTarget)
+		exitDelta := *bnConfig.ExitDelta + *bnConfig.OffsetDelta*(currentSpotValue/entryTarget)
+
+		if spread.ShortLastLeave < exitDelta &&
+			spread.ShortMedianLeave < exitDelta &&
 			premiumIndex.FundingRate < *bnConfig.MinimalKeepFundingRate {
 			price := spread.MakerDepth.MakerAsk * (1 + offset.Top)
 			price = math.Ceil(price/spotTickSize) * spotTickSize
@@ -183,8 +182,8 @@ func updateMakerNewOrders() {
 					logger.Debugf(
 						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
 						symbol,
-						spread.ShortLastLeave, bnExitDelta,
-						spread.ShortMedianLeave, bnExitDelta,
+						spread.ShortLastLeave, exitDelta,
+						spread.ShortMedianLeave, exitDelta,
 						quantity,
 					)
 					order := bnspot.NewOrderParams{
@@ -204,8 +203,8 @@ func updateMakerNewOrders() {
 					bnspotOrderRequestChs[symbol] <- SpotOrderRequest{New: &order}
 				}
 			}
-		} else if spread.ShortLastEnter > bnEnterDelta &&
-			spread.ShortMedianEnter > bnEnterDelta &&
+		} else if spread.ShortLastEnter > enterDelta &&
+			spread.ShortMedianEnter > enterDelta &&
 			premiumIndex.FundingRate > *bnConfig.MinimalEnterFundingRate &&
 			rank >= len(bnSymbols)-*bnConfig.TradeCount {
 			price := spread.MakerDepth.MakerBid * (1 + offset.Bot)
@@ -232,8 +231,8 @@ func updateMakerNewOrders() {
 						entryValue,
 						entryStep*0.8,
 						symbol,
-						spread.ShortLastEnter, bnEnterDelta,
-						spread.ShortMedianEnter, bnEnterDelta,
+						spread.ShortLastEnter, enterDelta,
+						spread.ShortMedianEnter, enterDelta,
 						quantity,
 					)
 					bnOpenLogSilentTimes[symbol] = time.Now().Add(*bnConfig.LogInterval)
@@ -247,8 +246,8 @@ func updateMakerNewOrders() {
 						entryValue,
 						usdtAvailable,
 						symbol,
-						spread.ShortLastEnter, bnEnterDelta,
-						spread.ShortMedianEnter, bnEnterDelta,
+						spread.ShortLastEnter, enterDelta,
+						spread.ShortMedianEnter, enterDelta,
 						quantity,
 					)
 					bnOpenLogSilentTimes[symbol] = time.Now().Add(*bnConfig.LogInterval)
@@ -259,8 +258,8 @@ func updateMakerNewOrders() {
 			logger.Debugf(
 				"TOP OPEN %s %f > %f, %f > %f, SIZE %f",
 				symbol,
-				spread.ShortLastEnter, bnEnterDelta,
-				spread.ShortMedianEnter, bnEnterDelta,
+				spread.ShortLastEnter, enterDelta,
+				spread.ShortMedianEnter, enterDelta,
 				quantity,
 			)
 			usdtAvailable -= entryValue

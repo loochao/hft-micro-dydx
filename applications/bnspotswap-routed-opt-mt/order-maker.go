@@ -66,6 +66,14 @@ func watchSpotOrderRequest(
 }
 
 func updateMakerOldOrders() {
+	if bnswapUSDTAsset == nil || bnspotUSDTBalance == nil {
+		return
+	}
+	entryStep := (*bnswapUSDTAsset.AvailableBalance + bnspotUSDTBalance.Free) * *bnConfig.EnterFreePct
+	if entryStep < *bnConfig.EnterMinimalStep {
+		entryStep = *bnConfig.EnterMinimalStep
+	}
+	entryTarget := entryStep * *bnConfig.EnterTargetFactor
 	for symbol, order := range bnspotOpenOrders {
 		//if bnspotOrderCancelCounts[symbol] > *bnConfig.OrderMaxCancelCount {
 		//	delete(bnspotOpenOrders, symbol)
@@ -74,7 +82,18 @@ func updateMakerOldOrders() {
 		if time.Now().Sub(bnspotCancelSilentTimes[symbol]) < 0 {
 			continue
 		}
-		if isOrderOK(order) {
+		premiumIndex, ok := bnswapPremiumIndexes[symbol]
+		if !ok {
+			continue
+		}
+		spotBalance, ok := bnspotBalances[symbol]
+		if !ok {
+			continue
+		}
+		enterDelta := *bnConfig.EnterDelta + *bnConfig.OffsetDelta*(premiumIndex.IndexPrice*(spotBalance.Free+spotBalance.Locked)/entryTarget)
+		exitDelta := *bnConfig.ExitDelta + *bnConfig.OffsetDelta*(premiumIndex.IndexPrice*(spotBalance.Free+spotBalance.Locked)/entryTarget)
+
+		if isOrderOK(order, enterDelta, exitDelta) {
 			continue
 		}
 		bnspotCancelSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent)
@@ -87,16 +106,13 @@ func updateMakerOldOrders() {
 	}
 }
 
-func isOrderOK(order bnspot.NewOrderParams) bool {
+func isOrderOK(order bnspot.NewOrderParams, enterDelta, exitDelta float64) bool {
 	spread, ok1 := bnSpreads[order.Symbol]
 	//quantile, ok2 := bnQuantiles[order.Symbol]
 	offset := bnspotOffsets[order.Symbol]
 	if !ok1 {
 		logger.Debugf("%s spread is not ready", order.Symbol)
 		return false
-	}
-	if bnEnterDelta == 0 || bnExitDelta == 0 {
-		logger.Debugf("%s delta is not ready", order.Symbol)
 	}
 	if time.Now().Sub(spread.Time) > *bnConfig.SpreadTimeToLive {
 		logger.Debugf("%s spread is out of date %v > %v", order.Symbol, time.Now().Sub(spread.Time), *bnConfig.SpreadTimeToLive)
@@ -137,10 +153,10 @@ func isOrderOK(order bnspot.NewOrderParams) bool {
 	}
 
 	if order.Side == bnspot.OrderSideBuy &&
-		(spread.TakerDepth.TakerBid-order.Price)/order.Price > bnEnterDelta {
+		(spread.TakerDepth.TakerBid-order.Price)/order.Price > enterDelta {
 		return true
 	} else if order.Side == bnspot.OrderSideSell &&
-		(spread.TakerDepth.TakerAsk-order.Price)/order.Price < bnExitDelta{
+		(spread.TakerDepth.TakerAsk-order.Price)/order.Price < exitDelta {
 		return true
 	}
 	if order.Side == bnspot.OrderSideBuy {
@@ -150,7 +166,7 @@ func isOrderOK(order bnspot.NewOrderParams) bool {
 			spread.TakerDepth.TakerBid,
 			order.Price,
 			(spread.TakerDepth.TakerBid-order.Price)/order.Price,
-			bnEnterDelta,
+			enterDelta,
 		)
 	} else {
 		logger.Debugf(
@@ -159,7 +175,7 @@ func isOrderOK(order bnspot.NewOrderParams) bool {
 			spread.TakerDepth.TakerAsk,
 			order.Price,
 			(spread.TakerDepth.TakerAsk-order.Price)/order.Price,
-			bnExitDelta,
+			exitDelta,
 		)
 	}
 	return false

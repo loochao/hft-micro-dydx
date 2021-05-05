@@ -102,7 +102,14 @@ func handleSave() {
 	}
 
 	totalUnHedgeValue := 0.0
-
+	entryTarget := 0.0
+	if bnswapUSDTAsset != nil && bnspotUSDTBalance != nil {
+		entryStep := (*bnswapUSDTAsset.AvailableBalance + bnspotUSDTBalance.Free) * *bnConfig.EnterFreePct
+		if entryStep < *bnConfig.EnterMinimalStep {
+			entryStep = *bnConfig.EnterMinimalStep
+		}
+		entryTarget = entryStep * *bnConfig.EnterTargetFactor
+	}
 	for _, symbol := range bnSymbols {
 		fields := make(map[string]interface{})
 		if position, ok := bnswapPositions[symbol]; ok {
@@ -115,6 +122,11 @@ func handleSave() {
 			fields["spotBalance"] = spotBalance.Free + spotBalance.Locked
 			if premiumIndex, ok := bnswapPremiumIndexes[symbol]; ok {
 				fields["spotValue"] = premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)
+				if entryTarget != 0 {
+					fields["enterDelta"] = *bnConfig.EnterDelta + *bnConfig.OffsetDelta*(premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)/entryTarget)
+					fields["exitDelta"] = *bnConfig.ExitDelta + *bnConfig.OffsetDelta*(premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)/entryTarget)
+				}
+
 				if position, ok := bnswapPositions[symbol]; ok {
 					if symbol == bnBNBSymbol {
 						fields["unHedgeValue"] = (position.PositionAmt + spotBalance.Free + spotBalance.Locked + *bnswapBNBAsset.MarginBalance) * premiumIndex.IndexPrice
