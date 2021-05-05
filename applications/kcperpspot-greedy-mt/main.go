@@ -404,14 +404,14 @@ func main() {
 					kcperpHttpPositionUpdateSilentTimes[perpOrder.Symbol] = time.Now().Add(*kcConfig.HttpSilent)
 					if perpOrder.Side == kcperp.OrderSideSell {
 						if spotSymbol, ok := kcpsSymbolsMap[perpOrder.Symbol]; ok {
-							if spotPrice, ok := kcspotLastFilledBuyPrices[spotSymbol]; ok {
+							if spotPrice, ok := kcspotLastFilledBuyPrices[spotSymbol]; ok && spotPrice > 0 {
 								kcRealisedSpread[spotSymbol] = (perpOrder.MatchPrice - spotPrice) / spotPrice
 								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, perpOrder.Symbol, kcRealisedSpread[spotSymbol])
 							}
 						}
 					} else if perpOrder.Side == kcperp.OrderSideBuy {
 						if spotSymbol, ok := kcpsSymbolsMap[perpOrder.Symbol]; ok {
-							if spotPrice, ok := kcspotLastFilledSellPrices[spotSymbol]; ok {
+							if spotPrice, ok := kcspotLastFilledSellPrices[spotSymbol]; ok && spotPrice > 0 {
 								kcRealisedSpread[spotSymbol] = (perpOrder.MatchPrice - spotPrice) / spotPrice
 								logger.Debugf("%s %s REALISED CLOSE SPREAD %f", spotSymbol, perpOrder.Symbol, kcRealisedSpread[spotSymbol])
 							}
