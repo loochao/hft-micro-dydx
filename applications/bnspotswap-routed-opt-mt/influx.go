@@ -116,8 +116,13 @@ func handleSave() {
 			if premiumIndex, ok := bnswapPremiumIndexes[symbol]; ok {
 				fields["spotValue"] = premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)
 				if position, ok := bnswapPositions[symbol]; ok {
-					fields["unHedgeValue"] = (position.PositionAmt + spotBalance.Free + spotBalance.Locked) * premiumIndex.IndexPrice
-					totalUnHedgeValue += (position.PositionAmt + spotBalance.Free + spotBalance.Locked) * premiumIndex.IndexPrice
+					if symbol == bnBNBSymbol {
+						fields["unHedgeValue"] = (position.PositionAmt + spotBalance.Free + spotBalance.Locked + *bnswapBNBAsset.MarginBalance) * premiumIndex.IndexPrice
+						totalUnHedgeValue += (position.PositionAmt + spotBalance.Free + spotBalance.Locked + *bnswapBNBAsset.MarginBalance) * premiumIndex.IndexPrice
+					} else {
+						fields["unHedgeValue"] = (position.PositionAmt + spotBalance.Free + spotBalance.Locked) * premiumIndex.IndexPrice
+						totalUnHedgeValue += (position.PositionAmt + spotBalance.Free + spotBalance.Locked) * premiumIndex.IndexPrice
+					}
 				}
 			}
 		}
