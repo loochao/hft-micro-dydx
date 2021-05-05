@@ -397,6 +397,7 @@ func main() {
 					totalFree := (bnspotUSDTBalance.Free + *bnswapUSDTAsset.AvailableBalance) - expectedInsuranceFund
 					targetSwap := totalFree/(*bnConfig.Leverage+1) + expectedInsuranceFund
 					change := targetSwap - *bnswapUSDTAsset.AvailableBalance
+					logger.Debugf("CHANGE %s", change)
 					if change > 0 && change > bnspotUSDTBalance.Free {
 						change = bnspotUSDTBalance.Free
 					}
