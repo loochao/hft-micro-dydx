@@ -384,6 +384,7 @@ func main() {
 			break
 		case <-reBalanceTimer.C:
 			if time.Now().Sub(bnGlobalSilent) < 0 {
+				reBalanceTimer.Reset(*bnConfig.ReBalanceInterval)
 				break
 			}
 			logger.Debugf("rebalance %v %v ", bnspotUSDTBalance, bnswapUSDTAsset)
