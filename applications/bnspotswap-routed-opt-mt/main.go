@@ -386,9 +386,11 @@ func main() {
 			if time.Now().Sub(bnGlobalSilent) < 0 {
 				break
 			}
+			logger.Debugf("rebalance %v %v ", bnspotUSDTBalance, bnswapUSDTAsset)
 			if bnspotUSDTBalance != nil && bnswapUSDTAsset != nil && bnswapUSDTAsset.AvailableBalance != nil {
 				//SWAP WS ACCOUNT 没有AvailableBalance, 为0 HTTP GET无数据
 				//SWAP的MarginBalance AvailableBalance WS推送缺失，会造成错误判断
+				logger.Debugf("rebalance 2 %v %v", bnswapAssetUpdatedForReBalance, bnspotBalanceUpdatedForReBalance)
 				if bnswapAssetUpdatedForReBalance && bnspotBalanceUpdatedForReBalance {
 					bnswapAssetUpdatedForReBalance = false
 					bnspotBalanceUpdatedForReBalance = false
@@ -649,7 +651,7 @@ func main() {
 					logger.Debugf("SYSTEM NOT READY SPOT %v SWAP %v SILENT TIME %v",
 						bnswapSystemReady, bnspotSystemReady, time.Now().Sub(bnGlobalSilent),
 					)
-					bnGlobalLogSilentTime = time.Now().Add(time.Second*5)
+					bnGlobalLogSilentTime = time.Now().Add(time.Second * 5)
 				}
 				if len(bnspotOpenOrders) > 0 {
 					for symbol := range bnspotOpenOrders {
