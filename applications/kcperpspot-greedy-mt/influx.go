@@ -78,6 +78,7 @@ func handleSave() {
 		totalPerpUSDTBalance = &tp
 	}
 
+	totalUnHedgedValue := 0.0
 	for _, perpSymbol := range kcperpSymbols {
 		spotSymbol := kcpsSymbolsMap[perpSymbol]
 		fields := make(map[string]interface{})
@@ -85,6 +86,11 @@ func handleSave() {
 			fields["perpCurrentQty"] = position.CurrentQty
 			if spread, ok := kcSpreads[spotSymbol]; ok {
 				fields["perpValue"] = position.CurrentQty * kcperpMultipliers[perpSymbol] * spread.TakerDepth.TakerBid
+				if spotBalance, ok := kcspotBalances[spotSymbol]; ok {
+					unHedgedValue := (position.CurrentQty*kcperpMultipliers[perpSymbol] + (spotBalance.Available + spotBalance.Holds)) * spread.MakerDepth.MidPrice
+					totalUnHedgedValue += unHedgedValue
+					fields["unHedgedValue"] = unHedgedValue
+				}
 			}
 		}
 		if spotBalance, ok := kcspotBalances[spotSymbol]; ok {
@@ -155,6 +161,7 @@ func handleSave() {
 		fields["spotBalance"] = *totalSpotBalance
 		fields["netWorth"] = (*totalSpotBalance + *totalPerpUSDTBalance) / *kcConfig.StartValue
 		fields["startValue"] = *kcConfig.StartValue
+		fields["totalUnHedgedValue"] = totalUnHedgedValue
 		fields["netWorth"] = netWorth
 		if time.Now().Sub(kcGlobalSilent) > 0 {
 			fields["globalSilent"] = 0

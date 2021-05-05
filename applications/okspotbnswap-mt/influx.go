@@ -60,9 +60,12 @@ func handleSave() {
 			time.Now().UTC(),
 		)
 		if err != nil {
-			logger.Debugf("Spot Balance NewPoint error %v", err)
+			logger.Debugf("client.NewPoint error %v", err)
 		} else {
-			go mtInfluxWriter.PushPoint(pt)
+			err = mtInfluxWriter.PushPoint(pt)
+			if err != nil {
+				logger.Debugf("mtInfluxWriter.PushPoint error %v", err)
+			}
 		}
 	}
 
@@ -127,9 +130,12 @@ func handleSave() {
 			time.Now().UTC(),
 		)
 		if err != nil {
-			logger.Debugf("new makerBalance point error %v", err)
+			logger.Debugf("client.NewPoint error %v", err)
 		} else {
-			go mtInfluxWriter.PushPoint(pt)
+			err = mtInfluxWriter.PushPoint(pt)
+			if err != nil {
+				logger.Debugf("mtInfluxWriter.PushPoint error %v", err)
+			}
 		}
 	}
 }
@@ -177,9 +183,12 @@ func handleExternalInfluxSave() {
 					time.Now().UTC(),
 				)
 				if err != nil {
-					logger.Debugf("Margin NewPoint error %v", err)
+					logger.Debugf("client.NewPoint error %v", err)
 				} else {
-					go mtExternalInfluxWriter.PushPoint(pt)
+					err = mtExternalInfluxWriter.PushPoint(pt)
+					if err != nil {
+						logger.Debugf("mtInfluxWriter.PushPoint error %v", err)
+					}
 				}
 			}
 		}
@@ -227,11 +236,11 @@ func reportsSaveLoop(
 						time.Now().UTC(),
 					)
 					if err != nil {
-						logger.Debugf("SpreadReport NewPoint error %v", err)
+						logger.Debugf("client.NewPoint error %v", err)
 					} else {
-						select {
-						case influxWriter.pushCh <- pt:
-						default:
+						err = influxWriter.PushPoint(pt)
+						if err != nil {
+							logger.Debugf("influxWriter.PushPoint error %v", err)
 						}
 					}
 				}
