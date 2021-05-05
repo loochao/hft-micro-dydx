@@ -192,40 +192,40 @@ func main() {
 		bnswapPremiumIndexesCh,
 	)
 
-	go watchSwapBars(
-		bnGlobalCtx,
-		bnswapAPI,
-		bnSymbols,
-		*bnConfig.BarsLookback,
-		*bnConfig.PullBarsInterval,
-		*bnConfig.PullBarsRetryInterval,
-		time.Second,
-		bnswapBarsMapCh,
-	)
+	//go watchSwapBars(
+	//	bnGlobalCtx,
+	//	bnswapAPI,
+	//	bnSymbols,
+	//	*bnConfig.BarsLookback,
+	//	*bnConfig.PullBarsInterval,
+	//	*bnConfig.PullBarsRetryInterval,
+	//	time.Second,
+	//	bnswapBarsMapCh,
+	//)
 
-	go watchSpotBars(
-		bnGlobalCtx,
-		bnspotAPI,
-		bnSymbols,
-		*bnConfig.BarsLookback,
-		*bnConfig.PullBarsInterval,
-		*bnConfig.PullBarsRetryInterval,
-		time.Second,
-		bnspotBarsMapCh,
-	)
+	//go watchSpotBars(
+	//	bnGlobalCtx,
+	//	bnspotAPI,
+	//	bnSymbols,
+	//	*bnConfig.BarsLookback,
+	//	*bnConfig.PullBarsInterval,
+	//	*bnConfig.PullBarsRetryInterval,
+	//	time.Second,
+	//	bnspotBarsMapCh,
+	//)
 
-	go watchDeltaQuantile(
-		bnGlobalCtx,
-		bnSymbols,
-		*bnConfig.BotQuantile,
-		*bnConfig.TopQuantile,
-		*bnConfig.MinimalEnterDelta,
-		*bnConfig.MaximalExitDelta,
-		*bnConfig.MinimalBandOffset,
-		bnswapAvgFundingRateCh,
-		bnBarsMapCh,
-		bnQuantilesCh,
-	)
+	//go watchDeltaQuantile(
+	//	bnGlobalCtx,
+	//	bnSymbols,
+	//	*bnConfig.BotQuantile,
+	//	*bnConfig.TopQuantile,
+	//	*bnConfig.EnterDelta,
+	//	*bnConfig.ExitDelta,
+	//	*bnConfig.MinimalBandOffset,
+	//	bnswapAvgFundingRateCh,
+	//	bnBarsMapCh,
+	//	bnQuantilesCh,
+	//)
 
 	makerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
 	for start := 0; start < len(bnSymbols); start += *bnConfig.OrderBookBatchSize {
@@ -502,13 +502,13 @@ func main() {
 				).Sub(time.Now()),
 			)
 			break
-		case bnswapBarsMap = <-bnswapBarsMapCh:
-			break
-		case bnspotBarsMap = <-bnspotBarsMapCh:
-			break
-		case bnQuantiles = <-bnQuantilesCh:
-			bnLoopTimer.Reset(time.Second)
-			break
+		//case bnswapBarsMap = <-bnswapBarsMapCh:
+		//	break
+		//case bnspotBarsMap = <-bnspotBarsMapCh:
+		//	break
+		//case bnQuantiles = <-bnQuantilesCh:
+		//	bnLoopTimer.Reset(time.Second)
+		//	break
 		case <-influxSaveTimer.C:
 			handleSave()
 			influxSaveTimer.Reset(
@@ -616,16 +616,16 @@ func main() {
 			}
 			frSum /= float64(len(bnSymbols))
 			bnswapAvgFundingRate = &frSum
-			if bnspotBarsMap != nil && bnswapBarsMap != nil {
-				select {
-				case bnswapAvgFundingRateCh <- frSum:
-				default:
-				}
-				select {
-				case bnBarsMapCh <- [2]common.KLinesMap{bnspotBarsMap, bnswapBarsMap}:
-				default:
-				}
-			}
+			//if bnspotBarsMap != nil && bnswapBarsMap != nil {
+			//	select {
+			//	case bnswapAvgFundingRateCh <- frSum:
+			//	default:
+			//	}
+			//	select {
+			//	case bnBarsMapCh <- [2]common.KLinesMap{bnspotBarsMap, bnswapBarsMap}:
+			//	default:
+			//	}
+			//}
 			bnRankSymbolMap, err = common.RankSymbols(bnSymbols, frs)
 			if err != nil {
 				logger.Debugf("RankSymbols error %v", err)

@@ -157,15 +157,15 @@ func handleSave() {
 		if realisedSpread, ok := bnRealisedSpread[symbol]; ok {
 			fields["realisedSpread"] = realisedSpread
 		}
-		if quantile, ok := bnQuantiles[symbol]; ok {
-			fields["quantileBot"] = quantile.Bot
-			fields["quantileTop"] = quantile.Top
-			fields["quantileOriginalTop"] = quantile.OriginalTop
-			fields["quantileOriginalBot"] = quantile.OriginalBot
-			fields["quantileMid"] = quantile.Mid
-			fields["quantileMaClose"] = quantile.MaClose
-			fields["quantileMeanFr"] = quantile.MeanFr
-		}
+		//if quantile, ok := bnQuantiles[symbol]; ok {
+		//	fields["quantileBot"] = quantile.Bot
+		//	fields["quantileTop"] = quantile.Top
+		//	fields["quantileOriginalTop"] = quantile.OriginalTop
+		//	fields["quantileOriginalBot"] = quantile.OriginalBot
+		//	fields["quantileMid"] = quantile.Mid
+		//	fields["quantileMaClose"] = quantile.MaClose
+		//	fields["quantileMeanFr"] = quantile.MeanFr
+		//}
 		pt, err := client.NewPoint(
 			*bnConfig.InternalInflux.Measurement,
 			map[string]string{
@@ -195,6 +195,12 @@ func handleSave() {
 		fields["netWorth"] = (*totalSpotBalance + *totalSwapUSDTBalance + *totalSwapBnBBalance) / *bnConfig.StartValue
 		fields["startValue"] = *bnConfig.StartValue
 		fields["netWorth"] = netWorth
+		if bnEnterDelta != 0 {
+			fields["enterDelta"] = bnEnterDelta
+		}
+		if bnEnterDelta != 0 {
+			fields["exitDelta"] = bnExitDelta
+		}
 		if bnGlobalSilent.Sub(time.Now()) > 0 {
 			fields["globalSilent"] = 1.0
 		} else {

@@ -33,9 +33,9 @@ type Config struct {
 	Leverage       *float64 `yaml:"leverage,omitempty"`
 	ChangeLeverage *bool    `yaml:"changeLeverage,omitempty"`
 
-	LoopInterval          *time.Duration `yaml:"loopInterval,omitempty"`
-	LogInterval           *time.Duration `yaml:"logInterval,omitempty"`
-	PullInterval          *time.Duration `yaml:"pullInterval,omitempty"`
+	LoopInterval *time.Duration `yaml:"loopInterval,omitempty"`
+	LogInterval  *time.Duration `yaml:"logInterval,omitempty"`
+	PullInterval *time.Duration `yaml:"pullInterval,omitempty"`
 
 	BalancePositionMaxAge *time.Duration `yaml:"balancePositionMaxAge,omitempty"`
 
@@ -49,12 +49,13 @@ type Config struct {
 	PullBarsRetryInterval *time.Duration `yaml:"pullBarsRetryInterval,omitempty"`
 	BarsLookback          *int           `yaml:"barsLookback,omitempty"`
 
-	TopQuantile       *float64 `yaml:"topQuantile,omitempty"`
-	BotQuantile       *float64 `yaml:"botQuantile,omitempty"`
-	TradeCount        *int     `yaml:"tradeCount,omitempty"`
-	MinimalBandOffset *float64 `yaml:"minimalBandOffset,omitempty"`
-	MinimalEnterDelta *float64 `yaml:"minimalEnterDelta,omitempty"`
-	MaximalExitDelta  *float64 `yaml:"maximalExitDelta,omitempty"`
+	//TopQuantile       *float64 `yaml:"topQuantile,omitempty"`
+	//BotQuantile       *float64 `yaml:"botQuantile,omitempty"`
+	TradeCount *int `yaml:"tradeCount,omitempty"`
+	//MinimalBandOffset *float64 `yaml:"minimalBandOffset,omitempty"`
+	EnterDelta  *float64 `yaml:"enterDelta,omitempty"`
+	ExitDelta   *float64 `yaml:"exitDelta,omitempty"`
+	OffsetDelta *float64 `yaml:"offsetDelta,omitempty"`
 
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`

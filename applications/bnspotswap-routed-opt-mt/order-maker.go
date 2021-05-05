@@ -89,14 +89,14 @@ func updateMakerOldOrders() {
 
 func isOrderOK(order bnspot.NewOrderParams) bool {
 	spread, ok1 := bnSpreads[order.Symbol]
-	quantile, ok2 := bnQuantiles[order.Symbol]
+	//quantile, ok2 := bnQuantiles[order.Symbol]
 	offset := bnspotOffsets[order.Symbol]
 	if !ok1 {
 		logger.Debugf("%s spread is not ready", order.Symbol)
 		return false
 	}
-	if !ok2 {
-		logger.Debugf("%s quantile is not ready", order.Symbol)
+	if bnEnterDelta == 0 || bnExitDelta == 0 {
+		logger.Debugf("%s delta is not ready", order.Symbol)
 	}
 	if time.Now().Sub(spread.Time) > *bnConfig.SpreadTimeToLive {
 		logger.Debugf("%s spread is out of date %v > %v", order.Symbol, time.Now().Sub(spread.Time), *bnConfig.SpreadTimeToLive)
@@ -137,10 +137,10 @@ func isOrderOK(order bnspot.NewOrderParams) bool {
 	}
 
 	if order.Side == bnspot.OrderSideBuy &&
-		(spread.TakerDepth.TakerBid-order.Price)/order.Price > quantile.Top {
+		(spread.TakerDepth.TakerBid-order.Price)/order.Price > bnEnterDelta {
 		return true
 	} else if order.Side == bnspot.OrderSideSell &&
-		(spread.TakerDepth.TakerAsk-order.Price)/order.Price < quantile.Bot{
+		(spread.TakerDepth.TakerAsk-order.Price)/order.Price < bnExitDelta{
 		return true
 	}
 	if order.Side == bnspot.OrderSideBuy {
@@ -150,7 +150,7 @@ func isOrderOK(order bnspot.NewOrderParams) bool {
 			spread.TakerDepth.TakerBid,
 			order.Price,
 			(spread.TakerDepth.TakerBid-order.Price)/order.Price,
-			quantile.Top,
+			bnEnterDelta,
 		)
 	} else {
 		logger.Debugf(
@@ -159,7 +159,7 @@ func isOrderOK(order bnspot.NewOrderParams) bool {
 			spread.TakerDepth.TakerAsk,
 			order.Price,
 			(spread.TakerDepth.TakerAsk-order.Price)/order.Price,
-			quantile.Bot,
+			bnExitDelta,
 		)
 	}
 	return false

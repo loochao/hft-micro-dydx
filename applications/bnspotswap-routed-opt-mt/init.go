@@ -91,14 +91,16 @@ var bnswapAvgFundingRate *float64
 var bnswapAvgFundingRateCh = make(chan float64, 100)
 var bnRankSymbolMap map[int]string
 
-var bnswapBarsMapCh = make(chan common.KLinesMap, 10)
-var bnswapBarsMap common.KLinesMap
-var bnspotBarsMapCh = make(chan common.KLinesMap, 10)
-var bnspotBarsMap common.KLinesMap
-var bnBarsMapUpdated = make(map[string]bool)
-var bnBarsMapCh = make(chan [2]common.KLinesMap, 100)
-var bnQuantilesCh = make(chan map[string]Quantile, 100)
-var bnQuantiles = make(map[string]Quantile)
+var bnEnterDelta, bnExitDelta float64
+
+//var bnswapBarsMapCh = make(chan common.KLinesMap, 10)
+//var bnswapBarsMap common.KLinesMap
+//var bnspotBarsMapCh = make(chan common.KLinesMap, 10)
+//var bnspotBarsMap common.KLinesMap
+//var bnBarsMapUpdated = make(map[string]bool)
+//var bnBarsMapCh = make(chan [2]common.KLinesMap, 100)
+//var bnQuantilesCh = make(chan map[string]Quantile, 100)
+//var bnQuantiles = make(map[string]Quantile)
 var bnspotLastLimitBuyPrices = make(map[string]float64)
 var bnspotLastLimitSellPrices = make(map[string]float64)
 var bnRealisedSpread = make(map[string]float64)
@@ -119,7 +121,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210505 02:10:03  ####")
+	logger.Debug("####  BUILD @ 20210505 02:32:02  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -172,6 +174,6 @@ func init() {
 	bnExpectedInsuranceFund = *bnConfig.StartValue * (1 - *bnConfig.InsuranceFundingRatio) * *bnConfig.Leverage / (*bnConfig.Leverage + 1) * *bnConfig.InsuranceFundingRatio
 	logger.Debugf("bnExpectedInsuranceFund %f", bnExpectedInsuranceFund)
 
-	bnBarsMapUpdated["swap"] = false
-	bnBarsMapUpdated["spot"] = false
+	//bnBarsMapUpdated["swap"] = false
+	//bnBarsMapUpdated["spot"] = false
 }
