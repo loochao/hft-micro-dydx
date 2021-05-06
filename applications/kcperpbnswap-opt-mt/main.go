@@ -448,11 +448,13 @@ func main() {
 						if makerPrice, ok := mLastFilledBuyPrices[makerSymbol]; ok {
 							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
 							logger.Debugf("%s REALISED SHORT SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
+							delete(mLastFilledBuyPrices, makerSymbol)
 						}
 					} else if takerOrder.Side == common.OrderSideBuy {
 						if makerPrice, ok := mLastFilledSellPrices[makerSymbol]; ok {
 							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
 							logger.Debugf("%s REALISED LONG SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
+							delete(mLastFilledSellPrices, makerSymbol)
 						}
 					}
 				}
