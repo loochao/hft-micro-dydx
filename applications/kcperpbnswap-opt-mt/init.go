@@ -90,7 +90,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210506 15:47:00  ####")
+	logger.Debug("####  BUILD @ 20210506 15:48:31  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -122,7 +122,9 @@ func init() {
 		mtSymbolsMap[makerSymbol] = takerSymbol
 		if offset, ok := mtConfig.MakerOrderOffsets[makerSymbol]; ok {
 			mOrderOffsets[makerSymbol], err = NewOffset(offset)
-			logger.Fatalf("NewOffset for %s error %v", makerSymbol, err)
+			if err != nil {
+				logger.Fatalf("NewOffset for %s error %v", makerSymbol, err)
+			}
 		} else {
 			logger.Fatalf("MISS OFFSET FOR %s", makerSymbol)
 		}
