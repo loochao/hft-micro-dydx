@@ -111,7 +111,7 @@ func updateSpotNewOrders() {
 		entryStep = *kcConfig.EnterMinimalStep
 	}
 	entryTarget := entryStep * *kcConfig.EnterTargetFactor
-	usdtAvailable := kcspotUSDTBalance.Available
+	usdtAvailable := math.Min(kcspotUSDTBalance.Available, kcperpUSDTAccount.AvailableBalance*float64(*kcConfig.Leverage))
 
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单
 	for rank := len(kcperpSymbols) - 1; rank >= 0; rank-- {
