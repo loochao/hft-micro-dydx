@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/geometrybase/hft-micro/kcperp"
 	"github.com/geometrybase/hft-micro/kcspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
@@ -105,21 +104,21 @@ func (w *TradeWS) readLoop(
 		msgLen := len(msg)
 		if len(msg) > 256 {
 			if msg[msgLen-28] == ':' {
-				symbolBytes = msg[msgLen-27:msgLen-19]
+				symbolBytes = msg[msgLen-27 : msgLen-19]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else if msg[msgLen-29] == ':' {
-				symbolBytes = msg[msgLen-28:msgLen-19]
+			} else if msg[msgLen-29] == ':' {
+				symbolBytes = msg[msgLen-28 : msgLen-19]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else if msg[msgLen-30] == ':' {
-				symbolBytes = msg[msgLen-29:msgLen-19]
+			} else if msg[msgLen-30] == ':' {
+				symbolBytes = msg[msgLen-29 : msgLen-19]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else if msg[msgLen-31] == ':' {
-				symbolBytes = msg[msgLen-30:msgLen-19]
+			} else if msg[msgLen-31] == ':' {
+				symbolBytes = msg[msgLen-30 : msgLen-19]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else if msg[msgLen-32] == ':' {
-				symbolBytes = msg[msgLen-31:msgLen-19]
+			} else if msg[msgLen-32] == ':' {
+				symbolBytes = msg[msgLen-31 : msgLen-19]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			}else{
+			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logSilentTime = time.Now().Add(time.Minute)
 					logger.Debugf("other msg %s", msg)
@@ -127,8 +126,8 @@ func (w *TradeWS) readLoop(
 				continue
 			}
 			logger.Debugf("%s", symbol)
-		}else{
-			if time.Now().Sub(logSilentTime) > 0 && len(msg) > 128{
+		} else {
+			if time.Now().Sub(logSilentTime) > 0 && len(msg) > 128 {
 				logSilentTime = time.Now().Add(time.Minute)
 				logger.Debugf("other msg %s", msg)
 			}
@@ -245,7 +244,7 @@ func (w *TradeWS) mainLoop(
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 
-	api, err := kcperp.NewAPI("", "", "", proxy)
+	api, err := kcspot.NewAPI("", "", "", proxy)
 	if err != nil {
 		logger.Debugf("NewAPI error %v", err)
 		return
@@ -336,12 +335,12 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)
 			select {
-			case w.writeCh <- kcperp.Ping{
+			case w.writeCh <- kcspot.Ping{
 				ID:   fmt.Sprintf("%d", time.Now().Nanosecond()/1000000),
 				Type: "ping",
 			}:
 			default:
-				logger.Debugf("w.writeCh <- kcperp.Ping failed ch len %d", len(w.writeCh))
+				logger.Debugf("w.writeCh <- kcspot.Ping failed ch len %d", len(w.writeCh))
 
 			}
 			break
@@ -448,7 +447,7 @@ func (w *TradeWS) saveLoop(ctx context.Context, savePath, symbol string, inputCh
 				}
 			}
 			dayTime = time.Now().Truncate(time.Hour * 24)
-			outPath = fmt.Sprintf("%s/%s-%s.kcperp.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
+			outPath = fmt.Sprintf("%s/%s-%s.kcspot.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				w.Stop()
