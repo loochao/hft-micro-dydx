@@ -456,3 +456,4 @@ func (trade *Trade) GetSize() float64   { return trade.Size }
 func (trade *Trade) GetPrice() float64  { return trade.Price }
 func (trade *Trade) GetTime() time.Time { return trade.Time }
 func (trade *Trade) IsUpTick() bool        { return trade.Side == TradeSideBuy }
+

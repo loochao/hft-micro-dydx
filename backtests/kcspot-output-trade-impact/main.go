@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kcspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/tdigest"
 	"os"
@@ -30,29 +30,22 @@ func main() {
 	defer iw.Stop()
 
 	symbols := strings.Split(
-		`XBTUSDTM,ETHUSDTM,BCHUSDTM,BSVUSDTM,LINKUSDTM,UNIUSDTM,YFIUSDTM,EOSUSDTM,DOTUSDTM,FILUSDTM,ADAUSDTM,XRPUSDTM,LTCUSDTM,TRXUSDTM,GRTUSDTM,SUSHIUSDTM,XLMUSDTM,1INCHUSDTM,ZECUSDTM,DASHUSDTM,AAVEUSDTM,KSMUSDTM,DOGEUSDTM,LUNAUSDTM,VETUSDTM,BNBUSDTM,SXPUSDTM,IOSTUSDTM,CRVUSDTM,ALGOUSDTM,AVAXUSDTM,FTMUSDTM,THETAUSDTM,ATOMUSDTM,BTTUSDTM,CHZUSDTM,ENJUSDTM,MANAUSDTM,BATUSDTM,XEMUSDTM,XTZUSDTM`,
+		`BTC-USDT,ETH-USDT,BCH-USDT,BCHSV-USDT,LINK-USDT,UNI-USDT,YFI-USDT,EOS-USDT,DOT-USDT,FIL-USDT,ADA-USDT,XRP-USDT,LTC-USDT,TRX-USDT,GRT-USDT,SUSHI-USDT,XLM-USDT,1INCH-USDT,ZEC-USDT,DASH-USDT,AAVE-USDT,KSM-USDT,DOGE-USDT,LUNA-USDT,VET-USDT,BNB-USDT,SXP-USDT,IOST-USDT,CRV-USDT,ALGO-USDT,AVAX-USDT,FTM-USDT,THETA-USDT,ATOM-USDT,BTT-USDT,CHZ-USDT,ENJ-USDT,MANA-USDT,BAT-USDT,XEM-USDT,XTZ-USDT`,
 		",",
 	)
-	//symbols := strings.Split(
-	//	`DOGEUSDTM`,
-	//	",",
-	//)
-	takerTradeCounts := make(map[string]int)
-	makerTradeCounts := make(map[string]int)
-	totalTradeCount := 0
 
-	dateStrs := "20210505,20210506"
+	dateStrs := "20210506"
 
 	quantiles := make(map[string]string)
-
-	totalValue := 0.0
+	tradeCounts := make(map[string]int)
 
 	for _, symbol := range symbols {
 		sellImpactTD, _ := tdigest.New()
 		buyImpactTD, _ := tdigest.New()
+		tradeCounts[symbol] = 0
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/kcperp-trade/%s-%s.kcperp.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/Users/chenjilin/MarketData/kcspot-trade/%s-%s.kcspot.trade.jl.gz", dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -64,16 +57,16 @@ func main() {
 				return
 			}
 			scanner := bufio.NewScanner(gr)
-			var takerFirstMatch *kcperp.Match
-			var takerLastMatch *kcperp.Match
+			var takerFirstMatch *kcspot.Trade
+			var takerLastMatch *kcspot.Trade
 			for scanner.Scan() {
-				match := kcperp.MatchWS{}
-				err := json.Unmarshal(scanner.Bytes(), &match)
+				wsTrade := kcspot.WSTrade{}
+				err := json.Unmarshal(scanner.Bytes(), &wsTrade)
 				if err != nil {
 					//logger.Debugf("json.Unmarshal %v %s", err, scanner.Bytes())
 					continue
 				}
-				if takerFirstMatch != nil && takerLastMatch != nil && takerFirstMatch.TakerOrderId != match.Data.TakerOrderId {
+				if takerFirstMatch != nil && takerLastMatch != nil && takerFirstMatch.TakerOrderId != wsTrade.Data.TakerOrderId {
 					if takerLastMatch.Price-takerFirstMatch.Price != 0 {
 						if takerLastMatch.Side == "buy" {
 							_ = buyImpactTD.Add((takerLastMatch.Price - takerFirstMatch.Price) / takerFirstMatch.Price)
@@ -81,24 +74,13 @@ func main() {
 							_ = sellImpactTD.Add((takerLastMatch.Price - takerFirstMatch.Price) / takerFirstMatch.Price)
 						}
 					}
-					takerFirstMatch = &match.Data
+					takerFirstMatch = &wsTrade.Data
 				}
 				if takerFirstMatch == nil {
-					takerFirstMatch = &match.Data
+					takerFirstMatch = &wsTrade.Data
 				}
-				takerLastMatch = &match.Data
-				if _, ok := makerTradeCounts[takerLastMatch.MakerUserID]; !ok {
-					makerTradeCounts[takerLastMatch.MakerUserID] = 0
-				}
-				makerTradeCounts[takerLastMatch.MakerUserID] ++
-				if _, ok := takerTradeCounts[takerLastMatch.TakerUserID]; !ok {
-					takerTradeCounts[takerLastMatch.TakerUserID] = 0
-				}
-				takerTradeCounts[takerLastMatch.TakerUserID] ++
-				totalTradeCount++
-				//if takerLastMatch.TakerUserID == "6083f90aae8ec10007fbba17" {
-				//	totalValue += takerLastMatch.Price*takerLastMatch.Size*100
-				//}
+				takerLastMatch = &wsTrade.Data
+				tradeCounts[symbol]++
 			}
 			_ = gr.Close()
 			_ = file.Close()
@@ -138,16 +120,5 @@ func main() {
 		//}
 
 	}
-	for takerUserID, count := range takerTradeCounts {
-		if float64(count)/float64(totalTradeCount) > 0.01 {
-			fmt.Printf("taker %s %d %f\n", takerUserID, count,float64(count)/float64(totalTradeCount))
-		}
-	}
-	fmt.Printf("\n\n")
-	for makerUserID, count := range makerTradeCounts {
-		if float64(count)/float64(totalTradeCount) > 0.01 {
-			fmt.Printf("maker %s %d %f\n", makerUserID, count,float64(count)/float64(totalTradeCount))
-		}
-	}
-	logger.Debugf("TOTAL VALUE %f", totalValue)
+	logger.Debugf("%v", tradeCounts)
 }
