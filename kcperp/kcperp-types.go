@@ -359,8 +359,8 @@ type WSOrder struct {
 	MatchPrice   float64   `json:"matchPrice,string"`
 	OrderType    string    `json:"orderType"`
 	Side         string    `json:"side"`
-	Price        float64   `json:"price,string"`
-	Size         float64   `json:"size,string"`
+	Price        float64   `json:"price,string,omitempty"`
+	Size         float64   `json:"size,string,omitempty"`
 	RemainSize   float64   `json:"remainSize,string"`
 	FilledSize   float64   `json:"filledSize,string"`
 	CanceledSize float64   `json:"canceledSize,string"`
