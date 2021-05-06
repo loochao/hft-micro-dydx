@@ -160,7 +160,7 @@ func updateSpotNewOrders() {
 			spread.MedianLeave < exitDelta &&
 			fundingRate.Value < *kcConfig.MinimalKeepFundingRate {
 			price := spread.MakerDepth.MidPrice
-			price = math.Floor(offset.Top/spotTickSize) * spotTickSize
+			price = math.Floor(price*(1.0 + offset.Top)/spotTickSize) * spotTickSize
 			if spotBalance.Available*price > spotMinNotional {
 				entryValue := math.Min(4*entryStep, spotBalance.Available*price*0.5)
 				if fundingRate.Value > *kcConfig.MinimalKeepFundingRate/2 {
@@ -204,7 +204,7 @@ func updateSpotNewOrders() {
 			fundingRate.Value > *kcConfig.MinimalEnterFundingRate &&
 			rank >= len(kcspotSymbols)-*kcConfig.TradeCount {
 			price := spread.MakerDepth.MidPrice
-			price = math.Ceil(offset.Bot/spotTickSize) * spotTickSize
+			price = math.Ceil(price*(1.0 + offset.Bot)/spotTickSize) * spotTickSize
 			targetValue := currentSpotSize*price + entryStep
 			if targetValue > entryTarget {
 				targetValue = entryTarget
