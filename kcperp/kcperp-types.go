@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/logger"
+	"strconv"
 	"time"
 )
 
@@ -359,8 +360,8 @@ type WSOrder struct {
 	MatchPrice   float64   `json:"matchPrice,string,omitempty"`
 	OrderType    string    `json:"orderType"`
 	Side         string    `json:"side"`
-	Price        float64   `json:"price,string,omitempty"`
-	Size         float64   `json:"size,string,omitempty"`
+	Price        float64   `json:"-"`
+	Size         float64   `json:"-"`
 	RemainSize   float64   `json:"remainSize,string,omitempty"`
 	FilledSize   float64   `json:"filledSize,string,omitempty"`
 	CanceledSize float64   `json:"canceledSize,string"`
@@ -373,22 +374,37 @@ type WSOrder struct {
 	ParseTime    time.Time `json:"-"`
 }
 
-func (wsCap *WSOrder) UnmarshalJSON(data []byte) error {
+func (wsOrder *WSOrder) UnmarshalJSON(data []byte) error {
 	type Alias WSOrder
 	aux := struct {
-		OrderTime int64 `json:"orderTime,omitempty"`
-		EventTime int64 `json:"ts,omitempty"`
+		OrderTime int64   `json:"orderTime,omitempty"`
+		EventTime int64   `json:"ts,omitempty"`
+		Price     string `json:"price"`
+		Size      string `json:"size"`
 		*Alias
 	}{
-		Alias: (*Alias)(wsCap),
+		Alias: (*Alias)(wsOrder),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		logger.Debugf("UnmarshalJSON WsOrder error %v", err)
 		return err
+	}else{
+		if aux.Price != "" {
+			wsOrder.Price, err = strconv.ParseFloat(aux.Price, 64)
+			if err != nil {
+				return err
+			}
+		}
+		if aux.Size != "" {
+			wsOrder.Size, err = strconv.ParseFloat(aux.Size, 64)
+			if err != nil {
+				return err
+			}
+		}
 	}
-	wsCap.EventTime = time.Unix(0, aux.EventTime)
-	wsCap.ParseTime = time.Now()
-	wsCap.OrderTime = time.Unix(0, aux.OrderTime)
+	wsOrder.EventTime = time.Unix(0, aux.EventTime)
+	wsOrder.ParseTime = time.Now()
+	wsOrder.OrderTime = time.Unix(0, aux.OrderTime)
 	return nil
 }
 
