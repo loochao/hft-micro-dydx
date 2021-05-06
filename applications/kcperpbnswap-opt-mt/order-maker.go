@@ -191,5 +191,5 @@ func isOrderProfitable(order kcperp.NewOrderParam, entryTarget float64) bool {
 			"NOT PROFITABLE %s SELL ORDER, CANCEL", order.Symbol,
 		)
 	}
-	return true
+	return false
 }
