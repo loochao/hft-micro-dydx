@@ -27,7 +27,7 @@ func watchPerpOrderRequest(
 			logger.Debugf("PERP SUBMIT %v", newOrderParam)
 			_, err := api.SubmitOrder(childCtx, newOrderParam)
 			if err != nil {
-				logger.Debugf("PERP SUBMIT ERROR %v", err)
+				logger.Debugf("PERP SUBMIT ERROR %s %v", newOrderParam.Symbol, err)
 				outputOrderErrorCh <- PerpOrderNewError{
 					Error:  err,
 					Params: newOrderParam,
@@ -37,4 +37,3 @@ func watchPerpOrderRequest(
 		}
 	}
 }
-

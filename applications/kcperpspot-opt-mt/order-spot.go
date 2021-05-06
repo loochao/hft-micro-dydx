@@ -36,7 +36,7 @@ func watchSpotOrderRequest(
 				_, err := api.SubmitOrder(childCtx, *request.New)
 				cancel()
 				if err != nil {
-					logger.Debugf("SPOT SUBMIT ERROR %v", err)
+					logger.Debugf("SPOT SUBMIT ERROR %s %v", request.New.Symbol, err)
 					outputOrderErrorCh <- SpotOrderNewError{
 						Error:  err,
 						Params: *request.New,
