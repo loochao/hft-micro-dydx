@@ -91,7 +91,7 @@ var kcConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210506 14:00:21  ####")
+	logger.Debug("####  BUILD @ 20210506 14:05:19  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -146,5 +146,5 @@ func init() {
 		kcperpHttpPositionUpdateSilentTimes[perpSymbol] = time.Now()
 	}
 
-	kcGlobalSilent = time.Now().Add(*kcConfig.EnterSilent)
+	kcGlobalSilent = time.Now().Add(*kcConfig.RestartSilent)
 }

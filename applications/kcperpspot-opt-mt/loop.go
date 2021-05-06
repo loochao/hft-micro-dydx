@@ -177,11 +177,12 @@ func updateSpotNewOrders() {
 				}
 				if quantity > 0 {
 					logger.Debugf(
-						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
+						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f PRICE %f",
 						spotSymbol,
 						spread.LastLeave, exitDelta,
 						spread.LastEnter, exitDelta,
 						quantity,
+						price,
 					)
 					order := kcspot.NewOrderParam{
 						Symbol:      spotSymbol,
@@ -271,11 +272,12 @@ func updateSpotNewOrders() {
 			usdtAvailable -= entryValue
 			kcOpenLogSilentTimes[spotSymbol] = time.Now()
 			logger.Debugf(
-				"TOP OPEN %s %f > %f, %f > %f, SIZE %f",
+				"TOP OPEN %s %f > %f, %f > %f, SIZE %f PRICE %f",
 				spotSymbol,
 				spread.LastEnter, enterDelta,
 				spread.MedianEnter, enterDelta,
 				quantity,
+				price,
 			)
 			order := kcspot.NewOrderParam{
 				Symbol:      spotSymbol,
