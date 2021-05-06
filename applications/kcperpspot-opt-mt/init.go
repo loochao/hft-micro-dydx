@@ -91,7 +91,7 @@ var kcConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210506 14:15:27  ####")
+	logger.Debug("####  BUILD @ 20210506 14:17:38  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -140,7 +140,7 @@ func init() {
 		kcspotOrderCancelCounts[spotSymbol] = 0
 
 		kcOpenLogSilentTimes[spotSymbol] = time.Now()
-		kcspotSilentTimes[spotSymbol] = time.Now().Add(time.Minute * 5)
+		kcspotSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.RestartSilent)
 
 		kcspotHttpBalanceUpdateSilentTimes[spotSymbol] = time.Now()
 		kcperpHttpPositionUpdateSilentTimes[perpSymbol] = time.Now()
