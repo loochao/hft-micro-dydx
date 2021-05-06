@@ -51,9 +51,9 @@ func updateTakerPositions() {
 
 		if math.Abs(takerSizeDiff) < takerStepSize {
 			continue
-		} else if takerSizeDiff < 0 && takerPosition.PositionAmt <= 0 && -takerSizeDiff*takerTakerDepth.TakerBid*(1.0-*mtConfig.EnterSlippage) < takerMinNotional {
+		} else if takerSizeDiff < 0 && takerPosition.PositionAmt <= 0 && -takerSizeDiff*takerTakerDepth.TakerBid < takerMinNotional {
 			continue
-		} else if takerSizeDiff > 0 && takerPosition.PositionAmt >= 0 && takerSizeDiff*takerTakerDepth.TakerAsk*(1.0+*mtConfig.EnterSlippage) < takerMinNotional {
+		} else if takerSizeDiff > 0 && takerPosition.PositionAmt >= 0 && takerSizeDiff*takerTakerDepth.TakerAsk < takerMinNotional {
 			continue
 		}
 
@@ -159,20 +159,22 @@ func updateMakerNewOrders() {
 
 		makerValue := makerPosition.AvgEntryPrice * makerPosition.CurrentQty * mMultipliers[makerSymbol]
 		offset := mOrderOffsets[makerSymbol]
-		enterDelta := *mtConfig.EnterDelta + *mtConfig.OffsetDelta*(makerValue/entryTarget)
-		offsetDelta := *mtConfig.ExitDelta + *mtConfig.OffsetDelta*(makerValue/entryTarget)
+		shortTop := *mtConfig.EnterDelta + *mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+		shortBot := *mtConfig.ExitDelta + *mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+		longBot := -*mtConfig.EnterDelta + *mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+		longTop := -*mtConfig.ExitDelta + *mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
 
 		//if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
 		//	mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 		//	logger.Debugf("LOOP %s", makerSymbol)
 		//}
 
-		if spread.ShortLastLeave < quantile.ShortBot &&
-			spread.ShortMedianLeave < quantile.ShortBot &&
+		if spread.ShortLastLeave < shortBot &&
+			spread.ShortMedianLeave < shortBot &&
 			fundingRate < *mtConfig.MinimalKeepFundingRate &&
 			makerPosition.CurrentQty > 0 {
 			makerSize := makerPosition.CurrentQty * makerMultiplier
-			price := math.Ceil(makerDepth.MakerAsk/makerTickSize) * makerTickSize
+			price := math.Ceil(makerDepth.MakerAsk*(1.0+offset.Top)/makerTickSize) * makerTickSize
 			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
 			if fundingRate > *mtConfig.MinimalKeepFundingRate*0.5 {
 				entryValue = math.Max(2*entryStep, makerSize*price*0.5)
@@ -186,11 +188,11 @@ func updateMakerNewOrders() {
 			}
 			if size > 0 {
 				logger.Debugf(
-					"SHORT BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
+					"SHORT BOT REDUCE %s %f < %f, %f < %f, SIZE %f PRICE %f",
 					makerSymbol,
-					spread.ShortLastLeave, quantile.ShortBot,
-					spread.ShortMedianLeave, quantile.ShortBot,
-					size,
+					spread.ShortLastLeave, shortBot,
+					spread.ShortMedianLeave, shortBot,
+					size, price,
 				)
 
 				order := kcperp.NewOrderParam{
@@ -216,13 +218,13 @@ func updateMakerNewOrders() {
 				mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
 				return
 			}
-		} else if spread.LongLastLeave > quantile.LongTop &&
-			spread.LongMedianLeave > quantile.LongTop &&
+		} else if spread.LongLastLeave > longTop &&
+			spread.LongMedianLeave > longTop &&
 			fundingRate > -*mtConfig.MinimalKeepFundingRate &&
 			makerPosition.CurrentQty < 0 {
 
 			makerSize := -makerPosition.CurrentQty * makerMultiplier
-			price := math.Floor(makerDepth.MakerBid/makerTickSize) * makerTickSize
+			price := math.Floor(makerDepth.MakerBid*(1.0+offset.Bot)/makerTickSize) * makerTickSize
 			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
 			if fundingRate < -*mtConfig.MinimalKeepFundingRate/2 {
 				entryValue = math.Max(2*entryStep, makerSize*price*0.5)
@@ -235,11 +237,11 @@ func updateMakerNewOrders() {
 			}
 			if size > 0 {
 				logger.Debugf(
-					"LONG TOP REDUCE %s %f > %f, %f > %f, VOLUME %f",
+					"LONG TOP REDUCE %s %f > %f, %f > %f, SIZE %f PRICE %f",
 					makerSymbol,
-					spread.LongLastLeave, quantile.LongTop,
-					spread.LongMedianLeave, quantile.LongTop,
-					size,
+					spread.LongLastLeave, longTop,
+					spread.LongMedianLeave, longTop,
+					size, price,
 				)
 				order := kcperp.NewOrderParam{
 					Symbol:      makerSymbol,
@@ -264,12 +266,12 @@ func updateMakerNewOrders() {
 				mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
 				return
 			}
-		} else if spread.ShortLastEnter > quantile.ShortTop &&
-			spread.ShortMedianEnter > quantile.ShortTop &&
+		} else if spread.ShortLastEnter > shortTop &&
+			spread.ShortMedianEnter > shortTop &&
 			fundingRate > *mtConfig.MinimalEnterFundingRate &&
 			makerPosition.CurrentQty >= 0 {
 			makerSize := makerPosition.CurrentQty * makerMultiplier
-			price := math.Floor(makerDepth.MakerBid/makerTickSize) * makerTickSize
+			price := math.Floor(makerDepth.MakerBid*(1.0+offset.Bot)/makerTickSize) * makerTickSize
 			targetValue := makerSize*price + entryStep
 			if targetValue > entryTarget {
 				targetValue = entryTarget
@@ -284,32 +286,32 @@ func updateMakerNewOrders() {
 
 			entryValue = size * makerMultiplier * price
 
-			//不及一个0.8*EntryStep, 不操作
-			if entryValue < entryStep*0.8 {
-				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED SHORT TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
-						entryValue,
-						entryStep*0.8,
-						makerSymbol,
-						spread.ShortLastEnter, quantile.ShortTop,
-						spread.ShortMedianEnter, quantile.ShortTop,
-						size,
-					)
-					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
-				}
-				continue
-			}
+			////不及一个0.8*EntryStep, 不操作
+			//if entryValue < entryStep*0.8 {
+			//	if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+			//		logger.Debugf(
+			//			"FAILED SHORT TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f PRICE %f",
+			//			entryValue,
+			//			entryStep*0.8,
+			//			makerSymbol,
+			//			spread.ShortLastEnter, shortTop,
+			//			spread.ShortMedianEnter, shortTop,
+			//			size, price,
+			//		)
+			//		mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+			//	}
+			//	continue
+			//}
 			if entryValue > makerUSDTAvailable {
 				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
 					logger.Debugf(
-						"FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f > %f, %f > %f, SIZE %f",
+						"FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f > %f, %f > %f, SIZE %f PRICE %f",
 						entryValue,
 						makerUSDTAvailable,
 						makerSymbol,
-						spread.ShortLastEnter, quantile.ShortTop,
-						spread.ShortMedianEnter, quantile.ShortTop,
-						size,
+						spread.ShortLastEnter, shortTop,
+						spread.ShortMedianEnter, shortTop,
+						size, price,
 					)
 					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
@@ -318,13 +320,13 @@ func updateMakerNewOrders() {
 			if entryValue < takerMinNotional {
 				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
 					logger.Debugf(
-						"FAILED SHORT TOP OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f",
+						"FAILED SHORT TOP OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f PRICE %f",
 						entryValue,
 						takerMinNotional,
 						makerSymbol,
-						spread.ShortLastEnter, quantile.ShortTop,
-						spread.ShortMedianEnter, quantile.ShortTop,
-						size,
+						spread.ShortLastEnter, shortTop,
+						spread.ShortMedianEnter, shortTop,
+						size, price,
 					)
 					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
@@ -332,11 +334,11 @@ func updateMakerNewOrders() {
 			}
 			mtLogSilentTimes[makerSymbol] = time.Now()
 			logger.Debugf(
-				"SHORT TOP OPEN %s %f > %f, %f > %f, SIZE %f",
+				"SHORT TOP OPEN %s %f > %f, %f > %f, SIZE %f PRICE %f",
 				makerSymbol,
-				spread.ShortLastEnter, quantile.ShortTop,
-				spread.ShortMedianEnter, quantile.ShortTop,
-				size,
+				spread.ShortLastEnter, shortTop,
+				spread.ShortMedianEnter, shortTop,
+				size, price,
 			)
 			makerUSDTAvailable -= entryValue
 			order := kcperp.NewOrderParam{
@@ -360,13 +362,13 @@ func updateMakerNewOrders() {
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 			mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
 			mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
-		} else if spread.LongLastEnter < quantile.LongBot &&
-			spread.LongMedianEnter < quantile.LongBot &&
+		} else if spread.LongLastEnter < longBot &&
+			spread.LongMedianEnter < longBot &&
 			fundingRate < -*mtConfig.MinimalEnterFundingRate &&
 			makerPosition.CurrentQty <= 0 {
 
 			makerSize := -makerPosition.CurrentQty * makerMultiplier
-			price := math.Ceil(makerDepth.MakerAsk/makerTickSize) * makerTickSize
+			price := math.Ceil(makerDepth.MakerAsk*(1.0+offset.Top)/makerTickSize) * makerTickSize
 			targetValue := makerSize*price + entryStep
 			if targetValue > entryTarget {
 				targetValue = entryTarget
@@ -382,31 +384,31 @@ func updateMakerNewOrders() {
 			entryValue = size * makerMultiplier * price
 
 			//不及一个0.8*EntryStep, 不操作
-			if entryValue < entryStep*0.8 {
-				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED LONG BOT OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f < %f, %f < %f, SIZE %f",
-						entryValue,
-						entryStep*0.8,
-						makerSymbol,
-						spread.LongLastEnter, quantile.LongBot,
-						spread.LongMedianEnter, quantile.LongBot,
-						size,
-					)
-					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
-				}
-				continue
-			}
+			//if entryValue < entryStep*0.8 {
+			//	if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
+			//		logger.Debugf(
+			//			"FAILED LONG BOT OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f < %f, %f < %f, SIZE %f",
+			//			entryValue,
+			//			entryStep*0.8,
+			//			makerSymbol,
+			//			spread.LongLastEnter, ongBot,
+			//			spread.LongMedianEnter, quantile.LongBot,
+			//			size,
+			//		)
+			//		mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
+			//	}
+			//	continue
+			//}
 			if entryValue > makerUSDTAvailable {
 				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
 					logger.Debugf(
-						"FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f < %f, %f < %f, SIZE %f",
+						"FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f < %f, %f < %f, SIZE %f PRICE %f",
 						entryValue,
 						makerUSDTAvailable,
 						makerSymbol,
-						spread.LongLastEnter, quantile.LongBot,
-						spread.LongMedianEnter, quantile.LongBot,
-						size,
+						spread.LongLastEnter, longBot,
+						spread.LongMedianEnter, longBot,
+						size, price,
 					)
 					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
@@ -415,13 +417,13 @@ func updateMakerNewOrders() {
 			if entryValue < takerMinNotional {
 				if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
 					logger.Debugf(
-						"FAILED LONG BOT OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f < %f, %f < %f, SIZE %f",
+						"FAILED LONG BOT OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f < %f, %f < %f, SIZE %f PRICE %f",
 						entryValue,
 						takerMinNotional,
 						makerSymbol,
-						spread.LongLastEnter, quantile.LongBot,
-						spread.LongMedianEnter, quantile.LongBot,
-						size,
+						spread.LongLastEnter, longBot,
+						spread.LongMedianEnter, longBot,
+						size, price,
 					)
 					mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)
 				}
@@ -429,11 +431,11 @@ func updateMakerNewOrders() {
 			}
 			mtLogSilentTimes[makerSymbol] = time.Now()
 			logger.Debugf(
-				"LONG BOT OPEN %s %f < %f, %f < %f, SIZE %f",
+				"LONG BOT OPEN %s %f < %f, %f < %f, SIZE %f PRICE %f",
 				makerSymbol,
-				spread.LongLastEnter, quantile.LongBot,
-				spread.LongMedianEnter, quantile.LongBot,
-				size,
+				spread.LongLastEnter, longBot,
+				spread.LongMedianEnter, longBot,
+				size, price,
 			)
 			makerUSDTAvailable -= entryValue
 			order := kcperp.NewOrderParam{

@@ -5,6 +5,7 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"strings"
 	"time"
 )
@@ -14,41 +15,17 @@ func handleSave() {
 		return
 	}
 
-	if tAccount != nil &&
-		tAccount.MarginBalance != nil &&
-		mAccount != nil {
-		totalBalance := *tAccount.MarginBalance + mAccount.MarginBalance
-		netWorth := totalBalance / *mtConfig.StartValue
-		fields := make(map[string]interface{})
-		fields["totalBalance"] = totalBalance
-		fields["takerBalance"] = *tAccount.MarginBalance
-		fields["makerBalance"] = mAccount.MarginBalance
-		fields["netWorth"] = netWorth
-		fields["startValue"] = *mtConfig.StartValue
-		fields["netWorth"] = netWorth
-		if tAccount.AvailableBalance != nil {
-			fields["takerAvailable"] = *tAccount.AvailableBalance
+	entryTarget := 0.0
+	if mAccount != nil || tAccount != nil || tAccount.AvailableBalance != nil {
+		entryStep := (mAccount.AvailableBalance + *tAccount.AvailableBalance) * *mtConfig.EnterFreePct
+		if entryStep < *mtConfig.EnterMinimalStep {
+			entryStep = *mtConfig.EnterMinimalStep
 		}
-		if tAccount.UnrealizedProfit != nil {
-			fields["takerUnrealizedProfit"] = *tAccount.UnrealizedProfit
-		}
-		fields["makerAvailable"] = mAccount.AvailableBalance
-		fields["makerUnrealizedProfit"] = mAccount.UnrealisedPNL
-		pt, err := client.NewPoint(
-			*mtConfig.InternalInflux.Measurement,
-			map[string]string{
-				"type": "balance",
-			},
-			fields,
-			time.Now().UTC(),
-		)
-		if err != nil {
-			logger.Debugf("Spot Balance NewPoint error %v", err)
-		} else {
-			go mtInfluxWriter.PushPoint(pt)
-		}
+		entryTarget = entryStep * *mtConfig.EnterTargetFactor
 	}
 
+
+	totalUnHedgeValue := 0.0
 	for _, makerSymbol := range mSymbols {
 		takerSymbol := mtSymbolsMap[makerSymbol]
 		fields := make(map[string]interface{})
@@ -56,6 +33,17 @@ func handleSave() {
 			fields["makerSize"] = makerPosition.CurrentQty * mMultipliers[makerSymbol]
 			if spread, ok := mtSpreads[makerSymbol]; ok {
 				fields["makerValue"] = makerPosition.CurrentQty * mMultipliers[makerSymbol] * spread.MakerDepth.MakerBid
+				makerValue := makerPosition.AvgEntryPrice * makerPosition.CurrentQty * mMultipliers[makerSymbol]
+				//offset := mOrderOffsets[makerSymbol]
+				fields["shortTop"] = *mtConfig.EnterDelta + *mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+				fields["shortBot"] = *mtConfig.ExitDelta + *mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+				fields["longBot"] = -*mtConfig.EnterDelta + *mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+				fields["longTop"] = -*mtConfig.ExitDelta + *mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+				if takerPosition, ok := tPositions[takerSymbol]; ok {
+					unHedgedValue := (takerPosition.PositionAmt +  makerPosition.CurrentQty * mMultipliers[makerSymbol])* spread.MakerDepth.MakerAsk
+					fields["unHedgedValue"] = unHedgedValue
+					totalUnHedgeValue += math.Abs(unHedgedValue)
+				}
 			}
 		}
 		if takerPosition, ok := tPositions[takerSymbol]; ok {
@@ -101,14 +89,6 @@ func handleSave() {
 		if realisedSpread, ok := mtRealisedSpread[makerSymbol]; ok {
 			fields["realisedSpread"] = realisedSpread
 		}
-		if quantile, ok := mtQuantiles[makerSymbol]; ok {
-			fields["quantileShortBot"] = quantile.ShortBot
-			fields["quantileShortTop"] = quantile.ShortTop
-			fields["quantileLongBot"] = quantile.LongBot
-			fields["quantileLongTop"] = quantile.LongTop
-			fields["quantileMid"] = quantile.Mid
-			fields["quantileMaClose"] = quantile.MaClose
-		}
 		if time.Now().Sub(mtGlobalSilent) > 0 {
 			fields["globalSilent"] = 0
 		} else {
@@ -125,9 +105,51 @@ func handleSave() {
 			time.Now().UTC(),
 		)
 		if err != nil {
-			logger.Debugf("new buyPosition point error %v", err)
+			logger.Debugf("client.NewPoint error %v", err)
 		} else {
-			go mtInfluxWriter.PushPoint(pt)
+			err = mtInfluxWriter.PushPoint(pt)
+			if err != nil {
+				logger.Debugf("mtInfluxWriter.PushPoint error %v", err)
+			}
+		}
+	}
+
+	if tAccount != nil &&
+		tAccount.MarginBalance != nil &&
+		mAccount != nil {
+		totalBalance := *tAccount.MarginBalance + mAccount.MarginBalance
+		netWorth := totalBalance / *mtConfig.StartValue
+		fields := make(map[string]interface{})
+		fields["totalUnHedgeValue"] = totalUnHedgeValue
+		fields["totalBalance"] = totalBalance
+		fields["takerBalance"] = *tAccount.MarginBalance
+		fields["makerBalance"] = mAccount.MarginBalance
+		fields["netWorth"] = netWorth
+		fields["startValue"] = *mtConfig.StartValue
+		fields["netWorth"] = netWorth
+		if tAccount.AvailableBalance != nil {
+			fields["takerAvailable"] = *tAccount.AvailableBalance
+		}
+		if tAccount.UnrealizedProfit != nil {
+			fields["takerUnrealizedProfit"] = *tAccount.UnrealizedProfit
+		}
+		fields["makerAvailable"] = mAccount.AvailableBalance
+		fields["makerUnrealizedProfit"] = mAccount.UnrealisedPNL
+		pt, err := client.NewPoint(
+			*mtConfig.InternalInflux.Measurement,
+			map[string]string{
+				"type": "balance",
+			},
+			fields,
+			time.Now().UTC(),
+		)
+		if err != nil {
+			logger.Debugf("client.NewPoint error %v", err)
+		} else {
+			err = mtInfluxWriter.PushPoint(pt)
+			if err != nil {
+				logger.Debugf("mtInfluxWriter.PushPoint error %v", err)
+			}
 		}
 	}
 }
@@ -160,9 +182,12 @@ func handleExternalInfluxSave() {
 				time.Now().UTC(),
 			)
 			if err != nil {
-				logger.Debugf("Margin NewPoint error %v", err)
+				logger.Debugf("client.NewPoint error %v", err)
 			} else {
-				go mtExternalInfluxWriter.PushPoint(pt)
+				err = mtExternalInfluxWriter.PushPoint(pt)
+				if err != nil {
+					logger.Debugf("mtExternalInfluxWriter.PushPoint error %v", err)
+				}
 			}
 		}
 	}
@@ -209,11 +234,11 @@ func reportsSaveLoop(
 						time.Now().UTC(),
 					)
 					if err != nil {
-						logger.Debugf("SpreadReport NewPoint error %v", err)
+						logger.Debugf("client.NewPoint error %v", err)
 					} else {
-						select {
-						case influxWriter.pushCh <- pt:
-						default:
+						err = influxWriter.PushPoint(pt)
+						if err != nil {
+							logger.Debugf("influxWriter.PushPoint error %v", err)
 						}
 					}
 				}

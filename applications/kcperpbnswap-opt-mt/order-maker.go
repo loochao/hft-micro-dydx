@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/kcperp"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"time"
 )
 
@@ -66,15 +67,12 @@ func watchMakerOrderRequest(
 
 func cancelAllMakerOpenOrders() {
 	for symbol, order := range mOpenOrders {
-		if mOrderCancelCounts[symbol] > *mtConfig.OrderMaxCancelCount {
-			delete(mOpenOrders, symbol)
+		if time.Now().Sub(mCancelSilentTimes[symbol]) < 0 {
 			continue
 		}
-		if time.Now().Sub(mOrderCancelSilentTimes[symbol]) < 0 {
-			continue
-		}
+		delete(mOpenOrders, symbol)
 		mOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderSilent)
-		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
+		mCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
 			Cancel: &kcperp.CancelAllOrdersParam{Symbol: order.Symbol},
@@ -83,20 +81,26 @@ func cancelAllMakerOpenOrders() {
 }
 
 func updateMakerOldOrders() {
+	if mAccount == nil || tAccount == nil || tAccount.AvailableBalance == nil {
+		return
+	}
+
+	entryStep := (mAccount.AvailableBalance + *tAccount.AvailableBalance) * *mtConfig.EnterFreePct
+	if entryStep < *mtConfig.EnterMinimalStep {
+		entryStep = *mtConfig.EnterMinimalStep
+	}
+	entryTarget := entryStep * *mtConfig.EnterTargetFactor
+
 	for symbol, order := range mOpenOrders {
-		if mOrderCancelCounts[symbol] > *mtConfig.OrderMaxCancelCount {
-			delete(mOpenOrders, symbol)
-			mOrderCancelCounts[order.Symbol] = 0
+		if time.Now().Sub(mCancelSilentTimes[symbol]) < 0 {
 			continue
 		}
-		if time.Now().Sub(mOrderCancelSilentTimes[symbol]) < 0 {
+		if isOrderProfitable(*order.NewOrderParam, entryTarget) {
 			continue
 		}
-		if isOrderProfitable(*order.NewOrderParam) {
-			continue
-		}
+		delete(mOpenOrders, symbol)
 		mOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderSilent)
-		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
+		mCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
 			Cancel: &kcperp.CancelAllOrdersParam{Symbol: order.Symbol},
@@ -104,50 +108,75 @@ func updateMakerOldOrders() {
 	}
 }
 
-func isOrderProfitable(order kcperp.NewOrderParam) bool {
-	spread, ok1 := mtSpreads[order.Symbol]
-	quantile, ok2 := mtQuantiles[order.Symbol]
-	if !ok1 || !ok2 || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
-		logger.Debugf("SPREAD IS OUT OF DATE %v, CANCEL %s", time.Now().Sub(spread.Time), order.Symbol)
+func isOrderProfitable(order kcperp.NewOrderParam, entryTarget float64) bool {
+	spread, okSpread := mtSpreads[order.Symbol]
+	makerPosition, okMakerPosition := mPositions[order.Symbol]
+
+	if !okSpread || !okMakerPosition || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
+		logger.Debugf("SPREAD OR MAKER POSITION NOT READY, CANCEL %s", order.Symbol)
 		return false
 	}
-	//检查价格有没有挂太远，太远撤掉
+
+	makerValue := makerPosition.AvgEntryPrice * makerPosition.CurrentQty * mMultipliers[order.Symbol]
+	offset := mOrderOffsets[order.Symbol]
+	shortTop := *mtConfig.EnterDelta + *mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+	shortBot := *mtConfig.ExitDelta + *mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+	longBot := -*mtConfig.EnterDelta + *mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+	longTop := -*mtConfig.ExitDelta + *mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+
+	//检查价格有没有在OFFSET范围内，不在撤掉
 	if order.Side == kcperp.OrderSideBuy &&
-		float64(order.Price) < (1.0-4**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid {
-		logger.Debugf("%s BUY PRICE %f < MAKER BID MINIMAL PRICE %f",
+		float64(order.Price) < spread.MakerDepth.MakerBid*(1.0+offset.FarBot) {
+		logger.Debugf("%s BUY PRICE %f < FAR BOT %f, CANCEL",
 			order.Symbol,
 			order.Price,
-			(1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid,
+			spread.MakerDepth.MakerBid*(1.0+offset.FarBot),
+		)
+		return false
+	} else if order.Side == kcperp.OrderSideBuy &&
+		float64(order.Price) > spread.MakerDepth.MakerBid*(1.0+offset.NearBot) {
+		logger.Debugf("%s BUY PRICE %f > NEAR BOT %f, CANCEL",
+			order.Symbol,
+			order.Price,
+			spread.MakerDepth.MakerBid*(1.0+offset.NearBot),
 		)
 		return false
 	} else if order.Side == kcperp.OrderSideSell &&
-		float64(order.Price) > (1.0+4**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk {
-		logger.Debugf("%s SELL PRICE %f > MAKER ASK MAXIMAL PRICE %f",
+		float64(order.Price) > spread.MakerDepth.MakerAsk*(1.0+offset.FarTop) {
+		logger.Debugf("%s SELL PRICE %f > FAR TOP %f, CANCEL ",
 			order.Symbol,
 			order.Price,
-			(1.0+2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk,
+			spread.MakerDepth.MakerAsk*(1.0+offset.FarTop),
+		)
+		return false
+	} else if order.Side == kcperp.OrderSideSell &&
+		float64(order.Price) < spread.MakerDepth.MakerAsk*(1.0+offset.NearTop) {
+		logger.Debugf("%s SELL PRICE %f < NEAR TOP %f, CANCEL ",
+			order.Symbol,
+			order.Price,
+			spread.MakerDepth.MakerAsk*(1.0+offset.NearTop),
 		)
 		return false
 	}
 
 	if order.Side == kcperp.OrderSideBuy &&
 		!order.ReduceOnly &&
-		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.ShortTop-*mtConfig.MakerOrderOffset {
+		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > shortTop {
 		//买入开多, 是开空价差, 参考ShortTop
 		return true
 	} else if order.Side == kcperp.OrderSideSell &&
 		order.ReduceOnly &&
-		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.ShortBot+*mtConfig.MakerOrderOffset {
+		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < shortBot{
 		//卖出平多, 是平空价, 参考ShortBot
 		return true
 	} else if order.Side == kcperp.OrderSideSell &&
 		!order.ReduceOnly &&
-		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.LongBot+*mtConfig.MakerOrderOffset {
+		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < longBot{
 		//卖出开空, 是开多价差, 参考LongBot
 		return true
 	} else if order.Side == kcperp.OrderSideBuy &&
 		order.ReduceOnly &&
-		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.LongTop-*mtConfig.MakerOrderOffset {
+		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > longTop {
 		//买入平空, 是平多价差, 参考LongTop
 		return true
 	}

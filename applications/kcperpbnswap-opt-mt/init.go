@@ -49,7 +49,7 @@ var mOrderSilentTimes = make(map[string]time.Time)
 var mSilentTimes = make(map[string]time.Time)
 var mOpenOrders = make(map[string]MakerOpenOrder)
 var mOrderCancelCounts = make(map[string]int)
-var mOrderCancelSilentTimes = make(map[string]time.Time)
+var mCancelSilentTimes = make(map[string]time.Time)
 var mOpenOrderCh = make(chan MakerOpenOrder, 10000)
 
 var tPositionsCh = make(chan []bnswap.Position, 10)
@@ -90,7 +90,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210426 13:34:37  ####")
+	logger.Debug("####  BUILD @ 20210506 15:38:44  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -129,10 +129,10 @@ func init() {
 
 		mOrderSilentTimes[makerSymbol] = time.Now()
 		mtLogSilentTimes[makerSymbol] = time.Now()
-		mSilentTimes[makerSymbol] = time.Now().Add(time.Minute)
+		mSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.RestartSilent)
 		mPositionsUpdateTimes[makerSymbol] = time.Unix(0, 0)
 		mOrderCancelCounts[makerSymbol] = 0
-		mOrderCancelSilentTimes[makerSymbol] = time.Now()
+		mCancelSilentTimes[makerSymbol] = time.Now()
 
 		tOrderSilentTimes[takerSymbol] = time.Now()
 		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
@@ -152,22 +152,4 @@ func init() {
 
 	mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 
-	//hostname, err := os.Hostname()
-	//if err != nil {
-	//	logger.Fatal(err)
-	//}
-
-	//err = raven.SetDSN("https://5c318e0f10a349308d2ff86f51de31d8:fa0a8f90a8244c6ea762130cdd6d1bb9@sentry.jilinchen.com/12")
-	//if err != nil {
-	//	logger.Fatal(err)
-	//}
-	//raven.SetTagsContext(map[string]string{
-	//	"influxAddress":     *mtConfig.InternalInflux.Address,
-	//	"influxDatabase":    *mtConfig.InternalInflux.Address,
-	//	"influxMeasurement": *mtConfig.InternalInflux.Address,
-	//	"BnApiKey":          *mtConfig.InternalInflux.Address,
-	//	"symbols":           fmt.Sprintf("%s", mSymbols),
-	//	"hostname":          hostname,
-	//	"name":              *mtConfig.Name,
-	//})
 }
