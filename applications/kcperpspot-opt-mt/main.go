@@ -445,6 +445,12 @@ func main() {
 				updateSpotOldOrders()
 				updateSpotNewOrders()
 			} else {
+				if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *kcConfig.LoopInterval {
+					logger.Debugf(
+						"SYSTEM NOT READY kcperpSystemReady %v kcspotSystemReady %v kcGlobalSilent %v",
+						kcperpSystemReady, kcspotSystemReady, time.Now().Sub(kcGlobalSilent),
+					)
+				}
 				if len(kcspotOpenOrders) > 0 {
 					for symbol := range kcspotOpenOrders {
 						kcspotOrderRequestChs[symbol] <- SpotOrderRequest{
