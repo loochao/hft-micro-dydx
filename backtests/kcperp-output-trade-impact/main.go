@@ -1,0 +1,121 @@
+package main
+
+import (
+	"bufio"
+	"compress/gzip"
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/logger"
+	"github.com/geometrybase/hft-micro/tdigest"
+	"os"
+	"strings"
+)
+
+func main() {
+	ctx := context.Background()
+	iw, err := common.NewInfluxWriter(
+		ctx,
+		"http://localhost:8086",
+		"",
+		"",
+		"hft",
+		500,
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer iw.Stop()
+
+	symbols := strings.Split(
+		`XBTUSDTM,ETHUSDTM,BCHUSDTM,BSVUSDTM,LINKUSDTM,UNIUSDTM,YFIUSDTM,EOSUSDTM,DOTUSDTM,FILUSDTM,ADAUSDTM,XRPUSDTM,LTCUSDTM,TRXUSDTM,GRTUSDTM,SUSHIUSDTM,XLMUSDTM,1INCHUSDTM,ZECUSDTM,DASHUSDTM,AAVEUSDTM,KSMUSDTM,DOGEUSDTM,LUNAUSDTM,VETUSDTM,BNBUSDTM,SXPUSDTM,IOSTUSDTM,CRVUSDTM,ALGOUSDTM,AVAXUSDTM,FTMUSDTM,THETAUSDTM,ATOMUSDTM,BTTUSDTM,CHZUSDTM,ENJUSDTM,MANAUSDTM,BATUSDTM,XEMUSDTM,XTZUSDTM`,
+		",",
+	)
+	dateStrs := "20210505"
+
+	quantiles := make(map[string]string)
+
+	for _, symbol := range symbols {
+		sellImpactTD, _ := tdigest.New()
+		buyImpactTD, _ := tdigest.New()
+		for _, dateStr := range strings.Split(dateStrs, ",") {
+			file, err := os.Open(
+				fmt.Sprintf("/Users/chenjilin/MarketData/kcperp-trade/%s-%s.kcperp.trade.jl.gz", dateStr, symbol),
+			)
+			if err != nil {
+				logger.Debugf("os.Open() error %v", err)
+				return
+			}
+			gr, err := gzip.NewReader(file)
+			if err != nil {
+				logger.Debugf("gzip.NewReader(file) error %v", err)
+				return
+			}
+			scanner := bufio.NewScanner(gr)
+			var takerFirstMatch *kcperp.Match
+			var takerLastMatch *kcperp.Match
+			var counter = 0
+			for scanner.Scan() {
+				match := kcperp.MatchWS{}
+				err := json.Unmarshal(scanner.Bytes(), &match)
+				if err != nil {
+					//logger.Debugf("json.Unmarshal %v %s", err, scanner.Bytes())
+					continue
+				}
+				if takerFirstMatch != nil && takerLastMatch != nil && takerFirstMatch.TakerOrderId != match.Data.TakerOrderId {
+					if takerLastMatch.Price - takerFirstMatch.Price != 0 {
+						if takerLastMatch.Side == "buy" {
+							_ = buyImpactTD.Add((takerLastMatch.Price - takerFirstMatch.Price)/takerFirstMatch.Price)
+						}else{
+							_ = sellImpactTD.Add((takerLastMatch.Price - takerFirstMatch.Price)/takerFirstMatch.Price)
+						}
+					}
+					takerFirstMatch = &match.Data
+				}
+				if takerFirstMatch == nil {
+					takerFirstMatch = &match.Data
+				}
+				takerLastMatch = &match.Data
+				counter ++
+					_ = gr.Close()
+					_ = file.Close()
+				}
+				quantiles[symbol] = fmt.Sprintf(
+					"%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f",
+					sellImpactTD.Quantile(0.0005),
+					sellImpactTD.Quantile(0.005),
+					sellImpactTD.Quantile(0.05),
+					sellImpactTD.Quantile(0.2),
+					sellImpactTD.Quantile(0.5),
+					buyImpactTD.Quantile(0.5),
+					buyImpactTD.Quantile(0.8),
+					buyImpactTD.Quantile(0.95),
+					buyImpactTD.Quantile(0.995),
+					buyImpactTD.Quantile(0.9995),
+				)
+				fmt.Printf(
+					"%s:\t%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
+					symbol,
+					sellImpactTD.Quantile(0.0005),
+					sellImpactTD.Quantile(0.005),
+					sellImpactTD.Quantile(0.05),
+					sellImpactTD.Quantile(0.2),
+					sellImpactTD.Quantile(0.5),
+					buyImpactTD.Quantile(0.5),
+					buyImpactTD.Quantile(0.8),
+					buyImpactTD.Quantile(0.95),
+					buyImpactTD.Quantile(0.995),
+					buyImpactTD.Quantile(0.9995),
+				)
+			}
+			//output, err := yaml.Marshal(quantiles)
+			//if err != nil {
+			//	logger.Fatal(err)
+			//} else {
+			//	fmt.Printf("%s", output)
+			//}
+
+	}
+}

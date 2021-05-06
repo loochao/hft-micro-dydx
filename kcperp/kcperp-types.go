@@ -513,3 +513,40 @@ type SystemStatus struct {
 	Msg    string `json:"msg"`
 	Status string `json:"status"`
 }
+
+type MatchWS struct {
+	Data    Match  `json:"data"`
+	Topic   string `json:"topic"`
+	Type    string `json:"type"`
+	Subject string `json:"subject"`
+}
+
+//{"data":{"makerUserId":"6087a3ac5ef8260006c4d8b9","symbol":"LINKUSDTM","sequence":1656767,"side":"buy","size":20,"price":49.511,"takerOrderId":"60931ad274332e00062a1846","makerOrderId":"60931ad235ff0c00063e0046","takerUserId":"60634b1c27acdc000609d7b8","tradeId":"60931ad23c7feb74160ff882","ts":1620253394937842861},"subject":"match","topic":"/contractMarket/execution:LINKUSDTM","type":"message"}
+type Match struct {
+	MakerUserID  string    `json:"makerUserId"`
+	Symbol       string    `json:"symbol"`
+	Sequence     int64     `json:"sequence"`
+	Side         string    `json:"side"`
+	Size         float64   `json:"size"`
+	Price        float64   `json:"price"`
+	TakerOrderId string    `json:"takerOrderId"`
+	MakerOrderId string    `json:"makerOrderId"`
+	TakerUserID  string    `json:"takerUserId"`
+	Timestamp    time.Time `json:"-"`
+}
+
+func (match *Match) UnmarshalJSON(data []byte) error {
+	type Alias Match
+	aux := struct {
+		Timestamp int64 `json:"ts"`
+		*Alias
+	}{
+		Alias: (*Alias)(match),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("json.Unmarshal error %v", err)
+		return err
+	}
+	match.Timestamp = time.Unix(0, aux.Timestamp)
+	return nil
+}
