@@ -355,14 +355,14 @@ type WSOrder struct {
 	Symbol       string    `json:"symbol"`
 	Type         string    `json:"type"`
 	Status       string    `json:"status"`
-	MatchSize    float64   `json:"matchSize,string"`
-	MatchPrice   float64   `json:"matchPrice,string"`
+	MatchSize    float64   `json:"matchSize,string,omitempty"`
+	MatchPrice   float64   `json:"matchPrice,string,omitempty"`
 	OrderType    string    `json:"orderType"`
 	Side         string    `json:"side"`
 	Price        float64   `json:"price,string,omitempty"`
 	Size         float64   `json:"size,string,omitempty"`
-	RemainSize   float64   `json:"remainSize,string"`
-	FilledSize   float64   `json:"filledSize,string"`
+	RemainSize   float64   `json:"remainSize,string,omitempty"`
+	FilledSize   float64   `json:"filledSize,string,omitempty"`
 	CanceledSize float64   `json:"canceledSize,string"`
 	TradeId      string    `json:"tradeId"`
 	ClientOid    string    `json:"clientOid"`
