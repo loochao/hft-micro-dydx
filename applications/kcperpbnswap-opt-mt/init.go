@@ -33,7 +33,6 @@ var tHttpPositionUpdateSilentTimes = make(map[string]time.Time)
 
 var mTickSizes = make(map[string]float64)
 var mMultipliers = make(map[string]float64)
-var tTickSizes = make(map[string]float64)
 var tStepSizes = make(map[string]float64)
 var tMinNotional = make(map[string]float64)
 var mtStepSizes = make(map[string]float64)
@@ -90,7 +89,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210506 15:48:31  ####")
+	logger.Debug("####  BUILD @ 20210506 16:00:40  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

@@ -26,7 +26,7 @@ func watchTakerOrderRequest(
 			if dryRun {
 				break
 			}
-			childCtx, _ := context.WithTimeout(ctx, timeout)
+			childCtx, cancel := context.WithTimeout(ctx, timeout)
 			logger.Debugf("TAKER SUBMIT %v", newOrderParam)
 			_, err := api.SubmitOrder(childCtx, newOrderParam)
 			if err != nil {
@@ -36,6 +36,7 @@ func watchTakerOrderRequest(
 					Params: newOrderParam,
 				}
 			}
+			cancel()
 		}
 	}
 }

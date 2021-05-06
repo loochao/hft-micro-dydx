@@ -7,12 +7,6 @@ import (
 )
 
 func handleMakerHttpPositions(positions []kcperp.Position) {
-	hasBuyPositions := make(map[string]bool)
-	hasSellPositions := make(map[string]bool)
-	for _, makerSymbol := range mSymbols {
-		hasBuyPositions[makerSymbol] = false
-		hasSellPositions[makerSymbol] = false
-	}
 	for _, nextPos := range positions {
 		if takerSymbol, ok := mtSymbolsMap[nextPos.Symbol]; ok {
 			if time.Now().Sub(mHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {

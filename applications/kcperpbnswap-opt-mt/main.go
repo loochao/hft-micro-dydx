@@ -84,7 +84,7 @@ func main() {
 		logger.Debugf("kcperp.GetOrderLimits error %v", err)
 		return
 	}
-	tTickSizes, tStepSizes, _, tMinNotional, _, _, err = bnswap.GetOrderLimits(mtGlobalCtx, tAPI, tSymbols)
+	_, tStepSizes, _, tMinNotional, _, _, err = bnswap.GetOrderLimits(mtGlobalCtx, tAPI, tSymbols)
 	if err != nil {
 		logger.Debugf("bnswap.GetOrderLimits error %v", err)
 		return

@@ -29,11 +29,11 @@ func watchMakerOrderRequest(
 				break
 			}
 			if request.New != nil {
-				childCtx, _ := context.WithTimeout(ctx, timeout)
+				childCtx, cancel := context.WithTimeout(ctx, timeout)
 				logger.Debugf("MAKER SUBMIT %s %s %f %d", request.New.Symbol, request.New.Side, request.New.Price, request.New.Size)
 				resp, err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
-					logger.Debugf("MAKER SUBMIT ERROR %v", err)
+					logger.Debugf("MAKER SUBMIT ERROR %s %v", request.New.Symbol, err)
 					outputOrderErrorCh <- MakerOrderNewError{
 						Error:  err,
 						Params: *request.New,
@@ -45,12 +45,13 @@ func watchMakerOrderRequest(
 						Symbol:          request.New.Symbol,
 					}
 				}
+				cancel()
 			} else if request.Cancel != nil {
-				childCtx, _ := context.WithTimeout(ctx, timeout)
+				childCtx, cancel := context.WithTimeout(ctx, timeout)
 				logger.Debugf("MAKER CANCEL ALL %s", request.Cancel.Symbol)
 				resp, err := api.CancelAllOrders(childCtx, *request.Cancel)
 				if err != nil {
-					logger.Debugf("MAKER SUBMIT ERROR %v", err)
+					logger.Debugf("MAKER SUBMIT ERROR %s %v", request.Cancel.Symbol, err)
 				} else {
 					for _, s := range resp.CancelledOrderIds {
 						outputOrderRespCh <- MakerOpenOrder{
@@ -60,6 +61,7 @@ func watchMakerOrderRequest(
 						}
 					}
 				}
+				cancel()
 			}
 		}
 	}
@@ -166,12 +168,12 @@ func isOrderProfitable(order kcperp.NewOrderParam, entryTarget float64) bool {
 		return true
 	} else if order.Side == kcperp.OrderSideSell &&
 		order.ReduceOnly &&
-		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < shortBot{
+		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < shortBot {
 		//卖出平多, 是平空价, 参考ShortBot
 		return true
 	} else if order.Side == kcperp.OrderSideSell &&
 		!order.ReduceOnly &&
-		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < longBot{
+		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < longBot {
 		//卖出开空, 是开多价差, 参考LongBot
 		return true
 	} else if order.Side == kcperp.OrderSideBuy &&
