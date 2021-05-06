@@ -50,7 +50,7 @@ func main() {
 	kcGlobalCtx, kcGlobalCancel = context.WithCancel(context.Background())
 	defer kcGlobalCancel()
 
-	_, kcperpMultipliers, kcperpTickSizes, _, err = kcperp.GetOrderLimits(kcGlobalCtx, kcperpAPI, kcperpSymbols)
+	_, kcperpMultipliers, _, _, err = kcperp.GetOrderLimits(kcGlobalCtx, kcperpAPI, kcperpSymbols)
 	if err != nil {
 		logger.Fatal(err)
 	}
