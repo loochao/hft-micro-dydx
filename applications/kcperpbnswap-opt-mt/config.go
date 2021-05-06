@@ -45,9 +45,9 @@ type Config struct {
 
 	MakerTakerSymbolsMap map[string]string `yaml:"makerTakerSymbolsMap,omitempty"`
 
-	enterDelta  *float64 `yaml:"enterDelta,omitempty"`
-	exitDelta   *float64 `yaml:"exitDelta,omitempty"`
-	orderOffset *float64 `yaml:"orderOffset,omitempty"`
+	EnterDelta  *float64 `yaml:"enterDelta,omitempty"`
+	ExitDelta   *float64 `yaml:"exitDelta,omitempty"`
+	OffsetDelta *float64 `yaml:"offsetDelta,omitempty"`
 
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`

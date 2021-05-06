@@ -37,7 +37,6 @@ func updateTakerPositions() {
 		makerMultiplier := mMultipliers[makerSymbol]
 
 		takerStepSize := tStepSizes[takerSymbol]
-		takerTickSize := tTickSizes[takerSymbol]
 		takerMinNotional := tMinNotional[takerSymbol]
 
 		makerSize := makerPosition.CurrentQty * makerMultiplier
@@ -52,7 +51,7 @@ func updateTakerPositions() {
 
 		if math.Abs(takerSizeDiff) < takerStepSize {
 			continue
-		}else if takerSizeDiff < 0 && takerPosition.PositionAmt <= 0 && -takerSizeDiff*takerTakerDepth.TakerBid*(1.0-*mtConfig.EnterSlippage) < takerMinNotional {
+		} else if takerSizeDiff < 0 && takerPosition.PositionAmt <= 0 && -takerSizeDiff*takerTakerDepth.TakerBid*(1.0-*mtConfig.EnterSlippage) < takerMinNotional {
 			continue
 		} else if takerSizeDiff > 0 && takerPosition.PositionAmt >= 0 && takerSizeDiff*takerTakerDepth.TakerAsk*(1.0+*mtConfig.EnterSlippage) < takerMinNotional {
 			continue
@@ -64,19 +63,15 @@ func updateTakerPositions() {
 		if takerSizeDiff*takerPosition.PositionAmt < 0 && math.Abs(takerSizeDiff) <= math.Abs(takerPosition.PositionAmt) {
 			reduceOnly = true
 		}
-		price := math.Round(takerTakerDepth.TakerAsk*(1.0+*mtConfig.EnterSlippage)/takerTickSize) * takerTickSize
 		side := "BUY"
 		if takerSizeDiff < 0 {
 			side = "SELL"
 			takerSizeDiff = -takerSizeDiff
-			price = math.Round(takerTakerDepth.TakerBid*(1.0-*mtConfig.EnterSlippage)/takerTickSize) * takerTickSize
 		}
 		takerOrder := bnswap.NewOrderParams{
 			Symbol:           takerSymbol,
 			Side:             side,
-			Type:             "LIMIT",
-			Price:            price,
-			TimeInForce:      "FOK",
+			Type:             bnswap.OrderTypeMarket,
 			Quantity:         takerSizeDiff,
 			ReduceOnly:       reduceOnly,
 			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
@@ -123,7 +118,8 @@ func updateMakerNewOrders() {
 	}
 	entryTarget := entryStep * *mtConfig.EnterTargetFactor
 
-	makerUSDTAvailable := mAccount.AvailableBalance
+	//得是两个市场的最小可用资金, 以防有一边用完了钱, 开不了仓
+	makerUSDTAvailable := math.Min(mAccount.AvailableBalance, *tAccount.AvailableBalance) * float64(*mtConfig.Leverage)
 
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单, 优先做空
 	for _, rank := range mtDualEnds {
@@ -145,11 +141,10 @@ func updateMakerNewOrders() {
 		if _, ok := mOpenOrders[makerSymbol]; ok {
 			continue
 		}
-		quantile, okQuantile := mtQuantiles[makerSymbol]
 		spread, okSpread := mtSpreads[makerSymbol]
 		makerPosition, okMakerPosition := mPositions[makerSymbol]
 		fundingRate, okFundingRate := mtFundingRates[makerSymbol]
-		if !okSpread || !okQuantile || !okMakerPosition || !okFundingRate {
+		if !okSpread || !okMakerPosition || !okFundingRate {
 			continue
 		}
 
@@ -161,6 +156,11 @@ func updateMakerNewOrders() {
 		makerTickSize := mTickSizes[makerSymbol]
 		takerMinNotional := tMinNotional[takerSymbol]
 		makerTakerStepSize := mtStepSizes[makerSymbol]
+
+		makerValue := makerPosition.AvgEntryPrice * makerPosition.CurrentQty * mMultipliers[makerSymbol]
+		offset := mOrderOffsets[makerSymbol]
+		enterDelta := *mtConfig.EnterDelta + *mtConfig.OffsetDelta*(makerValue/entryTarget)
+		offsetDelta := *mtConfig.ExitDelta + *mtConfig.OffsetDelta*(makerValue/entryTarget)
 
 		//if time.Now().Sub(mtLogSilentTimes[makerSymbol]) > 0 {
 		//	mtLogSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.LogInterval)

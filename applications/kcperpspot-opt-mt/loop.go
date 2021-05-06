@@ -224,21 +224,21 @@ func updateSpotNewOrders() {
 			entryValue = quantity * price
 
 			//不及一个0.8*EntryStep, 不操作
-			if entryValue < entryStep*0.8 {
-				if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
-						entryValue,
-						entryStep*0.8,
-						spotSymbol,
-						spread.LastEnter, enterDelta,
-						spread.MedianEnter, enterDelta,
-						quantity,
-					)
-					kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
-				}
-				continue
-			}
+			//if entryValue < entryStep*0.8 {
+			//	if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
+			//		logger.Debugf(
+			//			"FAILED TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
+			//			entryValue,
+			//			entryStep*0.8,
+			//			spotSymbol,
+			//			spread.LastEnter, enterDelta,
+			//			spread.MedianEnter, enterDelta,
+			//			quantity,
+			//		)
+			//		kcOpenLogSilentTimes[spotSymbol] = time.Now().Add(*kcConfig.LogInterval)
+			//	}
+			//	continue
+			//}
 			if entryValue > usdtAvailable {
 				if time.Now().Sub(kcOpenLogSilentTimes[spotSymbol]) > 0 {
 					logger.Debugf(

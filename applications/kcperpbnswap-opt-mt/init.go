@@ -68,14 +68,6 @@ var tPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
 var mtFundingRates = make(map[string]float64)
 var mtRankSymbolMap map[int]string
 
-var mBarsMapCh = make(chan common.KLinesMap)
-var mBarsMap = make(common.KLinesMap)
-var tBarsMapCh = make(chan common.KLinesMap)
-var tBarsMap = make(common.KLinesMap)
-var mtMapUpdated = make(map[string]bool)
-var mtBarsMapCh = make(chan [2]common.KLinesMap, 10)
-var mtQuantilesCh = make(chan map[string]MakerTakerDeltaQuantile, 10)
-var mtQuantiles map[string]MakerTakerDeltaQuantile
 var mtSpreads = make(map[string]*common.MakerTakerSpread)
 
 var mLastFilledBuyPrices = make(map[string]float64)
@@ -158,8 +150,6 @@ func init() {
 	}
 	logger.Debugf("DUAL ENDS RANK %d", mtDualEnds)
 
-	mtMapUpdated[TakerName] = false
-	mtMapUpdated[MakerName] = false
 	mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 
 	//hostname, err := os.Hostname()

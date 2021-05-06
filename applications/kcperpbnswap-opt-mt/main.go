@@ -101,6 +101,7 @@ func main() {
 	logger.Debugf("MERGED STEP SIZES: %v", mtStepSizes)
 
 	mtInfluxWriter, err = common.NewInfluxWriter(
+		mtGlobalCtx,
 		*mtConfig.InternalInflux.Address,
 		*mtConfig.InternalInflux.Username,
 		*mtConfig.InternalInflux.Password,
@@ -111,14 +112,10 @@ func main() {
 		logger.Debugf("common.NewInfluxWriter error %v", err)
 		return
 	}
-	defer func() {
-		err := mtInfluxWriter.Stop()
-		if err != nil {
-			logger.Warnf("stop influx writer error %v", err)
-		}
-	}()
+	defer mtInfluxWriter.Stop()
 
 	mtExternalInfluxWriter, err = common.NewInfluxWriter(
+		mtGlobalCtx,
 		*mtConfig.ExternalInflux.Address,
 		*mtConfig.ExternalInflux.Username,
 		*mtConfig.ExternalInflux.Password,
@@ -129,12 +126,7 @@ func main() {
 		logger.Debugf("common.NewInfluxWriter error %v", err)
 		return
 	}
-	defer func() {
-		err := mtExternalInfluxWriter.Stop()
-		if err != nil {
-			logger.Warnf("stop influx writer error %v", err)
-		}
-	}()
+	defer mtExternalInfluxWriter.Stop()
 
 	tUserWebsocket, err = bnswap.NewUserWebsocket(
 		mtGlobalCtx,
@@ -205,40 +197,6 @@ func main() {
 		*mtConfig.PullInterval*10, tPremiumIndexesCh,
 	)
 
-	go watchMakerBars(
-		mtGlobalCtx,
-		mAPI,
-		mSymbols,
-		*mtConfig.BarsLookback,
-		*mtConfig.PullBarsInterval,
-		*mtConfig.PullBarsRetryInterval,
-		*mtConfig.RequestInterval,
-		mBarsMapCh,
-	)
-
-	go watchTakerBars(
-		mtGlobalCtx,
-		tAPI,
-		tSymbols,
-		*mtConfig.BarsLookback,
-		*mtConfig.PullBarsInterval,
-		*mtConfig.PullBarsRetryInterval,
-		*mtConfig.RequestInterval,
-		tBarsMapCh,
-	)
-
-	go watchDeltaQuantile(
-		mtGlobalCtx,
-		mSymbols,
-		mtSymbolsMap,
-		*mtConfig.BotQuantile,
-		*mtConfig.TopQuantile,
-		*mtConfig.MinimalEnterDelta,
-		*mtConfig.MaximalExitDelta,
-		*mtConfig.MinimalBandOffset,
-		mtBarsMapCh,
-		mtQuantilesCh,
-	)
 	spreadReportCh := make(chan common.SpreadReport, 10000)
 	go reportsSaveLoop(
 		mtGlobalCtx,
@@ -495,30 +453,6 @@ func main() {
 		case tPremiumIndexes = <-tPremiumIndexesCh:
 			//logger.Debugf("%v", tPremiumIndexes)
 			handleUpdateFundingRates()
-			break
-		case mBarsMap = <-mBarsMapCh:
-			if mtMapUpdated[TakerName] {
-				mtBarsMapCh <- [2]common.KLinesMap{mBarsMap, tBarsMap}
-				mtMapUpdated[TakerName] = false
-				mtMapUpdated[MakerName] = false
-			} else {
-				mtMapUpdated[MakerName] = true
-			}
-			break
-		case tBarsMap = <-tBarsMapCh:
-			if mtMapUpdated[MakerName] {
-				mtBarsMapCh <- [2]common.KLinesMap{mBarsMap, tBarsMap}
-				mtMapUpdated[MakerName] = false
-				mtMapUpdated[TakerName] = false
-			} else {
-				mtMapUpdated[TakerName] = true
-			}
-			break
-		case qs := <-mtQuantilesCh:
-			if mtQuantiles == nil {
-				logger.Debugf("QUANTILES %v", qs)
-			}
-			mtQuantiles = qs
 			break
 		case <-influxSaveTimer.C:
 			handleSave()
