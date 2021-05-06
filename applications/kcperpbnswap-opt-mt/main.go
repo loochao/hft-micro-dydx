@@ -55,6 +55,22 @@ func main() {
 	mtGlobalCtx, mtGlobalCancel = context.WithCancel(context.Background())
 	defer mtGlobalCancel()
 
+
+	if *mtConfig.ChangeAutoDepositStatus {
+		for _, symbol := range mSymbols {
+			res, err := mAPI.ChangeAutoDepositStatus(mtGlobalCtx, kcperp.AutoDepositStatusParam{
+				Symbol: symbol,
+				Status: true,
+			})
+			if err != nil {
+				logger.Debugf("ChangeAutoDepositStatus FOR %s ERROR %v", symbol, err)
+			} else {
+				logger.Debugf("ChangeAutoDepositStatus FOR %s RESPONSE %v", symbol, res)
+			}
+			time.Sleep(time.Second)
+		}
+	}
+
 	if *mtConfig.ChangeLeverage {
 		for _, takerSymbol := range tSymbols {
 			res, err := tAPI.UpdateLeverage(mtGlobalCtx, bnswap.UpdateLeverageParams{

@@ -36,6 +36,7 @@ type Config struct {
 	Leverage       *int    `yaml:"leverage,omitempty"`
 	ChangeLeverage *bool   `yaml:"changeLeverage,omitempty"`
 	MarginType     *string `yaml:"marginType,omitempty"`
+	ChangeAutoDepositStatus *bool `yaml:"changeAutoDepositStatus,omitempty"`
 
 	LoopInterval          *time.Duration `yaml:"loopInterval,omitempty"`
 	LogInterval           *time.Duration `yaml:"logInterval,omitempty"`
