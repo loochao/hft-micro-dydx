@@ -155,7 +155,7 @@ func SystemStatusHttpLoop(
 				logger.Debugf("api.GetStatus(subCtx) error %v", err)
 				if !strings.Contains(err.Error(), "Too Many Requests") {
 					select {
-					case output <- false:
+					case output <- true:
 					default:
 						logger.Debugf("output <- false, failed ch len %d", len(output))
 					}
