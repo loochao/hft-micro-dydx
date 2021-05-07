@@ -84,6 +84,9 @@ func updateTakerPositions() {
 }
 
 func updateMakerNewOrders() {
+	if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
+		logger.Debugf("updateMakerNewOrders")
+	}
 
 	if mAccount == nil {
 		//logger.Debugf("mACCOUNT NOT READY")

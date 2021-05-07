@@ -368,6 +368,7 @@ func main() {
 						logger.Debugf("MAKER WS ORDER CANCELED %s %s %s %f %f", makerOrder.Symbol, makerOrder.ClientOID, makerOrder.Side, makerOrder.Size, makerOrder.Price)
 						mOrderSilentTimes[makerOrder.Symbol] = time.Now()
 						mBalancesUpdateTimes[makerOrder.Symbol] = time.Now()
+						tPositionsUpdateTimes[mtSymbolsMap[makerOrder.Symbol]] = time.Now()
 					} else {
 						logger.Debugf(
 							"MAKER WS ORDER FILLED %s %s SIDE %s FilledNotional %v FilledSize %f",

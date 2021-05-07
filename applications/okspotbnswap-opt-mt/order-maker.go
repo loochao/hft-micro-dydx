@@ -70,7 +70,6 @@ func cancelAllMakerOpenOrders() {
 		delete(mOpenOrders, symbol)
 		mOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderSilent)
 		mCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
-		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
 			Cancel: &okspot.CancelOrderParam{
 				Symbol:    order.Symbol,
@@ -100,7 +99,6 @@ func updateMakerOldOrders() {
 		delete(mOpenOrders, symbol)
 		mOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
 		mCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
-		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
 			Cancel: &okspot.CancelOrderParam{
 				Symbol:    order.Symbol,
