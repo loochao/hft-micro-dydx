@@ -34,7 +34,6 @@ var tHttpPositionUpdateSilentTimes = make(map[string]time.Time)
 var mTickSizes = make(map[string]float64)
 var mStepSizes = make(map[string]float64)
 var mMinSizes = make(map[string]float64)
-var tTickSizes = make(map[string]float64)
 var tStepSizes = make(map[string]float64)
 var tMinNotional = make(map[string]float64)
 var mtStepSizes = make(map[string]float64)
@@ -49,7 +48,7 @@ var mOrderSilentTimes = make(map[string]time.Time)
 var mSilentTimes = make(map[string]time.Time)
 var mOpenOrders = make(map[string]MakerOpenOrder)
 var mOrderCancelCounts = make(map[string]int)
-var mOrderCancelSilentTimes = make(map[string]time.Time)
+var mCancelSilentTimes = make(map[string]time.Time)
 var mOpenOrderCh = make(chan MakerOpenOrder, 10000)
 
 var tPositionsCh = make(chan []bnswap.Position, 10)
@@ -66,14 +65,6 @@ var tPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
 var mtFundingRates = make(map[string]float64)
 var mtRankSymbolMap map[int]string
 
-var mBarsMapCh = make(chan common.KLinesMap)
-var mBarsMap = make(common.KLinesMap)
-var tBarsMapCh = make(chan common.KLinesMap)
-var tBarsMap = make(common.KLinesMap)
-var mtMapUpdated = make(map[string]bool)
-var mtBarsMapCh = make(chan [2]common.KLinesMap, 10)
-var mtQuantilesCh = make(chan map[string]MakerTakerDeltaQuantile, 10)
-var mtQuantiles map[string]MakerTakerDeltaQuantile
 var mtSpreads = make(map[string]*common.ShortSpread)
 
 var mLastFilledBuyPrices = make(map[string]float64)
@@ -90,12 +81,13 @@ var tSystemReady = false
 var mSystemStatusCh = make(chan bool, 10)
 var tSystemStatusCh = make(chan bool, 10)
 var mtGlobalSilent = time.Now()
+var mOrderOffsets = make(map[string]Offset)
 
 var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210427 09:52:22  ####")
+	logger.Debug("####  BUILD @ 20210507 06:12:04  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -120,19 +112,26 @@ func init() {
 	}
 	mtConfig = &config
 
-
 	for makerSymbol, takerSymbol := range mtConfig.MakerTakerSymbolsMap {
 		mSymbols = append(mSymbols, makerSymbol)
 		tSymbols = append(tSymbols, takerSymbol)
 		tmSymbolsMap[takerSymbol] = makerSymbol
 		mtSymbolsMap[makerSymbol] = takerSymbol
+		if offset, ok := mtConfig.MakerOrderOffsets[makerSymbol]; ok {
+			mOrderOffsets[makerSymbol], err = NewOffset(offset)
+			if err != nil {
+				logger.Fatalf("NewOffset error %s %v", makerSymbol, err)
+			}
+		} else {
+			logger.Fatalf("Miss offset for %s", makerSymbol)
+		}
 
 		mOrderSilentTimes[makerSymbol] = time.Now()
 		mtLogSilentTimes[makerSymbol] = time.Now()
-		mSilentTimes[makerSymbol] = time.Now().Add(time.Minute)
+		mSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.RestartSilent)
 		mBalancesUpdateTimes[makerSymbol] = time.Unix(0, 0)
 		mOrderCancelCounts[makerSymbol] = 0
-		mOrderCancelSilentTimes[makerSymbol] = time.Now()
+		mCancelSilentTimes[makerSymbol] = time.Now()
 
 		tOrderSilentTimes[takerSymbol] = time.Now()
 		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
@@ -145,13 +144,11 @@ func init() {
 		mtDualEnds = append(mtDualEnds, i)
 		mtDualEnds = append(mtDualEnds, len(mSymbols)-1-i)
 	}
-	if len(mSymbols) % 2 == 1 {
+	if len(mSymbols)%2 == 1 {
 		mtDualEnds = append(mtDualEnds, len(mSymbols)/2)
 	}
 	logger.Debugf("DUAL ENDS RANK %d", mtDualEnds)
 
-	mtMapUpdated[TakerName] = false
-	mtMapUpdated[MakerName] = false
 	mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 
 	//hostname, err := os.Hostname()

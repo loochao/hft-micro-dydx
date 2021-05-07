@@ -15,60 +15,17 @@ func handleSave() {
 		return
 	}
 
-	if tAccount != nil &&
-		tAccount.MarginBalance != nil &&
-		mAccount != nil {
+	entryTarget := 0.0
 
-		mTotalBalance := mAccount.Balance
-		getAll := true
-		for makerSymbol, b := range mBalances {
-			if b.Balance != 0 {
-				if spread, ok := mtSpreads[makerSymbol]; ok {
-					mTotalBalance += b.Balance * spread.MakerDepth.TakerBid
-				} else {
-					logger.Debugf("MISS SPREAD FOR %s", makerSymbol)
-					getAll = false
-					break
-				}
-			}
+	if mAccount != nil && tAccount != nil && tAccount.AvailableBalance != nil {
+		entryStep := (mAccount.Available + *tAccount.AvailableBalance) * *mtConfig.EnterFreePct
+		if entryStep < *mtConfig.EnterMinimalStep {
+			entryStep = *mtConfig.EnterMinimalStep
 		}
-
-		fields := make(map[string]interface{})
-		if getAll {
-			totalBalance := *tAccount.MarginBalance + mTotalBalance
-			netWorth := totalBalance / *mtConfig.StartValue
-			fields["totalBalance"] = totalBalance
-			fields["makerBalance"] = mTotalBalance
-			fields["netWorth"] = netWorth
-		}
-
-		fields["takerBalance"] = *tAccount.MarginBalance
-		fields["startValue"] = *mtConfig.StartValue
-		fields["makerAvailable"] = mAccount.Available
-		if tAccount.AvailableBalance != nil {
-			fields["takerAvailable"] = *tAccount.AvailableBalance
-		}
-		if tAccount.UnrealizedProfit != nil {
-			fields["takerUnrealizedProfit"] = *tAccount.UnrealizedProfit
-		}
-		pt, err := client.NewPoint(
-			*mtConfig.InternalInflux.Measurement,
-			map[string]string{
-				"type": "balance",
-			},
-			fields,
-			time.Now().UTC(),
-		)
-		if err != nil {
-			logger.Debugf("client.NewPoint error %v", err)
-		} else {
-			err = mtInternalInfluxWriter.PushPoint(pt)
-			if err != nil {
-				logger.Debugf("mtInternalInfluxWriter.PushPoint error %v", err)
-			}
-		}
+		entryTarget = entryStep * *mtConfig.EnterTargetFactor
 	}
 
+	totalUnHedgedValue := 0.0
 	for _, makerSymbol := range mSymbols {
 		takerSymbol := mtSymbolsMap[makerSymbol]
 		fields := make(map[string]interface{})
@@ -76,6 +33,18 @@ func handleSave() {
 			fields["makerSize"] = makerBalance.Balance
 			if spread, ok := mtSpreads[makerSymbol]; ok {
 				fields["makerValue"] = makerBalance.Balance * spread.MakerDepth.MidPrice
+
+				if entryTarget != 0 {
+					currentSpotSize := makerBalance.Balance
+					currentSpotValue := currentSpotSize * spread.MakerDepth.MidPrice
+					fields["enterDelta"] = *mtConfig.EnterDelta + *mtConfig.OffsetDelta*(currentSpotValue/entryTarget)
+					fields["exitDelta"] = *mtConfig.ExitDelta + *mtConfig.OffsetDelta*(currentSpotValue/entryTarget)
+				}
+				if takerPosition, ok := tPositions[takerSymbol]; ok {
+					unHedgedValue := (makerBalance.Balance + takerPosition.PositionAmt) * spread.MakerDepth.MidPrice
+					totalUnHedgedValue += unHedgedValue
+					fields["unHedgedValue"] = unHedgedValue
+				}
 			}
 		}
 		if takerPosition, ok := tPositions[takerSymbol]; ok {
@@ -106,14 +75,6 @@ func handleSave() {
 		if realisedSpread, ok := mtRealisedSpread[makerSymbol]; ok {
 			fields["realisedSpread"] = realisedSpread
 		}
-		if quantile, ok := mtQuantiles[makerSymbol]; ok {
-			fields["quantileShortBot"] = quantile.ShortBot
-			fields["quantileShortTop"] = quantile.ShortTop
-			fields["quantileLongBot"] = quantile.LongBot
-			fields["quantileLongTop"] = quantile.LongTop
-			fields["quantileMid"] = quantile.Mid
-			fields["quantileMaClose"] = quantile.MaClose
-		}
 		if time.Now().Sub(mtGlobalSilent) > 0 {
 			fields["globalSilent"] = 0
 		} else {
@@ -125,6 +86,61 @@ func handleSave() {
 				"takerSymbol": takerSymbol,
 				"makerSymbol": makerSymbol,
 				"type":        "symbol",
+			},
+			fields,
+			time.Now().UTC(),
+		)
+		if err != nil {
+			logger.Debugf("client.NewPoint error %v", err)
+		} else {
+			err = mtInternalInfluxWriter.PushPoint(pt)
+			if err != nil {
+				logger.Debugf("mtInternalInfluxWriter.PushPoint error %v", err)
+			}
+		}
+	}
+
+	if tAccount != nil &&
+		tAccount.MarginBalance != nil &&
+		mAccount != nil {
+
+		mTotalBalance := mAccount.Balance
+		getAll := true
+		for makerSymbol, b := range mBalances {
+			if b.Balance != 0 {
+				if spread, ok := mtSpreads[makerSymbol]; ok {
+					mTotalBalance += b.Balance * spread.MakerDepth.TakerBid
+				} else {
+					logger.Debugf("MISS SPREAD FOR %s", makerSymbol)
+					getAll = false
+					break
+				}
+			}
+		}
+
+		fields := make(map[string]interface{})
+		if getAll {
+			totalBalance := *tAccount.MarginBalance + mTotalBalance
+			netWorth := totalBalance / *mtConfig.StartValue
+			fields["totalBalance"] = totalBalance
+			fields["makerBalance"] = mTotalBalance
+			fields["totalUnHedgedValue"] = totalUnHedgedValue
+			fields["netWorth"] = netWorth
+		}
+
+		fields["takerBalance"] = *tAccount.MarginBalance
+		fields["startValue"] = *mtConfig.StartValue
+		fields["makerAvailable"] = mAccount.Available
+		if tAccount.AvailableBalance != nil {
+			fields["takerAvailable"] = *tAccount.AvailableBalance
+		}
+		if tAccount.UnrealizedProfit != nil {
+			fields["takerUnrealizedProfit"] = *tAccount.UnrealizedProfit
+		}
+		pt, err := client.NewPoint(
+			*mtConfig.InternalInflux.Measurement,
+			map[string]string{
+				"type": "balance",
 			},
 			fields,
 			time.Now().UTC(),

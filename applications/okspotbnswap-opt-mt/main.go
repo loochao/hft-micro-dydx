@@ -86,7 +86,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	tTickSizes, tStepSizes, _, tMinNotional, _, _, err = bnswap.GetOrderLimits(mtGlobalCtx, tAPI, tSymbols)
+	_, tStepSizes, _, tMinNotional, _, _, err = bnswap.GetOrderLimits(mtGlobalCtx, tAPI, tSymbols)
 	if err != nil {
 		logger.Debugf("bnswap.GetOrderLimits error %v", err)
 		return
@@ -190,40 +190,6 @@ func main() {
 		*mtConfig.PullInterval*10, tPremiumIndexesCh,
 	)
 
-	go watchMakerBars(
-		mtGlobalCtx,
-		mAPI,
-		mSymbols,
-		*mtConfig.BarsLookback,
-		*mtConfig.PullBarsInterval,
-		*mtConfig.PullBarsRetryInterval,
-		*mtConfig.RequestInterval,
-		mBarsMapCh,
-	)
-
-	go watchTakerBars(
-		mtGlobalCtx,
-		tAPI,
-		tSymbols,
-		*mtConfig.BarsLookback,
-		*mtConfig.PullBarsInterval,
-		*mtConfig.PullBarsRetryInterval,
-		*mtConfig.RequestInterval,
-		tBarsMapCh,
-	)
-
-	go watchDeltaQuantile(
-		mtGlobalCtx,
-		mSymbols,
-		mtSymbolsMap,
-		*mtConfig.BotQuantile,
-		*mtConfig.TopQuantile,
-		*mtConfig.MinimalEnterDelta,
-		*mtConfig.MaximalExitDelta,
-		*mtConfig.MinimalBandOffset,
-		mtBarsMapCh,
-		mtQuantilesCh,
-	)
 	spreadReportCh := make(chan common.SpreadReport, 10000)
 	go reportsSaveLoop(
 		mtGlobalCtx,
@@ -451,30 +417,6 @@ func main() {
 		case tPremiumIndexes = <-tPremiumIndexesCh:
 			//logger.Debugf("%v", tPremiumIndexes)
 			handleUpdateFundingRates()
-			break
-		case mBarsMap = <-mBarsMapCh:
-			if mtMapUpdated[TakerName] {
-				mtBarsMapCh <- [2]common.KLinesMap{mBarsMap, tBarsMap}
-				mtMapUpdated[TakerName] = false
-				mtMapUpdated[MakerName] = false
-			} else {
-				mtMapUpdated[MakerName] = true
-			}
-			break
-		case tBarsMap = <-tBarsMapCh:
-			if mtMapUpdated[MakerName] {
-				mtBarsMapCh <- [2]common.KLinesMap{mBarsMap, tBarsMap}
-				mtMapUpdated[MakerName] = false
-				mtMapUpdated[TakerName] = false
-			} else {
-				mtMapUpdated[TakerName] = true
-			}
-			break
-		case qs := <-mtQuantilesCh:
-			//if mtQuantiles == nil {
-			//	logger.Debugf("QUANTILES %v", qs)
-			//}
-			mtQuantiles = qs
 			break
 		case <-influxSaveTimer.C:
 			handleSave()

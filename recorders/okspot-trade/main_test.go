@@ -10,7 +10,7 @@ import (
 
 func TestGzipFile(t *testing.T) {
 
-	file, err := os.Open("/Users/chenjilin/MarketData/kcperp-trade/20210505-LINKUSDTM.okspot.trade.jl.gz")
+	file, err := os.Open("/Users/chenjilin/Downloads/okspot-trade/20210507-LINK-USDT.okspot.trade.jl.gz")
 	if err != nil {
 		t.Fatal(err)
 	}
