@@ -11,7 +11,8 @@ import (
 )
 
 func WatchBalancesFromHttp(
-	ctx context.Context, api *API,
+	ctx context.Context,
+	api *API,
 	interval time.Duration,
 	output chan []Balance,
 ) {

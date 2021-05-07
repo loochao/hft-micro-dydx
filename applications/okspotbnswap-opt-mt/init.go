@@ -39,7 +39,7 @@ var tMinNotional = make(map[string]float64)
 var mtStepSizes = make(map[string]float64)
 
 var mAccount *okspot.Balance
-var mBalancesCh = make(chan []okspot.Balance, 10)
+var mBalancesCh = make(chan []okspot.Balance, 100)
 var mBalances = make(map[string]okspot.Balance)
 var mBalancesUpdateTimes = make(map[string]time.Time)
 var mOrderRequestChs = make(map[string]chan MakerOrderRequest)
@@ -86,7 +86,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210507 07:22:41  ####")
+	logger.Debug("####  BUILD @ 20210507 07:31:11  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

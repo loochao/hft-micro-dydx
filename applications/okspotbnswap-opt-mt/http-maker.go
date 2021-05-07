@@ -9,6 +9,7 @@ import (
 
 
 func handleMakerHttpBalances(balances []okspot.Balance) {
+	logger.Debugf("handleMakerHttpBalances %v", balances)
 	for _, balance := range balances {
 		if balance.Currency == "USDT" {
 			balance := balance
@@ -22,6 +23,7 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 			continue
 		}
 		makerSymbol := balance.Currency + "-USDT"
+		logger.Debugf("%s", makerSymbol)
 		if takerSymbol, ok := mtSymbolsMap[makerSymbol]; ok {
 			if time.Now().Sub(mHttpPositionUpdateSilentTimes[makerSymbol]) < 0 {
 				continue
