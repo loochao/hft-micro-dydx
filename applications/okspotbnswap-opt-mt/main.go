@@ -465,6 +465,12 @@ func main() {
 					cancelAllMakerOpenOrders()
 				}
 			} else {
+				if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
+					logger.Debugf(
+						"SYSTEM NOT READY mSystemReady %v tSystemReady %v mtGlobalSilent %v",
+						mSystemReady, tSystemReady, time.Now().Sub(mtGlobalSilent),
+					)
+				}
 				if len(mOpenOrders) > 0 {
 					for makerSymbol, order := range mOpenOrders {
 						select {
