@@ -81,12 +81,13 @@ var mSystemStatusCh = make(chan bool, 10)
 var tSystemStatusCh = make(chan bool, 10)
 var mtGlobalSilent = time.Now()
 var mOrderOffsets = make(map[string]Offset)
+var mtSaveSilent = time.Now()
 
 var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210507 07:41:06  ####")
+	logger.Debug("####  BUILD @ 20210507 07:43:47  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

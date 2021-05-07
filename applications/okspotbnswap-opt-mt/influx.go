@@ -15,6 +15,10 @@ func handleSave() {
 		return
 	}
 
+	if time.Now().Sub(mtSaveSilent) < 0 {
+		return
+	}
+
 	entryTarget := 0.0
 
 	if mAccount != nil && tAccount != nil && tAccount.AvailableBalance != nil {

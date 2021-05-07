@@ -383,6 +383,7 @@ func main() {
 						} else if makerOrder.Side == okspot.OrderSideBuy {
 							mLastFilledBuyPrices[makerOrder.Symbol] = lastFilledPrice
 						}
+						mtSaveSilent = time.Now().Add(*mtConfig.HttpSilent)
 					}
 				}
 			}
@@ -408,6 +409,7 @@ func main() {
 							logger.Debugf("%s REALISED LONG SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
 						}
 					}
+					mtSaveSilent = time.Now().Add(*mtConfig.HttpSilent)
 				}
 			}
 			break
