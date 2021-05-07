@@ -287,7 +287,7 @@ func main() {
 	go okspot.SystemStatusHttpLoop(
 		mtGlobalCtx,
 		mAPI,
-		*mtConfig.PullInterval/2,
+		*mtConfig.PullInterval*5,
 		mSystemStatusCh,
 	)
 
