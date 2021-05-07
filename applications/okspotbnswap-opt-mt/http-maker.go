@@ -23,10 +23,11 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 		}
 		makerSymbol := balance.Currency + "-USDT"
 		if takerSymbol, ok := mtSymbolsMap[makerSymbol]; ok {
+			hasBalances[makerSymbol] = true
+
 			if time.Now().Sub(mHttpPositionUpdateSilentTimes[makerSymbol]) < 0 {
 				continue
 			}
-			hasBalances[makerSymbol] = true
 			mBalancesUpdateTimes[makerSymbol] = time.Now()
 			var lastBalance *okspot.Balance
 			if b, ok := mBalances[makerSymbol]; ok {
