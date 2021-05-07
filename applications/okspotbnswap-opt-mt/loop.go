@@ -84,9 +84,9 @@ func updateTakerPositions() {
 }
 
 func updateMakerNewOrders() {
-	if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
-		logger.Debugf("updateMakerNewOrders")
-	}
+	//if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
+	//	logger.Debugf("updateMakerNewOrders")
+	//}
 
 	if mAccount == nil {
 		//logger.Debugf("mACCOUNT NOT READY")
@@ -94,16 +94,16 @@ func updateMakerNewOrders() {
 	}
 
 	if tAccount == nil || tAccount.AvailableBalance == nil {
-		if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
-			logger.Debugf("tACCOUNT NOT READY")
-		}
+		//if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
+		//	logger.Debugf("tACCOUNT NOT READY")
+		//}
 		return
 	}
 
 	if len(mtRankSymbolMap) == 0 {
-		if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
-			logger.Debugf("RankSymbolMAP NOT READY")
-		}
+		//if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
+		//	logger.Debugf("RankSymbolMAP NOT READY")
+		//}
 		return
 	}
 
@@ -129,33 +129,33 @@ func updateMakerNewOrders() {
 		takerSymbol := mtSymbolsMap[makerSymbol]
 		//需要保证两边都有仓位更新，才调整现货仓位
 		if time.Now().Sub(mBalancesUpdateTimes[makerSymbol]) > *mtConfig.BalancePositionMaxAge {
-			if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
-				logger.Debugf("%s time.Now().Sub(mBalancesUpdateTimes[makerSymbol]) %v", makerSymbol, time.Now().Sub(mBalancesUpdateTimes[makerSymbol]))
-			}
+			//if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
+			//	logger.Debugf("%s time.Now().Sub(mBalancesUpdateTimes[makerSymbol]) %v", makerSymbol, time.Now().Sub(mBalancesUpdateTimes[makerSymbol]))
+			//}
 			continue
 		}
 		if time.Now().Sub(tPositionsUpdateTimes[takerSymbol]) > *mtConfig.BalancePositionMaxAge {
-			if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
-				logger.Debugf("%s time.Now().Sub(tPositionsUpdateTimes[takerSymbol]) %v", makerSymbol, time.Now().Sub(tPositionsUpdateTimes[takerSymbol]))
-			}
+			//if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
+			//	logger.Debugf("%s time.Now().Sub(tPositionsUpdateTimes[takerSymbol]) %v", makerSymbol, time.Now().Sub(tPositionsUpdateTimes[takerSymbol]))
+			//}
 			continue
 		}
 		if time.Now().Sub(mOrderSilentTimes[makerSymbol]) < 0 {
-			if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
-				logger.Debugf("%s time.Now().Sub(mOrderSilentTimes[makerSymbol]) < 0", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
+			//	logger.Debugf("%s time.Now().Sub(mOrderSilentTimes[makerSymbol]) < 0", makerSymbol)
+			//}
 			continue
 		}
 		if time.Now().Sub(mSilentTimes[makerSymbol]) < 0 {
-			if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
-				logger.Debugf("%s time.Now().Sub(mSilentTimes[makerSymbol]) < 0", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
+			//	logger.Debugf("%s time.Now().Sub(mSilentTimes[makerSymbol]) < 0", makerSymbol)
+			//}
 			continue
 		}
 		if _, ok := mOpenOrders[makerSymbol]; ok {
-			if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
-				logger.Debugf("%s mOpenOrders[makerSymbol]) < 0", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(time.Second*15)) < *mtConfig.LoopInterval {
+			//	logger.Debugf("%s mOpenOrders[makerSymbol]) < 0", makerSymbol)
+			//}
 			continue
 		}
 		spread, okSpread := mtSpreads[makerSymbol]
