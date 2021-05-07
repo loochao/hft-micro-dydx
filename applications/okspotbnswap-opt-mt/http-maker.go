@@ -63,6 +63,7 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 				Balance:   0.0,
 			}
 			mBalancesUpdateTimes[makerSymbol] = time.Now()
+			mBalances[makerSymbol] = balance
 			if lastBalance == nil ||
 				lastBalance.Balance != balance.Balance {
 				logger.Debugf("MAKER HTTP BALANCE %s", balance.ToString())
