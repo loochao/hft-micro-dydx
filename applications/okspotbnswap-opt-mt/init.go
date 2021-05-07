@@ -47,7 +47,6 @@ var mNewOrderErrorCh chan MakerOrderNewError
 var mOrderSilentTimes = make(map[string]time.Time)
 var mSilentTimes = make(map[string]time.Time)
 var mOpenOrders = make(map[string]MakerOpenOrder)
-var mOrderCancelCounts = make(map[string]int)
 var mCancelSilentTimes = make(map[string]time.Time)
 var mOpenOrderCh = make(chan MakerOpenOrder, 10000)
 
@@ -87,7 +86,7 @@ var mtConfig *Config
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210507 06:47:11  ####")
+	logger.Debug("####  BUILD @ 20210507 07:16:06  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -130,7 +129,6 @@ func init() {
 		mtLogSilentTimes[makerSymbol] = time.Now()
 		mSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.RestartSilent)
 		mBalancesUpdateTimes[makerSymbol] = time.Unix(0, 0)
-		mOrderCancelCounts[makerSymbol] = 0
 		mCancelSilentTimes[makerSymbol] = time.Now()
 
 		tOrderSilentTimes[takerSymbol] = time.Now()

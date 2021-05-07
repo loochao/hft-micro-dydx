@@ -35,7 +35,7 @@ func handleMakerWSAccount(balances []okspot.Balance) {
 				//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 				tOrderSilentTimes[takerSymbol] = time.Now()
 				mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
-				if lastBalance != nil && lastBalance.Balance != balance.Balance && balance.Balance != 0 {
+				if lastBalance != nil && lastBalance.Balance != balance.Balance {
 					logger.Debugf("ENTER SILENT %s", makerSymbol)
 					mSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.EnterSilent)
 					mtLoopTimer.Reset(time.Nanosecond)

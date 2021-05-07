@@ -366,8 +366,8 @@ func main() {
 					}
 					if makerOrder.State == okspot.OrderStateCanceled {
 						logger.Debugf("MAKER WS ORDER CANCELED %s %s %s %f %f", makerOrder.Symbol, makerOrder.ClientOID, makerOrder.Side, makerOrder.Size, makerOrder.Price)
-						mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
-						mBalancesUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)
+						mOrderSilentTimes[makerOrder.Symbol] = time.Now()
+						mBalancesUpdateTimes[makerOrder.Symbol] = time.Now()
 					} else {
 						logger.Debugf(
 							"MAKER WS ORDER FILLED %s %s SIDE %s FilledNotional %v FilledSize %f",

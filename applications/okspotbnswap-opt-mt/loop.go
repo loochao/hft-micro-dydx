@@ -165,7 +165,7 @@ func updateMakerNewOrders() {
 		if spread.LastLeave < exitDelta &&
 			spread.MedianLeave < exitDelta &&
 			fundingRate < *mtConfig.MinimalKeepFundingRate &&
-			makerBalance.Balance > 0 {
+			makerBalance.Balance > makerMinSize  {
 			makerSize := makerBalance.Balance
 			price := math.Ceil(makerDepth.MidPrice*(1.0+makerOffset.Top)/makerTickSize) * makerTickSize
 			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
@@ -200,7 +200,6 @@ func updateMakerNewOrders() {
 					NewOrderParam: &order,
 				}
 				mOrderSilentTimes[makerSymbol] = time.Now()
-				mOrderCancelCounts[makerSymbol] = 0
 				mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 				mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
 				mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
@@ -309,7 +308,6 @@ func updateMakerNewOrders() {
 				NewOrderParam: &order,
 			}
 			mOrderSilentTimes[makerSymbol] = time.Now()
-			mOrderCancelCounts[makerSymbol] = 0
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.OrderSilent)
 			mHttpPositionUpdateSilentTimes[makerSymbol] = time.Now().Add(*mtConfig.HttpSilent)
 			mOrderRequestChs[makerSymbol] <- MakerOrderRequest{New: &order}
