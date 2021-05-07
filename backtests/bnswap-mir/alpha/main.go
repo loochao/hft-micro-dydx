@@ -40,7 +40,7 @@ func main() {
 		mirsMap[symbol] = make(map[time.Time][2]float64)
 
 		file, err := os.Open(
-			fmt.Sprintf("/Users/chenjilin/MarketData/mir/8h.mir.%s.csv", symbol),
+			fmt.Sprintf("/Users/chenjilin/MarketData/mir/4h.mir.%s.csv", symbol),
 		)
 		if err != nil {
 			logger.Debugf("os.Open() error %v", err)
@@ -86,9 +86,10 @@ func main() {
 	entryValue := 1.0 / float64(len(symbols))
 	netWorth := 1.0
 	commission := -0.000
+	tradeCount := 20
 timeLoop:
 	for _, t := range times {
-		if t.Sub(t.Truncate(time.Hour)) != time.Minute*55 {
+		if t.Sub(t.Truncate(time.Hour*4)) != time.Minute*15 {
 			continue
 		}
 		//if t.Truncate(time.Hour*4).Sub(t) != 0{
@@ -99,7 +100,7 @@ timeLoop:
 		mirs := make(map[string]float64)
 		for i, symbol := range symbols {
 			if v, ok := mirsMap[symbol][t]; ok {
-				alphas[i] = -v[0]
+				alphas[i] = v[0]
 				mirs[symbol] = v[0]
 				prices[symbol] = v[1]
 			} else {
@@ -114,7 +115,7 @@ timeLoop:
 		}
 		//logger.Debugf("%v", sm)
 		for rank, symbol := range sm {
-			if rank < len(symbols)/2 {
+			if rank < tradeCount {
 				if sizes[symbol] == 0 {
 					netWorth += entryValue * commission
 					sizes[symbol] = -entryValue
@@ -126,7 +127,7 @@ timeLoop:
 					sizes[symbol] = -entryValue
 					costs[symbol] = prices[symbol]
 				}
-			} else if rank >= len(symbols)/2  {
+			} else if rank >= len(symbols) - tradeCount  {
 				if sizes[symbol] == 0 {
 					netWorth += entryValue * commission
 					sizes[symbol] = entryValue
