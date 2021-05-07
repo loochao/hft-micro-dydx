@@ -186,7 +186,7 @@ func updateMakerNewOrders() {
 			fundingRate < *mtConfig.MinimalKeepFundingRate &&
 			makerBalance.Balance > makerMinSize {
 			makerSize := makerBalance.Balance
-			price := math.Ceil(makerDepth.MidPrice*(1.0+makerOffset.Top)/makerTickSize) * makerTickSize
+			price := math.Floor(makerDepth.MidPrice*(1.0+makerOffset.Top)/makerTickSize) * makerTickSize
 			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
 			if fundingRate > *mtConfig.MinimalKeepFundingRate*0.5 {
 				entryValue = math.Max(2*entryStep, makerSize*price*0.5)
@@ -228,7 +228,7 @@ func updateMakerNewOrders() {
 			spread.MedianEnter > enterDelta &&
 			fundingRate > *mtConfig.MinimalEnterFundingRate {
 			makerSize := makerBalance.Balance
-			price := math.Floor(makerDepth.MidPrice*(1.0+makerOffset.Bot)/makerTickSize) * makerTickSize
+			price := math.Ceil(makerDepth.MidPrice*(1.0+makerOffset.Bot)/makerTickSize) * makerTickSize
 			targetValue := makerSize*price + entryStep
 			if targetValue > entryTarget {
 				targetValue = entryTarget
