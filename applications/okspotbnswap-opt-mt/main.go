@@ -323,14 +323,14 @@ func main() {
 			logger.Debugf("MAKER USER WS DONE, EXIT MAIN LOOP")
 			return
 		case mSystemReady = <-mSystemStatusCh:
-			//logger.Debugf("mSystemStatusCh %v", mSystemReady)
 			if !mSystemReady {
+				logger.Debugf("mSystemStatusCh %v", mSystemReady)
 				mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 			}
 			break
 		case tSystemReady = <-tSystemStatusCh:
-			//logger.Debugf("tSystemStatusCh %v", tSystemReady)
 			if !tSystemReady {
+				logger.Debugf("tSystemStatusCh %v", tSystemReady)
 				mtGlobalSilent = time.Now().Add(*mtConfig.RestartSilent)
 			}
 			break
