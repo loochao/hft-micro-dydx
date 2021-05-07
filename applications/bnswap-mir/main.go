@@ -69,7 +69,7 @@ func main() {
 		}
 	}
 
-	swapTickSizes, swapStepSizes, _, swapMinNotional, _, _, err = bnswap.GetOrderLimits(swapGlobalCtx, swapAPI, swapSymbols)
+	_, swapStepSizes, _, swapMinNotional, _, _, err = bnswap.GetOrderLimits(swapGlobalCtx, swapAPI, swapSymbols)
 	if err != nil {
 		logger.Debugf("bnswap.GetOrderLimits error %v", err)
 		return
@@ -150,56 +150,18 @@ func main() {
 	go bnswap.StreamTradeMIR(
 		swapGlobalCtx,
 		swapGlobalCancel,
-		*swapConfig.ProxyAddress
+		*swapConfig.ProxyAddress,
 		*swapConfig.MirLookback,
-		*swapConfig.MirMinTradeValue,
 		*swapConfig.MirUpdateInterval,
+		*swapConfig.MirUpdateOffset,
+		swapConfig.MirMinTradeValues,
 		mirChannels,
 	)
-	//ctx context.Context,
-	//	cancel context.CancelFunc,
-	//	proxyAddress string,
-	//	lookback time.Duration,
-	//	minTradeValue float64,
-	//	updateInterval time.Duration,
-	//	channels map[string]chan common.MIR,
-	for start := 0; start < len(swapSymbols); start += *swapConfig.OrderBookBatchSize {
-		end := start + *swapConfig.OrderBookBatchSize
-		if end > len(swapSymbols) {
-			end = len(swapSymbols)
-		}
-		subTakerRowDepthChs := make(map[string]chan *common.DepthRawMessage)
-		for _, symbol := range swapSymbols[start:end] {
-			bnswapRawDepthChs[symbol] = make(chan *common.DepthRawMessage, 100)
-			subTakerRowDepthChs[symbol] = bnswapRawDepthChs[symbol]
-		}
-		go StreamDepth5(
-			swapGlobalCtx,
-			swapGlobalCancel,
-			*swapConfig.ProxyAddress,
-			subTakerRowDepthChs,
-		)
-	}
-
-	bnswapWalkedDepth5Ch := make(chan common.WalkedTakerDepth, len(swapSymbols)*100)
-	for takerSymbol := range swapConfig.SymbolsMap {
-		go StreamWalkedDepth(
-			swapGlobalCtx,
-			takerSymbol,
-			*swapConfig.OrderBookTimeDecay,
-			*swapConfig.OrderBookTimeBias,
-			*swapConfig.OrderBookTakerImpact,
-			*swapConfig.ReportCount,
-			bnswapRawDepthChs[takerSymbol],
-			swapDepthReportCh,
-			bnswapWalkedDepth5Ch,
-		)
-	}
 
 	swapNewOrderErrorCh = make(chan TakerOrderNewError, len(swapSymbols)*2)
 	for _, takerSymbol := range swapSymbols {
 		swapOrderRequestChs[takerSymbol] = make(chan bnswap.NewOrderParams, 2)
-		go watchTakerOrderRequest(
+		go watchOrderRequest(
 			swapGlobalCtx,
 			swapAPI,
 			*swapConfig.OrderTimeout,
@@ -216,19 +178,6 @@ func main() {
 		swapSystemStatusCh,
 	)
 
-	go bnswap.StreamTradeMIR()
-
-	go StreamMergedSignals(
-		swapGlobalCtx,
-		swapGlobalCancel,
-		*swapConfig.ProxyAddress,
-		swapConfig.Exchanges,
-		swapConfig.SymbolsMap,
-		*swapConfig.ImbalanceLookback,
-		*swapConfig.ImbalanceTimeToLive,
-		*swapConfig.ImbalanceUpdateInterval,
-		swapMirCh,
-	)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -259,7 +208,7 @@ func main() {
 			break
 
 		case s := <-swapMirCh:
-			swapMergedSignals[s.Symbol] = s
+			handleMirPosition(s)
 
 		case account := <-swapAccountCh:
 			handleTakerHttpAccount(account)
@@ -281,16 +230,8 @@ func main() {
 				swapHttpPositionUpdateSilentTimes[swapOrder.Symbol] = time.Now().Add(*swapConfig.HttpSilent)
 				if _, ok := swapSymbolsMap[swapOrder.Symbol]; ok {
 					logger.Debugf("%s FILLED %s %f %f", swapOrder.Symbol, swapOrder.Side, swapOrder.FilledAccumulatedQuantity, swapOrder.AveragePrice)
-					if lastEnterPrice, ok := swapLastEnterPrices[swapOrder.Symbol]; ok {
-						swapEnterOffset[swapOrder.Symbol] = (swapOrder.AveragePrice - lastEnterPrice) / lastEnterPrice
-						logger.Debugf("%s ENTER OFFSET %f", swapOrder.Symbol, swapEnterOffset[swapOrder.Symbol])
-					}
-					swapLastEnterPrices[swapOrder.Symbol] = swapOrder.AveragePrice
 				}
 			}
-			break
-		case depth := <-bnswapWalkedDepth5Ch:
-			swapMirs[depth.Symbol] = depth
 			break
 		case <-internalInfluxSaveTimer.C:
 			handleSave()
@@ -317,7 +258,7 @@ func main() {
 			break
 		case <-swapLoopTimer.C:
 			if swapSystemReady && time.Now().Sub(swapGlobalSilent) > 0 {
-				updateNewOrders()
+				updatePositions()
 			} else {
 				if time.Now().Truncate(time.Second*15).Add(*swapConfig.LoopInterval).Sub(time.Now()) > 0 {
 					logger.Debugf("SYSTEM NOT READY SWAP %v SILENT TIME %v",

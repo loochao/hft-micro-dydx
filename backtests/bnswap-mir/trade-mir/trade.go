@@ -207,7 +207,7 @@ func main() {
 					fields["value80"] = valueTd.Quantile(0.80)
 					fields["value50"] = valueTd.Quantile(0.50)
 					pt, err := client.NewPoint(
-						fmt.Sprintf("bnswap-trade-mir-%v", lookback),
+						fmt.Sprintf("bnswap-mir-%v", lookback),
 						map[string]string{
 							"symbol": symbol,
 						},

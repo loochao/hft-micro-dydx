@@ -9,11 +9,9 @@ import (
 func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 	for _, pos := range data.Account.Positions {
 		if _, ok := swapSymbolsMap[pos.Symbol]; !ok {
-			logger.Debugf("not in tm")
 			continue
 		}
 		if pos.PositionSide != "BOTH" {
-			logger.Debugf("not both")
 			continue
 		}
 		var lastPosition *bnswap.Position

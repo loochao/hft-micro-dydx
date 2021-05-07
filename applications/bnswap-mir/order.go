@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func watchTakerOrderRequest(
+func watchOrderRequest(
 	ctx context.Context,
 	api *bnswap.API,
 	timeout time.Duration,
@@ -16,7 +16,7 @@ func watchTakerOrderRequest(
 	outputOrderErrorCh chan TakerOrderNewError,
 ) {
 	defer func() {
-		logger.Debugf("EXIT watchTakerOrderRequest")
+		logger.Debugf("EXIT watchOrderRequest")
 	}()
 	for {
 		select {
@@ -26,7 +26,7 @@ func watchTakerOrderRequest(
 			if dryRun {
 				break
 			}
-			childCtx, _ := context.WithTimeout(ctx, timeout)
+			childCtx, cancel := context.WithTimeout(ctx, timeout)
 			_, err := api.SubmitOrder(childCtx, param)
 			if err != nil {
 				logger.Debugf("SUBMIT ERROR %s %s %v", param.Symbol, param.NewClientOrderId, err)
@@ -35,6 +35,7 @@ func watchTakerOrderRequest(
 					Params: param,
 				}
 			}
+			cancel()
 		}
 	}
 }

@@ -23,7 +23,6 @@ var swapAPI *bnswap.API
 var swapUserWebsocket *bnswap.UserWebsocket
 var swapHttpPositionUpdateSilentTimes = make(map[string]time.Time)
 
-var swapTickSizes = make(map[string]float64)
 var swapStepSizes = make(map[string]float64)
 var swapMinNotional = make(map[string]float64)
 
@@ -43,7 +42,8 @@ var swapSystemReady = false
 var swapSystemStatusCh = make(chan bool, 10)
 var swapGlobalSilent = time.Now()
 
-var swapTargetPositions map[string]float64
+var swapMirPositions = make(map[string]float64)
+var swapLastMirPrices = make(map[string]float64)
 
 var swapMirs = make(map[string]common.MIR)
 var swapMirCh = make(chan common.MIR, 10000)
@@ -77,7 +77,7 @@ func init() {
 	}
 	swapConfig = &config
 
-	for _, symbol := range swapConfig.Symbols {
+	for symbol := range swapConfig.MirMinTradeValues {
 		swapSymbols = append(swapSymbols, symbol)
 		swapSymbolsMap[symbol] = symbol
 		swapLogSilentTimes[symbol] = time.Now()

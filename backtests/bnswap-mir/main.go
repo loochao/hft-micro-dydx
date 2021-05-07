@@ -95,7 +95,7 @@ func main() {
 				fields["qBot"] = mirTd.Quantile(0.95)
 				fields["qValue"] = sizeTD.Quantile(0.8)
 				pt, err := client.NewPoint(
-					"bnswap-trade-mir",
+					"bnswap-mir",
 					map[string]string{
 						"symbol": symbol,
 					},

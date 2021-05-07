@@ -39,18 +39,19 @@ type Config struct {
 	PullInterval   *time.Duration `yaml:"pullInterval,omitempty"`
 	PositionMaxAge *time.Duration `yaml:"positionMaxAge,omitempty"`
 
-	Symbols           map[string]string `yaml:"symbols,omitempty"`
-	MirLookback       *time.Duration    `yaml:"mirLookback,omitempty"`
-	MirUpdateInterval *time.Duration    `yaml:"mirUpdateInterval,omitempty"`
-	MirMinTradeValue  *float64          `yaml:"mirMinTradeValue,omitempty"`
+	MirLookback       *time.Duration     `yaml:"mirLookback,omitempty"`
+	MirUpdateInterval *time.Duration     `yaml:"mirUpdateInterval,omitempty"`
+	MirUpdateOffset   *time.Duration     `yaml:"mirUpdateOffset,omitempty"`
+	MirMinTradeValues map[string]float64 `yaml:"mirMinTradeValues,omitempty"`
+
+	EnterStep   *float64 `yaml:"enterStep,omitempty"`
+	EnterTarget *float64 `yaml:"enterTarget,omitempty"`
 
 	StartValue  *float64           `yaml:"startValue,omitempty"`
-	EnterValue  *float64           `yaml:"enterValue,omitempty"`
 	StartValues map[string]float64 `yaml:"startValues,omitempty"`
 
 	OrderTimeout *time.Duration `yaml:"orderTimeout,omitempty"`
 	OrderSilent  *time.Duration `yaml:"orderSilent,omitempty"`
-
 	HttpSilent    *time.Duration `yaml:"httpSilent,omitempty"`
 	RestartSilent *time.Duration `yaml:"restartSilent,omitempty"`
 }

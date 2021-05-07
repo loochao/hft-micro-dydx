@@ -25,13 +25,14 @@ func StreamMIR(
 	ctx context.Context,
 	Symbol string,
 	lookback time.Duration,
-	minTradeValue float64,
 	updateInterval time.Duration,
+	updateOffset time.Duration,
+	minTradeValue float64,
 	tradeCh chan Trade,
 	mirCh chan MIR,
 ) {
 	var trade Trade
-	updateTimer := time.NewTimer(time.Now().Truncate(updateInterval).Add(updateInterval).Sub(time.Now()))
+	updateTimer := time.NewTimer(time.Now().Truncate(updateInterval).Add(updateInterval+updateOffset).Sub(time.Now()))
 	defer updateTimer.Stop()
 	tf := NewTimedFloat64s(lookback)
 	for {
@@ -51,7 +52,7 @@ func StreamMIR(
 					logger.Debugf("mirCh <- MIR failed, ch len %d", len(mirCh))
 				}
 			}
-			updateTimer.Reset(time.Now().Truncate(lookback).Add(lookback).Sub(time.Now()))
+			updateTimer.Reset(time.Now().Truncate(updateInterval).Add(updateInterval+updateOffset).Sub(time.Now()))
 		case trade = <-tradeCh:
 			if trade.GetPrice()*trade.GetSize() > minTradeValue {
 				tf.Insert(trade.GetTime(), trade.GetPrice())

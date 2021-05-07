@@ -139,7 +139,7 @@ func main() {
 		"HNTUSDT",
 		"UNFIUSDT",
 		"NEARUSDT",
-	}[:100]
+	}[95:]
 
 	//symbols = symbols[:2]
 	mirsMap := make(map[string]map[time.Time][2]float64)
@@ -254,7 +254,7 @@ timeLoop:
 		fields := make(map[string]interface{})
 		fields["netWorth"] = netWorth
 		pt, err := client.NewPoint(
-			"bnswap-trade-mir-alpha",
+			"bnswap-mir-alpha",
 			map[string]string{},
 			fields,
 			t,
@@ -267,7 +267,7 @@ timeLoop:
 			fields := make(map[string]interface{})
 			fields["size"] = sizes[symbol]
 			pt, _ := client.NewPoint(
-				"bnswap-trade-mir-alpha",
+				"bnswap-mir-alpha",
 				map[string]string{
 					"symbol": symbol,
 				},

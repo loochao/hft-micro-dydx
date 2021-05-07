@@ -11,8 +11,9 @@ func StreamTradeMIR(
 	cancel context.CancelFunc,
 	proxyAddress string,
 	lookback time.Duration,
-	minTradeValue float64,
 	updateInterval time.Duration,
+	updateOffset time.Duration,
+	minTradeValues map[string]float64,
 	channels map[string]chan common.MIR,
 ) {
 	tradesCh := make(map[string]chan common.Trade)
@@ -22,8 +23,9 @@ func StreamTradeMIR(
 			ctx,
 			symbol,
 			lookback,
-			minTradeValue,
 			updateInterval,
+			updateOffset,
+			minTradeValues[symbol],
 			tradesCh[symbol],
 			output,
 		)
@@ -45,4 +47,3 @@ func StreamTradeMIR(
 	}
 
 }
-

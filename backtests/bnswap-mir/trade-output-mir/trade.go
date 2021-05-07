@@ -292,7 +292,7 @@ func main() {
 					fields["price"] = d.Price
 					fields["return"] = d.Price / *firstPrice
 					pt, err := client.NewPoint(
-						fmt.Sprintf("bnswap-trade-mir-80-%v", lookback),
+						fmt.Sprintf("bnswap-mir-80-%v", lookback),
 						map[string]string{
 							"symbol": symbol,
 						},
