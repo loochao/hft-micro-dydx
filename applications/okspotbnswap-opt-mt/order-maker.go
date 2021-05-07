@@ -125,35 +125,35 @@ func isOrderProfitable(order okspot.NewOrderParam, entryTarget float64) bool {
 
 	//检查价格有没有挂太远，太远撤掉
 	if order.Side == okspot.OrderSideBuy &&
-		*order.Price < spread.MakerDepth.MidPrice+makerOffset.FarBot {
+		*order.Price < spread.MakerDepth.MidPrice*(1.0+makerOffset.FarBot) {
 		logger.Debugf("%s BUY PRICE %f < FAR BOT %f, CANCEL",
 			order.Symbol,
 			*order.Price,
-			spread.MakerDepth.MidPrice+makerOffset.FarBot,
+			spread.MakerDepth.MidPrice*(1.0+makerOffset.FarBot,
 		)
 		return false
 	} else if order.Side == okspot.OrderSideBuy &&
-		*order.Price > spread.MakerDepth.MidPrice+makerOffset.NearBot {
+		*order.Price > spread.MakerDepth.MidPrice*(1.0+makerOffset.NearBot) {
 		logger.Debugf("%s BUY PRICE %f > NEAR BOT %f, CANCEL",
 			order.Symbol,
 			*order.Price,
-			spread.MakerDepth.MidPrice+makerOffset.NearBot,
+			spread.MakerDepth.MidPrice*(1.0+makerOffset.NearBot),
 		)
 		return false
 	} else if order.Side == okspot.OrderSideSell &&
-		*order.Price > spread.MakerDepth.MidPrice + makerOffset.FarTop {
+		*order.Price > spread.MakerDepth.MidPrice*(1.0 + makerOffset.FarTop) {
 		logger.Debugf("%s SELL PRICE %f > FAR TOP %f, CANCEL",
 			order.Symbol,
 			*order.Price,
-			spread.MakerDepth.MidPrice + makerOffset.FarTop,
+			spread.MakerDepth.MidPrice*(1.0 + makerOffset.FarTop) ,
 		)
 		return false
 	} else if order.Side == okspot.OrderSideSell &&
-		*order.Price < spread.MakerDepth.MidPrice + makerOffset.NearTop {
+		*order.Price < spread.MakerDepth.MidPrice*(1.0 + makerOffset.NearTop) {
 		logger.Debugf("%s SELL PRICE %f < NEAR TOP %f, CANCEL",
 			order.Symbol,
 			*order.Price,
-			spread.MakerDepth.MidPrice + makerOffset.NearTop,
+			spread.MakerDepth.MidPrice*(1.0 + makerOffset.NearTop),
 		)
 		return false
 	}
