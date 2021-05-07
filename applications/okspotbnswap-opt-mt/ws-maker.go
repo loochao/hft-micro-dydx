@@ -16,6 +16,7 @@ func handleMakerWSAccount(balances []okspot.Balance) {
 					balance.Hold != mAccount.Hold) {
 				logger.Debugf("MAKER WS BALANCE %s", balance.ToString())
 			}
+			balance.Balance = balance.Available + balance.Hold
 			mAccount = &balance
 			continue
 		}
