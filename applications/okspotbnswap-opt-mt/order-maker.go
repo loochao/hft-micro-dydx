@@ -129,7 +129,7 @@ func isOrderProfitable(order okspot.NewOrderParam, entryTarget float64) bool {
 		logger.Debugf("%s BUY PRICE %f < FAR BOT %f, CANCEL",
 			order.Symbol,
 			*order.Price,
-			spread.MakerDepth.MidPrice*(1.0+makerOffset.FarBot,
+			spread.MakerDepth.MidPrice*(1.0+makerOffset.FarBot),
 		)
 		return false
 	} else if order.Side == okspot.OrderSideBuy &&
