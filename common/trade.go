@@ -40,7 +40,7 @@ func StreamMIR(
 		case <-ctx.Done():
 			return
 		case <-updateTimer.C:
-			if tf.Range() > lookback*3/4 {
+			if tf.Range() > lookback/4 {
 				select {
 				case mirCh <- MIR{
 					Value:     ComputeMIR(tf.Values()),
