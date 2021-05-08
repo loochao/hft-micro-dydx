@@ -46,7 +46,7 @@ func main() {
 	makerTradeCounts := make(map[string]int)
 	totalTradeCount := 0
 
-	dateStrs := "20210505,20210506"
+	dateStrs := "20210505,20210506,20210507"
 
 	quantiles := make(map[string]string)
 
@@ -110,30 +110,30 @@ func main() {
 		}
 		quantiles[symbol] = fmt.Sprintf(
 			"%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f",
-			sellImpactTD.Quantile(0.005),
 			sellImpactTD.Quantile(0.05),
 			sellImpactTD.Quantile(0.2),
-			sellImpactTD.Quantile(0.25),
+			sellImpactTD.Quantile(0.3),
+			sellImpactTD.Quantile(0.4),
 			sellImpactTD.Quantile(0.5),
 			buyImpactTD.Quantile(0.5),
-			buyImpactTD.Quantile(0.75),
+			buyImpactTD.Quantile(0.6),
+			buyImpactTD.Quantile(0.7),
 			buyImpactTD.Quantile(0.8),
 			buyImpactTD.Quantile(0.95),
-			buyImpactTD.Quantile(0.995),
 		)
 		fmt.Printf(
 			"%s:\t%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
 			symbol,
-			sellImpactTD.Quantile(0.005),
 			sellImpactTD.Quantile(0.05),
 			sellImpactTD.Quantile(0.2),
-			sellImpactTD.Quantile(0.25),
+			sellImpactTD.Quantile(0.3),
+			sellImpactTD.Quantile(0.4),
 			sellImpactTD.Quantile(0.5),
 			buyImpactTD.Quantile(0.5),
-			buyImpactTD.Quantile(0.75),
+			buyImpactTD.Quantile(0.6),
+			buyImpactTD.Quantile(0.7),
 			buyImpactTD.Quantile(0.8),
 			buyImpactTD.Quantile(0.95),
-			buyImpactTD.Quantile(0.995),
 		)
 		//output, err := yaml.Marshal(quantiles)
 		//if err != nil {
@@ -143,16 +143,16 @@ func main() {
 		//}
 
 	}
-	for takerUserID, count := range takerTradeCounts {
-		if float64(count)/float64(totalTradeCount) > 0.01 {
-			fmt.Printf("taker %s %d %f\n", takerUserID, count,float64(count)/float64(totalTradeCount))
-		}
-	}
-	fmt.Printf("\n\n")
-	for makerUserID, count := range makerTradeCounts {
-		if float64(count)/float64(totalTradeCount) > 0.01 {
-			fmt.Printf("maker %s %d %f\n", makerUserID, count,float64(count)/float64(totalTradeCount))
-		}
-	}
+	//for takerUserID, count := range takerTradeCounts {
+	//	if float64(count)/float64(totalTradeCount) > 0.01 {
+	//		fmt.Printf("taker %s %d %f\n", takerUserID, count,float64(count)/float64(totalTradeCount))
+	//	}
+	//}
+	//fmt.Printf("\n\n")
+	//for makerUserID, count := range makerTradeCounts {
+	//	if float64(count)/float64(totalTradeCount) > 0.01 {
+	//		fmt.Printf("maker %s %d %f\n", makerUserID, count,float64(count)/float64(totalTradeCount))
+	//	}
+	//}
 	logger.Debugf("TOTAL VALUE %f", totalValue)
 }
