@@ -35,9 +35,7 @@ const (
 )
 
 const (
-	OrderTimeInForceGTC  = "GTC"
-	OrderTimeInForceIOC  = "IOC"
-	OrderTimeInForceFOK  = "FOK"
+
 	OrderTimeInForceGTX  = "GTX"
 	OrderRespTypeAck     = "ACK"
 	OrderRespTypeResult  = "RESULT"
@@ -45,11 +43,7 @@ const (
 	OrderIsIsolatedTrue  = "TRUE"
 	OrderIsIsolatedFalse = "FALSE"
 
-	OrderSideBuy  = "BUY"
-	OrderSideSell = "SELL"
 
-	OrderTypeLimit           = "LIMIT"
-	OrderTypeMarket          = "MARKET"
 	OrderTypeStopLoss        = "STOP_LOSS"
 	OrderTypeStopLossLimit   = "STOP_LOSS_LIMIT"
 	OrderTypeTakeProfit      = "TAKE_PROFIT"

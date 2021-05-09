@@ -1,0 +1,31 @@
+{
+  "channel": "trades",
+  "market": "ETH-PERP",
+  "type": "update",
+  "data": [
+    {
+      "id": 981639557,
+      "price": 3775.3,
+      "size": 1.325,
+      "side": "sell",
+      "liquidation": false,
+      "time": "2021-05-09T12:28:31.582508+00:00"
+    },
+    {
+      "id": 981639558,
+      "price": 3775.5,
+      "size": 0.216,
+      "side": "sell",
+      "liquidation": false,
+      "time": "2021-05-09T12:28:31.583856+00:00"
+    },
+    {
+      "id": 981639559,
+      "price": 3775.5,
+      "size": 0.732,
+      "side": "sell",
+      "liquidation": false,
+      "time": "2021-05-09T12:28:31.583856+00:00"
+    }
+  ]
+}
