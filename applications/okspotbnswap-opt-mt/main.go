@@ -398,13 +398,13 @@ func main() {
 				logger.Debugf("TAKER WS ORDER %s %s %f %f", takerOrder.Symbol, takerOrder.Status, takerOrder.FilledAccumulatedQuantity, takerOrder.AveragePrice)
 				tHttpPositionUpdateSilentTimes[takerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 				if makerSymbol, ok := tmSymbolsMap[takerOrder.Symbol]; ok {
-					if takerOrder.Side == common.OrderSideSell {
+					if takerOrder.Side == bnswap.OrderSideSell {
 						if makerPrice, ok := mLastFilledBuyPrices[makerSymbol]; ok {
 							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
 							logger.Debugf("%s REALISED SHORT SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
 							delete(mLastFilledBuyPrices, makerSymbol)
 						}
-					} else if takerOrder.Side == common.OrderSideBuy {
+					} else if takerOrder.Side == bnswap.OrderSideBuy {
 						if makerPrice, ok := mLastFilledSellPrices[makerSymbol]; ok {
 							mtRealisedSpread[makerSymbol] = (takerOrder.AveragePrice - makerPrice) / makerPrice
 							logger.Debugf("%s REALISED LONG SPREAD %f", makerSymbol, mtRealisedSpread[makerSymbol])
