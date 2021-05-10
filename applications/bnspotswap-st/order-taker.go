@@ -30,7 +30,7 @@ func watchTakerOrderRequest(
 			}
 			if request.New != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				//logger.Debugf("SUBMIT %s %s %f %f", request.New.Symbol, request.New.NewClientOrderId, request.New.Price, request.New.Quantity)
+				//logger.Debugf("SUBMIT %s %s %f %f", request.New.Market, request.New.NewClientOrderId, request.New.Price, request.New.Quantity)
 				_, err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
 					logger.Debugf("SUBMIT ERROR %s %s %v", request.New.Symbol, request.New.NewClientOrderId, err)
@@ -93,7 +93,7 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 		if order.Side == common.OrderSideBuy &&
 			order.Price < spread.TakerDepth.BestBidPrice {
 			//logger.Debugf("TAKER BUY %s %f < BEST BID %f",
-			//	order.Symbol,
+			//	order.Market,
 			//	order.Price,
 			//	spread.TakerDepth.BestBidPrice,
 			//)
@@ -101,7 +101,7 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 		} else if order.Side == common.OrderSideSell &&
 			order.Price > spread.TakerDepth.TakerFarAsk {
 			//logger.Debugf("TAKER SELL %s %f > BEST ASK %f",
-			//	order.Symbol,
+			//	order.Market,
 			//	order.Price,
 			//	spread.TakerDepth.TakerFarBid,
 			//)
@@ -114,7 +114,7 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 				takerPrice = math.Ceil(takerPrice/tTickSizes[order.Symbol]) * tTickSizes[order.Symbol]
 				if order.Price > takerPrice*(1.0 + *mtConfig.CloseUpdateStep) {
 					//logger.Debugf("TAKER BUY %s %f > TARGET SELL PRICE %f",
-					//	order.Symbol,
+					//	order.Market,
 					//	order.Price,
 					//	spread.TakerDepth.TakerFarBid,
 					//)
@@ -129,7 +129,7 @@ func isTakerOrderOk(order bnswap.NewOrderParams) bool {
 				takerPrice = math.Floor(takerPrice/tTickSizes[order.Symbol]) * tTickSizes[order.Symbol]
 				if order.Price < takerPrice*(1.0 - *mtConfig.CloseUpdateStep) {
 					//logger.Debugf("TAKER BUY %s %f < TARGET BUY PRICE %f",
-					//	order.Symbol,
+					//	order.Market,
 					//	order.Price,
 					//	spread.TakerDepth.TakerFarBid,
 					//)

@@ -69,8 +69,8 @@ import (
 // The algorithm uses less randomness than the original node.js implementation, which permits to
 // extend the life span as well as reduce and guarantee the length. In general terms, each OrderId
 // has the following 3 pieces of information encoded: the millisecond (first 8 symbols), the worker
-// OrderId (9th Symbol), running concurrent counter within the same millisecond, only if required, over
-// all remaining symbols. The element of randomness per Symbol is 1/2 for the worker and the
+// OrderId (9th Market), running concurrent counter within the same millisecond, only if required, over
+// all remaining symbols. The element of randomness per Market is 1/2 for the worker and the
 // millisecond and 0 for the counter. Here 0 means no randomness, i.e. every value is encoded using
 // a 64-base alphabet; 1/2 means one of two matching symbols of the supplied alphabet, 1/4 one of
 // four matching symbols. The original algorithm of the node.js module uses 1/4 throughout.
@@ -295,7 +295,7 @@ func (abc *Abc) shuffle(alphabet string, seed uint64) {
 // represents n in 2^n, which defines how much randomness flows into the algorithm: 4 -- every value
 // can be represented by 4 symbols in the alphabet (permitting at most 16 lines), 5 -- every value
 // can be represented by 2 symbols in the alphabet (permitting at most 32 lines), 6 -- every value
-// is represented by exactly 1 Symbol with no randomness (permitting 64 lines).
+// is represented by exactly 1 Market with no randomness (permitting 64 lines).
 func (abc *Abc) Encode(val, nsymbols, digits uint) ([]rune, error) {
 	if digits < 4 || 6 < digits {
 		return nil, fmt.Errorf("allowed digits range [4,6], found %v", digits)

@@ -374,7 +374,7 @@ type Ping struct {
 //{
 //  "e": "trade",     // Event type
 //  "E": 123456789,   // Event time
-//  "s": "BNBBTC",    // Symbol
+//  "s": "BNBBTC",    // Market
 //  "t": 12345,       // Trade ID
 //  "p": "0.001",     // Price
 //  "q": "100",       // Quantity

@@ -15,7 +15,7 @@ import (
 	"unsafe"
 )
 
-type TradeWS struct {
+type OrderBookWS struct {
 	writeCh       chan interface{}
 	done          chan interface{}
 	reconnectCh   chan interface{}
@@ -24,7 +24,7 @@ type TradeWS struct {
 	stopped       int32
 }
 
-func (w *TradeWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *OrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -65,16 +65,16 @@ func (w *TradeWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
 	var symbolBytes []byte
 	var symbol string
-	var ch chan []byte
-	var ok bool
 	var msg []byte
 	var err error
+	var ch chan []byte
+	var ok bool
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -89,22 +89,25 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 			w.restart()
 			return
 		}
-		logger.Debugf("%s", msg)
-		if len(msg) > 128 && msg[13] == 't' {
-			if msg[41] == '"' {
-				symbolBytes = msg[33:41]
+		msgLen := len(msg)
+		if msgLen > 128 && msg[13] == 'o' {
+			if msg[45] == ',' {
+				symbolBytes = msg[36:44]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[42] == '"' {
-				symbolBytes = msg[33:42]
+			} else if msg[46] == ',' {
+				symbolBytes = msg[36:45]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[43] == '"' {
-				symbolBytes = msg[33:43]
+			} else if msg[47] == ',' {
+				symbolBytes = msg[36:46]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[44] == '"' {
-				symbolBytes = msg[33:44]
+			} else if msg[48] == ',' {
+				symbolBytes = msg[36:47]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[45] == '"' {
-				symbolBytes = msg[33:45]
+			} else if msg[49] == ',' {
+				symbolBytes = msg[36:48]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+			} else if msg[50] == ',' {
+				symbolBytes = msg[36:49]
 				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
@@ -114,7 +117,7 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 				continue
 			}
 		} else {
-			if time.Now().Sub(logSilentTime) > 0 {
+			if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
 				logger.Debugf("other msg %s", msg)
 				logSilentTime = time.Now().Add(time.Minute)
 			}
@@ -125,7 +128,7 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 			case ch <- msg:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("ch <- msg failed, ch len %d", len(ch))
+					logger.Debugf(" ch <- msg %s ch len %d", symbol, len(ch))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -133,7 +136,7 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 	}
 }
 
-func (w *TradeWS) readAll(r io.Reader) ([]byte, error) {
+func (w *OrderBookWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -151,7 +154,7 @@ func (w *TradeWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *TradeWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *OrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -196,15 +199,15 @@ func (w *TradeWS) reconnect(ctx context.Context, wsUrl string, proxy string, cou
 	return conn, nil
 }
 
-func (w *TradeWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
+func (w *OrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
-	markets := make([]string, 0)
+	symbols := make([]string, 0)
 	for symbol := range channels {
-		markets = append(markets, symbol)
+		symbols = append(symbols, symbol)
 	}
 
 	defer func() {
@@ -244,12 +247,12 @@ func (w *TradeWS) mainLoop(ctx context.Context, proxy string, channels map[strin
 			}
 			go w.readLoop(conn, channels)
 			go w.writeLoop(internalCtx, conn)
-			go w.heartbeatLoop(internalCtx, conn, markets)
+			go w.heartbeatLoop(internalCtx, conn, symbols)
 		}
 	}
 }
 
-func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -258,10 +261,10 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
-	symbolTimeout := time.Minute
-	symbolCheckInterval := time.Second
-	symbolCheckTimer := time.NewTimer(time.Second)
-	defer symbolCheckTimer.Stop()
+	marketTimeout := time.Minute
+	marketCheckInterval := time.Second
+	marketCheckTimer := time.NewTimer(time.Second)
+	defer marketCheckTimer.Stop()
 	marketUpdatedTimes := make(map[string]time.Time)
 	for _, symbol := range symbols {
 		marketUpdatedTimes[symbol] = time.Unix(0, 0)
@@ -285,6 +288,7 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 			pingTimer.Reset(time.Second * 15)
 			select {
 			case w.writeCh <- []byte("{\"op\": \"ping\"}"):
+				break
 			default:
 				logger.Debugf("w.writeCh <- ping failed, ch len %d", len(w.writeCh))
 			}
@@ -293,28 +297,43 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 			trafficTimeout.Reset(time.Second * 30)
 			marketUpdatedTimes[symbol] = time.Now()
 			break
-		case <-symbolCheckTimer.C:
-			for symbol, updateTime := range marketUpdatedTimes {
-				if time.Now().Sub(updateTime) > symbolTimeout {
+		case symbol := <-w.marketResetCh:
+			logger.Debugf("RESET %s", symbol)
+			trafficTimeout.Reset(time.Second * 30)
+			marketUpdatedTimes[symbol] = time.Now().Add(-marketTimeout)
+			break
+		case <-marketCheckTimer.C:
+			for market, updateTime := range marketUpdatedTimes {
+				if time.Now().Sub(updateTime) > marketTimeout {
+					select {
+					case w.writeCh <- SubscribeParam{
+						Operation: "unsubscribe",
+						Channel:   "orderbook",
+						Market:    market,
+					}:
+						marketUpdatedTimes[market] = time.Now().Add(marketTimeout)
+					default:
+						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+					}
 					select {
 					case w.writeCh <- SubscribeParam{
 						Operation: "subscribe",
-						Channel:   "trades",
-						Market:    symbol,
+						Channel:   "orderbook",
+						Market:    market,
 					}:
-						marketUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
+						marketUpdatedTimes[market] = time.Now().Add(marketTimeout)
 					default:
 						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
 					}
 				}
 			}
-			symbolCheckTimer.Reset(symbolCheckInterval)
+			marketCheckTimer.Reset(marketCheckInterval)
 			break
 		}
 	}
 }
 
-func (w *TradeWS) Stop() {
+func (w *OrderBookWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -322,7 +341,7 @@ func (w *TradeWS) Stop() {
 	}
 }
 
-func (w *TradeWS) restart() {
+func (w *OrderBookWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -330,20 +349,67 @@ func (w *TradeWS) restart() {
 	}
 }
 
-func (w *TradeWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Trade) {
-	logger.Debugf("START dataHandleLoop")
-	defer logger.Debugf("EXIT dataHandleLoop")
+func (w *OrderBookWS) Done() chan interface{} {
+	return w.done
+}
+
+func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Depth) {
+	logger.Debugf("START dataHandleLoop %s", market)
+	defer logger.Debugf("EXIT dataHandleLoop %s", market)
 	logSilentTime := time.Now()
-	wsTrades := WSTrades{}
+	orderbookData := OrderBookData{}
+	//var checkSum int64
 	var err error
+	var orderBook = OrderBook{
+		Bids:   common.Bids{},
+		Asks:   common.Asks{},
+		Market: market,
+	}
+	checkSumTimer := time.NewTimer(time.Minute)
+	var hasPartial = false
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
+		case <-checkSumTimer.C:
+			if hasPartial {
+				if orderBook.CompareCheckSum() {
+					select {
+					case w.marketCh <- market:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
+					}
+				} else {
+					hasPartial = false
+					select {
+					case w.marketResetCh <- market:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("w.marketResetCh <- market failed, ch len %d", len(w.marketResetCh))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
+					}
+				}
+			} else {
+				select {
+				case w.marketResetCh <- market:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.marketResetCh <- market failed, ch len %d", len(w.marketResetCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
+			}
+			checkSumTimer.Reset(time.Second * 5)
+			break
 		case msg := <-inputCh:
-			err = json.Unmarshal(msg, &wsTrades)
+			orderbookData = OrderBookData{}
+			err = json.Unmarshal(msg, &orderbookData)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("json.Unmarshal error %v", err)
@@ -351,23 +417,35 @@ func (w *TradeWS) dataHandleLoop(ctx context.Context, market string, inputCh cha
 				}
 				continue
 			}
-			for _, trade := range wsTrades.Data {
-				trade := trade
-				trade.Symbol = market
-				select {
-				case outputCh <- &trade:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("outputCh <- &trade failed, ch len %d", len(outputCh))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
+			switch orderbookData.Data.Action {
+			case "partial":
+				orderBook.Bids = orderbookData.Data.Bids
+				orderBook.Asks = orderbookData.Data.Asks
+				orderBook.Checksum = orderbookData.Data.Checksum
+				orderBook.Time = orderbookData.Data.Time
+				hasPartial = true
+				break
+			case "update":
+				if hasPartial {
+					orderBook.Asks = orderBook.Asks.UpdateBatch(orderbookData.Data.Asks)
+					orderBook.Bids = orderBook.Bids.UpdateBatch(orderbookData.Data.Bids)
+					orderBook.Checksum = orderbookData.Data.Checksum
+					orderBook.Time = orderbookData.Data.Time
 				}
-			}
-			select {
-			case w.marketCh <- market:
+				break
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
+					logger.Debugf("other action %s", msg)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+				continue
+			}
+			select {
+			case outputCh <- &orderBook:
+
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -375,21 +453,18 @@ func (w *TradeWS) dataHandleLoop(ctx context.Context, market string, inputCh cha
 	}
 }
 
-func (w *TradeWS) Done() chan interface{} {
-	return w.done
-}
-
-func NewTradeWS(
+func NewOrderBookWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan common.Trade,
-) *TradeWS {
-	ws := TradeWS{
-		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 100),
-		writeCh:     make(chan interface{}, 100*len(channels)),
-		marketCh:    make(chan string, 100*len(channels)),
-		stopped:     0,
+	channels map[string]chan common.Depth,
+) *OrderBookWS {
+	ws := OrderBookWS{
+		done:          make(chan interface{}),
+		reconnectCh:   make(chan interface{}, 100),
+		writeCh:       make(chan interface{}, 100*len(channels)),
+		marketCh:      make(chan string, 100*len(channels)),
+		marketResetCh: make(chan string, 100*len(channels)),
+		stopped:       0,
 	}
 	messagesCh := make(map[string]chan []byte)
 	for market, ch := range channels {

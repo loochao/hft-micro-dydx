@@ -29,7 +29,7 @@ func watchMakerOrderRequest(
 			}
 			if request.New != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				//logger.Debugf("MAKER SUBMIT %s %s %f %d", request.New.Symbol, request.New.Side, request.New.Price, request.New.Size)
+				//logger.Debugf("MAKER SUBMIT %s %s %f %d", request.New.Market, request.New.Side, request.New.Price, request.New.Size)
 				resp, err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
 					logger.Debugf("MAKER SUBMIT ERROR %v", err)
@@ -46,7 +46,7 @@ func watchMakerOrderRequest(
 				}
 			} else if request.Cancel != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				//logger.Debugf("MAKER CANCEL ALL %s", request.Cancel.Symbol)
+				//logger.Debugf("MAKER CANCEL ALL %s", request.Cancel.Market)
 				resp, err := api.CancelAllOrders(childCtx, *request.Cancel)
 				if err != nil {
 					logger.Debugf("MAKER SUBMIT ERROR %v", err)

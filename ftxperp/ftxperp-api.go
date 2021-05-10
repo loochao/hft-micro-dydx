@@ -76,8 +76,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 		}
 		rBody = bytes.NewReader(bodyStr)
 	}
-
-	path = "https://ftx.com/api" + path
+	logger.Debugf("%s", path)
 	req, err := http.NewRequest(method, "https://ftx.com/api"+path, rBody)
 	if err != nil {
 		return err
@@ -101,6 +100,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err != nil {
 		return err
 	}
+	logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
@@ -109,9 +109,39 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err := json.Unmarshal(contents, &dataCap); err != nil {
 		return err
 	} else if !dataCap.Success {
-		return errors.New(string(contents))
+		return errors.New(dataCap.Error)
 	}
 	return json.Unmarshal(dataCap.Result, result)
+}
+func (api *API) GetAccount(ctx context.Context) (*Account, error) {
+	account := Account{}
+	return &account, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/account", nil, nil, &account)
+}
+func (api *API) GetPositions(ctx context.Context) ([]Position, error) {
+	positions := make([]Position, 0)
+	return positions, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/positions", nil, nil, &positions)
+}
+
+func (api *API) PlaceOrder(ctx context.Context, param NewOrderParam) (*Order, error) {
+	order := Order{}
+	return &order, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/orders", nil, param,  &order)
+}
+
+func (api *API) CancelOrderByClientID(ctx context.Context, clientID string) (*string, error) {
+	var message string
+	return &message, api.SendAuthenticatedHTTPRequest(ctx, http.MethodDelete, "/orders/by_client_id/"+clientID, nil, nil,  &message)
+}
+
+func (api *API) CancelAllOrders(ctx context.Context, param CancelAllParam) (*string, error) {
+	var message string
+	return &message, api.SendAuthenticatedHTTPRequest(ctx, http.MethodDelete, "/orders", nil, param,  &message)
+}
+
+func (api *API) ChangeLeverage(ctx context.Context, param LeverageParam) (*Leverage, error) {
+	leverage :=Leverage{
+		Leverage: param.Leverage,
+	}
+	return &leverage, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/account/leverage", nil, param,  &leverage)
 }
 
 func (api *API) GetFutures(ctx context.Context) ([]Future, error) {

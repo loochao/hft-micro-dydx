@@ -97,7 +97,7 @@ func updateMakerOldOrders() {
 			continue
 		}
 		bnspotCancelSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent)
-		//bnspotOrderCancelCounts[order.Symbol] += 1
+		//bnspotOrderCancelCounts[order.Market] += 1
 		bnspotOrderSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent)
 		delete(bnspotOpenOrders, symbol)
 		bnspotOrderRequestChs[order.Symbol] <- SpotOrderRequest{
@@ -108,7 +108,7 @@ func updateMakerOldOrders() {
 
 func isOrderOK(order bnspot.NewOrderParams, enterDelta, exitDelta float64) bool {
 	spread, ok1 := bnSpreads[order.Symbol]
-	//quantile, ok2 := bnQuantiles[order.Symbol]
+	//quantile, ok2 := bnQuantiles[order.Market]
 	offset := bnspotOffsets[order.Symbol]
 	if !ok1 {
 		logger.Debugf("%s spread is not ready", order.Symbol)

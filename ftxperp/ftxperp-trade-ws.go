@@ -12,9 +12,10 @@ import (
 	"net/url"
 	"sync/atomic"
 	"time"
+	"unsafe"
 )
 
-type OrderBookWS struct {
+type TradeWS struct {
 	writeCh       chan interface{}
 	done          chan interface{}
 	reconnectCh   chan interface{}
@@ -23,7 +24,7 @@ type OrderBookWS struct {
 	stopped       int32
 }
 
-func (w *OrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *TradeWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -64,26 +65,16 @@ func (w *OrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-
-func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan *common.DepthRawMessage) {
+func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
-	//totalCount := 0
-	//totalLen := 0
-	//logSilentTime := time.Now()
-	//var symbolBytes []byte
-	//var symbol string
-	//var timeBytes []byte
-	//var eventTime time.Time
-	//var ch chan *common.DepthRawMessage
-	//var ok bool
+	logSilentTime := time.Now()
+	var symbolBytes []byte
+	var symbol string
+	var ch chan []byte
+	var ok bool
 	var msg []byte
-	//var msgLen int
-	//var mType int
-	//var resp []byte
 	var err error
-	//var subscribeEvent SubscribeEvent
-	//var segs []string
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -98,107 +89,51 @@ func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 			w.restart()
 			return
 		}
-
 		logger.Debugf("%s", msg)
-		//msgLen = len(msg)
-		//totalCount += 1
-		//totalLen += msgLen
-		//if totalCount > 1000000 {
-		//	logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
-		//	totalLen = 0
-		//	totalCount = 0
-		//}
-		//if msg[2] == 'e' {
-		//	err = json.Unmarshal(msg, &subscribeEvent)
-		//	if err != nil {
-		//		if time.Now().Sub(logSilentTime) > 0 {
-		//			logger.Debugf("json.Unmarshal(msg, &subscribeEvent) error %v", err)
-		//			logSilentTime = time.Now().Add(time.Minute)
-		//		}
-		//	}
-		//	segs = strings.Split(subscribeEvent.Channel, ":")
-		//	if len(segs) == 2 {
-		//		select {
-		//		case w.marketCh <- segs[1]:
-		//		default:
-		//			if time.Now().Sub(logSilentTime) > 0 {
-		//				logger.Debugf("w.marketCh <- symbol failed %s ch len %d", segs[2], len(w.marketCh))
-		//				logSilentTime = time.Now().Add(time.Minute)
-		//			}
-		//		}
-		//	}
-		//	continue
-		//} else if msg[2] == 't' && len(msg) > 128 {
-		//	//{"table":"spot/depth5","data":[{"asks":[["31.605","4.32464","1"],["31.607","85","1"],["31.61","2","1"],["31.612","0.1","1"],["31.614","1.405511","1"]],"bids":[["31.583","302.09312","3"],["31.582","0.9","1"],["31.58","111.30127","1"],["31.579","76","1"],["31.576","31.83446","1"]],"instrument_id":"LINK-USDT","timestamp":"2021-04-25T08:24:33.352Z"}]}
-		//	timeBytes = msg[msgLen-28 : msgLen-4]
-		//	eventTime, err = time.Parse(okspotTimeLayout, *(*string)(unsafe.Pointer(&timeBytes)))
-		//	if err != nil {
-		//		logger.Debugf("time.Parse %s error %v", timeBytes, err)
-		//		continue
-		//	}
-		//	if msg[msgLen-53] == ':' {
-		//		symbolBytes = msg[msgLen-51 : msgLen-43]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[msgLen-54] == ':' {
-		//		symbolBytes = msg[msgLen-52 : msgLen-43]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[msgLen-55] == ':' {
-		//		symbolBytes = msg[msgLen-53 : msgLen-43]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[msgLen-56] == ':' {
-		//		symbolBytes = msg[msgLen-54 : msgLen-43]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else {
-		//		if time.Now().Sub(logSilentTime) > 0 {
-		//			logger.Debugf("other msg %s", msg)
-		//			logSilentTime = time.Now().Add(time.Minute)
-		//		}
-		//		continue
-		//	}
-		//} else if msgLen == 4 && msg[2] == 'p' {
-		//	select {
-		//	case w.pingCh <- msg:
-		//	default:
-		//		if time.Now().Sub(logSilentTime) > 0 {
-		//			logger.Debugf("w.pongCh <- msg failed %s ch len %d", symbol, len(w.pingCh))
-		//			logSilentTime = time.Now().Add(time.Minute)
-		//		}
-		//	}
-		//	continue
-		//} else if msgLen == 4 {
-		//	if time.Now().Sub(logSilentTime) > 0 {
-		//		logger.Debugf("other msg %s", msg)
-		//		logSilentTime = time.Now().Add(time.Minute)
-		//	}
-		//	continue
-		//}
-		////logger.Debugf("%s %v ",symbol, eventTime)
-		//if ch, ok = channels[symbol]; ok {
-		//	select {
-		//	case ch <- &common.DepthRawMessage{
-		//		Depth:  msg,
-		//		Symbol: symbol,
-		//		Time:   eventTime,
-		//	}:
-		//	default:
-		//		if time.Now().Sub(logSilentTime) > 0 {
-		//			logger.Debugf("ch <- &common.DepthRawMessage failed %s ch len %d", symbol, len(ch))
-		//			logSilentTime = time.Now().Add(time.Minute)
-		//		}
-		//	}
-		//	select {
-		//	case w.marketCh <- symbol:
-		//	default:
-		//		if time.Now().Sub(logSilentTime) > 0 {
-		//			logger.Debugf("w.marketCh <- symbol failed %s ch len %d", symbol, len(w.marketCh))
-		//			logSilentTime = time.Now().Add(time.Minute)
-		//		}
-		//	}
-		//}
+		if len(msg) > 128 && msg[13] == 't' {
+			if msg[41] == '"' {
+				symbolBytes = msg[33:41]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+			} else if msg[42] == '"' {
+				symbolBytes = msg[33:42]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+			} else if msg[43] == '"' {
+				symbolBytes = msg[33:43]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+			} else if msg[44] == '"' {
+				symbolBytes = msg[33:44]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+			} else if msg[45] == '"' {
+				symbolBytes = msg[33:45]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+			} else {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("other msg %s", msg)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+				continue
+			}
+		} else {
+			if time.Now().Sub(logSilentTime) > 0 {
+				logger.Debugf("other msg %s", msg)
+				logSilentTime = time.Now().Add(time.Minute)
+			}
+			continue
+		}
+		if ch, ok = channels[symbol]; ok {
+			select {
+			case ch <- msg:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("ch <- msg failed, ch len %d", len(ch))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
+		}
 	}
 }
 
-func (w *OrderBookWS) readAll(r io.Reader) ([]byte, error) {
+func (w *TradeWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -216,7 +151,7 @@ func (w *OrderBookWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *OrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *TradeWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -261,15 +196,15 @@ func (w *OrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string,
 	return conn, nil
 }
 
-func (w *OrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.DepthRawMessage) {
+func (w *TradeWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
-	symbols := make([]string, 0)
+	markets := make([]string, 0)
 	for symbol := range channels {
-		symbols = append(symbols, symbol)
+		markets = append(markets, symbol)
 	}
 
 	defer func() {
@@ -309,12 +244,12 @@ func (w *OrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[s
 			}
 			go w.readLoop(conn, channels)
 			go w.writeLoop(internalCtx, conn)
-			go w.heartbeatLoop(internalCtx, conn, symbols)
+			go w.heartbeatLoop(internalCtx, conn, markets)
 		}
 	}
 }
 
-func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -349,8 +284,7 @@ func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 		case <-pingTimer.C:
 			pingTimer.Reset(time.Second * 15)
 			select {
-			case w.writeCh <- []byte("{'op': 'ping'}"):
-				break
+			case w.writeCh <- []byte("{\"op\": \"ping\"}"):
 			default:
 				logger.Debugf("w.writeCh <- ping failed, ch len %d", len(w.writeCh))
 			}
@@ -365,7 +299,7 @@ func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 					select {
 					case w.writeCh <- SubscribeParam{
 						Operation: "subscribe",
-						Channel:   "orderbook",
+						Channel:   "trades",
 						Market:    symbol,
 					}:
 						marketUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
@@ -380,7 +314,7 @@ func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 	}
 }
 
-func (w *OrderBookWS) Stop() {
+func (w *TradeWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -388,7 +322,7 @@ func (w *OrderBookWS) Stop() {
 	}
 }
 
-func (w *OrderBookWS) restart() {
+func (w *TradeWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -396,23 +330,73 @@ func (w *OrderBookWS) restart() {
 	}
 }
 
-func (w *OrderBookWS) Done() chan interface{} {
+func (w *TradeWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Trade) {
+	logger.Debugf("START dataHandleLoop")
+	defer logger.Debugf("EXIT dataHandleLoop")
+	logSilentTime := time.Now()
+	wsTrades := TradesData{}
+	var err error
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-w.done:
+			return
+		case msg := <-inputCh:
+			err = json.Unmarshal(msg, &wsTrades)
+			if err != nil {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("json.Unmarshal error %v", err)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+				continue
+			}
+			for _, trade := range wsTrades.Data {
+				trade := trade
+				trade.Symbol = market
+				select {
+				case outputCh <- &trade:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("outputCh <- &trade failed, ch len %d", len(outputCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
+			}
+			select {
+			case w.marketCh <- market:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
+		}
+	}
+}
+
+func (w *TradeWS) Done() chan interface{} {
 	return w.done
 }
 
-func NewOrderBookWS(
+func NewTradeWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan *common.DepthRawMessage,
-) *OrderBookWS {
-	ws := OrderBookWS{
+	channels map[string]chan common.Trade,
+) *TradeWS {
+	ws := TradeWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}, 100),
 		writeCh:     make(chan interface{}, 100*len(channels)),
 		marketCh:    make(chan string, 100*len(channels)),
 		stopped:     0,
 	}
-	go ws.mainLoop(ctx, proxy, channels)
+	messagesCh := make(map[string]chan []byte)
+	for market, ch := range channels {
+		messagesCh[market] = make(chan []byte, 1000)
+		go ws.dataHandleLoop(ctx, market, messagesCh[market], ch)
+	}
+	go ws.mainLoop(ctx, proxy, messagesCh)
 	ws.reconnectCh <- nil
 	return &ws
 }

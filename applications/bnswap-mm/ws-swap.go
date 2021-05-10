@@ -43,7 +43,7 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			}else {
 				bnswapOrderSilentTimes[pos.Symbol] = bnswapLastOrderTimes[pos.Symbol].Add(*bnConfig.OrderInterval)
 			}
-			//logger.Debugf("%s WS POSITION CHANGED NEW %s", pos.Symbol, pos.ToString())
+			//logger.Debugf("%s WS POSITION CHANGED NEW %s", pos.Market, pos.ToString())
 		}
 	}
 	for _, balance := range data.Account.Balances {

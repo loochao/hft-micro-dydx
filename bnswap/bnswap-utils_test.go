@@ -21,7 +21,7 @@ func TestParseDepth20(t *testing.T) {
 	//if err != nil {
 	//	t.Fatal(err)
 	//}
-	//assert.Equal(t, stream.Data.Symbol, depth.Symbol)
+	//assert.Equal(t, stream.Data.Market, depth.Market)
 	//assert.Equal(t, stream.Data.LastUpdateId, depth.LastUpdateId)
 	//for i := 0; i < 20; i++ {
 	//	assert.Equal(t, stream.Data.Asks[i][0], depth.Asks[i][0])

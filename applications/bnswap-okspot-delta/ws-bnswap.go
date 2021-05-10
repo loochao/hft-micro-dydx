@@ -37,7 +37,7 @@ func handleWSAccountEvent(data *bnswap.WSAccountEvent) {
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != bnswapPositions[pos.Symbol].PositionAmt ||
 			lastPosition.EntryPrice != bnswapPositions[pos.Symbol].EntryPrice {
-			//bnswapOrderSilentTimes[pos.Symbol] = time.Now()
+			//bnswapOrderSilentTimes[pos.Market] = time.Now()
 			logger.Debugf("WS POSITION CHANGED NEW %s", pos.ToString())
 		}
 	}

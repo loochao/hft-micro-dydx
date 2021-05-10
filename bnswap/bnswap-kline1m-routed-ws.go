@@ -326,11 +326,11 @@ func NewKline1MRoutedWebsocket(
 //{
 //  "e": "kline",     // Event type
 //  "E": 123456789,   // Event time
-//  "s": "BTCUSDT",    // Symbol
+//  "s": "BTCUSDT",    // Market
 //  "k": {
 //    "t": 123400000, // Kline start time
 //    "T": 123460000, // Kline close time
-//    "s": "BTCUSDT",  // Symbol
+//    "s": "BTCUSDT",  // Market
 //    "i": "1m",      // Interval
 //    "f": 100,       // First trade ID
 //    "L": 200,       // Last trade ID

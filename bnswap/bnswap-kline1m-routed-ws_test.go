@@ -28,9 +28,9 @@ func TestNewKline1MRoutedWebsocket(t *testing.T) {
 		case msg := <-channels[symbols[0]]:
 			logger.Debugf("%s %v %f", msg.Symbol, msg.Timestamp, msg.Close)
 		//case _ = <-channels[symbols[1]]:
-		//	//logger.Debugf("%s %v %f", msg.Symbol, msg.Timestamp, msg.Close)
+		//	//logger.Debugf("%s %v %f", msg.Market, msg.Timestamp, msg.Close)
 		//case _ = <-channels[symbols[2]]:
-		//	//logger.Debugf("%s %v %f", msg.Symbol, msg.Timestamp, msg.Close)
+		//	//logger.Debugf("%s %v %f", msg.Market, msg.Timestamp, msg.Close)
 		}
 	}
 }

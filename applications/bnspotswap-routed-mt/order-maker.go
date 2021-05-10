@@ -78,7 +78,7 @@ func updateMakerOldOrders() {
 			continue
 		}
 		bnspotCancelSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent)
-		//bnspotOrderCancelCounts[order.Symbol] += 1
+		//bnspotOrderCancelCounts[order.Market] += 1
 		bnspotOrderSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent)
 		delete(bnspotOpenOrders, symbol)
 		bnspotOrderRequestChs[order.Symbol] <- SpotOrderRequest{

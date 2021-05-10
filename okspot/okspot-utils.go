@@ -16,6 +16,8 @@ func WatchBalancesFromHttp(
 	interval time.Duration,
 	output chan []Balance,
 ) {
+	logger.Debugf("START WatchBalancesFromHttp")
+	defer logger.Debugf("EXIT WatchBalancesFromHttp")
 	timer := time.NewTimer(interval)
 	defer timer.Stop()
 	for {
@@ -28,7 +30,11 @@ func WatchBalancesFromHttp(
 			if err != nil {
 				logger.Debugf("api.GetAccounts error %v", err)
 			} else {
-				output <- balances
+				select {
+				case output <- balances:
+				default:
+					logger.Debugf("output <- balances failed, ch len %d", len(output))
+				}
 			}
 			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
 		}

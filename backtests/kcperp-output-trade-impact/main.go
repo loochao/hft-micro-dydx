@@ -46,7 +46,7 @@ func main() {
 	makerTradeCounts := make(map[string]int)
 	totalTradeCount := 0
 
-	dateStrs := "20210505,20210506,20210507"
+	dateStrs := "20210505,20210506,20210507,20210508,20210509"
 
 	quantiles := make(map[string]string)
 

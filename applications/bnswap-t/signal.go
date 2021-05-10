@@ -86,7 +86,7 @@ func startSignalRoutine(
 				signal.Value = 0.0
 			}
 
-			//logger.Debugf("%s %d %d %d", trade.Symbol, len(eventTimes), buyCount, sellCount)
+			//logger.Debugf("%s %d %d %d", trade.Market, len(eventTimes), buyCount, sellCount)
 			timer.Reset(time.Microsecond)
 			break
 		case <-timer.C:

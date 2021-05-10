@@ -318,7 +318,7 @@ func main() {
 			break
 		case takerOrderEvent := <-tUserWebsocket.OrderUpdateEventCh:
 			takerOrder := takerOrderEvent.Order
-			//logger.Debugf("%s %s %s", takerOrder.Status, takerOrder.Symbol, takerOrder.ClientOrderId)
+			//logger.Debugf("%s %s %s", takerOrder.Status, takerOrder.Market, takerOrder.ClientOrderId)
 			if takerOrder.Status == "REJECTED" ||
 				takerOrder.Status == "EXPIRED" ||
 				takerOrder.Status == "CANCELED" {

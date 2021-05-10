@@ -210,7 +210,7 @@ func (w *Depth20FilteredWebsocket) dataHandleLoop(ctx context.Context, id int, d
 				case w.symbolCh <- depth20.Symbol:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("w.symbolCh <- depth20.Symbol failed, ch len %d", len(w.symbolCh))
+						logger.Debugf("w.symbolCh <- depth20.Market failed, ch len %d", len(w.symbolCh))
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}

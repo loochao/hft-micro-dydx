@@ -54,7 +54,7 @@ func handleTakerWSAccount(data *bnswap.BalanceAndPositionUpdateEvent) {
 			}
 			tEnterTimeouts[pos.Symbol] = time.Now()
 			//mtLoopTimer.Reset(time.Nanosecond)
-			//logger.Debugf("WS POS %s %f %f", pos.Symbol, pos.PositionAmt, pos.EntryPrice)
+			//logger.Debugf("WS POS %s %f %f", pos.Market, pos.PositionAmt, pos.EntryPrice)
 		}
 	}
 	for _, balance := range data.Account.Balances {

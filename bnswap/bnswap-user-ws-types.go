@@ -15,7 +15,7 @@ type WSBalance struct {
 }
 
 //        {
-//          "s":"BTCUSDT",            // Symbol
+//          "s":"BTCUSDT",            // Market
 //          "pa":"0",                 // Position Amount
 //          "ep":"0.00000",            // Entry Price
 //          "cr":"200",               // (Pre-fee) Accumulated Realized
@@ -37,7 +37,7 @@ type WSPosition struct {
 }
 
 func (wsp *WSPosition) ToString() string {
-	return fmt.Sprintf("Symbol=%s,EntryPrice=%f,PositionAmt=%f", wsp.Symbol, wsp.EntryPrice, wsp.PositionAmt)
+	return fmt.Sprintf("Market=%s,EntryPrice=%f,PositionAmt=%f", wsp.Symbol, wsp.EntryPrice, wsp.PositionAmt)
 }
 
 type WSAccount struct {
@@ -76,7 +76,7 @@ type BalanceAndPositionUpdateEvent struct {
 //  "E":1568879465651,            // Event Time
 //  "T":1568879465650,            // Transaction Time
 //  "o":{
-//    "s":"BTCUSDT",              // Symbol
+//    "s":"BTCUSDT",              // Market
 //    "c":"TEST",                 // Client Order Id
 //      // special client order id:
 //      // starts with "autoclose-": liquidation order

@@ -59,7 +59,7 @@ type BalanceUpdateEvent struct {
 //{
 //  "e": "executionReport",        // Event type
 //  "E": 1499405658658,            // Event time
-//  "s": "ETHBTC",                 // Symbol
+//  "s": "ETHBTC",                 // Market
 //  "c": "mUvoqJxFIILMdfAW5iGSOW", // Client order ID
 //  "S": "BUY",                    // Side
 //  "o": "LIMIT",                  // Order type

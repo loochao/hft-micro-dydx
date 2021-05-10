@@ -374,7 +374,7 @@ func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map
 				case w.symbolCh <- wsTrade.Data.Symbol:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("w.symbolCh <- wsTrade.Data.Symbol failed, ch len %d", len(w.symbolCh))
+						logger.Debugf("w.symbolCh <- wsTrade.Data.Market failed, ch len %d", len(w.symbolCh))
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}

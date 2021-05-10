@@ -229,7 +229,7 @@ type Position struct {
 }
 
 func (position *Position) ToString() string {
-	return fmt.Sprintf("Symbol=%s,EntryPrice=%f,PositionAmt=%f", position.Symbol, position.EntryPrice, position.PositionAmt)
+	return fmt.Sprintf("Market=%s,EntryPrice=%f,PositionAmt=%f", position.Symbol, position.EntryPrice, position.PositionAmt)
 }
 
 type Asset struct {
@@ -460,7 +460,7 @@ func (no *NewOrderParams) ToUrlValues() url.Values {
 
 func (no NewOrderParams) ToString() string {
 	return fmt.Sprintf(
-		"Symbol=%s, Side=%s, Type=%s, ReduceOnly=%v, "+
+		"Market=%s, Side=%s, Type=%s, ReduceOnly=%v, "+
 			"Quantity=%f, Price=%f, NewClientOrderId=%s, "+
 			"TimeInForce=%s",
 		no.Symbol, no.Side, no.Type, no.ReduceOnly,
@@ -472,7 +472,7 @@ func (no NewOrderParams) ToString() string {
 //{
 //  "e": "aggTrade",  // Event type
 //  "E": 123456789,   // Event time
-//  "s": "BTCUSDT",    // Symbol
+//  "s": "BTCUSDT",    // Market
 //  "a": 5933014,     // Aggregate trade ID
 //  "p": "0.001",     // Price
 //  "q": "100",       // Quantity
