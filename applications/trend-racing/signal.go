@@ -20,7 +20,7 @@ func streamSignal(
 	timedBuyVolume := common.NewTimedSum(tradeLookback)
 	timedSellVolume := common.NewTimedSum(tradeLookback)
 	updateTimer := time.NewTimer(updateInterval)
-	timedDirection := common.NewTimedMean(tradeLookback)
+	//timedDirection := common.NewTimedMean(tradeLookback)
 	var depth common.Depth
 	var trade common.Trade
 	for {
