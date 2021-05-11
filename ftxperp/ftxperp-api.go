@@ -76,7 +76,6 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 		}
 		rBody = bytes.NewReader(bodyStr)
 	}
-	logger.Debugf("%s", path)
 	req, err := http.NewRequest(method, "https://ftx.com/api"+path, rBody)
 	if err != nil {
 		return err
@@ -100,7 +99,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%s", contents)
+	//logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err

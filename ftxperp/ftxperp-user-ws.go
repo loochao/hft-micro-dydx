@@ -12,18 +12,22 @@ import (
 	"net/url"
 	"sync/atomic"
 	"time"
-	"unsafe"
 )
 
 type UserWS struct {
-	writeCh       chan interface{}
-	done          chan interface{}
-	reconnectCh   chan interface{}
-	RestartCh     chan interface{}
-	marketCh      chan string
-	marketResetCh chan string
-	loginCh       chan bool
-	stopped       int32
+	writeCh     chan interface{}
+	done        chan interface{}
+	reconnectCh chan interface{}
+	RestartCh   chan interface{}
+	messageCh   chan []byte
+	OrderCh     chan Order
+	FillCh      chan Fill
+	loginCh     chan bool
+	stopped     int32
+	trafficCh   chan string
+	key         string
+	secret      string
+	proxy       string
 }
 
 func (w *UserWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
@@ -67,16 +71,16 @@ func (w *UserWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *UserWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *UserWS) readLoop(conn *websocket.Conn) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
-	var symbolBytes []byte
-	var symbol string
+	//var symbolBytes []byte
+	//var symbol string
 	var msg []byte
 	var err error
-	var ch chan []byte
-	var ok bool
+	//var ch chan []byte
+	//var ok bool
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -91,50 +95,57 @@ func (w *UserWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte)
 			w.restart()
 			return
 		}
-		msgLen := len(msg)
-		if msgLen > 128 && msg[13] == 'o' {
-			if msg[45] == ',' {
-				symbolBytes = msg[36:44]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[46] == ',' {
-				symbolBytes = msg[36:45]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[47] == ',' {
-				symbolBytes = msg[36:46]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[48] == ',' {
-				symbolBytes = msg[36:47]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[49] == ',' {
-				symbolBytes = msg[36:48]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else if msg[50] == ',' {
-				symbolBytes = msg[36:49]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("other msg %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-				continue
-			}
-		} else {
-			if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
-				logger.Debugf("other msg %s", msg)
+		select {
+		case w.messageCh <- msg:
+		default:
+			if time.Now().Sub(logSilentTime) > 0 {
 				logSilentTime = time.Now().Add(time.Minute)
 			}
-			continue
 		}
-		if ch, ok = channels[symbol]; ok {
-			select {
-			case ch <- msg:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf(" ch <- msg %s ch len %d", symbol, len(ch))
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-			}
-		}
+		//msgLen := len(msg)
+		//if msgLen > 128 && msg[13] == 'o' {
+		//	if msg[45] == ',' {
+		//		symbolBytes = msg[36:44]
+		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+		//	} else if msg[46] == ',' {
+		//		symbolBytes = msg[36:45]
+		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+		//	} else if msg[47] == ',' {
+		//		symbolBytes = msg[36:46]
+		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+		//	} else if msg[48] == ',' {
+		//		symbolBytes = msg[36:47]
+		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+		//	} else if msg[49] == ',' {
+		//		symbolBytes = msg[36:48]
+		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+		//	} else if msg[50] == ',' {
+		//		symbolBytes = msg[36:49]
+		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+		//	} else {
+		//		if time.Now().Sub(logSilentTime) > 0 {
+		//			logger.Debugf("other msg %s", msg)
+		//			logSilentTime = time.Now().Add(time.Minute)
+		//		}
+		//		continue
+		//	}
+		//} else {
+		//	if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
+		//		logger.Debugf("other msg %s", msg)
+		//		logSilentTime = time.Now().Add(time.Minute)
+		//	}
+		//	continue
+		//}
+		//if ch, ok = channels[symbol]; ok {
+		//	select {
+		//	case ch <- msg:
+		//	default:
+		//		if time.Now().Sub(logSilentTime) > 0 {
+		//			logger.Debugf(" ch <- msg %s ch len %d", symbol, len(ch))
+		//			logSilentTime = time.Now().Add(time.Minute)
+		//		}
+		//	}
+		//}
 	}
 }
 
@@ -201,17 +212,12 @@ func (w *UserWS) reconnect(ctx context.Context, wsUrl string, proxy string, coun
 	return conn, nil
 }
 
-func (w *UserWS) mainLoop(ctx context.Context, key, secret, proxy string, channels map[string]chan []byte) {
+func (w *UserWS) mainLoop(ctx context.Context, key, secret, proxy string) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
-	symbols := make([]string, 0)
-	for symbol := range channels {
-		symbols = append(symbols, symbol)
-	}
-
 	defer func() {
 		cancel()
 		if internalCancel != nil {
@@ -247,14 +253,14 @@ func (w *UserWS) mainLoop(ctx context.Context, key, secret, proxy string, channe
 				w.Stop()
 				return
 			}
-			go w.readLoop(conn, channels)
+			go w.readLoop(conn)
 			go w.writeLoop(internalCtx, conn)
-			go w.heartbeatLoop(internalCtx, key, secret, conn, symbols)
+			go w.heartbeatLoop(internalCtx, key, secret, conn)
 		}
 	}
 }
 
-func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *websocket.Conn, symbols []string) {
+func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *websocket.Conn) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -263,20 +269,18 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
-	marketTimeout := time.Minute
-	marketCheckInterval := time.Second
-	marketCheckTimer := time.NewTimer(time.Second)
-	defer marketCheckTimer.Stop()
-	marketUpdatedTimes := make(map[string]time.Time)
-	for _, symbol := range symbols {
-		marketUpdatedTimes[symbol] = time.Unix(0, 0)
-	}
+	dataTimeout := time.Minute
+	dataCheckInterval := time.Second
+	dataCheckTimer := time.NewTimer(time.Second)
+	defer dataCheckTimer.Stop()
+	fillsUpdateTime := time.Unix(0, 0)
+	ordersUpdateTime := time.Unix(0, 0)
 	trafficTimeout := time.NewTimer(time.Minute * 5)
 	pingTimer := time.NewTimer(time.Second * 15)
 	defer trafficTimeout.Stop()
 	defer pingTimer.Stop()
 	loginTimer := time.NewTimer(time.Second)
-	logined := false
+	login := false
 
 	for {
 		select {
@@ -285,20 +289,32 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 		case <-w.done:
 			return
 		case <-loginTimer.C:
-			if !logined {
+			if !login {
+				param := LoginParam{}
+				param.Args.Key = key
+				param.Args.Time = time.Now().UnixNano() / 1000000
+				signature := fmt.Sprintf("%dwebsocket_login", param.Args.Time)
+				param.Args.Sign = common.HexEncodeToString(common.GetHMAC(common.HashSHA256, []byte(signature), []byte(secret)))
+				param.Op = "login"
 				select {
-				case w.writeCh <- []byte("{\"op\": \"ping\"}"):
+				case w.writeCh <- param:
 					break
 				default:
-					logger.Debugf("w.writeCh <- ping failed, ch len %d", len(w.writeCh))
+					logger.Debugf("w.writeCh <- param failed, ch len %d", len(w.writeCh))
 				}
 			}
-			pingTimer.Reset(time.Second * 15)
+			loginTimer.Reset(time.Second * 15)
 			break
 		case <-trafficTimeout.C:
-			logger.Debugf("traffic timeout in 30s, restart ws")
+			logger.Debugf("traffic timeout in 60s, restart ws")
 			w.restart()
 			return
+		case login = <-w.loginCh:
+			if !login {
+				logger.Debugf("login failed, stop ws")
+				w.Stop()
+				return
+			}
 		case <-pingTimer.C:
 			pingTimer.Reset(time.Second * 15)
 			select {
@@ -308,42 +324,47 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 				logger.Debugf("w.writeCh <- ping failed, ch len %d", len(w.writeCh))
 			}
 			break
-		case symbol := <-w.marketCh:
-			trafficTimeout.Reset(time.Second * 30)
-			marketUpdatedTimes[symbol] = time.Now()
+		case traffic := <-w.trafficCh:
+			switch traffic {
+			case "pong":
+				break
+			case "fills":
+				fillsUpdateTime = time.Now().Add(time.Hour * 24)
+				break
+			case "orders":
+				ordersUpdateTime = time.Now().Add(time.Hour * 24)
+				break
+			}
+			trafficTimeout.Reset(time.Minute)
 			break
-		case symbol := <-w.marketResetCh:
-			logger.Debugf("RESET %s", symbol)
-			trafficTimeout.Reset(time.Second * 30)
-			marketUpdatedTimes[symbol] = time.Now().Add(-marketTimeout)
-			break
-		case <-marketCheckTimer.C:
-			for market, updateTime := range marketUpdatedTimes {
-				if time.Now().Sub(updateTime) > marketTimeout {
-					select {
-					case w.writeCh <- SubscribeParam{
-						Operation: "unsubscribe",
-						Channel:   "orderbook",
-						Market:    market,
-					}:
-						marketUpdatedTimes[market] = time.Now().Add(marketTimeout)
-					default:
-						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
-					}
+		case <-dataCheckTimer.C:
+			if login {
+				if time.Now().Sub(fillsUpdateTime) > dataTimeout {
 					select {
 					case w.writeCh <- SubscribeParam{
 						Operation: "subscribe",
-						Channel:   "orderbook",
-						Market:    market,
+						Channel:   "fills",
 					}:
-						marketUpdatedTimes[market] = time.Now().Add(marketTimeout)
+						fillsUpdateTime = time.Now().Add(time.Minute)
+						break
 					default:
-						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+						logger.Debugf("w.writeCh <- SubscribePara failed, ch len %d", len(w.writeCh))
+					}
+				}
+				if time.Now().Sub(ordersUpdateTime) > dataTimeout {
+					select {
+					case w.writeCh <- SubscribeParam{
+						Operation: "subscribe",
+						Channel:   "orders",
+					}:
+						ordersUpdateTime = time.Now().Add(time.Minute)
+						break
+					default:
+						logger.Debugf("w.writeCh <- SubscribePara failed, ch len %d", len(w.writeCh))
 					}
 				}
 			}
-			marketCheckTimer.Reset(marketCheckInterval)
-			break
+			dataCheckTimer.Reset(dataCheckInterval)
 		}
 	}
 }
@@ -359,6 +380,11 @@ func (w *UserWS) Stop() {
 func (w *UserWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
+		select {
+		case w.RestartCh <- nil:
+		default:
+			logger.Debugf("w.RestartCh <- nil failed, ch len %d", len(w.RestartCh))
+		}
 	default:
 		logger.Debugf("w.reconnectCh <- nil failed, ch len %d", len(w.reconnectCh))
 	}
@@ -368,128 +394,127 @@ func (w *UserWS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *UserWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Depth) {
-	logger.Debugf("START dataHandleLoop %s", market)
-	defer logger.Debugf("EXIT dataHandleLoop %s", market)
+func (w *UserWS) dataHandleLoop(ctx context.Context, id int) {
+	logger.Debugf("START dataHandleLoop %d", id)
+	defer logger.Debugf("EXIT dataHandleLoop %d", id)
 	logSilentTime := time.Now()
-	orderbookData := OrderBookData{}
-	//var checkSum int64
 	var err error
-	var orderBook = OrderBook{
-		Bids:   common.Bids{},
-		Asks:   common.Asks{},
-		Market: market,
-	}
-	checkSumTimer := time.NewTimer(time.Minute)
-	var hasPartial = false
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case <-checkSumTimer.C:
-			if hasPartial {
-				if orderBook.CompareCheckSum() {
+		case msg := <-w.messageCh:
+			dataCap := UserDataCap{}
+			err = json.Unmarshal(msg, &dataCap)
+			if err != nil {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("json.Unmarshal(msg, &dataCap) error %v", err)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+				continue
+			}
+			if dataCap.Type == "error" {
+				if dataCap.Msg == "Already logged in" {
 					select {
-					case w.marketCh <- market:
+					case w.loginCh <- true:
+						logger.Debugf("LOGIN success")
 					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
+						logger.Debugf("w.loginCh <- true failed, ch len %d", len(w.loginCh))
+					}
+				} else if dataCap.Msg == "Invalid login credentials" {
+					select {
+					case w.loginCh <- false:
+						logger.Debugf("login failed")
+					default:
+						logger.Debugf("w.loginCh <- true failed, ch len %d", len(w.loginCh))
 					}
 				} else {
-					hasPartial = false
-					select {
-					case w.marketResetCh <- market:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("w.marketResetCh <- market failed, ch len %d", len(w.marketResetCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
-				}
-			} else {
-				select {
-				case w.marketResetCh <- market:
-				default:
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("w.marketResetCh <- market failed, ch len %d", len(w.marketResetCh))
+						logger.Debugf("other error msg %s", msg)
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
-			}
-			checkSumTimer.Reset(time.Second * 5)
-			break
-		case msg := <-inputCh:
-			orderbookData = OrderBookData{}
-			err = json.Unmarshal(msg, &orderbookData)
-			if err != nil {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("json.Unmarshal error %v", err)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
 				continue
-			}
-			switch orderbookData.Data.Action {
-			case "partial":
-				orderBook.Bids = orderbookData.Data.Bids
-				orderBook.Asks = orderbookData.Data.Asks
-				orderBook.Checksum = orderbookData.Data.Checksum
-				orderBook.Time = orderbookData.Data.Time
-				hasPartial = true
-				break
-			case "update":
-				if hasPartial {
-					orderBook.Asks = orderBook.Asks.UpdateBatch(orderbookData.Data.Asks)
-					orderBook.Bids = orderBook.Bids.UpdateBatch(orderbookData.Data.Bids)
-					orderBook.Checksum = orderbookData.Data.Checksum
-					orderBook.Time = orderbookData.Data.Time
+			} else if dataCap.Type == "pong" {
+				select {
+				case w.trafficCh <- "pong":
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.trafficCh <- \"pong\" failed, ch len %d", len(w.trafficCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
-				break
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("other action %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
+			} else if dataCap.Type == "subscribed" {
+				select {
+				case w.trafficCh <- dataCap.Channel:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.trafficCh <- dataCap.Channel failed, ch len %d", len(w.trafficCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
-				continue
-			}
-			select {
-			case outputCh <- &orderBook:
-
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
-					logSilentTime = time.Now().Add(time.Minute)
+			} else if dataCap.Type == "update" {
+				switch dataCap.Channel {
+				case "fills":
+					fill := Fill{}
+					err = json.Unmarshal(dataCap.Data, &fill)
+					if err != nil {
+						logger.Debugf("err = json.Unmarshal(dataCap.Data, &order) error %v", err)
+					}else{
+						select {
+						case w.FillCh <- fill:
+						default:
+							logger.Debugf("w.FillCh <- fill failed, ch len %d", len(w.FillCh))
+						}
+					}
+					continue
+				case "orders":
+					order := Order{}
+					err = json.Unmarshal(dataCap.Data, &order)
+					if err != nil {
+						logger.Debugf("err = json.Unmarshal(dataCap.Data, &order) error %v", err)
+					} else {
+						select {
+						case w.OrderCh <- order:
+						default:
+							logger.Debugf("w.Order <- order failed, ch len %d", len(w.OrderCh))
+						}
+					}
+					continue
 				}
 			}
 		}
 	}
 }
 
+func (w *UserWS) Start(ctx context.Context) {
+	for i := 0; i < 4; i++ {
+		go w.dataHandleLoop(ctx, i)
+	}
+	go w.mainLoop(ctx, w.key, w.secret, w.proxy)
+	w.reconnectCh <- nil
+}
+
 func NewUserWS(
-	ctx context.Context,
 	key, secret,
 	proxy string,
-	channels map[string]chan common.Depth,
 ) *UserWS {
 	ws := UserWS{
-		done:          make(chan interface{}),
-		reconnectCh:   make(chan interface{}, 100),
-		writeCh:       make(chan interface{}, 100*len(channels)),
-		marketCh:      make(chan string, 100*len(channels)),
-		marketResetCh: make(chan string, 100*len(channels)),
-		RestartCh:     make(chan interface{}, 100),
-		loginCh:       make(chan bool, 100),
-		stopped:       0,
+		done:        make(chan interface{}),
+		reconnectCh: make(chan interface{}, 100),
+		writeCh:     make(chan interface{}, 100),
+		messageCh:   make(chan []byte, 10000),
+		RestartCh:   make(chan interface{}, 100),
+		trafficCh:   make(chan string, 100),
+		loginCh:     make(chan bool, 100),
+		stopped:     0,
+		key:         key,
+		secret:      secret,
+		proxy:       proxy,
+		OrderCh:     make(chan Order, 1000),
+		FillCh:      make(chan Fill, 1000),
 	}
-	messagesCh := make(map[string]chan []byte)
-	for market, ch := range channels {
-		messagesCh[market] = make(chan []byte, 1000)
-		go ws.dataHandleLoop(ctx, market, messagesCh[market], ch)
-	}
-	go ws.mainLoop(ctx, key, secret, proxy, messagesCh)
-	ws.reconnectCh <- nil
 	return &ws
 }

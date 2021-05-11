@@ -26,9 +26,9 @@ func (frp *FundingRateParam) ToUrlValues() url.Values {
 }
 
 type SubscribeParam struct {
-	Operation string `json:"op"`
-	Market    string `json:"market"`
-	Channel   string `json:"channel"`
+	Operation string `json:"op,omitempty"`
+	Market    string `json:"market,omitempty"`
+	Channel   string `json:"channel,omitempty"`
 }
 
 type LeverageParam struct {
@@ -44,7 +44,7 @@ type NewOrderParam struct {
 	ReduceOnly bool    `json:"reduceOnly,omitempty"`
 	Ioc        bool    `json:"ioc,omitempty"`
 	PostOnly   bool    `json:"postOnly,omitempty"`
-	ClientId   string  `json:"clientId,omitempty"`
+	ClientID   string  `json:"clientId,omitempty"`
 }
 
 type CancelAllParam struct {

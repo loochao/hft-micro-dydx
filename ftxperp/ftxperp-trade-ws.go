@@ -89,7 +89,6 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 			w.restart()
 			return
 		}
-		logger.Debugf("%s", msg)
 		if len(msg) > 128 && msg[13] == 't' {
 			if msg[41] == '"' {
 				symbolBytes = msg[33:41]
@@ -114,9 +113,11 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 				continue
 			}
 		} else {
-			if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("other msg %s", msg)
-				logSilentTime = time.Now().Add(time.Minute)
+			if len(msg) > 128 {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("other msg %s", msg)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
 			}
 			continue
 		}

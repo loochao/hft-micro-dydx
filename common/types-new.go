@@ -9,8 +9,8 @@ import (
 type Account interface {
 	GetCurrency() string
 	GetBalance() float64
-	GetAvailable() float64
-	GetLocked() float64
+	GetFree() float64
+	GetUsed() float64
 	GetTime() time.Time
 }
 
@@ -30,23 +30,59 @@ type Position interface {
 }
 
 type Exchange interface {
-	Initial(ctx context.Context, settings ExchangeSettings) error
-	Start(ctx context.Context)
-	SubmitOrder(param NewOrderParam) error
-	CancelOrder(param CancelOrderParam) error
-	OrderCh() chan Order
-	AccountCh() chan Account
-	RestartCh() chan interface{}
-	StatusCh() chan bool
 	Done() chan interface{}
+	Stop()
+
+	Setup(ctx context.Context, settings ExchangeSettings) error
+
+	GetMinNotional(symbol string) float64
+	GetMinSize(symbol string) float64
+	GetStepSize(symbol string) float64
+	GetTickSize(symbol string) float64
+
+	StreamBasic(ctx context.Context, statusCh chan SystemStatus, accountCh chan Account, positionCh map[string]chan Position, orderCh map[string]chan Order, )
+	StreamDepth(ctx context.Context, channels map[string]chan Depth, batchSize int)
+	StreamTrade(ctx context.Context, channels map[string]chan Trade, batchSize int)
+	StreamTicker(ctx context.Context, channels map[string]chan Ticker, batchSize int)
+	StreamKLine(ctx context.Context, channels map[string]chan []KLine, batchSize int, interval, lookback time.Duration)
+	StreamFundingRate(ctx context.Context, channels map[string]chan FundingRate, batchSize int)
+
+	WatchOrders(ctx context.Context, requestChannels map[string]chan OrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
+}
+
+type OrderError struct {
+	New    *NewOrderParam
+	Cancel *CancelOrderParam
+	Error  error
+}
+
+type FundingRate interface {
+	GetFundingRate() float64
+	GetNextFundingTime() time.Time
+}
+
+type Ticker interface {
+	GetHigh() float64
+	GetLow() float64
+	GetClose() float64
+	GetBidPrice() float64
+	GetAskPrice() float64
+	GetBidSize() float64
+	GetAskSize() float64
 }
 
 type ExchangeSettings struct {
-	Proxy         *string  `yaml:"proxy" json:"proxy"`
-	ApiKey        *string  `yaml:"apiKey" json:"apiKey"`
-	ApiSecret     *string  `yaml:"apiSecret" json:"apiSecret"`
-	ApiPassphrase *string  `yaml:"apiPassphrase" json:"apiPassphrase"`
-	Symbols       []string `yaml:"symbols" json:"symbols"`
+	Name             string        `yaml:"name" json:"name"`
+	Proxy            string        `yaml:"proxy" json:"proxy"`
+	ApiKey           string        `yaml:"apiKey" json:"apiKey"`
+	ApiSecret        string        `yaml:"apiSecret" json:"apiSecret"`
+	ApiPassphrase    string        `yaml:"apiPassphrase" json:"apiPassphrase"`
+	Symbols          []string      `yaml:"symbols" json:"symbols"`
+	HttpPullInterval time.Duration `yaml:"httpPullInterval" json:"httpPullInterval"`
+	MarginType       string        `yaml:"marginType" json:"marginType"`
+	ChangeMarginType bool          `yaml:"changeMarginType" json:"changeMarginType"`
+	Leverage         float64       `yaml:"leverage" json:"leverage"`
+	ChangeLeverage   bool          `yaml:"changeLeverage" json:"changeLeverage"`
 }
 
 type SpotExchange interface {
@@ -66,13 +102,13 @@ type OrderStatus string
 
 type NewOrderParam struct {
 	Symbol      string
-	Side        string
-	Type        string
+	Side        OrderSide
+	Type        OrderType
 	Size        float64
 	Price       float64
 	PostOnly    bool
 	ReduceOnly  bool
-	TimeInForce string
+	TimeInForce OrderTimeInForce
 	ClientID    string
 }
 
@@ -81,16 +117,22 @@ type CancelOrderParam struct {
 	ClientID string
 }
 
+type OrderRequest struct {
+	New    *NewOrderParam
+	Cancel *CancelOrderParam
+}
+
 type Order interface {
-	GetSymbol() float64
+	GetSymbol() string
 	GetSize() float64
 	GetPrice() float64
 	GetFilledSize() float64
 	GetFilledPrice() float64
-	GetSide() float64
-	GetClientID() float64
-	GetStatus() string
-	GetType() string
+	GetSide() OrderSide
+	GetClientID() string
+	GetID() string
+	GetStatus() OrderStatus
+	GetType() OrderType
 	GetPostOnly() bool
 	GetReduceOnly() bool
 }
@@ -207,7 +249,6 @@ func (asks Asks) Search(price float64) int {
 		return asks[i][0] >= price
 	})
 }
-
 func (asks Asks) SearchAfter(otherAsks Asks, n int, price float64) int {
 	return sort.Search(len(otherAsks)-n, func(i int) bool {
 		return otherAsks[i+n][0] >= price
@@ -270,4 +311,23 @@ type Depth interface {
 	GetAsks() Asks
 	GetBids() Bids
 	GetSymbol() string
+}
+
+type SystemStatus string
+
+var (
+	SystemStatusReady   = SystemStatus("READY")
+	SystemStatusRestart = SystemStatus("RESTART")
+	SystemStatusClosed  = SystemStatus("CLOSED")
+	SystemStatusError   = SystemStatus("ERROR")
+)
+
+type InfluxSettings struct {
+	Address      string        `yaml:"address,omitempty"`
+	Username     string        `yaml:"username,omitempty"`
+	Password     string        `yaml:"password,omitempty"`
+	Database     string        `yaml:"database,omitempty"`
+	Measurement  string        `yaml:"measurement,omitempty"`
+	BatchSize    int           `yaml:"batchSize,omitempty"`
+	SaveInterval time.Duration `yaml:"saveInterval,omitempty"`
 }

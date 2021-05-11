@@ -236,7 +236,6 @@ func (position *Position) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
-
 func (position *Position) GetSymbol() string {
 	return position.Future
 }
@@ -264,7 +263,7 @@ type Account struct {
 	Collateral                   float64    `json:"collateral"`
 	FreeCollateral               float64    `json:"freeCollateral"`
 	CollateralUsed               float64    `json:"collateralUsed"`
-	Leverage                     float64        `json:"leverage"`
+	Leverage                     float64    `json:"leverage"`
 	Liquidating                  bool       `json:"liquidating"`
 	MaintenanceMarginRequirement float64    `json:"maintenanceMarginRequirement"`
 	MakerFee                     float64    `json:"makerFee"`
@@ -377,6 +376,11 @@ func (order *Order) GetSide() common.OrderSide {
 func (order *Order) GetClientID() string {
 	return order.ClientId
 }
+
+func (order *Order) GetID() string {
+	return fmt.Sprintf("%d", order.ID)
+}
+
 func (order *Order) GetType() common.OrderType {
 	switch order.Type {
 	case OrderTypeLimit:
@@ -393,7 +397,7 @@ func (order *Order) GetPostOnly() bool {
 func (order *Order) GetReduceOnly() bool {
 	return order.ReduceOnly
 }
-func (order *Order) GetOrderStatus() common.OrderStatus {
+func (order *Order) GetStatus() common.OrderStatus {
 	switch order.Status {
 	case OrderStatusNew:
 		return common.OrderStatusNew
@@ -408,4 +412,104 @@ func (order *Order) GetOrderStatus() common.OrderStatus {
 
 type Leverage struct {
 	Leverage int `json:"leverage"`
+}
+
+//{"type": "error", "code": 400, "msg": "Already logged in"}
+type UserDataCap struct {
+	Type    string          `json:"type"`
+	Code    int             `json:"code"`
+	Msg     string          `json:"msg"`
+	Channel string          `json:"channel"`
+	Data    json.RawMessage `json:"data"`
+}
+
+type Fill struct {
+	Fee         float64   `json:"fee"`
+	Future      string    `json:"future"`
+	ID          int64     `json:"id"`
+	Liquidity   string    `json:"liquidity"`
+	Market      string    `json:"market"`
+	OrderId     int64     `json:"orderId"`
+	TradeId     int64     `json:"tradeId"`
+	FilledPrice float64   `json:"price"`
+	Side        string    `json:"side"`
+	FilledSize  float64   `json:"size"`
+	Time        time.Time `json:"-"`
+	Type        string    `json:"type"`
+	OrderType   string    `json:"-"`
+	ReduceOnly  bool      `json:"-"`
+	Ioc         bool      `json:"-"`
+	PostOnly    bool      `json:"-"`
+	Price       float64   `json:"-"`
+	Size        float64   `json:"-"`
+	ClientId    string    `json:"-"`
+}
+
+func (fill *Fill) UnmarshalJSON(data []byte) error {
+	type Alias Fill
+	aux := &struct {
+		*Alias
+		Time string `json:"time"`
+	}{
+		Alias: (*Alias)(fill),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	} else {
+		fill.Time, err = time.Parse(TimeLayout, aux.Time)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (fill *Fill) GetSymbol() string {
+	return fill.Future
+}
+func (fill *Fill) GetSize() float64 {
+	return fill.Size
+}
+func (fill *Fill) GetPrice() float64 {
+	return fill.Price
+}
+func (fill *Fill) GetFilledSize() float64 {
+	return fill.FilledSize
+}
+func (fill *Fill) GetFilledPrice() float64 {
+	return fill.FilledPrice
+}
+func (fill *Fill) GetSide() common.OrderSide {
+	if fill.Side == OrderSideBuy {
+		return common.OrderSideBuy
+	} else if fill.Side == OrderSideSell {
+		return common.OrderSideSell
+	}
+	return common.OrderSideUnknown
+}
+func (fill *Fill) GetClientID() string {
+	return fill.ClientId
+}
+
+func (fill *Fill) GetID() string {
+	return fmt.Sprintf("%d", fill.ID)
+}
+
+func (fill *Fill) GetType() common.OrderType {
+	switch fill.Type {
+	case OrderTypeLimit:
+		return common.OrderTypeLimit
+	case OrderTypeMarket:
+		return common.OrderTypeMarket
+	default:
+		return common.OrderTypeUnknown
+	}}
+func (fill *Fill) GetPostOnly() bool {
+	return fill.PostOnly
+}
+func (fill *Fill) GetReduceOnly() bool {
+	return fill.PostOnly
+}
+func (fill *Fill) GetStatus() common.OrderStatus {
+	return common.OrderStatusFilled
 }
