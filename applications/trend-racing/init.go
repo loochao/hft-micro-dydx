@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/ftxperp"
 	"github.com/geometrybase/hft-micro/logger"
@@ -80,6 +81,13 @@ func init() {
 	switch trConfig.ExchangeSettings.Name {
 	case "ftxperp":
 		trExchange = new(ftxperp.Ftxperp)
+		err = trExchange.Setup(trGlobalContext, trConfig.ExchangeSettings)
+		if err != nil {
+			logger.Fatal(err)
+		}
+		break
+	case "bnswap":
+		trExchange = new(bnswap.Bnswap)
 		err = trExchange.Setup(trGlobalContext, trConfig.ExchangeSettings)
 		if err != nil {
 			logger.Fatal(err)

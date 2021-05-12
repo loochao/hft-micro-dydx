@@ -19,11 +19,11 @@ type Depth20 struct {
 	ParseTime    time.Time      `json:"-"`
 }
 
-func (depth *Depth20) GetBids() [20][2]float64 {
-	return depth.Bids
+func (depth *Depth20) GetBids() common.Bids {
+	return depth.Bids[:]
 }
-func (depth *Depth20) GetAsks() [20][2]float64 {
-	return depth.Asks
+func (depth *Depth20) GetAsks() common.Asks {
+	return depth.Asks[:]
 }
 func (depth *Depth20) GetSymbol() string {
 	return depth.Symbol
@@ -495,14 +495,11 @@ type Trade struct {
 	IsTheBuyerTheMarketMaker bool `json:"m,omitempty"`
 }
 
-
 func (trade *Trade) GetSymbol() string  { return trade.Symbol }
 func (trade *Trade) GetSize() float64   { return trade.Quantity }
 func (trade *Trade) GetPrice() float64  { return trade.Price }
 func (trade *Trade) GetTime() time.Time { return trade.EventTime }
-func (trade *Trade) IsUpTick() bool        { return !trade.IsTheBuyerTheMarketMaker }
-
-
+func (trade *Trade) IsUpTick() bool     { return !trade.IsTheBuyerTheMarketMaker }
 
 //{
 //"code": "200",
@@ -623,4 +620,19 @@ func (depth *Depth5) UnmarshalJSON(data []byte) error {
 }
 
 type Ping struct {
+}
+
+type Depth Depth20
+
+func (depth *Depth) GetSymbol() string {
+	return depth.Symbol
+}
+func (depth *Depth) GetTime() time.Time {
+	return depth.EventTime
+}
+func (depth *Depth) GetAsks() common.Asks {
+	return depth.Asks[:]
+}
+func (depth *Depth) GetBids() common.Bids {
+	return depth.Bids[:]
 }

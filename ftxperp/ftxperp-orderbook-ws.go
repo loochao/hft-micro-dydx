@@ -358,7 +358,6 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 	defer logger.Debugf("EXIT dataHandleLoop %s", market)
 	logSilentTime := time.Now()
 	orderbookData := OrderBookData{}
-	//var checkSum int64
 	var err error
 	var orderBook = OrderBook{
 		Bids:   common.Bids{},
@@ -366,6 +365,10 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 		Market: market,
 	}
 	checkSumTimer := time.NewTimer(time.Minute)
+	defer checkSumTimer.Stop()
+	outputTimer := time.NewTimer(time.Millisecond * 100)
+	defer outputTimer.Stop()
+
 	var hasPartial = false
 	for {
 		select {
@@ -373,6 +376,18 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 			return
 		case <-w.done:
 			return
+		case <-outputTimer.C:
+			if hasPartial {
+				select {
+				case outputCh <- &orderBook:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
+			}
+			outputTimer.Reset(time.Millisecond * 100)
 		case <-checkSumTimer.C:
 			if hasPartial {
 				if orderBook.CompareCheckSum() {
@@ -440,15 +455,7 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 				}
 				continue
 			}
-			select {
-			case outputCh <- &orderBook:
 
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-			}
 		}
 	}
 }

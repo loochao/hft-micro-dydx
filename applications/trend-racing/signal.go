@@ -17,43 +17,49 @@ func streamSignal(
 	tradeCh chan common.Trade,
 	outputCh chan Signal,
 ) {
-	timedBuyVolume := common.NewTimedSum(tradeLookback)
-	timedSellVolume := common.NewTimedSum(tradeLookback)
+	timedTradeVolume := common.NewTimedSum(tradeLookback)
+	timedTickDirection := common.NewTimedSum(tradeLookback)
 	updateTimer := time.NewTimer(updateInterval)
-	//timedDirection := common.NewTimedMean(tradeLookback)
 	var depth common.Depth
 	var trade common.Trade
+	var loopTime = time.Now()
 	for {
+
 		select {
 		case <-ctx.Done():
 			return
 		case <-updateTimer.C:
 			updateTimer.Reset(updateInterval)
+			if time.Now().Sub(loopTime) < updateInterval {
+				continue
+			}
 			if depth == nil || trade == nil {
 				continue
 			}
-			if timedBuyVolume.Range() < tradeLookback/2 {
-				continue
-			}
-			if timedSellVolume.Range() < tradeLookback/2 {
-				continue
-			}
-			bidVolume := 0.0
-			askVolume := 0.0
+			loopTime = time.Now()
+			bookVolume := 0.0
 			bids := depth.GetBids()
 			asks := depth.GetAsks()
 			for i := 0; i < depthLevel && i < len(bids); i++ {
-				bidVolume += bids[i][0] * bids[i][1]
+				bookVolume += bids[i][0] * bids[i][1]
 			}
 			for i := 0; i < depthLevel && i < len(asks); i++ {
-				askVolume += asks[i][0] * asks[i][1]
+				bookVolume += asks[i][0] * asks[i][1]
+			}
+			direction := 0.0
+			tradeBookRatio := 0.0
+			if bookVolume != 0 {
+				tradeBookRatio = timedTradeVolume.Sum() / bookVolume
+			}
+			if timedTradeVolume.Sum() != 0 {
+				direction = timedTickDirection.Sum() / timedTradeVolume.Sum()
 			}
 			signal := Signal{
 				Symbol:         symbol,
-				BidVolume:      bidVolume,
-				AskVolume:      askVolume,
-				BuyVolume:      timedBuyVolume.Sum(),
-				SellVolume:     timedSellVolume.Sum(),
+				TradeBookRatio: tradeBookRatio,
+				TradeVolume:    timedTradeVolume.Sum(),
+				BookVolume:     bookVolume,
+				Direction:      direction,
 				BestBidPrice:   bids[0][0],
 				BestAskPrice:   bids[0][0],
 				LastTradePrice: trade.GetPrice(),
@@ -63,15 +69,19 @@ func streamSignal(
 			default:
 				logger.Debugf("outputCh <- signal failed ch len %d", len(outputCh))
 			}
+			break
 		case trade = <-tradeCh:
+			value := trade.GetSize() * trade.GetPrice()
 			if trade.IsUpTick() {
-				timedBuyVolume.Insert(trade.GetTime(), trade.GetSize()*trade.GetPrice())
+				timedTickDirection.Insert(trade.GetTime(), value)
 			} else {
-				timedSellVolume.Insert(trade.GetTime(), trade.GetSize()*trade.GetPrice())
+				timedTickDirection.Insert(trade.GetTime(), -value)
 			}
+			timedTradeVolume.Insert(trade.GetTime(), value)
 			break
 		case depth = <-depthCh:
 			break
 		}
+
 	}
 }

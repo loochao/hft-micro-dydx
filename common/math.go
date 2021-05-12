@@ -167,6 +167,18 @@ func NewTimedMean(lookback time.Duration) *TimedMean {
 	}
 }
 
+func NewTimedWeightedMean(lookback time.Duration) *TimedWeightedMean {
+	return &TimedWeightedMean{
+		lookback: lookback,
+		times:    make([]time.Time, 0),
+		values:   make([]float64, 0),
+		weights:  make([]float64, 0),
+		sum:      0,
+		mean:     0,
+		weight:   0,
+	}
+}
+
 type TimedWeightedMean struct {
 	lookback time.Duration
 	times    []time.Time
@@ -188,6 +200,7 @@ func (tm *TimedWeightedMean) Insert(timestamp time.Time, weight, value float64) 
 		if timestamp.Sub(t) > tm.lookback {
 			cutIndex = i
 			tm.sum -= tm.values[i] * tm.weights[i]
+			tm.weight -= tm.weights[i]
 		} else {
 			break
 		}
@@ -230,26 +243,27 @@ type VPIN struct {
 	values    []float64
 	imbalance float64
 }
+
 func (v *VPIN) Insert(size, price float64) float64 {
 	//first trade default to buy
 	if price > v.lastPrice {
-		v.buy += size*price
-		v.total += size*price
+		v.buy += size * price
+		v.total += size * price
 		v.values = append(v.values, size*price)
 		v.lastDir = 1.0
-	}else if price < v.lastPrice {
-		v.sell += size*price
-		v.total += size*price
+	} else if price < v.lastPrice {
+		v.sell += size * price
+		v.total += size * price
 		v.values = append(v.values, -size*price)
 		v.lastDir = -1.0
-	}else if v.lastDir >= 0 {
-		v.buy += size*price
-		v.total += size*price
+	} else if v.lastDir >= 0 {
+		v.buy += size * price
+		v.total += size * price
 		v.values = append(v.values, size*price)
 		v.lastDir = 1.0
-	}else if v.lastDir < 0 {
-		v.sell += size*price
-		v.total += size*price
+	} else if v.lastDir < 0 {
+		v.sell += size * price
+		v.total += size * price
 		v.values = append(v.values, -size*price)
 		v.lastDir = -1.0
 	}
@@ -260,7 +274,7 @@ func (v *VPIN) Insert(size, price float64) float64 {
 		if v.values[cutIndex] >= 0 {
 			v.total -= v.values[cutIndex]
 			v.buy -= v.values[cutIndex]
-		}else{
+		} else {
 			v.total += v.values[cutIndex]
 			v.sell += v.values[cutIndex]
 		}
@@ -270,7 +284,7 @@ func (v *VPIN) Insert(size, price float64) float64 {
 	if cutIndex > 0 {
 		v.values = v.values[cutIndex:]
 	}
-	v.imbalance = (v.buy - v.sell)/v.total
+	v.imbalance = (v.buy - v.sell) / v.total
 	return v.imbalance
 }
 func (v *VPIN) Imbalance() float64 {

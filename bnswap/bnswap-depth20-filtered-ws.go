@@ -237,7 +237,7 @@ func (w *Depth20FilteredWebsocket) start(ctx context.Context, symbols []string, 
 	defer func() {
 		w.Stop()
 		cancel()
-		logger.Debugf("EXIT start")
+		logger.Debugf("EXIT mainLoop")
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()

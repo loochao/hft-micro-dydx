@@ -110,7 +110,7 @@ func (iw *InfluxWriter) savePoints(points []*client.Point) error {
 }
 
 func (iw *InfluxWriter) watchPoints(ctx context.Context) {
-	defer logger.Debugf("START watchPoints")
+	logger.Debugf("START watchPoints")
 	defer func() {
 		logger.Debugf("EXIT watchPoints")
 	}()

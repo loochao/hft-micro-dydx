@@ -14,19 +14,19 @@ func main() {
 	defer trExchange.Stop()
 
 	//订阅帐号基本信息
-	positionsCh := make(map[string]chan common.Position)
-	ordersCh := make(map[string]chan common.Order)
-	for _, symbol := range trConfig.ExchangeSettings.Symbols {
-		positionsCh[symbol] = trPositionCh
-		ordersCh[symbol] = trOrderCh
-	}
-	go trExchange.StreamBasic(
-		trGlobalContext,
-		trStatusCh,
-		trAccountCh,
-		positionsCh,
-		ordersCh,
-	)
+	//positionsCh := make(map[string]chan common.Position)
+	//ordersCh := make(map[string]chan common.Order)
+	//for _, symbol := range trConfig.ExchangeSettings.Symbols {
+	//	positionsCh[symbol] = trPositionCh
+	//	ordersCh[symbol] = trOrderCh
+	//}
+	//go trExchange.StreamBasic(
+	//	trGlobalContext,
+	//	trStatusCh,
+	//	trAccountCh,
+	//	positionsCh,
+	//	ordersCh,
+	//)
 
 	depthChannels := make(map[string]chan common.Depth)
 	tradeChannels := make(map[string]chan common.Trade)
@@ -60,28 +60,32 @@ mainLoop:
 			break mainLoop
 		case <-trExchange.Done():
 			break mainLoop
-		case trSystemStatus = <-trStatusCh:
-			logger.Debugf("SYSTEM STATUS %s", trSystemStatus)
-			if trSystemStatus != common.SystemStatusReady {
-				trGlobalSilent = time.Now().Add(trConfig.GlobalSilent)
-			}
-			break
-		case trAccount = <-trAccountCh:
-			break
-		case pos := <-trPositionCh:
-			trPositions[pos.GetSymbol()] = pos
-			break
-		case order := <-trOrderCh:
-			trOrders[order.GetSymbol()] = order
-			break
+		//case trSystemStatus = <-trStatusCh:
+		//	logger.Debugf("SYSTEM STATUS %s", trSystemStatus)
+		//	if trSystemStatus != common.SystemStatusReady {
+		//		trGlobalSilent = time.Now().Add(trConfig.GlobalSilent)
+		//	}
+		//	break
+		//case trAccount = <-trAccountCh:
+		//	break
+		//case pos := <-trPositionCh:
+		//	trPositions[pos.GetSymbol()] = pos
+		//	break
+		//case order := <-trOrderCh:
+		//	trOrders[order.GetSymbol()] = order
+		//	break
 		case s := <-trSignalCh:
-			logger.Debugf("signal %v", s)
+			logger.Debugf("%s  \tTRADE/BOOK %.2f DIR %.2f LAST %.3f",
+				s.Symbol, s.TradeBookRatio, s.Direction,
+				s.LastTradePrice,
+			)
+			break
 		}
 	}
 
 	logger.Debugf("waiting 15s for exit.")
 	select {
-	case <-time.After(time.Second*15):
+	case <-time.After(time.Second * 15):
 	}
 	logger.Debugf("exit main loop")
 }

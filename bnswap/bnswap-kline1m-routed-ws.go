@@ -328,7 +328,7 @@ func NewKline1MRoutedWebsocket(
 //  "E": 123456789,   // Event time
 //  "s": "BTCUSDT",    // Market
 //  "k": {
-//    "t": 123400000, // Kline start time
+//    "t": 123400000, // Kline mainLoop time
 //    "T": 123460000, // Kline close time
 //    "s": "BTCUSDT",  // Market
 //    "i": "1m",      // Interval
