@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-
 type Offset struct {
 	FarTop  float64
 	Top     float64
@@ -41,5 +40,33 @@ func NewOffset(msg string) (Offset, error) {
 		NearBot: offsets[4],
 		Bot:     offsets[2],
 		FarBot:  offsets[0],
+	}, nil
+}
+
+type Delta struct {
+	LongBot  float64
+	LongTop  float64
+	ShortBot float64
+	ShortTop float64
+}
+
+func NewDelta(msg string) (Delta, error) {
+	splits := strings.Split(msg, ",")
+	if len(splits) != 8 {
+		return Delta{}, fmt.Errorf("bad delta %s", msg)
+	}
+	deltas := [8]float64{}
+	var err error
+	for i, s := range splits {
+		deltas[i], err = common.ParseFloat([]byte(s))
+		if err != nil {
+			return Delta{}, err
+		}
+	}
+	return Delta{
+		LongBot: deltas[1],
+		LongTop: deltas[6],
+		ShortBot: deltas[2],
+		ShortTop: deltas[7],
 	}, nil
 }

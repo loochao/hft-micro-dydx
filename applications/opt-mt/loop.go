@@ -225,10 +225,11 @@ func updateMakerNewOrders() {
 
 		makerValue := makerPosition.GetSize() * makerPosition.GetPrice()
 		offset := mOrderOffsets[makerSymbol]
-		shortTop := mtConfig.ShortEnterDelta + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
-		shortBot := mtConfig.ShortExitDelta + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
-		longBot := mtConfig.LongEnterDelta + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
-		longTop := mtConfig.LongExitDelta + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+		delta := mtDeltas[makerSymbol]
+		shortTop := delta.ShortTop + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+		shortBot := delta.ShortBot + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+		longBot := delta.LongBot + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+		longTop := delta.LongTop + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
 
 		if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
 			logger.Debugf("loop %s", makerSymbol)

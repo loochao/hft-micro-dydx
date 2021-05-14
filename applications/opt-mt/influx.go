@@ -26,16 +26,17 @@ func handleInternalSave() {
 	makerURPnl := 0.0
 	for _, makerSymbol := range mSymbols {
 		takerSymbol := mtSymbolsMap[makerSymbol]
+		delta := mtDeltas[makerSymbol]
 		fields := make(map[string]interface{})
 		if makerPosition, ok := mPositions[makerSymbol]; ok {
 			fields["makerSize"] = makerPosition.GetSize()
 			if spread, ok := mtSpreads[makerSymbol]; ok {
 				makerValue := makerPosition.GetSize() * makerPosition.GetPrice()
 				fields["makerValue"] = makerValue
-				fields["shortTop"] = mtConfig.ShortEnterDelta + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
-				fields["shortBot"] = mtConfig.ShortExitDelta + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
-				fields["longBot"] = mtConfig.LongEnterDelta + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
-				fields["longTop"] = mtConfig.LongExitDelta + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+				fields["shortTop"] = delta.ShortTop + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+				fields["shortBot"] = delta.ShortBot + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+				fields["longBot"] = delta.LongBot + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+				fields["longTop"] = delta.LongTop + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
 				if makerPosition.GetPrice() != 0 {
 					makerURPnl += makerPosition.GetSize() * (spread.MakerDepth.MidPrice - makerPosition.GetPrice())
 				}

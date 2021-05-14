@@ -75,6 +75,7 @@ var tSystemStatus = common.SystemStatusNoteReady
 var mSystemStatusCh = make(chan common.SystemStatus, 10)
 var tSystemStatusCh = make(chan common.SystemStatus, 10)
 var mOrderOffsets = make(map[string]Offset)
+var mtDeltas = make(map[string]Delta)
 
 var tHedgeMarkPrices = make(map[string]float64)
 
@@ -85,7 +86,7 @@ var tExchange common.Exchange
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210514 12:57:12  ####")
+	logger.Debug("####  BUILD @ 20210514 16:06:34  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -130,10 +131,19 @@ func init() {
 		logger.Fatal("unsupported exchange %s", mtConfig.TakerExchange.Name)
 	}
 	for makerSymbol, takerSymbol := range mtConfig.MakerTakerPairs {
-		mSymbols = append(mSymbols, makerSymbol)
-		tSymbols = append(tSymbols, takerSymbol)
-		tmSymbolsMap[takerSymbol] = makerSymbol
-		mtSymbolsMap[makerSymbol] = takerSymbol
+		if delta, ok := mtConfig.Deltas[makerSymbol]; ok {
+			dt, err := NewDelta(delta)
+			if err != nil {
+				logger.Fatalf("NewOffset for %s error %v", makerSymbol, err)
+			}
+			if dt.LongTop - dt.LongBot < mtConfig.MinimalDelta || dt.ShortTop - dt.ShortBot < mtConfig.MinimalDelta{
+				logger.Debugf("%s delta too small %s", makerSymbol, delta)
+				continue
+			}
+			mtDeltas[makerSymbol] = dt
+		}else{
+			logger.Fatalf("MISS DELTA FOR %s", makerSymbol)
+		}
 		if offset, ok := mtConfig.MakerOrderOffsets[makerSymbol]; ok {
 			mOrderOffsets[makerSymbol], err = NewOffset(offset)
 			if err != nil {
@@ -142,6 +152,10 @@ func init() {
 		} else {
 			logger.Fatalf("MISS OFFSET FOR %s", makerSymbol)
 		}
+		mSymbols = append(mSymbols, makerSymbol)
+		tSymbols = append(tSymbols, takerSymbol)
+		tmSymbolsMap[takerSymbol] = makerSymbol
+		mtSymbolsMap[makerSymbol] = takerSymbol
 
 		mOrderSilentTimes[makerSymbol] = time.Now()
 		mtLogSilentTimes[makerSymbol] = time.Now()

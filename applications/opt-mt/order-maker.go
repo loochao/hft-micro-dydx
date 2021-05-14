@@ -63,10 +63,11 @@ func isOrderProfitable(order common.NewOrderParam, entryTarget float64) bool {
 
 	makerValue := makerPosition.GetPrice() * makerPosition.GetSize()
 	offset := mOrderOffsets[order.Symbol]
-	shortTop := mtConfig.ShortEnterDelta + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
-	shortBot := mtConfig.ShortExitDelta + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
-	longBot := mtConfig.LongEnterDelta + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
-	longTop := mtConfig.LongExitDelta + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+	delta := mtDeltas[order.Symbol]
+	shortTop := delta.ShortTop + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+	shortBot := delta.ShortBot + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+	longBot := delta.LongBot + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+	longTop := delta.LongTop + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
 
 	//检查价格有没有在OFFSET范围内，不在撤掉
 	if order.Side == common.OrderSideBuy &&

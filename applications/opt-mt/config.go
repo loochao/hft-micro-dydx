@@ -26,18 +26,20 @@ type Config struct {
 
 	MakerTakerPairs map[string]string `yaml:"makerTakerPairs"`
 
-	LongEnterDelta  float64 `yaml:"longEnterDelta"`
-	LongExitDelta   float64 `yaml:"longExitDelta"`
-	ShortEnterDelta float64 `yaml:"shortEnterDelta"`
-	ShortExitDelta  float64 `yaml:"shortExitDelta"`
-	OffsetDelta     float64 `yaml:"offsetDelta"`
+	//LongEnterDelta  float64           `yaml:"longEnterDelta"`
+	//LongExitDelta   float64           `yaml:"longExitDelta"`
+	//ShortEnterDelta float64           `yaml:"shortEnterDelta"`
+	//ShortExitDelta  float64           `yaml:"shortExitDelta"`
+	OffsetDelta     float64           `yaml:"offsetDelta"`
+	MinimalDelta    float64           `yaml:"minimalDelta"`
+	Deltas          map[string]string `yaml:"makerDeltas"`
 
 	MinimalEnterFundingRate float64 `yaml:"minimalEnterFundingRate"`
 	MinimalKeepFundingRate  float64 `yaml:"minimalKeepFundingRate"`
 
-	DepthTimeDeltaMax      time.Duration     `yaml:"depthTimeDeltaMax"`
-	DepthTimeDeltaMin      time.Duration     `yaml:"depthTimeDeltaMin"`
-	DepthTakerDecay        float64           `yaml:"depthTakerDecay"`
+	DepthTimeDeltaMax   time.Duration     `yaml:"depthTimeDeltaMax"`
+	DepthTimeDeltaMin   time.Duration     `yaml:"depthTimeDeltaMin"`
+	DepthTakerDecay     float64           `yaml:"depthTakerDecay"`
 	DepthMakerDecay     float64           `yaml:"depthMakerDecay"`
 	DepthTakerBias      time.Duration     `yaml:"depthTakerBias"`
 	DepthMakerBias      time.Duration     `yaml:"depthMakerBias"`
@@ -53,7 +55,7 @@ type Config struct {
 
 	HedgeInstantly     bool          `yaml:"hedgeInstantly"`
 	HedgeCheckInterval time.Duration `yaml:"hedgeCheckInterval"`
-	HedgeTrackOffset   float64 `yaml:"hedgeTrackOffset"`
+	HedgeTrackOffset   float64       `yaml:"hedgeTrackOffset"`
 
 	StartValue        float64            `yaml:"startValue"`
 	EnterFreePct      float64            `yaml:"enterFreePct"`
