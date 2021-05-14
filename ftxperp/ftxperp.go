@@ -477,7 +477,7 @@ func (ftx *Ftxperp) positionsLoop(ctx context.Context, markets []string, positio
 					logger.Debugf("positionsCh <- positions failed, ch len %d", len(positionsCh))
 				}
 			}
-			pullTimer.Reset(pullInterval)
+			pullTimer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
 			break
 		}
 	}
@@ -506,7 +506,7 @@ func (ftx *Ftxperp) accountLoop(ctx context.Context, accountCh chan *Account) {
 					logger.Debugf("accountCh <- account failed, ch len %d", len(accountCh))
 				}
 			}
-			pullTimer.Reset(pullInterval)
+			pullTimer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
 			break
 		}
 	}

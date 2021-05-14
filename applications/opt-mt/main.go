@@ -488,7 +488,7 @@ func main() {
 				time.Now().Truncate(
 					mtConfig.InternalInflux.SaveInterval,
 				).Add(
-					mtConfig.InternalInflux.SaveInterval,
+					mtConfig.InternalInflux.SaveInterval+time.Second*15,
 				).Sub(time.Now()),
 			)
 			break
@@ -498,7 +498,7 @@ func main() {
 				time.Now().Truncate(
 					mtConfig.ExternalInflux.SaveInterval,
 				).Add(
-					mtConfig.ExternalInflux.SaveInterval,
+					mtConfig.ExternalInflux.SaveInterval+time.Second*15,
 				).Sub(time.Now()),
 			)
 			break
