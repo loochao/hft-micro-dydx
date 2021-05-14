@@ -86,7 +86,7 @@ var tExchange common.Exchange
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210514 16:09:23  ####")
+	logger.Debug("####  BUILD @ 20210514 16:14:34  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -136,10 +136,10 @@ func init() {
 			if err != nil {
 				logger.Fatalf("NewOffset for %s error %v", makerSymbol, err)
 			}
-			if dt.LongTop - dt.LongBot < mtConfig.MinimalDelta || dt.ShortTop - dt.ShortBot < mtConfig.MinimalDelta{
-				logger.Debugf("%s delta too small %s", makerSymbol, delta)
-				continue
-			}
+			//if dt.LongTop - dt.LongBot < mtConfig.MinimalDelta || dt.ShortTop - dt.ShortBot < mtConfig.MinimalDelta{
+			//	logger.Debugf("%s delta too small %s", makerSymbol, delta)
+			//	continue
+			//}
 			mtDeltas[makerSymbol] = dt
 		}else{
 			logger.Fatalf("MISS DELTA FOR %s", makerSymbol)

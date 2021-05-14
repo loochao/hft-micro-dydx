@@ -326,6 +326,7 @@ func updateMakerNewOrders() {
 			}
 		} else if spread.ShortLastEnter > shortTop &&
 			spread.ShortMedianEnter > shortTop &&
+			delta.ShortTop - delta.ShortBot > mtConfig.MinimalDelta &&
 			fundingRate > mtConfig.MinimalEnterFundingRate &&
 			makerPosition.GetSize() >= 0 {
 			makerSize := makerPosition.GetSize()
@@ -418,6 +419,7 @@ func updateMakerNewOrders() {
 			}
 		} else if spread.LongLastEnter < longBot &&
 			spread.LongMedianEnter < longBot &&
+			delta.LongTop - delta.LongBot > mtConfig.MinimalDelta &&
 			fundingRate < -mtConfig.MinimalEnterFundingRate &&
 			makerPosition.GetSize() <= 0 {
 
