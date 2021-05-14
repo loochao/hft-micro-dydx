@@ -72,8 +72,7 @@ func watchMakerTakerSpread(
 			}
 			if adjustedAgeDiff > maxAgeDiffBias {
 				logger.Debugf("adjustedAgeDiff %v maxAgeDiffBias %v failed, taker expire", adjustedAgeDiff, maxAgeDiffBias)
-				takerDepth = nil
-				takerWalkedDepth = nil
+				takerExpireCount++
 				break
 			} else if adjustedAgeDiff < -maxAgeDiffBias {
 				logger.Debugf("adjustedAgeDiff %v maxAgeDiffBias %v failed, maker expire mema %f %f tema %f",
@@ -82,8 +81,7 @@ func watchMakerTakerSpread(
 					makerDepthFilter.TimeDeltaEma,
 					takerDepthFilter.TimeDeltaEma,
 				)
-				makerDepth = nil
-				makerWalkedDepth = nil
+				makerExpireCount++
 				break
 			}
 			matchCount++
