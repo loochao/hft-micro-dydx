@@ -27,7 +27,7 @@ func TestNewDepth5RoutedWebsocket(t *testing.T) {
 	for _, symbol := range symbols {
 		channels[symbol] = make(chan *common.DepthRawMessage, 1000)
 	}
-	reportCh := make(chan common.DepthReport, 100)
+	reportCh := make(chan common.TimeReport, 100)
 	_ = NewDepth5RoutedWebsocket(
 		ctx, api,
 		"socks5://127.0.0.1:1081",

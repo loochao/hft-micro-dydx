@@ -61,6 +61,7 @@ func (w *UserWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 				return
 			}
 
+			logger.Debugf("%s", msgBytes)
 			err = conn.WriteMessage(websocket.TextMessage, msgBytes)
 			if err != nil {
 				logger.Debugf("conn.WriteMessage error %v", err)
@@ -95,6 +96,7 @@ func (w *UserWS) readLoop(conn *websocket.Conn) {
 			w.restart()
 			return
 		}
+		logger.Debugf("%s", msg)
 		select {
 		case w.messageCh <- msg:
 		default:
@@ -280,7 +282,10 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 	defer trafficTimeout.Stop()
 	defer pingTimer.Stop()
 	loginTimer := time.NewTimer(time.Second)
+	defer loginTimer.Stop()
 	login := false
+	loginSuccessTimer := time.NewTimer(time.Hour * 9999)
+	defer loginSuccessTimer.Stop()
 
 	for {
 		select {
@@ -288,6 +293,10 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 			return
 		case <-w.done:
 			return
+		case <-loginSuccessTimer.C:
+			login = true
+			dataCheckTimer.Reset(time.Nanosecond)
+			loginSuccessTimer.Reset(time.Hour*9999)
 		case <-loginTimer.C:
 			if !login {
 				param := LoginParam{}
@@ -298,6 +307,7 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 				param.Op = "login"
 				select {
 				case w.writeCh <- param:
+					loginSuccessTimer.Reset(time.Second*3)
 					break
 				default:
 					logger.Debugf("w.writeCh <- param failed, ch len %d", len(w.writeCh))
@@ -315,6 +325,8 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 				w.Stop()
 				return
 			}
+			dataCheckTimer.Reset(time.Nanosecond)
+			break
 		case <-pingTimer.C:
 			pingTimer.Reset(time.Second * 15)
 			select {
@@ -462,7 +474,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context, id int) {
 					err = json.Unmarshal(dataCap.Data, &fill)
 					if err != nil {
 						logger.Debugf("err = json.Unmarshal(dataCap.Data, &order) error %v", err)
-					}else{
+					} else {
 						select {
 						case w.FillCh <- fill:
 						default:

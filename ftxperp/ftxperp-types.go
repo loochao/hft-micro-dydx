@@ -316,7 +316,7 @@ type Order struct {
 	CreatedAt     time.Time `json:"-"`
 	FilledSize    float64   `json:"filledSize"`
 	AvgFillPrice  float64   `json:"avgFillPrice"`
-	Future        string    `json:"future"`
+	//Future        string    `json:"future"`
 	ID            int64     `json:"id"`
 	Market        string    `json:"market"`
 	Price         float64   `json:"price"`
@@ -351,20 +351,25 @@ func (order *Order) UnmarshalJSON(data []byte) error {
 }
 
 func (order *Order) GetSymbol() string {
-	return order.Future
+	return order.Market
 }
+
 func (order *Order) GetSize() float64 {
 	return order.Size
 }
+
 func (order *Order) GetPrice() float64 {
 	return order.Price
 }
+
 func (order *Order) GetFilledSize() float64 {
 	return order.FilledSize
 }
+
 func (order *Order) GetFilledPrice() float64 {
 	return order.AvgFillPrice
 }
+
 func (order *Order) GetSide() common.OrderSide {
 	if order.Side == OrderSideBuy {
 		return common.OrderSideBuy
@@ -373,6 +378,7 @@ func (order *Order) GetSide() common.OrderSide {
 	}
 	return common.OrderSideUnknown
 }
+
 func (order *Order) GetClientID() string {
 	return order.ClientId
 }
@@ -391,12 +397,15 @@ func (order *Order) GetType() common.OrderType {
 		return common.OrderTypeUnknown
 	}
 }
+
 func (order *Order) GetPostOnly() bool {
 	return order.PostOnly
 }
+
 func (order *Order) GetReduceOnly() bool {
 	return order.ReduceOnly
 }
+
 func (order *Order) GetStatus() common.OrderStatus {
 	switch order.Status {
 	case OrderStatusNew:
@@ -467,26 +476,34 @@ func (fill *Fill) UnmarshalJSON(data []byte) error {
 func (fill *Fill) GetSymbol() string {
 	return fill.Future
 }
+
 func (fill *Fill) GetSize() float64 {
 	return fill.Size
 }
+
 func (fill *Fill) GetPrice() float64 {
 	return fill.Price
 }
+
 func (fill *Fill) GetFilledSize() float64 {
 	return fill.FilledSize
 }
+
 func (fill *Fill) GetFilledPrice() float64 {
 	return fill.FilledPrice
 }
+
 func (fill *Fill) GetSide() common.OrderSide {
-	if fill.Side == OrderSideBuy {
+	switch fill.Side {
+	case OrderSideBuy:
 		return common.OrderSideBuy
-	} else if fill.Side == OrderSideSell {
+	case OrderSideSell:
 		return common.OrderSideSell
+	default:
+		return common.OrderSideUnknown
 	}
-	return common.OrderSideUnknown
 }
+
 func (fill *Fill) GetClientID() string {
 	return fill.ClientId
 }
@@ -503,13 +520,59 @@ func (fill *Fill) GetType() common.OrderType {
 		return common.OrderTypeMarket
 	default:
 		return common.OrderTypeUnknown
-	}}
+	}
+}
+
 func (fill *Fill) GetPostOnly() bool {
 	return fill.PostOnly
 }
+
 func (fill *Fill) GetReduceOnly() bool {
 	return fill.PostOnly
 }
+
 func (fill *Fill) GetStatus() common.OrderStatus {
 	return common.OrderStatusFilled
+}
+
+type FutureStats struct {
+	Future                   string    `json:"-"`
+	Volume                   float64   `json:"volume"`
+	NextFundingRate          float64   `json:"nextFundingRate"`
+	NextFundingTime          time.Time `json:"-"`
+	ExpirationPrice          float64   `json:"expirationPrice"`
+	PredictedExpirationPrice float64   `json:"predictedExpirationPrice"`
+	StrikePrice              float64   `json:"strikePrice"`
+	OpenInterest             float64   `json:"openInterest"`
+}
+
+func (fs *FutureStats) GetSymbol() string {
+	return fs.Future
+}
+
+func (fs *FutureStats) GetFundingRate() float64 {
+	return fs.NextFundingRate
+}
+
+func (fs *FutureStats) GetNextFundingTime() time.Time {
+	return fs.NextFundingTime
+}
+
+func (fs *FutureStats) UnmarshalJSON(data []byte) error {
+	type Alias FutureStats
+	aux := &struct {
+		NextFundingTime string `json:"nextFundingTime"`
+		*Alias
+	}{
+		Alias: (*Alias)(fs),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	} else {
+		fs.NextFundingTime, err = time.Parse(TimeLayout, aux.NextFundingTime)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

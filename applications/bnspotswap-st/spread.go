@@ -227,7 +227,7 @@ func watchMakerTakerSpread(
 				takerDepthFilter.GenerateReport()
 				select {
 				case reportCh <- common.SpreadReport{
-					MaxAgeDiff:            maxAgeDiff,
+					AdjustedAgeDiff:       maxAgeDiff,
 					MatchRatio:            float64(matchCount) / float64(depthCount),
 					MakerSymbol:           makerSymbol,
 					TakerSymbol:           takerSymbol,
@@ -270,7 +270,7 @@ func watchMakerTakerSpread(
 				takerDepthFilter.GenerateReport()
 				select {
 				case reportCh <- common.SpreadReport{
-					MaxAgeDiff:            maxAgeDiff,
+					AdjustedAgeDiff:       maxAgeDiff,
 					MatchRatio:            float64(matchCount) / float64(depthCount),
 					MakerSymbol:           makerSymbol,
 					TakerSymbol:           takerSymbol,

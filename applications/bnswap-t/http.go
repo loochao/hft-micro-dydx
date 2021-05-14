@@ -15,7 +15,7 @@ func (st *Strategy) handleHttpPosition(positions []bnswap.Position) {
 		if nextPos.PositionSide != "BOTH" {
 			continue
 		}
-		if nextPos.UpdateTime.Sub(st.LastOrderTimes[symbolIndex]) < *st.Config.PullInterval {
+		if nextPos.ParseTime.Sub(st.LastOrderTimes[symbolIndex]) < *st.Config.PullInterval {
 			continue
 		}
 		st.PositionsUpdateTimes[symbolIndex] = time.Now()

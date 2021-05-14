@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
@@ -76,7 +77,7 @@ type MakerTakerSpread struct {
 }
 
 type SpreadReport struct {
-	MaxAgeDiff            time.Duration
+	AdjustedAgeDiff       time.Duration
 	MatchRatio            float64
 	TakerDepthFilterRatio float64
 	MakerDepthFilterRatio float64
@@ -86,26 +87,25 @@ type SpreadReport struct {
 	TakerTimeDelta        float64
 	TakerMidPrice         float64
 	MakerMidPrice         float64
-	TakerMsgAvgLen        int
-	MakerMsgAvgLen        int
 	MakerSymbol           string
 	TakerSymbol           string
+	MakerExpireRatio      float64
+	TakerExpireRatio      float64
 }
 
 func (s *SpreadReport) ToString() string {
 	return fmt.Sprintf(
-		"%s-%s MR %f MDFR %f TDFR %f MTD %f TTD %f MTEMA %f TTEMA %f MAL %d TAL %d MAD %v",
+		"%s-%s MR %f MDFR %f TDFR %f MTD %f TTD %f MTEMA %f TTEMA %f MAD %v",
 		s.MakerSymbol, s.TakerSymbol,
 		s.MatchRatio,
 		s.MakerDepthFilterRatio, s.TakerDepthFilterRatio,
 		s.MakerTimeDelta, s.TakerTimeDelta,
 		s.MakerTimeDeltaEma, s.TakerTimeDeltaEma,
-		s.MakerMsgAvgLen, s.TakerMsgAvgLen,
-		s.MaxAgeDiff,
+		s.AdjustedAgeDiff,
 	)
 }
 
-func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) (*WalkedMakerTakerDepth, error) {
+func WalkMakerTakerDepth20(depth20 Depth, makerImpact, takerImpact float64) (*WalkedMakerTakerDepth, error) {
 
 	wd, hasMakerData, hasTakerData := &WalkedMakerTakerDepth{
 		Symbol:       depth20.GetSymbol(),
@@ -120,7 +120,13 @@ func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) (*
 		MakerBidSize: 0,
 	}, false, false
 
-	for _, bid := range depth20.GetBids() {
+	bids := depth20.GetBids()
+	bidLen := len(bids)
+	if bidLen > 20 {
+		bidLen = 20
+	}
+	for i := 0; i < bidLen; i++ {
+		bid := bids[i]
 		value := bid[0] * bid[1]
 		if !hasMakerData {
 			wd.MakerFarBid = bid[0]
@@ -156,7 +162,13 @@ func WalkMakerTakerDepth20(depth20 Depth20, makerImpact, takerImpact float64) (*
 
 	hasMakerData = false
 	hasTakerData = false
-	for _, ask := range depth20.GetAsks() {
+	asks := depth20.GetAsks()
+	askLen := len(asks)
+	if askLen > 20 {
+		askLen = 20
+	}
+	for i := 0; i < askLen; i++ {
+		ask := asks[i]
 		value := ask[0] * ask[1]
 		if !hasMakerData {
 			wd.MakerFarAsk = ask[0]
@@ -287,75 +299,77 @@ func WalkMakerTakerDepth5(depth20 Depth5, makerImpact, takerImpact float64) (*Wa
 	return wd, nil
 }
 
-type DepthFilter struct {
+type TimedData interface {
+	GetTime() time.Time
+}
+
+type TimeFilter struct {
+	min       float64
+	max       float64
 	decay1    float64
 	decay2    float64
 	bias      float64
 	TimeDelta float64
 
 	TimeDeltaEma float64
-	msgLen       int
 	FilterCount  int
 	TotalCount   int
-	Report       DepthReport
+	Report       TimeReport
 }
 
-func (m *DepthFilter) Filter(msg *DepthRawMessage) bool {
+func (m *TimeFilter) Filter(msg TimedData) bool {
 	m.TotalCount++
-	m.msgLen += len(msg.Depth)
-	m.TimeDelta = float64(time.Now().Sub(msg.Time) / time.Millisecond)
-	//if m.TimeDelta > 1000 {
-	//	m.TimeDelta = 1000
-	//}
-	//if m.TimeDelta < -1000 {
-	//	m.TimeDelta = -1000
-	//}
+	m.TimeDelta = float64(time.Now().Sub(msg.GetTime()) / time.Millisecond)
+	if m.TimeDelta > m.max {
+		m.TimeDelta = m.max
+	}
+	if m.TimeDelta < m.min {
+		m.TimeDelta = m.min
+	}
+	//before := m.TimeDeltaEma
 	m.TimeDeltaEma = m.decay1*m.TimeDeltaEma + m.decay2*m.TimeDelta
+	//logger.Debugf("%f before %f after %f", m.TimeDelta,before, m.TimeDeltaEma)
 	if m.TimeDelta > m.TimeDeltaEma+m.bias {
 		m.FilterCount++
-		//logger.Debugf("FILTER ++ %v", m.FilterCount)
 		return true
 	}
 	return false
 }
 
-func (m *DepthFilter) GenerateReport() DepthReport {
+func (m *TimeFilter) GenerateReport() TimeReport {
 	if m.TotalCount > 0 {
-		//logger.Debugf("TOTAL COUNT %v FILTER COUNT %v", m.TotalCount, m.FilterCount)
 		m.Report.FilterRatio = float64(m.FilterCount) / float64(m.TotalCount)
-		m.Report.MsgAvgLen = m.msgLen / m.TotalCount
 		m.Report.TimeDeltaEma = m.TimeDeltaEma
 		m.TotalCount = 0
 		m.FilterCount = 0
-		m.msgLen = 0
 	}
 	return m.Report
 }
 
 func NewDepthFilter(
-	decay, bias float64,
-) DepthFilter {
-	return DepthFilter{
-		decay1:    decay,
-		decay2:    1. - decay,
-		bias:      bias,
-		TimeDelta: bias,
-		msgLen:    0,
-
+	decay, bias, min, max float64,
+) TimeFilter {
+	logger.Debugf("min %f max %f", min, max)
+	return TimeFilter{
+		decay1:       decay,
+		decay2:       1. - decay,
+		bias:         bias,
+		TimeDelta:    bias,
+		min:          min,
+		max:          max,
 		TimeDeltaEma: bias,
 		FilterCount:  0,
 		TotalCount:   0,
-		Report: DepthReport{
+		Report: TimeReport{
 			Decay: decay,
 			Bias:  bias,
 		},
 	}
 }
 
-type DepthReport struct {
+type TimeReport struct {
 	FilterRatio  float64
 	TimeDeltaEma float64
-	MsgAvgLen    int
 	Decay        float64
 	Bias         float64
 }

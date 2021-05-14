@@ -99,7 +99,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err != nil {
 		return err
 	}
-	//logger.Debugf("%s", contents)
+	logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
@@ -123,24 +123,24 @@ func (api *API) GetPositions(ctx context.Context) ([]Position, error) {
 
 func (api *API) PlaceOrder(ctx context.Context, param NewOrderParam) (*Order, error) {
 	order := Order{}
-	return &order, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/orders", nil, param,  &order)
+	return &order, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/orders", nil, param, &order)
 }
 
 func (api *API) CancelOrderByClientID(ctx context.Context, clientID string) (*string, error) {
 	var message string
-	return &message, api.SendAuthenticatedHTTPRequest(ctx, http.MethodDelete, "/orders/by_client_id/"+clientID, nil, nil,  &message)
+	return &message, api.SendAuthenticatedHTTPRequest(ctx, http.MethodDelete, "/orders/by_client_id/"+clientID, nil, nil, &message)
 }
 
 func (api *API) CancelAllOrders(ctx context.Context, param CancelAllParam) (*string, error) {
 	var message string
-	return &message, api.SendAuthenticatedHTTPRequest(ctx, http.MethodDelete, "/orders", nil, param,  &message)
+	return &message, api.SendAuthenticatedHTTPRequest(ctx, http.MethodDelete, "/orders", nil, param, &message)
 }
 
 func (api *API) ChangeLeverage(ctx context.Context, param LeverageParam) (*Leverage, error) {
-	leverage :=Leverage{
+	leverage := Leverage{
 		Leverage: param.Leverage,
 	}
-	return &leverage, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/account/leverage", nil, param,  &leverage)
+	return &leverage, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/account/leverage", nil, param, &leverage)
 }
 
 func (api *API) GetFutures(ctx context.Context) ([]Future, error) {
@@ -148,9 +148,19 @@ func (api *API) GetFutures(ctx context.Context) ([]Future, error) {
 	return futures, api.SendHTTPRequest(ctx, http.MethodGet, "/futures", nil, &futures)
 }
 
-func (api *API) GetFundingRates(ctx context.Context,  param FundingRateParam) ([]FundingRate, error) {
+func (api *API) GetFundingRates(ctx context.Context, param FundingRateParam) ([]FundingRate, error) {
 	fundingRates := make([]FundingRate, 0)
 	return fundingRates, api.SendHTTPRequest(ctx, http.MethodGet, "/funding_rates", &param, &fundingRates)
+}
+
+func (api *API) GetFutureStats(ctx context.Context, futureName string) (*FutureStats, error) {
+	fs := &FutureStats{}
+	err := api.SendHTTPRequest(ctx, http.MethodGet, fmt.Sprintf("/futures/%s/stats", futureName), nil, &fs)
+	if err != nil {
+		return nil, err
+	}
+	fs.Future = futureName
+	return fs, nil
 }
 
 func NewAPI(key, secret, proxy string) (*API, error) {

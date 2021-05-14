@@ -1,6 +1,11 @@
 package bnswap
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/geometrybase/hft-micro/common"
+	"time"
+)
 
 //   {
 //          "a":"BNB",
@@ -9,9 +14,11 @@ import "fmt"
 //   }
 
 type WSBalance struct {
-	Asset              string  `json:"a"`
-	WalletBalance      float64 `json:"wb,string"`
-	CrossWalletBalance float64 `json:"cwb,string"`
+	Asset              string    `json:"a"`
+	WalletBalance      float64   `json:"wb,string"`
+	CrossWalletBalance float64   `json:"cwb,string"`
+	EventTime          time.Time `json:"-"`
+	ParseTime          time.Time `json:"-"`
 }
 
 //        {
@@ -26,14 +33,32 @@ type WSBalance struct {
 //        }
 
 type WSPosition struct {
-	Symbol              string  `json:"s"`
-	PositionAmt         float64 `json:"pa,string"`
-	EntryPrice          float64 `json:"ep,string"`
-	AccumulatedRealized float64 `json:"cr,string"`
-	UnRealizedProfit    float64 `json:"up,string"`
-	MarginType          string  `json:"mt"`
-	IsolatedWallet      float64 `json:"iw,string"`
-	PositionSide        string  `json:"ps"`
+	Symbol              string    `json:"s"`
+	PositionAmt         float64   `json:"pa,string"`
+	EntryPrice          float64   `json:"ep,string"`
+	AccumulatedRealized float64   `json:"cr,string"`
+	UnRealizedProfit    float64   `json:"up,string"`
+	MarginType          string    `json:"mt"`
+	IsolatedWallet      float64   `json:"iw,string"`
+	PositionSide        string    `json:"ps"`
+	ParseTime           time.Time `json:"-"`
+	EventTime           time.Time `json:"-"`
+}
+
+func (wsp *WSPosition) GetSymbol() string {
+	return wsp.Symbol
+}
+
+func (wsp *WSPosition) GetSize() float64 {
+	return wsp.PositionAmt
+}
+
+func (wsp *WSPosition) GetPrice() float64 {
+	return wsp.EntryPrice
+}
+
+func (wsp *WSPosition) GetTime() time.Time {
+	return wsp.ParseTime
 }
 
 func (wsp *WSPosition) ToString() string {
@@ -64,10 +89,38 @@ const (
 )
 
 type BalanceAndPositionUpdateEvent struct {
-	Event           string    `json:"e"`
-	Time            int64     `json:"E"`
-	TransactionTime int64     `json:"T"`
-	Account         WSAccount `json:"a"`
+	Event   string    `json:"e"`
+	Account WSAccount `json:"a"`
+
+	EventTime       time.Time `json:"-"`
+	TransactionTime time.Time `json:"-"`
+	ParseTime       time.Time `json:"-"`
+}
+
+func (bpu *BalanceAndPositionUpdateEvent) UnmarshalJSON(data []byte) error {
+	type Alias BalanceAndPositionUpdateEvent
+	aux := &struct {
+		EventTime       int64 `json:"E"`
+		TransactionTime int64 `json:"T"`
+		*Alias
+	}{
+		Alias: (*Alias)(bpu),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	bpu.ParseTime = time.Now()
+	bpu.EventTime = time.Unix(0, aux.EventTime*1000000)
+	bpu.TransactionTime = time.Unix(0, aux.TransactionTime*1000000)
+	for i := range bpu.Account.Positions {
+		bpu.Account.Positions[i].EventTime = bpu.EventTime
+		bpu.Account.Positions[i].ParseTime = bpu.ParseTime
+	}
+	for i := range bpu.Account.Balances {
+		bpu.Account.Balances[i].EventTime = bpu.EventTime
+		bpu.Account.Balances[i].ParseTime = bpu.ParseTime
+	}
+	return nil
 }
 
 //{
@@ -145,26 +198,103 @@ type WSOrder struct {
 	CallbackRate              float64 `json:"rp,string,omitempty"`
 }
 
+func (order *WSOrder) GetSymbol() string {
+	return order.Symbol
+}
 
-func (wso *WSOrder) ToOrder() *Order {
-	return &Order{
-		Symbol:        wso.Symbol,
-		OrderId:       wso.OrderId,
-		ClientOrderId: wso.ClientOrderId,
-		Price:         wso.OriginalPrice,
-		ReduceOnly:    wso.ReduceOnly,
-		OrigQty:       wso.OriginalQuantity,
-		CumQty:        wso.FilledAccumulatedQuantity,
-		CumQuote:      wso.AveragePrice,
-		Status:        wso.Status,
-		TimeInForce:   wso.TimeInForce,
-		Type:          wso.Type,
-		Side:          wso.Side,
-		StopPrice:     wso.StopPrice,
-		Time:          wso.Time,
+func (order *WSOrder) GetSize() float64 {
+	return order.OriginalQuantity
+}
+
+func (order *WSOrder) GetPrice() float64 {
+	return order.OriginalPrice
+}
+
+func (order *WSOrder) GetFilledSize() float64 {
+	return order.FilledAccumulatedQuantity
+}
+
+func (order *WSOrder) GetFilledPrice() float64 {
+	return order.AveragePrice
+}
+
+func (order *WSOrder) GetSide() common.OrderSide {
+	switch order.Side {
+	case OrderSideSell:
+		return common.OrderSideSell
+	case OrderSideBuy:
+		return common.OrderSideBuy
+	default:
+		return common.OrderSideUnknown
 	}
 }
 
+func (order *WSOrder) GetClientID() string {
+	return order.ClientOrderId
+}
+
+func (order *WSOrder) GetID() string {
+	return fmt.Sprintf("%d", order.OrderId)
+}
+
+func (order *WSOrder) GetStatus() common.OrderStatus {
+	switch order.Status {
+	case OrderStatusFilled:
+		return common.OrderStatusFilled
+	case OrderStatusCancelled:
+		return common.OrderStatusCancelled
+	case OrderStatusReject:
+		return common.OrderStatusReject
+	case OrderStatusPartiallyFilled:
+		return common.OrderStatusPartiallyFilled
+	case OrderStatusExpired:
+		return common.OrderStatusExpired
+	case OrderStatusNew:
+		return common.OrderStatusNew
+	case OrderStatusPendingCancel:
+		return common.OrderStatusPendingCancel
+	default:
+		return common.OrderStatusUnknown
+	}
+}
+
+func (order *WSOrder) GetType() common.OrderType {
+	switch order.Type {
+	case OrderTypeLimit:
+		return common.OrderTypeLimit
+	case OrderTypeMarket:
+		return common.OrderTypeMarket
+	default:
+		return common.OrderTypeUnknown
+	}
+}
+
+func (order *WSOrder) GetPostOnly() bool {
+	return order.TimeInForce == OrderTimeInForceGTX
+}
+
+func (order *WSOrder) GetReduceOnly() bool {
+	return order.ReduceOnly
+}
+
+func (order *WSOrder) ToOrder() *Order {
+	return &Order{
+		Symbol:        order.Symbol,
+		OrderId:       order.OrderId,
+		ClientOrderId: order.ClientOrderId,
+		Price:         order.OriginalPrice,
+		ReduceOnly:    order.ReduceOnly,
+		OrigQty:       order.OriginalQuantity,
+		CumQty:        order.FilledAccumulatedQuantity,
+		CumQuote:      order.AveragePrice,
+		Status:        order.Status,
+		TimeInForce:   order.TimeInForce,
+		Type:          order.Type,
+		Side:          order.Side,
+		StopPrice:     order.StopPrice,
+		Time:          order.Time,
+	}
+}
 
 type OrderUpdateEvent struct {
 	EventType       string  `json:"e"`

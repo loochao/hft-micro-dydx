@@ -35,12 +35,13 @@ type Exchange interface {
 
 	Setup(ctx context.Context, settings ExchangeSettings) error
 
-	GetMinNotional(symbol string) float64
-	GetMinSize(symbol string) float64
-	GetStepSize(symbol string) float64
-	GetTickSize(symbol string) float64
+	GetMinNotional(symbol string) (float64, error)
+	GetMinSize(symbol string) (float64, error)
+	GetStepSize(symbol string) (float64, error)
+	GetTickSize(symbol string) (float64, error)
 
 	StreamBasic(ctx context.Context, statusCh chan SystemStatus, accountCh chan Account, positionCh map[string]chan Position, orderCh map[string]chan Order, )
+	StreamSymbolStatus(ctx context.Context, channels map[string]chan SymbolStatus, batchSize int)
 	StreamDepth(ctx context.Context, channels map[string]chan Depth, batchSize int)
 	StreamTrade(ctx context.Context, channels map[string]chan Trade, batchSize int)
 	StreamTicker(ctx context.Context, channels map[string]chan Ticker, batchSize int)
@@ -48,6 +49,7 @@ type Exchange interface {
 	StreamFundingRate(ctx context.Context, channels map[string]chan FundingRate, batchSize int)
 
 	WatchOrders(ctx context.Context, requestChannels map[string]chan OrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
+	GenerateClientID() string
 }
 
 type OrderError struct {
@@ -57,6 +59,7 @@ type OrderError struct {
 }
 
 type FundingRate interface {
+	GetSymbol() string
 	GetFundingRate() float64
 	GetNextFundingTime() time.Time
 }
@@ -78,7 +81,7 @@ type ExchangeSettings struct {
 	ApiSecret        string        `yaml:"apiSecret" json:"apiSecret"`
 	ApiPassphrase    string        `yaml:"apiPassphrase" json:"apiPassphrase"`
 	Symbols          []string      `yaml:"symbols" json:"symbols"`
-	HttpPullInterval time.Duration `yaml:"httpPullInterval" json:"httpPullInterval"`
+	PullInterval     time.Duration `yaml:"pullInterval" json:"httpPullInterval"`
 	MarginType       string        `yaml:"marginType" json:"marginType"`
 	ChangeMarginType bool          `yaml:"changeMarginType" json:"changeMarginType"`
 	Leverage         float64       `yaml:"leverage" json:"leverage"`
@@ -316,18 +319,33 @@ type Depth interface {
 type SystemStatus string
 
 var (
-	SystemStatusReady   = SystemStatus("READY")
-	SystemStatusRestart = SystemStatus("RESTART")
-	SystemStatusClosed  = SystemStatus("CLOSED")
-	SystemStatusError   = SystemStatus("ERROR")
+	SystemStatusNoteReady = SystemStatus("NOTREADY")
+	SystemStatusReady     = SystemStatus("READY")
+	SystemStatusRestart   = SystemStatus("RESTART")
+	SystemStatusClosed    = SystemStatus("CLOSED")
+	SystemStatusError     = SystemStatus("ERROR")
+)
+
+type SymbolStatus string
+
+var (
+	SymbolStatusReady    = SymbolStatus("READY")
+	SymbolStatusNotReady = SymbolStatus("NOT_READY")
 )
 
 type InfluxSettings struct {
-	Address      string        `yaml:"address,omitempty"`
-	Username     string        `yaml:"username,omitempty"`
-	Password     string        `yaml:"password,omitempty"`
-	Database     string        `yaml:"database,omitempty"`
-	Measurement  string        `yaml:"measurement,omitempty"`
-	BatchSize    int           `yaml:"batchSize,omitempty"`
-	SaveInterval time.Duration `yaml:"saveInterval,omitempty"`
+	Address      string        `yaml:"address"`
+	Username     string        `yaml:"username"`
+	Password     string        `yaml:"password"`
+	Database     string        `yaml:"database"`
+	Measurement  string        `yaml:"measurement"`
+	BatchSize    int           `yaml:"batchSize"`
+	SaveInterval time.Duration `yaml:"saveInterval"`
 }
+
+var (
+	TickSizeNotFoundError    = "tick size for %s not found"
+	StepSizeNotFoundError    = "step size for %s not found"
+	MinSizeNotFoundError     = "min size for %s not found"
+	MinNotionalNotFoundError = "min notional for %s not found"
+)

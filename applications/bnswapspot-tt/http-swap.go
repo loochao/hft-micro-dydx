@@ -15,7 +15,7 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 		if nextPos.PositionSide != "BOTH" {
 			return
 		}
-		if nextPos.UpdateTime.Sub(bnswapLastOrderTimes[nextPos.Symbol]) < *bnConfig.PullInterval {
+		if nextPos.ParseTime.Sub(bnswapLastOrderTimes[nextPos.Symbol]) < *bnConfig.PullInterval {
 			return
 		}
 		var lastPosition *bnswap.Position

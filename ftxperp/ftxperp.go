@@ -7,6 +7,7 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -19,20 +20,40 @@ type Ftxperp struct {
 	settings common.ExchangeSettings
 }
 
-func (ftx *Ftxperp) GetMinNotional(symbol string) float64 {
-	return 0.0
+func (ftx *Ftxperp) GenerateClientID() string {
+	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 }
 
-func (ftx *Ftxperp) GetMinSize(symbol string) float64 {
-	return SizeIncrements[symbol]
+func (ftx *Ftxperp) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatus, batchSize int) {
+	panic("implement me")
 }
 
-func (ftx *Ftxperp) GetStepSize(symbol string) float64 {
-	return SizeIncrements[symbol]
+func (ftx *Ftxperp) GetMinNotional(symbol string) (float64, error) {
+	return 0.0, nil
 }
 
-func (ftx *Ftxperp) GetTickSize(symbol string) float64 {
-	return PriceIncrements[symbol]
+func (ftx *Ftxperp) GetMinSize(symbol string) (float64, error) {
+	if value, ok := SizeIncrements[symbol]; ok {
+		return value, nil
+	} else {
+		return 0, fmt.Errorf(common.MinSizeNotFoundError, symbol)
+	}
+}
+
+func (ftx *Ftxperp) GetStepSize(symbol string) (float64, error) {
+	if value, ok := SizeIncrements[symbol]; ok {
+		return value, nil
+	} else {
+		return 0, fmt.Errorf(common.StepSizeNotFoundError, symbol)
+	}
+}
+
+func (ftx *Ftxperp) GetTickSize(symbol string) (float64, error) {
+	if value, ok := PriceIncrements[symbol]; ok {
+		return value, nil
+	} else {
+		return 0, fmt.Errorf(common.TickSizeNotFoundError, symbol)
+	}
 }
 
 func (ftx *Ftxperp) StreamBasic(
@@ -78,15 +99,27 @@ func (ftx *Ftxperp) StreamBasic(
 		}
 	}
 
+	restartToReadyTimer := time.NewTimer(time.Hour * 9999)
+	defer restartToReadyTimer.Stop()
+
 	for {
 		select {
 		case <-ftx.done:
 			return
 		case <-userWS.Done():
 			return
+		case <-restartToReadyTimer.C:
+			select {
+			case statusCh <- common.SystemStatusReady:
+			default:
+				logger.Debugf("statusCh <- common.SystemStatusRestart failed ch len %d", len(statusCh))
+			}
+			restartToReadyTimer = time.NewTimer(time.Hour * 9999)
+			break
 		case <-userWS.RestartCh:
 			select {
 			case statusCh <- common.SystemStatusRestart:
+				restartToReadyTimer.Reset(time.Minute * 3)
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("restartCh <- common.SystemStatusRestart failed, ch len %d", len(statusCh))
@@ -126,7 +159,7 @@ func (ftx *Ftxperp) StreamBasic(
 			}
 		case order := <-userWS.OrderCh:
 			internalOrders[order.ID] = order
-			if orderCh, ok := ordersCh[order.Future]; ok {
+			if orderCh, ok := ordersCh[order.Market]; ok {
 				select {
 				case orderCh <- &order:
 				default:
@@ -135,7 +168,8 @@ func (ftx *Ftxperp) StreamBasic(
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
-
+			}else{
+				logger.Debugf("ORDER FROM OTHER PLACE %v", order)
 			}
 			break
 		case fill := <-userWS.FillCh:
@@ -244,7 +278,47 @@ func (ftx *Ftxperp) StreamKLine(ctx context.Context, channels map[string]chan []
 }
 
 func (ftx *Ftxperp) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
-	panic("implement me")
+	ftx.mu.Lock()
+	pullInterval := ftx.settings.PullInterval + time.Duration(len(channels))*time.Second
+	ftx.mu.Unlock()
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	pullTimes := make(map[string]time.Time)
+	timeOffset := time.Second
+	for market := range channels {
+		timeOffset += time.Second
+		pullTimes[market] = time.Now().Add(timeOffset)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			for market, pullTime := range pullTimes {
+				if time.Now().Sub(pullTime) < 0 {
+					continue
+				}
+				subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+				fs, err := ftx.api.GetFutureStats(subCtx, market)
+				if err != nil {
+					logger.Debugf("ftx.api.GetFutureStats(subCtx, %s) error %v", market,err)
+					pullTimes[market] = time.Now().Add(time.Second)
+				}else{
+					if ch, ok := channels[fs.Future]; ok {
+						select {
+						case ch <- fs:
+							pullTimes[market] = time.Now().Add(pullInterval)
+						default:
+							logger.Debugf("ch <- fs failed ch len %d", len(ch))
+							pullTimes[market] = time.Now().Add(time.Second)
+						}
+					}
+				}
+				cancel()
+			}
+			timer.Reset(time.Second)
+		}
+	}
 }
 
 func (ftx *Ftxperp) WatchOrders(
@@ -289,8 +363,8 @@ func (ftx *Ftxperp) WatchOrders(
 
 func (ftx *Ftxperp) Setup(ctx context.Context, settings common.ExchangeSettings) error {
 	var err error
-	if settings.HttpPullInterval == 0 {
-		settings.HttpPullInterval = time.Minute
+	if settings.PullInterval == 0 {
+		settings.PullInterval = time.Minute
 	}
 	ftx.settings = settings
 	ftx.done = make(chan interface{})
@@ -362,7 +436,7 @@ func (ftx *Ftxperp) Done() chan interface{} {
 
 func (ftx *Ftxperp) positionsLoop(ctx context.Context, markets []string, positionsCh chan []Position) {
 	ftx.mu.Lock()
-	pullInterval := ftx.settings.HttpPullInterval
+	pullInterval := ftx.settings.PullInterval
 	ftx.mu.Unlock()
 	pullTimer := time.NewTimer(pullInterval)
 	defer pullTimer.Stop()
@@ -406,7 +480,7 @@ func (ftx *Ftxperp) positionsLoop(ctx context.Context, markets []string, positio
 
 func (ftx *Ftxperp) accountLoop(ctx context.Context, accountCh chan *Account) {
 	ftx.mu.Lock()
-	pullInterval := ftx.settings.HttpPullInterval
+	pullInterval := ftx.settings.PullInterval
 	ftx.mu.Unlock()
 	pullTimer := time.NewTimer(pullInterval)
 	defer pullTimer.Stop()

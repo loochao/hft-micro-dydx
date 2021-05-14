@@ -10,53 +10,54 @@ import (
 	"time"
 )
 
-func handleSave() {
-	if time.Now().Sub(mtGlobalSilent) < 0 {
-		return
-	}
+func handleInternalSave() {
 
 	entryTarget := 0.0
-	if mAccount != nil || tAccount != nil || tAccount.AvailableBalance != nil {
-		entryStep := (mAccount.AvailableBalance + *tAccount.AvailableBalance) * *mtConfig.EnterFreePct
-		if entryStep < *mtConfig.EnterMinimalStep {
-			entryStep = *mtConfig.EnterMinimalStep
+	if mAccount != nil && tAccount != nil {
+		entryStep := (mAccount.GetFree() + tAccount.GetFree()) * mtConfig.EnterFreePct
+		if entryStep < mtConfig.EnterMinimalStep {
+			entryStep = mtConfig.EnterMinimalStep
 		}
-		entryTarget = entryStep * *mtConfig.EnterTargetFactor
+		entryTarget = entryStep * mtConfig.EnterTargetFactor
 	}
 
-
 	totalUnHedgeValue := 0.0
+	takerURPnl := 0.0
+	makerURPnl := 0.0
 	for _, makerSymbol := range mSymbols {
 		takerSymbol := mtSymbolsMap[makerSymbol]
 		fields := make(map[string]interface{})
 		if makerPosition, ok := mPositions[makerSymbol]; ok {
-			fields["makerSize"] = makerPosition.CurrentQty * mMultipliers[makerSymbol]
+			fields["makerSize"] = makerPosition.GetSize()
 			if spread, ok := mtSpreads[makerSymbol]; ok {
-				fields["makerValue"] = makerPosition.CurrentQty * mMultipliers[makerSymbol] * spread.MakerDepth.MakerBid
-				makerValue := makerPosition.AvgEntryPrice * makerPosition.CurrentQty * mMultipliers[makerSymbol]
-				//offset := mOrderOffsets[makerSymbol]
-				fields["shortTop"] = *mtConfig.EnterDelta + *mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
-				fields["shortBot"] = *mtConfig.ExitDelta + *mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
-				fields["longBot"] = -*mtConfig.EnterDelta + *mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
-				fields["longTop"] = -*mtConfig.ExitDelta + *mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+				makerValue := makerPosition.GetSize() * makerPosition.GetPrice()
+				fields["makerValue"] = makerValue
+				fields["shortTop"] = mtConfig.ShortEnterDelta + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+				fields["shortBot"] = mtConfig.ShortExitDelta + mtConfig.OffsetDelta*(math.Max(makerValue, 0)/entryTarget)
+				fields["longBot"] = mtConfig.LongEnterDelta + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+				fields["longTop"] = mtConfig.LongExitDelta + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
+				if makerPosition.GetPrice() != 0 {
+					makerURPnl += makerPosition.GetSize() * (spread.MakerDepth.MidPrice - makerPosition.GetPrice())
+				}
 				if takerPosition, ok := tPositions[takerSymbol]; ok {
-					unHedgedValue := (takerPosition.PositionAmt +  makerPosition.CurrentQty * mMultipliers[makerSymbol])* spread.MakerDepth.MakerAsk
+					unHedgedValue := (takerPosition.GetSize() + makerPosition.GetSize()) * spread.MakerDepth.MidPrice
 					fields["unHedgedValue"] = unHedgedValue
 					totalUnHedgeValue += math.Abs(unHedgedValue)
+					if takerPosition.GetPrice() != 0 {
+						takerURPnl += takerPosition.GetSize() * (spread.TakerDepth.MidPrice - takerPosition.GetPrice())
+					}
 				}
 			}
 		}
 		if takerPosition, ok := tPositions[takerSymbol]; ok {
-			fields["takerSize"] = takerPosition.PositionAmt
-			if spread, ok := mtSpreads[makerSymbol]; ok {
-				fields["takerValue"] = spread.TakerDepth.TakerBid * takerPosition.PositionAmt
-			}
+			fields["takerSize"] = takerPosition.GetSize()
+			fields["takerValue"] = takerPosition.GetPrice() * takerPosition.GetSize()
 		}
 		if fr, ok := mFundingRates[makerSymbol]; ok {
-			fields["makerFundingRate"] = fr.Value
+			fields["makerFundingRate"] = fr.GetFundingRate()
 		}
-		if pi, ok := tPremiumIndexes[takerSymbol]; ok {
-			fields["takerFundingRate"] = pi.FundingRate
+		if fr, ok := tFundingRates[takerSymbol]; ok {
+			fields["takerFundingRate"] = fr.GetFundingRate()
 		}
 		if fr, ok := mtFundingRates[makerSymbol]; ok {
 			fields["fundingRate"] = fr
@@ -89,13 +90,18 @@ func handleSave() {
 		if realisedSpread, ok := mtRealisedSpread[makerSymbol]; ok {
 			fields["realisedSpread"] = realisedSpread
 		}
-		if time.Now().Sub(mtGlobalSilent) > 0 {
-			fields["globalSilent"] = 0
+		if mSystemStatus == common.SystemStatusReady {
+			fields["makerSystemStatus"] = 1.0
 		} else {
-			fields["globalSilent"] = 1
+			fields["makerSystemStatus"] = -1.0
+		}
+		if tSystemStatus == common.SystemStatusReady {
+			fields["takerSystemStatus"] = 1.0
+		} else {
+			fields["takerSystemStatus"] = -1.0
 		}
 		pt, err := client.NewPoint(
-			*mtConfig.InternalInflux.Measurement,
+			mtConfig.InternalInflux.Measurement,
 			map[string]string{
 				"takerSymbol": takerSymbol,
 				"makerSymbol": makerSymbol,
@@ -115,28 +121,23 @@ func handleSave() {
 	}
 
 	if tAccount != nil &&
-		tAccount.MarginBalance != nil &&
 		mAccount != nil {
-		totalBalance := *tAccount.MarginBalance + mAccount.MarginBalance + mAccount.UnrealisedPNL
-		netWorth := totalBalance / *mtConfig.StartValue
+		totalBalance := tAccount.GetBalance() + mAccount.GetBalance()
+		netWorth := totalBalance / mtConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalUnHedgeValue"] = totalUnHedgeValue
 		fields["totalBalance"] = totalBalance
-		fields["takerBalance"] = *tAccount.MarginBalance
-		fields["makerBalance"] = mAccount.MarginBalance + mAccount.UnrealisedPNL
+		fields["takerBalance"] = tAccount.GetBalance()
+		fields["makerBalance"] = mAccount.GetBalance()
 		fields["netWorth"] = netWorth
-		fields["startValue"] = *mtConfig.StartValue
+		fields["startValue"] = mtConfig.StartValue
 		fields["netWorth"] = netWorth
-		if tAccount.AvailableBalance != nil {
-			fields["takerAvailable"] = *tAccount.AvailableBalance
-		}
-		if tAccount.UnrealizedProfit != nil {
-			fields["takerUnrealizedProfit"] = *tAccount.UnrealizedProfit
-		}
-		fields["makerAvailable"] = mAccount.AvailableBalance
-		fields["makerUnrealizedProfit"] = mAccount.UnrealisedPNL
+		fields["takerAvailable"] = tAccount.GetFree()
+		fields["takerURPnl"] = takerURPnl
+		fields["makerAvailable"] = mAccount.GetFree()
+		fields["makerURPnl"] = makerURPnl
 		pt, err := client.NewPoint(
-			*mtConfig.InternalInflux.Measurement,
+			mtConfig.InternalInflux.Measurement,
 			map[string]string{
 				"type": "balance",
 			},
@@ -156,15 +157,9 @@ func handleSave() {
 
 func handleExternalInfluxSave() {
 
-	if time.Now().Sub(mtGlobalSilent) < 0 {
-		return
-	}
-
-	if tAccount != nil &&
-		tAccount.MarginBalance != nil &&
-		mAccount != nil {
-		totalBalance := *tAccount.MarginBalance + mAccount.MarginBalance + mAccount.UnrealisedPNL
-		netWorth := totalBalance / *mtConfig.StartValue
+	if tAccount != nil && mAccount != nil {
+		totalBalance := tAccount.GetBalance() + mAccount.GetBalance()
+		netWorth := totalBalance / mtConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["netWorth"] = netWorth
 		for name, start := range mtConfig.StartValues {
@@ -174,7 +169,7 @@ func handleExternalInfluxSave() {
 		}
 		if len(fields) > 0 {
 			pt, err := client.NewPoint(
-				*mtConfig.ExternalInflux.Measurement,
+				mtConfig.ExternalInflux.Measurement,
 				map[string]string{
 					"name": *mtConfig.Name,
 				},
@@ -196,11 +191,11 @@ func handleExternalInfluxSave() {
 func reportsSaveLoop(
 	ctx context.Context,
 	influxWriter *common.InfluxWriter,
-	influxConfig InfluxConfig,
+	influxConfig common.InfluxSettings,
 	spreadReportCh chan common.SpreadReport,
 ) {
 	spreadReports := make(map[string]common.SpreadReport)
-	saveTimer := time.NewTimer(*influxConfig.SaveInterval)
+	saveTimer := time.NewTimer(influxConfig.SaveInterval)
 	for {
 		select {
 		case <-ctx.Done():
@@ -213,18 +208,18 @@ func reportsSaveLoop(
 			for _, report := range spreadReports {
 				fields := make(map[string]interface{})
 				fields["matchRatio"] = report.MatchRatio
-				fields["maxAgeDiff"] = float64(report.AdjustedAgeDiff)
+				fields["adjustedAgeDiff"] = float64(report.AdjustedAgeDiff / time.Millisecond)
 				fields["makerTimeDeltaEma"] = report.MakerTimeDeltaEma
 				fields["takerTimeDeltaEma"] = report.TakerTimeDeltaEma
 				fields["makerTimeDelta"] = report.MakerTimeDelta
 				fields["takerTimeDelta"] = report.TakerTimeDelta
 				fields["makerDepthFilterRatio"] = report.MakerDepthFilterRatio
 				fields["takerDepthFilterRatio"] = report.MakerDepthFilterRatio
-				fields["makerMsgAvgLen"] = report.MakerMsgAvgLen
-				fields["takerMsgAvgLen"] = report.TakerMsgAvgLen
+				fields["makerExpireRatio"] = report.MakerExpireRatio
+				fields["takerExpireRatio"] = report.TakerExpireRatio
 				if len(fields) > 0 {
 					pt, err := client.NewPoint(
-						*influxConfig.Measurement,
+						influxConfig.Measurement,
 						map[string]string{
 							"makerSymbol": report.MakerSymbol,
 							"takerSymbol": report.TakerSymbol,
@@ -243,7 +238,7 @@ func reportsSaveLoop(
 					}
 				}
 			}
-			saveTimer.Reset(*influxConfig.SaveInterval)
+			saveTimer.Reset(influxConfig.SaveInterval)
 			break
 		}
 	}

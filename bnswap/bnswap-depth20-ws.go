@@ -304,7 +304,7 @@ func NewDepth20WS(
 	ws := Depth20WS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		messageCh:   make(chan []byte, len(channels)),
+		messageCh:   make(chan []byte, len(channels)*100),
 		stopped:     false,
 		mu:          sync.Mutex{},
 	}

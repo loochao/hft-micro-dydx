@@ -188,7 +188,7 @@ func reportsSaveLoop(
 			for _, report := range spreadReports {
 				fields := make(map[string]interface{})
 				fields["matchRatio"] = report.MatchRatio
-				fields["maxAgeDiff"] = float64(report.MaxAgeDiff)
+				fields["maxAgeDiff"] = float64(report.AdjustedAgeDiff)
 				fields["makerTimeDeltaEma"] = report.MakerTimeDeltaEma
 				fields["takerTimeDeltaEma"] = report.TakerTimeDeltaEma
 				fields["makerTimeDelta"] = report.MakerTimeDelta

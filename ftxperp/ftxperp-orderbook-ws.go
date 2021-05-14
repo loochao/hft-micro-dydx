@@ -366,7 +366,8 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 	}
 	checkSumTimer := time.NewTimer(time.Minute)
 	defer checkSumTimer.Stop()
-	outputTimer := time.NewTimer(time.Millisecond * 100)
+	outputInterval := time.Millisecond * 100
+	outputTimer := time.NewTimer(outputInterval)
 	defer outputTimer.Stop()
 
 	var hasPartial = false
@@ -378,6 +379,8 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 			return
 		case <-outputTimer.C:
 			if hasPartial {
+				//如果不复制，Downstream会被修改
+				orderBook := orderBook
 				select {
 				case outputCh <- &orderBook:
 				default:
@@ -387,7 +390,8 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 					}
 				}
 			}
-			outputTimer.Reset(time.Millisecond * 100)
+			outputTimer.Reset(time.Now().Truncate(outputInterval).Add(outputInterval).Sub(time.Now()))
+			break
 		case <-checkSumTimer.C:
 			if hasPartial {
 				if orderBook.CompareCheckSum() {
@@ -400,6 +404,7 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 						}
 					}
 				} else {
+					logger.Debugf("check sum failed %s", market)
 					hasPartial = false
 					select {
 					case w.marketResetCh <- market:
@@ -453,9 +458,8 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 					logger.Debugf("other action %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
-				continue
 			}
-
+			break
 		}
 	}
 }

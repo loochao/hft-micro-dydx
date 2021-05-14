@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -24,17 +25,17 @@ func TestAPI_GetFutures(t *testing.T) {
 	for _, future := range futures {
 		if future.Type == "perpetual" && future.Enabled{
 			sizeIncrements[future.Name] = future.SizeIncrement
-			priceIncrements[future.Name] = future.SizeIncrement
+			priceIncrements[future.Name] = future.PriceIncrement
 		}
 	}
 	fmt.Printf("var SizeIncrements = map[string]float64{\n")
 	for name, value := range sizeIncrements {
-		fmt.Printf("  \"%s\":%f,\n", name, value)
+		fmt.Printf("  \"%s\":%s,\n", name,  strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	fmt.Printf("}\n\n")
 	fmt.Printf("var PriceIncrements = map[string]float64{\n")
 	for name, value := range priceIncrements {
-		fmt.Printf("  \"%s\":%f,\n", name, value)
+		fmt.Printf("  \"%s\":%s,\n", name, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	fmt.Printf("}\n\n")
 }

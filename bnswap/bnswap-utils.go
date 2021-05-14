@@ -367,7 +367,7 @@ func WatchPositionsFromHttp(
 				}
 				for _, position := range positions {
 					position := position
-					position.UpdateTime = time.Now()
+					position.ParseTime = time.Now()
 					//if position.PositionAmt == 0 {
 					//	position.PositionSide = "BOTH"
 					//}

@@ -1,6 +1,8 @@
 package main
 
-import "time"
+import (
+	"time"
+)
 
 func strategy1(
 	tradeBookRatio,
@@ -19,7 +21,8 @@ func strategy1(
 	tradeInterval time.Duration,
 ) (newNetWorth float64, newPositionSize float64, newPositionCost float64, newLastMarkedPrice float64, nextTradeTime time.Time) {
 	nextTradeTime = eventTime
-	if tradeBookRatio > 0.2 && tradeBookRatio < 0.4 {
+	newLastMarkedPrice = lastMarkedPrice
+	if tradeBookRatio > 0.1  {
 		if tradeDir > 0 {
 			if positionSize < 0 {
 				if meanPrice > lastMarkedPrice*(1-addOffset) {
@@ -48,8 +51,10 @@ func strategy1(
 		} else {
 			if positionSize > 0 {
 				if meanPrice < lastMarkedPrice*(1+addOffset) {
+
 					netWorth += positionSize * (bestBidPrice - positionCost) / positionCost
 					netWorth += positionSize * commission
+
 					netWorth += addValue * commission
 					positionSize = -addValue
 					positionCost = bestBidPrice
@@ -80,9 +85,9 @@ func strategy1(
 			newLastMarkedPrice = meanPrice
 			nextTradeTime = eventTime.Add(tradeInterval)
 		} else if positionSize > 0 && meanPrice > lastMarkedPrice*(1+addOffset) {
-			netWorth += addValue * commission
-			positionCost = (positionSize*positionCost + addValue*bestAskPrice) / (positionSize + addValue)
-			positionSize += addValue
+			//netWorth += addValue * commission
+			//positionCost = (positionSize*positionCost + addValue*bestAskPrice) / (positionSize + addValue)
+			//positionSize += addValue
 			newLastMarkedPrice = meanPrice
 			nextTradeTime = eventTime.Add(tradeInterval)
 		} else if positionSize < 0 && meanPrice > lastMarkedPrice*(1-addOffset) {
@@ -93,9 +98,9 @@ func strategy1(
 			newLastMarkedPrice = meanPrice
 			nextTradeTime = eventTime.Add(tradeInterval)
 		} else if positionSize < 0 && meanPrice < lastMarkedPrice*(1-addOffset) {
-			netWorth += addValue * commission
-			positionCost = (positionSize*positionCost - addValue*bestBidPrice) / (positionSize - addValue)
-			positionSize -= addValue
+			//netWorth += addValue * commission
+			//positionCost = (positionSize*positionCost - addValue*bestBidPrice) / (positionSize - addValue)
+			//positionSize -= addValue
 			newLastMarkedPrice = meanPrice
 			nextTradeTime = eventTime.Add(tradeInterval)
 		}

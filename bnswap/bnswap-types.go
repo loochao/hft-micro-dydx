@@ -225,7 +225,24 @@ type Position struct {
 	Symbol           string
 	UnRealizedProfit float64   `json:"unRealizedProfit,string"`
 	PositionSide     string    `json:"positionSide"`
-	UpdateTime       time.Time `json:"-"`
+	ParseTime        time.Time `json:"-"`
+	EventTime        time.Time `json:"-"`
+}
+
+func (position *Position) GetSymbol() string {
+	return position.Symbol
+}
+
+func (position *Position) GetSize() float64 {
+	return position.PositionAmt
+}
+
+func (position *Position) GetPrice() float64 {
+	return position.EntryPrice
+}
+
+func (position *Position) GetTime() time.Time {
+	return position.ParseTime
 }
 
 func (position *Position) ToString() string {
@@ -234,17 +251,51 @@ func (position *Position) ToString() string {
 
 type Asset struct {
 	Asset                  string
-	InitialMargin          *float64 `json:"initialMargin,string,omitempty"`
-	MaintMargin            *float64 `json:"maintMargin,string,omitempty"`
-	MarginBalance          *float64 `json:"marginBalance,string,omitempty"`
-	MaxWithdrawAmount      *float64 `json:"maxWithdrawAmount,string,omitempty"`
-	OpenOrderInitialMargin *float64 `json:"openOrderInitialMargin,string,omitempty"`
-	PositionInitialMargin  *float64 `json:"positionInitialMargin,string,omitempty"`
-	UnrealizedProfit       *float64 `json:"unrealizedProfit,string,omitempty"`
-	WalletBalance          *float64 `json:"walletBalance,string"`
-	CrossWalletBalance     *float64 `json:"crossWalletBalance,string"`
-	CrossUnPnl             *float64 `json:"crossUnPnl,string,omitempty"`
-	AvailableBalance       *float64 `json:"availableBalance,string,omitempty"`
+	InitialMargin          *float64  `json:"initialMargin,string,omitempty"`
+	MaintMargin            *float64  `json:"maintMargin,string,omitempty"`
+	MarginBalance          *float64  `json:"marginBalance,string,omitempty"`
+	MaxWithdrawAmount      *float64  `json:"maxWithdrawAmount,string,omitempty"`
+	OpenOrderInitialMargin *float64  `json:"openOrderInitialMargin,string,omitempty"`
+	PositionInitialMargin  *float64  `json:"positionInitialMargin,string,omitempty"`
+	UnrealizedProfit       *float64  `json:"unrealizedProfit,string,omitempty"`
+	WalletBalance          *float64  `json:"walletBalance,string"`
+	CrossWalletBalance     *float64  `json:"crossWalletBalance,string"`
+	CrossUnPnl             *float64  `json:"crossUnPnl,string,omitempty"`
+	AvailableBalance       *float64  `json:"availableBalance,string,omitempty"`
+	EventTime              time.Time `json:"-"`
+	ParseTime              time.Time `json:"-"`
+}
+
+func (a Asset) GetCurrency() string {
+	return a.Asset
+}
+
+func (a Asset) GetBalance() float64 {
+	if a.MarginBalance != nil {
+		return *a.MarginBalance
+	} else {
+		return 0.0
+	}
+}
+
+func (a Asset) GetFree() float64 {
+	if a.AvailableBalance != nil {
+		return *a.AvailableBalance
+	} else {
+		return 0.0
+	}
+}
+
+func (a Asset) GetUsed() float64 {
+	if a.WalletBalance != nil && a.AvailableBalance != nil {
+		return *a.WalletBalance - *a.AvailableBalance
+	} else {
+		return 0.0
+	}
+}
+
+func (a Asset) GetTime() time.Time {
+	return a.ParseTime
 }
 
 //{
@@ -302,7 +353,32 @@ type Account struct {
 	TotalPositionInitialMargin  float64    `json:"totalPositionInitialMargin,string"`
 	TotalUnrealizedProfit       float64    `json:"totalUnrealizedProfit,string"`
 	TotalWalletBalance          float64    `json:"totalWalletBalance,string"`
-	UpdateTime                  int        `json:"updateTime"`
+	EventTime                   time.Time  `json:"-"`
+	ParseTime                   time.Time  `json:"-"`
+}
+
+func (account *Account) UnmarshalJSON(data []byte) error {
+	type Alias Account
+	aux := &struct {
+		*Alias
+		EventTime int64 `json:"updateTime"`
+	}{
+		Alias: (*Alias)(account),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	account.ParseTime = time.Now()
+	account.EventTime = time.Unix(0, aux.EventTime*1000000)
+	for i := range account.Assets {
+		account.Assets[i].EventTime = account.EventTime
+		account.Assets[i].ParseTime = account.ParseTime
+	}
+	for i := range account.Positions {
+		account.Positions[i].EventTime = account.EventTime
+		account.Positions[i].EventTime = account.EventTime
+	}
+	return nil
 }
 
 type ListenKey struct {
@@ -405,6 +481,89 @@ type Order struct {
 	WorkingType   string  `json:"workingType"`
 	Code          int64   `json:"code"`
 	Msg           string  `json:"msg"`
+}
+
+func (order *Order) GetSymbol() string {
+	return order.Symbol
+}
+
+func (order *Order) GetSize() float64 {
+	return order.OrigQty
+}
+
+func (order *Order) GetPrice() float64 {
+	return order.Price
+}
+
+func (order *Order) GetFilledSize() float64 {
+	return order.CumQty
+}
+
+func (order *Order) GetFilledPrice() float64 {
+	if order.CumQty != 0 {
+		return order.CumQuote / order.CumQty
+	} else {
+		return 0.0
+	}
+}
+
+func (order *Order) GetSide() common.OrderSide {
+	switch order.Side {
+	case OrderSideSell:
+		return common.OrderSideSell
+	case OrderSideBuy:
+		return common.OrderSideBuy
+	default:
+		return common.OrderSideUnknown
+	}
+}
+
+func (order *Order) GetClientID() string {
+	return order.ClientOrderId
+}
+
+func (order *Order) GetID() string {
+	return fmt.Sprintf("%d", order.OrderId)
+}
+
+func (order *Order) GetStatus() common.OrderStatus {
+	switch order.Status {
+	case OrderStatusFilled:
+		return common.OrderStatusFilled
+	case OrderStatusCancelled:
+		return common.OrderStatusCancelled
+	case OrderStatusReject:
+		return common.OrderStatusReject
+	case OrderStatusPartiallyFilled:
+		return common.OrderStatusPartiallyFilled
+	case OrderStatusExpired:
+		return common.OrderStatusExpired
+	case OrderStatusNew:
+		return common.OrderStatusNew
+	case OrderStatusPendingCancel:
+		return common.OrderStatusPendingCancel
+	default:
+		return common.OrderStatusUnknown
+	}
+}
+
+func (order *Order) GetType() common.OrderType {
+	switch order.Type {
+	case OrderTypeLimit:
+		return common.OrderTypeLimit
+	case OrderTypeMarket:
+		return common.OrderTypeMarket
+	default:
+		return common.OrderTypeUnknown
+	}
+}
+
+func (order *Order) GetPostOnly() bool {
+	return order.TimeInForce == OrderTimeInForceGTX
+}
+
+func (order *Order) GetReduceOnly() bool {
+	return order.ReduceOnly
 }
 
 func (order *Order) ToString() string {
@@ -522,6 +681,24 @@ func (c *CancelAllOrderParams) ToUrlValues() url.Values {
 	return values
 }
 
+type CancelOrderParam struct {
+	Symbol            string `json:"symbol"`
+	OrderId           int64  `json:"orderId"`
+	OrigClientOrderId string `json:"origClientOrderId"`
+}
+
+func (c *CancelOrderParam) ToUrlValues() url.Values {
+	values := url.Values{}
+	values.Set("symbol", c.Symbol)
+	if c.OrderId != 0 {
+		values.Set("orderId", fmt.Sprintf("%d", c.OrderId))
+	}
+	if c.OrigClientOrderId != "" {
+		values.Set("origClientOrderId", c.OrigClientOrderId)
+	}
+	return values
+}
+
 type PremiumIndex struct {
 	EventTime            time.Time `json:"-"`
 	Symbol               string    `json:"symbol,omitempty"`
@@ -531,6 +708,18 @@ type PremiumIndex struct {
 	FundingRate          float64   `json:"lastFundingRate,string,omitempty"`
 	NextFundingTime      time.Time `json:"-"`
 	ParseTime            time.Time `json:"-"`
+}
+
+func (mpu *PremiumIndex) GetSymbol() string {
+	return mpu.Symbol
+}
+
+func (mpu *PremiumIndex) GetFundingRate() float64 {
+	return mpu.FundingRate
+}
+
+func (mpu *PremiumIndex) GetNextFundingTime() time.Time {
+	return mpu.NextFundingTime
 }
 
 func (mpu *PremiumIndex) ToString() string {
