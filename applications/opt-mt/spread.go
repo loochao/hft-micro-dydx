@@ -47,8 +47,8 @@ func watchMakerTakerSpread(
 	shortEnterTimedMedian := common.NewTimedMedian(spreadLookback)
 	longEnterTimedMedian := common.NewTimedMedian(spreadLookback)
 
-	takerDepthDirMedian := common.NewTimedMedian(depthDirLookback)
-	makerDepthDirMedian := common.NewTimedMedian(depthDirLookback)
+	takerDepthDirMedian := common.NewTimedMean(depthDirLookback)
+	makerDepthDirMedian := common.NewTimedMean(depthDirLookback)
 
 	expectedChanSendingTime := time.Nanosecond * 300
 	matchCount := 0
@@ -56,6 +56,8 @@ func watchMakerTakerSpread(
 	makerExpireCount := 0
 	takerExpireCount := 0
 	var shortLastEnter, longLastEnter float64
+	var lastTakerBidAsk, currentTakerBidAsk float64
+	var lastMakerBidAsk, currentMakerBidAsk float64
 	for {
 		select {
 		case <-ctx.Done():
@@ -120,8 +122,8 @@ func watchMakerTakerSpread(
 				LongMedianEnter: longEnterTimedMedian.Median(),
 				LongMedianLeave: shortEnterTimedMedian.Median(),
 
-				MakerDir: makerDepthDirMedian.Median(),
-				TakerDir: takerDepthDirMedian.Median(),
+				MakerDir: makerDepthDirMedian.Mean(),
+				TakerDir: takerDepthDirMedian.Mean(),
 
 				AgeDiff: adjustedAgeDiff,
 				Time:    spreadTime,
@@ -164,9 +166,11 @@ func watchMakerTakerSpread(
 			if makerDepth != nil && makerDepth.GetTime().Sub(newMakerDepth.GetTime()) >= 0 {
 				break
 			}
-			if makerDepth != nil {
-				makerDepthDirMedian.Insert(newMakerDepth.GetTime(), newMakerDepth.GetAsks()[0][0]-makerDepth.GetAsks()[0][0]+newMakerDepth.GetAsks()[0][0]-makerDepth.GetAsks()[0][0])
+			currentMakerBidAsk = newMakerDepth.GetBids()[0][0] + newMakerDepth.GetAsks()[0][0]
+			if lastMakerBidAsk != 0 {
+				makerDepthDirMedian.Insert(newMakerDepth.GetTime(), currentMakerBidAsk - lastMakerBidAsk)
 			}
+			lastMakerBidAsk = currentMakerBidAsk
 			makerDepth = newMakerDepth
 			if !makerDepthFilter.Filter(makerDepth) && takerDepth != nil {
 				adjustedAgeDiff = makerDepth.GetTime().Sub(takerDepth.GetTime()) + time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma-takerDepthFilter.TimeDeltaEma))*time.Millisecond
@@ -213,11 +217,11 @@ func watchMakerTakerSpread(
 				takerDepth.GetTime().Sub(newTakerDepth.GetTime()) >= 0 {
 				break
 			}
-
-			if takerDepth != nil {
-				takerDepthDirMedian.Insert(newTakerDepth.GetTime(), newTakerDepth.GetAsks()[0][0]-takerDepth.GetAsks()[0][0]+newTakerDepth.GetAsks()[0][0]-takerDepth.GetAsks()[0][0])
+			currentTakerBidAsk = newTakerDepth.GetBids()[0][0] + newTakerDepth.GetAsks()[0][0]
+			if lastTakerBidAsk != 0 {
+				takerDepthDirMedian.Insert(newTakerDepth.GetTime(), currentTakerBidAsk - lastTakerBidAsk)
 			}
-
+			lastTakerBidAsk = currentTakerBidAsk
 			takerDepth = newTakerDepth
 			if !takerDepthFilter.Filter(takerDepth) && makerDepth != nil {
 				adjustedAgeDiff = makerDepth.GetTime().Sub(takerDepth.GetTime()) + time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma-takerDepthFilter.TimeDeltaEma))*time.Millisecond
