@@ -203,22 +203,40 @@ type OrderBookData struct {
 	Type    string    `json:"type"`
 }
 
+//    {
+//      "future": "DOGE-PERP",
+//      "size": 184.0,
+//      "side": "sell",
+//      "netSize": -184.0,
+//      "longOrderSize": 0.0,
+//      "shortOrderSize": 0.0,
+//      "cost": -97.672628,
+//      "entryPrice": 0.5308295,
+//      "unrealizedPnl": 0.0,
+//      "realizedPnl": -0.02857,
+//      "initialMarginRequirement": 0.33333333,
+//      "maintenanceMarginRequirement": 0.03,
+//      "openSize": 184.0,
+//      "collateralUsed": 32.55754234109124,
+//      "estimatedLiquidationPrice": 3.47169418045141
+//    }
+
 type Position struct {
-	Cost                         float64 `json:"cost"`
-	EntryPrice                   float64 `json:"entryPrice"`
-	EstimatedLiquidationPrice    float64 `json:"estimatedLiquidationPrice"`
-	Market                       string  `json:"future"`
-	InitialMarginRequirement     float64 `json:"initialMarginRequirement"`
-	LongOrderSize                float64 `json:"longOrderSize"`
-	MaintenanceMarginRequirement float64 `json:"maintenanceMarginRequirement"`
-	NetSize                      float64 `json:"netSize"`
-	OpenSize                     float64 `json:"openSize"`
-	RealizedPnl                  float64 `json:"realizedPnl"`
-	ShortOrderSize               float64 `json:"shortOrderSize"`
-	Side                         string  `json:"side"`
-	Size                         float64 `json:"size"`
-	UnrealizedPnl                float64 `json:"unrealizedPnl"`
+	Market                       string    `json:"future"`
+	Size                         float64   `json:"size"`
+	Side                         string    `json:"side"`
+	NetSize                      float64   `json:"netSize"`
+	LongOrderSize                float64   `json:"longOrderSize"`
+	ShortOrderSize               float64   `json:"shortOrderSize"`
+	Cost                         float64   `json:"cost"`
+	EntryPrice                   float64   `json:"entryPrice"`
+	UnrealizedPnl                float64   `json:"unrealizedPnl"`
+	RealizedPnl                  float64   `json:"realizedPnl"`
+	InitialMarginRequirement     float64   `json:"initialMarginRequirement"`
+	MaintenanceMarginRequirement float64   `json:"maintenanceMarginRequirement"`
+	OpenSize                     float64   `json:"openSize"`
 	CollateralUsed               float64   `json:"collateralUsed"`
+	EstimatedLiquidationPrice    float64   `json:"estimatedLiquidationPrice"`
 	ParseTime                    time.Time `json:"-"`
 }
 
@@ -438,7 +456,7 @@ func (order *Order) GetStatus() common.OrderStatus {
 	case OrderStatusClosed:
 		if order.FilledSize != 0 {
 			return common.OrderStatusFilled
-		}else{
+		} else {
 			return common.OrderStatusCancelled
 		}
 	default:
@@ -483,8 +501,8 @@ type UserDataCap struct {
 //}
 
 type Fill struct {
-	ID            int64     `json:"id"`
-	Market        string    `json:"market"`
+	ID     int64  `json:"id"`
+	Market string `json:"market"`
 	//Future        string    `json:"future"`
 	BaseCurrency  string    `json:"baseCurrency"`
 	QuoteCurrency string    `json:"quoteCurrency"`
