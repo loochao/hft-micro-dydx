@@ -184,6 +184,9 @@ func (ftx *Ftxperp) StreamBasic(
 				fill.OrderType = order.Type
 			}
 			if pos, ok := internalPositions[fill.Market]; ok {
+				if pos.ParseTime.Sub(fill.Time) > time.Second {
+					continue
+				}
 				size := fill.FilledSize
 				if fill.Side != OrderSideBuy {
 					size = -fill.FilledSize
