@@ -78,6 +78,11 @@ func updateTakerPositions() {
 			if takerOrder.Side == common.OrderSideBuy &&
 				spread.TakerDir < 0 &&
 				spread.TakerDepth.BestAskPrice < hedgeMarkPrice*(1.0-mtConfig.HedgeTrackOffset) {
+				logger.Debugf(
+					"%s taker change size %f dir %f mark price %f -> %f",
+					takerSymbol, takerSizeDiff, spread.TakerDir,
+					hedgeMarkPrice, spread.TakerDepth.BestAskPrice,
+				)
 				tHedgeMarkPrices[takerSymbol] = spread.TakerDepth.BestAskPrice
 				tOrderSilentTimes[takerSymbol] = time.Now().Add(mtConfig.HedgeCheckInterval)
 				mOrderSilentTimes[makerSymbol] = time.Now().Add(mtConfig.HedgeCheckInterval)
@@ -87,6 +92,11 @@ func updateTakerPositions() {
 			} else if takerOrder.Side == common.OrderSideSell &&
 				spread.TakerDir > 0 &&
 				spread.TakerDepth.BestBidPrice > hedgeMarkPrice*(1.0+mtConfig.HedgeTrackOffset) {
+				logger.Debugf(
+					"%s taker change size %f dir %f mark price %f -> %f",
+					takerSymbol, -takerSizeDiff, spread.TakerDir,
+					hedgeMarkPrice, spread.TakerDepth.BestAskPrice,
+				)
 				tHedgeMarkPrices[takerSymbol] = spread.TakerDepth.BestBidPrice
 				tOrderSilentTimes[takerSymbol] = time.Now().Add(mtConfig.HedgeCheckInterval)
 				mOrderSilentTimes[makerSymbol] = time.Now().Add(mtConfig.HedgeCheckInterval)
