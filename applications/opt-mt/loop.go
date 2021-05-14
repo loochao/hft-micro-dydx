@@ -165,56 +165,53 @@ func updateMakerNewOrders() {
 
 		spread, okSpread := mtSpreads[makerSymbol]
 
-		if okSpread && time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
-			logger.Debugf("%s maker dir %f  taker dir %f", makerSymbol, spread.MakerDir, spread.TakerDir)
-		}
+		//if okSpread && time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
+		//	logger.Debugf("%s maker dir %f  taker dir %f", makerSymbol, spread.MakerDir, spread.TakerDir)
+		//}
 		//需要保证两边都有仓位更新，才调整现货仓位
 		if time.Now().Sub(mPositionsUpdateTimes[makerSymbol]) > mtConfig.BalancePositionMaxAge {
-			if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
-				logger.Debugf("maker position too old %s", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
+			//	logger.Debugf("maker position too old %s", makerSymbol)
+			//}
 			continue
 		}
 		if time.Now().Sub(tPositionsUpdateTimes[takerSymbol]) > mtConfig.BalancePositionMaxAge {
-			if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
-				logger.Debugf("taker position too old %s", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
+			//	logger.Debugf("taker position too old %s", makerSymbol)
+			//}
 			continue
 		}
 		if time.Now().Sub(mOrderSilentTimes[makerSymbol]) < 0 {
-			if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
-				logger.Debugf("taker order silent %s", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
+			//	logger.Debugf("taker order silent %s", makerSymbol)
+			//}
 			continue
 		}
 		if time.Now().Sub(mEnterSilentTimes[makerSymbol]) < 0 {
-			if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
-				logger.Debugf("maker enter silent %s", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
+			//	logger.Debugf("maker enter silent %s", makerSymbol)
+			//}
 			continue
 		}
 		if _, ok := mOpenOrders[makerSymbol]; ok {
-			if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
-				logger.Debugf("has open order %s", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
+			//	logger.Debugf("has open order %s", makerSymbol)
+			//}
 			continue
 		}
 		makerPosition, okMakerPosition := mPositions[makerSymbol]
 		fundingRate, okFundingRate := mtFundingRates[makerSymbol]
 		if !okSpread || !okMakerPosition || !okFundingRate {
-			if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
-				logger.Debugf("spread %v maker position %v fundingRate %v %s", okSpread, okFundingRate, okMakerPosition, makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
+			//	logger.Debugf("spread %v maker position %v fundingRate %v %s", okSpread, okFundingRate, okMakerPosition, makerSymbol)
+			//}
 			continue
-		}
-		if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
-			logger.Debugf("%s maker dir %f  taker dir %f", makerSymbol, spread.MakerDir, spread.TakerDir)
 		}
 
 		if time.Now().Sub(spread.Time) > mtConfig.SpreadTimeToLive {
-			if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
-				logger.Debugf("spread too old %s %v", makerSymbol, spread.Time)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
+			//	logger.Debugf("spread too old %s %v", makerSymbol, spread.Time)
+			//}
 			continue
 		}
 		makerDepth := spread.MakerDepth
@@ -231,9 +228,9 @@ func updateMakerNewOrders() {
 		longBot := delta.LongBot + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
 		longTop := delta.LongTop + mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
 
-		if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
-			logger.Debugf("loop %s", makerSymbol)
-		}
+		//if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
+		//	logger.Debugf("loop %s", makerSymbol)
+		//}
 
 		if spread.ShortLastLeave < shortBot &&
 			spread.ShortMedianLeave < shortBot &&
