@@ -78,11 +78,16 @@ func handleInternalSave() {
 			fields["takerMakerAsk"] = spread.TakerDepth.MakerAsk
 			fields["takerTakerBid"] = spread.TakerDepth.TakerBid
 			fields["takerTakerAsk"] = spread.TakerDepth.TakerAsk
+			fields["takerBestBidPrice"] = spread.TakerDepth.BestBidPrice
+			fields["takerBestAskPrice"] = spread.TakerDepth.BestAskPrice
 
 			fields["makerMakerBid"] = spread.MakerDepth.MakerBid
 			fields["makerMakerAsk"] = spread.MakerDepth.MakerAsk
 			fields["makerTakerBid"] = spread.MakerDepth.TakerBid
 			fields["makerTakerAsk"] = spread.MakerDepth.TakerAsk
+
+			fields["takerDir"] = spread.TakerDir
+			fields["makerDir"] = spread.MakerDir
 
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
