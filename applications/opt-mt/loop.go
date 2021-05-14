@@ -202,6 +202,9 @@ func updateMakerNewOrders() {
 			}
 			continue
 		}
+		if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
+			logger.Debugf("%s maker dir %f  taker dir %f", makerSymbol, spread.MakerDir, spread.TakerDir)
+		}
 
 		if time.Now().Sub(spread.Time) > mtConfig.SpreadTimeToLive {
 			if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {

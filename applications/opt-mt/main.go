@@ -342,6 +342,9 @@ func main() {
 								tPositionsUpdateTimes[mtSymbolsMap[nextPos.GetSymbol()]] = time.Now()
 								mPositionsUpdateTimes[nextPos.GetSymbol()] = time.Now()
 							} else {
+								if ok {
+									logger.Debugf("%s taker dir %f", mtSymbolsMap[nextPos.GetSymbol()], spread.TakerDir)
+								}
 								tOrderSilentTimes[mtSymbolsMap[nextPos.GetSymbol()]] = time.Now()
 								mtLoopTimer.Reset(time.Nanosecond)
 							}
@@ -416,6 +419,9 @@ func main() {
 							tPositionsUpdateTimes[mtSymbolsMap[makerOrder.GetSymbol()]] = time.Now()
 							mPositionsUpdateTimes[makerOrder.GetSymbol()] = time.Now()
 						} else {
+							if ok {
+								logger.Debugf("%s taker dir %f", mtSymbolsMap[makerOrder.GetSymbol()], spread.TakerDir)
+							}
 							tOrderSilentTimes[mtSymbolsMap[makerOrder.GetSymbol()]] = time.Now()
 							mtLoopTimer.Reset(time.Nanosecond)
 						}

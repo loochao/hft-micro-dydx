@@ -61,7 +61,7 @@ func (w *UserWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 				return
 			}
 
-			logger.Debugf("%s", msgBytes)
+			//logger.Debugf("%s", msgBytes)
 			err = conn.WriteMessage(websocket.TextMessage, msgBytes)
 			if err != nil {
 				logger.Debugf("conn.WriteMessage error %v", err)
@@ -96,7 +96,7 @@ func (w *UserWS) readLoop(conn *websocket.Conn) {
 			w.restart()
 			return
 		}
-		logger.Debugf("%s", msg)
+		//logger.Debugf("%s", msg)
 		select {
 		case w.messageCh <- msg:
 		default:
