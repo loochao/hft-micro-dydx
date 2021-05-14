@@ -514,9 +514,9 @@ func updateMakerNewOrders() {
 
 func handleUpdateFundingRates() {
 	if len(mFundingRates) != len(tFundingRates) {
-		if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LogInterval {
-			logger.Debugf("len(mFundingRates) %d != len(tFundingRates) %d", len(mFundingRates), len(tFundingRates))
-		}
+		//if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LogInterval {
+		//	logger.Debugf("len(mFundingRates) %d != len(tFundingRates) %d", len(mFundingRates), len(tFundingRates))
+		//}
 		return
 	}
 	frs := make([]float64, len(mSymbols))

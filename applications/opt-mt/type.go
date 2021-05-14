@@ -64,9 +64,9 @@ func NewDelta(msg string) (Delta, error) {
 		}
 	}
 	return Delta{
-		LongBot: deltas[0],
-		LongTop: deltas[6],
-		ShortBot: deltas[1],
-		ShortTop: deltas[7],
+		LongBot: deltas[1],
+		LongTop: deltas[5],
+		ShortBot: deltas[2],
+		ShortTop: deltas[6],
 	}, nil
 }
