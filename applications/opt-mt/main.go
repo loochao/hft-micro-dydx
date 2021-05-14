@@ -317,7 +317,7 @@ func main() {
 					mPositions[nextPos.GetSymbol()] = nextPos
 					mPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
-						logger.Debugf("maker position change %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
+						logger.Debugf("%s maker position change %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
 
 						changeSize := -(nextPos.GetSize() - prevPos.GetSize())
 
@@ -366,7 +366,7 @@ func main() {
 					tPositions[nextPos.GetSymbol()] = nextPos
 					tPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
-						logger.Debugf("taker position change %f -> %f", prevPos.GetSize(), nextPos.GetSize())
+						logger.Debugf("%s taker position change %f -> %f", nextPos.GetSymbol(),prevPos.GetSize(), nextPos.GetSize())
 					}
 				}
 			} else {
