@@ -623,7 +623,7 @@ func (fs *FutureStats) GetSymbol() string {
 }
 
 func (fs *FutureStats) GetFundingRate() float64 {
-	return fs.NextFundingRate
+	return fs.NextFundingRate*24.0
 }
 
 func (fs *FutureStats) GetNextFundingTime() time.Time {
