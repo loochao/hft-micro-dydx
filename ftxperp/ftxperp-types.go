@@ -365,7 +365,7 @@ type Order struct {
 	FilledSize    float64   `json:"filledSize"`
 	RemainingSize float64   `json:"remainingSize"`
 	ReduceOnly    bool      `json:"reduceOnly"`
-	Liquidation   string    `json:"liquidation"`
+	Liquidation   bool      `json:"liquidation"`
 	AvgFillPrice  float64   `json:"avgFillPrice"`
 	PostOnly      bool      `json:"postOnly"`
 	Ioc           bool      `json:"ioc"`
