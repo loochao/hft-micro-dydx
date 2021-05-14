@@ -311,7 +311,7 @@ func main() {
 			}
 			break
 		case nextPos := <-mPositionCh:
-			logger.Debugf("maker position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
+			//logger.Debugf("maker position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := mPositions[nextPos.GetSymbol()]; ok {
 				if nextPos.GetTime().Sub(prevPos.GetTime()) >= 0 {
 					mPositions[nextPos.GetSymbol()] = nextPos
@@ -363,7 +363,7 @@ func main() {
 		case mAccount = <-mAccountCh:
 			break
 		case nextPos := <-tPositionCh:
-			logger.Debugf("taker position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
+			//logger.Debugf("taker position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := tPositions[nextPos.GetSymbol()]; ok {
 				if nextPos.GetTime().Sub(prevPos.GetTime()) >= 0 {
 					tPositions[nextPos.GetSymbol()] = nextPos
