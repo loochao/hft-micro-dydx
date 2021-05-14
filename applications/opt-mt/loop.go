@@ -162,6 +162,12 @@ func updateMakerNewOrders() {
 	for _, rank := range mtDualEnds {
 		makerSymbol := mtRankSymbolMap[rank]
 		takerSymbol := mtSymbolsMap[makerSymbol]
+
+		spread, okSpread := mtSpreads[makerSymbol]
+
+		if okSpread && time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
+			logger.Debugf("%s maker dir %f  taker dir %f", makerSymbol, spread.MakerDir, spread.TakerDir)
+		}
 		//需要保证两边都有仓位更新，才调整现货仓位
 		if time.Now().Sub(mPositionsUpdateTimes[makerSymbol]) > mtConfig.BalancePositionMaxAge {
 			if time.Now().Sub(time.Now().Truncate(mtConfig.LogInterval)) < mtConfig.LoopInterval {
@@ -193,7 +199,6 @@ func updateMakerNewOrders() {
 			}
 			continue
 		}
-		spread, okSpread := mtSpreads[makerSymbol]
 		makerPosition, okMakerPosition := mPositions[makerSymbol]
 		fundingRate, okFundingRate := mtFundingRates[makerSymbol]
 		if !okSpread || !okMakerPosition || !okFundingRate {
