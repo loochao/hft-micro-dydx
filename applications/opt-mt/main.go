@@ -310,13 +310,16 @@ func main() {
 			}
 			break
 		case nextPos := <-mPositionCh:
-			logger.Debugf("MAKER POSITION %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
+			logger.Debugf("maker position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := mPositions[nextPos.GetSymbol()]; ok {
 				if nextPos.GetTime().Sub(prevPos.GetTime()) >= 0 {
 					mPositions[nextPos.GetSymbol()] = nextPos
 					mPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
-						logger.Debugf("maker pos change %f -> %f")
+						logger.Debugf("maker position change %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
+						if nextPos.GetSize() != 0 {
+							mEnterSilentTimes[nextPos.GetSymbol()] = time.Now().Add(mtConfig.EnterSilent)
+						}
 					}
 				}
 			} else {
@@ -327,13 +330,13 @@ func main() {
 		case mAccount = <-mAccountCh:
 			break
 		case nextPos := <-tPositionCh:
-			logger.Debugf("TAKER POSITION %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
+			logger.Debugf("taker position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := tPositions[nextPos.GetSymbol()]; ok {
 				if nextPos.GetTime().Sub(prevPos.GetTime()) >= 0 {
 					tPositions[nextPos.GetSymbol()] = nextPos
 					tPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
-						logger.Debugf("taker pos change %f -> %f", prevPos.GetSize(), nextPos.GetSize())
+						logger.Debugf("taker position change %f -> %f", prevPos.GetSize(), nextPos.GetSize())
 					}
 				}
 			} else {
@@ -347,7 +350,6 @@ func main() {
 			if makerOrder.GetStatus() == common.OrderStatusExpired ||
 				makerOrder.GetStatus() == common.OrderStatusReject ||
 				makerOrder.GetStatus() == common.OrderStatusCancelled ||
-				makerOrder.GetStatus() == common.OrderStatusClosed ||
 				makerOrder.GetStatus() == common.OrderStatusFilled {
 				if openOrder, ok := mOpenOrders[makerOrder.GetSymbol()]; ok && openOrder.ClientID == makerOrder.GetClientID() {
 					delete(mOpenOrders, makerOrder.GetSymbol())
@@ -364,11 +366,12 @@ func main() {
 					} else if makerOrder.GetSide() == common.OrderSideBuy {
 						mLastFilledBuyPrices[makerOrder.GetSymbol()] = makerOrder.GetFilledPrice()
 					}
+					mEnterSilentTimes[makerOrder.GetSymbol()] = time.Now().Add(mtConfig.EnterSilent)
 				} else {
-					logger.Debugf("TAKER ORDER %s %s", makerOrder.GetSymbol(), makerOrder.GetStatus())
+					logger.Debugf("MAKER ORDER %s %s", makerOrder.GetSymbol(), makerOrder.GetStatus())
 					logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
 					mOrderSilentTimes[makerOrder.GetSymbol()] = time.Now().Add(time.Second)
-					mPositionsUpdateTimes[makerOrder.GetSymbol()] = time.Unix(0, 0)
+					mPositionsUpdateTimes[makerOrder.GetSymbol()] = time.Now()
 				}
 			}
 			break
@@ -376,7 +379,6 @@ func main() {
 			if takerOrder.GetStatus() == common.OrderStatusExpired ||
 				takerOrder.GetStatus() == common.OrderStatusReject ||
 				takerOrder.GetStatus() == common.OrderStatusCancelled ||
-				takerOrder.GetStatus() == common.OrderStatusClosed ||
 				takerOrder.GetStatus() == common.OrderStatusFilled {
 				if takerOrder.GetStatus() != common.OrderStatusFilled {
 					logger.Debugf("TAKER ORDER %s %s", takerOrder.GetSymbol(), takerOrder.GetStatus())
@@ -464,7 +466,7 @@ func main() {
 			} else {
 				if time.Now().Sub(time.Now().Truncate(time.Second*15)) < mtConfig.LoopInterval {
 					logger.Debugf(
-						"SYSTEM NOT READY mSystemStatus %v tSystemStatus %v",
+						"system not ready mSystemStatus %v tSystemStatus %v",
 						mSystemStatus, tSystemStatus,
 					)
 				}

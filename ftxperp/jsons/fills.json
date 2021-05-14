@@ -1,0 +1,22 @@
+{
+  "channel": "fills",
+  "type": "update",
+  "data": {
+    "id": 2088010379,
+    "market": "DOGE-PERP",
+    "future": "DOGE-PERP",
+    "baseCurrency": null,
+    "quoteCurrency": null,
+    "type": "order",
+    "side": "sell",
+    "price": 0.527801,
+    "size": 44.0,
+    "orderId": 48026769445,
+    "time": "2021-05-14T09:41:21.708365+00:00",
+    "tradeId": 1035221885,
+    "feeRate": 0.00019,
+    "fee": 0.00441241636,
+    "feeCurrency": "USD",
+    "liquidity": "maker"
+  }
+}

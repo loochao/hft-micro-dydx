@@ -204,20 +204,20 @@ type OrderBookData struct {
 }
 
 type Position struct {
-	Cost                         float64   `json:"cost"`
-	EntryPrice                   float64   `json:"entryPrice"`
-	EstimatedLiquidationPrice    float64   `json:"estimatedLiquidationPrice"`
-	Future                       string    `json:"future"`
-	InitialMarginRequirement     float64   `json:"initialMarginRequirement"`
-	LongOrderSize                float64   `json:"longOrderSize"`
-	MaintenanceMarginRequirement float64   `json:"maintenanceMarginRequirement"`
-	NetSize                      float64   `json:"netSize"`
-	OpenSize                     float64   `json:"openSize"`
-	RealizedPnl                  float64   `json:"realizedPnl"`
-	ShortOrderSize               float64   `json:"shortOrderSize"`
-	Side                         string    `json:"side"`
-	Size                         float64   `json:"size"`
-	UnrealizedPnl                float64   `json:"unrealizedPnl"`
+	Cost                         float64 `json:"cost"`
+	EntryPrice                   float64 `json:"entryPrice"`
+	EstimatedLiquidationPrice    float64 `json:"estimatedLiquidationPrice"`
+	Market                       string  `json:"future"`
+	InitialMarginRequirement     float64 `json:"initialMarginRequirement"`
+	LongOrderSize                float64 `json:"longOrderSize"`
+	MaintenanceMarginRequirement float64 `json:"maintenanceMarginRequirement"`
+	NetSize                      float64 `json:"netSize"`
+	OpenSize                     float64 `json:"openSize"`
+	RealizedPnl                  float64 `json:"realizedPnl"`
+	ShortOrderSize               float64 `json:"shortOrderSize"`
+	Side                         string  `json:"side"`
+	Size                         float64 `json:"size"`
+	UnrealizedPnl                float64 `json:"unrealizedPnl"`
 	CollateralUsed               float64   `json:"collateralUsed"`
 	ParseTime                    time.Time `json:"-"`
 }
@@ -237,7 +237,7 @@ func (position *Position) UnmarshalJSON(data []byte) error {
 	return nil
 }
 func (position *Position) GetSymbol() string {
-	return position.Future
+	return position.Market
 }
 func (position *Position) GetSize() float64 {
 	return position.NetSize
@@ -312,23 +312,46 @@ type AccountHttpResponse struct {
 	Result  Account `json:"result"`
 }
 
+//{
+//  "channel": "orders",
+//  "type": "update",
+//  "data": {
+//    "id": 48026351503,
+//    "clientId": "16209851438511",
+//    "market": "DOGE-PERP",
+//    "type": "limit",
+//    "side": "sell",
+//    "price": 0.528221,
+//    "size": 46.0,
+//    "status": "closed",
+//    "filledSize": 0.0,
+//    "remainingSize": 0.0,
+//    "reduceOnly": false,
+//    "liquidation": false,
+//    "avgFillPrice": null,
+//    "postOnly": true,
+//    "ioc": false,
+//    "createdAt": "2021-05-14T09:39:03.121411+00:00"
+//  }
+//}
+
 type Order struct {
-	CreatedAt     time.Time `json:"-"`
-	FilledSize    float64   `json:"filledSize"`
-	AvgFillPrice  float64   `json:"avgFillPrice"`
-	//Future        string    `json:"future"`
 	ID            int64     `json:"id"`
+	ClientId      string    `json:"clientId"`
 	Market        string    `json:"market"`
-	Price         float64   `json:"price"`
-	RemainingSize float64   `json:"remainingSize"`
+	Type          string    `json:"type"`
 	Side          string    `json:"side"`
+	Price         float64   `json:"price"`
 	Size          float64   `json:"size"`
 	Status        string    `json:"status"`
-	Type          string    `json:"type"`
+	FilledSize    float64   `json:"filledSize"`
+	RemainingSize float64   `json:"remainingSize"`
 	ReduceOnly    bool      `json:"reduceOnly"`
-	Ioc           bool      `json:"ioc"`
+	Liquidation   string    `json:"liquidation"`
+	AvgFillPrice  float64   `json:"avgFillPrice"`
 	PostOnly      bool      `json:"postOnly"`
-	ClientId      string    `json:"clientId"`
+	Ioc           bool      `json:"ioc"`
+	CreatedAt     time.Time `json:"-"`
 }
 
 func (order *Order) UnmarshalJSON(data []byte) error {
@@ -413,7 +436,11 @@ func (order *Order) GetStatus() common.OrderStatus {
 	case OrderStatusOpen:
 		return common.OrderStatusOpen
 	case OrderStatusClosed:
-		return common.OrderStatusClosed
+		if order.FilledSize != 0 {
+			return common.OrderStatusFilled
+		}else{
+			return common.OrderStatusCancelled
+		}
 	default:
 		return common.OrderStatusUnknown
 	}
@@ -432,26 +459,53 @@ type UserDataCap struct {
 	Data    json.RawMessage `json:"data"`
 }
 
+//{
+//  "channel": "fills",
+//  "type": "update",
+//  "data": {
+//    "id": 2088010379,
+//    "market": "DOGE-PERP",
+//    "future": "DOGE-PERP",
+//    "baseCurrency": null,
+//    "quoteCurrency": null,
+//    "type": "order",
+//    "side": "sell",
+//    "price": 0.527801,
+//    "size": 44.0,
+//    "orderId": 48026769445,
+//    "time": "2021-05-14T09:41:21.708365+00:00",
+//    "tradeId": 1035221885,
+//    "feeRate": 0.00019,
+//    "fee": 0.00441241636,
+//    "feeCurrency": "USD",
+//    "liquidity": "maker"
+//  }
+//}
+
 type Fill struct {
-	Fee         float64   `json:"fee"`
-	Future      string    `json:"future"`
-	ID          int64     `json:"id"`
-	Liquidity   string    `json:"liquidity"`
-	Market      string    `json:"market"`
-	OrderId     int64     `json:"orderId"`
-	TradeId     int64     `json:"tradeId"`
-	FilledPrice float64   `json:"price"`
-	Side        string    `json:"side"`
-	FilledSize  float64   `json:"size"`
-	Time        time.Time `json:"-"`
-	Type        string    `json:"type"`
-	OrderType   string    `json:"-"`
-	ReduceOnly  bool      `json:"-"`
-	Ioc         bool      `json:"-"`
-	PostOnly    bool      `json:"-"`
-	Price       float64   `json:"-"`
-	Size        float64   `json:"-"`
-	ClientId    string    `json:"-"`
+	ID            int64     `json:"id"`
+	Market        string    `json:"market"`
+	//Future        string    `json:"future"`
+	BaseCurrency  string    `json:"baseCurrency"`
+	QuoteCurrency string    `json:"quoteCurrency"`
+	Type          string    `json:"type"`
+	Side          string    `json:"side"`
+	FilledPrice   float64   `json:"price"`
+	FilledSize    float64   `json:"size"`
+	OrderId       int64     `json:"orderId"`
+	Time          time.Time `json:"-"`
+	TradeId       int64     `json:"tradeId"`
+	FeeRate       float64   `json:"feeRate"`
+	Fee           float64   `json:"fee"`
+	Liquidity     string    `json:"liquidity"`
+
+	OrderType  string  `json:"-"`
+	ReduceOnly bool    `json:"-"`
+	Ioc        bool    `json:"-"`
+	PostOnly   bool    `json:"-"`
+	Price      float64 `json:"-"`
+	Size       float64 `json:"-"`
+	ClientId   string  `json:"-"`
 }
 
 func (fill *Fill) UnmarshalJSON(data []byte) error {
@@ -474,7 +528,7 @@ func (fill *Fill) UnmarshalJSON(data []byte) error {
 }
 
 func (fill *Fill) GetSymbol() string {
-	return fill.Future
+	return fill.Market
 }
 
 func (fill *Fill) GetSize() float64 {
@@ -509,7 +563,7 @@ func (fill *Fill) GetClientID() string {
 }
 
 func (fill *Fill) GetID() string {
-	return fmt.Sprintf("%d", fill.ID)
+	return fmt.Sprintf("%d", fill.OrderId)
 }
 
 func (fill *Fill) GetType() common.OrderType {

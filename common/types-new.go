@@ -160,7 +160,7 @@ var OrderStatusPendingCancel = OrderStatus("PENDING_CANCEL")
 var OrderStatusReject = OrderStatus("REJECTED")
 var OrderStatusExpired = OrderStatus("EXPIRED")
 var OrderStatusFilled = OrderStatus("FILLED")
-var OrderStatusClosed = OrderStatus("CLOSED") // filled or cancelled or expired or rejected
+//var OrderStatusClosed = OrderStatus("CLOSED") // filled or cancelled or expired or rejected
 var OrderStatusUnknown = OrderStatus("ORDER_STATUS_UNKNOWN")
 
 type Bids [][2]float64

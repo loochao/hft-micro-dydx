@@ -1,0 +1,22 @@
+{
+  "channel": "orders",
+  "type": "update",
+  "data": {
+    "id": 48026351503,
+    "clientId": "16209851438511",
+    "market": "DOGE-PERP",
+    "type": "limit",
+    "side": "sell",
+    "price": 0.528221,
+    "size": 46.0,
+    "status": "closed",
+    "filledSize": 0.0,
+    "remainingSize": 0.0,
+    "reduceOnly": false,
+    "liquidation": false,
+    "avgFillPrice": null,
+    "postOnly": true,
+    "ioc": false,
+    "createdAt": "2021-05-14T09:39:03.121411+00:00"
+  }
+}

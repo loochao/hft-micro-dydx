@@ -141,12 +141,14 @@ func (ftx *Ftxperp) StreamBasic(
 		case ps := <-internalPositionsCh:
 			for _, p := range ps {
 				p := p
-				if oldP, ok := internalPositions[p.Future]; ok {
+				if oldP, ok := internalPositions[p.Market]; ok {
 					if oldP.ParseTime.Sub(p.ParseTime) < 0 {
-						internalPositions[p.Future] = p
+						internalPositions[p.Market] = p
 					}
+				} else {
+					internalPositions[p.Market] = p
 				}
-				if positionCh, ok := positionsCh[p.Future]; ok {
+				if positionCh, ok := positionsCh[p.Market]; ok {
 					select {
 					case positionCh <- &p:
 					default:
@@ -168,12 +170,12 @@ func (ftx *Ftxperp) StreamBasic(
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
-			}else{
+			} else {
 				logger.Debugf("ORDER FROM OTHER PLACE %v", order)
 			}
 			break
 		case fill := <-userWS.FillCh:
-			if order, ok := internalOrders[fill.ID]; ok {
+			if order, ok := internalOrders[fill.OrderId]; ok {
 				fill.PostOnly = order.PostOnly
 				fill.ReduceOnly = order.ReduceOnly
 				fill.ClientId = order.ClientId
@@ -181,7 +183,7 @@ func (ftx *Ftxperp) StreamBasic(
 				fill.Size = order.Size
 				fill.OrderType = order.Type
 			}
-			if pos, ok := internalPositions[fill.Future]; ok {
+			if pos, ok := internalPositions[fill.Market]; ok {
 				size := fill.FilledSize
 				if fill.Side != OrderSideBuy {
 					size = -fill.FilledSize
@@ -197,8 +199,8 @@ func (ftx *Ftxperp) StreamBasic(
 					pos.Cost += size * price
 					pos.NetSize += size
 				}
-				internalPositions[fill.Future] = pos
-				if positionCh, ok := positionsCh[fill.Future]; ok {
+				internalPositions[fill.Market] = pos
+				if positionCh, ok := positionsCh[fill.Market]; ok {
 					select {
 					case positionCh <- &pos:
 					default:
@@ -209,7 +211,7 @@ func (ftx *Ftxperp) StreamBasic(
 					}
 				}
 			}
-			if orderCh, ok := ordersCh[fill.Future]; ok {
+			if orderCh, ok := ordersCh[fill.Market]; ok {
 				select {
 				case orderCh <- &fill:
 				default:
@@ -301,9 +303,9 @@ func (ftx *Ftxperp) StreamFundingRate(ctx context.Context, channels map[string]c
 				subCtx, cancel := context.WithTimeout(ctx, time.Minute)
 				fs, err := ftx.api.GetFutureStats(subCtx, market)
 				if err != nil {
-					logger.Debugf("ftx.api.GetFutureStats(subCtx, %s) error %v", market,err)
+					logger.Debugf("ftx.api.GetFutureStats(subCtx, %s) error %v", market, err)
 					pullTimes[market] = time.Now().Add(time.Second)
-				}else{
+				} else {
 					if ch, ok := channels[fs.Future]; ok {
 						select {
 						case ch <- fs:
@@ -454,14 +456,14 @@ func (ftx *Ftxperp) positionsLoop(ctx context.Context, markets []string, positio
 				hasPositions := map[string]bool{}
 				outPositions := make([]Position, 0)
 				for _, position := range positions {
-					hasPositions[position.Future] = true
+					hasPositions[position.Market] = true
 					position := position
 					outPositions = append(outPositions, position)
 				}
 				for _, market := range markets {
 					if _, ok := hasPositions[market]; !ok {
 						outPositions = append(outPositions, Position{
-							Future:    market,
+							Market:    market,
 							ParseTime: time.Now(),
 						})
 					}
