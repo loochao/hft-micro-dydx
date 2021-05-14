@@ -35,20 +35,25 @@ type Config struct {
 	MinimalEnterFundingRate float64 `yaml:"minimalEnterFundingRate"`
 	MinimalKeepFundingRate  float64 `yaml:"minimalKeepFundingRate"`
 
-	DepthTimeDeltaMax           time.Duration           `yaml:"depthTimeDeltaMax"`
-	DepthTimeDeltaMin           time.Duration           `yaml:"depthTimeDeltaMin"`
-	DepthTakerDecay             float64           `yaml:"depthTakerDecay"`
-	DepthMakerDecay             float64           `yaml:"depthMakerDecay"`
-	DepthTakerBias              time.Duration     `yaml:"depthTakerBias"`
-	DepthMakerBias              time.Duration     `yaml:"depthMakerBias"`
-	BatchSize                   int               `yaml:"depthBatchSize"`
-	DepthMakerImpact            float64           `yaml:"depthMakerImpact"`
-	DepthTakerImpact            float64           `yaml:"depthTakerImpact"`
-	DepthMaxAgeDiffBias         time.Duration     `yaml:"depthMaxAgeDiffBias"`
-	ReportCount                 int               `yaml:"reportCount"`
-	SpreadTimeToLive            time.Duration     `yaml:"spreadTimeToLive"`
-	SpreadLookbackDuration      time.Duration     `yaml:"spreadLookbackDuration"`
-	MakerOrderOffsets           map[string]string `yaml:"makerOrderOffsets"`
+	DepthTimeDeltaMax      time.Duration     `yaml:"depthTimeDeltaMax"`
+	DepthTimeDeltaMin      time.Duration     `yaml:"depthTimeDeltaMin"`
+	DepthTakerDecay        float64           `yaml:"depthTakerDecay"`
+	DepthMakerDecay     float64           `yaml:"depthMakerDecay"`
+	DepthTakerBias      time.Duration     `yaml:"depthTakerBias"`
+	DepthMakerBias      time.Duration     `yaml:"depthMakerBias"`
+	BatchSize           int               `yaml:"depthBatchSize"`
+	DepthMakerImpact    float64           `yaml:"depthMakerImpact"`
+	DepthTakerImpact    float64           `yaml:"depthTakerImpact"`
+	DepthMaxAgeDiffBias time.Duration     `yaml:"depthMaxAgeDiffBias"`
+	DepthDirLookback    time.Duration     `yaml:"depthDirLookback"`
+	ReportCount         int               `yaml:"reportCount"`
+	SpreadTimeToLive    time.Duration     `yaml:"spreadTimeToLive"`
+	SpreadLookback      time.Duration     `yaml:"spreadLookback"`
+	MakerOrderOffsets   map[string]string `yaml:"makerOrderOffsets"`
+
+	HedgeInstantly     bool          `yaml:"hedgeInstantly"`
+	HedgeCheckInterval time.Duration `yaml:"hedgeCheckInterval"`
+	HedgeTrackOffset   float64 `yaml:"hedgeTrackOffset"`
 
 	StartValue        float64            `yaml:"startValue"`
 	EnterFreePct      float64            `yaml:"enterFreePct"`
@@ -118,7 +123,7 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.SpreadTimeToLive == 0 {
 		config.SpreadTimeToLive = time.Second * 3
 	}
-	if config.SpreadLookbackDuration == 0 {
-		config.SpreadLookbackDuration = time.Second
+	if config.SpreadLookback == 0 {
+		config.SpreadLookback = time.Second
 	}
 }

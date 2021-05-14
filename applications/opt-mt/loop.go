@@ -72,14 +72,39 @@ func updateTakerPositions() {
 			ClientID:   tExchange.GenerateClientID(),
 		}
 		logger.Debugf("TAKER ORDER %v", takerOrder)
-		mOrderSilentTimes[makerSymbol] = time.Now().Add(mtConfig.OrderSilent)
 
+		hedgeMarkPrice, okHedgeMarkPrice := tHedgeMarkPrices[takerSymbol]
+		if !mtConfig.HedgeInstantly && okHedgeMarkPrice {
+			if takerOrder.Side == common.OrderSideBuy &&
+				spread.TakerDir < 0 &&
+				spread.TakerDepth.BestAskPrice < hedgeMarkPrice*(1.0-mtConfig.HedgeTrackOffset) {
+				tHedgeMarkPrices[takerSymbol] = spread.TakerDepth.BestAskPrice
+				tOrderSilentTimes[takerSymbol] = time.Now().Add(mtConfig.HedgeCheckInterval)
+				mOrderSilentTimes[makerSymbol] = time.Now().Add(mtConfig.HedgeCheckInterval)
+				tPositionsUpdateTimes[takerSymbol] = time.Now()
+				mPositionsUpdateTimes[takerSymbol] = time.Now()
+				continue
+			} else if takerOrder.Side == common.OrderSideSell &&
+				spread.TakerDir > 0 &&
+				spread.TakerDepth.BestBidPrice > hedgeMarkPrice*(1.0+mtConfig.HedgeTrackOffset) {
+				tHedgeMarkPrices[takerSymbol] = spread.TakerDepth.BestBidPrice
+				tOrderSilentTimes[takerSymbol] = time.Now().Add(mtConfig.HedgeCheckInterval)
+				mOrderSilentTimes[makerSymbol] = time.Now().Add(mtConfig.HedgeCheckInterval)
+				tPositionsUpdateTimes[takerSymbol] = time.Now()
+				mPositionsUpdateTimes[takerSymbol] = time.Now()
+				continue
+			}
+		}
+		mOrderSilentTimes[makerSymbol] = time.Now().Add(mtConfig.OrderSilent)
 		tOrderSilentTimes[takerSymbol] = time.Now().Add(mtConfig.OrderSilent)
 		tPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
 		if !mtConfig.DryRun {
 			tOrderRequestChMap[takerSymbol] <- common.OrderRequest{
 				New: &takerOrder,
 			}
+		}
+		if okHedgeMarkPrice {
+			delete(tHedgeMarkPrices, takerSymbol)
 		}
 	}
 	mtUnHedgeValue = unHedgedValue

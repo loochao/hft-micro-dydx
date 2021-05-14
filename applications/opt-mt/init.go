@@ -76,6 +76,8 @@ var mSystemStatusCh = make(chan common.SystemStatus, 10)
 var tSystemStatusCh = make(chan common.SystemStatus, 10)
 var mOrderOffsets = make(map[string]Offset)
 
+var tHedgeMarkPrices = make(map[string]float64)
+
 var mtConfig *Config
 
 var mExchange common.Exchange
@@ -83,7 +85,7 @@ var tExchange common.Exchange
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210514 10:59:11  ####")
+	logger.Debug("####  BUILD @ 20210514 12:13:36  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

@@ -73,6 +73,8 @@ type MakerTakerSpread struct {
 	LongMedianLeave  float64
 	MakerDepth       WalkedMakerTakerDepth
 	TakerDepth       WalkedMakerTakerDepth
+	MakerDir         float64
+	TakerDir         float64
 	Time             time.Time
 }
 

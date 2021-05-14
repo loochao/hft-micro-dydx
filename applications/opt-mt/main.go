@@ -225,7 +225,8 @@ func main() {
 			mtConfig.DepthTimeDeltaMax,
 			mtConfig.DepthMaxAgeDiffBias,
 			mtConfig.ReportCount,
-			mtConfig.SpreadLookbackDuration,
+			mtConfig.SpreadLookback,
+			mtConfig.DepthDirLookback,
 			makerDepthChMap[makerSymbol],
 			takerDepthChMap[takerSymbol],
 			spreadReportCh,
@@ -317,6 +318,30 @@ func main() {
 					mPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
 						logger.Debugf("maker position change %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
+
+						changeSize := nextPos.GetSize() - prevPos.GetSize()
+
+						if mtConfig.HedgeInstantly {
+							tOrderSilentTimes[mtSymbolsMap[nextPos.GetSymbol()]] = time.Now()
+							mtLoopTimer.Reset(time.Nanosecond)
+						} else {
+							if spread, ok := mtSpreads[nextPos.GetSymbol()]; ok && ((changeSize > 0 && spread.TakerDir > 0) ||
+								(changeSize < 0 && spread.TakerDir < 0)) {
+								if changeSize > 0 {
+									tHedgeMarkPrices[mtSymbolsMap[nextPos.GetSymbol()]] = spread.TakerDepth.BestBidPrice
+								} else {
+									tHedgeMarkPrices[mtSymbolsMap[nextPos.GetSymbol()]] = spread.TakerDepth.BestAskPrice
+								}
+								tOrderSilentTimes[mtSymbolsMap[nextPos.GetSymbol()]] = time.Now().Add(mtConfig.HedgeCheckInterval)
+								mOrderSilentTimes[nextPos.GetSymbol()] = time.Now().Add(mtConfig.HedgeCheckInterval)
+								tPositionsUpdateTimes[mtSymbolsMap[nextPos.GetSymbol()]] = time.Now()
+								mPositionsUpdateTimes[nextPos.GetSymbol()] = time.Now()
+							} else {
+								tOrderSilentTimes[mtSymbolsMap[nextPos.GetSymbol()]] = time.Now()
+								mtLoopTimer.Reset(time.Nanosecond)
+							}
+						}
+
 						if nextPos.GetSize() != 0 {
 							mEnterSilentTimes[nextPos.GetSymbol()] = time.Now().Add(mtConfig.EnterSilent)
 						}
@@ -359,8 +384,28 @@ func main() {
 						"MAKER ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
 						makerOrder.GetSymbol(), makerOrder.GetSide(), makerOrder.GetFilledSize(), makerOrder.GetFilledPrice(),
 					)
-					tOrderSilentTimes[mtSymbolsMap[makerOrder.GetSymbol()]] = time.Now()
-					mtLoopTimer.Reset(time.Nanosecond)
+
+					if mtConfig.HedgeInstantly {
+						tOrderSilentTimes[mtSymbolsMap[makerOrder.GetSymbol()]] = time.Now()
+						mtLoopTimer.Reset(time.Nanosecond)
+					} else {
+						if spread, ok := mtSpreads[makerOrder.GetSymbol()]; ok && ((makerOrder.GetSide() == common.OrderSideBuy && spread.TakerDir > 0) ||
+							(makerOrder.GetSide() == common.OrderSideSell && spread.TakerDir < 0)) {
+							if makerOrder.GetSide() == common.OrderSideBuy {
+								tHedgeMarkPrices[mtSymbolsMap[makerOrder.GetSymbol()]] = spread.TakerDepth.BestBidPrice
+							} else {
+								tHedgeMarkPrices[mtSymbolsMap[makerOrder.GetSymbol()]] = spread.TakerDepth.BestAskPrice
+							}
+							tOrderSilentTimes[mtSymbolsMap[makerOrder.GetSymbol()]] = time.Now().Add(mtConfig.HedgeCheckInterval)
+							mOrderSilentTimes[makerOrder.GetSymbol()] = time.Now().Add(mtConfig.HedgeCheckInterval)
+							tPositionsUpdateTimes[mtSymbolsMap[makerOrder.GetSymbol()]] = time.Now()
+							mPositionsUpdateTimes[makerOrder.GetSymbol()] = time.Now()
+						} else {
+							tOrderSilentTimes[mtSymbolsMap[makerOrder.GetSymbol()]] = time.Now()
+							mtLoopTimer.Reset(time.Nanosecond)
+						}
+					}
+
 					if makerOrder.GetSide() == common.OrderSideSell {
 						mLastFilledSellPrices[makerOrder.GetSymbol()] = makerOrder.GetFilledPrice()
 					} else if makerOrder.GetSide() == common.OrderSideBuy {
