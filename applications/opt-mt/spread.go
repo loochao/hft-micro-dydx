@@ -81,7 +81,7 @@ func watchMakerTakerSpread(
 					makerDepthFilter.TimeDelta,
 					makerDepthFilter.TimeDeltaEma,
 					takerDepthFilter.TimeDeltaEma,
-					)
+				)
 				makerDepth = nil
 				makerWalkedDepth = nil
 				break
@@ -163,16 +163,11 @@ func watchMakerTakerSpread(
 			if !makerDepthFilter.Filter(makerDepth) && takerDepth != nil {
 				adjustedAgeDiff = makerDepth.GetTime().Sub(takerDepth.GetTime()) + time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma-takerDepthFilter.TimeDeltaEma))*time.Millisecond
 				if adjustedAgeDiff > maxAgeDiffBias {
-					logger.Debugf("taker expire %v > %v", adjustedAgeDiff, maxAgeDiffBias)
 					//taker已经过期
-					takerDepth = nil
-					takerWalkedDepth = nil
 					takerExpireCount++
-				} else if adjustedAgeDiff < -maxAgeDiffBias {
-					logger.Debugf("maker expire %v < %v", adjustedAgeDiff, -maxAgeDiffBias)
+				}
+				if adjustedAgeDiff < -maxAgeDiffBias {
 					//maker已经过期
-					makerDepth = nil
-					makerWalkedDepth = nil
 					makerExpireCount++
 				} else {
 					makerWalkDepthTimer.Reset(expectedChanSendingTime)
@@ -214,21 +209,14 @@ func watchMakerTakerSpread(
 			if !takerDepthFilter.Filter(takerDepth) && makerDepth != nil {
 				adjustedAgeDiff = makerDepth.GetTime().Sub(takerDepth.GetTime()) + time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma-takerDepthFilter.TimeDeltaEma))*time.Millisecond
 				if adjustedAgeDiff > maxAgeDiffBias {
-					logger.Debugf("taker expire %v > %v", adjustedAgeDiff, maxAgeDiffBias)
 					//taker已经过期
-					takerDepth = nil
-					takerWalkedDepth = nil
 					takerExpireCount++
-					break
-				} else if adjustedAgeDiff < -maxAgeDiffBias {
-					logger.Debugf("maker expire %v < %v", adjustedAgeDiff, -maxAgeDiffBias)
-					//maker已经过期
-					makerDepth = nil
-					makerWalkedDepth = nil
-					makerExpireCount++
-					break
 				} else {
 					takerWalkDepthTimer.Reset(expectedChanSendingTime)
+				}
+				if adjustedAgeDiff < -maxAgeDiffBias {
+					//maker已经过期
+					makerExpireCount++
 				}
 			}
 			depthCount++
