@@ -55,7 +55,7 @@ func main() {
 	fmt.Printf("\n\n")
 
 	symbols := strings.Split(
-		`BTC-PERP`,
+		`DOGE-PERP`,
 		",",
 	)
 	symbols = matchSymbols[:]
@@ -153,7 +153,7 @@ func main() {
 						shortDelta := (bnSellPrice - ftxSellPrice) / ftxSellPrice
 						_ = longDeltaTD.Add(longDelta)
 						_ = shortDeltaTD.Add(shortDelta)
-						if saveToInflux && ftxTrade.Time.Sub(ftxTrade.Time.Truncate(time.Minute)) < lookback{
+						if saveToInflux && ftxTrade.Time.Sub(ftxTrade.Time.Truncate(time.Minute)) < lookback {
 							fields := make(map[string]interface{})
 							fields["longDelta"] = longDelta
 							fields["shortDelta"] = shortDelta
@@ -200,19 +200,31 @@ func main() {
 		}
 		deltaQuantiles[symbol] = fmt.Sprintf(
 			"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+			longDeltaTD.Quantile(0.005),
 			longDeltaTD.Quantile(0.05),
 			longDeltaTD.Quantile(0.1),
 			longDeltaTD.Quantile(0.2),
-			longDeltaTD.Quantile(0.5),
-			shortDeltaTD.Quantile(0.5),
 			shortDeltaTD.Quantile(0.8),
 			shortDeltaTD.Quantile(0.9),
 			shortDeltaTD.Quantile(0.95),
+			shortDeltaTD.Quantile(0.995),
 		)
+		//deltaQuantiles[symbol] = fmt.Sprintf(
+		//	"  \"%s\": {%.6f,%.6f},\n",
+		//	symbol,
+		//	longDeltaTD.Quantile(0.1),
+		//	shortDeltaTD.Quantile(0.9),
+		//)
 	}
 	fmt.Printf("\n\n")
 	for _, symbol := range symbols {
 		fmt.Printf("%s: %s\n", symbol, deltaQuantiles[symbol])
 	}
 	fmt.Printf("\n\n")
+
+	//fmt.Printf("\n\nvar topBots = map[string][2]float64{\n")
+	//for _, symbol := range symbols {
+	//	fmt.Printf("%s", deltaQuantiles[symbol])
+	//}
+	//fmt.Printf("}\n\n")
 }
