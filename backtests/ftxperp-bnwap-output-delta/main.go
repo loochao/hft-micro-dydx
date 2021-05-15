@@ -201,12 +201,12 @@ func main() {
 		deltaQuantiles[symbol] = fmt.Sprintf(
 			"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
 			longDeltaTD.Quantile(0.005),
+			longDeltaTD.Quantile(0.01),
 			longDeltaTD.Quantile(0.05),
-			longDeltaTD.Quantile(0.1),
 			longDeltaTD.Quantile(0.2),
 			shortDeltaTD.Quantile(0.8),
-			shortDeltaTD.Quantile(0.9),
 			shortDeltaTD.Quantile(0.95),
+			shortDeltaTD.Quantile(0.99),
 			shortDeltaTD.Quantile(0.995),
 		)
 		//deltaQuantiles[symbol] = fmt.Sprintf(
