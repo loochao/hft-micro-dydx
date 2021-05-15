@@ -316,7 +316,7 @@ func (account *Account) GetCurrency() string {
 	return "USDT"
 }
 func (account *Account) GetBalance() float64 {
-	return account.Collateral
+	return account.TotalAccountValue
 }
 func (account *Account) GetFree() float64 {
 	return account.FreeCollateral
