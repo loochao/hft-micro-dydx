@@ -215,7 +215,6 @@ func updateMakerNewOrders() {
 			continue
 		}
 		makerDepth := spread.MakerDepth
-		makerMultiplier := mStepSizes[makerSymbol]
 		makerTickSize := mTickSizes[makerSymbol]
 		takerMinNotional := tMinNotional[takerSymbol]
 		makerTakerStepSize := mtStepSizes[makerSymbol]
@@ -244,8 +243,7 @@ func updateMakerNewOrders() {
 			}
 			size := entryValue / price
 			size = math.Round(size/makerTakerStepSize) * makerTakerStepSize
-			size = math.Round(size / makerMultiplier)
-			entryValue = size * makerMultiplier * price
+			entryValue = size * price
 			if makerSize*price-entryValue < entryStep {
 				size = makerPosition.GetSize()
 			}
@@ -290,7 +288,6 @@ func updateMakerNewOrders() {
 			}
 			size := entryValue / price
 			size = math.Round(size/makerTakerStepSize) * makerTakerStepSize
-			size = math.Round(size / makerMultiplier)
 			if makerSize*price-entryValue < entryStep {
 				size = -makerPosition.GetSize()
 			}
@@ -323,7 +320,7 @@ func updateMakerNewOrders() {
 			}
 		} else if spread.ShortLastEnter > shortTop &&
 			spread.ShortMedianEnter > shortTop &&
-			delta.ShortTop - delta.ShortBot > mtConfig.MinimalDelta &&
+			delta.ShortTop-delta.ShortBot > mtConfig.MinimalDelta &&
 			fundingRate > mtConfig.MinimalEnterFundingRate &&
 			makerPosition.GetSize() >= 0 {
 			makerSize := makerPosition.GetSize()
@@ -338,9 +335,8 @@ func updateMakerNewOrders() {
 			}
 			size := entryValue / price
 			size = math.Round(size/makerTakerStepSize) * makerTakerStepSize
-			size = math.Round(size / makerMultiplier)
 
-			entryValue = size * makerMultiplier * price
+			entryValue = size *  price
 
 			////不及一个0.8*EntryStep, 不操作
 			//if entryValue < entryStep*0.8 {
@@ -416,7 +412,7 @@ func updateMakerNewOrders() {
 			}
 		} else if spread.LongLastEnter < longBot &&
 			spread.LongMedianEnter < longBot &&
-			delta.LongTop - delta.LongBot > mtConfig.MinimalDelta &&
+			delta.LongTop-delta.LongBot > mtConfig.MinimalDelta &&
 			fundingRate < -mtConfig.MinimalEnterFundingRate &&
 			makerPosition.GetSize() <= 0 {
 
@@ -432,9 +428,8 @@ func updateMakerNewOrders() {
 			}
 			size := entryValue / price
 			size = math.Round(size/makerTakerStepSize) * makerTakerStepSize
-			size = math.Round(size / makerMultiplier)
 
-			entryValue = size * makerMultiplier * price
+			entryValue = size *  price
 
 			//不及一个0.8*EntryStep, 不操作
 			//if entryValue < entryStep*0.8 {
