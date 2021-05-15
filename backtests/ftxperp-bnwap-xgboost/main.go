@@ -73,42 +73,42 @@ func main() {
 		bnBuyPrice1s := common.NewTimedMean(lookback)
 		bnSellPrice1s := common.NewTimedMean(lookback)
 
-		bnBuyPrice5s := common.NewTimedMean(time.Second*5)
-		bnSellPrice5s := common.NewTimedMean(time.Second*5)
-		bnBuyPrice15s := common.NewTimedMean(time.Second*15)
-		bnSellPrice15s := common.NewTimedMean(time.Second*15)
-		bnBuyPrice30s := common.NewTimedMean(time.Second*30)
-		bnSellPrice30s := common.NewTimedMean(time.Second*30)
+		bnBuyPrice5s := common.NewTimedMean(time.Second * 5)
+		bnSellPrice5s := common.NewTimedMean(time.Second * 5)
+		bnBuyPrice15s := common.NewTimedMean(time.Second * 15)
+		bnSellPrice15s := common.NewTimedMean(time.Second * 15)
+		bnBuyPrice30s := common.NewTimedMean(time.Second * 30)
+		bnSellPrice30s := common.NewTimedMean(time.Second * 30)
 		bnBuyPrice1m := common.NewTimedMean(time.Minute)
 		bnSellPrice1m := common.NewTimedMean(time.Minute)
-		bnBuyPrice3m := common.NewTimedMean(time.Minute*3)
-		bnSellPrice3m := common.NewTimedMean(time.Minute*3)
-		bnBuyPrice5m := common.NewTimedMean(time.Minute*5)
-		bnSellPrice5m := common.NewTimedMean(time.Minute*5)
+		bnBuyPrice3m := common.NewTimedMean(time.Minute * 3)
+		bnSellPrice3m := common.NewTimedMean(time.Minute * 3)
+		bnBuyPrice5m := common.NewTimedMean(time.Minute * 5)
+		bnSellPrice5m := common.NewTimedMean(time.Minute * 5)
 
 		bnBuyVolume1s := common.NewTimedMean(lookback)
 		bnSellVolume1s := common.NewTimedMean(lookback)
-		bnBuyVolume5s := common.NewTimedMean(time.Second*5)
-		bnSellVolume5s := common.NewTimedMean(time.Second*5)
-		bnBuyVolume15s := common.NewTimedMean(time.Second*15)
-		bnSellVolume15s := common.NewTimedMean(time.Second*15)
-		bnBuyVolume30s := common.NewTimedMean(time.Second*30)
-		bnSellVolume30s := common.NewTimedMean(time.Second*30)
+		bnBuyVolume5s := common.NewTimedMean(time.Second * 5)
+		bnSellVolume5s := common.NewTimedMean(time.Second * 5)
+		bnBuyVolume15s := common.NewTimedMean(time.Second * 15)
+		bnSellVolume15s := common.NewTimedMean(time.Second * 15)
+		bnBuyVolume30s := common.NewTimedMean(time.Second * 30)
+		bnSellVolume30s := common.NewTimedMean(time.Second * 30)
 		bnBuyVolume1m := common.NewTimedMean(time.Minute)
 		bnSellVolume1m := common.NewTimedMean(time.Minute)
-		bnBuyVolume3m := common.NewTimedMean(time.Minute*3)
-		bnSellVolume3m := common.NewTimedMean(time.Minute*3)
-		bnBuyVolume5m := common.NewTimedMean(time.Minute*5)
-		bnSellVolume5m := common.NewTimedMean(time.Minute*5)
+		bnBuyVolume3m := common.NewTimedMean(time.Minute * 3)
+		bnSellVolume3m := common.NewTimedMean(time.Minute * 3)
+		bnBuyVolume5m := common.NewTimedMean(time.Minute * 5)
+		bnSellVolume5m := common.NewTimedMean(time.Minute * 5)
 
-		const featureCount = 33
-		const closeTime = time.Second*90
-		longLabels := make(map[time.Time]float64)
-		longFeatures := make(map[time.Time][featureCount]float64)
-		longMarkPrices := make(map[time.Time]float64)
-		shortLabels := make(map[time.Time]float64)
-		shortFeatures := make(map[time.Time][featureCount]float64)
-		shortMarkPrices := make(map[time.Time]float64)
+		const featureCount = 14
+		const closeTime = 15000000000
+		longLabels := make(map[int]float64)
+		longFeatures := make(map[int][featureCount]float64)
+		longMarkPrices := make(map[int]float64)
+		shortLabels := make(map[int]float64)
+		shortFeatures := make(map[int][featureCount]float64)
+		shortMarkPrices := make(map[int]float64)
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			ftxFile, err := os.Open(
 				fmt.Sprintf("/Users/chenjilin/MarketData/ftxperp-trade/%s-%s.ftxperp.trade.jl.gz", dateStr, symbol),
@@ -219,104 +219,102 @@ func main() {
 						shortDelta := (bnSellPrice - ftxBuyPrice) / ftxBuyPrice
 						if lastFtxTrade != nil {
 							for t, markPrice := range longMarkPrices {
-								if lastFtxTrade.Time.Sub(t) < closeTime && ftxTrade.Time.Sub(t) >= closeTime {
-									longLabels[t] = (markPrice - bnBuyPrice)/markPrice
+								if int(lastFtxTrade.Time.UnixNano()/1)-t < closeTime && int(ftxTrade.Time.UnixNano()/1)-t >= closeTime {
+									longLabels[t] = (markPrice - bnBuyPrice) / markPrice
 									delete(longMarkPrices, t)
 								}
 							}
 							for t, markPrice := range shortMarkPrices {
-								if lastFtxTrade.Time.Sub(t) < closeTime && ftxTrade.Time.Sub(t) >= closeTime {
-									shortLabels[t] = (bnSellPrice - markPrice)/markPrice
+								if int(lastFtxTrade.Time.UnixNano()/1)-t < closeTime && int(ftxTrade.Time.UnixNano()/1)-t >= closeTime {
+									shortLabels[t] = (bnSellPrice - markPrice) / markPrice
 									delete(shortMarkPrices, t)
 								}
 							}
 						}
 						if longDelta < topBots[symbol][0] {
-							longMarkPrices[ftxTrade.Time] = bnBuyPrice
-							longFeatures[ftxTrade.Time] = [featureCount]float64{
-								(bnBuyPrice1s.Mean() - bnBuyPrice5s.Mean())/bnBuyPrice5s.Mean(),
-								(bnBuyPrice1s.Mean() - bnBuyPrice15s.Mean())/bnBuyPrice15s.Mean(),
-								(bnBuyPrice1s.Mean() - bnBuyPrice30s.Mean())/bnBuyPrice30s.Mean(),
-								(bnBuyPrice1s.Mean() - bnBuyPrice1m.Mean())/bnBuyPrice1m.Mean(),
-								(bnBuyPrice1s.Mean() - bnBuyPrice3m.Mean())/bnBuyPrice3m.Mean(),
-								(bnBuyPrice1s.Mean() - bnBuyPrice5m.Mean())/bnBuyPrice5m.Mean(),
+							longMarkPrices[int(ftxTrade.Time.UnixNano()/1)] = bnBuyPrice
+							longFeatures[int(ftxTrade.Time.UnixNano()/1)] = [featureCount]float64{
+								//(bnBuyPrice1s.Mean() - bnBuyPrice5s.Mean()) / bnBuyPrice5s.Mean(),
+								//(bnBuyPrice1s.Mean() - bnBuyPrice15s.Mean()) / bnBuyPrice15s.Mean(),
+								//(bnBuyPrice1s.Mean() - bnBuyPrice30s.Mean()) / bnBuyPrice30s.Mean(),
+								//(bnBuyPrice1s.Mean() - bnBuyPrice1m.Mean()) / bnBuyPrice1m.Mean(),
+								//(bnBuyPrice1s.Mean() - bnBuyPrice3m.Mean()) / bnBuyPrice3m.Mean(),
+								//(bnBuyPrice1s.Mean() - bnBuyPrice5m.Mean()) / bnBuyPrice5m.Mean(),
+								//
+								//(bnSellPrice1s.Mean() - bnSellPrice5s.Mean()) / bnSellPrice5s.Mean(),
+								//(bnSellPrice1s.Mean() - bnSellPrice15s.Mean()) / bnSellPrice15s.Mean(),
+								//(bnSellPrice1s.Mean() - bnSellPrice30s.Mean()) / bnSellPrice30s.Mean(),
+								//(bnSellPrice1s.Mean() - bnSellPrice1m.Mean()) / bnSellPrice1m.Mean(),
+								//(bnSellPrice1s.Mean() - bnSellPrice3m.Mean()) / bnSellPrice3m.Mean(),
+								//(bnSellPrice1s.Mean() - bnSellPrice5m.Mean()) / bnSellPrice5m.Mean(),
 
-								(bnSellPrice1s.Mean() - bnSellPrice5s.Mean())/bnSellPrice5s.Mean(),
-								(bnSellPrice1s.Mean() - bnSellPrice15s.Mean())/bnSellPrice15s.Mean(),
-								(bnSellPrice1s.Mean() - bnSellPrice30s.Mean())/bnSellPrice30s.Mean(),
-								(bnSellPrice1s.Mean() - bnSellPrice1m.Mean())/bnSellPrice1m.Mean(),
-								(bnSellPrice1s.Mean() - bnSellPrice3m.Mean())/bnSellPrice3m.Mean(),
-								(bnSellPrice1s.Mean() - bnSellPrice5m.Mean())/bnSellPrice5m.Mean(),
+								(bnBuyVolume1s.Mean() - bnSellPrice1s.Mean()) / (bnBuyVolume1s.Mean() + bnSellPrice1s.Mean()),
+								(bnBuyVolume5s.Mean() - bnSellPrice5s.Mean()) / (bnBuyVolume5s.Mean() + bnSellPrice5s.Mean()),
+								(bnBuyVolume15s.Mean() - bnSellPrice15s.Mean()) / (bnBuyVolume15s.Mean() + bnSellPrice15s.Mean()),
+								(bnBuyVolume30s.Mean() - bnSellPrice30s.Mean()) / (bnBuyVolume30s.Mean() + bnSellPrice30s.Mean()),
+								(bnBuyVolume1m.Mean() - bnSellPrice1m.Mean()) / (bnBuyVolume1m.Mean() + bnSellPrice1m.Mean()),
+								(bnBuyVolume3m.Mean() - bnSellPrice3m.Mean()) / (bnBuyVolume3m.Mean() + bnSellPrice3m.Mean()),
+								(bnBuyVolume5m.Mean() - bnSellPrice5m.Mean()) / (bnBuyVolume5m.Mean() + bnSellPrice5m.Mean()),
 
-								(bnBuyVolume1s.Mean()-bnSellPrice1s.Mean())/(bnBuyVolume1s.Mean()+bnSellPrice1s.Mean()),
-								(bnBuyVolume5s.Mean()-bnSellPrice5s.Mean())/(bnBuyVolume5s.Mean()+bnSellPrice5s.Mean()),
-								(bnBuyVolume15s.Mean()-bnSellPrice15s.Mean())/(bnBuyVolume15s.Mean()+bnSellPrice15s.Mean()),
-								(bnBuyVolume30s.Mean()-bnSellPrice30s.Mean())/(bnBuyVolume30s.Mean()+bnSellPrice30s.Mean()),
-								(bnBuyVolume1m.Mean()-bnSellPrice1m.Mean())/(bnBuyVolume1m.Mean()+bnSellPrice1m.Mean()),
-								(bnBuyVolume3m.Mean()-bnSellPrice3m.Mean())/(bnBuyVolume3m.Mean()+bnSellPrice3m.Mean()),
-								(bnBuyVolume5m.Mean()-bnSellPrice5m.Mean())/(bnBuyVolume5m.Mean()+bnSellPrice5m.Mean()),
-
-								float64(bnBuyVolume1s.Len()-bnSellPrice1s.Len())/float64(bnBuyVolume1s.Len()+bnSellPrice1s.Len()),
-								float64(bnBuyVolume5s.Len()-bnSellPrice5s.Len())/float64(bnBuyVolume5s.Len()+bnSellPrice5s.Len()),
-								float64(bnBuyVolume15s.Len()-bnSellPrice15s.Len())/float64(bnBuyVolume15s.Len()+bnSellPrice15s.Len()),
-								float64(bnBuyVolume30s.Len()-bnSellPrice30s.Len())/float64(bnBuyVolume30s.Len()+bnSellPrice30s.Len()),
-								float64(bnBuyVolume1m.Len()-bnSellPrice1m.Len())/float64(bnBuyVolume1m.Len()+bnSellPrice1m.Len()),
-								float64(bnBuyVolume3m.Len()-bnSellPrice3m.Len())/float64(bnBuyVolume3m.Len()+bnSellPrice3m.Len()),
-								float64(bnBuyVolume5m.Len()-bnSellPrice5m.Len())/float64(bnBuyVolume5m.Len()+bnSellPrice5m.Len()),
+								float64(bnBuyVolume1s.Len()-bnSellPrice1s.Len()) / float64(bnBuyVolume1s.Len()+bnSellPrice1s.Len()),
+								float64(bnBuyVolume5s.Len()-bnSellPrice5s.Len()) / float64(bnBuyVolume5s.Len()+bnSellPrice5s.Len()),
+								float64(bnBuyVolume15s.Len()-bnSellPrice15s.Len()) / float64(bnBuyVolume15s.Len()+bnSellPrice15s.Len()),
+								float64(bnBuyVolume30s.Len()-bnSellPrice30s.Len()) / float64(bnBuyVolume30s.Len()+bnSellPrice30s.Len()),
+								float64(bnBuyVolume1m.Len()-bnSellPrice1m.Len()) / float64(bnBuyVolume1m.Len()+bnSellPrice1m.Len()),
+								float64(bnBuyVolume3m.Len()-bnSellPrice3m.Len()) / float64(bnBuyVolume3m.Len()+bnSellPrice3m.Len()),
+								float64(bnBuyVolume5m.Len()-bnSellPrice5m.Len()) / float64(bnBuyVolume5m.Len()+bnSellPrice5m.Len()),
 
 
-								(bnBuyPrice1s.Mean() - bnSellPrice1s.Mean())/bnSellPrice1s.Mean(),
-								(bnBuyPrice5s.Mean() - bnSellPrice5s.Mean())/bnSellPrice5s.Mean(),
-								(bnBuyPrice15s.Mean() - bnSellPrice15s.Mean())/bnSellPrice15s.Mean(),
-								(bnBuyPrice30s.Mean() - bnSellPrice30s.Mean())/bnSellPrice30s.Mean(),
-								(bnBuyPrice1m.Mean() - bnSellPrice1m.Mean())/bnSellPrice1m.Mean(),
-								(bnBuyPrice3m.Mean() - bnSellPrice3m.Mean())/bnSellPrice3m.Mean(),
-								(bnBuyPrice5m.Mean() - bnSellPrice5m.Mean())/bnSellPrice5m.Mean(),
-
+								//(bnBuyPrice1s.Mean() - bnSellPrice1s.Mean()) / bnSellPrice1s.Mean(),
+								//(bnBuyPrice5s.Mean() - bnSellPrice5s.Mean()) / bnSellPrice5s.Mean(),
+								//(bnBuyPrice15s.Mean() - bnSellPrice15s.Mean()) / bnSellPrice15s.Mean(),
+								//(bnBuyPrice30s.Mean() - bnSellPrice30s.Mean()) / bnSellPrice30s.Mean(),
+								//(bnBuyPrice1m.Mean() - bnSellPrice1m.Mean()) / bnSellPrice1m.Mean(),
+								//(bnBuyPrice3m.Mean() - bnSellPrice3m.Mean()) / bnSellPrice3m.Mean(),
+								//(bnBuyPrice5m.Mean() - bnSellPrice5m.Mean()) / bnSellPrice5m.Mean(),
 							}
 						}
 						if shortDelta > topBots[symbol][1] {
-							shortMarkPrices[ftxTrade.Time] = bnSellPrice
-							shortFeatures[ftxTrade.Time] = [featureCount]float64{
+							shortMarkPrices[int(ftxTrade.Time.UnixNano()/1)] = bnSellPrice
+							shortFeatures[int(ftxTrade.Time.UnixNano()/1)] = [featureCount]float64{
 
-								(bnBuyPrice1s.Mean() - bnBuyPrice5s.Mean())/bnBuyPrice5s.Mean(),
-								(bnBuyPrice1s.Mean() - bnBuyPrice15s.Mean())/bnBuyPrice15s.Mean(),
-								(bnBuyPrice1s.Mean() - bnBuyPrice30s.Mean())/bnBuyPrice30s.Mean(),
-								(bnBuyPrice1s.Mean() - bnBuyPrice1m.Mean())/bnBuyPrice1m.Mean(),
-								(bnBuyPrice1s.Mean() - bnBuyPrice3m.Mean())/bnBuyPrice3m.Mean(),
-								(bnBuyPrice1s.Mean() - bnBuyPrice5m.Mean())/bnBuyPrice5m.Mean(),
+								//(bnBuyPrice1s.Mean() - bnBuyPrice5s.Mean()) / bnBuyPrice5s.Mean(),
+								//(bnBuyPrice1s.Mean() - bnBuyPrice15s.Mean()) / bnBuyPrice15s.Mean(),
+								//(bnBuyPrice1s.Mean() - bnBuyPrice30s.Mean()) / bnBuyPrice30s.Mean(),
+								//(bnBuyPrice1s.Mean() - bnBuyPrice1m.Mean()) / bnBuyPrice1m.Mean(),
+								//(bnBuyPrice1s.Mean() - bnBuyPrice3m.Mean()) / bnBuyPrice3m.Mean(),
+								//(bnBuyPrice1s.Mean() - bnBuyPrice5m.Mean()) / bnBuyPrice5m.Mean(),
+								//
+								//(bnSellPrice1s.Mean() - bnSellPrice5s.Mean()) / bnSellPrice5s.Mean(),
+								//(bnSellPrice1s.Mean() - bnSellPrice15s.Mean()) / bnSellPrice15s.Mean(),
+								//(bnSellPrice1s.Mean() - bnSellPrice30s.Mean()) / bnSellPrice30s.Mean(),
+								//(bnSellPrice1s.Mean() - bnSellPrice1m.Mean()) / bnSellPrice1m.Mean(),
+								//(bnSellPrice1s.Mean() - bnSellPrice3m.Mean()) / bnSellPrice3m.Mean(),
+								//(bnSellPrice1s.Mean() - bnSellPrice5m.Mean()) / bnSellPrice5m.Mean(),
 
-								(bnSellPrice1s.Mean() - bnSellPrice5s.Mean())/bnSellPrice5s.Mean(),
-								(bnSellPrice1s.Mean() - bnSellPrice15s.Mean())/bnSellPrice15s.Mean(),
-								(bnSellPrice1s.Mean() - bnSellPrice30s.Mean())/bnSellPrice30s.Mean(),
-								(bnSellPrice1s.Mean() - bnSellPrice1m.Mean())/bnSellPrice1m.Mean(),
-								(bnSellPrice1s.Mean() - bnSellPrice3m.Mean())/bnSellPrice3m.Mean(),
-								(bnSellPrice1s.Mean() - bnSellPrice5m.Mean())/bnSellPrice5m.Mean(),
+								(bnBuyVolume1s.Mean() - bnSellVolume1s.Mean()) / (bnBuyVolume1s.Mean() + bnSellVolume1s.Mean()),
+								(bnBuyVolume5s.Mean() - bnSellVolume5s.Mean()) / (bnBuyVolume5s.Mean() + bnSellVolume5s.Mean()),
+								(bnBuyVolume15s.Mean() - bnSellVolume15s.Mean()) / (bnBuyVolume15s.Mean() + bnSellVolume15s.Mean()),
+								(bnBuyVolume30s.Mean() - bnSellVolume30s.Mean()) / (bnBuyVolume30s.Mean() + bnSellVolume30s.Mean()),
+								(bnBuyVolume1m.Mean() - bnSellVolume1m.Mean()) / (bnBuyVolume1m.Mean() + bnSellVolume1m.Mean()),
+								(bnBuyVolume3m.Mean() - bnSellVolume3m.Mean()) / (bnBuyVolume3m.Mean() + bnSellVolume3m.Mean()),
+								(bnBuyVolume5m.Mean() - bnSellVolume5m.Mean()) / (bnBuyVolume5m.Mean() + bnSellVolume5m.Mean()),
 
-								(bnBuyVolume1s.Mean()-bnSellVolume1s.Mean())/(bnBuyVolume1s.Mean()+bnSellVolume1s.Mean()),
-								(bnBuyVolume5s.Mean()-bnSellVolume5s.Mean())/(bnBuyVolume5s.Mean()+bnSellVolume5s.Mean()),
-								(bnBuyVolume15s.Mean()-bnSellVolume15s.Mean())/(bnBuyVolume15s.Mean()+bnSellVolume15s.Mean()),
-								(bnBuyVolume30s.Mean()-bnSellVolume30s.Mean())/(bnBuyVolume30s.Mean()+bnSellVolume30s.Mean()),
-								(bnBuyVolume1m.Mean()-bnSellVolume1m.Mean())/(bnBuyVolume1m.Mean()+bnSellVolume1m.Mean()),
-								(bnBuyVolume3m.Mean()-bnSellVolume3m.Mean())/(bnBuyVolume3m.Mean()+bnSellVolume3m.Mean()),
-								(bnBuyVolume5m.Mean()-bnSellVolume5m.Mean())/(bnBuyVolume5m.Mean()+bnSellVolume5m.Mean()),
+								float64(bnBuyPrice1s.Len()-bnSellPrice1s.Len()) / float64(bnBuyPrice1s.Len()+bnSellPrice1s.Len()),
+								float64(bnBuyPrice5s.Len()-bnSellPrice5s.Len()) / float64(bnBuyPrice5s.Len()+bnSellPrice5s.Len()),
+								float64(bnBuyPrice15s.Len()-bnSellPrice15s.Len()) / float64(bnBuyPrice15s.Len()+bnSellPrice15s.Len()),
+								float64(bnBuyPrice30s.Len()-bnSellPrice30s.Len()) / float64(bnBuyPrice30s.Len()+bnSellPrice30s.Len()),
+								float64(bnBuyPrice1m.Len()-bnSellPrice1m.Len()) / float64(bnBuyPrice1m.Len()+bnSellPrice1m.Len()),
+								float64(bnBuyPrice3m.Len()-bnSellPrice3m.Len()) / float64(bnBuyPrice3m.Len()+bnSellPrice3m.Len()),
+								float64(bnBuyPrice5m.Len()-bnSellPrice5m.Len()) / float64(bnBuyPrice5m.Len()+bnSellPrice5m.Len()),
 
-								float64(bnBuyPrice1s.Len()-bnSellPrice1s.Len())/float64(bnBuyPrice1s.Len()+bnSellPrice1s.Len()),
-								float64(bnBuyPrice5s.Len()-bnSellPrice5s.Len())/float64(bnBuyPrice5s.Len()+bnSellPrice5s.Len()),
-								float64(bnBuyPrice15s.Len()-bnSellPrice15s.Len())/float64(bnBuyPrice15s.Len()+bnSellPrice15s.Len()),
-								float64(bnBuyPrice30s.Len()-bnSellPrice30s.Len())/float64(bnBuyPrice30s.Len()+bnSellPrice30s.Len()),
-								float64(bnBuyPrice1m.Len()-bnSellPrice1m.Len())/float64(bnBuyPrice1m.Len()+bnSellPrice1m.Len()),
-								float64(bnBuyPrice3m.Len()-bnSellPrice3m.Len())/float64(bnBuyPrice3m.Len()+bnSellPrice3m.Len()),
-								float64(bnBuyPrice5m.Len()-bnSellPrice5m.Len())/float64(bnBuyPrice5m.Len()+bnSellPrice5m.Len()),
-
-								(bnBuyPrice1s.Mean() - bnSellPrice1s.Mean())/bnSellPrice1s.Mean(),
-								(bnBuyPrice5s.Mean() - bnSellPrice5s.Mean())/bnSellPrice5s.Mean(),
-								(bnBuyPrice15s.Mean() - bnSellPrice15s.Mean())/bnSellPrice15s.Mean(),
-								(bnBuyPrice30s.Mean() - bnSellPrice30s.Mean())/bnSellPrice30s.Mean(),
-								(bnBuyPrice1m.Mean() - bnSellPrice1m.Mean())/bnSellPrice1m.Mean(),
-								(bnBuyPrice3m.Mean() - bnSellPrice3m.Mean())/bnSellPrice3m.Mean(),
-								(bnBuyPrice5m.Mean() - bnSellPrice5m.Mean())/bnSellPrice5m.Mean(),
-
+								//(bnBuyPrice1s.Mean() - bnSellPrice1s.Mean()) / bnSellPrice1s.Mean(),
+								//(bnBuyPrice5s.Mean() - bnSellPrice5s.Mean()) / bnSellPrice5s.Mean(),
+								//(bnBuyPrice15s.Mean() - bnSellPrice15s.Mean()) / bnSellPrice15s.Mean(),
+								//(bnBuyPrice30s.Mean() - bnSellPrice30s.Mean()) / bnSellPrice30s.Mean(),
+								//(bnBuyPrice1m.Mean() - bnSellPrice1m.Mean()) / bnSellPrice1m.Mean(),
+								//(bnBuyPrice3m.Mean() - bnSellPrice3m.Mean()) / bnSellPrice3m.Mean(),
+								//(bnBuyPrice5m.Mean() - bnSellPrice5m.Mean()) / bnSellPrice5m.Mean(),
 							}
 						}
 
@@ -329,17 +327,29 @@ func main() {
 			_ = ftxFile.Close()
 		}
 
+		ts := make([]int,0, len(longLabels))
+		for t := range longLabels {
+			ts = append(ts, t)
+		}
+		sort.Ints(ts)
 		longText := ""
-		for t, label := range longLabels {
-			longText += fmt.Sprintf("%d,%.6f,%.6f\n", t.UnixNano()/1000000, label, longFeatures[t])
+		for _, t := range ts {
+			label :=  longLabels[t]
+			longText += fmt.Sprintf("%d,%.6f,%.6f\n", t, label, longFeatures[t])
 		}
 		longText = strings.Replace(longText, "[", "", -1)
 		longText = strings.Replace(longText, "]", "", -1)
 		longText = strings.Replace(longText, " ", ",", -1)
 
+		ts = make([]int,0, len(shortLabels))
+		for t := range shortLabels {
+			ts = append(ts, t)
+		}
+		sort.Ints(ts)
 		shortText := ""
-		for t, label := range shortLabels {
-			shortText += fmt.Sprintf("%d,%.6f,%.6f\n", t.UnixNano()/1000000, label, shortFeatures[t])
+		for _, t := range ts {
+			label := shortLabels[t]
+			shortText += fmt.Sprintf("%d,%.6f,%.6f\n", t, label, shortFeatures[t])
 		}
 		shortText = strings.Replace(shortText, "[", "", -1)
 		shortText = strings.Replace(shortText, "]", "", -1)
@@ -353,8 +363,6 @@ func main() {
 		if err != nil {
 			logger.Fatal(err)
 		}
-
-
 
 	}
 }
