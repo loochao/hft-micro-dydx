@@ -104,14 +104,14 @@ func main() {
 			"%s:\t%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
 			symbol,
 			sellImpactTD.Quantile(0.005),
+			sellImpactTD.Quantile(0.01),
 			sellImpactTD.Quantile(0.05),
-			sellImpactTD.Quantile(0.1),
 			sellImpactTD.Quantile(0.2),
 			sellImpactTD.Quantile(0.5),
 			buyImpactTD.Quantile(0.5),
 			buyImpactTD.Quantile(0.8),
-			buyImpactTD.Quantile(0.9),
 			buyImpactTD.Quantile(0.95),
+			buyImpactTD.Quantile(0.99),
 			buyImpactTD.Quantile(0.995),
 		)
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"math"
 	"strings"
 )
 
@@ -64,9 +65,9 @@ func NewDelta(msg string) (Delta, error) {
 		}
 	}
 	return Delta{
-		LongBot: deltas[0],
-		LongTop: deltas[6],
-		ShortBot: deltas[1],
-		ShortTop: deltas[7],
+		LongBot:  math.Min(-0.002, deltas[1]),
+		LongTop:  math.Max(0.0, deltas[5]),
+		ShortBot: math.Min(0.0, deltas[2]),
+		ShortTop: math.Max(0.002, deltas[6]),
 	}, nil
 }
