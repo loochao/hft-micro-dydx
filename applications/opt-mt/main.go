@@ -264,26 +264,6 @@ func main() {
 				}
 			}
 		}()
-
-		go func() {
-			for _, takerSymbol := range tSymbols {
-				select {
-				case <-mtGlobalCtx.Done():
-					return
-				case <-time.After(mtConfig.RequestInterval):
-					logger.Debugf("initial cancel all %s", takerSymbol)
-					select {
-					case <-mtGlobalCtx.Done():
-						return
-					case tOrderRequestChMap[takerSymbol] <- common.OrderRequest{
-						Cancel: &common.CancelOrderParam{
-							Symbol: takerSymbol,
-						},
-					}:
-					}
-				}
-			}
-		}()
 	}
 
 	logger.Debugf("start main loop")
