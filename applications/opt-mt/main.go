@@ -137,8 +137,8 @@ func main() {
 		makerPositionChMap[makerSymbol] = mPositionCh
 		makerOrderChMap[makerSymbol] = mOrderCh
 		makerFundingRateChMap[makerSymbol] = mFundingRateCh
-		makerDepthChMap[makerSymbol] = make(chan common.Depth, 100)
-		mOrderRequestChMap[makerSymbol] = make(chan common.OrderRequest, 2)
+		makerDepthChMap[makerSymbol] = make(chan common.Depth, 200)
+		mOrderRequestChMap[makerSymbol] = make(chan common.OrderRequest, 200)
 		makerNewOrderErrorChMap[makerSymbol] = mNewOrderErrorCh
 	}
 	go mExchange.StreamBasic(
@@ -174,8 +174,8 @@ func main() {
 		takerPositionChMap[takerSymbol] = tPositionCh
 		takerOrderChMap[takerSymbol] = tOrderCh
 		takerFundingRateChMap[takerSymbol] = tFundingRateCh
-		takerDepthChMap[takerSymbol] = make(chan common.Depth, 100)
-		tOrderRequestChMap[takerSymbol] = make(chan common.OrderRequest, 2)
+		takerDepthChMap[takerSymbol] = make(chan common.Depth, 200)
+		tOrderRequestChMap[takerSymbol] = make(chan common.OrderRequest, 200)
 		takerNewOrderErrorChMap[takerSymbol] = tNewOrderErrorCh
 	}
 	go tExchange.StreamBasic(

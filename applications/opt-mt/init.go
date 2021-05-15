@@ -31,32 +31,32 @@ var tMinNotional = make(map[string]float64)
 var mtStepSizes = make(map[string]float64)
 
 var mAccount common.Account
-var mAccountCh = make(chan common.Account, 10)
-var mPositionCh = make(chan common.Position, 10)
-var mOrderCh = make(chan common.Order, 10)
+var mAccountCh = make(chan common.Account, 200)
+var mPositionCh = make(chan common.Position, 200)
+var mOrderCh = make(chan common.Order, 200)
 var mPositions = make(map[string]common.Position)
 var mPositionsUpdateTimes = make(map[string]time.Time)
 var mOrderRequestChMap = make(map[string]chan common.OrderRequest)
-var mNewOrderErrorCh = make(chan common.OrderError, 100)
+var mNewOrderErrorCh = make(chan common.OrderError, 200)
 var mOrderSilentTimes = make(map[string]time.Time)
 var mEnterSilentTimes = make(map[string]time.Time)
 var mOpenOrders = make(map[string]common.NewOrderParam)
 var mCancelSilentTimes = make(map[string]time.Time)
 
-var tPositionCh = make(chan common.Position, 10)
-var tOrderCh = make(chan common.Order, 10)
+var tPositionCh = make(chan common.Position, 200)
+var tOrderCh = make(chan common.Order, 200)
 var tPositions = make(map[string]common.Position)
 var tPositionsUpdateTimes = make(map[string]time.Time)
 var tAccount common.Account
-var tAccountCh = make(chan common.Account, 10)
-var tNewOrderErrorCh = make(chan common.OrderError, 100)
+var tAccountCh = make(chan common.Account, 200)
+var tNewOrderErrorCh = make(chan common.OrderError, 200)
 var tOrderRequestChMap = make(map[string]chan common.OrderRequest)
 var tOrderSilentTimes = make(map[string]time.Time)
 
 var mFundingRates = make(map[string]common.FundingRate)
-var mFundingRateCh = make(chan common.FundingRate, 10)
+var mFundingRateCh = make(chan common.FundingRate, 200)
 var tFundingRates = make(map[string]common.FundingRate)
-var tFundingRateCh = make(chan common.FundingRate, 10)
+var tFundingRateCh = make(chan common.FundingRate, 200)
 var mtFundingRates = make(map[string]float64)
 var mtRankSymbolMap map[int]string
 
@@ -72,8 +72,8 @@ var mtLoopTimer *time.Timer
 var mtDualEnds []int
 var mSystemStatus = common.SystemStatusNoteReady
 var tSystemStatus = common.SystemStatusNoteReady
-var mSystemStatusCh = make(chan common.SystemStatus, 10)
-var tSystemStatusCh = make(chan common.SystemStatus, 10)
+var mSystemStatusCh = make(chan common.SystemStatus, 100)
+var tSystemStatusCh = make(chan common.SystemStatus, 100)
 var mOrderOffsets = make(map[string]Offset)
 var mtDeltas = make(map[string]Delta)
 
@@ -86,7 +86,7 @@ var tExchange common.Exchange
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210515 06:28:51  ####")
+	logger.Debug("####  BUILD @ 20210515 06:34:13  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
