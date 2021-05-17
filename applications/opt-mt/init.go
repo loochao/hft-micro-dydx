@@ -86,7 +86,7 @@ var tExchange common.Exchange
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210517 00:21:07  ####")
+	logger.Debug("####  BUILD @ 20210517 01:00:17  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
