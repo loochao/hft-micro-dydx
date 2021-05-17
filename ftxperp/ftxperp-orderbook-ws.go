@@ -371,6 +371,7 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 	defer outputTimer.Stop()
 
 	var hasPartial = false
+	var orderBookUpdate = false
 	for {
 		select {
 		case <-ctx.Done():
@@ -393,7 +394,7 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 			outputTimer.Reset(time.Now().Truncate(outputInterval).Add(outputInterval).Sub(time.Now()))
 			break
 		case <-checkSumTimer.C:
-			if hasPartial {
+			if hasPartial && orderBookUpdate {
 				if orderBook.CompareCheckSum() {
 					select {
 					case w.marketCh <- market:
@@ -415,7 +416,8 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 						}
 					}
 				}
-			} else {
+			} else if time.Now().Sub(orderBook.Time) > time.Minute {
+				logger.Debugf("orderbook out of date, %s", market)
 				select {
 				case w.marketResetCh <- market:
 				default:
@@ -444,6 +446,7 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 				orderBook.Checksum = orderbookData.Data.Checksum
 				orderBook.Time = orderbookData.Data.Time
 				hasPartial = true
+				orderBookUpdate = true
 				break
 			case "update":
 				if hasPartial {
@@ -451,6 +454,7 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 					orderBook.Bids = orderBook.Bids.UpdateBatch(orderbookData.Data.Bids)
 					orderBook.Checksum = orderbookData.Data.Checksum
 					orderBook.Time = orderbookData.Data.Time
+					orderBookUpdate = true
 				}
 				break
 			default:
