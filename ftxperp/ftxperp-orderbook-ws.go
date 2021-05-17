@@ -449,6 +449,9 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 				orderBook.Time = orderbookData.Data.Time
 				hasPartial = true
 				orderBookUpdate = true
+				if !orderBook.CompareCheckSum() {
+					logger.Debugf("check sum failed at partial event %s", msg)
+				}
 				break
 			case "update":
 				if hasPartial {
