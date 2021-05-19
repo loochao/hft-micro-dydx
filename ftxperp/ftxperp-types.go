@@ -150,6 +150,10 @@ func (orderBook *OrderBook) FormatFloat(value float64) string {
 		return "5e-06"
 	} else if value == 0.000001 {
 		return "1e-06"
+	} else if value == 0.00005 {
+		return "5e-05"
+	} else if value == 0.00001 {
+		return "1e-05"
 	}else{
 		return strconv.FormatFloat(value, 'f', -1, 64)
 	}
