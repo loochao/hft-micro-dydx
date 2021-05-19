@@ -37,7 +37,11 @@ func updateTakerPositions() {
 		makerSize := makerPosition.GetSize()
 
 		takerSizeDiff := -makerSize - takerPosition.GetSize()
-		takerSizeDiff = math.Round(takerSizeDiff/takerStepSize) * takerStepSize
+		if takerSizeDiff >= 0 {
+			takerSizeDiff = math.Floor(takerSizeDiff/takerStepSize) * takerStepSize
+		}else{
+			takerSizeDiff = math.Ceil(takerSizeDiff/takerStepSize) * takerStepSize
+		}
 		if takerSizeDiff > 0 {
 			unHedgedValue += math.Abs(takerSizeDiff * takerTakerDepth.TakerAsk)
 		} else {
