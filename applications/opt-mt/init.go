@@ -70,8 +70,8 @@ var mtUnHedgeValue float64
 var mtLogSilentTimes = make(map[string]time.Time)
 var mtLoopTimer *time.Timer
 var mtDualEnds []int
-var mSystemStatus = common.SystemStatusNoteReady
-var tSystemStatus = common.SystemStatusNoteReady
+var mSystemStatus = common.SystemStatusNotReady
+var tSystemStatus = common.SystemStatusNotReady
 var mSystemStatusCh = make(chan common.SystemStatus, 100)
 var tSystemStatusCh = make(chan common.SystemStatus, 100)
 var mOrderOffsets = make(map[string]Offset)
@@ -86,7 +86,7 @@ var tExchange common.Exchange
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210517 01:31:55  ####")
+	logger.Debug("####  BUILD @ 20210519 12:15:27  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -136,7 +136,7 @@ func init() {
 			if err != nil {
 				logger.Fatalf("NewOffset for %s error %v", makerSymbol, err)
 			}
-			//if dt.LongTop - dt.LongBot < mtConfig.MinimalDelta || dt.ShortTop - dt.ShortBot < mtConfig.MinimalDelta{
+			//if dt.LongTop - dt.LongBot < mtConfig.BasicLongEnterDelta || dt.ShortTop - dt.ShortBot < mtConfig.BasicLongEnterDelta{
 			//	logger.Debugf("%s delta too small %s", makerSymbol, delta)
 			//	continue
 			//}

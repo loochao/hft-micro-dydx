@@ -41,7 +41,7 @@ func (wsb *WSBalance) ToBalance() Balance {
 }
 
 //{
-//  "e": "balanceUpdate",         //Event Type
+//  "e": "balanceUpdate",         //Event EventType
 //  "E": 1573200697110,           //Event Time
 //  "a": "BTC",                   //Asset
 //  "d": "100.00000000",          //Balance Delta

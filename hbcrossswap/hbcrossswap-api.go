@@ -123,9 +123,9 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 		return err
 	}
 	if method == http.MethodGet {
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("Content-EventType", "application/x-www-form-urlencoded")
 	} else {
-		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Content-EventType", "application/json")
 	}
 
 	resp, err := api.client.Do(req.WithContext(ctx))

@@ -1964,7 +1964,7 @@ func (a Tags) AppendHashKey(dst []byte) []byte {
 		return dst
 	}
 
-	// Type invariant: Tags are sorted
+	// EventType invariant: Tags are sorted
 
 	sz := 0
 	var escaped Tags

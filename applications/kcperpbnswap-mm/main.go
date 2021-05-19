@@ -142,12 +142,12 @@ func main() {
 		*mtConfig.ProxyAddress,
 	)
 	if err != nil {
-		logger.Debugf("bnswap.NewUserWebsocket error %v", err)
+		logger.Debugf("bnswap.NewUserWebsocketAndStart error %v", err)
 		return
 	}
 	defer tUserWebsocket.Stop()
 
-	mUserWebsocket = kcperp.NewUserWebsocket(
+	mUserWebsocket = kcperp.NewUserWebsocketAndStart(
 		mtGlobalCtx,
 		mAPI,
 		mSymbols,
@@ -441,12 +441,12 @@ func main() {
 			handleMakerWSAccount(msg)
 			break
 		case makerOrder := <-mUserWebsocket.OrderCh:
-			if makerOrder.Type == kcperp.OrderTypeCanceled ||
-				makerOrder.Type == kcperp.OrderTypeMatch {
+			if makerOrder.EventType == kcperp.OrderStatusCanceled ||
+				makerOrder.EventType == kcperp.OrderStatusMatch {
 				if openOrder, ok := mOpenOrders[makerOrder.Symbol]; ok && openOrder.ClientOid == makerOrder.ClientOid {
 					delete(mOpenOrders, makerOrder.Symbol)
 				}
-				if makerOrder.Type == kcperp.OrderTypeCanceled {
+				if makerOrder.EventType == kcperp.OrderStatusCanceled {
 					mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
 					mPositionsUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)
 				} else {

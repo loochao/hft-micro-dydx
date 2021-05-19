@@ -2,10 +2,13 @@ package kcperp
 
 import (
 	"context"
+	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
 	"os"
+	"sort"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -34,6 +37,73 @@ func TestAPI_GetContracts(t *testing.T) {
 		}
 	}
 	logger.Debugf("%d", len(usdSymbols))
+}
+
+func TestAPI_GetLimits(t *testing.T) {
+	var api *API
+	var ctx = context.Background()
+	var err error
+	api, err = NewAPI(
+		os.Getenv("KCPERP_KEY"),
+		os.Getenv("KCPERP_SECRET"),
+		os.Getenv("KCPERP_PASSPHRASE"),
+		"socks5://127.0.0.1:1080")
+	if err != nil {
+		t.Fatal(err)
+	}
+	symbols, err := api.GetContracts(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	multipliers := make(map[string]float64)
+	tickSizes := make(map[string]float64)
+	lotSizes := make(map[string]float64)
+	maxPrices := make(map[string]float64)
+	ss := make([]string, 0)
+	maxOrderSizes := make(map[string]float64)
+	for _, s := range symbols {
+		if s.QuoteCurrency == "USDT" && s.Status == "Open" && s.FairMethod == "FundingRate" {
+			multipliers[s.Symbol] = s.Multiplier
+			tickSizes[s.Symbol] = s.TickSize
+			lotSizes[s.Symbol] = s.LotSize
+			maxPrices[s.Symbol] = s.MaxPrice
+			maxOrderSizes[s.Symbol] = s.MaxOrderQty
+			ss = append(ss, s.Symbol)
+		}
+	}
+	sort.Strings(ss)
+	str := "var Multipliers = map[string]float64{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf(`  "%s": %s,
+`, symbol, strconv.FormatFloat(multipliers[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var TickSizes = map[string]float64{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf(`  "%s": %s,
+`, symbol, strconv.FormatFloat(tickSizes[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var LotSizes = map[string]float64{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf(`  "%s": %s,
+`, symbol, strconv.FormatFloat(lotSizes[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var MaxPrices = map[string]float64{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf(`  "%s": %s,
+`, symbol, strconv.FormatFloat(maxPrices[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var MaxOrderSizes = map[string]float64{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf(`  "%s": %s,
+`, symbol, strconv.FormatFloat(maxOrderSizes[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	fmt.Printf(str)
 }
 
 func TestAPI_GetKlines(t *testing.T) {

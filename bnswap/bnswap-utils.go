@@ -55,7 +55,7 @@ func ParseTrade(bytes []byte) (*Trade, error) {
 			if bytes[offset] == 'E' && bytes[offset-1] == '"' && bytes[offset+1] == '"' && offset+13 < bytesLen {
 				eventTime, err := common.ParseInt(bytes[offset+3 : offset+16])
 				if err != nil {
-					return nil, fmt.Errorf("EventTime error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("TimePoint error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				trade.EventTime = time.Unix(0, eventTime*1000000)
 				offset += 21
@@ -165,7 +165,7 @@ func ParseDepth20(bytes []byte) (*Depth20, error) {
 			if bytes[offset] == 'E' && bytes[offset-1] == '"' && bytes[offset+1] == '"' && offset+13 < bytesLen {
 				eventTime, err := common.ParseInt(bytes[offset+3 : offset+16])
 				if err != nil {
-					return nil, fmt.Errorf("EventTime error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("TimePoint error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				orderBook.EventTime = time.Unix(0, eventTime*1000000)
 				offset += 17
@@ -270,7 +270,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 				timeStr := bytes[offset+3 : offset+16]
 				eventTime, err := strconv.ParseInt(*(*string)(unsafe.Pointer(&timeStr)), 10, 64)
 				if err != nil {
-					return nil, fmt.Errorf("EventTime error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("TimePoint error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				markPrice.EventTime = time.Unix(0, eventTime*1000000)
 				offset += 16
@@ -586,7 +586,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 			if bytes[offset] == 'E' && bytes[offset-1] == '"' && bytes[offset+1] == '"' && offset+13 < bytesLen {
 				eventTime, err := common.ParseInt(bytes[offset+3 : offset+16])
 				if err != nil {
-					return nil, fmt.Errorf("EventTime error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return nil, fmt.Errorf("TimePoint error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				orderBook.EventTime = time.Unix(0, eventTime*1000000)
 				offset += 17

@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"strconv"
 	"time"
@@ -23,15 +24,13 @@ const (
 	Granularity1Day   = 1440
 	Granularity1Week  = 10080
 
-	OrderStatusOpen  = "open"
-	OrderStatusMatch = "match"
-	OrderStatusDone  = "done"
-
-	OrderTypeOpen     = "open"
-	OrderTypeMatch    = "match"
-	OrderTypeFilled   = "filled"
-	OrderTypeCanceled = "canceled"
-	OrderTypeUpdate   = "update"
+	//       "type": "match",  //消息类型，取值列表: "open", "match", "filled", "canceled", "update"
+	OrderStatusOpen     = "open"
+	OrderStatusMatch    = "match"
+	OrderStatusDone     = "done"
+	OrderStatusFilled   = "filled"
+	OrderStatusCanceled = "canceled"
+	OrderStatusUpdate   = "update"
 
 	SystemStatusOpen       = "open"
 	SystemStatusCancelOnly = "cancelonly"
@@ -144,11 +143,11 @@ type Depth5 struct {
 	EventTime time.Time     `json:"-"`
 }
 
-func (depth *Depth5) GetBids() [5][2]float64 {
-	return depth.Bids
+func (depth *Depth5) GetBids() common.Bids {
+	return depth.Bids[:]
 }
-func (depth *Depth5) GetAsks() [5][2]float64 {
-	return depth.Asks
+func (depth *Depth5) GetAsks() common.Asks {
+	return depth.Asks[:]
 }
 func (depth *Depth5) GetSymbol() string {
 	return depth.Symbol
@@ -212,22 +211,38 @@ type Position struct {
 	ParseTime         time.Time `json:"-"`
 }
 
-func (wsCap *Position) UnmarshalJSON(data []byte) error {
+func (position *Position) GetSymbol() string {
+	return position.Symbol
+}
+
+func (position *Position) GetSize() float64 {
+	return position.CurrentQty * Multipliers[position.Symbol]
+}
+
+func (position *Position) GetPrice() float64 {
+	return position.AvgEntryPrice
+}
+
+func (position *Position) GetTime() time.Time {
+	return position.EventTime
+}
+
+func (position *Position) UnmarshalJSON(data []byte) error {
 	type Alias Position
 	aux := struct {
 		OpeningTimestamp int64 `json:"openingTimestamp"`
 		CurrentTimestamp int64 `json:"currentTimestamp"`
 		*Alias
 	}{
-		Alias: (*Alias)(wsCap),
+		Alias: (*Alias)(position),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		logger.Debugf("UnmarshalJSON Position error %v", err)
 		return err
 	}
-	wsCap.EventTime = time.Unix(0, aux.CurrentTimestamp*1000000)
-	wsCap.ParseTime = time.Now()
-	wsCap.OpeningTimestamp = time.Unix(0, aux.OpeningTimestamp*1000000)
+	position.EventTime = time.Unix(0, aux.CurrentTimestamp*1000000)
+	position.ParseTime = time.Now()
+	position.OpeningTimestamp = time.Unix(0, aux.OpeningTimestamp*1000000)
 	return nil
 }
 
@@ -243,22 +258,38 @@ type WSPosition struct {
 	ParseTime         time.Time `json:"-"`
 }
 
-func (wsCap *WSPosition) UnmarshalJSON(data []byte) error {
+func (wsPosition *WSPosition) GetSymbol() string {
+	return wsPosition.Symbol
+}
+
+func (wsPosition *WSPosition) GetSize() float64 {
+	return *wsPosition.CurrentQty * Multipliers[wsPosition.Symbol]
+}
+
+func (wsPosition *WSPosition) GetPrice() float64 {
+	return *wsPosition.AvgEntryPrice
+}
+
+func (wsPosition *WSPosition) GetTime() time.Time {
+	return wsPosition.EventTime
+}
+
+func (wsPosition *WSPosition) UnmarshalJSON(data []byte) error {
 	type Alias WSPosition
 	aux := struct {
 		CurrentTimestamp *int64 `json:"currentTimestamp"`
 		*Alias
 	}{
-		Alias: (*Alias)(wsCap),
+		Alias: (*Alias)(wsPosition),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		logger.Debugf("UnmarshalJSON Position error %v", err)
 		return err
 	}
 	if aux.CurrentTimestamp != nil {
-		wsCap.EventTime = time.Unix(0, *aux.CurrentTimestamp*1000000)
+		wsPosition.EventTime = time.Unix(0, *aux.CurrentTimestamp*1000000)
 	}
-	wsCap.ParseTime = time.Now()
+	wsPosition.ParseTime = time.Now()
 	return nil
 }
 
@@ -354,7 +385,7 @@ type Ping struct {
 type WSOrder struct {
 	OrderId      string    `json:"orderId"`
 	Symbol       string    `json:"symbol"`
-	Type         string    `json:"type"`
+	EventType    string    `json:"type"`
 	Status       string    `json:"status"`
 	MatchSize    float64   `json:"matchSize,string,omitempty"`
 	MatchPrice   float64   `json:"matchPrice,string,omitempty"`
@@ -374,11 +405,90 @@ type WSOrder struct {
 	ParseTime    time.Time `json:"-"`
 }
 
+func (wsOrder *WSOrder) GetSymbol() string {
+	return wsOrder.Symbol
+}
+
+func (wsOrder *WSOrder) GetSize() float64 {
+	return wsOrder.Size * Multipliers[wsOrder.Symbol]
+}
+
+func (wsOrder *WSOrder) GetPrice() float64 {
+	return wsOrder.Price
+}
+
+func (wsOrder *WSOrder) GetFilledSize() float64 {
+	return wsOrder.MatchSize
+}
+
+func (wsOrder *WSOrder) GetFilledPrice() float64 {
+	return wsOrder.MatchPrice
+}
+
+func (wsOrder *WSOrder) GetSide() common.OrderSide {
+	switch wsOrder.Side {
+	case OrderSideSell:
+		return common.OrderSideSell
+	case OrderSideBuy:
+		return common.OrderSideBuy
+	default:
+		return common.OrderSideUnknown
+	}
+}
+
+func (wsOrder *WSOrder) GetClientID() string {
+	return wsOrder.ClientOid
+}
+
+func (wsOrder *WSOrder) GetID() string {
+	return wsOrder.OrderId
+}
+
+func (wsOrder *WSOrder) GetStatus() common.OrderStatus {
+	switch wsOrder.EventType {
+	case OrderStatusOpen:
+		return common.OrderStatusOpen
+	case OrderStatusDone:
+		if wsOrder.FilledSize != 0 {
+			return common.OrderStatusFilled
+		} else {
+			return common.OrderStatusCancelled
+		}
+	case OrderStatusFilled:
+		return common.OrderStatusFilled
+	case OrderStatusMatch:
+		return common.OrderStatusFilled
+	case OrderStatusUpdate:
+		return common.OrderStatusOpen
+	default:
+		return common.OrderStatusUnknown
+	}
+}
+
+func (wsOrder *WSOrder) GetType() common.OrderType {
+	switch wsOrder.OrderType {
+	case OrderTypeMarket:
+		return common.OrderTypeMarket
+	case OrderTypeLimit:
+		return common.OrderTypeLimit
+	default:
+		return common.OrderTypeUnknown
+	}
+}
+
+func (wsOrder *WSOrder) GetPostOnly() bool {
+	return false
+}
+
+func (wsOrder *WSOrder) GetReduceOnly() bool {
+	return false
+}
+
 func (wsOrder *WSOrder) UnmarshalJSON(data []byte) error {
 	type Alias WSOrder
 	aux := struct {
-		OrderTime int64   `json:"orderTime,omitempty"`
-		EventTime int64   `json:"ts,omitempty"`
+		OrderTime int64  `json:"orderTime,omitempty"`
+		EventTime int64  `json:"ts,omitempty"`
 		Price     string `json:"price"`
 		Size      string `json:"size"`
 		*Alias
@@ -388,7 +498,7 @@ func (wsOrder *WSOrder) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &aux); err != nil {
 		logger.Debugf("UnmarshalJSON WsOrder error %v", err)
 		return err
-	}else{
+	} else {
 		if aux.Price != "" {
 			wsOrder.Price, err = strconv.ParseFloat(aux.Price, 64)
 			if err != nil {
@@ -427,6 +537,26 @@ type WsBalanceEvent struct {
 	WithdrawHold     *float64  `json:"withdrawHold,string,omitempty"`
 	EventTime        time.Time `json:"-"`
 	Subject          string    `json:"-"`
+}
+
+func (w WsBalanceEvent) GetCurrency() string {
+	return *w.Currency
+}
+
+func (w WsBalanceEvent) GetBalance() float64 {
+	return *w.AvailableBalance + *w.HoldBalance
+}
+
+func (w WsBalanceEvent) GetFree() float64 {
+	return *w.AvailableBalance
+}
+
+func (w WsBalanceEvent) GetUsed() float64 {
+	return *w.HoldBalance
+}
+
+func (w WsBalanceEvent) GetTime() time.Time {
+	return w.EventTime
 }
 
 type Account struct {
@@ -504,24 +634,36 @@ type CurrentFundingRate struct {
 	Granularity    int       `json:"granularity"`
 	Value          float64   `json:"value"`
 	PredictedValue float64   `json:"predictedValue"`
-	EventTime      time.Time `json:"-"`
+	TimePoint      time.Time `json:"-"`
 	ParseTime      time.Time `json:"-"`
 }
 
-func (wsCap *CurrentFundingRate) UnmarshalJSON(data []byte) error {
+func (fr *CurrentFundingRate) GetSymbol() string {
+	return fr.Symbol
+}
+
+func (fr *CurrentFundingRate) GetFundingRate() float64 {
+	return fr.Value
+}
+
+func (fr *CurrentFundingRate) GetNextFundingTime() time.Time {
+	return fr.TimePoint
+}
+
+func (fr *CurrentFundingRate) UnmarshalJSON(data []byte) error {
 	type Alias CurrentFundingRate
 	aux := struct {
 		TimePoint int64 `json:"timePoint,omitempty"`
 		*Alias
 	}{
-		Alias: (*Alias)(wsCap),
+		Alias: (*Alias)(fr),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		logger.Debugf("UnmarshalJSON CurrentFundingRate error %v", err)
 		return err
 	}
-	wsCap.EventTime = time.Unix(0, aux.TimePoint*1000000)
-	wsCap.ParseTime = time.Now()
+	fr.TimePoint = time.Unix(0, aux.TimePoint*1000000)
+	fr.ParseTime = time.Now()
 	return nil
 }
 

@@ -75,17 +75,18 @@ type Ticker interface {
 }
 
 type ExchangeSettings struct {
-	Name             string        `yaml:"name" json:"name"`
-	Proxy            string        `yaml:"proxy" json:"proxy"`
-	ApiKey           string        `yaml:"apiKey" json:"apiKey"`
-	ApiSecret        string        `yaml:"apiSecret" json:"apiSecret"`
-	ApiPassphrase    string        `yaml:"apiPassphrase" json:"apiPassphrase"`
-	Symbols          []string      `yaml:"symbols" json:"symbols"`
-	PullInterval     time.Duration `yaml:"pullInterval" json:"httpPullInterval"`
-	MarginType       string        `yaml:"marginType" json:"marginType"`
-	ChangeMarginType bool          `yaml:"changeMarginType" json:"changeMarginType"`
-	Leverage         float64       `yaml:"leverage" json:"leverage"`
-	ChangeLeverage   bool          `yaml:"changeLeverage" json:"changeLeverage"`
+	Name                string        `yaml:"name" json:"name"`
+	Proxy               string        `yaml:"proxy" json:"proxy"`
+	ApiKey              string        `yaml:"apiKey" json:"apiKey"`
+	ApiSecret           string        `yaml:"apiSecret" json:"apiSecret"`
+	ApiPassphrase       string        `yaml:"apiPassphrase" json:"apiPassphrase"`
+	Symbols             []string      `yaml:"symbols" json:"symbols"`
+	PullInterval        time.Duration `yaml:"pullInterval" json:"httpPullInterval"`
+	HttpRequestInterval time.Duration `yaml:"httpRequestInterval" json:"httpRequestInterval"`
+	MarginType          string        `yaml:"marginType" json:"marginType"`
+	ChangeMarginType    bool          `yaml:"changeMarginType" json:"changeMarginType"`
+	Leverage            float64       `yaml:"leverage" json:"leverage"`
+	ChangeLeverage      bool          `yaml:"changeLeverage" json:"changeLeverage"`
 }
 
 type SpotExchange interface {
@@ -160,6 +161,7 @@ var OrderStatusPendingCancel = OrderStatus("PENDING_CANCEL")
 var OrderStatusReject = OrderStatus("REJECTED")
 var OrderStatusExpired = OrderStatus("EXPIRED")
 var OrderStatusFilled = OrderStatus("FILLED")
+
 //var OrderStatusClosed = OrderStatus("CLOSED") // filled or cancelled or expired or rejected
 var OrderStatusUnknown = OrderStatus("ORDER_STATUS_UNKNOWN")
 
@@ -319,11 +321,11 @@ type Depth interface {
 type SystemStatus string
 
 var (
-	SystemStatusNoteReady = SystemStatus("NOTREADY")
-	SystemStatusReady     = SystemStatus("READY")
-	SystemStatusRestart   = SystemStatus("RESTART")
-	SystemStatusClosed    = SystemStatus("CLOSED")
-	SystemStatusError     = SystemStatus("ERROR")
+	SystemStatusNotReady = SystemStatus("NOTREADY")
+	SystemStatusReady    = SystemStatus("READY")
+	SystemStatusRestart  = SystemStatus("RESTART")
+	SystemStatusClosed   = SystemStatus("CLOSED")
+	SystemStatusError    = SystemStatus("ERROR")
 )
 
 type SymbolStatus string

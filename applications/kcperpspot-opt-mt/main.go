@@ -111,7 +111,7 @@ func main() {
 	)
 	defer kcspotUserWebsocket.Stop()
 
-	kcperpUserWebsocket = kcperp.NewUserWebsocket(
+	kcperpUserWebsocket = kcperp.NewUserWebsocketAndStart(
 		kcGlobalCtx,
 		kcperpAPI,
 		kcperpSymbols,
@@ -354,9 +354,9 @@ func main() {
 			handlePerpWSBalance(msg)
 			break
 		case perpOrder := <-kcperpUserWebsocket.OrderCh:
-			if perpOrder.Type == kcperp.OrderTypeCanceled ||
-				perpOrder.Type == kcperp.OrderTypeMatch {
-				if perpOrder.Type == kcperp.OrderTypeCanceled {
+			if perpOrder.EventType == kcperp.OrderStatusCanceled ||
+				perpOrder.EventType == kcperp.OrderStatusMatch {
+				if perpOrder.EventType == kcperp.OrderStatusCanceled {
 					logger.Debugf("PERP WS ORDER CANCELED %v ", perpOrder)
 					kcperpOrderSilentTimes[perpOrder.Symbol] = time.Now().Add(time.Second)
 					kcperpPositionsUpdateTimes[perpOrder.Symbol] = time.Unix(0, 0)

@@ -125,19 +125,19 @@ func main() {
 					entrySize += entryStep
 					lastTradeTime = d.EventTime
 					//} else if (lastSellPrice-lastEntryPrice)/lastEntryPrice < -0.002 &&
-					//	d.EventTime.Sub(lastTradeTime) > tradeInterval {
+					//	d.TimePoint.Sub(lastTradeTime) > tradeInterval {
 					//	netWorth += (lastSellPrice-entryPrice)/entryPrice*entrySize + entrySize*commission
 					//	entryPrice = lastSellPrice
 					//	lastEntryPrice = lastSellPrice
 					//	entrySize = entryStep
-					//	lastTradeTime = d.EventTime.Add(tradeInterval*4)
+					//	lastTradeTime = d.TimePoint.Add(tradeInterval*4)
 					//} else if entrySize > entryTarget &&
-					//	d.EventTime.Sub(lastTradeTime) > tradeInterval {
+					//	d.TimePoint.Sub(lastTradeTime) > tradeInterval {
 					//	netWorth += (lastSellPrice-entryPrice)/entryPrice*entrySize + entrySize*commission
 					//	entryPrice = lastSellPrice
 					//	lastEntryPrice = lastSellPrice
 					//	entrySize = entryStep
-					//	lastTradeTime = d.EventTime.Add(time.Hour*999)
+					//	lastTradeTime = d.TimePoint.Add(time.Hour*999)
 				}
 			} else if buyVolume.Sum() < sellVolume.Sum() &&
 				d.EventTime.Sub(tradeSilentTime) > 0 {
@@ -171,12 +171,12 @@ func main() {
 					entrySize -= entryStep
 					lastTradeTime = d.EventTime
 					//} else if (lastBuyPrice-lastEntryPrice)/lastEntryPrice > 0.002 &&
-					//	d.EventTime.Sub(lastTradeTime) > tradeInterval {
+					//	d.TimePoint.Sub(lastTradeTime) > tradeInterval {
 					//	netWorth += (lastBuyPrice-entryPrice)/entryPrice*entrySize + -entrySize*commission
 					//	entryPrice = lastBuyPrice
 					//	lastEntryPrice = lastBuyPrice
 					//	entrySize = -entryStep
-					//	lastTradeTime = d.EventTime.Add(4*tradeInterval)
+					//	lastTradeTime = d.TimePoint.Add(4*tradeInterval)
 				}
 			}
 

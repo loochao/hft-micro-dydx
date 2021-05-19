@@ -27,7 +27,7 @@ type WSBalance struct {
 //          "ep":"0.00000",            // Entry Price
 //          "cr":"200",               // (Pre-fee) Accumulated Realized
 //          "up":"0",                     // Unrealized PnL
-//          "mt":"isolated",              // Margin Type
+//          "mt":"isolated",              // Margin EventType
 //          "iw":"0.00000000",            // Isolated Wallet (if isolated position)
 //          "ps":"BOTH"                   // Position Side
 //        }
@@ -125,7 +125,7 @@ func (bpu *BalanceAndPositionUpdateEvent) UnmarshalJSON(data []byte) error {
 
 //{
 //
-//  "e":"ORDER_TRADE_UPDATE",     // Event Type
+//  "e":"ORDER_TRADE_UPDATE",     // Event EventType
 //  "E":1568879465651,            // Event Time
 //  "T":1568879465650,            // Transaction Time
 //  "o":{
@@ -135,13 +135,13 @@ func (bpu *BalanceAndPositionUpdateEvent) UnmarshalJSON(data []byte) error {
 //      // starts with "autoclose-": liquidation order
 //      // "adl_autoclose": ADL auto close order
 //    "S":"SELL",                 // Side
-//    "o":"TRAILING_STOP_MARKET", // Order Type
+//    "o":"TRAILING_STOP_MARKET", // Order EventType
 //    "f":"GTC",                  // Time in Force
 //    "q":"0.001",                // Original Quantity
 //    "p":"0",                    // Original Price
 //    "ap":"0",                   // Average Price
 //    "sp":"7103.04",             // Stop Price. Please ignore with TRAILING_STOP_MARKET order
-//    "x":"NEW",                  // Execution Type
+//    "x":"NEW",                  // Execution EventType
 //    "X":"NEW",                  // Order Status
 //    "i":8886774,                // Order Id
 //    "l":"0",                    // Order Last Filled Quantity
@@ -155,8 +155,8 @@ func (bpu *BalanceAndPositionUpdateEvent) UnmarshalJSON(data []byte) error {
 //    "a":"9.91",                 // Ask Notional
 //    "m":false,                  // Is this trade the maker side?
 //    "R":false,                  // Is this reduce only
-//    "wt":"CONTRACT_PRICE",      // Stop Price Working Type
-//    "ot":"TRAILING_STOP_MARKET",    // Original Order Type
+//    "wt":"CONTRACT_PRICE",      // Stop Price Working EventType
+//    "ot":"TRAILING_STOP_MARKET",    // Original Order EventType
 //    "ps":"LONG",                        // Position Side
 //    "cp":false,                     // If Close-All, pushed with conditional order
 //    "AP":"7476.89",             // Activation Price, only puhed with TRAILING_STOP_MARKET order

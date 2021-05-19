@@ -146,7 +146,11 @@ func (orderBook *OrderBook) GetBids() common.Bids {
 func (orderBook *OrderBook) FormatFloat(value float64) string {
 	if math.Floor(value) == value {
 		return strconv.FormatFloat(value, 'f', -1, 64) + ".0"
-	} else {
+	} else if value == 0.000005 {
+		return "5e-06"
+	} else if value == 0.000001 {
+		return "1e-06"
+	}else{
 		return strconv.FormatFloat(value, 'f', -1, 64)
 	}
 }
@@ -157,12 +161,12 @@ func (orderBook *OrderBook) CompareCheckSum() bool {
 func (orderBook *OrderBook) GetCheckSum() uint32 {
 	bidLen := len(orderBook.Bids)
 	askLen := len(orderBook.Asks)
-	//if bidLen > 100 {
-	//	bidLen = 100
-	//}
-	//if askLen > 100 {
-	//	askLen = 100
-	//}
+	if bidLen > 100 {
+		bidLen = 100
+	}
+	if askLen > 100 {
+		askLen = 100
+	}
 	str := ""
 	for i := 0; i < bidLen && i < askLen; i++ {
 		str += fmt.Sprintf(

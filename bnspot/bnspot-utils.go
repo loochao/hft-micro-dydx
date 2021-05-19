@@ -410,7 +410,7 @@ func ParseTrade(msg []byte) (*Trade, error) {
 			if msg[offset] == 'E' && msg[offset-1] == '"' && msg[offset+1] == '"' && offset+13 < bytesLen {
 				eventTime, err := common.ParseInt(msg[offset+3 : offset+16])
 				if err != nil {
-					return nil, fmt.Errorf("EventTime error %v start %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
+					return nil, fmt.Errorf("TimePoint error %v start %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
 				}
 				trade.EventTime = time.Unix(0, eventTime*1000000)
 				offset += 18

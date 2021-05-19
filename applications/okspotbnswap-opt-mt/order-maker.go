@@ -29,7 +29,7 @@ func watchMakerOrderRequest(
 			}
 			if request.New != nil {
 				childCtx, _ := context.WithTimeout(ctx, timeout)
-				//logger.Debugf("MAKER SUBMIT %s %s %f %f", request.New.Market, request.New.Type, *(request.New.Price), *(request.New.Size))
+				//logger.Debugf("MAKER SUBMIT %s %s %f %f", request.New.Market, request.New.EventType, *(request.New.Price), *(request.New.Size))
 				resp, err := api.SubmitOrder(childCtx, *request.New)
 				if err != nil {
 					logger.Debugf("MAKER SUBMIT ERROR %v", err)

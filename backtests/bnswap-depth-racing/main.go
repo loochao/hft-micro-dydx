@@ -98,7 +98,7 @@ func main() {
 							_ = depthDeltaRatioTD.Add(depthDeltaRatio)
 						}
 					//}else {
-					//	depthTimedSizeDelta.Insert(d.EventTime, 0)
+					//	depthTimedSizeDelta.Insert(d.TimePoint, 0)
 					//	depthDeltaRatio = 0
 					//	_ = depthDeltaRatioTD.Add(depthDeltaRatio)
 					}

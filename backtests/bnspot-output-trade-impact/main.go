@@ -87,7 +87,7 @@ func main() {
 						lastBuyTrade = d
 					}
 				}
-				//if lastEventTime != nil && d.EventTime.Truncate(computeInterval).Sub(*lastEventTime) > 0 {
+				//if lastEventTime != nil && d.TimePoint.Truncate(computeInterval).Sub(*lastEventTime) > 0 {
 				//	fields["buyDeltaQ9995"] = buyImpactTD.Quantile(0.9995)
 				//	fields["buyDeltaQ995"] = buyImpactTD.Quantile(0.995)
 				//	fields["buyDeltaQ95"] = buyImpactTD.Quantile(0.95)
@@ -104,14 +104,14 @@ func main() {
 				//			"symbol": symbol,
 				//		},
 				//		fields,
-				//		d.EventTime,
+				//		d.TimePoint,
 				//	)
 				//	if err != nil {
 				//		logger.Debugf("client.NewPoint error %v", err)
 				//	}
 				//	iw.PointCh <- pt
 				//}
-				//lastEventTime = &d.EventTime
+				//lastEventTime = &d.TimePoint
 				lastTrade = d
 			}
 			_ = gr.Close()

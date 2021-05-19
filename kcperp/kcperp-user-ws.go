@@ -25,6 +25,9 @@ type UserWebsocket struct {
 	reconnectCh chan interface{}
 	stopped     int32
 	topicCh     chan string
+	symbols     []string
+	api         *API
+	proxy       string
 }
 
 func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
@@ -373,11 +376,11 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 		case topic := <-w.topicCh:
 			if _, ok := topicUpdatedTimes[topic]; ok {
 				//logger.Debugf("TOPIC %s add 4 hours", topic)
-				topicUpdatedTimes[topic] = time.Now().Add(time.Hour*4)
+				topicUpdatedTimes[topic] = time.Now().Add(time.Hour * 4)
 			}
 			break
 		case <-pingTimer.C:
-			pingTimer.Reset(pingInterval/2)
+			pingTimer.Reset(pingInterval / 2)
 			select {
 			case <-ctx.Done():
 				return
@@ -447,7 +450,39 @@ func (w *UserWebsocket) Done() chan interface{} {
 	return w.done
 }
 
+func (w *UserWebsocket) Start(ctx context.Context) {
+	go w.mainLoop(ctx, w.api, w.symbols, w.proxy)
+	go w.dataHandleLoop(ctx, 1)
+	go w.dataHandleLoop(ctx, 2)
+	go w.dataHandleLoop(ctx, 3)
+	go w.dataHandleLoop(ctx, 4)
+	w.reconnectCh <- nil
+}
+
 func NewUserWebsocket(
+	api *API,
+	symbols []string,
+	proxy string,
+) *UserWebsocket {
+	ws := UserWebsocket{
+		done:        make(chan interface{}),
+		reconnectCh: make(chan interface{}),
+		OrderCh:     make(chan *WSOrder, 100),
+		BalanceCh:   make(chan *WsBalanceEvent, 100),
+		PositionCh:  make(chan *WSPosition, 100),
+		RestartCh:   make(chan interface{}, 100),
+		messageCh:   make(chan []byte, 10000),
+		writeCh:     make(chan interface{}, 100),
+		topicCh:     make(chan string, 100),
+		stopped:     0,
+		symbols:     symbols,
+		api:         api,
+		proxy:       proxy,
+	}
+	return &ws
+}
+
+func NewUserWebsocketAndStart(
 	ctx context.Context,
 	api *API,
 	symbols []string,

@@ -32,7 +32,7 @@ func handleSpotHttpAccount(accounts []kcspot.Account) {
 		if kcspotHttpBalanceUpdateSilentTimes[symbol].Sub(time.Now()) > 0 {
 			continue
 		}
-		//if account.EventTime.Sub(kcspotLastOrderTimes[symbol]).Seconds() < 0.0 {
+		//if account.TimePoint.Sub(kcspotLastOrderTimes[symbol]).Seconds() < 0.0 {
 		//	continue
 		//}
 
