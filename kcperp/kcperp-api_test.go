@@ -203,7 +203,7 @@ func TestAPI_SubmitOrder(t *testing.T) {
 		"60a3cb5632b1dc000699fc3a",
 		"41892859-d509-4e07-ba68-c2a80f1df056",
 		"panda03",
-		"socks5://127.0.0.1:1082")
+		"socks5://127.0.0.1:1080")
 	if err != nil {
 		t.Fatal(err)
 	}
