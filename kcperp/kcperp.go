@@ -203,7 +203,8 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 				}
 				if wsPosition.UnrealisedPnlPcnt != nil {
 					position.UnrealisedPnlPcnt = *wsPosition.UnrealisedPnlPcnt
-				}if wsPosition.UnrealisedRoePcnt != nil {
+				}
+				if wsPosition.UnrealisedRoePcnt != nil {
 					position.UnrealisedRoePcnt = *wsPosition.UnrealisedRoePcnt
 				}
 				if ch, ok := positionCh[position.Symbol]; ok {
