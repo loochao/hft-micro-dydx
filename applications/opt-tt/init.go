@@ -92,7 +92,7 @@ var xyEnterTimes = make(map[string]time.Time)
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210521 16:18:41  ####")
+	logger.Debug("####  BUILD @ 20210521 16:28:18  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -151,11 +151,11 @@ func init() {
 		xyMergedDirs[xSymbol] = 0.0
 		xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now()
 
-		xOrderSilentTimes[xSymbol] = time.Now()
+		xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.RestartSilent)
 		xyLogSilentTimes[xSymbol] = time.Now()
 		xPositionsUpdateTimes[xSymbol] = time.Unix(0, 0)
 
-		yOrderSilentTimes[ySymbol] = time.Now()
+		yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.RestartSilent)
 		yPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
 	}
 	xyConfig.XExchange.Symbols = xSymbols

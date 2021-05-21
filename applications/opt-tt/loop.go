@@ -8,6 +8,18 @@ import (
 )
 
 func updateYPositions() {
+	if xAccount == nil {
+		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			logger.Debugf("xACCOUNT not ready")
+		}
+		return
+	}
+	if yAccount == nil {
+		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			logger.Debugf("yACCOUNT not ready")
+		}
+		return
+	}
 	unHedgedValue := 0.0
 	for _, ySymbol := range ySymbols {
 		xSymbol := yxSymbolsMap[ySymbol]
@@ -18,10 +30,11 @@ func updateYPositions() {
 			continue
 		}
 
-		yPosition, okYBalance := yPositions[ySymbol]
+		yPosition, okYPosition := yPositions[ySymbol]
+		_, okXPosition := xPositions[xSymbol]
 		targetSize, okTargetSize := yTargetPositionSizes[ySymbol]
 		spread, okSpread := xySpreads[xSymbol]
-		if !okYBalance || !okSpread || !okTargetSize {
+		if !okYPosition || !okSpread || !okTargetSize || !okXPosition {
 			continue
 		}
 		yDepth := spread.YDepth
@@ -96,17 +109,31 @@ func updateYPositions() {
 }
 
 func updateXPositions() {
+	if xAccount == nil {
+		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			logger.Debugf("xACCOUNT not ready")
+		}
+		return
+	}
+	if yAccount == nil {
+		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			logger.Debugf("yACCOUNT not ready")
+		}
+		return
+	}
 	for _, xSymbol := range xSymbols {
+		ySymbol := xySymbolsMap[xSymbol]
 		if time.Now().Sub(xPositionsUpdateTimes[xSymbol]) > xyConfig.BalancePositionMaxAge {
 			continue
 		}
 		if xOrderSilentTimes[xSymbol].Sub(time.Now()).Seconds() > 0 {
 			continue
 		}
-		xPosition, okXBalance := xPositions[xSymbol]
+		xPosition, okXPosition := xPositions[xSymbol]
+		_, okYPosition := yPositions[ySymbol]
 		xTargetSize, okXTargetSize := xTargetPositionSizes[xSymbol]
 		spread, okSpread := xySpreads[xSymbol]
-		if !okXBalance || !okSpread || !okXTargetSize {
+		if !okXPosition || !okSpread || !okXTargetSize || !okYPosition {
 			continue
 		}
 		xDepth := spread.XDepth
@@ -153,8 +180,8 @@ func updateXPositions() {
 			xSizeDiff = -xSizeDiff
 		}
 		yOrder := common.NewOrderParam{
-			Symbol: xSymbol,
-			Side:   side,
+			Symbol:     xSymbol,
+			Side:       side,
 			Type:       common.OrderTypeMarket,
 			Size:       xSizeDiff,
 			ReduceOnly: reduceOnly,
