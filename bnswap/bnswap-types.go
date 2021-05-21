@@ -577,7 +577,7 @@ func (order *Order) ToString() string {
 	str += fmt.Sprintf("CumQuote=%v, ", order.CumQuote)
 	str += fmt.Sprintf("Status=%v, ", order.Status)
 	str += fmt.Sprintf("TimeInForce=%v, ", order.TimeInForce)
-	str += fmt.Sprintf("EventType=%v, ", order.Type)
+	str += fmt.Sprintf("Type=%v, ", order.Type)
 	str += fmt.Sprintf("Side=%v, ", order.Side)
 	str += fmt.Sprintf("StopPrice=%v, ", order.StopPrice)
 	str += fmt.Sprintf("WorkingType=%v, ", order.WorkingType)
@@ -619,7 +619,7 @@ func (no *NewOrderParams) ToUrlValues() url.Values {
 
 func (no NewOrderParams) ToString() string {
 	return fmt.Sprintf(
-		"Market=%s, Side=%s, EventType=%s, ReduceOnly=%v, "+
+		"Market=%s, Side=%s, Type=%s, ReduceOnly=%v, "+
 			"Quantity=%f, Price=%f, NewClientOrderId=%s, "+
 			"TimeInForce=%s",
 		no.Symbol, no.Side, no.Type, no.ReduceOnly,

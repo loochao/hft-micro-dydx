@@ -88,7 +88,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	api.mu.Unlock()
 	req.Header.Set("FTX-SIGN", common.HexEncodeToString(hmacSigned))
 	req.Header.Set("FTX-TS", timestamp)
-	req.Header.Set("Content-EventType", "application/json")
+	req.Header.Set("Content-Type", "application/json")
 	resp, err := api.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return err

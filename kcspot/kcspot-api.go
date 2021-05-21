@@ -88,7 +88,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	for key, value := range headers {
 		req.Header.Set(key, value)
 	}
-	req.Header.Set("Content-EventType", "application/json")
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := api.client.Do(req.WithContext(ctx))
 	if err != nil {

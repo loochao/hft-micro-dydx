@@ -385,7 +385,7 @@ func (c *client) Write(bp BatchPoints) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-EventType", "")
+	req.Header.Set("Content-Type", "")
 	req.Header.Set("User-Agent", c.useragent)
 	if c.username != "" {
 		req.SetBasicAuth(c.username, c.password)
@@ -605,7 +605,7 @@ func checkResponse(resp *http.Response) error {
 
 	// If we get an unexpected content type, then it is also not from influx direct and therefore
 	// we want to know what we received and what status code was returned for debugging purposes.
-	if cType, _, _ := mime.ParseMediaType(resp.Header.Get("Content-EventType")); cType != "application/json" {
+	if cType, _, _ := mime.ParseMediaType(resp.Header.Get("Content-Type")); cType != "application/json" {
 		// Read up to 1kb of the body to help identify downstream errors and limit the impact of things
 		// like downstream serving a large file
 		body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 1024))
@@ -632,7 +632,7 @@ func (c *client) createDefaultRequest(q Query) (*http.Request, error) {
 		return nil, err
 	}
 
-	req.Header.Set("Content-EventType", "")
+	req.Header.Set("Content-Type", "")
 	req.Header.Set("User-Agent", c.useragent)
 
 	if c.username != "" {

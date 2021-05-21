@@ -32,7 +32,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Content-EventType", "application/json")
+	req.Header.Add("Content-Type", "application/json")
 	resp, err := api.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
@@ -53,10 +53,10 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 		reader = resp.Body
 	default:
 		switch {
-		case strings.Contains(resp.Header.Get("Content-EventType"), "application/json"):
+		case strings.Contains(resp.Header.Get("Content-Type"), "application/json"):
 			reader = resp.Body
 		default:
-			logger.Warnf("request response content type differs from JSON; received %v", resp.Header.Get("Content-EventType"))
+			logger.Warnf("request response content type differs from JSON; received %v", resp.Header.Get("Content-Type"))
 			reader = resp.Body
 			contentTypeDifferent = true
 		}
@@ -110,7 +110,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Content-EventType", "application/json")
+	req.Header.Add("Content-Type", "application/json")
 	hmac := common.GetHMAC(common.HashSHA256,
 		[]byte(utcTime+httpMethod+requestPath+string(payload)),
 		[]byte(api.credentials.Secret))
@@ -140,10 +140,10 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 		reader = resp.Body
 	default:
 		switch {
-		case strings.Contains(resp.Header.Get("Content-EventType"), "application/json"):
+		case strings.Contains(resp.Header.Get("Content-Type"), "application/json"):
 			reader = resp.Body
 		default:
-			logger.Warnf("request response content type differs from JSON; received %v", resp.Header.Get("Content-EventType"))
+			logger.Warnf("request response content type differs from JSON; received %v", resp.Header.Get("Content-Type"))
 			reader = resp.Body
 			contentTypeDifferent = true
 		}
