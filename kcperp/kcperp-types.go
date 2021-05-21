@@ -258,22 +258,6 @@ type WSPosition struct {
 	ParseTime         time.Time `json:"-"`
 }
 
-func (wsPosition *WSPosition) GetSymbol() string {
-	return wsPosition.Symbol
-}
-
-func (wsPosition *WSPosition) GetSize() float64 {
-	return *wsPosition.CurrentQty * Multipliers[wsPosition.Symbol]
-}
-
-func (wsPosition *WSPosition) GetPrice() float64 {
-	return *wsPosition.AvgEntryPrice
-}
-
-func (wsPosition *WSPosition) GetTime() time.Time {
-	return wsPosition.EventTime
-}
-
 func (wsPosition *WSPosition) UnmarshalJSON(data []byte) error {
 	type Alias WSPosition
 	aux := struct {
@@ -539,25 +523,6 @@ type WsBalanceEvent struct {
 	Subject          string    `json:"-"`
 }
 
-func (w WsBalanceEvent) GetCurrency() string {
-	return *w.Currency
-}
-
-func (w WsBalanceEvent) GetBalance() float64 {
-	return *w.AvailableBalance + *w.HoldBalance
-}
-
-func (w WsBalanceEvent) GetFree() float64 {
-	return *w.AvailableBalance
-}
-
-func (w WsBalanceEvent) GetUsed() float64 {
-	return *w.HoldBalance
-}
-
-func (w WsBalanceEvent) GetTime() time.Time {
-	return w.EventTime
-}
 
 type Account struct {
 	AccountEquity    float64 `json:"accountEquity"`

@@ -209,7 +209,7 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 				}
 				if ch, ok := positionCh[position.Symbol]; ok {
 					select {
-					case ch <- wsPosition:
+					case ch <- &position:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logger.Debugf("ch <- &wsPosition failed, ch len %d", len(ch))
