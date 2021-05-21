@@ -101,10 +101,12 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 	go userWS.Start(ctx)
 	go k.systemStatusLoop(ctx, statusCh)
 	go k.positionsLoop(ctx, positionCh)
-	go k.accountLoop(ctx, accountCh)
+	httpAccountCh := make(chan Account, 100)
+	go k.accountLoop(ctx, httpAccountCh)
 	logSilentTime := time.Now()
 	restartResetTimer := time.NewTimer(time.Hour * 9999)
 	defer restartResetTimer.Stop()
+	var account *Account
 	for {
 		select {
 		case <-userWS.Done():
@@ -123,6 +125,16 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+		case a := <-httpAccountCh:
+			account = &a
+			select {
+			case accountCh <- account:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("accountCh <- account failed, ch len %d", len(accountCh))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
 		case <-userWS.RestartCh:
 			select {
 			case statusCh <- common.SystemStatusRestart:
@@ -135,12 +147,23 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 				}
 			}
 		case balance := <-userWS.BalanceCh:
-			select {
-			case accountCh <- balance:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("ch <- &order failed, ch len %d", len(accountCh))
-					logSilentTime = time.Now().Add(time.Minute)
+			if account != nil {
+				if balance.AvailableBalance != nil {
+					account.AvailableBalance = *balance.AvailableBalance
+				}
+				if balance.HoldBalance != nil {
+					account.FrozenFunds = *balance.HoldBalance
+				}
+				if balance.OrderMargin != nil {
+					account.OrderMargin = *balance.OrderMargin
+				}
+				select {
+				case accountCh <- account:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("ch <- &order failed, ch len %d", len(accountCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 			}
 		case order := <-userWS.OrderCh:
@@ -195,7 +218,7 @@ func (k *Kcperp) StreamSymbolStatus(ctx context.Context, channels map[string]cha
 						Symbol: symbol,
 					})
 					if err != nil {
-						logger.Debugf("%s k.api.GetTicker error %v", symbol,err)
+						logger.Debugf("%s k.api.GetTicker error %v", symbol, err)
 						status = common.SymbolStatusNotReady
 					} else {
 						size := LotSizes[symbol]
@@ -221,7 +244,7 @@ func (k *Kcperp) StreamSymbolStatus(ctx context.Context, channels map[string]cha
 					}
 					if time.Now().Sub(startTime) > 0 {
 						startTime = time.Now().Add(checkInterval)
-					}else{
+					} else {
 						startTime = startTime.Add(checkInterval)
 					}
 					updateTimes[symbol] = startTime.Add(checkInterval)
@@ -408,7 +431,7 @@ func (k *Kcperp) systemStatusLoop(
 }
 
 func (k *Kcperp) accountLoop(
-	ctx context.Context, output chan common.Account,
+	ctx context.Context, output chan Account,
 ) {
 	k.mu.Lock()
 	pullInterval := k.settings.PullInterval
@@ -427,7 +450,7 @@ func (k *Kcperp) accountLoop(
 			if err != nil {
 				logger.Debugf("k.api.GetAccountOverView error %v", err)
 			} else {
-				output <- account
+				output <- *account
 			}
 			timer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
 		}
