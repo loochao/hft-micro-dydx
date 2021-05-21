@@ -168,7 +168,7 @@ func updateXPositions() {
 			}
 		}
 
-		logger.Debugf("updateYPositions %s size %f position %f -> %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize)
+		logger.Debugf("updateXPositions %s size %f position %f -> %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize)
 
 		reduceOnly := false
 		if xSizeDiff*xPosition.GetSize() < 0 && math.Abs(xSizeDiff) <= math.Abs(xPosition.GetSize()) {
