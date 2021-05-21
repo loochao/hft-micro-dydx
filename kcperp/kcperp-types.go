@@ -246,14 +246,73 @@ func (position *Position) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+//{"data":{"realisedGrossPnl":0E-8,"symbol":"MANAUSDTM","crossMode":false,"liquidationPrice":1.077,"posLoss":0E-8,"avgEntryPrice":0.824,"unrealisedPnl":-0.05000000,"markPrice":0.826,"posMargin":6.88314667,"autoDeposit":false,"riskLimit":200000,"unrealisedCost":-20.60000000,"posComm":0.01648000,"posMaint":0.53953460,"posCost":-20.60000000,"maintMarginReq":0.025,"bankruptPrice":1.099,"realisedCost":0.01236000,"markValue":-20.65000000,"posInit":6.86666667,"realisedPnl":-0.01236000,"maintMargin":6.83314667,"realLeverage":3.0220048903,"changeReason":"positionChange","currentCost":-20.60000000,"settleCurrency":"USDT","currentQty":-25,"currentComm":0.01236000,"realisedGrossCost":0E-8,"isOpen":true,"posCross":0E-8,"currentTimestamp":1621615230736,"unrealisedRoePcnt":-0.0073,"unrealisedPnlPcnt":-0.0024},"subject":"position.change","topic":"/contract/position:MANAUSDTM","channelType":"private","type":"message","userId":"60a3c060c0b3d10006aa9428"}
+//      "realisedGrossPnl": 0E-8,                //累加已实现毛利
+//      "crossMode": false,                      //是否全仓
+//      "liquidationPrice": 1000000.0,           //强平价格
+//      "posLoss": 0E-8,                         //手动追加的保证金
+//      "avgEntryPrice": 7508.22,                //平均开仓价格
+//      "unrealisedPnl": -0.00014735,            //未实现盈亏
+//      "markPrice": 7947.83,                    //标记价格
+//      "posMargin": 0.00266779,                 //仓位保证金
+//      "riskLimit": 200,                        //风险限额
+//      "unrealisedCost": 0.00266375,            //未实现价值
+//      "posComm": 0.00000392,                   //破产费用
+//      "posMaint": 0.00001724,                  //维持保证金
+//      "posCost": 0.00266375,                   //仓位价值
+//      "maintMarginReq": 0.005,                 //维持保证金比例
+//      "bankruptPrice": 1000000.0,              //破产价格
+//      "realisedCost": 0.00000271,              //当前累计已实现仓位价值
+//      "markValue": 0.00251640,                 //标记价值
+//      "posInit": 0.00266375,                   //杠杆保证金
+//      "realisedPnl": -0.00000253,              //已实现盈亏
+//      "maintMargin": 0.00252044,               //仓位保证金
+//      "realLeverage": 1.06,                    //杠杆倍数
+//      "currentCost": 0.00266375,               //当前总仓位价值
+//      "openingTimestamp": 1558433191000,       //开仓时间
+//      "currentQty": -20,                       //当前仓位
+//      "delevPercentage": 0.52,                 //ADL分位数
+//      "currentComm": 0.00000271,               //当前总费用
+//      "realisedGrossCost": 0E-8,               //累计已实现毛利价值
+//      "isOpen": true,                          //是否开仓
+//      "posCross": 1.2E-7,                      //手动追加的保证金
+//      "currentTimestamp": 1558506060394,       //当前时间戳
+//      "unrealisedRoePcnt": -0.0553,            //投资回报率
+//      "unrealisedPnlPcnt": -0.0553,            //仓位盈亏率
+//      "settleCurrency": "XBT"                  //结算币种
 type WSPosition struct {
-	ID                string    `json:"id"`
-	Symbol            string    `json:"-"`
-	CurrentQty        *float64  `json:"currentQty"`
-	AvgEntryPrice     *float64  `json:"avgEntryPrice"`
-	UnrealisedPnl     *float64  `json:"unrealisedPnl"`
-	UnrealisedPnlPcnt *float64  `json:"unrealisedPnlPcnt"`
-	UnrealisedRoePcnt *float64  `json:"unrealisedRoePcnt"`
+	Symbol           string   `json:"-"`
+	RealisedGrossPnl *float64 `json:"realisedGrossPnl,omitempty"`
+	CrossMode        *bool    `json:"crossMode,omitempty"`
+	LiquidationPrice *float64 `json:"liquidationPrice,omitempty"`
+	PosLoss          *float64 `json:"posLoss,omitempty"`
+	AvgEntryPrice    *float64 `json:"avgEntryPrice,omitempty"`
+	UnrealisedPnl    *float64 `json:"unrealisedPnl,omitempty"`
+	MarkPrice        *float64 `json:"markPrice,omitempty"`
+	PosMargin        *float64 `json:"posMargin,omitempty"`
+	RiskLimit        *float64 `json:"riskLimit,omitempty"`
+	UnrealisedCost   *float64 `json:"unrealisedCost,omitempty"`
+	PosComm          *float64 `json:"posComm,omitempty"`
+	PosMaint         *float64 `json:"posMaint,omitempty"`
+	PosCost          *float64 `json:"posCost,omitempty"`
+	MaintMarginReq   *float64 `json:"maintMarginReq,omitempty"`
+	BankruptPrice    *float64 `json:"bankruptPrice,omitempty"`
+	RealisedCost     *float64 `json:"realisedCost,omitempty"`
+	MarkValue        *float64 `json:"markValue,omitempty"`
+	PosInit          *float64 `json:"posInit,omitempty"`
+	RealisedPnl      *float64 `json:"realisedPnl,omitempty"`
+	MaintMargin      *float64 `json:"maintMargin,omitempty"`
+	RealLeverage     *float64 `json:"realLeverage,omitempty"`
+	CurrentCost      *float64 `json:"currentCost,omitempty"`
+	CurrentQty       *float64 `json:"currentQty,omitempty"`
+	DelevPercentage   *float64  `json:"delevPercentage,omitempty"`
+	CurrentComm       *float64  `json:"currentComm,omitempty"`
+	RealisedGrossCost *float64  `json:"realisedGrossCost,omitempty"`
+	IsOpen            *float64  `json:"isOpen,omitempty"`
+	PosCross          *float64  `json:"posCross,omitempty"`
+	SettleCurrency    *string   `json:"settleCurrency,omitempty"`
+	UnrealisedPnlPcnt *float64  `json:"unrealisedPnlPcnt,omitempty"`
+	UnrealisedRoePcnt *float64  `json:"unrealisedRoePcnt,omitempty"`
 	EventTime         time.Time `json:"-"`
 	ParseTime         time.Time `json:"-"`
 }
@@ -522,7 +581,6 @@ type WsBalanceEvent struct {
 	EventTime        time.Time `json:"-"`
 	Subject          string    `json:"-"`
 }
-
 
 type Account struct {
 	AccountEquity    float64 `json:"accountEquity"`
