@@ -14,5 +14,5 @@ git push origin master
 
 chmod 755 "./dist/hft-mirco-opt-tt.$dt"
 
-echo "pd02"
-rsync -avx --progress "./dist/hft-mirco-opt-tt.$dt" pd02:/usr/local/bin/
+echo "wenzhe"
+rsync -avx --progress "./dist/hft-mirco-opt-tt.$dt" wenzhe:/usr/local/bin/
