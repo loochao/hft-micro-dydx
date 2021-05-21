@@ -92,7 +92,7 @@ var xyEnterTimes = make(map[string]time.Time)
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210521 16:06:53  ####")
+	logger.Debug("####  BUILD @ 20210521 16:15:20  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

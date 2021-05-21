@@ -100,19 +100,32 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 	)
 	go userWS.Start(ctx)
 	go k.systemStatusLoop(ctx, statusCh)
-	go k.positionsLoop(ctx, positionCh)
+	httpPositionsCh := make(chan map[string]Position)
+	go k.positionsLoop(ctx, symbols, httpPositionsCh)
 	httpAccountCh := make(chan Account, 100)
 	go k.accountLoop(ctx, httpAccountCh)
 	logSilentTime := time.Now()
 	restartResetTimer := time.NewTimer(time.Hour * 9999)
 	defer restartResetTimer.Stop()
 	var account *Account
+	positionsMap := make(map[string]Position)
 	for {
 		select {
 		case <-userWS.Done():
 			return
 		case <-k.done:
 			return
+		case positionsMap = <-httpPositionsCh:
+			for symbol, pos := range positionsMap {
+				if ch, ok := positionCh[symbol]; ok {
+					pos := pos
+					select {
+					case ch <- &pos:
+					default:
+						logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
+					}
+				}
+			}
 		case <-restartResetTimer.C:
 			select {
 			case statusCh <- common.SystemStatusReady:
@@ -177,14 +190,30 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 					}
 				}
 			}
-		case position := <-userWS.PositionCh:
-			if ch, ok := positionCh[position.Symbol]; ok {
-				select {
-				case ch <- position:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- &position failed, ch len %d", len(ch))
-						logSilentTime = time.Now().Add(time.Minute)
+		case wsPosition := <-userWS.PositionCh:
+			if position, ok := positionsMap[wsPosition.Symbol]; ok {
+				if wsPosition.AvgEntryPrice != nil {
+					position.AvgEntryPrice = *wsPosition.AvgEntryPrice
+				}
+				if wsPosition.UnrealisedPnl != nil {
+					position.UnrealisedPnl = *wsPosition.UnrealisedPnl
+				}
+				if wsPosition.CurrentQty != nil {
+					position.CurrentQty = *wsPosition.CurrentQty
+				}
+				if wsPosition.UnrealisedPnlPcnt != nil {
+					position.UnrealisedPnlPcnt = *wsPosition.UnrealisedPnlPcnt
+				}if wsPosition.UnrealisedRoePcnt != nil {
+					position.UnrealisedRoePcnt = *wsPosition.UnrealisedRoePcnt
+				}
+				if ch, ok := positionCh[position.Symbol]; ok {
+					select {
+					case ch <- wsPosition:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("ch <- &wsPosition failed, ch len %d", len(ch))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
 					}
 				}
 			}
@@ -459,15 +488,12 @@ func (k *Kcperp) accountLoop(
 
 func (k *Kcperp) positionsLoop(
 	ctx context.Context,
-	outputChs map[string]chan common.Position,
+	symbols []string,
+	outputChs chan map[string]Position,
 ) {
 	k.mu.Lock()
 	pullInterval := k.settings.PullInterval
 	k.mu.Unlock()
-	symbols := make([]string, 0)
-	for symbol := range outputChs {
-		symbols = append(symbols, symbol)
-	}
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
@@ -493,15 +519,10 @@ func (k *Kcperp) positionsLoop(
 					position := position
 					positionBySymbols[position.Symbol] = position
 				}
-				for symbol, position := range positionBySymbols {
-					if ch, ok := outputChs[symbol]; ok {
-						position := position
-						select {
-						case ch <- &position:
-						default:
-							logger.Debugf("ch <- &position failed, ch len %d", len(ch))
-						}
-					}
+				select {
+				case outputChs <- positionBySymbols:
+				default:
+					logger.Debugf("outputChs <- positionBySymbols failed, ch len %d", len(outputChs))
 				}
 			}
 			timer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
