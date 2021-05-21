@@ -281,30 +281,30 @@ func (position *Position) UnmarshalJSON(data []byte) error {
 //      "unrealisedPnlPcnt": -0.0553,            //仓位盈亏率
 //      "settleCurrency": "XBT"                  //结算币种
 type WSPosition struct {
-	Symbol           string   `json:"-"`
-	RealisedGrossPnl *float64 `json:"realisedGrossPnl,omitempty"`
-	CrossMode        *bool    `json:"crossMode,omitempty"`
-	LiquidationPrice *float64 `json:"liquidationPrice,omitempty"`
-	PosLoss          *float64 `json:"posLoss,omitempty"`
-	AvgEntryPrice    *float64 `json:"avgEntryPrice,omitempty"`
-	UnrealisedPnl    *float64 `json:"unrealisedPnl,omitempty"`
-	MarkPrice        *float64 `json:"markPrice,omitempty"`
-	PosMargin        *float64 `json:"posMargin,omitempty"`
-	RiskLimit        *float64 `json:"riskLimit,omitempty"`
-	UnrealisedCost   *float64 `json:"unrealisedCost,omitempty"`
-	PosComm          *float64 `json:"posComm,omitempty"`
-	PosMaint         *float64 `json:"posMaint,omitempty"`
-	PosCost          *float64 `json:"posCost,omitempty"`
-	MaintMarginReq   *float64 `json:"maintMarginReq,omitempty"`
-	BankruptPrice    *float64 `json:"bankruptPrice,omitempty"`
-	RealisedCost     *float64 `json:"realisedCost,omitempty"`
-	MarkValue        *float64 `json:"markValue,omitempty"`
-	PosInit          *float64 `json:"posInit,omitempty"`
-	RealisedPnl      *float64 `json:"realisedPnl,omitempty"`
-	MaintMargin      *float64 `json:"maintMargin,omitempty"`
-	RealLeverage     *float64 `json:"realLeverage,omitempty"`
-	CurrentCost      *float64 `json:"currentCost,omitempty"`
-	CurrentQty       *float64 `json:"currentQty,omitempty"`
+	Symbol            string    `json:"-"`
+	RealisedGrossPnl  *float64  `json:"realisedGrossPnl,omitempty"`
+	CrossMode         *bool     `json:"crossMode,omitempty"`
+	LiquidationPrice  *float64  `json:"liquidationPrice,omitempty"`
+	PosLoss           *float64  `json:"posLoss,omitempty"`
+	AvgEntryPrice     *float64  `json:"avgEntryPrice,omitempty"`
+	UnrealisedPnl     *float64  `json:"unrealisedPnl,omitempty"`
+	MarkPrice         *float64  `json:"markPrice,omitempty"`
+	PosMargin         *float64  `json:"posMargin,omitempty"`
+	RiskLimit         *float64  `json:"riskLimit,omitempty"`
+	UnrealisedCost    *float64  `json:"unrealisedCost,omitempty"`
+	PosComm           *float64  `json:"posComm,omitempty"`
+	PosMaint          *float64  `json:"posMaint,omitempty"`
+	PosCost           *float64  `json:"posCost,omitempty"`
+	MaintMarginReq    *float64  `json:"maintMarginReq,omitempty"`
+	BankruptPrice     *float64  `json:"bankruptPrice,omitempty"`
+	RealisedCost      *float64  `json:"realisedCost,omitempty"`
+	MarkValue         *float64  `json:"markValue,omitempty"`
+	PosInit           *float64  `json:"posInit,omitempty"`
+	RealisedPnl       *float64  `json:"realisedPnl,omitempty"`
+	MaintMargin       *float64  `json:"maintMargin,omitempty"`
+	RealLeverage      *float64  `json:"realLeverage,omitempty"`
+	CurrentCost       *float64  `json:"currentCost,omitempty"`
+	CurrentQty        *float64  `json:"currentQty,omitempty"`
 	DelevPercentage   *float64  `json:"delevPercentage,omitempty"`
 	CurrentComm       *float64  `json:"currentComm,omitempty"`
 	RealisedGrossCost *float64  `json:"realisedGrossCost,omitempty"`
@@ -579,7 +579,25 @@ type WsBalanceEvent struct {
 	HoldBalance      *float64  `json:"holdBalance,string,omitempty"`
 	WithdrawHold     *float64  `json:"withdrawHold,string,omitempty"`
 	EventTime        time.Time `json:"-"`
+	ParseTime        time.Time `json:"-"`
 	Subject          string    `json:"-"`
+}
+
+func (wsBalanceEvent *WsBalanceEvent) UnmarshalJSON(data []byte) error {
+	type Alias WsBalanceEvent
+	aux := struct {
+		Timestamp int64 `json:"timestamp,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(wsBalanceEvent),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("UnmarshalJSON MarkPrice error %v", err)
+		return err
+	}
+	wsBalanceEvent.EventTime = time.Unix(0, aux.Timestamp*1000000)
+	wsBalanceEvent.ParseTime = time.Now()
+	return nil
 }
 
 type Account struct {
@@ -591,6 +609,23 @@ type Account struct {
 	FrozenFunds      float64 `json:"frozenFunds"`
 	AvailableBalance float64 `json:"availableBalance"`
 	Currency         string  `json:"currency"`
+	EventTime        time.Time `json:"-"`
+	ParseTime        time.Time `json:"-"`
+}
+
+func (a *Account) UnmarshalJSON(data []byte) error {
+	type Alias Account
+	aux := struct {
+		*Alias
+	}{
+		Alias: (*Alias)(a),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	a.EventTime = time.Now()
+	a.ParseTime = time.Now()
+	return nil
 }
 
 func (a Account) GetCurrency() string {

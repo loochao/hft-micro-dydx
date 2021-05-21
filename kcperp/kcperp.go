@@ -162,6 +162,10 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 			}
 		case balance := <-userWS.BalanceCh:
 			if account != nil {
+				if account.EventTime.Sub(balance.EventTime) > 0 {
+					continue
+				}
+				account.EventTime = balance.EventTime
 				if balance.AvailableBalance != nil {
 					account.AvailableBalance = *balance.AvailableBalance
 				}
@@ -193,6 +197,10 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 			}
 		case wsPosition := <-userWS.PositionCh:
 			if position, ok := positionsMap[wsPosition.Symbol]; ok {
+				if position.EventTime.Sub(wsPosition.EventTime) > 0 {
+					continue
+				}
+				position.EventTime = wsPosition.EventTime
 				if wsPosition.AvgEntryPrice != nil {
 					position.AvgEntryPrice = *wsPosition.AvgEntryPrice
 				}
