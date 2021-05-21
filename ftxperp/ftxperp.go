@@ -24,7 +24,7 @@ func (ftx *Ftxperp) GenerateClientID() string {
 	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 }
 
-func (ftx *Ftxperp) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatus, batchSize int) {
+func (ftx *Ftxperp) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	panic("implement me")
 }
 

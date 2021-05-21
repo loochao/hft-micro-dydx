@@ -22,48 +22,58 @@ func handleInternalSave() {
 	}
 
 	totalUnHedgeValue := 0.0
-	takerURPnl := 0.0
-	makerURPnl := 0.0
-	for _, makerSymbol := range xSymbols {
-		takerSymbol := xySymbolsMap[makerSymbol]
-		delta := xyDeltas[makerSymbol]
+	yURPnl := 0.0
+	xURPnl := 0.0
+	for _, xSymbol := range xSymbols {
+		ySymbol := xySymbolsMap[xSymbol]
 		fields := make(map[string]interface{})
-		if makerPosition, ok := xPositions[makerSymbol]; ok {
-			fields["makerSize"] = makerPosition.GetSize()
-			if spread, ok := xySpreads[makerSymbol]; ok {
-				makerValue := makerPosition.GetSize() * makerPosition.GetPrice()
-				fields["makerValue"] = makerValue
-				fields["shortTop"] = delta.ShortTop + xyConfig.EnterOffsetDelta*(math.Max(makerValue, 0)/entryTarget)
-				fields["shortBot"] = delta.ShortBot + xyConfig.EnterOffsetDelta*(math.Max(makerValue, 0)/entryTarget)
-				fields["longBot"] = delta.LongBot + xyConfig.EnterOffsetDelta*(math.Min(makerValue, 0)/entryTarget)
-				fields["longTop"] = delta.LongTop + xyConfig.EnterOffsetDelta*(math.Min(makerValue, 0)/entryTarget)
-				if makerPosition.GetPrice() != 0 {
-					makerURPnl += makerPosition.GetSize() * (spread.MakerDepth.MidPrice - makerPosition.GetPrice())
-				}
-				if takerPosition, ok := yPositions[takerSymbol]; ok {
-					unHedgedValue := (takerPosition.GetSize() + makerPosition.GetSize()) * spread.MakerDepth.MidPrice
+		if xPosition, ok := xPositions[xSymbol]; ok {
+			fields["makerSize"] = xPosition.GetSize()
+			if spread, ok := xySpreads[xSymbol]; ok {
+				xValue := xPosition.GetSize() * xPosition.GetPrice()
+				fields["xValue"] = xValue
+
+				if yPosition, ok := yPositions[ySymbol]; ok {
+					if entryTarget != 0 {
+						xValue := math.Abs(xPosition.GetSize()) * xPosition.GetPrice()
+						yValue := math.Abs(yPosition.GetSize()) * yPosition.GetPrice()
+						offsetFactor := (xValue + yValue) * 0.5 / entryTarget
+						shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
+						shortBot := xyConfig.ShortExitDelta
+						longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
+						longTop := xyConfig.LongExitDelta
+						fields["shortTop"] = shortTop
+						fields["shortBot"] = shortBot
+						fields["longBot"] = longBot
+						fields["longTop"] = longTop
+					}
+					unHedgedValue := (yPosition.GetSize() + xPosition.GetSize()) * spread.XDepth.MidPrice
 					fields["unHedgedValue"] = unHedgedValue
 					totalUnHedgeValue += math.Abs(unHedgedValue)
-					if takerPosition.GetPrice() != 0 {
-						takerURPnl += takerPosition.GetSize() * (spread.TakerDepth.MidPrice - takerPosition.GetPrice())
+					if yPosition.GetPrice() != 0 {
+						yURPnl += yPosition.GetSize() * (spread.YDepth.MidPrice - yPosition.GetPrice())
 					}
+				}
+
+				if xPosition.GetPrice() != 0 {
+					xURPnl += xPosition.GetSize() * (spread.XDepth.MidPrice - xPosition.GetPrice())
 				}
 			}
 		}
-		if takerPosition, ok := yPositions[takerSymbol]; ok {
-			fields["takerSize"] = takerPosition.GetSize()
-			fields["takerValue"] = takerPosition.GetPrice() * takerPosition.GetSize()
+		if yPosition, ok := yPositions[ySymbol]; ok {
+			fields["ySize"] = yPosition.GetSize()
+			fields["yValue"] = yPosition.GetPrice() * yPosition.GetSize()
 		}
-		if fr, ok := xFundingRates[makerSymbol]; ok {
-			fields["makerFundingRate"] = fr.GetFundingRate()
+		if fr, ok := xFundingRates[xSymbol]; ok {
+			fields["xFundingRate"] = fr.GetFundingRate()
 		}
-		if fr, ok := yFundingRates[takerSymbol]; ok {
-			fields["takerFundingRate"] = fr.GetFundingRate()
+		if fr, ok := yFundingRates[ySymbol]; ok {
+			fields["yFundingRate"] = fr.GetFundingRate()
 		}
-		if fr, ok := xyFundingRates[makerSymbol]; ok {
+		if fr, ok := xyFundingRates[xSymbol]; ok {
 			fields["fundingRate"] = fr
 		}
-		if spread, ok := xySpreads[makerSymbol]; ok {
+		if spread, ok := xySpreads[xSymbol]; ok {
 
 			fields["spreadShortLastEnter"] = spread.ShortLastEnter
 			fields["spreadShortLastLeave"] = spread.ShortLastLeave
@@ -75,43 +85,46 @@ func handleInternalSave() {
 			fields["spreadLongMedianEnter"] = spread.LongMedianEnter
 			fields["spreadLongMedianLeave"] = spread.LongMedianLeave
 
-			fields["takerMakerBid"] = spread.TakerDepth.MakerBid
-			fields["takerMakerAsk"] = spread.TakerDepth.MakerAsk
-			fields["takerTakerBid"] = spread.TakerDepth.TakerBid
-			fields["takerTakerAsk"] = spread.TakerDepth.TakerAsk
-			fields["takerBestBidPrice"] = spread.TakerDepth.BestBidPrice
-			fields["takerBestAskPrice"] = spread.TakerDepth.BestAskPrice
+			fields["yMakerBid"] = spread.YDepth.MakerBid
+			fields["yMakerAsk"] = spread.YDepth.MakerAsk
+			fields["yTakerBid"] = spread.YDepth.TakerBid
+			fields["yTakerAsk"] = spread.YDepth.TakerAsk
+			fields["yBestBidPrice"] = spread.YDepth.BestBidPrice
+			fields["yBestAskPrice"] = spread.YDepth.BestAskPrice
 
-			fields["makerMakerBid"] = spread.MakerDepth.MakerBid
-			fields["makerMakerAsk"] = spread.MakerDepth.MakerAsk
-			fields["makerTakerBid"] = spread.MakerDepth.TakerBid
-			fields["makerTakerAsk"] = spread.MakerDepth.TakerAsk
+			fields["xMakerBid"] = spread.XDepth.MakerBid
+			fields["xMakerAsk"] = spread.XDepth.MakerAsk
+			fields["xTakerBid"] = spread.XDepth.TakerBid
+			fields["xTakerAsk"] = spread.XDepth.TakerAsk
+			fields["xBestBidPrice"] = spread.XDepth.BestBidPrice
+			fields["xBestAskPrice"] = spread.XDepth.BestAskPrice
 
-			fields["takerDir"] = spread.TakerDir
-			fields["makerDir"] = spread.MakerDir
+			fields["yDir"] = spread.YDir
+			fields["xDir"] = spread.XDir
+			fields["dir"] =  spread.XDir*xyConfig.XYDirRatio + spread.YDir*(1.0-xyConfig.XYDirRatio)
 
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
 		}
-		if realisedSpread, ok := xyRealisedSpread[makerSymbol]; ok {
+		if realisedSpread, ok := xyRealisedSpread[xSymbol]; ok {
 			fields["realisedSpread"] = realisedSpread
 		}
 		if xSystemStatus == common.SystemStatusReady {
-			fields["makerSystemStatus"] = 1.0
+			fields["xSystemStatus"] = 1.0
 		} else {
-			fields["makerSystemStatus"] = -1.0
+			fields["xSystemStatus"] = -1.0
 		}
 		if ySystemStatus == common.SystemStatusReady {
-			fields["takerSystemStatus"] = 1.0
+			fields["ySystemStatus"] = 1.0
 		} else {
-			fields["takerSystemStatus"] = -1.0
+			fields["ySystemStatus"] = -1.0
 		}
 		pt, err := client.NewPoint(
 			xyConfig.InternalInflux.Measurement,
 			map[string]string{
-				"takerSymbol": takerSymbol,
-				"makerSymbol": makerSymbol,
-				"type":        "symbol",
+				"ySymbol": ySymbol,
+				"xSymbol": xSymbol,
+				"type":    "symbol",
 			},
 			fields,
 			time.Now().UTC(),
@@ -133,15 +146,15 @@ func handleInternalSave() {
 		fields := make(map[string]interface{})
 		fields["totalUnHedgeValue"] = totalUnHedgeValue
 		fields["totalBalance"] = totalBalance
-		fields["takerBalance"] = yAccount.GetBalance()
-		fields["makerBalance"] = xAccount.GetBalance()
+		fields["yBalance"] = yAccount.GetBalance()
+		fields["xBalance"] = xAccount.GetBalance()
 		fields["netWorth"] = netWorth
 		fields["startValue"] = xyConfig.StartValue
 		fields["netWorth"] = netWorth
-		fields["takerAvailable"] = yAccount.GetFree()
-		fields["takerURPnl"] = takerURPnl
-		fields["makerAvailable"] = xAccount.GetFree()
-		fields["makerURPnl"] = makerURPnl
+		fields["yAvailable"] = yAccount.GetFree()
+		fields["yURPnl"] = yURPnl
+		fields["xAvailable"] = xAccount.GetFree()
+		fields["xURPnl"] = xURPnl
 		pt, err := client.NewPoint(
 			xyConfig.InternalInflux.Measurement,
 			map[string]string{
@@ -198,9 +211,9 @@ func reportsSaveLoop(
 	ctx context.Context,
 	influxWriter *common.InfluxWriter,
 	influxConfig common.InfluxSettings,
-	spreadReportCh chan common.SpreadReport,
+	spreadReportCh chan SpreadReport,
 ) {
-	spreadReports := make(map[string]common.SpreadReport)
+	spreadReports := make(map[string]SpreadReport)
 	saveTimer := time.NewTimer(influxConfig.SaveInterval)
 	for {
 		select {
@@ -208,28 +221,28 @@ func reportsSaveLoop(
 			return
 		case spreadReport := <-spreadReportCh:
 			//logger.Debugf("%s", spreadReport.ToString())
-			spreadReports[spreadReport.MakerSymbol] = spreadReport
+			spreadReports[spreadReport.XSymbol] = spreadReport
 			break
 		case <-saveTimer.C:
 			for _, report := range spreadReports {
 				fields := make(map[string]interface{})
 				fields["matchRatio"] = report.MatchRatio
 				fields["adjustedAgeDiff"] = float64(report.AdjustedAgeDiff / time.Millisecond)
-				fields["makerTimeDeltaEma"] = report.MakerTimeDeltaEma
-				fields["takerTimeDeltaEma"] = report.TakerTimeDeltaEma
-				fields["makerTimeDelta"] = report.MakerTimeDelta
-				fields["takerTimeDelta"] = report.TakerTimeDelta
-				fields["makerDepthFilterRatio"] = report.MakerDepthFilterRatio
-				fields["takerDepthFilterRatio"] = report.MakerDepthFilterRatio
-				fields["makerExpireRatio"] = report.MakerExpireRatio
-				fields["takerExpireRatio"] = report.TakerExpireRatio
+				fields["xTimeDeltaEma"] = report.XTimeDeltaEma
+				fields["yTimeDeltaEma"] = report.YTimeDeltaEma
+				fields["xTimeDelta"] = report.XTimeDelta
+				fields["yTimeDelta"] = report.YTimeDelta
+				fields["xDepthFilterRatio"] = report.XDepthFilterRatio
+				fields["yDepthFilterRatio"] = report.XDepthFilterRatio
+				fields["xExpireRatio"] = report.XExpireRatio
+				fields["yExpireRatio"] = report.YExpireRatio
 				if len(fields) > 0 {
 					pt, err := client.NewPoint(
 						influxConfig.Measurement,
 						map[string]string{
-							"makerSymbol": report.MakerSymbol,
-							"takerSymbol": report.TakerSymbol,
-							"type":        "spread-report",
+							"xSymbol": report.XSymbol,
+							"ySymbol": report.YSymbol,
+							"type":    "spread-report",
 						},
 						fields,
 						time.Now().UTC(),

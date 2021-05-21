@@ -41,7 +41,7 @@ type Exchange interface {
 	GetTickSize(symbol string) (float64, error)
 
 	StreamBasic(ctx context.Context, statusCh chan SystemStatus, accountCh chan Account, positionCh map[string]chan Position, orderCh map[string]chan Order, )
-	StreamSymbolStatus(ctx context.Context, channels map[string]chan SymbolStatus, batchSize int)
+	StreamSymbolStatus(ctx context.Context, channels map[string]chan SymbolStatusMsg, batchSize int)
 	StreamDepth(ctx context.Context, channels map[string]chan Depth, batchSize int)
 	StreamTrade(ctx context.Context, channels map[string]chan Trade, batchSize int)
 	StreamTicker(ctx context.Context, channels map[string]chan Ticker, batchSize int)
@@ -328,11 +328,15 @@ var (
 	SystemStatusError    = SystemStatus("ERROR")
 )
 
-type SymbolStatus string
+type SymbolStatusMsg string
+type SymbolStatus struct {
+	Symbol string
+	Status SymbolStatusMsg
+}
 
 var (
-	SymbolStatusReady    = SymbolStatus("READY")
-	SymbolStatusNotReady = SymbolStatus("NOT_READY")
+	SymbolStatusReady    = SymbolStatusMsg("READY")
+	SymbolStatusNotReady = SymbolStatusMsg("NOT_READY")
 )
 
 type InfluxSettings struct {

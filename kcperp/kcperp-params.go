@@ -103,3 +103,15 @@ type AutoDepositStatusParam struct {
 	Symbol string `json:"symbol"`
 	Status bool   `json:"status"`
 }
+
+type TickerParam struct {
+	Symbol string
+}
+
+func (t *TickerParam) ToUrlValues() url.Values {
+	values := url.Values{}
+	if t.Symbol != "" {
+		values.Set("symbol", t.Symbol)
+	}
+	return values
+}

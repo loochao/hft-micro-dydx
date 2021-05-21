@@ -194,23 +194,29 @@ func TestAPI_SubmitOrder(t *testing.T) {
 	var api *API
 	var ctx = context.Background()
 	var err error
+	//api, err = NewAPI(
+	//	os.Getenv("KCPERP_KEY"),
+	//	os.Getenv("KCPERP_SECRET"),
+	//	os.Getenv("KCPERP_PASSPHRASE"),
+	//	"socks5://127.0.0.1:1080")
 	api, err = NewAPI(
-		os.Getenv("KCPERP_KEY"),
-		os.Getenv("KCPERP_SECRET"),
-		os.Getenv("KCPERP_PASSPHRASE"),
-		"socks5://127.0.0.1:1081")
+		"60a3cb5632b1dc000699fc3a",
+		"41892859-d509-4e07-ba68-c2a80f1df056",
+		"panda03",
+		"socks5://127.0.0.1:1082")
 	if err != nil {
 		t.Fatal(err)
 	}
 	oid, _ := common.GenerateShortId()
 	res, err := api.SubmitOrder(ctx, NewOrderParam{
-		ClientOid: oid,
-		Symbol:    "XBTUSDTM",
-		Side:      OrderSideSell,
-		Type:      OrderTypeLimit,
-		Price:     63000,
-		Size:      1,
-		Leverage:  10,
+		ClientOid:   oid,
+		Symbol:      "BTTUSDTM",
+		Side:        OrderSideSell,
+		TimeInForce: OrderTimeInForceIOC,
+		Type:        OrderTypeLimit,
+		Price:       common.Float64(0.0048),
+		Size:        1,
+		Leverage:    3,
 	})
 	if err != nil {
 		t.Fatal(err)

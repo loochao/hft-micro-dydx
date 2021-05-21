@@ -158,6 +158,7 @@ func (orderBook *OrderBook) FormatFloat(value float64) string {
 		return strconv.FormatFloat(value, 'f', -1, 64)
 	}
 }
+
 func (orderBook *OrderBook) CompareCheckSum() bool {
 	return orderBook.GetCheckSum() == orderBook.Checksum
 }

@@ -25,9 +25,9 @@ var xyInfluxWriter *common.InfluxWriter
 var xyExternalInfluxWriter *common.InfluxWriter
 
 var xStepSizes = make(map[string]float64)
-var xMinNotional = make(map[string]float64)
+var xMinNotionals = make(map[string]float64)
 var yStepSizes = make(map[string]float64)
-var yMinNotional = make(map[string]float64)
+var yMinNotionals = make(map[string]float64)
 var xyStepSizes = make(map[string]float64)
 
 var xAccount common.Account
@@ -92,7 +92,7 @@ var xyEnterTimes = make(map[string]time.Time)
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210517 01:31:55  ####")
+	logger.Debug("####  BUILD @ 20210521 14:27:52  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -153,7 +153,6 @@ func init() {
 
 		xOrderSilentTimes[xSymbol] = time.Now()
 		xyLogSilentTimes[xSymbol] = time.Now()
-		xEnterSilentTimes[xSymbol] = time.Now()
 		xPositionsUpdateTimes[xSymbol] = time.Unix(0, 0)
 
 		yOrderSilentTimes[ySymbol] = time.Now()

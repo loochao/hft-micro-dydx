@@ -570,6 +570,26 @@ type Account struct {
 	Currency         string  `json:"currency"`
 }
 
+func (a Account) GetCurrency() string {
+	return a.Currency
+}
+
+func (a Account) GetBalance() float64 {
+	return a.MarginBalance + a.UnrealisedPNL
+}
+
+func (a Account) GetFree() float64 {
+	return a.AvailableBalance
+}
+
+func (a Account) GetUsed() float64 {
+	return a.FrozenFunds
+}
+
+func (a Account) GetTime() time.Time {
+	panic("implement me")
+}
+
 type MarkPrice struct {
 	Symbol      string    `json:"-"`
 	Granularity int       `json:"granularity"`
@@ -706,5 +726,52 @@ func (match *Match) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	match.Timestamp = time.Unix(0, aux.Timestamp)
+	return nil
+}
+
+// {
+//    "code": "200000",
+//    "data": {
+//      "sequence": 1001,             // 顺序号
+//      "symbol": "XBTUSDM",              // 合约
+//      "side": "buy",                    // 成交方向 - taker
+//      "size": 10,                       // 成交数量
+//      "price": "7000.0",                // 成交价格
+//      "bestBidSize": 20,                // 最佳买一价总量
+//      "bestBidPrice": "7000.0",     // 最佳买一价
+//      "bestAskSize": 30,                // 最佳卖一价总量
+//      "bestAskPrice": "7001.0",     // 最佳卖一价
+//      "tradeId": "5cbd7377a6ffab0c7ba98b26",  // 交易号
+//      "ts": 1550653727731              // 成交时间 - 纳秒
+//    }
+//  }
+
+type Ticker struct {
+	Sequence     int64     `json:"sequence"`
+	Symbol       int64     `json:"symbol"`
+	Side         string    `json:"side"`
+	Size         float64   `json:"size,float64"`
+	Price        float64   `json:"price,float64"`
+	BestBidSize  float64   `json:"bestBidSize,float64"`
+	BestBidPrice float64   `json:"bestBidPrice,float64"`
+	BestAskSize  float64   `json:"bestAskSize,float64"`
+	BestAskPrice float64   `json:"bestAskPrice,float64"`
+	TradeId      string    `json:"tradeId"`
+	Timestamp    time.Time `json:"-"`
+}
+
+func (ticker *Ticker) UnmarshalJSON(data []byte) error {
+	type Alias Ticker
+	aux := struct {
+		Timestamp int64 `json:"ts"`
+		*Alias
+	}{
+		Alias: (*Alias)(ticker),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("json.Unmarshal error %v", err)
+		return err
+	}
+	ticker.Timestamp = time.Unix(0, aux.Timestamp)
 	return nil
 }

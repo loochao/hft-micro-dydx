@@ -2,6 +2,7 @@ package kcperp
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
@@ -99,6 +100,8 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 	)
 	go userWS.Start(ctx)
 	go k.systemStatusLoop(ctx, statusCh)
+	go k.positionsLoop(ctx, positionCh)
+	go k.accountLoop(ctx, accountCh)
 	logSilentTime := time.Now()
 	restartResetTimer := time.NewTimer(time.Hour * 9999)
 	defer restartResetTimer.Stop()
@@ -166,8 +169,67 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 	}
 }
 
-func (k *Kcperp) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatus, batchSize int) {
-	panic("implement me")
+func (k *Kcperp) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
+	checkInterval := time.Second * 5
+	startTime := time.Now()
+	updateTimes := make(map[string]time.Time)
+	for symbol := range channels {
+		updateTimes[symbol] = startTime
+		startTime = startTime.Add(checkInterval)
+	}
+	loopTimer := time.NewTimer(time.Second)
+	k.mu.Lock()
+	leverage := int(k.settings.Leverage)
+	k.mu.Unlock()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-k.done:
+			return
+		case <-loopTimer.C:
+			for symbol, ch := range channels {
+				if time.Now().Sub(updateTimes[symbol]) > 0 {
+					status := common.SymbolStatusReady
+					ticker, err := k.api.GetTicker(ctx, TickerParam{
+						Symbol: symbol,
+					})
+					if err != nil {
+						logger.Debugf("%s k.api.GetTicker error %v", symbol,err)
+						status = common.SymbolStatusNotReady
+					} else {
+						size := LotSizes[symbol]
+						price := ticker.BestAskPrice * 1.05
+						price = math.Ceil(price/TickSizes[symbol]) * TickSizes[symbol]
+						_, err := k.api.SubmitOrder(ctx, NewOrderParam{
+							Symbol:      symbol,
+							Side:        OrderSideSell,
+							TimeInForce: OrderTimeInForceIOC,
+							Price:       common.Float64(price),
+							Size:        int64(size),
+							Leverage:    leverage,
+						})
+						if err != nil {
+							logger.Debugf("k.api.SubmitOrder error %v", err)
+							status = common.SymbolStatusNotReady
+						}
+					}
+					select {
+					case ch <- status:
+					default:
+						logger.Debugf("%s ch <- status failed, ch len %d", symbol, len(ch))
+					}
+					if time.Now().Sub(startTime) > 0 {
+						startTime = time.Now().Add(checkInterval)
+					}else{
+						startTime = startTime.Add(checkInterval)
+					}
+					updateTimes[symbol] = startTime.Add(checkInterval)
+				}
+			}
+			loopTimer.Reset(time.Second)
+		}
+	}
 }
 
 func (k *Kcperp) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
@@ -345,6 +407,33 @@ func (k *Kcperp) systemStatusLoop(
 	}
 }
 
+func (k *Kcperp) accountLoop(
+	ctx context.Context, output chan common.Account,
+) {
+	k.mu.Lock()
+	pullInterval := k.settings.PullInterval
+	k.mu.Unlock()
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			account, err := k.api.GetAccountOverView(subCtx, AccountParam{
+				Currency: "USDT",
+			})
+			if err != nil {
+				logger.Debugf("k.api.GetAccountOverView error %v", err)
+			} else {
+				output <- account
+			}
+			timer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
+		}
+	}
+}
+
 func (k *Kcperp) positionsLoop(
 	ctx context.Context,
 	outputChs map[string]chan common.Position,
@@ -455,7 +544,13 @@ func (k *Kcperp) submitOrder(ctx context.Context, param common.NewOrderParam, ti
 		newOrderParam.Price = common.Float64(math.Round(param.Price/tickSize) * tickSize)
 	}
 	newOrderParam.ClientOid = param.ClientID
-	_, err := k.api.SubmitOrder(ctx, newOrderParam)
+	k.mu.Lock()
+	newOrderParam.Leverage = int(k.settings.Leverage)
+	k.mu.Unlock()
+	str, _ := json.Marshal(newOrderParam)
+	logger.Debugf("k.api.SubmitOrder %s", str)
+	resp, err := k.api.SubmitOrder(ctx, newOrderParam)
+	logger.Debugf("k.api.SubmitOrder %v %v", resp, err)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{

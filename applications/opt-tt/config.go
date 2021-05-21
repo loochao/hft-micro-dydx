@@ -20,11 +20,7 @@ type Config struct {
 
 	LoopInterval          time.Duration `yaml:"loopInterval"`
 	LogInterval           time.Duration `yaml:"logInterval"`
-	PullInterval          time.Duration `yaml:"pullInterval"`
-	TradeOrderInterval    time.Duration `yaml:"requestInterval"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
-
-	XYPairs map[string]string `yaml:"xyPairs"`
 
 	EnterOffsetDelta        float64 `yaml:"enterOffsetDelta"`
 	LongEnterDelta          float64 `yaml:"longEnterDelta"`
@@ -50,7 +46,6 @@ type Config struct {
 	SpreadTimeToLive    time.Duration `yaml:"spreadTimeToLive"`
 	SpreadLookback      time.Duration `yaml:"spreadLookback"`
 
-	HedgeInstantly     bool          `yaml:"hedgeInstantly"`
 	HedgeCheckInterval time.Duration `yaml:"hedgeCheckInterval"`
 	HedgeTrackOffset   float64       `yaml:"hedgeTrackOffset"`
 
@@ -65,9 +60,10 @@ type Config struct {
 	OrderSilent   time.Duration `yaml:"orderSilent"`
 	CancelSilent  time.Duration `yaml:"cancelSilent"`
 	EnterSilent   time.Duration `yaml:"enterSilent"`
-	EnterDuration time.Duration `yaml:"enterDuration"`
 	RestartSilent time.Duration `yaml:"restartSilent"`
 	HttpSilent    time.Duration `yaml:"httpSilent"`
+
+	XYPairs map[string]string `yaml:"xyPairs"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -77,16 +73,9 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.LogInterval == 0 {
 		config.LoopInterval = time.Minute
 	}
-	if config.PullInterval == 0 {
-		config.PullInterval = time.Minute
-	}
-	if config.EnterDuration == 0 {
-		config.EnterDuration = time.Minute * 5
-	}
 	if config.BalancePositionMaxAge == 0 {
 		config.BalancePositionMaxAge = time.Minute * 3
 	}
-
 	if config.OrderTimeout == 0 {
 		config.OrderTimeout = time.Second * 5
 	}

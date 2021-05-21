@@ -1,136 +1,194 @@
 package main
 
 import (
-	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
-	"math/rand"
 	"time"
 )
 
-func updateTakerPositions() {
+func updateYPositions() {
 	unHedgedValue := 0.0
-	for _, takerSymbol := range ySymbols {
-		makerSymbol := yxSymbolsMap[takerSymbol]
-		if time.Now().Sub(yPositionsUpdateTimes[takerSymbol]) > xyConfig.BalancePositionMaxAge {
+	for _, ySymbol := range ySymbols {
+		xSymbol := yxSymbolsMap[ySymbol]
+		if time.Now().Sub(yPositionsUpdateTimes[ySymbol]) > xyConfig.BalancePositionMaxAge {
 			continue
 		}
-		if time.Now().Sub(xPositionsUpdateTimes[makerSymbol]) > xyConfig.BalancePositionMaxAge {
-			continue
-		}
-		if yOrderSilentTimes[takerSymbol].Sub(time.Now()).Seconds() > 0 {
+		if yOrderSilentTimes[ySymbol].Sub(time.Now()).Seconds() > 0 {
 			continue
 		}
 
-		makerPosition, okPosition := xPositions[makerSymbol]
-		takerPosition, okTakerBalance := yPositions[takerSymbol]
-		spread, okSpread := xySpreads[makerSymbol]
-		if !okPosition || !okTakerBalance || !okSpread {
+		yPosition, okYBalance := yPositions[ySymbol]
+		targetSize, okTargetSize := yTargetPositionSizes[ySymbol]
+		spread, okSpread := xySpreads[xSymbol]
+		if !okYBalance || !okSpread || !okTargetSize {
 			continue
 		}
-		takerTakerDepth := spread.TakerDepth
+		yDepth := spread.YDepth
 
-		takerStepSize := yStepSizes[takerSymbol]
-		takerMinNotional := yMinNotional[takerSymbol]
+		yStepSize := yStepSizes[ySymbol]
+		yMinNotional := yMinNotionals[ySymbol]
+		ySizeDiff := targetSize - yPosition.GetSize()
+		ySizeDiff = math.Round(ySizeDiff/yStepSize) * yStepSize
+		unHedgedValue += math.Abs(ySizeDiff * yDepth.MidPrice)
 
-		makerSize := makerPosition.GetSize()
-
-		takerSizeDiff := -makerSize - takerPosition.GetSize()
-		takerSizeDiff = math.Round(takerSizeDiff/takerStepSize) * takerStepSize
-		if takerSizeDiff > 0 {
-			unHedgedValue += math.Abs(takerSizeDiff * takerTakerDepth.TakerAsk)
-		} else {
-			unHedgedValue += math.Abs(takerSizeDiff * takerTakerDepth.TakerBid)
-		}
-
-		if math.Abs(takerSizeDiff) < takerStepSize {
+		if math.Abs(ySizeDiff) < yStepSize {
 			continue
-		} else if takerSizeDiff < 0 && takerPosition.GetSize() <= 0 && -takerSizeDiff*takerTakerDepth.TakerBid < takerMinNotional {
+		} else if ySizeDiff < 0 && yPosition.GetSize() <= 0 && -ySizeDiff*yDepth.BestBidPrice < yMinNotional {
 			continue
-		} else if takerSizeDiff > 0 && takerPosition.GetSize() >= 0 && takerSizeDiff*takerTakerDepth.TakerAsk < takerMinNotional {
+		} else if ySizeDiff > 0 && yPosition.GetSize() >= 0 && ySizeDiff*yDepth.BestAskPrice < yMinNotional {
 			continue
 		}
 
-		logger.Debugf("updateTakerPositions %s SIZE DIFF %f POS %f -> %f", takerSymbol, takerSizeDiff, takerPosition.GetSize(), -makerSize)
+		hedgeMarkPrice, okHedgeMarkPrice := yHedgeMarkPrices[ySymbol]
+		if xyEnterTradeOrders[xSymbol] == EnterTradeOrderXY && okHedgeMarkPrice {
+			if ySizeDiff < 0 && yDepth.BestBidPrice > hedgeMarkPrice*(1.0+xyConfig.EnterOffsetDelta) {
+				logger.Debugf("%s updateYPositions size %f push mark price %f -> %f", ySymbol, ySizeDiff, hedgeMarkPrice, yDepth.BestBidPrice)
+				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
+				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				yPositionsUpdateTimes[ySymbol] = time.Now()
+				continue
+			} else if ySizeDiff > 0 && yDepth.BestAskPrice < hedgeMarkPrice*(1.0-xyConfig.EnterOffsetDelta) {
+				logger.Debugf("%s updateYPositions size %f push mark price %f -> %f", ySymbol, ySizeDiff, hedgeMarkPrice, yDepth.BestAskPrice)
+				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
+				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				yPositionsUpdateTimes[ySymbol] = time.Now()
+				continue
+			}
+		}
+
+		logger.Debugf("updateYPositions %s size %f position %f -> %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize)
 
 		reduceOnly := false
-		if takerSizeDiff*takerPosition.GetSize() < 0 && math.Abs(takerSizeDiff) <= math.Abs(takerPosition.GetSize()) {
+		if ySizeDiff*yPosition.GetSize() < 0 && math.Abs(ySizeDiff) <= math.Abs(yPosition.GetSize()) {
 			reduceOnly = true
 		}
 		side := common.OrderSideBuy
-		if takerSizeDiff < 0 {
+		if ySizeDiff < 0 {
 			side = common.OrderSideSell
-			takerSizeDiff = -takerSizeDiff
+			ySizeDiff = -ySizeDiff
 		}
-		takerOrder := common.NewOrderParam{
-			Symbol:     takerSymbol,
+		yOrder := common.NewOrderParam{
+			Symbol:     ySymbol,
 			Side:       side,
 			Type:       common.OrderTypeMarket,
-			Size:       takerSizeDiff,
+			Size:       ySizeDiff,
 			ReduceOnly: reduceOnly,
 			ClientID:   yExchange.GenerateClientID(),
 		}
-		logger.Debugf("TAKER ORDER %v", takerOrder)
-
-		hedgeMarkPrice, okHedgeMarkPrice := yHedgeMarkPrices[takerSymbol]
-		if !xyConfig.HedgeInstantly && okHedgeMarkPrice {
-			if takerOrder.Side == common.OrderSideBuy &&
-				spread.TakerDir < 0 &&
-				spread.TakerDepth.BestAskPrice < hedgeMarkPrice*(1.0-xyConfig.HedgeTrackOffset) {
-				logger.Debugf(
-					"%s taker change size %f dir %f mark price %f -> %f",
-					takerSymbol, takerSizeDiff, spread.TakerDir,
-					hedgeMarkPrice, spread.TakerDepth.BestAskPrice,
-				)
-				yHedgeMarkPrices[takerSymbol] = spread.TakerDepth.BestAskPrice
-				yOrderSilentTimes[takerSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				xOrderSilentTimes[makerSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				yPositionsUpdateTimes[takerSymbol] = time.Now()
-				xPositionsUpdateTimes[takerSymbol] = time.Now()
-				continue
-			} else if takerOrder.Side == common.OrderSideSell &&
-				spread.TakerDir > 0 &&
-				spread.TakerDepth.BestBidPrice > hedgeMarkPrice*(1.0+xyConfig.HedgeTrackOffset) {
-				logger.Debugf(
-					"%s taker change size %f dir %f mark price %f -> %f",
-					takerSymbol, -takerSizeDiff, spread.TakerDir,
-					hedgeMarkPrice, spread.TakerDepth.BestAskPrice,
-				)
-				yHedgeMarkPrices[takerSymbol] = spread.TakerDepth.BestBidPrice
-				yOrderSilentTimes[takerSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				xOrderSilentTimes[makerSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				yPositionsUpdateTimes[takerSymbol] = time.Now()
-				xPositionsUpdateTimes[takerSymbol] = time.Now()
-				continue
-			}
-		}
-		xOrderSilentTimes[makerSymbol] = time.Now().Add(xyConfig.OrderSilent)
-		yOrderSilentTimes[takerSymbol] = time.Now().Add(xyConfig.OrderSilent)
-		yPositionsUpdateTimes[takerSymbol] = time.Unix(0, 0)
+		logger.Debugf("y order %v", yOrder)
 		if !xyConfig.DryRun {
-			yOrderRequestChMap[takerSymbol] <- common.OrderRequest{
-				New: &takerOrder,
+			select {
+			case yOrderRequestChMap[ySymbol] <- common.OrderRequest{
+				New: &yOrder,
+			}:
+				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.OrderSilent)
+				yPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
+				if okHedgeMarkPrice {
+					delete(yHedgeMarkPrices, ySymbol)
+				}
+			default:
+				logger.Debugf("yOrderRequestChMap[ySymbol] <- common.OrderRequest failed, ch len %d", len(yOrderRequestChMap[ySymbol]))
 			}
-		}
-		if okHedgeMarkPrice {
-			delete(yHedgeMarkPrices, takerSymbol)
 		}
 	}
 	xyUnHedgeValue = unHedgedValue
+}
+
+func updateXPositions() {
+	for _, xSymbol := range xSymbols {
+		if time.Now().Sub(xPositionsUpdateTimes[xSymbol]) > xyConfig.BalancePositionMaxAge {
+			continue
+		}
+		if xOrderSilentTimes[xSymbol].Sub(time.Now()).Seconds() > 0 {
+			continue
+		}
+		xPosition, okXBalance := xPositions[xSymbol]
+		xTargetSize, okXTargetSize := xTargetPositionSizes[xSymbol]
+		spread, okSpread := xySpreads[xSymbol]
+		if !okXBalance || !okSpread || !okXTargetSize {
+			continue
+		}
+		xDepth := spread.XDepth
+
+		xStepSize := xStepSizes[xSymbol]
+		xMinNotional := xMinNotionals[xSymbol]
+		xSizeDiff := xTargetSize - xPosition.GetSize()
+		xSizeDiff = math.Round(xSizeDiff/xStepSize) * xStepSize
+
+		if math.Abs(xSizeDiff) < xStepSize {
+			continue
+		} else if xSizeDiff < 0 && xPosition.GetSize() <= 0 && -xSizeDiff*xDepth.BestBidPrice < xMinNotional {
+			continue
+		} else if xSizeDiff > 0 && xPosition.GetSize() >= 0 && xSizeDiff*xDepth.BestAskPrice < xMinNotional {
+			continue
+		}
+
+		xHedgeMarkPrice, okXHedgeMarkPrice := xHedgeMarkPrices[xSymbol]
+		if xyEnterTradeOrders[xSymbol] == EnterTradeOrderYX && okXHedgeMarkPrice {
+			if xSizeDiff < 0 && xDepth.BestBidPrice > xHedgeMarkPrice*(1.0+xyConfig.EnterOffsetDelta) {
+				logger.Debugf("%s updateXPositions size %f push mark price %f -> %f", xSymbol, xSizeDiff, xHedgeMarkPrice, xDepth.BestBidPrice)
+				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
+				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				xPositionsUpdateTimes[xSymbol] = time.Now()
+				continue
+			} else if xSizeDiff > 0 && xDepth.BestAskPrice < xHedgeMarkPrice*(1.0-xyConfig.EnterOffsetDelta) {
+				logger.Debugf("%s updateXPositions size %f push mark price %f -> %f", xSymbol, xSizeDiff, xHedgeMarkPrice, xDepth.BestAskPrice)
+				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
+				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				xPositionsUpdateTimes[xSymbol] = time.Now()
+				continue
+			}
+		}
+
+		logger.Debugf("updateYPositions %s size %f position %f -> %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize)
+
+		reduceOnly := false
+		if xSizeDiff*xPosition.GetSize() < 0 && math.Abs(xSizeDiff) <= math.Abs(xPosition.GetSize()) {
+			reduceOnly = true
+		}
+		side := common.OrderSideBuy
+		if xSizeDiff < 0 {
+			side = common.OrderSideSell
+			xSizeDiff = -xSizeDiff
+		}
+		yOrder := common.NewOrderParam{
+			Symbol: xSymbol,
+			Side:   side,
+			Type:       common.OrderTypeMarket,
+			Size:       xSizeDiff,
+			ReduceOnly: reduceOnly,
+			ClientID:   xExchange.GenerateClientID(),
+		}
+		logger.Debugf("x order %v", yOrder)
+		if !xyConfig.DryRun {
+			select {
+			case xOrderRequestChMap[xSymbol] <- common.OrderRequest{
+				New: &yOrder,
+			}:
+				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.OrderSilent)
+				xPositionsUpdateTimes[xSymbol] = time.Unix(0, 0)
+				if okXHedgeMarkPrice {
+					delete(xHedgeMarkPrices, xSymbol)
+				}
+			default:
+				logger.Debugf("xOrderRequestChMap[xSymbol] <- common.OrderRequest %d failed, ch len %d", len(xOrderRequestChMap[xSymbol]))
+			}
+		}
+	}
 }
 
 func updateTargetPositionSizes() {
 
 	if xAccount == nil {
 		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			logger.Debugf("mACCOUNT not ready")
+			logger.Debugf("xACCOUNT not ready")
 		}
 		return
 	}
 	if yAccount == nil {
 		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			logger.Debugf("tACCOUNT not ready")
+			logger.Debugf("yACCOUNT not ready")
 		}
 		return
 	}
@@ -141,6 +199,7 @@ func updateTargetPositionSizes() {
 		if time.Now().Sub(xyTargetPositionUpdateSilentTimes[xSymbol]) < 0 {
 			continue
 		}
+		//其他时间以X为准
 		if xPosition, okXPosition := xPositions[xSymbol]; okXPosition {
 			xTargetPositionSizes[xSymbol] = xPosition.GetSize()
 			yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
@@ -156,7 +215,7 @@ func updateTargetPositionSizes() {
 
 	if xyUnHedgeValue > xyConfig.MaxUnHedgeValue {
 		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			logger.Debugf("taker unhedged value %f > %f", xyUnHedgeValue, xyConfig.MaxUnHedgeValue)
+			logger.Debugf("xyUnHedgeValue %f > xyConfig.MaxUnHedgeValue %f", xyUnHedgeValue, xyConfig.MaxUnHedgeValue)
 		}
 		return
 	}
@@ -168,7 +227,7 @@ func updateTargetPositionSizes() {
 	entryTarget := entryStep * xyConfig.EnterTargetFactor
 
 	//得是两个市场的最小可用资金, 以防有一边用完了钱, 开不了仓
-	makerUSDTAvailable := math.Min(xAccount.GetFree()*xyConfig.XExchange.Leverage, yAccount.GetFree()*xyConfig.YExchange.Leverage)
+	xyUSDTAvailable := math.Min(xAccount.GetFree()*xyConfig.XExchange.Leverage, yAccount.GetFree()*xyConfig.YExchange.Leverage)
 
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单, 优先做空
 	for _, rank := range xyDualEnds {
@@ -178,325 +237,339 @@ func updateTargetPositionSizes() {
 		spread, okSpread := xySpreads[xSymbol]
 		//需要保证两边都有仓位更新，才调整现货仓位
 		if time.Now().Sub(xPositionsUpdateTimes[xSymbol]) > xyConfig.BalancePositionMaxAge {
-			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			//	logger.Debugf("maker position too old %s", xSymbol)
-			//}
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("%s x position too old", xSymbol)
+			}
 			continue
 		}
 		if time.Now().Sub(yPositionsUpdateTimes[ySymbol]) > xyConfig.BalancePositionMaxAge {
-			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			//	logger.Debugf("taker position too old %s", xSymbol)
-			//}
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("%s y position too old", xSymbol)
+			}
 			continue
 		}
 		if time.Now().Sub(xyTargetPositionUpdateSilentTimes[xSymbol]) < 0 {
-			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			//	logger.Debugf("taker order silent %s", xSymbol)
-			//}
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("%s %s in target update silent", xSymbol, ySymbol)
+			}
 			continue
 		}
 		xPosition, okXPosition := xPositions[xSymbol]
 		yPosition, okYPosition := yPositions[ySymbol]
 		fundingRate, okFundingRate := xyFundingRates[xSymbol]
 		if !okSpread || !okXPosition || !okYPosition || !okFundingRate {
-			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			//	logger.Debugf("spread %v x position %v fundingRate %v %s", okSpread, okFundingRate, okXPosition, xSymbol)
-			//}
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("%s %s spread %v x position %v y position %v fundingRate %v", xSymbol, ySymbol, okSpread, okXPosition, okYPosition, okFundingRate)
+			}
 			continue
 		}
 
 		if time.Now().Sub(spread.Time) > xyConfig.SpreadTimeToLive {
-			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			//	logger.Debugf("spread too old %s %v", xSymbol, spread.Time)
-			//}
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("%s %s spread too old %v", xSymbol, ySymbol, spread.Time)
+			}
 			continue
 		}
 		xDepth := spread.XDepth
 		yDepth := spread.YDepth
 		xStepSize := xStepSizes[xSymbol]
-		yStepSize := yStepSizes[ySymbol]
+		xMinNotional := xMinNotionals[xSymbol]
+		yMinNotional := yMinNotionals[ySymbol]
 
 		xyStepSize := xyStepSizes[xSymbol]
-		xValue := xPosition.GetSize() * xPosition.GetPrice()
-		yValue := yPosition.GetSize() * yPosition.GetPrice()
-		offsetFactor := (math.Abs(xValue) + math.Abs(yValue)) / entryTarget
+		xValue := math.Abs(xPosition.GetSize()) * xPosition.GetPrice()
+		yValue := math.Abs(yPosition.GetSize()) * yPosition.GetPrice()
+		offsetFactor := (xValue + yValue) * 0.5 / entryTarget
 		shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
 		shortBot := xyConfig.ShortExitDelta
 		longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
 		longTop := xyConfig.LongExitDelta
 
+		xSize := xPosition.GetSize()
+		midPrice := (xDepth.MidPrice + yDepth.MidPrice) * 0.5
+
+		xyMergedDirs[xSymbol] = spread.XDir*xyConfig.XYDirRatio + spread.YDir*(1.0-xyConfig.XYDirRatio)
+
 		if spread.ShortLastLeave < shortBot &&
 			spread.ShortMedianLeave < shortBot &&
 			fundingRate < xyConfig.MinimalKeepFundingRate &&
-			xPosition.GetSize() >= xStepSize {
+			xSize >= xStepSize {
 
-			makerSize := xPosition.GetSize()
-			price := math.Ceil(xDepth.MakerAsk*(1.0+offset.Top)/makerTickSize) * makerTickSize
-			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
+			entryValue := math.Min(4*entryStep, math.Min(xValue, yValue))
 			if fundingRate > xyConfig.MinimalKeepFundingRate*0.5 {
-				entryValue = math.Max(2*entryStep, makerSize*price*0.5)
+				entryValue = math.Min(2*entryStep, math.Min(xValue, yValue))
 			}
-			size := entryValue / price
+			size := entryValue / midPrice
 			size = math.Round(size/xyStepSize) * xyStepSize
-			entryValue = size * price
-			if makerSize*price-entryValue < entryStep {
+			entryValue = size * midPrice
+			if xValue-entryValue < entryStep {
 				size = xPosition.GetSize()
 			}
-			if size > 0 {
-				logger.Debugf(
-					"SHORT BOT REDUCE %s %f < %f, %f < %f, SIZE %f PRICE %f",
-					xSymbol,
-					spread.ShortLastLeave, shortBot,
-					spread.ShortMedianLeave, shortBot,
-					size, price,
-				)
-
-				order := common.NewOrderParam{
-					Symbol:      xSymbol,
-					Side:        common.OrderSideSell,
-					Type:        common.OrderTypeLimit,
-					Price:       price,
-					TimeInForce: common.OrderTimeInForceGTC,
-					Size:        size,
-					PostOnly:    true,
-					ReduceOnly:  true,
-					ClientID:    xExchange.GenerateClientID(),
-				}
-				xOpenOrders[xSymbol] = order
-				xOrderSilentTimes[xSymbol] = time.Now()
-				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.OrderSilent)
-				if !xyConfig.DryRun {
-					xOrderRequestChMap[xSymbol] <- common.OrderRequest{New: &order}
-				}
-				return
+			if yValue-entryValue < entryStep {
+				size = xPosition.GetSize()
 			}
+			//谁小以谁为准
+			if xValue <= yValue {
+				xTargetPositionSizes[xSymbol] -= size
+				if xTargetPositionSizes[xSymbol] < 0 {
+					xTargetPositionSizes[xSymbol] = 0
+				}
+				yTargetPositionSizes[ySymbol] = -xTargetPositionSizes[xSymbol]
+			} else {
+				yTargetPositionSizes[ySymbol] += size
+				if yTargetPositionSizes[ySymbol] > 0 {
+					yTargetPositionSizes[ySymbol] = 0
+				}
+				xTargetPositionSizes[xSymbol] = -yTargetPositionSizes[ySymbol]
+			}
+			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
+
+			logger.Debugf(
+				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f",
+				xSymbol, ySymbol,
+				spread.ShortLastLeave, shortTop,
+				spread.ShortMedianLeave, shortTop,
+				size,
+			)
+
+			if xyMergedDirs[xSymbol] < 0 {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
+				xOrderSilentTimes[xSymbol] = time.Now()
+				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
+				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
+			} else if xyMergedDirs[xSymbol] > 0 {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
+				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
+				yOrderSilentTimes[ySymbol] = time.Now()
+				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
+			} else {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderUnknown
+				xOrderSilentTimes[xSymbol] = time.Now()
+				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
+				yOrderSilentTimes[ySymbol] = time.Now()
+				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
+			}
+
 		} else if spread.LongLastLeave > longTop &&
 			spread.LongMedianLeave > longTop &&
 			fundingRate > -xyConfig.MinimalKeepFundingRate &&
-			xPosition.GetSize() < 0 {
+			xSize <= -xStepSize {
 
-			makerSize := -xPosition.GetSize()
-			price := math.Floor(xDepth.MakerBid*(1.0+offset.Bot)/makerTickSize) * makerTickSize
-			entryValue := math.Max(4*entryStep, makerSize*price*0.5)
-			if fundingRate < -xyConfig.MinimalKeepFundingRate/2 {
-				entryValue = math.Max(2*entryStep, makerSize*price*0.5)
+			entryValue := math.Min(4*entryStep, math.Min(xValue, yValue))
+			if fundingRate < -xyConfig.MinimalKeepFundingRate*0.5 {
+				entryValue = math.Min(2*entryStep, math.Min(xValue, yValue))
 			}
-			size := entryValue / price
+			size := entryValue / midPrice
 			size = math.Round(size/xyStepSize) * xyStepSize
-			if makerSize*price-entryValue < entryStep {
-				size = -xPosition.GetSize()
+			entryValue = size * midPrice
+			if xValue-entryValue < entryStep {
+				size = xPosition.GetSize()
 			}
-			if size > 0 {
-				logger.Debugf(
-					"LONG TOP REDUCE %s %f > %f, %f > %f, SIZE %f PRICE %f",
-					xSymbol,
-					spread.LongLastLeave, longTop,
-					spread.LongMedianLeave, longTop,
-					size, price,
-				)
-				order := common.NewOrderParam{
-					Symbol:      xSymbol,
-					Side:        common.OrderSideBuy,
-					Type:        common.OrderTypeLimit,
-					Price:       price,
-					TimeInForce: common.OrderTimeInForceGTC,
-					Size:        size,
-					PostOnly:    true,
-					ReduceOnly:  true,
-					ClientID:    xExchange.GenerateClientID(),
+			if yValue-entryValue < entryStep {
+				size = xPosition.GetSize()
+			}
+			//谁小以谁为准
+			if xValue <= yValue {
+				xTargetPositionSizes[xSymbol] += size
+				if xTargetPositionSizes[xSymbol] > 0 {
+					xTargetPositionSizes[xSymbol] = 0
 				}
-				xOpenOrders[xSymbol] = order
+				yTargetPositionSizes[ySymbol] = -xTargetPositionSizes[xSymbol]
+			} else {
+				yTargetPositionSizes[ySymbol] -= size
+				if yTargetPositionSizes[ySymbol] < 0 {
+					yTargetPositionSizes[ySymbol] = 0
+				}
+				xTargetPositionSizes[xSymbol] = -yTargetPositionSizes[ySymbol]
+			}
+			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
+			xyMergedDirs[xSymbol] = spread.XDir*xyConfig.XYDirRatio + spread.YDir*(1.0-xyConfig.XYDirRatio)
+
+			logger.Debugf(
+				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f",
+				xSymbol, ySymbol,
+				spread.LongLastLeave, longTop,
+				spread.LongMedianLeave, longTop,
+				size,
+			)
+
+			if xyMergedDirs[xSymbol] < 0 {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
+				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
+				yOrderSilentTimes[ySymbol] = time.Now()
+				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
+			} else if xyMergedDirs[xSymbol] > 0 {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
 				xOrderSilentTimes[xSymbol] = time.Now()
-				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.OrderSilent)
-				if !xyConfig.DryRun {
-					xOrderRequestChMap[xSymbol] <- common.OrderRequest{New: &order}
-				}
-				return
+				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
+				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
+			} else {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderUnknown
+				xOrderSilentTimes[xSymbol] = time.Now()
+				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
+				yOrderSilentTimes[ySymbol] = time.Now()
+				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
 			}
 		} else if spread.ShortLastEnter > shortTop &&
 			spread.ShortMedianEnter > shortTop &&
-			delta.ShortTop-delta.ShortBot > xyConfig.BasicLongEnterDelta &&
 			fundingRate > xyConfig.MinimalEnterFundingRate &&
-			xPosition.GetSize() >= 0 {
-			makerSize := xPosition.GetSize()
-			price := math.Floor(xDepth.MakerBid*(1.0+offset.Bot)/makerTickSize) * makerTickSize
-			targetValue := makerSize*price + entryStep
+			xSize >= 0 {
+
+			targetValue := math.Max(xValue, yValue) + entryStep
 			if targetValue > entryTarget {
 				targetValue = entryTarget
 			}
-			entryValue := targetValue - makerSize*price
-			if entryValue > makerUSDTAvailable*0.8 {
-				entryValue = makerUSDTAvailable * 0.8
-			}
-			size := entryValue / price
+			entryValue := targetValue - math.Max(xValue, yValue)
+			size := entryValue / midPrice
 			size = math.Round(size/xyStepSize) * xyStepSize
+			entryValue = size * midPrice
 
-			entryValue = size * price
-
-			////不及一个0.8*EntryStep, 不操作
-			//if entryValue < entryStep*0.8 {
-			//	if time.Now().Sub(xyLogSilentTimes[xSymbol]) > 0 {
-			//		logger.Debugf(
-			//			"FAILED SHORT TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f PRICE %f",
-			//			entryValue,
-			//			entryStep*0.8,
-			//			xSymbol,
-			//			spread.ShortLastEnter, shortTop,
-			//			spread.ShortMedianEnter, shortTop,
-			//			size, price,
-			//		)
-			//		xyLogSilentTimes[xSymbol] = time.Now().Add(*xyConfig.LogInterval)
-			//	}
-			//	continue
-			//}
-			if entryValue > makerUSDTAvailable {
-				if time.Now().Sub(xyLogSilentTimes[xSymbol]) > 0 {
+			if entryValue > xyUSDTAvailable {
+				if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
 					logger.Debugf(
-						"FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f > %f, %f > %f, SIZE %f PRICE %f",
-						entryValue,
-						makerUSDTAvailable,
+						"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN xyUSDTAvailable %f, %f > %f, %f > %f, SIZE %f",
 						xSymbol,
+						ySymbol,
+						entryValue,
+						xyUSDTAvailable,
 						spread.ShortLastEnter, shortTop,
 						spread.ShortMedianEnter, shortTop,
-						size, price,
+						size,
+					)
+				}
+				continue
+			}
+			if entryValue < yMinNotional || entryValue < xMinNotional || entryValue == 0 {
+				if time.Now().Sub(xyLogSilentTimes[xSymbol]) > 0 {
+					logger.Debugf(
+						"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
+						xSymbol, ySymbol,
+						entryValue,
+						spread.ShortLastEnter, shortTop,
+						spread.ShortMedianEnter, shortTop,
+						size,
 					)
 					xyLogSilentTimes[xSymbol] = time.Now().Add(xyConfig.LogInterval)
 				}
 				continue
 			}
-			if entryValue < takerMinNotional {
-				if time.Now().Sub(xyLogSilentTimes[xSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED SHORT TOP OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f > %f, %f > %f, SIZE %f PRICE %f",
-						entryValue,
-						takerMinNotional,
-						xSymbol,
-						spread.ShortLastEnter, shortTop,
-						spread.ShortMedianEnter, shortTop,
-						size, price,
-					)
-					xyLogSilentTimes[xSymbol] = time.Now().Add(xyConfig.LogInterval)
-				}
-				continue
-			}
-			xyLogSilentTimes[xSymbol] = time.Now()
 			logger.Debugf(
-				"SHORT TOP OPEN %s %f > %f, %f > %f, SIZE %f PRICE %f",
-				xSymbol,
+				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f",
+				xSymbol, ySymbol,
 				spread.ShortLastEnter, shortTop,
 				spread.ShortMedianEnter, shortTop,
-				size, price,
+				size,
 			)
-			makerUSDTAvailable -= entryValue
-			order := common.NewOrderParam{
-				Symbol:      xSymbol,
-				Side:        common.OrderSideBuy,
-				Type:        common.OrderTypeLimit,
-				Price:       price,
-				TimeInForce: common.OrderTimeInForceGTC,
-				Size:        size,
-				PostOnly:    true,
-				ReduceOnly:  false,
-				ClientID:    xExchange.GenerateClientID(),
+			//谁大以谁为准
+			if xValue >= yValue {
+				xTargetPositionSizes[xSymbol] += size
+				yTargetPositionSizes[ySymbol] = -xTargetPositionSizes[xSymbol]
+			} else {
+				yTargetPositionSizes[ySymbol] -= size
+				xTargetPositionSizes[xSymbol] = -yTargetPositionSizes[ySymbol]
 			}
-			xOpenOrders[xSymbol] = order
-			xOrderSilentTimes[xSymbol] = time.Now()
-			xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.OrderSilent)
-			if !xyConfig.DryRun {
-				xOrderRequestChMap[xSymbol] <- common.OrderRequest{New: &order}
+			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
+			xyUSDTAvailable -= entryValue
+			if xyMergedDirs[xSymbol] < 0 {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
+				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
+				yOrderSilentTimes[ySymbol] = time.Now()
+				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
+			} else if xyMergedDirs[xSymbol] > 0 {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
+				xOrderSilentTimes[xSymbol] = time.Now()
+				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
+				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
+			} else {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderUnknown
+				xOrderSilentTimes[xSymbol] = time.Now()
+				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
+				yOrderSilentTimes[ySymbol] = time.Now()
+				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
 			}
 		} else if spread.LongLastEnter < longBot &&
 			spread.LongMedianEnter < longBot &&
-			delta.LongTop-delta.LongBot > xyConfig.BasicLongEnterDelta &&
 			fundingRate < -xyConfig.MinimalEnterFundingRate &&
-			xPosition.GetSize() <= 0 {
+			xSize <= 0 {
 
-			makerSize := -xPosition.GetSize()
-			price := math.Ceil(xDepth.MakerAsk*(1.0+offset.Top)/makerTickSize) * makerTickSize
-			targetValue := makerSize*price + entryStep
+			targetValue := math.Max(xValue, yValue) + entryStep
 			if targetValue > entryTarget {
 				targetValue = entryTarget
 			}
-			entryValue := targetValue - makerSize*price
-			if entryValue > makerUSDTAvailable*0.8 {
-				entryValue = makerUSDTAvailable * 0.8
-			}
-			size := entryValue / price
+			entryValue := targetValue - math.Max(xValue, yValue)
+			size := entryValue / midPrice
 			size = math.Round(size/xyStepSize) * xyStepSize
-
-			entryValue = size * price
-
-			//不及一个0.8*EntryStep, 不操作
-			//if entryValue < entryStep*0.8 {
-			//	if time.Now().Sub(xyLogSilentTimes[xSymbol]) > 0 {
-			//		logger.Debugf(
-			//			"FAILED LONG BOT OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f < %f, %f < %f, SIZE %f",
-			//			entryValue,
-			//			entryStep*0.8,
-			//			xSymbol,
-			//			spread.LongLastEnter, ongBot,
-			//			spread.LongMedianEnter, quantile.LongBot,
-			//			size,
-			//		)
-			//		xyLogSilentTimes[xSymbol] = time.Now().Add(*xyConfig.LogInterval)
-			//	}
-			//	continue
-			//}
-			if entryValue > makerUSDTAvailable {
+			entryValue = size * midPrice
+			if entryValue > xyUSDTAvailable {
+				if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+					logger.Debugf(
+						"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN xyUSDTAvailable %f, %f < %f, %f < %f, SIZE %f",
+						xSymbol,
+						ySymbol,
+						entryValue,
+						xyUSDTAvailable,
+						spread.LongLastEnter, longTop,
+						spread.LongMedianEnter, longTop,
+						size,
+					)
+				}
+				continue
+			}
+			if entryValue < yMinNotional || entryValue < xMinNotional || entryValue == 0 {
 				if time.Now().Sub(xyLogSilentTimes[xSymbol]) > 0 {
 					logger.Debugf(
-						"FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN WithdrawAvailable %f, %s %f < %f, %f < %f, SIZE %f PRICE %f",
+						"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
+						xSymbol, ySymbol,
 						entryValue,
-						makerUSDTAvailable,
-						xSymbol,
-						spread.LongLastEnter, longBot,
-						spread.LongMedianEnter, longBot,
-						size, price,
+						spread.LongLastEnter, longTop,
+						spread.LongMedianEnter, longTop,
+						size,
 					)
 					xyLogSilentTimes[xSymbol] = time.Now().Add(xyConfig.LogInterval)
 				}
 				continue
 			}
-			if entryValue < takerMinNotional {
-				if time.Now().Sub(xyLogSilentTimes[xSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED LONG BOT OPEN, ORDER VALUE %f LESS THAN NOTIONAL %f, %s %f < %f, %f < %f, SIZE %f PRICE %f",
-						entryValue,
-						takerMinNotional,
-						xSymbol,
-						spread.LongLastEnter, longBot,
-						spread.LongMedianEnter, longBot,
-						size, price,
-					)
-					xyLogSilentTimes[xSymbol] = time.Now().Add(xyConfig.LogInterval)
-				}
-				continue
-			}
-			xyLogSilentTimes[xSymbol] = time.Now()
 			logger.Debugf(
-				"LONG BOT OPEN %s %f < %f, %f < %f, SIZE %f PRICE %f",
-				xSymbol,
+				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f",
+				xSymbol, ySymbol,
 				spread.LongLastEnter, longBot,
 				spread.LongMedianEnter, longBot,
-				size, price,
+				size,
 			)
-			makerUSDTAvailable -= entryValue
-			order := common.NewOrderParam{
-				Symbol:      xSymbol,
-				Side:        common.OrderSideSell,
-				Type:        common.OrderTypeLimit,
-				Price:       price,
-				TimeInForce: common.OrderTimeInForceGTC,
-				Size:        size,
-				PostOnly:    true,
-				ReduceOnly:  false,
-				ClientID:    fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+			//谁大以谁为准
+			if xValue >= yValue {
+				xTargetPositionSizes[xSymbol] -= size
+				yTargetPositionSizes[ySymbol] = -xTargetPositionSizes[xSymbol]
+			} else {
+				yTargetPositionSizes[ySymbol] += size
+				xTargetPositionSizes[xSymbol] = -yTargetPositionSizes[ySymbol]
 			}
-			xOpenOrders[xSymbol] = order
-			xOrderSilentTimes[xSymbol] = time.Now()
-			xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.OrderSilent)
-			if !xyConfig.DryRun {
-				xOrderRequestChMap[xSymbol] <- common.OrderRequest{New: &order}
+			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
+			xyUSDTAvailable -= entryValue
+			if xyMergedDirs[xSymbol] < 0 {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
+				xOrderSilentTimes[xSymbol] = time.Now()
+				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
+				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
+			} else if xyMergedDirs[xSymbol] > 0 {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
+				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
+				yOrderSilentTimes[ySymbol] = time.Now()
+				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
+			} else {
+				xyEnterTradeOrders[xSymbol] = EnterTradeOrderUnknown
+				xOrderSilentTimes[xSymbol] = time.Now()
+				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
+				yOrderSilentTimes[ySymbol] = time.Now()
+				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
 			}
 		}
 	}

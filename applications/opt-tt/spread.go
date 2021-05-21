@@ -10,89 +10,81 @@ import (
 
 func watchXYSpread(
 	ctx context.Context,
-	makerSymbol, takerSymbol string,
+	xSymbol, ySymbol string,
 	makerImpact, takerImpact float64,
-	makerDecay float64,
-	makerBias time.Duration,
-	takerDecay float64,
-	takerBias time.Duration,
+	xDecay float64,
+	xBias time.Duration,
+	yDecay float64,
+	yBias time.Duration,
 	minTimeDelta, maxTimeDelta time.Duration,
 	maxAgeDiffBias time.Duration,
 	reportCount int,
 	spreadLookback time.Duration,
 	depthDirLookback time.Duration,
 	makerDepthCh, takerDepthCh chan common.Depth,
-	reportCh chan common.SpreadReport,
-	outputCh chan *common.MakerTakerSpread,
+	reportCh chan SpreadReport,
+	outputCh chan *XYSpread,
 ) {
 	var err error
-	var makerDepth, newMakerDepth common.Depth
-	var takerDepth, newTakerDepth common.Depth
-	var makerWalkedDepth, takerWalkedDepth *common.WalkedMakerTakerDepth
+	var xDepth, newXDepth common.Depth
+	var yDepth, newYDepth common.Depth
+	var xWalkedDepth, yWalkedDepth *common.WalkedMakerTakerDepth
 	var spreadTime time.Time
 	var adjustedAgeDiff time.Duration
-	var makerBiasInMs = float64(makerBias / time.Millisecond)
-	var takerBiasInMs = float64(takerBias / time.Millisecond)
+	var xBiasInMs = float64(xBias / time.Millisecond)
+	var yBiasInMs = float64(yBias / time.Millisecond)
 	var minTimeDeltaInMs = float64(minTimeDelta / time.Millisecond)
 	var maxTimeDeltaInMs = float64(maxTimeDelta / time.Millisecond)
-	//var maxAgeDiff = makerTakerBias
-	var makerDepthFilter = common.NewDepthFilter(makerDecay, makerBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
-	var takerDepthFilter = common.NewDepthFilter(takerDecay, takerBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
+	var xDepthFilter = common.NewDepthFilter(xDecay, xBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
+	var yDepthFilter = common.NewDepthFilter(yDecay, yBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
 
 	logSilentTime := time.Now()
 	walkSpreadTimer := time.NewTimer(time.Hour * 999)
-	makerWalkDepthTimer := time.NewTimer(time.Hour * 999)
-	takerWalkDepthTimer := time.NewTimer(time.Hour * 999)
+	xWalkDepthTimer := time.NewTimer(time.Hour * 999)
+	yWalkDepthTimer := time.NewTimer(time.Hour * 999)
 
 	shortEnterTimedMedian := common.NewTimedMedian(spreadLookback)
 	longEnterTimedMedian := common.NewTimedMedian(spreadLookback)
 
-	takerDepthDirMedian := common.NewTimedMean(depthDirLookback)
-	makerDepthDirMedian := common.NewTimedMean(depthDirLookback)
+	yDepthDirMedian := common.NewTimedMean(depthDirLookback)
+	xDepthDirMedian := common.NewTimedMean(depthDirLookback)
 
 	expectedChanSendingTime := time.Nanosecond * 300
 	matchCount := 0
 	depthCount := 0
-	makerExpireCount := 0
-	takerExpireCount := 0
+	xExpireCount := 0
+	yExpireCount := 0
 	var shortLastEnter, longLastEnter float64
-	var lastTakerBidAsk, currentTakerBidAsk float64
-	var lastMakerBidAsk, currentMakerBidAsk float64
+	var lastYBidAsk, currentYBidAsk float64
+	var lastXBidAsk, currentXBidAsk float64
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-walkSpreadTimer.C:
-			if makerWalkedDepth == nil || takerWalkedDepth == nil {
+			if xWalkedDepth == nil || yWalkedDepth == nil {
 				break
 			}
 			//需要用ema time delta 对age diff进行修正
-			adjustedAgeDiff = makerWalkedDepth.Time.Sub(takerWalkedDepth.Time) + time.Duration(makerDepthFilter.TimeDeltaEma-takerDepthFilter.TimeDeltaEma)*time.Millisecond
+			adjustedAgeDiff = xWalkedDepth.Time.Sub(yWalkedDepth.Time) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
 			//取新一点的时间为spread time
-			if makerWalkedDepth.Time.Sub(takerWalkedDepth.Time) < 0 {
+			if xWalkedDepth.Time.Sub(yWalkedDepth.Time) < 0 {
 				//需要对时间进行补偿
-				spreadTime = takerWalkedDepth.Time.Add(time.Millisecond * time.Duration(takerDepthFilter.TimeDeltaEma))
+				spreadTime = yWalkedDepth.Time.Add(time.Millisecond * time.Duration(yDepthFilter.TimeDeltaEma))
 			} else {
 				//需要对时间进行补偿
-				spreadTime = makerWalkedDepth.Time.Add(time.Millisecond * time.Duration(makerDepthFilter.TimeDeltaEma))
+				spreadTime = xWalkedDepth.Time.Add(time.Millisecond * time.Duration(xDepthFilter.TimeDeltaEma))
 			}
 			if adjustedAgeDiff > maxAgeDiffBias {
-				//logger.Debugf("adjustedAgeDiff %v maxAgeDiffBias %v failed, taker expire", adjustedAgeDiff, maxAgeDiffBias)
-				takerExpireCount++
+				yExpireCount++
 				break
 			} else if adjustedAgeDiff < -maxAgeDiffBias {
-				//logger.Debugf("adjustedAgeDiff %v maxAgeDiffBias %v failed, maker expire mema %f %f tema %f",
-				//	adjustedAgeDiff, maxAgeDiffBias,
-				//	makerDepthFilter.TimeDelta,
-				//	makerDepthFilter.TimeDeltaEma,
-				//	takerDepthFilter.TimeDeltaEma,
-				//)
-				makerExpireCount++
+				xExpireCount++
 				break
 			}
 			matchCount++
-			shortLastEnter = (takerWalkedDepth.TakerBid - makerWalkedDepth.MakerBid) / makerWalkedDepth.MakerBid
-			longLastEnter = (takerWalkedDepth.TakerAsk - makerWalkedDepth.MakerAsk) / makerWalkedDepth.MakerAsk
+			shortLastEnter = (yWalkedDepth.TakerBid - xWalkedDepth.TakerAsk) / xWalkedDepth.TakerAsk
+			longLastEnter = (yWalkedDepth.TakerAsk - xWalkedDepth.TakerBid) / xWalkedDepth.TakerBid
 
 			shortEnterTimedMedian.Insert(spreadTime, shortLastEnter)
 			longEnterTimedMedian.Insert(spreadTime, longLastEnter)
@@ -106,11 +98,11 @@ func watchXYSpread(
 
 			select {
 			case <-ctx.Done():
-			case outputCh <- &common.MakerTakerSpread{
-				TakerSymbol: takerSymbol,
-				MakerSymbol: makerSymbol,
-				TakerDepth:  *takerWalkedDepth,
-				MakerDepth:  *makerWalkedDepth,
+			case outputCh <- &XYSpread{
+				YSymbol: ySymbol,
+				XSymbol: xSymbol,
+				YDepth:  *yWalkedDepth,
+				XDepth:  *xWalkedDepth,
 
 				ShortLastEnter:   shortLastEnter,
 				ShortLastLeave:   longLastEnter,
@@ -122,25 +114,25 @@ func watchXYSpread(
 				LongMedianEnter: longEnterTimedMedian.Median(),
 				LongMedianLeave: shortEnterTimedMedian.Median(),
 
-				MakerDir: makerDepthDirMedian.Mean(),
-				TakerDir: takerDepthDirMedian.Mean(),
+				XDir: xDepthDirMedian.Mean(),
+				YDir: yDepthDirMedian.Mean(),
 
 				AgeDiff: adjustedAgeDiff,
 				Time:    spreadTime,
 			}:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("outputCh <- &common.MakerTakerSpread %s-%s len(outputCh) %d", makerSymbol, takerSymbol, len(outputCh))
+					logger.Debugf("outputCh <- &common.MakerTakerSpread %s-%s len(outputCh) %d", xSymbol, ySymbol, len(outputCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
 			break
-		case <-makerWalkDepthTimer.C:
-			if makerDepth != nil {
-				makerWalkedDepth, err = common.WalkMakerTakerDepth20(makerDepth, makerImpact, takerImpact)
+		case <-xWalkDepthTimer.C:
+			if xDepth != nil {
+				xWalkedDepth, err = common.WalkMakerTakerDepth20(xDepth, makerImpact, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("maker common.WalkMakerTakerDepth20 error %v %s", err, makerSymbol)
+						logger.Debugf("maker common.WalkMakerTakerDepth20 error %v %s", err, xSymbol)
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 					break
@@ -148,12 +140,12 @@ func watchXYSpread(
 				walkSpreadTimer.Reset(time.Nanosecond)
 			}
 			break
-		case <-takerWalkDepthTimer.C:
-			if takerDepth != nil {
-				takerWalkedDepth, err = common.WalkMakerTakerDepth20(takerDepth, makerImpact, takerImpact)
+		case <-yWalkDepthTimer.C:
+			if yDepth != nil {
+				yWalkedDepth, err = common.WalkMakerTakerDepth20(yDepth, makerImpact, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("taker common.WalkMakerTakerDepth5 error %v %s", err, takerSymbol)
+						logger.Debugf("taker common.WalkMakerTakerDepth5 error %v %s", err, ySymbol)
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 					break
@@ -162,105 +154,105 @@ func watchXYSpread(
 			}
 			break
 
-		case newMakerDepth = <-makerDepthCh:
-			if makerDepth != nil && makerDepth.GetTime().Sub(newMakerDepth.GetTime()) >= 0 {
+		case newXDepth = <-makerDepthCh:
+			if xDepth != nil && xDepth.GetTime().Sub(newXDepth.GetTime()) >= 0 {
 				break
 			}
-			currentMakerBidAsk = newMakerDepth.GetBids()[0][0] + newMakerDepth.GetAsks()[0][0]
-			if lastMakerBidAsk != 0 {
-				makerDepthDirMedian.Insert(newMakerDepth.GetTime(), currentMakerBidAsk - lastMakerBidAsk)
+			currentXBidAsk = newXDepth.GetBids()[0][0] + newXDepth.GetAsks()[0][0]
+			if lastXBidAsk != 0 {
+				xDepthDirMedian.Insert(newXDepth.GetTime(), (currentXBidAsk-lastXBidAsk)/lastXBidAsk)
 			}
-			lastMakerBidAsk = currentMakerBidAsk
-			makerDepth = newMakerDepth
-			if !makerDepthFilter.Filter(makerDepth) && takerDepth != nil {
-				adjustedAgeDiff = makerDepth.GetTime().Sub(takerDepth.GetTime()) + time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma-takerDepthFilter.TimeDeltaEma))*time.Millisecond
+			lastXBidAsk = currentXBidAsk
+			xDepth = newXDepth
+			if !xDepthFilter.Filter(xDepth) && yDepth != nil {
+				adjustedAgeDiff = xDepth.GetTime().Sub(yDepth.GetTime()) + time.Duration(math.Abs(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma))*time.Millisecond
 				if adjustedAgeDiff > maxAgeDiffBias {
 					//taker已经过期
-					takerExpireCount++
+					yExpireCount++
 				}
 				if adjustedAgeDiff < -maxAgeDiffBias {
 					//maker已经过期
-					makerExpireCount++
+					xExpireCount++
 				} else {
-					makerWalkDepthTimer.Reset(expectedChanSendingTime)
+					xWalkDepthTimer.Reset(expectedChanSendingTime)
 				}
 			}
 			depthCount++
 			if depthCount > reportCount {
-				makerDepthFilter.GenerateReport()
-				takerDepthFilter.GenerateReport()
+				xDepthFilter.GenerateReport()
+				yDepthFilter.GenerateReport()
 				select {
-				case reportCh <- common.SpreadReport{
-					AdjustedAgeDiff:       adjustedAgeDiff,
-					MatchRatio:            float64(matchCount) / float64(depthCount),
-					MakerSymbol:           makerSymbol,
-					TakerSymbol:           takerSymbol,
-					MakerTimeDeltaEma:     makerDepthFilter.TimeDeltaEma,
-					TakerTimeDeltaEma:     takerDepthFilter.TimeDeltaEma,
-					MakerTimeDelta:        makerDepthFilter.TimeDelta,
-					TakerTimeDelta:        takerDepthFilter.TimeDelta,
-					MakerDepthFilterRatio: makerDepthFilter.Report.FilterRatio,
-					TakerDepthFilterRatio: takerDepthFilter.Report.FilterRatio,
-					MakerExpireRatio:      float64(makerExpireCount) / float64(depthCount),
-					TakerExpireRatio:      float64(takerExpireCount) / float64(depthCount),
+				case reportCh <- SpreadReport{
+					AdjustedAgeDiff:   adjustedAgeDiff,
+					MatchRatio:        float64(matchCount) / float64(depthCount),
+					XSymbol:           xSymbol,
+					YSymbol:           ySymbol,
+					XTimeDeltaEma:     xDepthFilter.TimeDeltaEma,
+					YTimeDeltaEma:     yDepthFilter.TimeDeltaEma,
+					XTimeDelta:        xDepthFilter.TimeDelta,
+					YTimeDelta:        yDepthFilter.TimeDelta,
+					XDepthFilterRatio: xDepthFilter.Report.FilterRatio,
+					YDepthFilterRatio: yDepthFilter.Report.FilterRatio,
+					XExpireRatio:      float64(xExpireCount) / float64(depthCount),
+					YExpireRatio:      float64(yExpireCount) / float64(depthCount),
 				}:
 				default:
 				}
 				matchCount = 0
 				depthCount = 0
-				takerExpireCount = 0
-				makerExpireCount = 0
+				yExpireCount = 0
+				xExpireCount = 0
 			}
 			break
-		case newTakerDepth = <-takerDepthCh:
-			if takerDepth != nil &&
-				takerDepth.GetTime().Sub(newTakerDepth.GetTime()) >= 0 {
+		case newYDepth = <-takerDepthCh:
+			if yDepth != nil &&
+				yDepth.GetTime().Sub(newYDepth.GetTime()) >= 0 {
 				break
 			}
-			currentTakerBidAsk = newTakerDepth.GetBids()[0][0] + newTakerDepth.GetAsks()[0][0]
-			if lastTakerBidAsk != 0 {
-				takerDepthDirMedian.Insert(newTakerDepth.GetTime(), currentTakerBidAsk - lastTakerBidAsk)
+			currentYBidAsk = newYDepth.GetBids()[0][0] + newYDepth.GetAsks()[0][0]
+			if lastYBidAsk != 0 {
+				yDepthDirMedian.Insert(newYDepth.GetTime(), (currentYBidAsk-lastYBidAsk)/lastYBidAsk)
 			}
-			lastTakerBidAsk = currentTakerBidAsk
-			takerDepth = newTakerDepth
-			if !takerDepthFilter.Filter(takerDepth) && makerDepth != nil {
-				adjustedAgeDiff = makerDepth.GetTime().Sub(takerDepth.GetTime()) + time.Duration(math.Abs(makerDepthFilter.TimeDeltaEma-takerDepthFilter.TimeDeltaEma))*time.Millisecond
+			lastYBidAsk = currentYBidAsk
+			yDepth = newYDepth
+			if !yDepthFilter.Filter(yDepth) && xDepth != nil {
+				adjustedAgeDiff = xDepth.GetTime().Sub(yDepth.GetTime()) + time.Duration(math.Abs(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma))*time.Millisecond
 				if adjustedAgeDiff > maxAgeDiffBias {
 					//taker已经过期
-					takerExpireCount++
+					yExpireCount++
 				} else {
-					takerWalkDepthTimer.Reset(expectedChanSendingTime)
+					yWalkDepthTimer.Reset(expectedChanSendingTime)
 				}
 				if adjustedAgeDiff < -maxAgeDiffBias {
 					//maker已经过期
-					makerExpireCount++
+					xExpireCount++
 				}
 			}
 			depthCount++
 			if depthCount > reportCount {
-				makerDepthFilter.GenerateReport()
-				takerDepthFilter.GenerateReport()
+				xDepthFilter.GenerateReport()
+				yDepthFilter.GenerateReport()
 				select {
-				case reportCh <- common.SpreadReport{
+				case reportCh <- SpreadReport{
 					AdjustedAgeDiff:       adjustedAgeDiff,
 					MatchRatio:            float64(matchCount) / float64(depthCount),
-					MakerSymbol:           makerSymbol,
-					TakerSymbol:           takerSymbol,
-					MakerTimeDeltaEma:     makerDepthFilter.TimeDeltaEma,
-					TakerTimeDeltaEma:     takerDepthFilter.TimeDeltaEma,
-					MakerTimeDelta:        makerDepthFilter.TimeDelta,
-					TakerTimeDelta:        takerDepthFilter.TimeDelta,
-					MakerDepthFilterRatio: makerDepthFilter.Report.FilterRatio,
-					TakerDepthFilterRatio: takerDepthFilter.Report.FilterRatio,
-					MakerExpireRatio:      float64(makerExpireCount) / float64(depthCount),
-					TakerExpireRatio:      float64(takerExpireCount) / float64(depthCount),
+					XSymbol:           xSymbol,
+					YSymbol:           ySymbol,
+					XTimeDeltaEma:     xDepthFilter.TimeDeltaEma,
+					YTimeDeltaEma:     yDepthFilter.TimeDeltaEma,
+					XTimeDelta:        xDepthFilter.TimeDelta,
+					YTimeDelta:        yDepthFilter.TimeDelta,
+					XDepthFilterRatio: xDepthFilter.Report.FilterRatio,
+					YDepthFilterRatio: yDepthFilter.Report.FilterRatio,
+					XExpireRatio:      float64(xExpireCount) / float64(depthCount),
+					YExpireRatio:      float64(yExpireCount) / float64(depthCount),
 				}:
 				default:
 				}
 				matchCount = 0
 				depthCount = 0
-				takerExpireCount = 0
-				makerExpireCount = 0
+				yExpireCount = 0
+				xExpireCount = 0
 			}
 			break
 		}

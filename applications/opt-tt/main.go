@@ -46,25 +46,25 @@ func main() {
 		if err != nil {
 			logger.Debugf("yExchange.GetStepSize(ySymbol) error %v", err)
 		}
-		yMinNotional[ySymbol], err = yExchange.GetMinNotional(ySymbol)
+		yMinNotionals[ySymbol], err = yExchange.GetMinNotional(ySymbol)
 		if err != nil {
 			logger.Debugf("yExchange.GetMinNotional(ySymbol) error %v", err)
 		}
 	}
 	logger.Debugf("y stepSizes %v", yStepSizes)
-	logger.Debugf("y minNotional %v", yMinNotional)
+	logger.Debugf("y minNotional %v", yMinNotionals)
 	for _, xSymbol := range xSymbols {
 		xStepSizes[xSymbol], err = xExchange.GetStepSize(xSymbol)
 		if err != nil {
 			logger.Debugf("xExchange.GetStepSize(xSymbol) error %v", err)
 		}
-		xMinNotional[xSymbol], err = xExchange.GetMinNotional(xSymbol)
+		xMinNotionals[xSymbol], err = xExchange.GetMinNotional(xSymbol)
 		if err != nil {
 			logger.Debugf("xExchange.GetMinNotional(xSymbol) error %v", err)
 		}
 	}
 	logger.Debugf("x stepSizes %v", xStepSizes)
-	logger.Debugf("x minNotional %v", xMinNotional)
+	logger.Debugf("x minNotional %v", xMinNotionals)
 
 	for xSymbol, xStepSize := range xStepSizes {
 		if yStepSize, ok := yStepSizes[xySymbolsMap[xSymbol]]; !ok {
@@ -200,7 +200,7 @@ func main() {
 		yNewOrderErrorChMap,
 	)
 
-	spreadReportCh := make(chan common.SpreadReport, 10000)
+	spreadReportCh := make(chan SpreadReport, 10000)
 	go reportsSaveLoop(
 		xyGlobalCtx,
 		xyInfluxWriter,
@@ -208,7 +208,7 @@ func main() {
 		spreadReportCh,
 	)
 
-	spreadCh := make(chan *common.MakerTakerSpread, len(xSymbols)*100)
+	spreadCh := make(chan *XYSpread, len(xSymbols)*100)
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		go watchXYSpread(
 			xyGlobalCtx,
@@ -242,28 +242,6 @@ func main() {
 		}()
 	}
 
-	if !xyConfig.DryRun {
-		go func() {
-			for _, xSymbol := range xSymbols {
-				select {
-				case <-xyGlobalCtx.Done():
-					return
-				case <-time.After(xyConfig.RequestInterval):
-					logger.Debugf("initial cancel all %s", xSymbol)
-					select {
-					case <-xyGlobalCtx.Done():
-						return
-					case xOrderRequestChMap[xSymbol] <- common.OrderRequest{
-						Cancel: &common.CancelOrderParam{
-							Symbol: xSymbol,
-						},
-					}:
-					}
-				}
-			}
-		}()
-	}
-
 	logger.Debugf("start main loop")
 	fundingInterval := time.Hour * 8
 	fundingSilent := time.Minute * 5
@@ -290,11 +268,11 @@ func main() {
 			break
 		case <-xyDirResetTimer.C:
 			for xSymbol := range xySymbolsMap {
-				if time.Now().Sub(xyEnterTimes[xSymbol]) < 0 && xyEnterTradeOrders[xSymbol] != EnterTradeOrderUnknown{
+				if time.Now().Sub(xyEnterTimes[xSymbol]) < 0 && xyEnterTradeOrders[xSymbol] != EnterTradeOrderUnknown {
 					continue
 				}
 				if spread, ok := xySpreads[xSymbol]; ok {
-					xyMergedDirs[xSymbol]  = spread.XDir*xyConfig.XYDirRatio + spread.YDir*(1.0 - xyConfig.XYDirRatio)
+					xyMergedDirs[xSymbol] = spread.XDir*xyConfig.XYDirRatio + spread.YDir*(1.0-xyConfig.XYDirRatio)
 				}
 			}
 		case nextPos := <-xPositionCh:
@@ -305,41 +283,6 @@ func main() {
 					xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
 						logger.Debugf("%s x position change %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
-
-						changeSize := -(nextPos.GetSize() - prevPos.GetSize())
-
-						if xyConfig.HedgeInstantly {
-							yOrderSilentTimes[xySymbolsMap[nextPos.GetSymbol()]] = time.Now()
-							xyLoopTimer.Reset(time.Nanosecond)
-						} else {
-							if spread, ok := xySpreads[nextPos.GetSymbol()]; ok && ((changeSize < 0 && spread.TakerDir > 0) ||
-								(changeSize > 0 && spread.TakerDir < 0)) {
-								if changeSize < 0 {
-									yHedgeMarkPrices[xySymbolsMap[nextPos.GetSymbol()]] = spread.TakerDepth.BestBidPrice
-								} else {
-									yHedgeMarkPrices[xySymbolsMap[nextPos.GetSymbol()]] = spread.TakerDepth.BestAskPrice
-								}
-								logger.Debugf(
-									"%s y change size %f dir %f mark price %f",
-									xySymbolsMap[nextPos.GetSymbol()], changeSize, spread.TakerDir,
-									yHedgeMarkPrices[xySymbolsMap[nextPos.GetSymbol()]],
-								)
-								yOrderSilentTimes[xySymbolsMap[nextPos.GetSymbol()]] = time.Now().Add(xyConfig.HedgeCheckInterval)
-								xOrderSilentTimes[nextPos.GetSymbol()] = time.Now().Add(xyConfig.HedgeCheckInterval)
-								yPositionsUpdateTimes[xySymbolsMap[nextPos.GetSymbol()]] = time.Now()
-								xPositionsUpdateTimes[nextPos.GetSymbol()] = time.Now()
-							} else {
-								if ok {
-									logger.Debugf("%s y dir %f", xySymbolsMap[nextPos.GetSymbol()], spread.TakerDir)
-								}
-								yOrderSilentTimes[xySymbolsMap[nextPos.GetSymbol()]] = time.Now()
-								xyLoopTimer.Reset(time.Nanosecond)
-							}
-						}
-
-						if nextPos.GetSize() != 0 {
-							xEnterSilentTimes[nextPos.GetSymbol()] = time.Now().Add(xyConfig.EnterSilent)
-						}
 					}
 				}
 			} else {
@@ -348,6 +291,7 @@ func main() {
 			}
 			break
 		case xAccount = <-xAccountCh:
+			logger.Debugf("x account %s %f %f %f", xAccount.GetCurrency(), xAccount.GetBalance(), xAccount.GetFree(), xAccount.GetUsed())
 			break
 		case nextPos := <-yPositionCh:
 			//logger.Debugf("y position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
@@ -365,66 +309,45 @@ func main() {
 			}
 			break
 		case yAccount = <-yAccountCh:
+			logger.Debugf("y account %s %f %f %f", yAccount.GetCurrency(), yAccount.GetBalance(), yAccount.GetFree(), yAccount.GetUsed())
 			break
 		case xOrder := <-xOrderCh:
 			if xOrder.GetStatus() == common.OrderStatusExpired ||
 				xOrder.GetStatus() == common.OrderStatusReject ||
 				xOrder.GetStatus() == common.OrderStatusCancelled ||
 				xOrder.GetStatus() == common.OrderStatusFilled {
-				if openOrder, ok := xOpenOrders[xOrder.GetSymbol()]; ok && openOrder.ClientID == xOrder.GetClientID() {
-					delete(xOpenOrders, xOrder.GetSymbol())
-				}
-				if xOrder.GetStatus() == common.OrderStatusFilled {
-					logger.Debugf(
-						"MAKER ORDER FILLED %s SIDE %s TRADE SIZE %v TRADE PRICE %f",
-						xOrder.GetSymbol(), xOrder.GetSide(), xOrder.GetFilledSize(), xOrder.GetFilledPrice(),
-					)
 
-					if xyConfig.HedgeInstantly {
-						yOrderSilentTimes[xySymbolsMap[xOrder.GetSymbol()]] = time.Now()
-						xyLoopTimer.Reset(time.Nanosecond)
-					} else {
-						if spread, ok := xySpreads[xOrder.GetSymbol()]; ok && ((xOrder.GetSide() == common.OrderSideBuy && spread.TakerDir > 0) ||
-							(xOrder.GetSide() == common.OrderSideSell && spread.TakerDir < 0)) {
-							if xOrder.GetSide() == common.OrderSideBuy {
-								yHedgeMarkPrices[xySymbolsMap[xOrder.GetSymbol()]] = spread.TakerDepth.BestBidPrice
-								logger.Debugf(
-									"%s y change size %f dir %f mark price %f",
-									xySymbolsMap[xOrder.GetSymbol()], -xOrder.GetSize(), spread.TakerDir,
-									yHedgeMarkPrices[xySymbolsMap[xOrder.GetSymbol()]],
-								)
-							} else {
-								yHedgeMarkPrices[xySymbolsMap[xOrder.GetSymbol()]] = spread.TakerDepth.BestAskPrice
-								logger.Debugf(
-									"%s y change size %f dir %f mark price %f",
-									xySymbolsMap[xOrder.GetSymbol()], xOrder.GetSize(), spread.TakerDir,
-									yHedgeMarkPrices[xySymbolsMap[xOrder.GetSymbol()]],
-								)
+				xSymbol := xOrder.GetSymbol()
+				if xOrder.GetStatus() != common.OrderStatusFilled {
+					logger.Debugf("x order %s %s", xOrder.GetSymbol(), xOrder.GetStatus())
+					xOrderSilentTimes[xSymbol] = time.Now().Add(time.Second)
+					xPositionsUpdateTimes[xSymbol] = time.Unix(0, 0)
+				} else {
+					if ySymbol, ok := xySymbolsMap[xSymbol]; ok {
+						if xOrder.GetSide() == common.OrderSideBuy {
+							xBuyPrice := xOrder.GetFilledPrice()
+							xLastFilledBuyPrices[xSymbol] = xBuyPrice
+							if tradeDir, ok := xyEnterTradeOrders[ySymbol]; ok && tradeDir == EnterTradeOrderYX {
+								if ySellPrice, ok := yLastFilledSellPrices[ySymbol]; ok {
+									xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / xBuyPrice
+									logger.Debugf("%s %s realised short spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
+									delete(xLastFilledBuyPrices, ySymbol)
+									delete(yLastFilledBuyPrices, ySymbol)
+								}
 							}
-							yOrderSilentTimes[xySymbolsMap[xOrder.GetSymbol()]] = time.Now().Add(xyConfig.HedgeCheckInterval)
-							xOrderSilentTimes[xOrder.GetSymbol()] = time.Now().Add(xyConfig.HedgeCheckInterval)
-							yPositionsUpdateTimes[xySymbolsMap[xOrder.GetSymbol()]] = time.Now()
-							xPositionsUpdateTimes[xOrder.GetSymbol()] = time.Now()
-						} else {
-							if ok {
-								logger.Debugf("%s y dir %f", xySymbolsMap[xOrder.GetSymbol()], spread.TakerDir)
+						} else if xOrder.GetSide() == common.OrderSideSell {
+							xSellPrice := xOrder.GetFilledPrice()
+							xLastFilledSellPrices[xSymbol] = xSellPrice
+							if tradeDir, ok := xyEnterTradeOrders[ySymbol]; ok && tradeDir == EnterTradeOrderYX {
+								if yBuyPrice, ok := yLastFilledBuyPrices[ySymbol]; ok {
+									xyRealisedSpread[xSymbol] = (xSellPrice - yBuyPrice) / xSellPrice
+									logger.Debugf("%s %s realised long spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
+									delete(xLastFilledSellPrices, xSymbol)
+									delete(yLastFilledBuyPrices, ySymbol)
+								}
 							}
-							yOrderSilentTimes[xySymbolsMap[xOrder.GetSymbol()]] = time.Now()
-							xyLoopTimer.Reset(time.Nanosecond)
 						}
 					}
-
-					if xOrder.GetSide() == common.OrderSideSell {
-						xLastFilledSellPrices[xOrder.GetSymbol()] = xOrder.GetFilledPrice()
-					} else if xOrder.GetSide() == common.OrderSideBuy {
-						xLastFilledBuyPrices[xOrder.GetSymbol()] = xOrder.GetFilledPrice()
-					}
-					xEnterSilentTimes[xOrder.GetSymbol()] = time.Now().Add(xyConfig.EnterSilent)
-				} else {
-					logger.Debugf("MAKER ORDER %s %s", xOrder.GetSymbol(), xOrder.GetStatus())
-					logger.Debugf("MAKER WS ORDER CANCELED %v ", xOrder)
-					xOrderSilentTimes[xOrder.GetSymbol()] = time.Now().Add(time.Second)
-					xPositionsUpdateTimes[xOrder.GetSymbol()] = time.Now()
 				}
 			}
 			break
@@ -433,33 +356,43 @@ func main() {
 				yOrder.GetStatus() == common.OrderStatusReject ||
 				yOrder.GetStatus() == common.OrderStatusCancelled ||
 				yOrder.GetStatus() == common.OrderStatusFilled {
+
+				ySymbol := yOrder.GetSymbol()
 				if yOrder.GetStatus() != common.OrderStatusFilled {
-					logger.Debugf("TAKER ORDER %s %s", yOrder.GetSymbol(), yOrder.GetStatus())
-					yOrderSilentTimes[yOrder.GetSymbol()] = time.Now().Add(time.Second)
-					yPositionsUpdateTimes[yOrder.GetSymbol()] = time.Unix(0, 0)
+					logger.Debugf("y order %s %s", yOrder.GetSymbol(), yOrder.GetStatus())
+					yOrderSilentTimes[ySymbol] = time.Now().Add(time.Second)
+					yPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
 				} else {
-					logger.Debugf("TAKER ORDER %s %s %f %f", yOrder.GetSymbol(), yOrder.GetStatus(), yOrder.GetFilledSize(), yOrder.GetFilledPrice())
-					if xSymbol, ok := yxSymbolsMap[yOrder.GetSymbol()]; ok {
-						if yOrder.GetSide() == common.OrderSideSell {
-							if xPrice, ok := xLastFilledBuyPrices[xSymbol]; ok {
-								xyRealisedSpread[xSymbol] = (yOrder.GetFilledPrice() - xPrice) / xPrice
-								logger.Debugf("%s REALISED SHORT SPREAD %f", xSymbol, xyRealisedSpread[xSymbol])
-								delete(xLastFilledBuyPrices, xSymbol)
+					if xSymbol, ok := yxSymbolsMap[ySymbol]; ok {
+						if yOrder.GetSide() == common.OrderSideBuy {
+							yBuyPrice := yOrder.GetFilledPrice()
+							yLastFilledBuyPrices[ySymbol] = yBuyPrice
+							if tradeDir, ok := xyEnterTradeOrders[xSymbol]; ok && tradeDir == EnterTradeOrderXY {
+								if xSellPrice, ok := xLastFilledSellPrices[xSymbol]; ok {
+									xyRealisedSpread[xSymbol] = (xSellPrice - yBuyPrice) / xSellPrice
+									logger.Debugf("%s %s realised long spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
+									delete(xLastFilledBuyPrices, xSymbol)
+									delete(yLastFilledBuyPrices, ySymbol)
+								}
 							}
-						} else if yOrder.GetSide() == common.OrderSideBuy {
-							if xPrice, ok := xLastFilledSellPrices[xSymbol]; ok {
-								xyRealisedSpread[xSymbol] = (yOrder.GetFilledPrice() - xPrice) / xPrice
-								logger.Debugf("%s REALISED LONG SPREAD %f", xSymbol, xyRealisedSpread[xSymbol])
-								delete(xLastFilledSellPrices, xSymbol)
+						} else if yOrder.GetSide() == common.OrderSideSell {
+							ySellPrice := yOrder.GetFilledPrice()
+							yLastFilledSellPrices[ySymbol] = ySellPrice
+							if tradeDir, ok := xyEnterTradeOrders[xSymbol]; ok && tradeDir == EnterTradeOrderXY {
+								if xBUyPrice, ok := xLastFilledBuyPrices[xSymbol]; ok {
+									xyRealisedSpread[xSymbol] = (ySellPrice - xBUyPrice) / xBUyPrice
+									logger.Debugf("%s %s realised short spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
+									delete(yLastFilledSellPrices, xSymbol)
+									delete(xLastFilledBuyPrices, ySymbol)
+								}
 							}
 						}
 					}
 				}
-
 			}
 			break
 		case spread := <-spreadCh:
-			xySpreads[spread.MakerSymbol] = spread
+			xySpreads[spread.XSymbol] = spread
 			break
 		case fr := <-xFundingRateCh:
 			xFundingRates[fr.GetSymbol()] = fr
@@ -491,30 +424,31 @@ func main() {
 			break
 		case yNewError := <-yNewOrderErrorCh:
 			if yNewError.Cancel != nil {
+				logger.Debugf("Cancel %v error %v", *yNewError.Cancel, yNewError.Error)
 				yOrderSilentTimes[yNewError.Cancel.Symbol] = time.Now().Add(xyConfig.OrderSilent)
 			} else if yNewError.New != nil {
+				logger.Debugf("New %v error %v", *yNewError.New, yNewError.Error)
 				yOrderSilentTimes[yNewError.New.Symbol] = time.Now().Add(xyConfig.OrderSilent)
 			}
 			break
 		case xNewError := <-xNewOrderErrorCh:
 			if xNewError.Cancel != nil {
+				logger.Debugf("Cancel %v error %v", *xNewError.Cancel, xNewError.Error)
 				xOrderSilentTimes[xNewError.Cancel.Symbol] = time.Now().Add(xyConfig.OrderSilent)
 			} else if xNewError.New != nil {
+				logger.Debugf("New %v error %v", *xNewError.New, xNewError.Error)
 				xOrderSilentTimes[xNewError.New.Symbol] = time.Now().Add(xyConfig.OrderSilent)
 			}
 			break
 
 		case <-xyLoopTimer.C:
 			if xSystemStatus == common.SystemStatusReady && ySystemStatus == common.SystemStatusReady {
-				updateTakerPositions()
+				updateYPositions()
 				if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
 					time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
-					updateMakerOldOrders()
 					updateTargetPositionSizes()
-				} else {
-					if len(xOpenOrders) > 0 && !xyConfig.DryRun {
-						cancelAllMakerOpenOrders()
-					}
+					updateXPositions()
+					updateYPositions()
 				}
 			} else {
 				if time.Now().Sub(time.Now().Truncate(time.Second*15)) < xyConfig.LoopInterval {
@@ -522,9 +456,6 @@ func main() {
 						"system not ready xSystemStatus %v ySystemStatus %v",
 						xSystemStatus, ySystemStatus,
 					)
-				}
-				if len(xOpenOrders) > 0 && !xyConfig.DryRun {
-					cancelAllMakerOpenOrders()
 				}
 			}
 			xyLoopTimer.Reset(

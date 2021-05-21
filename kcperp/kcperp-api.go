@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"io"
 	"io/ioutil"
 	"net"
@@ -73,7 +74,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 		if err != nil {
 			return err
 		}
-		//logger.Debugf("%s", bodyStr)
+		logger.Debugf("%s", bodyStr)
 		rBody = bytes.NewReader(bodyStr)
 	}
 	headers := api.signer.Headers(fmt.Sprintf("%s%s%s", method, path, bodyStr))
@@ -112,6 +113,11 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 func (api *API) GetContracts(ctx context.Context) ([]Contract, error) {
 	contracts := make([]Contract, 0)
 	return contracts, api.SendHTTPRequest(ctx, http.MethodGet, "/api/v1/contracts/active", nil, &contracts)
+}
+
+func (api *API) GetTicker(ctx context.Context, param TickerParam) (*Ticker, error) {
+	ticker := &Ticker{}
+	return ticker, api.SendHTTPRequest(ctx, http.MethodGet, "/api/v1/ticker", &param, &ticker)
 }
 
 func (api *API) GetAccountOverView(ctx context.Context, param AccountParam) (*Account, error) {
