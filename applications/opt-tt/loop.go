@@ -654,18 +654,18 @@ func handleUpdateFundingRates() {
 		return
 	}
 	frs := make([]float64, len(xSymbols))
-	for i, makerSymbol := range xSymbols {
-		takerSymbol := xySymbolsMap[makerSymbol]
-		if makerFr, ok := xFundingRates[makerSymbol]; ok {
-			if takerFr, ok := yFundingRates[takerSymbol]; ok {
-				frs[i] = takerFr.GetFundingRate() - makerFr.GetFundingRate()
-				xyFundingRates[makerSymbol] = frs[i]
+	for i, xSymbol := range xSymbols {
+		ySymbol := xySymbolsMap[xSymbol]
+		if xFr, ok := xFundingRates[xSymbol]; ok {
+			if yFr, ok := yFundingRates[ySymbol]; ok {
+				frs[i] = yFr.GetFundingRate() - xFr.GetFundingRate()
+				xyFundingRates[xSymbol] = frs[i]
 			} else {
-				logger.Debugf("MISS PREMIUM INDEX FOR TAKER %s", makerSymbol)
+				logger.Debugf("MISS PREMIUM INDEX FOR TAKER %s", xSymbol)
 				return
 			}
 		} else {
-			logger.Debugf("MISS FUNDING RATE FOR MAKER %s", makerSymbol)
+			logger.Debugf("MISS FUNDING RATE FOR MAKER %s", xSymbol)
 			return
 		}
 	}

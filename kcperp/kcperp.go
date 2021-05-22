@@ -2,7 +2,6 @@ package kcperp
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
@@ -625,10 +624,10 @@ func (k *Kcperp) submitOrder(ctx context.Context, param common.NewOrderParam, ti
 	k.mu.Lock()
 	newOrderParam.Leverage = int(k.settings.Leverage)
 	k.mu.Unlock()
-	str, _ := json.Marshal(newOrderParam)
-	logger.Debugf("k.api.SubmitOrder %s", str)
-	resp, err := k.api.SubmitOrder(ctx, newOrderParam)
-	logger.Debugf("k.api.SubmitOrder %v %v", resp, err)
+	//str, _ := json.Marshal(newOrderParam)
+	//logger.Debugf("k.api.SubmitOrder %s", str)
+	_, err := k.api.SubmitOrder(ctx, newOrderParam)
+	//logger.Debugf("k.api.SubmitOrder %v %v", resp, err)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{
