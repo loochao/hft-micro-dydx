@@ -264,37 +264,37 @@ func updateTargetPositionSizes() {
 		spread, okSpread := xySpreads[xSymbol]
 		//需要保证两边都有仓位更新，才调整现货仓位
 		if time.Now().Sub(xPositionsUpdateTimes[xSymbol]) > xyConfig.BalancePositionMaxAge {
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("%s x position too old", xSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			//	logger.Debugf("%s x position too old", xSymbol)
+			//}
 			continue
 		}
 		if time.Now().Sub(yPositionsUpdateTimes[ySymbol]) > xyConfig.BalancePositionMaxAge {
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("%s y position too old", xSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			//	logger.Debugf("%s y position too old", xSymbol)
+			//}
 			continue
 		}
 		if time.Now().Sub(xyTargetPositionUpdateSilentTimes[xSymbol]) < 0 {
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("%s %s in target update silent", xSymbol, ySymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			//	logger.Debugf("%s %s in target update silent", xSymbol, ySymbol)
+			//}
 			continue
 		}
 		xPosition, okXPosition := xPositions[xSymbol]
 		yPosition, okYPosition := yPositions[ySymbol]
 		fundingRate, okFundingRate := xyFundingRates[xSymbol]
 		if !okSpread || !okXPosition || !okYPosition || !okFundingRate {
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("%s %s spread %v x position %v y position %v fundingRate %v", xSymbol, ySymbol, okSpread, okXPosition, okYPosition, okFundingRate)
-			}
+			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			//	logger.Debugf("%s %s spread %v x position %v y position %v fundingRate %v", xSymbol, ySymbol, okSpread, okXPosition, okYPosition, okFundingRate)
+			//}
 			continue
 		}
 
 		if time.Now().Sub(spread.Time) > xyConfig.SpreadTimeToLive {
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("%s %s spread too old %v", xSymbol, ySymbol, spread.Time)
-			}
+			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			//	logger.Debugf("%s %s spread too old %v", xSymbol, ySymbol, spread.Time)
+			//}
 			continue
 		}
 		xDepth := spread.XDepth
@@ -351,14 +351,6 @@ func updateTargetPositionSizes() {
 			}
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
 
-			logger.Debugf(
-				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f",
-				xSymbol, ySymbol,
-				spread.ShortLastLeave, shortTop,
-				spread.ShortMedianLeave, shortTop,
-				size,
-			)
-
 			if xyMergedDirs[xSymbol] < 0 {
 				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
 				xOrderSilentTimes[xSymbol] = time.Now()
@@ -378,6 +370,15 @@ func updateTargetPositionSizes() {
 				yOrderSilentTimes[ySymbol] = time.Now()
 				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
 			}
+			logger.Debugf(
+				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f, MARK PRICE Y %f",
+				xSymbol, ySymbol,
+				spread.ShortLastLeave, shortTop,
+				spread.ShortMedianLeave, shortTop,
+				size,
+				xyEnterTradeOrders[xSymbol],
+				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
+			)
 
 		} else if spread.LongLastLeave > longTop &&
 			spread.LongMedianLeave > longTop &&
@@ -414,14 +415,6 @@ func updateTargetPositionSizes() {
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
 			xyMergedDirs[xSymbol] = spread.XDir*xyConfig.XYDirRatio + spread.YDir*(1.0-xyConfig.XYDirRatio)
 
-			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f",
-				xSymbol, ySymbol,
-				spread.LongLastLeave, longTop,
-				spread.LongMedianLeave, longTop,
-				size,
-			)
-
 			if xyMergedDirs[xSymbol] < 0 {
 				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
 				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
@@ -441,6 +434,16 @@ func updateTargetPositionSizes() {
 				yOrderSilentTimes[ySymbol] = time.Now()
 				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
 			}
+
+			logger.Debugf(
+				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, ENTER ORDER %s MARK PRICE X %f MARK PRICE Y %f",
+				xSymbol, ySymbol,
+				spread.LongLastLeave, longTop,
+				spread.LongMedianLeave, longTop,
+				size,
+				xyEnterTradeOrders[xSymbol],
+				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
+			)
 		} else if spread.ShortLastEnter > shortTop &&
 			spread.ShortMedianEnter > shortTop &&
 			fundingRate > xyConfig.MinimalEnterFundingRate &&
@@ -484,13 +487,6 @@ func updateTargetPositionSizes() {
 				}
 				continue
 			}
-			logger.Debugf(
-				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f",
-				xSymbol, ySymbol,
-				spread.ShortLastEnter, shortTop,
-				spread.ShortMedianEnter, shortTop,
-				size,
-			)
 			//谁大以谁为准
 			if xValue >= yValue {
 				xTargetPositionSizes[xSymbol] += size
@@ -520,6 +516,15 @@ func updateTargetPositionSizes() {
 				yOrderSilentTimes[ySymbol] = time.Now()
 				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
 			}
+			logger.Debugf(
+				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f MARK PRICE Y %f",
+				xSymbol, ySymbol,
+				spread.ShortLastEnter, shortTop,
+				spread.ShortMedianEnter, shortTop,
+				size,
+				xyEnterTradeOrders[xSymbol],
+				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
+			)
 		} else if spread.LongLastEnter < longBot &&
 			spread.LongMedianEnter < longBot &&
 			fundingRate < -xyConfig.MinimalEnterFundingRate &&
@@ -562,13 +567,6 @@ func updateTargetPositionSizes() {
 				}
 				continue
 			}
-			logger.Debugf(
-				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f",
-				xSymbol, ySymbol,
-				spread.LongLastEnter, longBot,
-				spread.LongMedianEnter, longBot,
-				size,
-			)
 			//谁大以谁为准
 			if xValue >= yValue {
 				xTargetPositionSizes[xSymbol] -= size
@@ -598,6 +596,15 @@ func updateTargetPositionSizes() {
 				yOrderSilentTimes[ySymbol] = time.Now()
 				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
 			}
+			logger.Debugf(
+				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f, MARK PRICE Y %f",
+				xSymbol, ySymbol,
+				spread.LongLastEnter, longBot,
+				spread.LongMedianEnter, longBot,
+				size,
+				xyEnterTradeOrders[xSymbol],
+				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
+			)
 		}
 	}
 }
