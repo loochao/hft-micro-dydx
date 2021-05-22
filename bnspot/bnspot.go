@@ -532,7 +532,11 @@ func (bn *Bnspot) submitOrder(ctx context.Context, param common.NewOrderParam, t
 	if param.Type == common.OrderTypeMarket {
 		newOrderParam.Type = OrderTypeMarket
 	} else {
-		newOrderParam.Type = OrderTypeLimit
+		if param.PostOnly {
+			newOrderParam.Type = OrderTypeLimitMarker
+		} else {
+			newOrderParam.Type = OrderTypeLimit
+		}
 	}
 	switch param.TimeInForce {
 	case common.OrderTimeInForceIOC:

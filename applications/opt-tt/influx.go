@@ -99,10 +99,6 @@ func handleInternalSave() {
 			fields["xBestBidPrice"] = spread.XDepth.BestBidPrice
 			fields["xBestAskPrice"] = spread.XDepth.BestAskPrice
 
-			fields["yDir"] = spread.YDir
-			fields["xDir"] = spread.XDir
-			fields["dir"] =  spread.XDir*xyConfig.XYDirRatio + spread.YDir*(1.0-xyConfig.XYDirRatio)
-
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
 		}

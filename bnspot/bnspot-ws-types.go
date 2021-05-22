@@ -221,13 +221,19 @@ func (o OrderUpdateEvent) GetType() common.OrderType {
 		return common.OrderTypeMarket
 	case OrderTypeLimit:
 		return common.OrderTypeLimit
+	case OrderTypeLimitMarker:
+		return common.OrderTypeLimit
 	default:
 		return common.OrderTypeUnknown
 	}
 }
 
 func (o OrderUpdateEvent) GetPostOnly() bool {
-	return false
+	if o.OrderType == OrderTypeLimitMarker {
+		return true
+	}else{
+		return false
+	}
 }
 
 func (o OrderUpdateEvent) GetReduceOnly() bool {

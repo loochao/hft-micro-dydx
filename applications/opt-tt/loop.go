@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func updateYPositions(isExit bool) {
+func updateYPositions() {
 	if xAccount == nil {
 		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
 			logger.Debugf("xACCOUNT not ready")
@@ -53,24 +53,8 @@ func updateYPositions(isExit bool) {
 			continue
 		}
 
-		hedgeMarkPrice, okHedgeMarkPrice := yHedgeMarkPrices[ySymbol]
-		if xyEnterTradeOrders[xSymbol] == EnterTradeOrderXY && okHedgeMarkPrice && !isExit {
-			if ySizeDiff < 0 && yDepth.BestBidPrice > hedgeMarkPrice*(1.0+xyConfig.EnterOffsetDelta) {
-				logger.Debugf("%s updateYPositions size %f push mark price %f -> %f", ySymbol, ySizeDiff, hedgeMarkPrice, yDepth.BestBidPrice)
-				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
-				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				yPositionsUpdateTimes[ySymbol] = time.Now()
-				continue
-			} else if ySizeDiff > 0 && yDepth.BestAskPrice < hedgeMarkPrice*(1.0-xyConfig.EnterOffsetDelta) {
-				logger.Debugf("%s updateYPositions size %f push mark price %f -> %f", ySymbol, ySizeDiff, hedgeMarkPrice, yDepth.BestAskPrice)
-				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
-				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				yPositionsUpdateTimes[ySymbol] = time.Now()
-				continue
-			}
-		}
 
-		logger.Debugf("updateYPositions %s size %f position %f -> %f last mark price %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize, yHedgeMarkPrices[ySymbol])
+		logger.Debugf("updateYPositions %s size %f position %f -> %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize)
 
 		reduceOnly := false
 		if ySizeDiff*yPosition.GetSize() < 0 && math.Abs(ySizeDiff) <= math.Abs(yPosition.GetSize()) {
@@ -80,13 +64,6 @@ func updateYPositions(isExit bool) {
 		if ySizeDiff < 0 {
 			side = common.OrderSideSell
 			ySizeDiff = -ySizeDiff
-			if okHedgeMarkPrice && xyEnterTradeOrders[xSymbol] == EnterTradeOrderXY {
-				logger.Debugf("%s short trend profit %f", ySymbol, (yDepth.BestBidPrice-hedgeMarkPrice)/hedgeMarkPrice)
-			}
-		} else {
-			if okHedgeMarkPrice && xyEnterTradeOrders[xSymbol] == EnterTradeOrderXY {
-				logger.Debugf("%s long trend profit %f", ySymbol, (hedgeMarkPrice-yDepth.BestBidPrice)/hedgeMarkPrice)
-			}
 		}
 		yOrder := common.NewOrderParam{
 			Symbol:     ySymbol,
@@ -104,9 +81,6 @@ func updateYPositions(isExit bool) {
 			}:
 				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.OrderSilent)
 				yPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
-				if okHedgeMarkPrice {
-					delete(yHedgeMarkPrices, ySymbol)
-				}
 			default:
 				logger.Debugf("yOrderRequestChMap[ySymbol] <- common.OrderRequest %s failed, ch len %d", ySymbol, len(yOrderRequestChMap[ySymbol]))
 			}
@@ -115,7 +89,7 @@ func updateYPositions(isExit bool) {
 	xyUnHedgeValue = unHedgedValue
 }
 
-func updateXPositions(isExit bool) {
+func updateXPositions() {
 	if xAccount == nil {
 		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
 			logger.Debugf("xACCOUNT not ready")
@@ -158,24 +132,7 @@ func updateXPositions(isExit bool) {
 			continue
 		}
 
-		xHedgeMarkPrice, okXHedgeMarkPrice := xHedgeMarkPrices[xSymbol]
-		if xyEnterTradeOrders[xSymbol] == EnterTradeOrderYX && okXHedgeMarkPrice && !isExit {
-			if xSizeDiff < 0 && xDepth.BestBidPrice > xHedgeMarkPrice*(1.0+xyConfig.EnterOffsetDelta) {
-				logger.Debugf("%s updateXPositions size %f push mark price %f -> %f", xSymbol, xSizeDiff, xHedgeMarkPrice, xDepth.BestBidPrice)
-				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
-				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				xPositionsUpdateTimes[xSymbol] = time.Now()
-				continue
-			} else if xSizeDiff > 0 && xDepth.BestAskPrice < xHedgeMarkPrice*(1.0-xyConfig.EnterOffsetDelta) {
-				logger.Debugf("%s updateXPositions size %f push mark price %f -> %f", xSymbol, xSizeDiff, xHedgeMarkPrice, xDepth.BestAskPrice)
-				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
-				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				xPositionsUpdateTimes[xSymbol] = time.Now()
-				continue
-			}
-		}
-
-		logger.Debugf("updateXPositions %s size %f position %f -> %f last mark price %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize, xHedgeMarkPrices[xSymbol])
+		logger.Debugf("updateXPositions %s size %f position %f -> %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize)
 
 		reduceOnly := false
 		if xSizeDiff*xPosition.GetSize() < 0 && math.Abs(xSizeDiff) <= math.Abs(xPosition.GetSize()) {
@@ -185,13 +142,6 @@ func updateXPositions(isExit bool) {
 		if xSizeDiff < 0 {
 			side = common.OrderSideSell
 			xSizeDiff = -xSizeDiff
-			if okXHedgeMarkPrice && xyEnterTradeOrders[xSymbol] == EnterTradeOrderYX {
-				logger.Debugf("%s short trend profit %f", ySymbol, (xDepth.BestBidPrice-xHedgeMarkPrice)/xHedgeMarkPrice)
-			}
-		} else {
-			if okXHedgeMarkPrice && xyEnterTradeOrders[xSymbol] == EnterTradeOrderYX {
-				logger.Debugf("%s long trend profit %f", ySymbol, (xHedgeMarkPrice-xDepth.BestBidPrice)/xHedgeMarkPrice)
-			}
 		}
 		yOrder := common.NewOrderParam{
 			Symbol:     xSymbol,
@@ -209,9 +159,6 @@ func updateXPositions(isExit bool) {
 			}:
 				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.OrderSilent)
 				xPositionsUpdateTimes[xSymbol] = time.Unix(0, 0)
-				if okXHedgeMarkPrice {
-					delete(xHedgeMarkPrices, xSymbol)
-				}
 			default:
 				logger.Debugf("xOrderRequestChMap[xSymbol] <- common.OrderRequest %s failed, ch len %d", xSymbol, len(xOrderRequestChMap[xSymbol]))
 			}
@@ -329,7 +276,6 @@ func updateTargetPositionSizes() {
 		xSize := xPosition.GetSize()
 		midPrice := (xDepth.MidPrice + yDepth.MidPrice) * 0.5
 
-		xyMergedDirs[xSymbol] = spread.XDir*xyConfig.XYDirRatio + spread.YDir*(1.0-xyConfig.XYDirRatio)
 
 		if spread.ShortLastLeave < shortBot &&
 			spread.ShortMedianLeave < shortBot &&
@@ -364,40 +310,18 @@ func updateTargetPositionSizes() {
 				xTargetPositionSizes[xSymbol] = -yTargetPositionSizes[ySymbol]
 			}
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
-
-			//sell x buy y
-			if xyMergedDirs[xSymbol]*xyTradeDirection < 0 {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
-				xOrderSilentTimes[xSymbol] = time.Now()
-				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
-				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
-			} else if xyMergedDirs[xSymbol]*xyTradeDirection > 0 {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
-				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
-				yOrderSilentTimes[ySymbol] = time.Now()
-				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
-			} else {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderUnknown
-				xOrderSilentTimes[xSymbol] = time.Now()
-				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
-				yOrderSilentTimes[ySymbol] = time.Now()
-				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
-			}
+			xOrderSilentTimes[xSymbol] = time.Now()
+			yOrderSilentTimes[ySymbol] = time.Now()
 			delete(xLastFilledBuyPrices, xSymbol)
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
-				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f, MARK PRICE Y %f, DIR %f",
+				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f",
 				xSymbol, ySymbol,
 				spread.ShortLastLeave, shortBot,
 				spread.ShortMedianLeave, shortBot,
 				size,
-				xyEnterTradeOrders[xSymbol],
-				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
-				xyMergedDirs[xSymbol],
 			)
 		} else if spread.LongLastLeave > longTop &&
 			spread.LongMedianLeave > longTop &&
@@ -432,41 +356,19 @@ func updateTargetPositionSizes() {
 				xTargetPositionSizes[xSymbol] = -yTargetPositionSizes[ySymbol]
 			}
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
-			xyMergedDirs[xSymbol] = spread.XDir*xyConfig.XYDirRatio + spread.YDir*(1.0-xyConfig.XYDirRatio)
 
-			//buy x sell y
-			if xyMergedDirs[xSymbol]*xyTradeDirection < 0 {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
-				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
-				yOrderSilentTimes[ySymbol] = time.Now()
-				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
-			} else if xyMergedDirs[xSymbol]*xyTradeDirection > 0 {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
-				xOrderSilentTimes[xSymbol] = time.Now()
-				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
-				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
-			} else {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderUnknown
-				xOrderSilentTimes[xSymbol] = time.Now()
-				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
-				yOrderSilentTimes[ySymbol] = time.Now()
-				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
-			}
+			xOrderSilentTimes[xSymbol] = time.Now()
+			yOrderSilentTimes[ySymbol] = time.Now()
 			delete(xLastFilledBuyPrices, xSymbol)
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, ENTER ORDER %s MARK PRICE X %f MARK PRICE Y %f DIR %f",
+				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f",
 				xSymbol, ySymbol,
 				spread.LongLastLeave, longTop,
 				spread.LongMedianLeave, longTop,
 				size,
-				xyEnterTradeOrders[xSymbol],
-				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
-				xyMergedDirs[xSymbol],
 			)
 		} else if spread.ShortLastEnter > shortTop &&
 			spread.ShortMedianEnter > shortTop &&
@@ -521,39 +423,18 @@ func updateTargetPositionSizes() {
 			}
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
 			xyUSDTAvailable -= entryValue
-			//buy x sell y
-			if xyMergedDirs[xSymbol]*xyTradeDirection < 0 {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
-				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
-				yOrderSilentTimes[ySymbol] = time.Now()
-				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
-			} else if xyMergedDirs[xSymbol]*xyTradeDirection > 0 {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
-				xOrderSilentTimes[xSymbol] = time.Now()
-				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
-				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
-			} else {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderUnknown
-				xOrderSilentTimes[xSymbol] = time.Now()
-				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
-				yOrderSilentTimes[ySymbol] = time.Now()
-				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
-			}
+			xOrderSilentTimes[xSymbol] = time.Now()
+			yOrderSilentTimes[ySymbol] = time.Now()
 			delete(xLastFilledBuyPrices, xSymbol)
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
-				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f MARK PRICE Y %f DIR %f",
+				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f",
 				xSymbol, ySymbol,
 				spread.ShortLastEnter, shortTop,
 				spread.ShortMedianEnter, shortTop,
 				size,
-				xyEnterTradeOrders[xSymbol],
-				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
-				xyMergedDirs[xSymbol],
 			)
 		} else if spread.LongLastEnter < longBot &&
 			spread.LongMedianEnter < longBot &&
@@ -607,39 +488,18 @@ func updateTargetPositionSizes() {
 			}
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
 			xyUSDTAvailable -= entryValue
-			//sell x buy y
-			if xyMergedDirs[xSymbol]*xyTradeDirection < 0 {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
-				xOrderSilentTimes[xSymbol] = time.Now()
-				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
-				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
-			} else if xyMergedDirs[xSymbol]*xyTradeDirection > 0 {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
-				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
-				yOrderSilentTimes[ySymbol] = time.Now()
-				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
-			} else {
-				xyEnterTradeOrders[xSymbol] = EnterTradeOrderUnknown
-				xOrderSilentTimes[xSymbol] = time.Now()
-				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
-				yOrderSilentTimes[ySymbol] = time.Now()
-				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
-			}
+			xOrderSilentTimes[xSymbol] = time.Now()
+			yOrderSilentTimes[ySymbol] = time.Now()
 			delete(xLastFilledBuyPrices, xSymbol)
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
-				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f, MARK PRICE Y %f DIR %f",
+				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f",
 				xSymbol, ySymbol,
 				spread.LongLastEnter, longBot,
 				spread.LongMedianEnter, longBot,
 				size,
-				xyEnterTradeOrders[xSymbol],
-				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
-				xyMergedDirs[xSymbol],
 			)
 		}
 	}

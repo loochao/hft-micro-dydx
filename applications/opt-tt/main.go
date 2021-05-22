@@ -123,8 +123,6 @@ func main() {
 
 	xyLoopTimer = time.NewTimer(time.Second)
 	defer xyLoopTimer.Stop()
-	xyDirResetTimer = time.NewTimer(time.Second)
-	defer xyDirResetTimer.Stop()
 
 	xPositionChMap := make(map[string]chan common.Position)
 	xOrderChMap := make(map[string]chan common.Order)
@@ -224,7 +222,6 @@ func main() {
 			xyConfig.DepthMaxAgeDiffBias,
 			xyConfig.ReportCount,
 			xyConfig.SpreadLookback,
-			xyConfig.DepthDirLookback,
 			xDepthChMap[xSymbol],
 			yDepthChMap[ySymbol],
 			spreadReportCh,
@@ -270,15 +267,6 @@ mainLoop:
 				logger.Debugf("ySystemStatus %v", ySystemStatus)
 			}
 			break
-		case <-xyDirResetTimer.C:
-			for xSymbol := range xySymbolsMap {
-				if time.Now().Sub(xyEnterTimes[xSymbol]) < 0 && xyEnterTradeOrders[xSymbol] != EnterTradeOrderUnknown {
-					continue
-				}
-				if spread, ok := xySpreads[xSymbol]; ok {
-					xyMergedDirs[xSymbol] = spread.XDir*xyConfig.XYDirRatio + spread.YDir*(1.0-xyConfig.XYDirRatio)
-				}
-			}
 		case nextPos := <-xPositionCh:
 			//logger.Debugf("x position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := xPositions[nextPos.GetSymbol()]; ok {
@@ -332,7 +320,7 @@ mainLoop:
 						if xOrder.GetSide() == common.OrderSideBuy {
 							xBuyPrice := xOrder.GetFilledPrice()
 							xLastFilledBuyPrices[xSymbol] = xBuyPrice
-							logger.Debugf("%s set x buy price %f dir %s y %s sell %f", xSymbol, xBuyPrice, xyEnterTradeOrders[xSymbol], xSymbol, yLastFilledSellPrices[ySymbol])
+							logger.Debugf("%s set x buy price %f dir y %s sell %f", xSymbol, xBuyPrice, yLastFilledSellPrices[ySymbol])
 							if ySellPrice, ok := yLastFilledSellPrices[ySymbol]; ok {
 								xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / ySellPrice
 								logger.Debugf("%s - %s realised short spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
@@ -340,7 +328,7 @@ mainLoop:
 						} else if xOrder.GetSide() == common.OrderSideSell {
 							xSellPrice := xOrder.GetFilledPrice()
 							xLastFilledSellPrices[xSymbol] = xSellPrice
-							logger.Debugf("%s set x sell price %f dir %s y %s buy %f ", xSymbol, xSellPrice, xyEnterTradeOrders[xSymbol], ySymbol, yLastFilledBuyPrices[ySymbol])
+							logger.Debugf("%s set x sell price %f dir y %s buy %f ", xSymbol, xSellPrice, ySymbol, yLastFilledBuyPrices[ySymbol])
 							if yBuyPrice, ok := yLastFilledBuyPrices[ySymbol]; ok {
 								xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
 								logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
@@ -367,7 +355,7 @@ mainLoop:
 						if yOrder.GetSide() == common.OrderSideBuy {
 							yBuyPrice := yOrder.GetFilledPrice()
 							yLastFilledBuyPrices[ySymbol] = yBuyPrice
-							logger.Debugf("%s set y buy price %f dir %s x %s sell %f", ySymbol, yBuyPrice, xyEnterTradeOrders[xSymbol], xSymbol, xLastFilledSellPrices[xSymbol])
+							logger.Debugf("%s set y buy price %f dir x %s sell %f", ySymbol, yBuyPrice, xSymbol, xLastFilledSellPrices[xSymbol])
 							if xSellPrice, ok := xLastFilledSellPrices[xSymbol]; ok {
 								xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
 								logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
@@ -375,7 +363,7 @@ mainLoop:
 						} else if yOrder.GetSide() == common.OrderSideSell {
 							ySellPrice := yOrder.GetFilledPrice()
 							yLastFilledSellPrices[ySymbol] = ySellPrice
-							logger.Debugf("%s set y sell price %f dir %s x %s buy %f", ySymbol, ySellPrice, xyEnterTradeOrders[xSymbol], xSymbol, xLastFilledBuyPrices[xSymbol])
+							logger.Debugf("%s set y sell price %f dir x %s buy %f", ySymbol, ySellPrice, xSymbol, xLastFilledBuyPrices[xSymbol])
 							if xBuyPrice, ok := xLastFilledBuyPrices[xSymbol]; ok {
 								xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / ySellPrice
 								logger.Debugf("%s - %s realised short spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
@@ -440,8 +428,8 @@ mainLoop:
 				if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
 					time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
 					updateTargetPositionSizes()
-					updateXPositions(false)
-					updateYPositions(false)
+					updateXPositions()
+					updateYPositions()
 				}
 			} else {
 				if time.Now().Sub(time.Now().Truncate(time.Second*15)) < xyConfig.LoopInterval {
@@ -462,7 +450,7 @@ mainLoop:
 		}
 	}
 	logger.Debugf("hedge all positions, and wait 30s")
-	updateXPositions(true)
-	updateYPositions(true)
+	updateXPositions()
+	updateYPositions()
 	<-time.After(time.Second * 30)
 }

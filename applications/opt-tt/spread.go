@@ -20,7 +20,6 @@ func watchXYSpread(
 	maxAgeDiffBias time.Duration,
 	reportCount int,
 	spreadLookback time.Duration,
-	depthDirLookback time.Duration,
 	makerDepthCh, takerDepthCh chan common.Depth,
 	reportCh chan SpreadReport,
 	outputCh chan *XYSpread,
@@ -46,17 +45,12 @@ func watchXYSpread(
 	shortEnterTimedMedian := common.NewTimedMedian(spreadLookback)
 	longEnterTimedMedian := common.NewTimedMedian(spreadLookback)
 
-	yDepthDirMedian := common.NewTimedMean(depthDirLookback)
-	xDepthDirMedian := common.NewTimedMean(depthDirLookback)
-
 	expectedChanSendingTime := time.Nanosecond * 300
 	matchCount := 0
 	depthCount := 0
 	xExpireCount := 0
 	yExpireCount := 0
 	var shortLastEnter, longLastEnter float64
-	var lastYBidAsk, currentYBidAsk float64
-	var lastXBidAsk, currentXBidAsk float64
 	for {
 		select {
 		case <-ctx.Done():
@@ -114,9 +108,6 @@ func watchXYSpread(
 				LongMedianEnter: longEnterTimedMedian.Median(),
 				LongMedianLeave: shortEnterTimedMedian.Median(),
 
-				XDir: xDepthDirMedian.Mean(),
-				YDir: yDepthDirMedian.Mean(),
-
 				AgeDiff: adjustedAgeDiff,
 				Time:    spreadTime,
 			}:
@@ -158,11 +149,6 @@ func watchXYSpread(
 			if xDepth != nil && xDepth.GetTime().Sub(newXDepth.GetTime()) >= 0 {
 				break
 			}
-			currentXBidAsk = newXDepth.GetBids()[0][0] + newXDepth.GetAsks()[0][0]
-			if lastXBidAsk != 0 {
-				xDepthDirMedian.Insert(newXDepth.GetTime(), (currentXBidAsk-lastXBidAsk)/lastXBidAsk)
-			}
-			lastXBidAsk = currentXBidAsk
 			xDepth = newXDepth
 			if !xDepthFilter.Filter(xDepth) && yDepth != nil {
 				adjustedAgeDiff = xDepth.GetTime().Sub(yDepth.GetTime()) + time.Duration(math.Abs(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma))*time.Millisecond
@@ -209,11 +195,6 @@ func watchXYSpread(
 				yDepth.GetTime().Sub(newYDepth.GetTime()) >= 0 {
 				break
 			}
-			currentYBidAsk = newYDepth.GetBids()[0][0] + newYDepth.GetAsks()[0][0]
-			if lastYBidAsk != 0 {
-				yDepthDirMedian.Insert(newYDepth.GetTime(), (currentYBidAsk-lastYBidAsk)/lastYBidAsk)
-			}
-			lastYBidAsk = currentYBidAsk
 			yDepth = newYDepth
 			if !yDepthFilter.Filter(yDepth) && xDepth != nil {
 				adjustedAgeDiff = xDepth.GetTime().Sub(yDepth.GetTime()) + time.Duration(math.Abs(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma))*time.Millisecond

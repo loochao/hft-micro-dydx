@@ -45,11 +45,6 @@ type Config struct {
 	SpreadTimeToLive    time.Duration `yaml:"spreadTimeToLive"`
 	SpreadLookback      time.Duration `yaml:"spreadLookback"`
 
-	DepthDirLookback    time.Duration `yaml:"depthDirLookback"`
-	HedgeCheckInterval time.Duration `yaml:"hedgeCheckInterval"`
-	HedgeTrackOffset   float64       `yaml:"hedgeTrackOffset"`
-	TradeDirection     float64       `yaml:"tradeDirection"`
-
 	StartValue        float64            `yaml:"startValue"`
 	EnterFreePct      float64            `yaml:"enterFreePct"`
 	EnterMinimalStep  float64            `yaml:"enterMinimalStep"`

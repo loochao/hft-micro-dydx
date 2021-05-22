@@ -446,13 +446,19 @@ func (order NewOrderResponse) GetType() common.OrderType {
 		return common.OrderTypeMarket
 	case OrderTypeLimit:
 		return common.OrderTypeLimit
+	case OrderTypeLimitMarker:
+		return common.OrderTypeLimit
 	default:
 		return common.OrderTypeUnknown
 	}
 }
 
 func (order NewOrderResponse) GetPostOnly() bool {
-	return false
+	if order.Type == OrderTypeLimitMarker {
+		return false
+	}else{
+		return true
+	}
 }
 
 func (order NewOrderResponse) GetReduceOnly() bool {

@@ -68,15 +68,12 @@ var xyRealisedSpread = make(map[string]float64)
 var xyUnHedgeValue float64
 var xyLogSilentTimes = make(map[string]time.Time)
 var xyLoopTimer *time.Timer
-var xyDirResetTimer *time.Timer
 var xyDualEnds []int
 var xSystemStatus = common.SystemStatusNotReady
 var ySystemStatus = common.SystemStatusNotReady
 var xSystemStatusCh = make(chan common.SystemStatus, 100)
 var ySystemStatusCh = make(chan common.SystemStatus, 100)
 
-var yHedgeMarkPrices = make(map[string]float64)
-var xHedgeMarkPrices = make(map[string]float64)
 var xTargetPositionSizes = make(map[string]float64)
 var yTargetPositionSizes = make(map[string]float64)
 var xyTargetPositionUpdateSilentTimes = make(map[string]time.Time)
@@ -86,14 +83,10 @@ var xyConfig *Config
 var xExchange common.Exchange
 var yExchange common.Exchange
 
-var xyEnterTradeOrders = make(map[string]EnterTradeOrder)
-var xyMergedDirs = make(map[string]float64)
-var xyEnterTimes = make(map[string]time.Time)
-var xyTradeDirection = 0.0
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210522 12:14:12  ####")
+	logger.Debug("####  BUILD @ 20210522 16:04:02  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -147,9 +140,6 @@ func init() {
 		yxSymbolsMap[ySymbol] = xSymbol
 		xySymbolsMap[xSymbol] = ySymbol
 
-		xyEnterTimes[xSymbol] = time.Unix(0, 0)
-		xyEnterTradeOrders[xSymbol] = EnterTradeOrderUnknown
-		xyMergedDirs[xSymbol] = 0.0
 		xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now()
 
 		xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.RestartSilent)
@@ -168,11 +158,6 @@ func init() {
 	}
 	if len(xSymbols)%2 == 1 {
 		xyDualEnds = append(xyDualEnds, len(xSymbols)/2)
-	}
-	if xyConfig.TradeDirection > 0 {
-		xyTradeDirection = 1.0
-	} else if xyConfig.TradeDirection < 0 {
-		xyTradeDirection = -1.0
 	}
 	logger.Debugf("dual end ranks %d", xyDualEnds)
 }
