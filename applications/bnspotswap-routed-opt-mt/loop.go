@@ -32,7 +32,7 @@ func updateSwapPositions() {
 		swapPosition, okSwapPosition := bnswapPositions[symbol]
 		spotBalance, okSpotBalance := bnspotBalances[symbol]
 		spread, okSpread := bnSpreads[symbol]
-		if !okSwapPosition || !okSpotBalance {
+		if !okSwapPosition || !okSpotBalance || !okSpread{
 			continue
 		}
 		swapOrderBook := spread.TakerDepth

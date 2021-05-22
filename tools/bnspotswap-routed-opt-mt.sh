@@ -25,3 +25,6 @@ rsync -avx --progress "./dist/hft-mirco-bnspotswap-routed-opt-mt.$dt" wenzhe:/us
 
 echo "ff05"
 rsync -avx --progress "./dist/hft-mirco-bnspotswap-routed-opt-mt.$dt" ff05:/usr/local/bin/
+
+echo "vc001"
+rsync -avx --progress "./dist/hft-mirco-bnspotswap-routed-opt-mt.$dt" vc001:/usr/local/bin/
