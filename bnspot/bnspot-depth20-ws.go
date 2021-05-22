@@ -251,8 +251,8 @@ func (w *Depth20Websocket) Done() chan interface{} {
 }
 
 func (w *Depth20Websocket) dataHandleLoop(ctx context.Context, id int, channels map[string]chan common.Depth) {
-	logger.Debugf("START dataHandleLoop")
-	defer logger.Debugf("EXIT dataHandleLoop")
+	logger.Debugf("START dataHandleLoop %d", id)
+	defer logger.Debugf("EXIT dataHandleLoop %d", id)
 	logSilentTime := time.Now()
 	for {
 		select {
@@ -287,7 +287,7 @@ func (w *Depth20Websocket) dataHandleLoop(ctx context.Context, id int, channels 
 	}
 }
 
-func NewDepth20Websocket(
+func NewDepth20WS(
 	ctx context.Context,
 	proxy string,
 	channels map[string]chan common.Depth,
@@ -300,10 +300,10 @@ func NewDepth20Websocket(
 		mu:          sync.Mutex{},
 	}
 	go ws.mainLoop(ctx, channels, proxy)
-	go ws.dataHandleLoop(ctx)
-	go ws.dataHandleLoop(ctx)
-	go ws.dataHandleLoop(ctx)
-	go ws.dataHandleLoop(ctx)
+	go ws.dataHandleLoop(ctx, 1, channels)
+	go ws.dataHandleLoop(ctx, 2, channels)
+	go ws.dataHandleLoop(ctx, 3, channels)
+	go ws.dataHandleLoop(ctx, 4, channels)
 	ws.reconnectCh <- nil
 	return &ws
 }

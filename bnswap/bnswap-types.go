@@ -762,11 +762,11 @@ type Depth5 struct {
 	ParseTime    time.Time     `json:"-"`
 }
 
-func (depth *Depth5) GetBids() [5][2]float64 {
-	return depth.Bids
+func (depth *Depth5) GetBids() common.Bids {
+	return depth.Bids[:]
 }
-func (depth *Depth5) GetAsks() [5][2]float64 {
-	return depth.Asks
+func (depth *Depth5) GetAsks() common.Asks {
+	return depth.Asks[:]
 }
 func (depth *Depth5) GetSymbol() string {
 	return depth.Symbol

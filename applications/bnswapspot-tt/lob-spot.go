@@ -9,7 +9,7 @@ import (
 func watchSpotWalkedOrderBooks(
 	ctx context.Context, proxyAddress string,
 	takerImpact, makerImpact float64, symbols []string, output chan WalkedOrderBook) {
-	ws := bnspot.NewDepth20Websocket(ctx, symbols, proxyAddress)
+	ws := bnspot.NewDepth20WS(ctx, symbols, proxyAddress)
 	defer ws.Stop()
 
 	lastUpdatedIds := make(map[string]int64)

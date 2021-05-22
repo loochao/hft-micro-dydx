@@ -26,6 +26,10 @@ type DepthRawMessage struct {
 	Time   time.Time
 }
 
+func (d DepthRawMessage) GetTime() time.Time {
+	return d.Time
+}
+
 type TradeRaw struct {
 	Data   []byte
 	Symbol string
@@ -209,11 +213,11 @@ func WalkMakerTakerDepth20(depth20 Depth, makerImpact, takerImpact float64) (*Wa
 	return wd, nil
 }
 
-func WalkMakerTakerDepth5(depth20 Depth5, makerImpact, takerImpact float64) (*WalkedMakerTakerDepth, error) {
+func WalkMakerTakerDepth5(depth5 Depth, makerImpact, takerImpact float64) (*WalkedMakerTakerDepth, error) {
 
 	wd, hasMakerData, hasTakerData := &WalkedMakerTakerDepth{
-		Symbol:       depth20.GetSymbol(),
-		Time:         depth20.GetTime(),
+		Symbol:       depth5.GetSymbol(),
+		Time:         depth5.GetTime(),
 		TakerAsk:     0,
 		TakerBid:     0,
 		MakerAsk:     0,
@@ -224,7 +228,7 @@ func WalkMakerTakerDepth5(depth20 Depth5, makerImpact, takerImpact float64) (*Wa
 		MakerBidSize: 0,
 	}, false, false
 
-	for _, bid := range depth20.GetBids() {
+	for _, bid := range depth5.GetBids() {
 		value := bid[0] * bid[1]
 		if !hasMakerData {
 			wd.MakerFarBid = bid[0]
@@ -253,14 +257,14 @@ func WalkMakerTakerDepth5(depth20 Depth5, makerImpact, takerImpact float64) (*Wa
 		}
 	}
 	if wd.TakerBidSize == 0 || wd.MakerBidSize == 0 {
-		return nil, fmt.Errorf("bad depth bids %v", depth20.GetBids())
+		return nil, fmt.Errorf("bad depth bids %v", depth5.GetBids())
 	}
 	wd.TakerBid /= wd.TakerBidSize
 	wd.MakerBid /= wd.MakerBidSize
 
 	hasMakerData = false
 	hasTakerData = false
-	for _, ask := range depth20.GetAsks() {
+	for _, ask := range depth5.GetAsks() {
 		value := ask[0] * ask[1]
 		if !hasMakerData {
 			wd.MakerFarAsk = ask[0]
@@ -289,15 +293,15 @@ func WalkMakerTakerDepth5(depth20 Depth5, makerImpact, takerImpact float64) (*Wa
 		}
 	}
 	if wd.TakerAskSize == 0 || wd.MakerAskSize == 0 {
-		return nil, fmt.Errorf("bad depth ask %v", depth20.GetAsks())
+		return nil, fmt.Errorf("bad depth ask %v", depth5.GetAsks())
 	}
 	wd.TakerAsk /= wd.TakerAskSize
 	wd.MakerAsk /= wd.MakerAskSize
-	wd.BestBidPrice = depth20.GetBids()[0][0]
-	wd.BestAskPrice = depth20.GetAsks()[0][0]
-	wd.MidPrice = (depth20.GetBids()[0][0] + depth20.GetAsks()[0][0]) * 0.5
-	wd.MircoPrice = (depth20.GetBids()[0][0]*depth20.GetAsks()[0][1] +
-		depth20.GetAsks()[0][0]*depth20.GetBids()[0][1]) / (depth20.GetAsks()[0][1] + depth20.GetBids()[0][1])
+	wd.BestBidPrice = depth5.GetBids()[0][0]
+	wd.BestAskPrice = depth5.GetAsks()[0][0]
+	wd.MidPrice = (depth5.GetBids()[0][0] + depth5.GetAsks()[0][0]) * 0.5
+	wd.MircoPrice = (depth5.GetBids()[0][0]*depth5.GetAsks()[0][1] +
+		depth5.GetAsks()[0][0]*depth5.GetBids()[0][1]) / (depth5.GetAsks()[0][1] + depth5.GetBids()[0][1])
 	return wd, nil
 }
 

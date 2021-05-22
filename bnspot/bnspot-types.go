@@ -217,11 +217,11 @@ type Balance struct {
 }
 
 func (b *Balance) GetSymbol() string {
-	return b.Asset+"USDT"
+	return b.Asset + "USDT"
 }
 
 func (b *Balance) GetSize() float64 {
-	return b.Free+b.Locked
+	return b.Free + b.Locked
 }
 
 func (b *Balance) GetPrice() float64 {
@@ -233,7 +233,7 @@ func (b *Balance) GetCurrency() string {
 }
 
 func (b *Balance) GetBalance() float64 {
-	return b.Free+b.Locked
+	return b.Free + b.Locked
 }
 
 func (b *Balance) GetFree() float64 {
@@ -254,6 +254,22 @@ func (b *Balance) ToString() string {
 
 type TransferResponse struct {
 	TranId int64 `json:"tranId"`
+}
+
+type FundingRate struct {
+	Symbol string
+}
+
+func (f FundingRate) GetSymbol() string {
+	return f.Symbol
+}
+
+func (f FundingRate) GetFundingRate() float64 {
+	return 0
+}
+
+func (f FundingRate) GetNextFundingTime() time.Time {
+	return time.Time{}
 }
 
 type NewOrderParams struct {
@@ -332,6 +348,115 @@ type NewOrderResponse struct {
 		Commission      float64 `json:"commission,string"`
 		CommissionAsset string  `json:"commissionAsset"`
 	} `json:"fills"`
+	EventTime time.Time `json:"-"`
+	ParseTime time.Time `json:"-"`
+}
+
+func (order *NewOrderResponse) UnmarshalJSON(data []byte) error {
+	type Alias NewOrderResponse
+	aux := &struct {
+		TransactionTime int64 `json:"transactTime"`
+		*Alias
+	}{
+		Alias: (*Alias)(order),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	order.EventTime = time.Unix(0, aux.TransactionTime*1000000)
+	order.ParseTime = time.Now()
+	return nil
+}
+
+func (order NewOrderResponse) GetSymbol() string {
+	return order.Symbol
+}
+
+func (order NewOrderResponse) GetSize() float64 {
+	return order.OrigQty
+}
+
+func (order NewOrderResponse) GetPrice() float64 {
+	return order.Price
+}
+
+func (order NewOrderResponse) GetFilledSize() float64 {
+	size := 0.0
+	for _, f := range order.Fills {
+		size += f.Qty
+	}
+	return size
+}
+
+func (order NewOrderResponse) GetFilledPrice() float64 {
+	size := 0.0
+	value := 0.0
+	for _, f := range order.Fills {
+		size += f.Qty
+		value += f.Qty * f.Price
+	}
+	if size != 0.0 {
+		return value / size
+	} else {
+		return 0.0
+	}
+}
+
+func (order NewOrderResponse) GetSide() common.OrderSide {
+	switch order.Side {
+	case OrderSideBuy:
+		return common.OrderSideBuy
+	case OrderSideSell:
+		return common.OrderSideSell
+	default:
+		return common.OrderSideUnknown
+	}
+}
+
+func (order NewOrderResponse) GetClientID() string {
+	return order.ClientOrderID
+}
+
+func (order NewOrderResponse) GetID() string {
+	return fmt.Sprintf("%d", order.OrderID)
+}
+
+func (order NewOrderResponse) GetStatus() common.OrderStatus {
+	switch order.Status {
+	case OrderStatusNew:
+		return common.OrderStatusNew
+	case OrderStatusFilled:
+		return common.OrderStatusFilled
+	case OrderStatusCancelled:
+		return common.OrderStatusCancelled
+	case OrderStatusReject:
+		return common.OrderStatusReject
+	case OrderStatusExpired:
+		return common.OrderStatusExpired
+	case OrderStatusPartiallyFilled:
+		return common.OrderStatusFilled
+	default:
+		return common.OrderStatusUnknown
+	}
+}
+
+func (order NewOrderResponse) GetType() common.OrderType {
+	switch order.Type {
+	case OrderTypeMarket:
+		return common.OrderTypeMarket
+	case OrderTypeLimit:
+		return common.OrderTypeLimit
+	default:
+		return common.OrderTypeUnknown
+	}
+}
+
+func (order NewOrderResponse) GetPostOnly() bool {
+	return false
+}
+
+func (order NewOrderResponse) GetReduceOnly() bool {
+	return false
 }
 
 type CancelAllOrderParams struct {
@@ -374,8 +499,8 @@ type Depth5 struct {
 	ParseTime    time.Time     `json:"-"`
 }
 
-func (depth Depth5) GetBids() [5][2]float64 { return depth.Bids }
-func (depth Depth5) GetAsks() [5][2]float64 { return depth.Asks }
+func (depth Depth5) GetBids() common.Bids { return depth.Bids[:] }
+func (depth Depth5) GetAsks() common.Asks { return depth.Asks[:] }
 func (depth Depth5) GetSymbol() string      { return depth.Symbol }
 func (depth Depth5) GetTime() time.Time     { return depth.ParseTime }
 func (depth *Depth5) UnmarshalJSON(data []byte) error {

@@ -12,7 +12,7 @@ func watchSpotWalkedOrderBooks(
 	cancel context.CancelFunc,
 	proxyAddress string,
 	takerImpact, makerImpact float64, symbols []string, output map[string]chan *WalkedOrderBook) {
-	ws := bnspot.NewDepth20Websocket(ctx, symbols, proxyAddress)
+	ws := bnspot.NewDepth20WS(ctx, symbols, proxyAddress)
 	defer ws.Stop()
 
 	lastUpdatedIds := make(map[string]int64)

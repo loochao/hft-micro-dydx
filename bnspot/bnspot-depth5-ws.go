@@ -3,22 +3,23 @@ package bnspot
 import (
 	"context"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
-	"sync/atomic"
+	"sync"
 	"time"
 )
 
 type Depth5Websocket struct {
 	messageCh   chan []byte
-	DataCh      chan *Depth5
 	done        chan interface{}
 	reconnectCh chan interface{}
-	stopped     int32
+	stopped     bool
+	mu          sync.Mutex
 }
 
 func (w *Depth5Websocket) readLoop(conn *websocket.Conn) {
@@ -119,12 +120,12 @@ func (w *Depth5Websocket) reconnect(ctx context.Context, wsUrl string, proxy str
 	return conn, nil
 }
 
-func (w *Depth5Websocket) mainLoop(ctx context.Context, symbols []string, proxy string) {
+func (w *Depth5Websocket) mainLoop(ctx context.Context, channels map[string]chan common.Depth, proxy string) {
 	logger.Debugf("START mainLoop")
 	urlStr := "wss://stream.binance.com:9443/stream?streams="
-	for _, symbol := range symbols {
+	for symbol := range channels {
 		urlStr += fmt.Sprintf(
-			"%s@depth20@100ms/",
+			"%s@depth5@100ms/",
 			strings.ToLower(symbol),
 		)
 	}
@@ -225,8 +226,10 @@ func (w *Depth5Websocket) heartbeatLoop(ctx context.Context, conn *websocket.Con
 }
 
 func (w *Depth5Websocket) Stop() {
-	if atomic.LoadInt32(&w.stopped) == 0 {
-		atomic.StoreInt32(&w.stopped, 1)
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if !w.stopped {
+		w.stopped = true
 		close(w.done)
 		logger.Debugf("stopped")
 	}
@@ -247,13 +250,10 @@ func (w *Depth5Websocket) Done() chan interface{} {
 	return w.done
 }
 
-func (w *Depth5Websocket) dataHandleLoop(ctx context.Context) {
-	logger.Debugf("START dataHandleLoop")
-	defer logger.Debugf("EXIT dataHandleLoop")
+func (w *Depth5Websocket) dataHandleLoop(ctx context.Context, id int, channels map[string]chan common.Depth) {
+	logger.Debugf("START dataHandleLoop %d", id)
+	defer logger.Debugf("EXIT dataHandleLoop %d", id)
 	logSilentTime := time.Now()
-	totalLen := 0
-	totalCount := 0
-	logSilentTime = time.Now()
 	for {
 		select {
 		case <-ctx.Done():
@@ -261,51 +261,49 @@ func (w *Depth5Websocket) dataHandleLoop(ctx context.Context) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			totalCount += 1
-			totalLen += len(msg)
-			if totalCount > 1000000 {
-				logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
-				totalLen = 0
-				totalCount = 0
-			}
 			if msg[2] != 's' {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("BNSPOT OTHER MSG %s", msg)
+					logger.Debugf("bnspot other msg %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 				continue
 			}
-			depth20, err := ParseDepth5(msg)
+			depth5, err := ParseDepth5(msg)
 			if err != nil {
 				logger.Debugf("ParseDepth5 error %v %s", err, msg)
 				continue
 			}
-			select {
-			case w.DataCh <- depth20:
-			default:
-				logger.Debugf("w.DataCh <- depth20 failed, len(w.DataCh) = %d", len(w.DataCh))
+			if ch, ok := channels[depth5.Symbol]; ok {
+				select {
+				case ch <- depth5:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("ch <- depth5 failed, %s ch len %d", depth5.Symbol, len(ch))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
 			}
 		}
 	}
 }
 
-func NewDepth5Websocket(
+func NewDepth5WS(
 	ctx context.Context,
-	symbols []string,
 	proxy string,
+	channels map[string]chan common.Depth,
 ) *Depth5Websocket {
 	ws := Depth5Websocket{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 100),
-		DataCh:      make(chan *Depth5, 10*len(symbols)),
-		messageCh:   make(chan []byte, 10*len(symbols)),
-		stopped:     0,
+		reconnectCh: make(chan interface{}, 1000),
+		messageCh:   make(chan []byte, 100*len(channels)),
+		stopped:     false,
+		mu:          sync.Mutex{},
 	}
-	go ws.mainLoop(ctx, symbols, proxy)
-	go ws.dataHandleLoop(ctx)
-	go ws.dataHandleLoop(ctx)
-	go ws.dataHandleLoop(ctx)
-	go ws.dataHandleLoop(ctx)
+	go ws.mainLoop(ctx, channels, proxy)
+	go ws.dataHandleLoop(ctx, 1, channels)
+	go ws.dataHandleLoop(ctx, 2, channels)
+	go ws.dataHandleLoop(ctx, 3, channels)
+	go ws.dataHandleLoop(ctx, 4, channels)
 	ws.reconnectCh <- nil
 	return &ws
 }

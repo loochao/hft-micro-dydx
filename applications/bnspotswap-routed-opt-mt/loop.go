@@ -77,7 +77,7 @@ func updateSwapPositions() {
 		bnswapOrderRequestChs[symbol] <- bnswap.NewOrderParams{
 			Symbol:           symbol,
 			Side:             side,
-			Type:             common.OrderTypeMarket,
+			Type:             bnswap.OrderTypeMarket,
 			Quantity:         swapSize,
 			ReduceOnly:       reduceOnly,
 			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),

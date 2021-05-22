@@ -2,6 +2,7 @@ package bnspot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
@@ -236,7 +237,7 @@ func (bn *Bnspot) StreamDepth(ctx context.Context, channels map[string]chan comm
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
-			ws := NewDepth20Websocket(ctx, proxy, channels)
+			ws := NewDepth5WS(ctx, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
@@ -321,22 +322,15 @@ func (bn *Bnspot) StreamFundingRate(ctx context.Context, channels map[string]cha
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
-			indexes, err := bn.api.GetPremiumIndex(subCtx)
-			if err != nil {
-				logger.Debugf("WatchPositionsFromHttp GetPositions error %v", err)
-			} else {
-				for _, fr := range indexes {
-					if ch, ok := channels[fr.Symbol]; ok {
-						fr := fr
-						select {
-						case ch <- &fr:
-						default:
-						}
-					}
+			for symbol, ch := range channels {
+				select {
+				case ch <- &FundingRate{
+					Symbol: symbol,
+				}:
+				default:
+					logger.Debugf("ch <- &FundingRate failed %s ch len %d", symbol, len(ch))
 				}
 			}
-			cancel()
 			timer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
 		}
 	}
@@ -400,7 +394,7 @@ func (bn *Bnspot) Setup(ctx context.Context, settings common.ExchangeSettings) (
 		if _, ok := MinSizes[symbol]; !ok {
 			return fmt.Errorf("min size not found for %s", symbol)
 		}
-		if _, ok := MinNotional[symbol]; !ok {
+		if _, ok := MinNotionals[symbol]; !ok {
 			return fmt.Errorf("min notional not found for %s", symbol)
 		}
 		if _, ok := MultiplierUps[symbol]; !ok {
@@ -408,28 +402,6 @@ func (bn *Bnspot) Setup(ctx context.Context, settings common.ExchangeSettings) (
 		}
 		if _, ok := MultiplierDowns[symbol]; !ok {
 			return fmt.Errorf("multiplier down not found for %s", symbol)
-		}
-		if settings.ChangeLeverage {
-			res, err := bn.api.UpdateLeverage(ctx, UpdateLeverageParams{
-				Symbol:   symbol,
-				Leverage: int64(settings.Leverage),
-			})
-			if err != nil {
-				logger.Debugf("UPDATE LEVERAGE FOR %s ERROR %v", symbol, err)
-			} else {
-				logger.Debugf("UPDATE LEVERAGE FOR %s RESPONSE %v", symbol, res)
-			}
-		}
-		if settings.ChangeMarginType {
-			res, err := bn.api.UpdateMarginType(ctx, UpdateMarginTypeParams{
-				Symbol:     symbol,
-				MarginType: settings.MarginType,
-			})
-			if err != nil {
-				logger.Debugf("UPDATE MARGIN TYPE FOR %s ERROR %v", symbol, err)
-			} else {
-				logger.Debugf("UPDATE MARGIN TYPE FOR %s RESPONSE %v", symbol, res)
-			}
 		}
 		time.Sleep(time.Second)
 	}
@@ -570,15 +542,11 @@ func (bn *Bnspot) submitOrder(ctx context.Context, param common.NewOrderParam, t
 	case common.OrderTimeInForceFOK:
 		newOrderParam.TimeInForce = OrderTimeInForceFOK
 	}
-	if param.PostOnly {
-		newOrderParam.TimeInForce = OrderTimeInForceGTX
-	}
-	newOrderParam.ReduceOnly = param.ReduceOnly
 	if param.Price != 0 {
 		newOrderParam.Price = math.Round(param.Price/tickSize) * tickSize
 	}
-	newOrderParam.NewClientOrderId = param.ClientID
-	order, err := bn.api.SubmitOrder(ctx, newOrderParam)
+	newOrderParam.NewClientOrderID = param.ClientID
+	order, _, err := bn.api.SubmitOrder(ctx, newOrderParam)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{
@@ -598,25 +566,8 @@ func (bn *Bnspot) submitOrder(ctx context.Context, param common.NewOrderParam, t
 }
 
 func (bn *Bnspot) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
-
-	if param.ClientID != "" || param.Symbol != "" {
-		cancelOrderParam := CancelOrderParam{
-			Symbol:            param.Symbol,
-			OrigClientOrderId: param.ClientID,
-		}
-		_, err := bn.api.CancelOrder(ctx, cancelOrderParam)
-		if err != nil {
-			select {
-			case errCh <- common.OrderError{
-				Cancel: &param,
-				Error:  err,
-			}:
-			default:
-				logger.Debugf("errCh <- common.OrderError failed, ch len %d", len(errCh))
-			}
-		}
-	} else if param.Symbol != "" {
-		_, err := bn.api.CancelAllOpenOrders(ctx, CancelAllOrderParams{
+	if param.Symbol != "" {
+		_, _, err := bn.api.CancelAllOrder(ctx, CancelAllOrderParams{
 			Symbol: param.Symbol,
 		})
 		if err != nil {
