@@ -245,17 +245,21 @@ func main() {
 	logger.Debugf("start main loop")
 	fundingInterval := time.Hour * 8
 	fundingSilent := time.Minute * 5
+mainLoop:
 	for {
 		select {
 		case <-xyGlobalCtx.Done():
 			logger.Debugf("global ctx done, exit main loop")
-			return
+			xyGlobalCancel()
+			break mainLoop
 		case <-xExchange.Done():
 			logger.Debugf("x exchange done, exit main loop")
-			return
+			xyGlobalCancel()
+			break mainLoop
 		case <-yExchange.Done():
 			logger.Debugf("y exchange done, exit main loop")
-			return
+			xyGlobalCancel()
+			break mainLoop
 		case xSystemStatus = <-xSystemStatusCh:
 			if xSystemStatus != common.SystemStatusReady {
 				logger.Debugf("xSystemStatus %v", xSystemStatus)
@@ -445,12 +449,11 @@ func main() {
 
 		case <-xyLoopTimer.C:
 			if xSystemStatus == common.SystemStatusReady && ySystemStatus == common.SystemStatusReady {
-				updateYPositions()
 				if time.Now().Sub(time.Now().Truncate(fundingInterval)) > fundingSilent &&
 					time.Now().Truncate(fundingInterval).Add(fundingInterval).Sub(time.Now()) > fundingSilent {
 					updateTargetPositionSizes()
-					updateXPositions()
-					updateYPositions()
+					updateXPositions(false)
+					updateYPositions(false)
 				}
 			} else {
 				if time.Now().Sub(time.Now().Truncate(time.Second*15)) < xyConfig.LoopInterval {
@@ -470,4 +473,8 @@ func main() {
 			break
 		}
 	}
+	logger.Debugf("hedge all positions, and wait 30s")
+	updateXPositions(true)
+	updateYPositions(true)
+	<-time.After(time.Second * 30)
 }

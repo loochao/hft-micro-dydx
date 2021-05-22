@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func updateYPositions() {
+func updateYPositions(isExit bool) {
 	if xAccount == nil {
 		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
 			logger.Debugf("xACCOUNT not ready")
@@ -54,7 +54,7 @@ func updateYPositions() {
 		}
 
 		hedgeMarkPrice, okHedgeMarkPrice := yHedgeMarkPrices[ySymbol]
-		if xyEnterTradeOrders[xSymbol] == EnterTradeOrderXY && okHedgeMarkPrice {
+		if xyEnterTradeOrders[xSymbol] == EnterTradeOrderXY && okHedgeMarkPrice && !isExit {
 			if ySizeDiff < 0 && yDepth.BestBidPrice > hedgeMarkPrice*(1.0+xyConfig.EnterOffsetDelta) {
 				logger.Debugf("%s updateYPositions size %f push mark price %f -> %f", ySymbol, ySizeDiff, hedgeMarkPrice, yDepth.BestBidPrice)
 				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
@@ -108,7 +108,7 @@ func updateYPositions() {
 	xyUnHedgeValue = unHedgedValue
 }
 
-func updateXPositions() {
+func updateXPositions(isExit bool) {
 	if xAccount == nil {
 		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
 			logger.Debugf("xACCOUNT not ready")
@@ -152,7 +152,7 @@ func updateXPositions() {
 		}
 
 		xHedgeMarkPrice, okXHedgeMarkPrice := xHedgeMarkPrices[xSymbol]
-		if xyEnterTradeOrders[xSymbol] == EnterTradeOrderYX && okXHedgeMarkPrice {
+		if xyEnterTradeOrders[xSymbol] == EnterTradeOrderYX && okXHedgeMarkPrice && !isExit {
 			if xSizeDiff < 0 && xDepth.BestBidPrice > xHedgeMarkPrice*(1.0+xyConfig.EnterOffsetDelta) {
 				logger.Debugf("%s updateXPositions size %f push mark price %f -> %f", xSymbol, xSizeDiff, xHedgeMarkPrice, xDepth.BestBidPrice)
 				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
