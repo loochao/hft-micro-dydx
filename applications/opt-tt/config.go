@@ -41,11 +41,11 @@ type Config struct {
 	DepthMakerImpact    float64       `yaml:"depthMakerImpact"`
 	DepthTakerImpact    float64       `yaml:"depthTakerImpact"`
 	DepthMaxAgeDiffBias time.Duration `yaml:"depthMaxAgeDiffBias"`
-	DepthDirLookback    time.Duration `yaml:"depthDirLookback"`
 	ReportCount         int           `yaml:"reportCount"`
 	SpreadTimeToLive    time.Duration `yaml:"spreadTimeToLive"`
 	SpreadLookback      time.Duration `yaml:"spreadLookback"`
 
+	DepthDirLookback    time.Duration `yaml:"depthDirLookback"`
 	HedgeCheckInterval time.Duration `yaml:"hedgeCheckInterval"`
 	HedgeTrackOffset   float64       `yaml:"hedgeTrackOffset"`
 	TradeDirection     float64       `yaml:"tradeDirection"`
