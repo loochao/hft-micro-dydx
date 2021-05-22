@@ -70,7 +70,7 @@ func updateYPositions() {
 			}
 		}
 
-		logger.Debugf("updateYPositions %s size %f position %f -> %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize)
+		logger.Debugf("updateYPositions %s size %f position %f -> %f last mark price %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize, yHedgeMarkPrices[ySymbol])
 
 		reduceOnly := false
 		if ySizeDiff*yPosition.GetSize() < 0 && math.Abs(ySizeDiff) <= math.Abs(yPosition.GetSize()) {
@@ -168,7 +168,7 @@ func updateXPositions() {
 			}
 		}
 
-		logger.Debugf("updateXPositions %s size %f position %f -> %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize)
+		logger.Debugf("updateXPositions %s size %f position %f -> %f last mark price %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize, xHedgeMarkPrices[xSymbol])
 
 		reduceOnly := false
 		if xSizeDiff*xPosition.GetSize() < 0 && math.Abs(xSizeDiff) <= math.Abs(xPosition.GetSize()) {
