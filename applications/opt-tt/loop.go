@@ -370,6 +370,10 @@ func updateTargetPositionSizes() {
 				yOrderSilentTimes[ySymbol] = time.Now()
 				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
 			}
+			delete(xLastFilledBuyPrices, xSymbol)
+			delete(xLastFilledSellPrices, xSymbol)
+			delete(yLastFilledBuyPrices, ySymbol)
+			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
 				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f, MARK PRICE Y %f",
 				xSymbol, ySymbol,
@@ -379,7 +383,6 @@ func updateTargetPositionSizes() {
 				xyEnterTradeOrders[xSymbol],
 				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
 			)
-
 		} else if spread.LongLastLeave > longTop &&
 			spread.LongMedianLeave > longTop &&
 			fundingRate > -xyConfig.MinimalKeepFundingRate &&
@@ -434,7 +437,10 @@ func updateTargetPositionSizes() {
 				yOrderSilentTimes[ySymbol] = time.Now()
 				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
 			}
-
+			delete(xLastFilledBuyPrices, xSymbol)
+			delete(xLastFilledSellPrices, xSymbol)
+			delete(yLastFilledBuyPrices, ySymbol)
+			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
 				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, ENTER ORDER %s MARK PRICE X %f MARK PRICE Y %f",
 				xSymbol, ySymbol,
@@ -516,6 +522,10 @@ func updateTargetPositionSizes() {
 				yOrderSilentTimes[ySymbol] = time.Now()
 				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
 			}
+			delete(xLastFilledBuyPrices, xSymbol)
+			delete(xLastFilledSellPrices, xSymbol)
+			delete(yLastFilledBuyPrices, ySymbol)
+			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
 				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f MARK PRICE Y %f",
 				xSymbol, ySymbol,
@@ -596,6 +606,10 @@ func updateTargetPositionSizes() {
 				yOrderSilentTimes[ySymbol] = time.Now()
 				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
 			}
+			delete(xLastFilledBuyPrices, xSymbol)
+			delete(xLastFilledSellPrices, xSymbol)
+			delete(yLastFilledBuyPrices, ySymbol)
+			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
 				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f, MARK PRICE Y %f",
 				xSymbol, ySymbol,
