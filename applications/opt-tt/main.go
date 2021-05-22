@@ -348,7 +348,7 @@ mainLoop:
 					yOrderSilentTimes[ySymbol] = time.Now().Add(time.Second)
 					yPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
 				} else {
-					logger.Debugf("y order filled %s %s %s %s size %f price %f", yOrder.GetSymbol(), yOrder.GetStatus(), yOrder.GetSide(), yOrder.GetFilledSize(), yOrder.GetFilledPrice())
+					logger.Debugf("y order filled %s %s %s size %f price %f", yOrder.GetSymbol(), yOrder.GetStatus(), yOrder.GetSide(), yOrder.GetFilledSize(), yOrder.GetFilledPrice())
 					if xSymbol, ok := yxSymbolsMap[ySymbol]; ok {
 						if yOrder.GetSide() == common.OrderSideBuy {
 							yBuyPrice := yOrder.GetFilledPrice()
