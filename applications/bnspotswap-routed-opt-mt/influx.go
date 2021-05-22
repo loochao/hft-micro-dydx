@@ -123,8 +123,8 @@ func handleSave() {
 			if premiumIndex, ok := bnswapPremiumIndexes[symbol]; ok {
 				fields["spotValue"] = premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)
 				if entryTarget != 0 {
-					fields["enterDelta"] = *bnConfig.EnterDelta + *bnConfig.OffsetDelta*(premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)/entryTarget)
-					fields["exitDelta"] = *bnConfig.ExitDelta + *bnConfig.OffsetDelta*(premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)/entryTarget)
+					fields["enterDelta"] = *bnConfig.EnterDelta + *bnConfig.EnterOffset*(premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)/entryTarget)
+					fields["exitDelta"] = *bnConfig.ExitDelta + *bnConfig.ExitOffset*(premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)/entryTarget)
 				}
 
 				if position, ok := bnswapPositions[symbol]; ok {

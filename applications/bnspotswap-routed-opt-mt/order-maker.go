@@ -90,8 +90,8 @@ func updateMakerOldOrders() {
 		if !ok {
 			continue
 		}
-		enterDelta := *bnConfig.EnterDelta + *bnConfig.OffsetDelta*(premiumIndex.IndexPrice*(spotBalance.Free+spotBalance.Locked)/entryTarget)
-		exitDelta := *bnConfig.ExitDelta + *bnConfig.OffsetDelta*(premiumIndex.IndexPrice*(spotBalance.Free+spotBalance.Locked)/entryTarget)
+		enterDelta := *bnConfig.EnterDelta + *bnConfig.EnterOffset*(premiumIndex.IndexPrice*(spotBalance.Free+spotBalance.Locked)/entryTarget)
+		exitDelta := *bnConfig.ExitDelta + *bnConfig.ExitOffset*(premiumIndex.IndexPrice*(spotBalance.Free+spotBalance.Locked)/entryTarget)
 
 		if isOrderOK(order, enterDelta, exitDelta) {
 			continue

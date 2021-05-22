@@ -159,8 +159,8 @@ func updateMakerNewOrders() {
 		currentSpotValue := currentSpotSize * premiumIndex.IndexPrice
 		offset := bnspotOffsets[symbol]
 
-		enterDelta := *bnConfig.EnterDelta + *bnConfig.OffsetDelta*(currentSpotValue/entryTarget)
-		exitDelta := *bnConfig.ExitDelta + *bnConfig.OffsetDelta*(currentSpotValue/entryTarget)
+		enterDelta := *bnConfig.EnterDelta + *bnConfig.EnterOffset*(currentSpotValue/entryTarget)
+		exitDelta := *bnConfig.ExitDelta + *bnConfig.ExitOffset*(currentSpotValue/entryTarget)
 
 		if spread.ShortLastLeave < exitDelta &&
 			spread.ShortMedianLeave < exitDelta &&

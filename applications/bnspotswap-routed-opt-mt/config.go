@@ -55,7 +55,8 @@ type Config struct {
 	//MinimalBandOffset *float64 `yaml:"minimalBandOffset,omitempty"`
 	EnterDelta  *float64 `yaml:"enterDelta,omitempty"`
 	ExitDelta   *float64 `yaml:"exitDelta,omitempty"`
-	OffsetDelta *float64 `yaml:"offsetDelta,omitempty"`
+	EnterOffset *float64 `yaml:"enterOffset,omitempty"`
+	ExitOffset  *float64 `yaml:"exitOffset,omitempty"`
 
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`
