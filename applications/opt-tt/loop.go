@@ -378,8 +378,8 @@ func updateTargetPositionSizes() {
 			logger.Debugf(
 				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f, MARK PRICE Y %f",
 				xSymbol, ySymbol,
-				spread.ShortLastLeave, shortTop,
-				spread.ShortMedianLeave, shortTop,
+				spread.ShortLastLeave, shortBot,
+				spread.ShortMedianLeave, shortBot,
 				size,
 				xyEnterTradeOrders[xSymbol],
 				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
@@ -559,8 +559,8 @@ func updateTargetPositionSizes() {
 						ySymbol,
 						entryValue,
 						xyUSDTAvailable,
-						spread.LongLastEnter, longTop,
-						spread.LongMedianEnter, longTop,
+						spread.LongLastEnter, longBot,
+						spread.LongMedianEnter, longBot,
 						size,
 					)
 				}
@@ -572,8 +572,8 @@ func updateTargetPositionSizes() {
 						"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
 						xSymbol, ySymbol,
 						entryValue,
-						spread.LongLastEnter, longTop,
-						spread.LongMedianEnter, longTop,
+						spread.LongLastEnter, longBot,
+						spread.LongMedianEnter, longBot,
 						size,
 					)
 					xyLogSilentTimes[xSymbol] = time.Now().Add(xyConfig.LogInterval)
