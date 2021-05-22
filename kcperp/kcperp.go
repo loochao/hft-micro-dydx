@@ -216,6 +216,7 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 				if wsPosition.UnrealisedRoePcnt != nil {
 					position.UnrealisedRoePcnt = *wsPosition.UnrealisedRoePcnt
 				}
+				positionsMap[wsPosition.Symbol] = position
 				if ch, ok := positionCh[position.Symbol]; ok {
 					select {
 					case ch <- &position:
