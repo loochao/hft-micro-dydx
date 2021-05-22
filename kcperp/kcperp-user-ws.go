@@ -73,8 +73,6 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 func (w *UserWebsocket) readLoop(conn *websocket.Conn, pingInterval time.Duration) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
-	totalCount := 0
-	totalLen := 0
 	logSilentTime := time.Now()
 	pingInterval *= 10
 	for {
@@ -96,14 +94,6 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn, pingInterval time.Duratio
 			go w.restart()
 			return
 		}
-		totalCount += 1
-		totalLen += len(msg)
-		if totalCount > 10000 {
-			logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
-			totalLen = 0
-			totalCount = 0
-		}
-		//logger.Debugf("%s", msg)
 		select {
 		case <-time.After(time.Millisecond):
 			if time.Now().Sub(logSilentTime) > 0 {
