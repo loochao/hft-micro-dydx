@@ -336,8 +336,6 @@ mainLoop:
 								if ySellPrice, ok := yLastFilledSellPrices[ySymbol]; ok {
 									xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / ySellPrice
 									logger.Debugf("%s - %s realised short spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
-									delete(xLastFilledBuyPrices, ySymbol)
-									delete(yLastFilledBuyPrices, ySymbol)
 								}
 							}
 						} else if xOrder.GetSide() == common.OrderSideSell {
@@ -347,8 +345,6 @@ mainLoop:
 								if yBuyPrice, ok := yLastFilledBuyPrices[ySymbol]; ok {
 									xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
 									logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
-									delete(xLastFilledSellPrices, xSymbol)
-									delete(yLastFilledBuyPrices, ySymbol)
 								}
 							}
 						}
@@ -377,8 +373,6 @@ mainLoop:
 								if xSellPrice, ok := xLastFilledSellPrices[xSymbol]; ok {
 									xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
 									logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
-									delete(xLastFilledBuyPrices, xSymbol)
-									delete(yLastFilledBuyPrices, ySymbol)
 								}
 							}
 						} else if yOrder.GetSide() == common.OrderSideSell {
@@ -388,8 +382,6 @@ mainLoop:
 								if xBUyPrice, ok := xLastFilledBuyPrices[xSymbol]; ok {
 									xyRealisedSpread[xSymbol] = (ySellPrice - xBUyPrice) / ySellPrice
 									logger.Debugf("%s - %s realised short spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
-									delete(yLastFilledSellPrices, xSymbol)
-									delete(xLastFilledBuyPrices, ySymbol)
 								}
 							}
 						}

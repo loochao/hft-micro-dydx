@@ -92,7 +92,7 @@ var xyEnterTimes = make(map[string]time.Time)
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210522 02:08:41  ####")
+	logger.Debug("####  BUILD @ 20210522 03:26:29  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -127,7 +127,7 @@ func init() {
 	case "kcperp":
 		xExchange = &kcperp.Kcperp{}
 	default:
-		logger.Fatal("unsupported exchange %s", xyConfig.XExchange.Name)
+		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
 
 	switch xyConfig.YExchange.Name {
@@ -138,7 +138,7 @@ func init() {
 	case "kcperp":
 		yExchange = &kcperp.Kcperp{}
 	default:
-		logger.Fatal("unsupported exchange %s", xyConfig.YExchange.Name)
+		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
 	}
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		xSymbols = append(xSymbols, xSymbol)

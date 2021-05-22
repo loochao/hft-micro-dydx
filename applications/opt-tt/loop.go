@@ -101,7 +101,7 @@ func updateYPositions(isExit bool) {
 					delete(yHedgeMarkPrices, ySymbol)
 				}
 			default:
-				logger.Debugf("yOrderRequestChMap[ySymbol] <- common.OrderRequest failed, ch len %d", len(yOrderRequestChMap[ySymbol]))
+				logger.Debugf("yOrderRequestChMap[ySymbol] <- common.OrderRequest %s failed, ch len %d", ySymbol,len(yOrderRequestChMap[ySymbol]))
 			}
 		}
 	}
@@ -199,7 +199,7 @@ func updateXPositions(isExit bool) {
 					delete(xHedgeMarkPrices, xSymbol)
 				}
 			default:
-				logger.Debugf("xOrderRequestChMap[xSymbol] <- common.OrderRequest %d failed, ch len %d", len(xOrderRequestChMap[xSymbol]))
+				logger.Debugf("xOrderRequestChMap[xSymbol] <- common.OrderRequest %s failed, ch len %d",xSymbol, len(xOrderRequestChMap[xSymbol]))
 			}
 		}
 	}
