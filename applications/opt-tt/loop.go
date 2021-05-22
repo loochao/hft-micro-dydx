@@ -351,13 +351,13 @@ func updateTargetPositionSizes() {
 			}
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
 
-			if xyMergedDirs[xSymbol] < 0 {
+			if xyMergedDirs[xSymbol] > 0 {
 				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
 				xOrderSilentTimes[xSymbol] = time.Now()
 				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
 				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
 				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
-			} else if xyMergedDirs[xSymbol] > 0 {
+			} else if xyMergedDirs[xSymbol] < 0 {
 				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
 				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
 				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
@@ -418,13 +418,13 @@ func updateTargetPositionSizes() {
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
 			xyMergedDirs[xSymbol] = spread.XDir*xyConfig.XYDirRatio + spread.YDir*(1.0-xyConfig.XYDirRatio)
 
-			if xyMergedDirs[xSymbol] < 0 {
+			if xyMergedDirs[xSymbol] > 0 {
 				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
 				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
 				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
 				yOrderSilentTimes[ySymbol] = time.Now()
 				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
-			} else if xyMergedDirs[xSymbol] > 0 {
+			} else if xyMergedDirs[xSymbol] < 0 {
 				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
 				xOrderSilentTimes[xSymbol] = time.Now()
 				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
@@ -503,13 +503,13 @@ func updateTargetPositionSizes() {
 			}
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
 			xyUSDTAvailable -= entryValue
-			if xyMergedDirs[xSymbol] < 0 {
+			if xyMergedDirs[xSymbol] > 0 {
 				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
 				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
 				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
 				yOrderSilentTimes[ySymbol] = time.Now()
 				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
-			} else if xyMergedDirs[xSymbol] > 0 {
+			} else if xyMergedDirs[xSymbol] < 0 {
 				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
 				xOrderSilentTimes[xSymbol] = time.Now()
 				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
@@ -587,13 +587,13 @@ func updateTargetPositionSizes() {
 			}
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
 			xyUSDTAvailable -= entryValue
-			if xyMergedDirs[xSymbol] < 0 {
+			if xyMergedDirs[xSymbol] > 0 {
 				xyEnterTradeOrders[xSymbol] = EnterTradeOrderXY
 				xOrderSilentTimes[xSymbol] = time.Now()
 				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
 				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
 				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
-			} else if xyMergedDirs[xSymbol] > 0 {
+			} else if xyMergedDirs[xSymbol] < 0 {
 				xyEnterTradeOrders[xSymbol] = EnterTradeOrderYX
 				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
 				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
