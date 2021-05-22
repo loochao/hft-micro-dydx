@@ -308,7 +308,7 @@ type WSPosition struct {
 	DelevPercentage   *float64  `json:"delevPercentage,omitempty"`
 	CurrentComm       *float64  `json:"currentComm,omitempty"`
 	RealisedGrossCost *float64  `json:"realisedGrossCost,omitempty"`
-	IsOpen            *float64  `json:"isOpen,omitempty"`
+	IsOpen            *bool     `json:"isOpen,omitempty"`
 	PosCross          *float64  `json:"posCross,omitempty"`
 	SettleCurrency    *string   `json:"settleCurrency,omitempty"`
 	UnrealisedPnlPcnt *float64  `json:"unrealisedPnlPcnt,omitempty"`
@@ -586,7 +586,7 @@ type WsBalanceEvent struct {
 func (wsBalanceEvent *WsBalanceEvent) UnmarshalJSON(data []byte) error {
 	type Alias WsBalanceEvent
 	aux := struct {
-		Timestamp int64 `json:"timestamp,omitempty"`
+		Timestamp int64 `json:"timestamp,string,omitempty"`
 		*Alias
 	}{
 		Alias: (*Alias)(wsBalanceEvent),
@@ -601,14 +601,14 @@ func (wsBalanceEvent *WsBalanceEvent) UnmarshalJSON(data []byte) error {
 }
 
 type Account struct {
-	AccountEquity    float64 `json:"accountEquity"`
-	UnrealisedPNL    float64 `json:"unrealisedPNL"`
-	MarginBalance    float64 `json:"marginBalance"`
-	PositionMargin   float64 `json:"positionMargin"`
-	OrderMargin      float64 `json:"orderMargin"`
-	FrozenFunds      float64 `json:"frozenFunds"`
-	AvailableBalance float64 `json:"availableBalance"`
-	Currency         string  `json:"currency"`
+	AccountEquity    float64   `json:"accountEquity"`
+	UnrealisedPNL    float64   `json:"unrealisedPNL"`
+	MarginBalance    float64   `json:"marginBalance"`
+	PositionMargin   float64   `json:"positionMargin"`
+	OrderMargin      float64   `json:"orderMargin"`
+	FrozenFunds      float64   `json:"frozenFunds"`
+	AvailableBalance float64   `json:"availableBalance"`
+	Currency         string    `json:"currency"`
 	EventTime        time.Time `json:"-"`
 	ParseTime        time.Time `json:"-"`
 }
