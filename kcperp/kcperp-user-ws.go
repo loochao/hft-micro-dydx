@@ -103,7 +103,7 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn, pingInterval time.Duratio
 			totalLen = 0
 			totalCount = 0
 		}
-		logger.Debugf("%s", msg)
+		//logger.Debugf("%s", msg)
 		select {
 		case <-time.After(time.Millisecond):
 			if time.Now().Sub(logSilentTime) > 0 {
