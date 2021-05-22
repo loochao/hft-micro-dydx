@@ -391,13 +391,14 @@ func updateTargetPositionSizes() {
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
-				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f, MARK PRICE Y %f",
+				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f, MARK PRICE Y %f, DIR %f",
 				xSymbol, ySymbol,
 				spread.ShortLastLeave, shortBot,
 				spread.ShortMedianLeave, shortBot,
 				size,
 				xyEnterTradeOrders[xSymbol],
 				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
+				xyMergedDirs[xSymbol],
 			)
 		} else if spread.LongLastLeave > longTop &&
 			spread.LongMedianLeave > longTop &&
@@ -459,13 +460,14 @@ func updateTargetPositionSizes() {
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, ENTER ORDER %s MARK PRICE X %f MARK PRICE Y %f",
+				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, ENTER ORDER %s MARK PRICE X %f MARK PRICE Y %f DIR %f",
 				xSymbol, ySymbol,
 				spread.LongLastLeave, longTop,
 				spread.LongMedianLeave, longTop,
 				size,
 				xyEnterTradeOrders[xSymbol],
 				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
+				xyMergedDirs[xSymbol],
 			)
 		} else if spread.ShortLastEnter > shortTop &&
 			spread.ShortMedianEnter > shortTop &&
@@ -545,13 +547,14 @@ func updateTargetPositionSizes() {
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
-				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f MARK PRICE Y %f",
+				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f MARK PRICE Y %f DIR %f",
 				xSymbol, ySymbol,
 				spread.ShortLastEnter, shortTop,
 				spread.ShortMedianEnter, shortTop,
 				size,
 				xyEnterTradeOrders[xSymbol],
 				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
+				xyMergedDirs[xSymbol],
 			)
 		} else if spread.LongLastEnter < longBot &&
 			spread.LongMedianEnter < longBot &&
@@ -630,13 +633,14 @@ func updateTargetPositionSizes() {
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
-				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f, MARK PRICE Y %f",
+				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, ENTER ORDER %s, MARK PRICE X %f, MARK PRICE Y %f DIR %f",
 				xSymbol, ySymbol,
 				spread.LongLastEnter, longBot,
 				spread.LongMedianEnter, longBot,
 				size,
 				xyEnterTradeOrders[xSymbol],
 				xHedgeMarkPrices[xSymbol], yHedgeMarkPrices[ySymbol],
+				xyMergedDirs[xSymbol],
 			)
 		}
 	}
