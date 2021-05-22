@@ -46,6 +46,15 @@ func (k *Kcperp) Setup(ctx context.Context, settings common.ExchangeSettings) er
 		if _, err = k.GetTickSize(symbol); err != nil {
 			return err
 		}
+		if settings.ChangeLeverage {
+			_, err = k.api.ChangeAutoDepositStatus(ctx, AutoDepositStatusParam{
+				Symbol: symbol,
+				Status: true,
+			})
+			if err != nil {
+				return err
+			}
+		}
 	}
 	k.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.ApiPassphrase, settings.Proxy)
 	if err != nil {
