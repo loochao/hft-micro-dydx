@@ -330,8 +330,8 @@ func main() {
 							xLastFilledBuyPrices[xSymbol] = xBuyPrice
 							if tradeDir, ok := xyEnterTradeOrders[ySymbol]; ok && tradeDir == EnterTradeOrderYX {
 								if ySellPrice, ok := yLastFilledSellPrices[ySymbol]; ok {
-									xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / xBuyPrice
-									logger.Debugf("%s %s realised short spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
+									xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / ySellPrice
+									logger.Debugf("%s - %s realised short spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
 									delete(xLastFilledBuyPrices, ySymbol)
 									delete(yLastFilledBuyPrices, ySymbol)
 								}
@@ -341,8 +341,8 @@ func main() {
 							xLastFilledSellPrices[xSymbol] = xSellPrice
 							if tradeDir, ok := xyEnterTradeOrders[ySymbol]; ok && tradeDir == EnterTradeOrderYX {
 								if yBuyPrice, ok := yLastFilledBuyPrices[ySymbol]; ok {
-									xyRealisedSpread[xSymbol] = (xSellPrice - yBuyPrice) / xSellPrice
-									logger.Debugf("%s %s realised long spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
+									xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
+									logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
 									delete(xLastFilledSellPrices, xSymbol)
 									delete(yLastFilledBuyPrices, ySymbol)
 								}
@@ -371,8 +371,8 @@ func main() {
 							yLastFilledBuyPrices[ySymbol] = yBuyPrice
 							if tradeDir, ok := xyEnterTradeOrders[xSymbol]; ok && tradeDir == EnterTradeOrderXY {
 								if xSellPrice, ok := xLastFilledSellPrices[xSymbol]; ok {
-									xyRealisedSpread[xSymbol] = (xSellPrice - yBuyPrice) / xSellPrice
-									logger.Debugf("%s %s realised long spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
+									xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
+									logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
 									delete(xLastFilledBuyPrices, xSymbol)
 									delete(yLastFilledBuyPrices, ySymbol)
 								}
@@ -382,8 +382,8 @@ func main() {
 							yLastFilledSellPrices[ySymbol] = ySellPrice
 							if tradeDir, ok := xyEnterTradeOrders[xSymbol]; ok && tradeDir == EnterTradeOrderXY {
 								if xBUyPrice, ok := xLastFilledBuyPrices[xSymbol]; ok {
-									xyRealisedSpread[xSymbol] = (ySellPrice - xBUyPrice) / xBUyPrice
-									logger.Debugf("%s %s realised short spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
+									xyRealisedSpread[xSymbol] = (ySellPrice - xBUyPrice) / ySellPrice
+									logger.Debugf("%s - %s realised short spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
 									delete(yLastFilledSellPrices, xSymbol)
 									delete(xLastFilledBuyPrices, ySymbol)
 								}
