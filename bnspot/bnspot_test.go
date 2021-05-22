@@ -38,7 +38,7 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 			switch filter.FilterType {
 			case "PRICE_FILTER":
 				tickSizes[symbol.Symbol] = filter.TickSize
-			case "MARKET_LOT_SIZE":
+			case "LOT_SIZE":
 				stepSizes[symbol.Symbol] = filter.StepSize
 				minSizes[symbol.Symbol] = filter.MinQty
 			case "PERCENT_PRICE":

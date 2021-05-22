@@ -54,22 +54,21 @@ func updateYPositions(isExit bool) {
 		}
 
 		hedgeMarkPrice, okHedgeMarkPrice := yHedgeMarkPrices[ySymbol]
-		//hedgeMarkPrice, okHedgeMarkPrice := yHedgeMarkPrices[ySymbol]
-		//if xyEnterTradeOrders[xSymbol] == EnterTradeOrderXY && okHedgeMarkPrice && !isExit {
-		//	if ySizeDiff < 0 && yDepth.BestBidPrice > hedgeMarkPrice*(1.0+xyConfig.EnterOffsetDelta) {
-		//		logger.Debugf("%s updateYPositions size %f push mark price %f -> %f", ySymbol, ySizeDiff, hedgeMarkPrice, yDepth.BestBidPrice)
-		//		yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
-		//		yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-		//		yPositionsUpdateTimes[ySymbol] = time.Now()
-		//		continue
-		//	} else if ySizeDiff > 0 && yDepth.BestAskPrice < hedgeMarkPrice*(1.0-xyConfig.EnterOffsetDelta) {
-		//		logger.Debugf("%s updateYPositions size %f push mark price %f -> %f", ySymbol, ySizeDiff, hedgeMarkPrice, yDepth.BestAskPrice)
-		//		yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
-		//		yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-		//		yPositionsUpdateTimes[ySymbol] = time.Now()
-		//		continue
-		//	}
-		//}
+		if xyEnterTradeOrders[xSymbol] == EnterTradeOrderXY && okHedgeMarkPrice && !isExit {
+			if ySizeDiff < 0 && yDepth.BestBidPrice > hedgeMarkPrice*(1.0+xyConfig.EnterOffsetDelta) {
+				logger.Debugf("%s updateYPositions size %f push mark price %f -> %f", ySymbol, ySizeDiff, hedgeMarkPrice, yDepth.BestBidPrice)
+				yHedgeMarkPrices[ySymbol] = yDepth.BestBidPrice
+				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				yPositionsUpdateTimes[ySymbol] = time.Now()
+				continue
+			} else if ySizeDiff > 0 && yDepth.BestAskPrice < hedgeMarkPrice*(1.0-xyConfig.EnterOffsetDelta) {
+				logger.Debugf("%s updateYPositions size %f push mark price %f -> %f", ySymbol, ySizeDiff, hedgeMarkPrice, yDepth.BestAskPrice)
+				yHedgeMarkPrices[ySymbol] = yDepth.BestAskPrice
+				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				yPositionsUpdateTimes[ySymbol] = time.Now()
+				continue
+			}
+		}
 
 		logger.Debugf("updateYPositions %s size %f position %f -> %f last mark price %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize, yHedgeMarkPrices[ySymbol])
 
@@ -160,21 +159,21 @@ func updateXPositions(isExit bool) {
 		}
 
 		xHedgeMarkPrice, okXHedgeMarkPrice := xHedgeMarkPrices[xSymbol]
-		//if xyEnterTradeOrders[xSymbol] == EnterTradeOrderYX && okXHedgeMarkPrice && !isExit {
-		//	if xSizeDiff < 0 && xDepth.BestBidPrice > xHedgeMarkPrice*(1.0+xyConfig.EnterOffsetDelta) {
-		//		logger.Debugf("%s updateXPositions size %f push mark price %f -> %f", xSymbol, xSizeDiff, xHedgeMarkPrice, xDepth.BestBidPrice)
-		//		xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
-		//		xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-		//		xPositionsUpdateTimes[xSymbol] = time.Now()
-		//		continue
-		//	} else if xSizeDiff > 0 && xDepth.BestAskPrice < xHedgeMarkPrice*(1.0-xyConfig.EnterOffsetDelta) {
-		//		logger.Debugf("%s updateXPositions size %f push mark price %f -> %f", xSymbol, xSizeDiff, xHedgeMarkPrice, xDepth.BestAskPrice)
-		//		xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
-		//		xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
-		//		xPositionsUpdateTimes[xSymbol] = time.Now()
-		//		continue
-		//	}
-		//}
+		if xyEnterTradeOrders[xSymbol] == EnterTradeOrderYX && okXHedgeMarkPrice && !isExit {
+			if xSizeDiff < 0 && xDepth.BestBidPrice > xHedgeMarkPrice*(1.0+xyConfig.EnterOffsetDelta) {
+				logger.Debugf("%s updateXPositions size %f push mark price %f -> %f", xSymbol, xSizeDiff, xHedgeMarkPrice, xDepth.BestBidPrice)
+				xHedgeMarkPrices[xSymbol] = xDepth.BestBidPrice
+				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				xPositionsUpdateTimes[xSymbol] = time.Now()
+				continue
+			} else if xSizeDiff > 0 && xDepth.BestAskPrice < xHedgeMarkPrice*(1.0-xyConfig.EnterOffsetDelta) {
+				logger.Debugf("%s updateXPositions size %f push mark price %f -> %f", xSymbol, xSizeDiff, xHedgeMarkPrice, xDepth.BestAskPrice)
+				xHedgeMarkPrices[xSymbol] = xDepth.BestAskPrice
+				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.HedgeCheckInterval)
+				xPositionsUpdateTimes[xSymbol] = time.Now()
+				continue
+			}
+		}
 
 		logger.Debugf("updateXPositions %s size %f position %f -> %f last mark price %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize, xHedgeMarkPrices[xSymbol])
 

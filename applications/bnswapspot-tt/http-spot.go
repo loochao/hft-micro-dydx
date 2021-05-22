@@ -36,7 +36,7 @@ func handleSpotHttpAccount(account bnspot.Account) {
 		if bnspotHttpBalanceUpdateSilentTimes[symbol].Sub(time.Now()) > 0 {
 			continue
 		}
-		if account.UpdateTime.Sub(bnspotLastOrderTimes[symbol]).Seconds() < 0.0 {
+		if account.EventTime.Sub(bnspotLastOrderTimes[symbol]).Seconds() < 0.0 {
 			continue
 		}
 

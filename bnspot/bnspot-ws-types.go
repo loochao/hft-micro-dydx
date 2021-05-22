@@ -1,6 +1,11 @@
 package bnspot
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/geometrybase/hft-micro/common"
+	"time"
+)
 
 //{
 //  "e": "outboundAccountPosition", //Event type
@@ -17,15 +22,38 @@ import "fmt"
 
 type AccountUpdateEvent struct {
 	EventType               string      `json:"e"`
-	EventTime               int64       `json:"E"`
 	TimeOfLastAccountUpdate int64       `json:"u"`
 	Balances                []WSBalance `json:"B"`
+	EventTime               time.Time   `json:"-"`
+	ParseTime               time.Time   `json:"-"`
+}
+
+func (at *AccountUpdateEvent) UnmarshalJSON(data []byte) error {
+	type Alias AccountUpdateEvent
+	aux := &struct {
+		EventTime int64 `json:"E"`
+		*Alias
+	}{
+		Alias: (*Alias)(at),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	at.EventTime = time.Unix(0, aux.EventTime*1000000)
+	at.ParseTime = time.Now()
+	for i := 0; i < len(at.Balances); i++ {
+		at.Balances[i].EventTime = at.EventTime
+		at.Balances[i].ParseTime = at.ParseTime
+	}
+	return nil
 }
 
 type WSBalance struct {
-	Asset        string  `json:"a"`
-	FreeAmount   float64 `json:"f,string"`
-	LockedAmount float64 `json:"l,string"`
+	Asset        string    `json:"a"`
+	FreeAmount   float64   `json:"f,string"`
+	LockedAmount float64   `json:"l,string"`
+	EventTime    time.Time `json:"-"`
+	ParseTime    time.Time `json:"-"`
 }
 
 func (wsb *WSBalance) ToString() string {
@@ -92,34 +120,132 @@ type BalanceUpdateEvent struct {
 //}
 
 type OrderUpdateEvent struct {
-	EventType                              string  `json:"e"`
-	EventTime                              int64   `json:"E"`
-	Symbol                                 string  `json:"s"`
-	ClientOrderID                          string  `json:"c"`
-	Side                                   string  `json:"S"`
-	OrderType                              string  `json:"o"`
-	TimeInForce                            string  `json:"f"`
-	Quantity                               float64 `json:"q,string"`
-	OrderPrice                             float64 `json:"p,string"`
-	StopPrice                              float64 `json:"P,string"`
-	IcebergQuantity                        float64 `json:"F,string"`
-	OrderListId                            int     `json:"g"`
-	OriginalClientOrderID                  string  `json:"C"`
-	CurrentExecutionType                   string  `json:"x"`
-	CurrentOrderStatus                     string  `json:"X"`
-	OrderRejectReason                      string  `json:"r"`
-	OrderID                                int64   `json:"i"`
-	LastExecutedQuantity                   float64 `json:"l,string"`
-	CumulativeFilledQuantity               float64 `json:"z,string"`
-	LastExecutedPrice                      float64 `json:"L,string"`
-	CommissionAmount                       float64 `json:"n,string"`
-	CommissionAsset                        string  `json:"N"`
-	TransactionTime                        int64   `json:"T"`
-	TradeID                                int64   `json:"t"`
-	IsTheOrderOnTheBook                    bool    `json:"w"`
-	IsThisTradeTheMakerSide                bool    `json:"m"`
-	OrderCreationTime                      int64   `json:"O"`
-	CumulativeQuoteAssetTransactedQuantity float64 `json:"Z,string"`
-	LastQuoteAssetTransactedQuantity       float64 `json:"Y,string"`
-	QuoteOrderQty                          float64 `json:"Q,string"`
+	EventType                              string    `json:"e"`
+	EventTime                              time.Time `json:"-"`
+	ParseTime                              time.Time `json:"-"`
+	Symbol                                 string    `json:"s"`
+	ClientOrderID                          string    `json:"c"`
+	Side                                   string    `json:"S"`
+	OrderType                              string    `json:"o"`
+	TimeInForce                            string    `json:"f"`
+	Quantity                               float64   `json:"q,string"`
+	OrderPrice                             float64   `json:"p,string"`
+	StopPrice                              float64   `json:"P,string"`
+	IcebergQuantity                        float64   `json:"F,string"`
+	OrderListId                            int       `json:"g"`
+	OriginalClientOrderID                  string    `json:"C"`
+	CurrentExecutionType                   string    `json:"x"`
+	CurrentOrderStatus                     string    `json:"X"`
+	OrderRejectReason                      string    `json:"r"`
+	OrderID                                int64     `json:"i"`
+	LastExecutedQuantity                   float64   `json:"l,string"`
+	CumulativeFilledQuantity               float64   `json:"z,string"`
+	LastExecutedPrice                      float64   `json:"L,string"`
+	CommissionAmount                       float64   `json:"n,string"`
+	CommissionAsset                        string    `json:"N"`
+	TransactionTime                        int64     `json:"T"`
+	TradeID                                int64     `json:"t"`
+	IsTheOrderOnTheBook                    bool      `json:"w"`
+	IsThisTradeTheMakerSide                bool      `json:"m"`
+	OrderCreationTime                      int64     `json:"O"`
+	CumulativeQuoteAssetTransactedQuantity float64   `json:"Z,string"`
+	LastQuoteAssetTransactedQuantity       float64   `json:"Y,string"`
+	QuoteOrderQty                          float64   `json:"Q,string"`
+}
+
+func (o OrderUpdateEvent) GetSymbol() string {
+	return o.Symbol
+}
+
+func (o OrderUpdateEvent) GetSize() float64 {
+	return o.Quantity
+}
+
+func (o OrderUpdateEvent) GetPrice() float64 {
+	return o.OrderPrice
+}
+
+func (o OrderUpdateEvent) GetFilledSize() float64 {
+	return o.CumulativeFilledQuantity
+}
+
+func (o OrderUpdateEvent) GetFilledPrice() float64 {
+	if o.CumulativeFilledQuantity != 0 {
+		return o.CumulativeQuoteAssetTransactedQuantity/o.CumulativeFilledQuantity
+	}else{
+		return 0.0
+	}
+}
+
+func (o OrderUpdateEvent) GetSide() common.OrderSide {
+	switch o.Side {
+	case OrderSideSell:
+		return common.OrderSideSell
+	case OrderSideBuy:
+		return common.OrderSideBuy
+	default:
+		return common.OrderSideUnknown
+	}
+}
+
+func (o OrderUpdateEvent) GetClientID() string {
+	return o.ClientOrderID
+}
+
+func (o OrderUpdateEvent) GetID() string {
+	return fmt.Sprintf("%s", o.OrderID)
+}
+
+func (o OrderUpdateEvent) GetStatus() common.OrderStatus {
+	switch o.CurrentOrderStatus {
+	case OrderStatusNew:
+		return common.OrderStatusNew
+	case OrderStatusFilled:
+		return common.OrderStatusFilled
+	case OrderStatusCancelled:
+		return common.OrderStatusCancelled
+	case OrderStatusReject:
+		return common.OrderStatusReject
+	case OrderStatusExpired:
+		return common.OrderStatusExpired
+	case OrderStatusPartiallyFilled:
+		return common.OrderStatusFilled
+	default:
+		return common.OrderStatusUnknown
+	}
+}
+
+func (o OrderUpdateEvent) GetType() common.OrderType {
+	switch o.OrderType {
+	case OrderTypeMarket:
+		return common.OrderTypeMarket
+	case OrderTypeLimit:
+		return common.OrderTypeLimit
+	default:
+		return common.OrderTypeUnknown
+	}
+}
+
+func (o OrderUpdateEvent) GetPostOnly() bool {
+	return false
+}
+
+func (o OrderUpdateEvent) GetReduceOnly() bool {
+	return false
+}
+
+func (o *OrderUpdateEvent) UnmarshalJSON(data []byte) error {
+	type Alias OrderUpdateEvent
+	aux := &struct {
+		EventTime int64 `json:"E"`
+		*Alias
+	}{
+		Alias: (*Alias)(o),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	o.EventTime = time.Unix(0, aux.EventTime*1000000)
+	o.ParseTime = time.Now()
+	return nil
 }

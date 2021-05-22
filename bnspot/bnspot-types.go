@@ -65,8 +65,8 @@ type Depth20 struct {
 
 func (depth Depth20) GetBids() common.Bids { return depth.Bids[:] }
 func (depth Depth20) GetAsks() common.Asks { return depth.Asks[:] }
-func (depth Depth20) GetSymbol() string       { return depth.Symbol }
-func (depth Depth20) GetTime() time.Time      { return depth.ParseTime }
+func (depth Depth20) GetSymbol() string    { return depth.Symbol }
+func (depth Depth20) GetTime() time.Time   { return depth.ParseTime }
 func (depth *Depth20) UnmarshalJSON(data []byte) error {
 	type Alias Depth20
 	aux := &struct {
@@ -182,7 +182,8 @@ type Account struct {
 	CanTrade         bool      `json:"canTrade"`
 	CanWithdraw      bool      `json:"canWithdraw"`
 	CanDeposit       bool      `json:"canDeposit"`
-	UpdateTime       time.Time `json:"-"`
+	EventTime        time.Time `json:"-"`
+	ParseTime        time.Time `json:"-"`
 	Balances         []Balance `json:"balances"`
 }
 
@@ -197,15 +198,54 @@ func (at *Account) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	at.UpdateTime = time.Unix(0, aux.UpdateTime*1e6)
+	at.EventTime = time.Unix(0, aux.UpdateTime*1000000)
+	at.ParseTime = time.Now()
+	for i := 0; i < len(at.Balances); i++ {
+		at.Balances[i].EventTime = at.EventTime
+		at.Balances[i].ParseTime = at.ParseTime
+	}
 	return nil
 }
 
 // Balance holds query order data
 type Balance struct {
-	Asset  string  `json:"asset"`
-	Free   float64 `json:"free,string"`
-	Locked float64 `json:"locked,string"`
+	Asset     string    `json:"asset"`
+	Free      float64   `json:"free,string"`
+	Locked    float64   `json:"locked,string"`
+	EventTime time.Time `json:"-"`
+	ParseTime time.Time `json:"-"`
+}
+
+func (b *Balance) GetSymbol() string {
+	return b.Asset+"USDT"
+}
+
+func (b *Balance) GetSize() float64 {
+	return b.Free+b.Locked
+}
+
+func (b *Balance) GetPrice() float64 {
+	return 0.0
+}
+
+func (b *Balance) GetCurrency() string {
+	return b.Asset
+}
+
+func (b *Balance) GetBalance() float64 {
+	return b.Free+b.Locked
+}
+
+func (b *Balance) GetFree() float64 {
+	return b.Free
+}
+
+func (b *Balance) GetUsed() float64 {
+	return b.Locked
+}
+
+func (b *Balance) GetTime() time.Time {
+	return b.EventTime
 }
 
 func (b *Balance) ToString() string {
@@ -400,8 +440,7 @@ func (trade *Trade) GetSymbol() string  { return trade.Symbol }
 func (trade *Trade) GetSize() float64   { return trade.Quantity }
 func (trade *Trade) GetPrice() float64  { return trade.Price }
 func (trade *Trade) GetTime() time.Time { return trade.EventTime }
-func (trade *Trade) IsUpTick() bool        { return !trade.IsTheBuyerTheMarketMaker }
-
+func (trade *Trade) IsUpTick() bool     { return !trade.IsTheBuyerTheMarketMaker }
 
 func (trade *Trade) UnmarshalJSON(data []byte) error {
 	type Alias Trade
@@ -439,5 +478,5 @@ func (trade *Trade) UnmarshalJSON(data []byte) error {
 
 type WSTrade struct {
 	Stream string `json:"stream"`
-	Data   Trade `json:"data"`
+	Data   Trade  `json:"data"`
 }
