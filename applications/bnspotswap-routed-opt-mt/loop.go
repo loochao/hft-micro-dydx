@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/bnswap"
-	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/rand"
-	"strings"
 	"time"
 )
 
@@ -80,7 +78,7 @@ func updateSwapPositions() {
 			Type:             bnswap.OrderTypeMarket,
 			Quantity:         swapSize,
 			ReduceOnly:       reduceOnly,
-			NewClientOrderId: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
+			NewClientOrderId: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 		}
 	}
 	bnUnHedgeValue = unHedgedValue
@@ -193,7 +191,7 @@ func updateMakerNewOrders() {
 						//TimeInForce:      bnspot.OrderTimeInForceGTC,
 						Side:             bnspot.OrderSideSell,
 						Type:             bnspot.OrderTypeLimitMarker,
-						NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
+						NewClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 					}
 					bnspotLastLimitSellPrices[symbol] = price
 					bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
@@ -271,7 +269,7 @@ func updateMakerNewOrders() {
 				//TimeInForce:      bnspot.OrderTimeInForceGTC,
 				Side:             bnspot.OrderSideBuy,
 				Type:             bnspot.OrderTypeLimitMarker,
-				NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
+				NewClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 			}
 			bnspotLastLimitBuyPrices[symbol] = price
 			bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
@@ -332,13 +330,7 @@ func hedgeBnb() {
 	}
 	price := math.Round(swapPremiumIndex.MarkPrice*(1.0+*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 	side := "BUY"
-	id, _ := common.GenerateShortId()
-	clOrdID := fmt.Sprintf(
-		"%s-H%.6f",
-		id,
-		spotBalance.Free+*bnswapBNBAsset.MarginBalance,
-	)
-	clOrdID = strings.ReplaceAll(clOrdID, ".", "_")
+	clOrdID := fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 	if swapSize < 0 {
 		side = "SELL"
 		swapSize = -swapSize
@@ -358,3 +350,4 @@ func hedgeBnb() {
 		NewClientOrderId: clOrdID,
 	}
 }
+

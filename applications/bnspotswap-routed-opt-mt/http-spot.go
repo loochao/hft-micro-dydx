@@ -201,7 +201,7 @@ func handleReBalanceBnb() {
 						TimeInForce:      "FOK",
 						Price:            price,
 						Quantity:         size,
-						NewClientOrderID: fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
+						NewClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 					},
 				}
 			}
