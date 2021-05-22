@@ -392,10 +392,10 @@ func updateTargetPositionSizes() {
 			size = math.Round(size/xyStepSize) * xyStepSize
 			entryValue = size * midPrice
 			if xValue-entryValue < entryStep {
-				size = xPosition.GetSize()
+				size = -xPosition.GetSize()
 			}
 			if yValue-entryValue < entryStep {
-				size = xPosition.GetSize()
+				size = -xPosition.GetSize()
 			}
 			//谁小以谁为准
 			if xValue <= yValue {
