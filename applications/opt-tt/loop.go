@@ -7,6 +7,64 @@ import (
 	"time"
 )
 
+func hedgeYSymbol(ySymbol, xSymbol string) float64{
+	yPosition, okYPosition := yPositions[ySymbol]
+	_, okXPosition := xPositions[xSymbol]
+	targetSize, okTargetSize := yTargetPositionSizes[ySymbol]
+	spread, okSpread := xySpreads[xSymbol]
+	if !okYPosition || !okSpread || !okTargetSize || !okXPosition {
+		return 0
+	}
+	yDepth := spread.YDepth
+
+	yStepSize := yStepSizes[ySymbol]
+	yMinNotional := yMinNotionals[ySymbol]
+	ySizeDiff := targetSize - yPosition.GetSize()
+	ySizeDiff = math.Round(ySizeDiff/yStepSize) * yStepSize
+
+	if math.Abs(ySizeDiff) < yStepSize {
+		return 0
+	} else if ySizeDiff < 0 && yPosition.GetSize() <= 0 && -ySizeDiff*yDepth.BestBidPrice < yMinNotional {
+		return 0
+	} else if ySizeDiff > 0 && yPosition.GetSize() >= 0 && ySizeDiff*yDepth.BestAskPrice < yMinNotional {
+		return 0
+	}
+
+
+	logger.Debugf("updateYPositions %s size %f position %f -> %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize)
+
+	reduceOnly := false
+	if ySizeDiff*yPosition.GetSize() < 0 && math.Abs(ySizeDiff) <= math.Abs(yPosition.GetSize()) {
+		reduceOnly = true
+	}
+	side := common.OrderSideBuy
+	if ySizeDiff < 0 {
+		side = common.OrderSideSell
+		ySizeDiff = -ySizeDiff
+	}
+	yOrder := common.NewOrderParam{
+		Symbol:     ySymbol,
+		Side:       side,
+		Type:       common.OrderTypeMarket,
+		Size:       ySizeDiff,
+		ReduceOnly: reduceOnly,
+		ClientID:   yExchange.GenerateClientID(),
+	}
+	//logger.Debugf("y order %v", yOrder)
+	if !xyConfig.DryRun {
+		select {
+		case yOrderRequestChMap[ySymbol] <- common.OrderRequest{
+			New: &yOrder,
+		}:
+			yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.OrderSilent)
+			yPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
+		default:
+			logger.Debugf("yOrderRequestChMap[ySymbol] <- common.OrderRequest %s failed, ch len %d", ySymbol, len(yOrderRequestChMap[ySymbol]))
+		}
+	}
+	return math.Abs(ySizeDiff * yDepth.MidPrice)
+}
+
 func updateYPositions() {
 	if xAccount == nil {
 		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
@@ -29,64 +87,65 @@ func updateYPositions() {
 		if yOrderSilentTimes[ySymbol].Sub(time.Now()).Seconds() > 0 {
 			continue
 		}
-
-		yPosition, okYPosition := yPositions[ySymbol]
-		_, okXPosition := xPositions[xSymbol]
-		targetSize, okTargetSize := yTargetPositionSizes[ySymbol]
-		spread, okSpread := xySpreads[xSymbol]
-		if !okYPosition || !okSpread || !okTargetSize || !okXPosition {
-			continue
-		}
-		yDepth := spread.YDepth
-
-		yStepSize := yStepSizes[ySymbol]
-		yMinNotional := yMinNotionals[ySymbol]
-		ySizeDiff := targetSize - yPosition.GetSize()
-		ySizeDiff = math.Round(ySizeDiff/yStepSize) * yStepSize
-		unHedgedValue += math.Abs(ySizeDiff * yDepth.MidPrice)
-
-		if math.Abs(ySizeDiff) < yStepSize {
-			continue
-		} else if ySizeDiff < 0 && yPosition.GetSize() <= 0 && -ySizeDiff*yDepth.BestBidPrice < yMinNotional {
-			continue
-		} else if ySizeDiff > 0 && yPosition.GetSize() >= 0 && ySizeDiff*yDepth.BestAskPrice < yMinNotional {
-			continue
-		}
-
-
-		logger.Debugf("updateYPositions %s size %f position %f -> %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize)
-
-		reduceOnly := false
-		if ySizeDiff*yPosition.GetSize() < 0 && math.Abs(ySizeDiff) <= math.Abs(yPosition.GetSize()) {
-			reduceOnly = true
-		}
-		side := common.OrderSideBuy
-		if ySizeDiff < 0 {
-			side = common.OrderSideSell
-			ySizeDiff = -ySizeDiff
-		}
-		yOrder := common.NewOrderParam{
-			Symbol:     ySymbol,
-			Side:       side,
-			Type:       common.OrderTypeMarket,
-			Size:       ySizeDiff,
-			ReduceOnly: reduceOnly,
-			ClientID:   yExchange.GenerateClientID(),
-		}
-		//logger.Debugf("y order %v", yOrder)
-		if !xyConfig.DryRun {
-			select {
-			case yOrderRequestChMap[ySymbol] <- common.OrderRequest{
-				New: &yOrder,
-			}:
-				yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.OrderSilent)
-				yPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
-			default:
-				logger.Debugf("yOrderRequestChMap[ySymbol] <- common.OrderRequest %s failed, ch len %d", ySymbol, len(yOrderRequestChMap[ySymbol]))
-			}
-		}
+		unHedgedValue += hedgeYSymbol(ySymbol, xSymbol)
 	}
 	xyUnHedgeValue = unHedgedValue
+}
+
+func hedgeXSymbol(xSymbol, ySymbol string){
+	xPosition, okXPosition := xPositions[xSymbol]
+	_, okYPosition := yPositions[ySymbol]
+	xTargetSize, okXTargetSize := xTargetPositionSizes[xSymbol]
+	spread, okSpread := xySpreads[xSymbol]
+	if !okXPosition || !okSpread || !okXTargetSize || !okYPosition {
+		return
+	}
+	xDepth := spread.XDepth
+
+	xStepSize := xStepSizes[xSymbol]
+	xMinNotional := xMinNotionals[xSymbol]
+	xSizeDiff := xTargetSize - xPosition.GetSize()
+	xSizeDiff = math.Round(xSizeDiff/xStepSize) * xStepSize
+
+	if math.Abs(xSizeDiff) < xStepSize {
+		return
+	} else if xSizeDiff < 0 && xPosition.GetSize() <= 0 && -xSizeDiff*xDepth.BestBidPrice < xMinNotional {
+		return
+	} else if xSizeDiff > 0 && xPosition.GetSize() >= 0 && xSizeDiff*xDepth.BestAskPrice < xMinNotional {
+		return
+	}
+
+	logger.Debugf("updateXPositions %s size %f position %f -> %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize)
+
+	reduceOnly := false
+	if xSizeDiff*xPosition.GetSize() < 0 && math.Abs(xSizeDiff) <= math.Abs(xPosition.GetSize()) {
+		reduceOnly = true
+	}
+	side := common.OrderSideBuy
+	if xSizeDiff < 0 {
+		side = common.OrderSideSell
+		xSizeDiff = -xSizeDiff
+	}
+	yOrder := common.NewOrderParam{
+		Symbol:     xSymbol,
+		Side:       side,
+		Type:       common.OrderTypeMarket,
+		Size:       xSizeDiff,
+		ReduceOnly: reduceOnly,
+		ClientID:   xExchange.GenerateClientID(),
+	}
+	//logger.Debugf("x order %v", yOrder)
+	if !xyConfig.DryRun {
+		select {
+		case xOrderRequestChMap[xSymbol] <- common.OrderRequest{
+			New: &yOrder,
+		}:
+			xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.OrderSilent)
+			xPositionsUpdateTimes[xSymbol] = time.Unix(0, 0)
+		default:
+			logger.Debugf("xOrderRequestChMap[xSymbol] <- common.OrderRequest %s failed, ch len %d", xSymbol, len(xOrderRequestChMap[xSymbol]))
+		}
+	}
 }
 
 func updateXPositions() {
@@ -110,59 +169,7 @@ func updateXPositions() {
 		if xOrderSilentTimes[xSymbol].Sub(time.Now()).Seconds() > 0 {
 			continue
 		}
-		xPosition, okXPosition := xPositions[xSymbol]
-		_, okYPosition := yPositions[ySymbol]
-		xTargetSize, okXTargetSize := xTargetPositionSizes[xSymbol]
-		spread, okSpread := xySpreads[xSymbol]
-		if !okXPosition || !okSpread || !okXTargetSize || !okYPosition {
-			continue
-		}
-		xDepth := spread.XDepth
-
-		xStepSize := xStepSizes[xSymbol]
-		xMinNotional := xMinNotionals[xSymbol]
-		xSizeDiff := xTargetSize - xPosition.GetSize()
-		xSizeDiff = math.Round(xSizeDiff/xStepSize) * xStepSize
-
-		if math.Abs(xSizeDiff) < xStepSize {
-			continue
-		} else if xSizeDiff < 0 && xPosition.GetSize() <= 0 && -xSizeDiff*xDepth.BestBidPrice < xMinNotional {
-			continue
-		} else if xSizeDiff > 0 && xPosition.GetSize() >= 0 && xSizeDiff*xDepth.BestAskPrice < xMinNotional {
-			continue
-		}
-
-		logger.Debugf("updateXPositions %s size %f position %f -> %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize)
-
-		reduceOnly := false
-		if xSizeDiff*xPosition.GetSize() < 0 && math.Abs(xSizeDiff) <= math.Abs(xPosition.GetSize()) {
-			reduceOnly = true
-		}
-		side := common.OrderSideBuy
-		if xSizeDiff < 0 {
-			side = common.OrderSideSell
-			xSizeDiff = -xSizeDiff
-		}
-		yOrder := common.NewOrderParam{
-			Symbol:     xSymbol,
-			Side:       side,
-			Type:       common.OrderTypeMarket,
-			Size:       xSizeDiff,
-			ReduceOnly: reduceOnly,
-			ClientID:   xExchange.GenerateClientID(),
-		}
-		//logger.Debugf("x order %v", yOrder)
-		if !xyConfig.DryRun {
-			select {
-			case xOrderRequestChMap[xSymbol] <- common.OrderRequest{
-				New: &yOrder,
-			}:
-				xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.OrderSilent)
-				xPositionsUpdateTimes[xSymbol] = time.Unix(0, 0)
-			default:
-				logger.Debugf("xOrderRequestChMap[xSymbol] <- common.OrderRequest %s failed, ch len %d", xSymbol, len(xOrderRequestChMap[xSymbol]))
-			}
-		}
+		hedgeXSymbol(xSymbol, ySymbol)
 	}
 }
 
@@ -316,6 +323,8 @@ func updateTargetPositionSizes() {
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
+			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
 				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f",
 				xSymbol, ySymbol,
@@ -363,6 +372,8 @@ func updateTargetPositionSizes() {
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
+			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
 				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f",
 				xSymbol, ySymbol,
@@ -429,6 +440,8 @@ func updateTargetPositionSizes() {
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
+			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
 				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f",
 				xSymbol, ySymbol,
@@ -494,6 +507,8 @@ func updateTargetPositionSizes() {
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
+			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
 				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f",
 				xSymbol, ySymbol,
