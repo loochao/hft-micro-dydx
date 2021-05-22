@@ -118,7 +118,7 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 		case positionsMap = <-httpPositionsCh:
 			for symbol, pos := range positionsMap {
 				if ch, ok := positionCh[symbol]; ok {
-					logger.Debugf("%v", pos)
+					//logger.Debugf("%v", pos)
 					pos := pos
 					select {
 					case ch <- &pos:
