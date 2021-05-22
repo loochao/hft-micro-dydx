@@ -291,7 +291,7 @@ func main() {
 			}
 			break
 		case xAccount = <-xAccountCh:
-			logger.Debugf("x account %s %f %f %f", xAccount.GetCurrency(), xAccount.GetBalance(), xAccount.GetFree(), xAccount.GetUsed())
+			//logger.Debugf("x account %s %f %f %f", xAccount.GetCurrency(), xAccount.GetBalance(), xAccount.GetFree(), xAccount.GetUsed())
 			break
 		case nextPos := <-yPositionCh:
 			//logger.Debugf("y position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
@@ -309,7 +309,7 @@ func main() {
 			}
 			break
 		case yAccount = <-yAccountCh:
-			logger.Debugf("y account %s %f %f %f", yAccount.GetCurrency(), yAccount.GetBalance(), yAccount.GetFree(), yAccount.GetUsed())
+			//logger.Debugf("y account %s %f %f %f", yAccount.GetCurrency(), yAccount.GetBalance(), yAccount.GetFree(), yAccount.GetUsed())
 			break
 		case xOrder := <-xOrderCh:
 			if xOrder.GetStatus() == common.OrderStatusExpired ||
