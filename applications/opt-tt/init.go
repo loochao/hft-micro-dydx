@@ -89,10 +89,11 @@ var yExchange common.Exchange
 var xyEnterTradeOrders = make(map[string]EnterTradeOrder)
 var xyMergedDirs = make(map[string]float64)
 var xyEnterTimes = make(map[string]time.Time)
+var xyTradeDirection = 0.0
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210522 05:14:43  ####")
+	logger.Debug("####  BUILD @ 20210522 05:47:55  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -167,6 +168,11 @@ func init() {
 	}
 	if len(xSymbols)%2 == 1 {
 		xyDualEnds = append(xyDualEnds, len(xSymbols)/2)
+	}
+	if xyConfig.TradeDirection > 0 {
+		xyTradeDirection = 1.0
+	} else if xyConfig.TradeDirection < 0 {
+		xyTradeDirection = -1.0
 	}
 	logger.Debugf("dual end ranks %d", xyDualEnds)
 }

@@ -48,6 +48,7 @@ type Config struct {
 
 	HedgeCheckInterval time.Duration `yaml:"hedgeCheckInterval"`
 	HedgeTrackOffset   float64       `yaml:"hedgeTrackOffset"`
+	TradeDirection     float64       `yaml:"tradeDirection"`
 
 	StartValue        float64            `yaml:"startValue"`
 	EnterFreePct      float64            `yaml:"enterFreePct"`
