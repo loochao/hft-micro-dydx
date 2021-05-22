@@ -32,7 +32,7 @@ func updateSwapPositions() {
 		swapPosition, okSwapPosition := bnswapPositions[symbol]
 		spotBalance, okSpotBalance := bnspotBalances[symbol]
 		spread, okSpread := bnSpreads[symbol]
-		if !okSwapPosition || !okSpotBalance || !okSpread{
+		if !okSwapPosition || !okSpotBalance || !okSpread {
 			continue
 		}
 		swapOrderBook := spread.TakerDepth
@@ -168,9 +168,9 @@ func updateMakerNewOrders() {
 			price := spread.MakerDepth.MakerAsk * (1 + offset.Top)
 			price = math.Ceil(price/spotTickSize) * spotTickSize
 			if spotBalance.Free*price > spotMinNotional {
-				entryValue := math.Min(4*entryStep, spotBalance.Free*price*0.5)
+				entryValue := math.Min(2*(rand.Float64()+1.0)*entryStep, spotBalance.Free*price*0.5)
 				if premiumIndex.FundingRate > *bnConfig.MinimalKeepFundingRate/2 {
-					entryValue = math.Min(2*entryStep, spotBalance.Free*price*0.5)
+					entryValue = math.Min((rand.Float64()+1.0)*entryStep, spotBalance.Free*price*0.5)
 				}
 				quantity := entryValue / price
 				quantity = math.Round(quantity/mergedStepSize) * mergedStepSize
@@ -207,9 +207,10 @@ func updateMakerNewOrders() {
 			spread.ShortMedianEnter > enterDelta &&
 			premiumIndex.FundingRate > *bnConfig.MinimalEnterFundingRate &&
 			rank >= len(bnSymbols)-*bnConfig.TradeCount {
+
 			price := spread.MakerDepth.MakerBid * (1 + offset.Bot)
 			price = math.Floor(price/spotTickSize) * spotTickSize
-			targetValue := currentSpotSize*price + entryStep
+			targetValue := currentSpotSize*price + (rand.Float64()+1.0)*0.5*entryStep
 			if targetValue > entryTarget {
 				targetValue = entryTarget
 			}
