@@ -81,11 +81,11 @@ func updateYPositions(isExit bool) {
 		if ySizeDiff < 0 {
 			side = common.OrderSideSell
 			ySizeDiff = -ySizeDiff
-			if okHedgeMarkPrice {
+			if okHedgeMarkPrice && xyEnterTradeOrders[xSymbol] == EnterTradeOrderXY {
 				logger.Debugf("%s short trend profit %f", ySymbol, (yDepth.BestBidPrice-hedgeMarkPrice)/hedgeMarkPrice)
 			}
 		} else {
-			if okHedgeMarkPrice {
+			if okHedgeMarkPrice && xyEnterTradeOrders[xSymbol] == EnterTradeOrderXY {
 				logger.Debugf("%s long trend profit %f", ySymbol, (hedgeMarkPrice-yDepth.BestBidPrice)/hedgeMarkPrice)
 			}
 		}
@@ -186,11 +186,11 @@ func updateXPositions(isExit bool) {
 		if xSizeDiff < 0 {
 			side = common.OrderSideSell
 			xSizeDiff = -xSizeDiff
-			if okXHedgeMarkPrice {
+			if okXHedgeMarkPrice && xyEnterTradeOrders[xSymbol] == EnterTradeOrderYX {
 				logger.Debugf("%s short trend profit %f", ySymbol, (xDepth.BestBidPrice-xHedgeMarkPrice)/xHedgeMarkPrice)
 			}
 		} else {
-			if okXHedgeMarkPrice {
+			if okXHedgeMarkPrice && xyEnterTradeOrders[xSymbol] == EnterTradeOrderYX {
 				logger.Debugf("%s long trend profit %f", ySymbol, (xHedgeMarkPrice-xDepth.BestBidPrice)/xHedgeMarkPrice)
 			}
 		}
