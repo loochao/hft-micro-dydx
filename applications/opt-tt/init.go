@@ -93,7 +93,7 @@ var xyTradeDirection = 0.0
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210522 06:00:38  ####")
+	logger.Debug("####  BUILD @ 20210522 08:45:31  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
