@@ -167,7 +167,6 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 			}
 			switch splits[0] {
 			case "/contractMarket/tradeOrders":
-				logger.Debugf("KCPERP WS ORDER %s", wsCap.Data)
 				order := WSOrder{}
 				err = json.Unmarshal(wsCap.Data, &order)
 				if err != nil {
