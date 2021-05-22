@@ -323,7 +323,7 @@ func main() {
 					xOrderSilentTimes[xSymbol] = time.Now().Add(time.Second)
 					xPositionsUpdateTimes[xSymbol] = time.Unix(0, 0)
 				} else {
-					logger.Debugf("x order filled %s %s", xOrder.GetSymbol(), xOrder.GetStatus())
+					logger.Debugf("x order filled %s %s size %f price %f", xOrder.GetSymbol(), xOrder.GetStatus(), xOrder.GetFilledSize(), xOrder.GetFilledPrice())
 					if ySymbol, ok := xySymbolsMap[xSymbol]; ok {
 						if xOrder.GetSide() == common.OrderSideBuy {
 							xBuyPrice := xOrder.GetFilledPrice()
@@ -364,7 +364,7 @@ func main() {
 					yOrderSilentTimes[ySymbol] = time.Now().Add(time.Second)
 					yPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
 				} else {
-					logger.Debugf("y order filled %s %s", yOrder.GetSymbol(), yOrder.GetStatus())
+					logger.Debugf("y order filled %s %s size %f price %f", yOrder.GetSymbol(), yOrder.GetStatus(), yOrder.GetFilledSize(), yOrder.GetFilledPrice())
 					if xSymbol, ok := yxSymbolsMap[ySymbol]; ok {
 						if yOrder.GetSide() == common.OrderSideBuy {
 							yBuyPrice := yOrder.GetFilledPrice()
