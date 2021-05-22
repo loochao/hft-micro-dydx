@@ -332,6 +332,7 @@ mainLoop:
 						if xOrder.GetSide() == common.OrderSideBuy {
 							xBuyPrice := xOrder.GetFilledPrice()
 							xLastFilledBuyPrices[xSymbol] = xBuyPrice
+							logger.Debugf("%s set x buy price %f", xSymbol, xBuyPrice)
 							if tradeDir, ok := xyEnterTradeOrders[ySymbol]; ok && tradeDir == EnterTradeOrderYX {
 								if ySellPrice, ok := yLastFilledSellPrices[ySymbol]; ok {
 									xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / ySellPrice
@@ -341,6 +342,7 @@ mainLoop:
 						} else if xOrder.GetSide() == common.OrderSideSell {
 							xSellPrice := xOrder.GetFilledPrice()
 							xLastFilledSellPrices[xSymbol] = xSellPrice
+							logger.Debugf("%s set x sell price %f", xSymbol, xSellPrice)
 							if tradeDir, ok := xyEnterTradeOrders[ySymbol]; ok && tradeDir == EnterTradeOrderYX {
 								if yBuyPrice, ok := yLastFilledBuyPrices[ySymbol]; ok {
 									xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
@@ -369,6 +371,7 @@ mainLoop:
 						if yOrder.GetSide() == common.OrderSideBuy {
 							yBuyPrice := yOrder.GetFilledPrice()
 							yLastFilledBuyPrices[ySymbol] = yBuyPrice
+							logger.Debugf("%s set y buy price %f", ySymbol, yBuyPrice)
 							if tradeDir, ok := xyEnterTradeOrders[xSymbol]; ok && tradeDir == EnterTradeOrderXY {
 								if xSellPrice, ok := xLastFilledSellPrices[xSymbol]; ok {
 									xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
@@ -378,6 +381,7 @@ mainLoop:
 						} else if yOrder.GetSide() == common.OrderSideSell {
 							ySellPrice := yOrder.GetFilledPrice()
 							yLastFilledSellPrices[ySymbol] = ySellPrice
+							logger.Debugf("%s set y sell price %f", ySymbol, ySellPrice)
 							if tradeDir, ok := xyEnterTradeOrders[xSymbol]; ok && tradeDir == EnterTradeOrderXY {
 								if xBUyPrice, ok := xLastFilledBuyPrices[xSymbol]; ok {
 									xyRealisedSpread[xSymbol] = (ySellPrice - xBUyPrice) / ySellPrice
