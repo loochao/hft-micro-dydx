@@ -12,14 +12,17 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 			return
 		}
 		if nextPos.PositionSide != "BOTH" {
-			return
+			continue
 		}
-		if bnswapHttpPositionUpdateSilentTimes[nextPos.Symbol].Sub(nextPos.ParseTime) > 0 {
-			return
-		}
+		//if bnswapHttpPositionUpdateSilentTimes[nextPos.Symbol].Sub(nextPos.ParseTime) > 0 {
+		//	continue
+		//}
 		var lastPosition *bnswap.Position
-		if p, ok := bnswapPositions[nextPos.Symbol]; ok {
-			p := p
+		if currentPosition, ok := bnswapPositions[nextPos.Symbol]; ok {
+			if currentPosition.EventTime.Sub(nextPos.EventTime) >= 0 {
+				continue
+			}
+			p := currentPosition
 			lastPosition = &p
 		}
 		bnswapPositions[nextPos.Symbol] = nextPos
