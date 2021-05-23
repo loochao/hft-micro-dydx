@@ -105,7 +105,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 
 				} else if msg[2] == 'e' && msg[6] == 'e' {
 					orderUpdateEvent := OrderUpdateEvent{}
-					logger.Debugf("%s", msg)
+					//logger.Debugf("%s", msg)
 					err := json.Unmarshal(msg, &orderUpdateEvent)
 					if err != nil {
 						logger.Debugf("json.Unmarshal(msg, &orderUpdateEvent) error %v %s", err, msg)
