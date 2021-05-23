@@ -224,10 +224,10 @@ func updateMakerNewOrders() {
 			entryValue = quantity * price
 
 			//不及一个0.8*EntryStep, 不操作
-			if entryValue < entryStep*0.8 {
+			if entryValue < entryStep*0.5 {
 				if time.Now().Sub(bnOpenLogSilentTimes[symbol]) > 0 {
 					logger.Debugf(
-						"FAILED TOP OPEN, ENTRY VALUE %f LESS THAN 0.8*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
+						"FAILED TOP OPEN, ENTRY VALUE %f LESS THAN 0.5*ENTRY_STEP %f, %s %f > %f, %f > %f, SIZE %f",
 						entryValue,
 						entryStep*0.8,
 						symbol,
