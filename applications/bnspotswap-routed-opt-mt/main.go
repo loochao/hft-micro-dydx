@@ -51,16 +51,34 @@ func main() {
 	bnGlobalCtx, bnGlobalCancel = context.WithCancel(context.Background())
 	defer bnGlobalCancel()
 
-	bnswapTickSizes, bnswapStepSizes, _, bnswapMinNotional, _, _, err = bnswap.GetOrderLimits(bnGlobalCtx, bnswapAPI, bnSymbols)
-	if err != nil {
-		logger.Debugf("bnswap.GetOrderLimits %v", err)
-		return
+	var ok bool
+	for _, symbol := range bnSymbols {
+		if bnswapTickSizes[symbol], ok = bnswap.TickSizes[symbol]; !ok {
+			logger.Debugf("miss bnswap tick size for %s", symbol)
+		}
+		if bnswapStepSizes[symbol], ok = bnswap.StepSizes[symbol]; !ok {
+			logger.Debugf("miss bnswap step size for %s", symbol)
+		}
+		if bnswapMinNotional[symbol], ok = bnswap.MinNotional[symbol]; !ok {
+			logger.Debugf("miss bnswap min notional for %s", symbol)
+		}
+		if bnspotTickSizes[symbol], ok = bnspot.TickSizes[symbol]; !ok {
+			logger.Debugf("miss bnspot tick size for %s", symbol)
+		}
+		if bnspotStepSizes[symbol], ok = bnspot.StepSizes[symbol]; !ok {
+			logger.Debugf("miss bnspot step size for %s", symbol)
+		}
+		if bnspotMinNotional[symbol], ok = bnspot.MinNotionals[symbol]; !ok {
+			logger.Debugf("miss bnspot min notional for %s", symbol)
+		}
 	}
-	bnspotTickSizes, bnspotStepSizes, _, bnspotMinNotional, err = bnspot.GetOrderLimits(bnGlobalCtx, bnspotAPI, bnSymbols)
-	if err != nil {
-		logger.Debugf("bnspot.GetOrderLimits %v", err)
-		return
-	}
+
+	logger.Debugf("bnswapTickSizes %v", bnswapTickSizes)
+	logger.Debugf("bnswapStepSizes %v", bnswapStepSizes)
+	logger.Debugf("bnswapMinNotional %v", bnswapMinNotional)
+	logger.Debugf("bnspotTickSizes %v", bnspotTickSizes)
+	logger.Debugf("bnspotStepSizes %v", bnspotStepSizes)
+	logger.Debugf("bnspotMinNotional %v", bnspotMinNotional)
 
 	for symbol := range bnswapStepSizes {
 		bnMergedStepSizes[symbol] = common.MergedStepSize(bnswapStepSizes[symbol], bnspotStepSizes[symbol])

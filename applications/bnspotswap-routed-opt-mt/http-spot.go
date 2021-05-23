@@ -164,7 +164,7 @@ func reBalanceBnB(
 		if err != nil {
 			logger.Debugf("NewFutureAccountTransfer error %v", err)
 		} else {
-			logger.Debugf("NewFutureAccountTransfer success %d %s %v", tType, change,resp.TranId)
+			logger.Debugf("NewFutureAccountTransfer success %d %f %v", tType, change,resp.TranId)
 		}
 	}
 }
@@ -188,7 +188,7 @@ func handleReBalanceBnb() {
 			if size*price < bnspotMinNotional[bnBNBSymbol] {
 				size = math.Ceil(bnspotMinNotional[bnBNBSymbol]/price/bnspotStepSizes[bnBNBSymbol]) * bnspotStepSizes[bnBNBSymbol]
 			}
-			if price*size < bnspotUSDTBalance.Free {
+			if price*size < bnspotUSDTBalance.Free && price*size > bnspot.MinNotionals[bnBNBSymbol]{
 				logger.Debugf("CHANGE BNB SIZE %f PRICE %f", size, price)
 				bnspotOrderSilentTimes[bnBNBSymbol] = time.Now().Add(*bnConfig.OrderSilent)
 				bnspotBalancesUpdateTimes[bnBNBSymbol] = time.Unix(0, 0)
