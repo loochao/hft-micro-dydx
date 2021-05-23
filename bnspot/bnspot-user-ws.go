@@ -319,7 +319,7 @@ func NewUserWebsocket(
 		RestartCh:            make(chan interface{}, 100),
 		OrderUpdateEventCh:   make(chan *OrderUpdateEvent, 100),
 		AccountUpdateEventCh: make(chan *AccountUpdateEvent, 100),
-		messageCh:            make(chan []byte, 100),
+		messageCh:            make(chan []byte, 10000),
 		stopped:              0,
 	}
 	go func(ctx context.Context, ws *UserWebsocket, listenKey ListenKey) {
@@ -353,9 +353,9 @@ func NewUserWebsocket(
 	}(ctx, &ws, listenKey)
 	go ws.mainLoop(ctx, wsUrl, proxy)
 	go ws.dataHandleLoop(ctx, 1)
-	go ws.dataHandleLoop(ctx, 2)
-	go ws.dataHandleLoop(ctx, 3)
-	go ws.dataHandleLoop(ctx, 4)
+	//go ws.dataHandleLoop(ctx, 2)
+	//go ws.dataHandleLoop(ctx, 3)
+	//go ws.dataHandleLoop(ctx, 4)
 	ws.reconnectCh <- nil
 	return &ws, nil
 }
