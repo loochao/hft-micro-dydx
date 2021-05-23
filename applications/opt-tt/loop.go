@@ -196,8 +196,16 @@ func updateTargetPositionSizes() {
 		}
 		//其他时间以X为准
 		if xPosition, okXPosition := xPositions[xSymbol]; okXPosition {
-			xTargetPositionSizes[xSymbol] = xPosition.GetSize()
-			yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
+			if yPosition, okYPosition := yPositions[ySymbol]; okYPosition {
+				minSize := math.Min(math.Abs(xPosition.GetSize()), math.Abs(yPosition.GetSize()))
+				if xPosition.GetSize() >= 0 {
+					xTargetPositionSizes[xSymbol] = minSize
+					yTargetPositionSizes[ySymbol] = -minSize
+				}else{
+					xTargetPositionSizes[xSymbol] = -minSize
+					yTargetPositionSizes[ySymbol] = minSize
+				}
+			}
 		}
 	}
 

@@ -504,7 +504,6 @@ func main() {
 						bnRealisedSpread[wsOrder.Symbol] = (wsOrder.AveragePrice - spotPrice) / spotPrice
 						logger.Debugf("%s REALISED OPEN SPREAD %f", wsOrder.Symbol, bnRealisedSpread[wsOrder.Symbol])
 						delete(bnspotLastLimitBuyPrices, wsOrder.Symbol)
-
 					}
 				}
 			}
