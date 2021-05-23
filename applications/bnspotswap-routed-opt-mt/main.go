@@ -572,6 +572,7 @@ func main() {
 				if spotPrice, ok := bnspotLastLimitBuyPrices[order.Symbol]; ok {
 					bnRealisedSpread[order.Symbol] = (filledPrice - spotPrice) / spotPrice
 					logger.Debugf("%s REALISED OPEN SPREAD %f", order.Symbol, bnRealisedSpread[order.Symbol])
+					delete(bnspotLastLimitBuyPrices, order.Symbol)
 				}
 				bnswapHttpPositionUpdateSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			} else if order.Side == bnspot.OrderSideBuy &&
@@ -586,6 +587,7 @@ func main() {
 				if spotPrice, ok := bnspotLastLimitSellPrices[order.Symbol]; ok {
 					bnRealisedSpread[order.Symbol] = (filledPrice - spotPrice) / spotPrice
 					logger.Debugf("%s REALISED CLOSE SPREAD %f", order.Symbol, bnRealisedSpread[order.Symbol])
+					delete(bnspotLastLimitSellPrices, order.Symbol)
 				}
 				bnswapHttpPositionUpdateSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			}
