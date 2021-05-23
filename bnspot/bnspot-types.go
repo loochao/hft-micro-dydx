@@ -293,7 +293,9 @@ func (o *NewOrderParams) ToUrlValues() url.Values {
 		values.Set("timeInForce", o.TimeInForce)
 	}
 	values.Set("quantity", strconv.FormatFloat(o.Quantity, 'f', 8, 64))
-	values.Set("price", strconv.FormatFloat(o.Price, 'f', 8, 64))
+	if o.Price != 0.0 || o.Type == OrderTypeMarket {
+		values.Set("price", strconv.FormatFloat(o.Price, 'f', 8, 64))
+	}
 	values.Set("newClientOrderId", o.NewClientOrderID)
 	values.Set("newOrderRespType", o.NewOrderRespType)
 	if o.IcebergQty != 0 {
@@ -456,7 +458,7 @@ func (order NewOrderResponse) GetType() common.OrderType {
 func (order NewOrderResponse) GetPostOnly() bool {
 	if order.Type == OrderTypeLimitMarker {
 		return false
-	}else{
+	} else {
 		return true
 	}
 }
@@ -507,8 +509,8 @@ type Depth5 struct {
 
 func (depth Depth5) GetBids() common.Bids { return depth.Bids[:] }
 func (depth Depth5) GetAsks() common.Asks { return depth.Asks[:] }
-func (depth Depth5) GetSymbol() string      { return depth.Symbol }
-func (depth Depth5) GetTime() time.Time     { return depth.ParseTime }
+func (depth Depth5) GetSymbol() string    { return depth.Symbol }
+func (depth Depth5) GetTime() time.Time   { return depth.ParseTime }
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	type Alias Depth5
 	aux := &struct {
