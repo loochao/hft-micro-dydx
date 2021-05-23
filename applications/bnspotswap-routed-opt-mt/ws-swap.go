@@ -30,6 +30,8 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			}
 			lastPosition = &bnswap.Position{}
 			*lastPosition = currentPosition
+			currentPosition.EventTime = nextPos.EventTime
+			currentPosition.ParseTime = nextPos.ParseTime
 			currentPosition.EntryPrice = nextPos.EntryPrice
 			currentPosition.PositionAmt = nextPos.PositionAmt
 			currentPosition.UnRealizedProfit = nextPos.UnRealizedProfit

@@ -33,7 +33,7 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 			lastPosition.EntryPrice != nextPos.EntryPrice {
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			bnLoopTimer.Reset(time.Nanosecond)
-			bnswapOrderSilentTimes[nextPos.Symbol] = time.Now()
+			//bnswapOrderSilentTimes[nextPos.Symbol] = time.Now()
 			logger.Debugf("SWAP HTTP POSITION %s", nextPos.ToString())
 			if lastPosition != nil {
 				logger.Debugf("SWAP %s POS OLD TIME %v NEW TIME %v", nextPos.Symbol, lastPosition.EventTime, nextPos.EventTime)

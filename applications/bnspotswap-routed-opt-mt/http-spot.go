@@ -49,8 +49,8 @@ func handleSpotHttpAccount(account bnspot.Account) {
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			if symbol == bnBNBSymbol {
 				bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.PullInterval * 3)
-			} else {
-				bnswapOrderSilentTimes[symbol] = time.Now()
+			//} else {
+			//	bnswapOrderSilentTimes[symbol] = time.Now()
 			}
 			if lastBalance != nil && lastBalance.Free+lastBalance.Locked != balance.Free +balance.Locked {
 				bnspotSilentTimes[symbol] = time.Now().Add(*bnConfig.EnterSilent)
@@ -88,8 +88,8 @@ func handleSpotHttpAccount(account bnspot.Account) {
 				//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 				if symbol == bnBNBSymbol {
 					bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.PullInterval * 3)
-				} else {
-					bnswapOrderSilentTimes[symbol] = time.Now()
+				//} else {
+				//	bnswapOrderSilentTimes[symbol] = time.Now()
 				}
 				if hasLast {
 					bnspotSilentTimes[symbol] = time.Now().Add(*bnConfig.EnterSilent)
