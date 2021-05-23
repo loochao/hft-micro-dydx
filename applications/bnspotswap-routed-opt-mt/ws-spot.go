@@ -11,15 +11,15 @@ func handleSpotWSOutboundAccountPosition(account *bnspot.AccountUpdateEvent) {
 
 		if wsBalance.Asset == "USDT" {
 			balance := wsBalance.ToBalance()
-			if bnspotUSDTBalance != nil &&
-				(bnspotUSDTBalance.Free != balance.Free ||
-					bnspotUSDTBalance.Locked != balance.Locked) {
-				logger.Debugf(
-					"USDT CHANGE Free %f->%f Locked %f->%f",
-					bnspotUSDTBalance.Free, balance.Free,
-					bnspotUSDTBalance.Locked, balance.Locked,
-				)
-			}
+			//if bnspotUSDTBalance != nil &&
+			//	(bnspotUSDTBalance.Free != balance.Free ||
+			//		bnspotUSDTBalance.Locked != balance.Locked) {
+			//	logger.Debugf(
+			//		"USDT CHANGE Free %f->%f Locked %f->%f",
+			//		bnspotUSDTBalance.Free, balance.Free,
+			//		bnspotUSDTBalance.Locked, balance.Locked,
+			//	)
+			//}
 			bnspotUSDTBalance = &balance
 			bnspotBalanceUpdatedForInflux = true
 			bnspotBalanceUpdatedForExternalInflux = true
