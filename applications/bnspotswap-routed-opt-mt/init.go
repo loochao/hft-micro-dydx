@@ -119,7 +119,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210523 15:30:54  ####")
+	logger.Debug("####  BUILD @ 20210523 15:43:22  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

@@ -353,6 +353,7 @@ func WatchPositionsFromHttp(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			eventTime := time.Now()
 			positions, err := api.GetPositions(subCtx)
 			if err != nil {
 				logger.Debugf("WatchPositionsFromHttp GetPositions error %v", err)
@@ -363,11 +364,14 @@ func WatchPositionsFromHttp(
 					positionBySymbols[symbol] = Position{
 						Symbol:       symbol,
 						PositionSide: "BOTH",
+						EventTime: eventTime,
+						ParseTime: time.Now(),
 					}
 				}
 				for _, position := range positions {
 					position := position
 					position.ParseTime = time.Now()
+					position.EventTime = eventTime
 					//if position.PositionAmt == 0 {
 					//	position.PositionSide = "BOTH"
 					//}

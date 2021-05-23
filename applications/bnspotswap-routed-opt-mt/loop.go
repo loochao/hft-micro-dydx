@@ -194,12 +194,11 @@ func updateMakerNewOrders() {
 						NewClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 					}
 					bnspotLastLimitSellPrices[symbol] = price
+					delete(bnspotLastLimitBuyPrices, symbol)
 					bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
 					bnspotOrderCancelCounts[symbol] = 0
 					bnspotOpenOrders[symbol] = order
 					bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
-					delete(bnspotLastLimitSellPrices, symbol)
-					delete(bnspotLastLimitBuyPrices, symbol)
 					bnspotOrderRequestChs[symbol] <- SpotOrderRequest{New: &order}
 				}
 			}
@@ -274,12 +273,11 @@ func updateMakerNewOrders() {
 				NewClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 			}
 			bnspotLastLimitBuyPrices[symbol] = price
+			delete(bnspotLastLimitSellPrices, symbol)
 			bnspotOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
 			bnspotOrderCancelCounts[symbol] = 0
 			bnspotOpenOrders[symbol] = order
 			bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
-			delete(bnspotLastLimitSellPrices, symbol)
-			delete(bnspotLastLimitBuyPrices, symbol)
 			bnspotOrderRequestChs[symbol] <- SpotOrderRequest{New: &order}
 		}
 	}
