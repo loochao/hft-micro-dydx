@@ -292,8 +292,10 @@ func (o *NewOrderParams) ToUrlValues() url.Values {
 	if o.TimeInForce != "" {
 		values.Set("timeInForce", o.TimeInForce)
 	}
-	values.Set("quantity", strconv.FormatFloat(o.Quantity, 'f', 8, 64))
-	if o.Price != 0.0 || o.Type == OrderTypeMarket {
+	if o.Quantity != 0.0 {
+		values.Set("quantity", strconv.FormatFloat(o.Quantity, 'f', 8, 64))
+	}
+	if o.Price != 0.0 && o.Type != OrderTypeMarket {
 		values.Set("price", strconv.FormatFloat(o.Price, 'f', 8, 64))
 	}
 	values.Set("newClientOrderId", o.NewClientOrderID)

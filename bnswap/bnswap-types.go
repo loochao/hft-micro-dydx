@@ -605,8 +605,10 @@ func (no *NewOrderParams) ToUrlValues() url.Values {
 	values.Set("side", no.Side)
 	values.Set("type", no.Type)
 	values.Set("reduceOnly", strconv.FormatBool(no.ReduceOnly))
-	values.Set("quantity", strconv.FormatFloat(no.Quantity, 'f', 8, 64))
-	if no.Price != 0 {
+	if no.Quantity != 0.0 {
+		values.Set("quantity", strconv.FormatFloat(no.Quantity, 'f', 8, 64))
+	}
+	if no.Price != 0.0 && no.Type != OrderTypeMarket{
 		values.Set("price", strconv.FormatFloat(no.Price, 'f', 8, 64))
 	}
 	values.Set("newClientOrderId", no.NewClientOrderId)
