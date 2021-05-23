@@ -458,7 +458,7 @@ func main() {
 		case spotWSOrder := <-bnspotUserWebsocket.OrderUpdateEventCh:
 			//logger.Debugf("SPOT WS ORDER %v", spotWSOrder)
 			if spotWSOrder.CurrentOrderStatus == bnspot.OrderStatusFilled {
-				logger.Debugf("SPOT WS ORDER %s %s %s", spotWSOrder.Symbol, spotWSOrder.CurrentOrderStatus, spotWSOrder.ClientOrderID)
+				logger.Debugf("SPOT WS ORDER %s %s %s %s", spotWSOrder.Symbol, spotWSOrder.CurrentOrderStatus, spotWSOrder.OriginalClientOrderID, spotWSOrder.ClientOrderID)
 				if spotWSOrder.CumulativeFilledQuantity > 0 && spotWSOrder.CumulativeQuoteAssetTransactedQuantity > 0 {
 					logger.Debugf("SPOT WS ORDER FILLED %s %s CumulativeFilledQuantity %f CumulativeQuoteAssetTransactedQuantity %f", spotWSOrder.Symbol, spotWSOrder.Side, spotWSOrder.CumulativeFilledQuantity, spotWSOrder.CumulativeQuoteAssetTransactedQuantity)
 				}
@@ -467,7 +467,7 @@ func main() {
 				}
 				bnspotHttpBalanceUpdateSilentTimes[spotWSOrder.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			} else if spotWSOrder.CurrentOrderStatus == bnspot.OrderStatusCancelled {
-				logger.Debugf("SPOT WS ORDER %s %s %s", spotWSOrder.Symbol, spotWSOrder.CurrentOrderStatus, spotWSOrder.ClientOrderID)
+				logger.Debugf("SPOT WS ORDER %s %s %s %s", spotWSOrder.Symbol, spotWSOrder.CurrentOrderStatus, spotWSOrder.OriginalClientOrderID, spotWSOrder.ClientOrderID)
 				bnspotBalancesUpdateTimes[spotWSOrder.Symbol] = time.Now()
 				bnswapPositionsUpdateTimes[spotWSOrder.Symbol] = time.Now()
 				if openOrder, ok := bnspotOpenOrders[spotWSOrder.Symbol]; ok && openOrder.NewClientOrderID == spotWSOrder.OriginalClientOrderID {
@@ -565,7 +565,7 @@ func main() {
 				order.CumQuote != 0 && order.CumQty != 0 {
 				filledPrice := order.CumQuote / order.CumQty
 				logger.Debugf(
-					"SWAP ORDER %s %s %s %f %f %f",
+					"SWAP ORDER %s %s %s %s %f %f %f",
 					order.Symbol, order.Status, order.ClientOrderId,
 					order.CumQty, order.CumQuote, filledPrice,
 				)
@@ -599,7 +599,7 @@ func main() {
 				}
 			}
 		case order := <-bnspotNewOrderResponseCh:
-			logStr := fmt.Sprintf("SPOT ORDER %s %s %s %s %s %f %f", order.Symbol, order.ClientOrderID, order.Side, order.Status, order.Type, order.Price, order.CummulativeQuoteQty)
+			logStr := fmt.Sprintf("SPOT ORDER %s %s %s %s %s %f %f", order.Symbol, order.ClientOrderID,order.Side, order.Status, order.Type, order.Price, order.OrigQty)
 			if order.Status == bnspot.OrderStatusReject ||
 				order.Status == bnspot.OrderStatusExpired ||
 				order.Status == bnspot.OrderStatusCancelled {
