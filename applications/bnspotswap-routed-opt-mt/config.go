@@ -43,16 +43,7 @@ type Config struct {
 	ResetUnrealisedTriggerPct  *float64       `yaml:"resetUnrealisedTriggerPct,omitempty"`
 	ResetCount                 *int           `yaml:"resetCount,omitempty"`
 
-	OrderOffsets map[string]string `yaml:"orderOffsets,omitempty"`
-
-	//PullBarsInterval      *time.Duration `yaml:"pullBarsInterval,omitempty"`
-	//PullBarsRetryInterval *time.Duration `yaml:"pullBarsRetryInterval,omitempty"`
-	//BarsLookback          *int           `yaml:"barsLookback,omitempty"`
-
-	//TopQuantile       *float64 `yaml:"topQuantile,omitempty"`
-	//BotQuantile       *float64 `yaml:"botQuantile,omitempty"`
-	TradeCount *int `yaml:"tradeCount,omitempty"`
-	//MinimalBandOffset *float64 `yaml:"minimalBandOffset,omitempty"`
+	TradeCount  *int     `yaml:"tradeCount,omitempty"`
 	EnterDelta  *float64 `yaml:"enterDelta,omitempty"`
 	ExitDelta   *float64 `yaml:"exitDelta,omitempty"`
 	EnterOffset *float64 `yaml:"enterOffset,omitempty"`
@@ -61,39 +52,39 @@ type Config struct {
 	MinimalEnterFundingRate *float64 `yaml:"minimalEnterFundingRate,omitempty"`
 	MinimalKeepFundingRate  *float64 `yaml:"minimalKeepFundingRate,omitempty"`
 
-	OrderBookMakerDecay         *float64       `yaml:"orderBookMakerDecay,omitempty"`
-	OrderBookMakerBias          *float64       `yaml:"orderBookMakerBias,omitempty"`
-	OrderBookTakerDecay         *float64       `yaml:"orderBookTakerDecay,omitempty"`
-	OrderBookTakerBias          *float64       `yaml:"orderBookTakerBias,omitempty"`
-	OrderBookTakerImpact        *float64       `yaml:"orderBookTakerImpact,omitempty"`
-	OrderBookMakerImpact        *float64       `yaml:"orderBookMakerImpact,omitempty"`
-	OrderBookBatchSize          *int           `yaml:"orderBookBatchSize,omitempty"`
-	ReportCount                 *int           `yaml:"reportCount,omitempty"`
-	OrderBookMaxAgeDiffBias     *time.Duration `yaml:"orderBookMaxAgeDiffBias,omitempty"`
-	SpreadTimeToLive            *time.Duration `yaml:"spreadTimeToLive,omitempty"`
-	SpreadLookbackDuration      *time.Duration `yaml:"spreadLookbackDuration,omitempty"`
-	SpreadLookbackMinimalWindow *int           `yaml:"spreadLookbackMinimalWindow,omitempty"`
-	BnbMinSize                  *float64       `yaml:"bnbMinSize,omitempty"`
-	BnbCheckInterval            *time.Duration `yaml:"bnbCheckInterval,omitempty"`
-	StartValue                  *float64       `yaml:"startValue,omitempty"`
-	EnterFreePct                *float64       `yaml:"enterFreePct,omitempty"`
-	EnterMinimalStep            *float64       `yaml:"enterMinimalStep,omitempty"`
-	EnterTargetFactor           *float64       `yaml:"enterTargetFactor,omitempty"`
+	OrderBookMakerDecay         *float64           `yaml:"orderBookMakerDecay,omitempty"`
+	OrderBookMakerBias          *float64           `yaml:"orderBookMakerBias,omitempty"`
+	OrderBookTakerDecay         *float64           `yaml:"orderBookTakerDecay,omitempty"`
+	OrderBookTakerBias          *float64           `yaml:"orderBookTakerBias,omitempty"`
+	OrderBookTakerImpact        *float64           `yaml:"orderBookTakerImpact,omitempty"`
+	OrderBookMakerImpact        *float64           `yaml:"orderBookMakerImpact,omitempty"`
+	OrderBookBatchSize          *int               `yaml:"orderBookBatchSize,omitempty"`
+	ReportCount                 *int               `yaml:"reportCount,omitempty"`
+	OrderBookMaxAgeDiffBias     *time.Duration     `yaml:"orderBookMaxAgeDiffBias,omitempty"`
+	SpreadTimeToLive            *time.Duration     `yaml:"spreadTimeToLive,omitempty"`
+	SpreadLookbackDuration      *time.Duration     `yaml:"spreadLookbackDuration,omitempty"`
+	SpreadLookbackMinimalWindow *int               `yaml:"spreadLookbackMinimalWindow,omitempty"`
+	BnbMinSize                  *float64           `yaml:"bnbMinSize,omitempty"`
+	BnbCheckInterval            *time.Duration     `yaml:"bnbCheckInterval,omitempty"`
+	StartValue                  *float64           `yaml:"startValue,omitempty"`
+	StartValues                 map[string]float64 `yaml:"startValues,omitempty"`
+	EnterFreePct                *float64           `yaml:"enterFreePct,omitempty"`
+	EnterMinimalStep            *float64           `yaml:"enterMinimalStep,omitempty"`
+	EnterTargetFactor           *float64           `yaml:"enterTargetFactor,omitempty"`
 
 	InsuranceFundingRatio    *float64       `yaml:"insuranceFundingRatio,omitempty"`
 	ReBalanceInterval        *time.Duration `yaml:"reBalanceInterval,omitempty"`
 	ReBalanceMinimalNotional *float64       `yaml:"reBalanceMinimalNotional,omitempty"`
 
-	OrderTimeout        *time.Duration     `yaml:"orderTimeout,omitempty"`
-	OrderSilent         *time.Duration     `yaml:"orderSilent,omitempty"`
-	OrderCancelSilent   *time.Duration     `yaml:"orderCancelSilent,omitempty"`
-	OrderMaxCancelCount *int               `yaml:"orderMaxCancelCount,omitempty"`
-	EnterSlippage       *float64           `yaml:"enterSlippage,omitempty"`
-	EnterSilent         *time.Duration     `yaml:"enterSilent,omitempty"`
-	StartValues         map[string]float64 `yaml:"startValues,omitempty"`
-	MaxUnHedgeValue     *float64           `yaml:"maxUnHedgeValue,omitempty"`
-	HttpSilent          *time.Duration     `yaml:"httpSilent,omitempty"`
-	RestartSilent       *time.Duration     `yaml:"restartSilent,omitempty"`
+	OrderTimeout    *time.Duration `yaml:"orderTimeout,omitempty"`
+	OrderSilent     *time.Duration `yaml:"orderSilent,omitempty"`
+	CancelSilent    *time.Duration `yaml:"cancelSilent,omitempty"`
+	EnterSilent     *time.Duration `yaml:"enterSilent,omitempty"`
+	MaxUnHedgeValue *float64       `yaml:"maxUnHedgeValue,omitempty"`
+	HttpSilent      *time.Duration `yaml:"httpSilent,omitempty"`
+	RestartSilent   *time.Duration `yaml:"restartSilent,omitempty"`
+
+	OrderOffsets map[string]string `yaml:"orderOffsets,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

@@ -96,9 +96,9 @@ func updateMakerOldOrders() {
 		if isOrderOK(order, enterDelta, exitDelta) {
 			continue
 		}
-		bnspotCancelSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent)
+		bnspotCancelSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.CancelSilent)
 		//bnspotOrderCancelCounts[order.Market] += 1
-		bnspotOrderSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.OrderCancelSilent)
+		bnspotOrderSilentTimes[order.Symbol] = time.Now().Add(*bnConfig.CancelSilent)
 		delete(bnspotOpenOrders, symbol)
 		bnspotOrderRequestChs[order.Symbol] <- SpotOrderRequest{
 			Cancel: &bnspot.CancelAllOrderParams{Symbol: order.Symbol},

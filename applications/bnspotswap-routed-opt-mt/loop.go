@@ -43,7 +43,7 @@ func updateSwapPositions() {
 
 		//只做空SWAP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
 		//有spread才计算, 没有直接干
-		if okSpread && swapSize <= 0 && -swapSize*swapOrderBook.TakerBid*(1.0-*bnConfig.EnterSlippage) < swapMinNotional {
+		if okSpread && swapSize <= 0 && -swapSize*swapOrderBook.TakerBid< swapMinNotional {
 			continue
 		}
 		if swapSize > 0 && swapPosition.PositionAmt >= 0 {
@@ -305,7 +305,6 @@ func hedgeBnb() {
 	}
 
 	swapStepSize := bnswapStepSizes[symbol]
-	swapTickSize := bnswapTickSizes[symbol]
 	swapMinNotional := bnswapMinNotional[symbol]
 
 	targetSize := -(spotBalance.Free + *bnswapBNBAsset.MarginBalance)
@@ -316,10 +315,10 @@ func hedgeBnb() {
 	if math.Abs(swapSize) < swapStepSize {
 		return
 	}
-	if swapSize < 0 && -swapSize*swapPremiumIndex.MarkPrice*(1.0-*bnConfig.EnterSlippage) < swapMinNotional {
+	if swapSize < 0 && -swapSize*swapPremiumIndex.MarkPrice < swapMinNotional {
 		return
 	}
-	if swapSize > 0 && swapSize*swapPremiumIndex.MarkPrice*(1.0+*bnConfig.EnterSlippage) < swapMinNotional {
+	if swapSize > 0 && swapSize*swapPremiumIndex.MarkPrice < swapMinNotional {
 		return
 	}
 	logger.Debugf("hedgeBnb %s SIZE %f POS %f -> %f", symbol, swapSize, swapPosition.PositionAmt, targetSize)
@@ -328,13 +327,11 @@ func hedgeBnb() {
 	if swapSize*swapPosition.PositionAmt < 0 && math.Abs(swapSize) <= math.Abs(swapPosition.PositionAmt) {
 		reduceOnly = true
 	}
-	price := math.Round(swapPremiumIndex.MarkPrice*(1.0+*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 	side := "BUY"
 	clOrdID := fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 	if swapSize < 0 {
 		side = "SELL"
 		swapSize = -swapSize
-		price = math.Round(swapPremiumIndex.MarkPrice*(1.0-*bnConfig.EnterSlippage)/swapTickSize) * swapTickSize
 	}
 	bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.OrderSilent)
 	bnswapPositionsUpdateTimes[symbol] = time.Unix(0, 0)
@@ -342,8 +339,7 @@ func hedgeBnb() {
 	bnswapOrderRequestChs[symbol] <- bnswap.NewOrderParams{
 		Symbol:           symbol,
 		Side:             side,
-		Type:             "LIMIT",
-		Price:            price,
+		Type:             bnspot.OrderTypeMarket,
 		TimeInForce:      "FOK",
 		Quantity:         swapSize,
 		ReduceOnly:       reduceOnly,

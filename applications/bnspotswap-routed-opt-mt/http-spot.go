@@ -183,7 +183,7 @@ func handleReBalanceBnb() {
 		if currentSize < *bnConfig.BnbMinSize {
 			size := *bnConfig.BnbMinSize - currentSize
 			size = math.Ceil(size/bnspotStepSizes[bnBNBSymbol]) * bnspotStepSizes[bnBNBSymbol]
-			price := bnbPremiumIndex.IndexPrice * (1.0 + *bnConfig.EnterSlippage)
+			price := bnbPremiumIndex.IndexPrice
 			price = math.Ceil(price/bnspotTickSizes[bnBNBSymbol])*bnspotTickSizes[bnBNBSymbol]
 			if size*price < bnspotMinNotional[bnBNBSymbol] {
 				size = math.Ceil(bnspotMinNotional[bnBNBSymbol]/price/bnspotStepSizes[bnBNBSymbol]) * bnspotStepSizes[bnBNBSymbol]
@@ -197,9 +197,8 @@ func handleReBalanceBnb() {
 					New: &bnspot.NewOrderParams{
 						Symbol:           bnBNBSymbol,
 						Side:             bnspot.OrderSideBuy,
-						Type:             bnspot.OrderTypeLimit,
+						Type:             bnspot.OrderTypeMarket,
 						TimeInForce:      "FOK",
-						Price:            price,
 						Quantity:         size,
 						NewClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 					},
