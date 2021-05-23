@@ -198,6 +198,8 @@ func updateMakerNewOrders() {
 					bnspotOrderCancelCounts[symbol] = 0
 					bnspotOpenOrders[symbol] = order
 					bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
+					delete(bnspotLastLimitSellPrices, symbol)
+					delete(bnspotLastLimitBuyPrices, symbol)
 					bnspotOrderRequestChs[symbol] <- SpotOrderRequest{New: &order}
 				}
 			}
@@ -276,6 +278,8 @@ func updateMakerNewOrders() {
 			bnspotOrderCancelCounts[symbol] = 0
 			bnspotOpenOrders[symbol] = order
 			bnspotHttpBalanceUpdateSilentTimes[symbol] = time.Now().Add(*bnConfig.HttpSilent)
+			delete(bnspotLastLimitSellPrices, symbol)
+			delete(bnspotLastLimitBuyPrices, symbol)
 			bnspotOrderRequestChs[symbol] <- SpotOrderRequest{New: &order}
 		}
 	}
