@@ -31,6 +31,9 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 			bnLoopTimer.Reset(time.Nanosecond)
 			bnswapOrderSilentTimes[nextPos.Symbol] = time.Now()
 			logger.Debugf("SWAP HTTP POSITION %s", nextPos.ToString())
+			if lastPosition != nil {
+				logger.Debugf("SWAP %s POS OLD TIME %v NEW TIME %v", nextPos.Symbol, lastPosition.EventTime, nextPos.EventTime)
+			}
 		}
 	}
 }
