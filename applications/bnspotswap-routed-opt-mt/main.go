@@ -599,7 +599,7 @@ func main() {
 				}
 			}
 		case order := <-bnspotNewOrderResponseCh:
-			logStr := fmt.Sprintf("SPOT ORDER %v", order)
+			logStr := fmt.Sprintf("SPOT ORDER %s %s %s %s %s %f %f", order.Symbol, order.ClientOrderID, order.Side, order.Status, order.Type, order.Price, order.CummulativeQuoteQty)
 			if order.Status == bnspot.OrderStatusReject ||
 				order.Status == bnspot.OrderStatusExpired ||
 				order.Status == bnspot.OrderStatusCancelled {
