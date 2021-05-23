@@ -340,7 +340,6 @@ func hedgeBnb() {
 		Symbol:           symbol,
 		Side:             side,
 		Type:             bnspot.OrderTypeMarket,
-		TimeInForce:      "FOK",
 		Quantity:         swapSize,
 		ReduceOnly:       reduceOnly,
 		NewClientOrderId: clOrdID,
