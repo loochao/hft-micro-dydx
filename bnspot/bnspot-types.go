@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"net/url"
 	"strconv"
 	"time"
@@ -303,6 +304,7 @@ func (o *NewOrderParams) ToUrlValues() url.Values {
 	if o.IcebergQty != 0 {
 		values.Set("icebergQty", strconv.FormatFloat(o.IcebergQty, 'f', 8, 64))
 	}
+	logger.Debugf("%s", values.Encode())
 	return values
 }
 
