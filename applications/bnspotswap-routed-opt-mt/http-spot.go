@@ -198,7 +198,6 @@ func handleReBalanceBnb() {
 						Symbol:           bnBNBSymbol,
 						Side:             bnspot.OrderSideBuy,
 						Type:             bnspot.OrderTypeMarket,
-						TimeInForce:      "FOK",
 						Quantity:         size,
 						NewClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 					},
