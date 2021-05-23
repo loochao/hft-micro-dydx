@@ -38,6 +38,10 @@ func (k *Kcperp) Setup(ctx context.Context, settings common.ExchangeSettings) er
 	k.stopped = false
 	k.done = make(chan interface{})
 	k.settings = settings
+	k.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.ApiPassphrase, settings.Proxy)
+	if err != nil {
+		return err
+	}
 	for _, symbol := range settings.Symbols {
 		if _, err = k.GetStepSize(symbol); err != nil {
 			return err
@@ -54,10 +58,6 @@ func (k *Kcperp) Setup(ctx context.Context, settings common.ExchangeSettings) er
 				return err
 			}
 		}
-	}
-	k.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.ApiPassphrase, settings.Proxy)
-	if err != nil {
-		return err
 	}
 	return nil
 }
