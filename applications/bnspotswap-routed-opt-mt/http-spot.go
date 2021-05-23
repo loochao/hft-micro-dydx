@@ -44,15 +44,15 @@ func handleSpotHttpAccount(account bnspot.Account) {
 		bnspotBalancesUpdateTimes[symbol] = time.Now()
 
 		if lastBalance == nil ||
-			lastBalance.Free+lastBalance.Locked != balance.Free +balance.Locked {
+			lastBalance.Free+lastBalance.Locked != balance.Free+balance.Locked {
 			logger.Debugf("SPOT HTTP BALANCE %s", balance.ToString())
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			if symbol == bnBNBSymbol {
 				bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.PullInterval * 3)
-			//} else {
-			//	bnswapOrderSilentTimes[symbol] = time.Now()
+				//} else {
+				//	bnswapOrderSilentTimes[symbol] = time.Now()
 			}
-			if lastBalance != nil && lastBalance.Free+lastBalance.Locked != balance.Free +balance.Locked {
+			if lastBalance != nil && lastBalance.Free+lastBalance.Locked != balance.Free+balance.Locked {
 				bnspotSilentTimes[symbol] = time.Now().Add(*bnConfig.EnterSilent)
 			}
 			bnLoopTimer.Reset(time.Nanosecond)
@@ -82,14 +82,13 @@ func handleSpotHttpAccount(account bnspot.Account) {
 			}
 			lastBalance, hasLast := bnspotBalances[symbol]
 			if !hasLast ||
-				lastBalance.Free != balance.Free ||
-				lastBalance.Locked != balance.Locked {
+				lastBalance.Free+lastBalance.Locked != balance.Free+balance.Locked {
 				logger.Debugf("SPOT HTTP BALANCE %s", balance.ToString())
 				//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 				if symbol == bnBNBSymbol {
 					bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.PullInterval * 3)
-				//} else {
-				//	bnswapOrderSilentTimes[symbol] = time.Now()
+				} else {
+					bnswapOrderSilentTimes[symbol] = time.Now()
 				}
 				if hasLast {
 					bnspotSilentTimes[symbol] = time.Now().Add(*bnConfig.EnterSilent)
@@ -125,7 +124,7 @@ func reBalanceUSDT(
 		})
 		if err != nil {
 			logger.Debugf("NewFutureAccountTransfer error %v", err)
-		}else{
+		} else {
 			logger.Debugf("%v", *resp)
 		}
 	}
@@ -164,7 +163,7 @@ func reBalanceBnB(
 		if err != nil {
 			logger.Debugf("NewFutureAccountTransfer error %v", err)
 		} else {
-			logger.Debugf("NewFutureAccountTransfer success %d %f %v", tType, change,resp.TranId)
+			logger.Debugf("NewFutureAccountTransfer success %d %f %v", tType, change, resp.TranId)
 		}
 	}
 }
@@ -184,11 +183,11 @@ func handleReBalanceBnb() {
 			size := *bnConfig.BnbMinSize - currentSize
 			size = math.Ceil(size/bnspotStepSizes[bnBNBSymbol]) * bnspotStepSizes[bnBNBSymbol]
 			price := bnbPremiumIndex.IndexPrice
-			price = math.Ceil(price/bnspotTickSizes[bnBNBSymbol])*bnspotTickSizes[bnBNBSymbol]
+			price = math.Ceil(price/bnspotTickSizes[bnBNBSymbol]) * bnspotTickSizes[bnBNBSymbol]
 			if size*price < bnspotMinNotional[bnBNBSymbol] {
 				size = math.Ceil(bnspotMinNotional[bnBNBSymbol]/price/bnspotStepSizes[bnBNBSymbol]) * bnspotStepSizes[bnBNBSymbol]
 			}
-			if price*size < bnspotUSDTBalance.Free && price*size > bnspot.MinNotionals[bnBNBSymbol]{
+			if price*size < bnspotUSDTBalance.Free && price*size > bnspot.MinNotionals[bnBNBSymbol] {
 				logger.Debugf("CHANGE BNB SIZE %f PRICE %f", size, price)
 				bnspotOrderSilentTimes[bnBNBSymbol] = time.Now().Add(*bnConfig.OrderSilent)
 				bnspotBalancesUpdateTimes[bnBNBSymbol] = time.Unix(0, 0)
