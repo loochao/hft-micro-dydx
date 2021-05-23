@@ -19,11 +19,12 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 		//}
 		var lastPosition *bnswap.Position
 		if currentPosition, ok := bnswapPositions[nextPos.Symbol]; ok {
-			if currentPosition.EventTime.Sub(nextPos.EventTime) >= 0 {
+			if currentPosition.EventTime.Sub(nextPos.EventTime) > 0 {
+				logger.Debugf("%s nextPos EventTime is older %v < %v", nextPos.EventTime, currentPosition.EventTime)
 				continue
 			}
-			p := currentPosition
-			lastPosition = &p
+			lastPosition = &bnswap.Position{}
+			*lastPosition = currentPosition
 		}
 		bnswapPositions[nextPos.Symbol] = nextPos
 		bnswapPositionsUpdateTimes[nextPos.Symbol] = time.Now()
