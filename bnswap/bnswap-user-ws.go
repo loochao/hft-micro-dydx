@@ -94,6 +94,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 			if msg[0] == '{' && len(msg) > 14 {
 				if msg[2] == 'e' && msg[6] == 'A' && msg[14] == 'U' {
 					balanceAndPositionUpdateEvent := BalanceAndPositionUpdateEvent{}
+					logger.Debugf("%s", msg)
 					err := json.Unmarshal(msg, &balanceAndPositionUpdateEvent)
 					if err != nil {
 						logger.Debugf("json.Unmarshal error %v %s", err, msg)
