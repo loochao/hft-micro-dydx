@@ -478,7 +478,7 @@ func main() {
 				if wsOrder.Side == bnswap.OrderSideBuy {
 					if spotPrice, ok := bnspotLastLimitSellPrices[wsOrder.Symbol]; ok {
 						bnRealisedSpread[wsOrder.Symbol] = (wsOrder.AveragePrice - spotPrice) / spotPrice
-						logger.Debugf("%s REALISED OPEN SPREAD %f", wsOrder.Symbol, bnRealisedSpread[wsOrder.Symbol])
+						logger.Debugf("%s REALISED CLOSE SPREAD %f", wsOrder.Symbol, bnRealisedSpread[wsOrder.Symbol])
 					}
 				} else {
 					if spotPrice, ok := bnspotLastLimitBuyPrices[wsOrder.Symbol]; ok {
