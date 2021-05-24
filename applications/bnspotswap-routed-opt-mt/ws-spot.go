@@ -7,6 +7,7 @@ import (
 )
 
 func handleSpotWSOutboundAccountPosition(account *bnspot.AccountUpdateEvent) {
+	logger.Debugf("SPOT WS %v", account.EventTime)
 	for _, wsBalance := range account.Balances {
 
 		if wsBalance.Asset == "USDT" {
@@ -33,6 +34,7 @@ func handleSpotWSOutboundAccountPosition(account *bnspot.AccountUpdateEvent) {
 
 		if lastBalance != nil &&
 			lastBalance.EventTime.Sub(wsBalance.EventTime) > 0 {
+			logger.Debugf("%v is older than %s %v", wsBalance, lastBalance.Asset, lastBalance.EventTime)
 			continue
 		}
 

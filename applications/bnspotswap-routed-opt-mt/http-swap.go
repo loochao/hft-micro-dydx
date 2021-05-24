@@ -7,13 +7,19 @@ import (
 )
 
 func handleSwapHttpAccount(account bnswap.Account) {
+	logger.Debugf("SWAP HTTP %v", account.EventTime)
 	for _, asset := range account.Assets {
 		if asset.Asset == "USDT" {
-			asset := asset
-			bnswapUSDTAsset = &asset
 			bnswapAssetUpdatedForReBalance = true
 			bnswapAssetUpdatedForInflux = true
 			bnswapAssetUpdatedForExternalInflux = true
+			if bnswapUSDTAsset != nil &&
+				bnswapUSDTAsset.EventTime.Sub(asset.EventTime) > 0 {
+				logger.Debugf("%v is older than USDT %v", asset, bnswapUSDTAsset.EventTime)
+				continue
+			}
+			asset := asset
+			bnswapUSDTAsset = &asset
 			bnLoopTimer.Reset(time.Nanosecond)
 			continue
 		}
@@ -33,6 +39,9 @@ func handleSwapHttpAccount(account bnswap.Account) {
 		//if bnswapHttpPositionUpdateSilentTimes[nextPos.Symbol].Sub(nextPos.ParseTime) > 0 {
 		//	continue
 		//}
+		bnswapPositions[nextPos.Symbol] = nextPos
+		bnswapPositionsUpdateTimes[nextPos.Symbol] = time.Now()
+
 		var lastPosition *bnswap.Position
 		if currentPosition, ok := bnswapPositions[nextPos.Symbol]; ok {
 			if currentPosition.EventTime.Sub(nextPos.EventTime) > 0 {
@@ -42,8 +51,6 @@ func handleSwapHttpAccount(account bnswap.Account) {
 			lastPosition = &bnswap.Position{}
 			*lastPosition = currentPosition
 		}
-		bnswapPositions[nextPos.Symbol] = nextPos
-		bnswapPositionsUpdateTimes[nextPos.Symbol] = time.Now()
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != nextPos.PositionAmt ||
 			lastPosition.EntryPrice != nextPos.EntryPrice {

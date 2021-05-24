@@ -7,6 +7,7 @@ import (
 )
 
 func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
+	logger.Debugf("SWAP WS %v", data.EventTime)
 	for _, nextPos := range data.Account.Positions {
 		if _, ok := bnspotOffsets[nextPos.Symbol]; !ok {
 			continue

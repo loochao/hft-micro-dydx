@@ -12,7 +12,7 @@ import (
 )
 
 func handleSpotHttpAccount(account bnspot.Account) {
-
+	logger.Debugf("SPOT HTTP %v", account.EventTime)
 	hasUSDT := false
 	hasSpotBalances := make(map[string]time.Time)
 	for _, balance := range account.Balances {
@@ -41,6 +41,9 @@ func handleSpotHttpAccount(account bnspot.Account) {
 		if bnspotHttpBalanceUpdateSilentTimes[symbol].Sub(time.Now()) > 0 {
 			continue
 		}
+		bnspotBalances[symbol] = balance
+		bnspotBalancesUpdateTimes[symbol] = time.Now()
+
 		var lastBalance *bnspot.Balance
 		if b, ok := bnspotBalances[symbol]; ok {
 			b := b
@@ -51,8 +54,6 @@ func handleSpotHttpAccount(account bnspot.Account) {
 			logger.Debugf("%v is older than %s %v", balance, lastBalance.Asset, lastBalance.EventTime)
 			continue
 		}
-		bnspotBalances[symbol] = balance
-		bnspotBalancesUpdateTimes[symbol] = time.Now()
 
 		if lastBalance == nil ||
 			lastBalance.Free+lastBalance.Locked != balance.Free+balance.Locked {
