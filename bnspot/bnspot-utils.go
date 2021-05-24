@@ -146,7 +146,7 @@ func WatchAccountFromHttp(
 		case <-timer.C:
 			account, _, err := api.GetAccount(ctx)
 			if err != nil {
-				logger.Debugf("WatchAccountFromHttp GetAccount error %v", err)
+				logger.Debugf("api.GetAccount(ctx) error %v", err)
 			} else {
 				output <- *account
 			}
