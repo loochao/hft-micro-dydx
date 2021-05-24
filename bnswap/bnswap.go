@@ -74,20 +74,17 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 		logger.Debugf("NewUserWebsocket(ctx,  bn.api, proxy) error %v", err)
 		return
 	}
-	internalPositionsCh := make(chan []Position, 10)
 	positionSymbols := make([]string, 0)
 	for symbol := range positionChMap {
 		positionSymbols = append(positionSymbols, symbol)
 	}
 	internalAccountCh := make(chan Account, 10)
-	go bn.watchAccount(ctx, internalAccountCh)
-	go bn.watchPositions(ctx, positionSymbols, internalPositionsCh)
+	go bn.watchAccount(ctx, internalAccountCh, positionChMap)
 	go bn.watchSystemStatus(ctx, statusCh)
 	logSilentTime := time.Now()
 
 	var usdtAsset *Asset
 
-	positionsMap := make(map[string]*Position)
 	restartToReadyTimer := time.NewTimer(time.Hour * 9999)
 	defer restartToReadyTimer.Stop()
 	for {
@@ -157,22 +154,6 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("ch <- &wsOrder.Order failed, ch len %d", len(ch))
 						logSilentTime = time.Now().Add(time.Minute)
-					}
-				}
-			}
-			break
-		case positions := <-internalPositionsCh:
-			for _, pos := range positions {
-				if ch, ok := positionChMap[pos.Symbol]; ok {
-					pos := pos
-					positionsMap[pos.Symbol] = &pos
-					select {
-					case ch <- &pos:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
 					}
 				}
 			}
@@ -518,7 +499,8 @@ func (bn *Bnswap) watchPositions(
 
 func (bn *Bnswap) watchAccount(
 	ctx context.Context,
-	output chan Account,
+	outputAccount chan Account,
+	positionsMapCh map[string]chan common.Position,
 ) {
 	bn.mu.Lock()
 	updateInterval := bn.settings.PullInterval
@@ -535,7 +517,17 @@ func (bn *Bnswap) watchAccount(
 			if err != nil {
 				logger.Debugf("bn.api.GetAccount(subCtx) error %v", err)
 			} else {
-				output <- *account
+				outputAccount <- *account
+				for _, position := range account.Positions {
+					if ch, ok := positionsMapCh[position.Symbol]; ok {
+						position := position
+						select {
+						case ch <- &position:
+						default:
+							logger.Debugf("ch <- &position failed, %s ch len %d", position.Symbol, len(ch))
+						}
+					}
+				}
 			}
 			timer.Reset(time.Now().Truncate(updateInterval).Add(updateInterval).Sub(time.Now()))
 		}
