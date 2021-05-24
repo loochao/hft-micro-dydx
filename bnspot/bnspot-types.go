@@ -216,6 +216,10 @@ type Balance struct {
 	ParseTime time.Time `json:"-"`
 }
 
+func (b *Balance) GetTime() time.Time {
+	return b.EventTime
+}
+
 func (b *Balance) GetEventTime() time.Time {
 	return b.EventTime
 }
