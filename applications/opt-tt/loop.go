@@ -246,7 +246,7 @@ func updateTargetPositionSizes() {
 		}
 		if time.Now().Sub(yPositionsUpdateTimes[ySymbol]) > xyConfig.BalancePositionMaxAge {
 			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("%s y position too old", xSymbol)
+				logger.Debugf("%s y position too old", ySymbol)
 			}
 			continue
 		}

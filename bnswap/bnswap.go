@@ -79,7 +79,7 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 		positionSymbols = append(positionSymbols, symbol)
 	}
 	internalAccountCh := make(chan Account, 10)
-	go bn.watchAccount(ctx, internalAccountCh, positionChMap)
+	go bn.watchAccount(ctx, internalAccountCh)
 	go bn.watchSystemStatus(ctx, statusCh)
 	logSilentTime := time.Now()
 
@@ -130,7 +130,7 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 			}
 			for _, balance := range bp.Account.Balances {
 				if balance.Asset == "USDT" {
-					if usdtAsset != nil {
+					if usdtAsset != nil && usdtAsset.EventTime.Sub(balance.EventTime) < 0{
 						usdtAsset.WalletBalance = &balance.WalletBalance
 						usdtAsset.CrossWalletBalance = &balance.CrossWalletBalance
 						select {
@@ -172,6 +172,22 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 						}
 					}
 					break
+				}
+			}
+			for _, nextPos := range account.Positions {
+				if nextPos.PositionSide != "BOTH" {
+					continue
+				}
+				if outputCh, ok := positionChMap[nextPos.Symbol]; ok {
+					nextPos := nextPos
+					select {
+					case outputCh <- &nextPos:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("outputCh <- &nextPos failed, ch len %d", len(outputCh))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
+					}
 				}
 			}
 			break
@@ -500,7 +516,6 @@ func (bn *Bnswap) watchPositions(
 func (bn *Bnswap) watchAccount(
 	ctx context.Context,
 	outputAccount chan Account,
-	positionsMapCh map[string]chan common.Position,
 ) {
 	bn.mu.Lock()
 	updateInterval := bn.settings.PullInterval
@@ -517,16 +532,10 @@ func (bn *Bnswap) watchAccount(
 			if err != nil {
 				logger.Debugf("bn.api.GetAccount(subCtx) error %v", err)
 			} else {
-				outputAccount <- *account
-				for _, position := range account.Positions {
-					if ch, ok := positionsMapCh[position.Symbol]; ok {
-						position := position
-						select {
-						case ch <- &position:
-						default:
-							logger.Debugf("ch <- &position failed, %s ch len %d", position.Symbol, len(ch))
-						}
-					}
+				select {
+				case outputAccount <- *account:
+				default:
+					logger.Debugf("outputAccount <- *account failed, ch len %d", len(outputAccount))
 				}
 			}
 			timer.Reset(time.Now().Truncate(updateInterval).Add(updateInterval).Sub(time.Now()))
