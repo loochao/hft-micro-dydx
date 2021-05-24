@@ -175,6 +175,7 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 				}
 			}
 			for _, nextPos := range account.Positions {
+				logger.Debugf("%s %v", nextPos.Symbol, nextPos.EventTime)
 				if nextPos.PositionSide != "BOTH" {
 					continue
 				}
