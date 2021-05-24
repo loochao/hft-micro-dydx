@@ -23,6 +23,11 @@ func handleSwapHttpAccount(account bnswap.Account) {
 			continue
 		}
 		if asset.Asset == "BNB" {
+			if bnswapBNBAsset != nil &&
+				bnswapBNBAsset.EventTime.Sub(asset.EventTime) > 0 {
+				logger.Debugf("%v is older than USDT %v", asset, bnswapBNBAsset.EventTime)
+				continue
+			}
 			asset := asset
 			bnswapBNBAsset = &asset
 			continue
@@ -64,27 +69,3 @@ func handleSwapHttpAccount(account bnswap.Account) {
 	}
 }
 
-//func swapCreateOrder(
-//	ctx context.Context,
-//	api *bnswap.API,
-//	timeout time.Duration,
-//	params bnswap.NewOrderParams,
-//) {
-//	childCtx, _ := context.WithTimeout(ctx, timeout)
-//	order, err := api.SubmitOrder(childCtx, params)
-//	if err != nil {
-//		logger.Debugf("SUBMIT ERROR %s  %v ", params.ToString(), err)
-//		select {
-//		case <-ctx.Done():
-//		case bnswapOrderNewErrorCh <- TakerOrderNewError{
-//			Error:  err,
-//			Params: params,
-//		}:
-//		}
-//	} else if order.Status == "FILLED" ||
-//		order.Status == "CANCELED" ||
-//		order.Status == "REJECTED" ||
-//		order.Status == "EXPIRED" {
-//		bnswapOrderResponseCh <- *order
-//	}
-//}

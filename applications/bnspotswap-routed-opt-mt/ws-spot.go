@@ -7,7 +7,6 @@ import (
 )
 
 func handleSpotWSOutboundAccountPosition(account *bnspot.AccountUpdateEvent) {
-	logger.Debugf("SPOT WS %v", account.EventTime)
 	for _, wsBalance := range account.Balances {
 
 		if wsBalance.Asset == "USDT" {

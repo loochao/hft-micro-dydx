@@ -21,8 +21,10 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 				Symbol:           nextPos.Symbol,
 				EntryPrice:       nextPos.EntryPrice,
 				PositionAmt:      nextPos.PositionAmt,
-				UnRealizedProfit: nextPos.UnRealizedProfit,
+				UnrealizedProfit: nextPos.UnRealizedProfit,
 				PositionSide:     "BOTH",
+				EventTime:        data.EventTime,
+				ParseTime:        data.ParseTime,
 			}
 		} else {
 			if currentPosition.EventTime.Sub(nextPos.EventTime) > 0 {
@@ -35,7 +37,7 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			currentPosition.ParseTime = nextPos.ParseTime
 			currentPosition.EntryPrice = nextPos.EntryPrice
 			currentPosition.PositionAmt = nextPos.PositionAmt
-			currentPosition.UnRealizedProfit = nextPos.UnRealizedProfit
+			currentPosition.UnrealizedProfit = nextPos.UnRealizedProfit
 			bnswapPositions[nextPos.Symbol] = currentPosition
 		}
 
@@ -61,8 +63,10 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 					Asset:              balance.Asset,
 					WalletBalance:      &wb,
 					CrossWalletBalance: &cwb,
+					EventTime:          balance.EventTime,
+					ParseTime:          balance.ParseTime,
 				}
-			} else {
+			} else if balance.EventTime.Sub(bnswapUSDTAsset.EventTime) >= 0 {
 				bnswapUSDTAsset.WalletBalance = &wb
 				bnswapUSDTAsset.CrossWalletBalance = &cwb
 			}
@@ -76,8 +80,10 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 					Asset:              balance.Asset,
 					WalletBalance:      &wb,
 					CrossWalletBalance: &cwb,
+					EventTime:          balance.EventTime,
+					ParseTime:          balance.ParseTime,
 				}
-			} else {
+			} else if balance.EventTime.Sub(bnswapBNBAsset.EventTime) >= 0 {
 				bnswapBNBAsset.WalletBalance = &wb
 				bnswapBNBAsset.CrossWalletBalance = &cwb
 			}
