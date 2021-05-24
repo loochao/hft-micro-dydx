@@ -43,7 +43,7 @@ func updateSwapPositions() {
 
 		//只做空SWAP，所以开空是加仓，开多是减仓，减仓大小受当前空仓大小限制, 加仓受MinNotional限制
 		//有spread才计算, 没有直接干
-		if okSpread && swapSize <= 0 && -swapSize*swapOrderBook.TakerBid< swapMinNotional {
+		if okSpread && swapSize <= 0 && -swapSize*swapOrderBook.TakerBid < swapMinNotional {
 			continue
 		}
 		if swapSize > 0 && swapPosition.PositionAmt >= 0 {
@@ -158,7 +158,7 @@ func updateMakerNewOrders() {
 		offset := bnspotOffsets[symbol]
 
 		enterDelta := *bnConfig.EnterDelta + *bnConfig.EnterOffset*(currentSpotValue/entryTarget)
-		exitDelta := *bnConfig.ExitDelta + *bnConfig.ExitOffset*(currentSpotValue/entryTarget)
+		exitDelta := *bnConfig.ExitDelta + *bnConfig.ExitOffset*((currentSpotValue-entryStep)/entryTarget)
 
 		if spread.ShortLastLeave < exitDelta &&
 			spread.ShortMedianLeave < exitDelta &&
@@ -347,4 +347,3 @@ func hedgeBnb() {
 		NewClientOrderId: clOrdID,
 	}
 }
-
