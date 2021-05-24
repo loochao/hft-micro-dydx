@@ -33,7 +33,9 @@ func handleSwapHttpAccount(account bnswap.Account) {
 			continue
 		}
 	}
+	logger.Debugf("%d", len(account.Positions))
 	for _, nextPos := range account.Positions {
+		logger.Debugf("%s %v", nextPos.Symbol, nextPos.EventTime)
 		if _, ok := bnspotOffsets[nextPos.Symbol]; !ok {
 			return
 		}

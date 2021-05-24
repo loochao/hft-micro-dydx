@@ -216,7 +216,7 @@ type ServerTime struct {
 //    }
 
 type Position struct {
-	Symbol                 string
+	Symbol                 string    `json:"symbol"`
 	InitialMargin          float64   `json:"initialMargin,string"`
 	MaintMargin            float64   `json:"maintMargin,string"`
 	UnrealizedProfit       float64   `json:"unrealizedProfit,string"`
