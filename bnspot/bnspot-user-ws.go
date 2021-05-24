@@ -345,8 +345,8 @@ func NewUserWebsocket(
 					logger.Debugf("api.SendAuthenticatedHTTPRequest error %v", err)
 					ws.Stop()
 					return
-				}else{
-					logger.Debugf("%v", resp)
+				//}else{
+				//	logger.Debugf("%v", resp)
 				}
 				timer.Reset(time.Minute * 20)
 			}

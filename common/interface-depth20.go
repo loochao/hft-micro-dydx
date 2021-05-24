@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
@@ -355,7 +354,7 @@ func (m *TimeFilter) GenerateReport() TimeReport {
 func NewDepthFilter(
 	decay, bias, min, max float64,
 ) TimeFilter {
-	logger.Debugf("min %f max %f", min, max)
+	//logger.Debugf("min %f max %f", min, max)
 	return TimeFilter{
 		decay1:       decay,
 		decay2:       1. - decay,
