@@ -234,6 +234,14 @@ type Position struct {
 	EventTime              time.Time `json:"-"`
 }
 
+func (position *Position) GetEventTime() time.Time {
+	return position.EventTime
+}
+
+func (position *Position) GetParseTime() time.Time {
+	return position.ParseTime
+}
+
 func (position *Position) GetSymbol() string {
 	return position.Symbol
 }
@@ -244,10 +252,6 @@ func (position *Position) GetSize() float64 {
 
 func (position *Position) GetPrice() float64 {
 	return position.EntryPrice
-}
-
-func (position *Position) GetTime() time.Time {
-	return position.EventTime
 }
 
 func (position *Position) ToString() string {

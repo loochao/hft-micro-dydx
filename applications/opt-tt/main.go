@@ -270,16 +270,16 @@ mainLoop:
 		case nextPos := <-xPositionCh:
 			//logger.Debugf("x position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := xPositions[nextPos.GetSymbol()]; ok {
-				if nextPos.GetTime().Sub(prevPos.GetTime()) >= 0 {
+				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 					xPositions[nextPos.GetSymbol()] = nextPos
-					xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
+					xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
 						logger.Debugf("%s x position change %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
 					}
 				}
 			} else {
 				xPositions[nextPos.GetSymbol()] = nextPos
-				xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
+				xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 			}
 			break
 		case account := <-xAccountCh:
@@ -289,18 +289,18 @@ mainLoop:
 			//logger.Debugf("x account %s %f %f %f", xAccount.GetCurrency(), xAccount.GetBalance(), xAccount.GetFree(), xAccount.GetUsed())
 			break
 		case nextPos := <-yPositionCh:
-			logger.Debugf("y position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
+			logger.Debugf("y position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := yPositions[nextPos.GetSymbol()]; ok {
-				if nextPos.GetTime().Sub(prevPos.GetTime()) >= 0 {
+				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 					yPositions[nextPos.GetSymbol()] = nextPos
-					yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
+					yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
 						logger.Debugf("%s y position change %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
 					}
 				}
 			} else {
 				yPositions[nextPos.GetSymbol()] = nextPos
-				yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
+				yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 			}
 			break
 		case account := <-yAccountCh:

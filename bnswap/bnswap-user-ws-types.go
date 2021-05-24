@@ -45,6 +45,14 @@ type WSPosition struct {
 	EventTime           time.Time `json:"-"`
 }
 
+func (wsp *WSPosition) GetEventTime() time.Time {
+	return wsp.EventTime
+}
+
+func (wsp *WSPosition) GetParseTime() time.Time {
+	return wsp.ParseTime
+}
+
 func (wsp *WSPosition) GetSymbol() string {
 	return wsp.Symbol
 }
@@ -55,10 +63,6 @@ func (wsp *WSPosition) GetSize() float64 {
 
 func (wsp *WSPosition) GetPrice() float64 {
 	return wsp.EntryPrice
-}
-
-func (wsp *WSPosition) GetTime() time.Time {
-	return wsp.ParseTime
 }
 
 func (wsp *WSPosition) ToString() string {

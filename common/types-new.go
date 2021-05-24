@@ -26,7 +26,8 @@ type Position interface {
 	GetSymbol() string
 	GetSize() float64
 	GetPrice() float64
-	GetTime() time.Time
+	GetEventTime() time.Time
+	GetParseTime() time.Time
 }
 
 type Exchange interface {
