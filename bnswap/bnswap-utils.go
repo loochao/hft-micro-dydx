@@ -332,7 +332,7 @@ func WatchAccountFromHttp(
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			account, err := api.GetAccount(subCtx)
 			if err != nil {
-				logger.Debugf("WatchAccountFromHttp GetAccount error %v", err)
+				logger.Debugf("api.GetAccount(subCtx) error %v", err)
 			} else {
 				output <- *account
 			}

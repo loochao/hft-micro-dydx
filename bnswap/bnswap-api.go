@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -121,6 +122,9 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	}
 	reader := resp.Body
 	contents, err := ioutil.ReadAll(reader)
+	if strings.Contains(path, "/fapi/v2/account") {
+		logger.Debugf("%s", contents)
+	}
 	if err != nil {
 		return err
 	}
@@ -250,7 +254,7 @@ func (api *API) GetAccount(ctx context.Context) (*Account, error) {
 	err := api.SendAuthenticatedHTTPRequest(
 		ctx,
 		http.MethodGet,
-		"/fapi/v1/account",
+		"/fapi/v2/account",
 		nil,
 		&account,
 	)
