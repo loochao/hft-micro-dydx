@@ -239,15 +239,15 @@ func updateTargetPositionSizes() {
 		spread, okSpread := xySpreads[xSymbol]
 		//需要保证两边都有仓位更新，才调整现货仓位
 		if time.Now().Sub(xPositionsUpdateTimes[xSymbol]) > xyConfig.BalancePositionMaxAge {
-			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			//	logger.Debugf("%s x position too old", xSymbol)
-			//}
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("%s x position too old", xSymbol)
+			}
 			continue
 		}
 		if time.Now().Sub(yPositionsUpdateTimes[ySymbol]) > xyConfig.BalancePositionMaxAge {
-			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			//	logger.Debugf("%s y position too old", xSymbol)
-			//}
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("%s y position too old", xSymbol)
+			}
 			continue
 		}
 		if time.Now().Sub(xyTargetPositionUpdateSilentTimes[xSymbol]) < 0 {
