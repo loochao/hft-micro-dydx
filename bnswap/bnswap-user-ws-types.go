@@ -62,7 +62,7 @@ func (wsp *WSPosition) GetTime() time.Time {
 }
 
 func (wsp *WSPosition) ToString() string {
-	return fmt.Sprintf("Market=%s,EntryPrice=%f,PositionAmt=%f", wsp.Symbol, wsp.EntryPrice, wsp.PositionAmt)
+	return fmt.Sprintf("Symbol=%s,EntryPrice=%f,PositionAmt=%f", wsp.Symbol, wsp.EntryPrice, wsp.PositionAmt)
 }
 
 type WSAccount struct {

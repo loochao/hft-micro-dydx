@@ -22,7 +22,7 @@ func handleSpotHttpAccount(account bnspot.Account) {
 			bnspotBalanceUpdatedForReBalance = true
 			if bnspotUSDTBalance != nil &&
 				bnspotUSDTBalance.EventTime.Sub(balance.EventTime) > 0 {
-				logger.Debugf("%v is older than bnspotUSDTBalance %v", balance, bnspotUSDTBalance.EventTime)
+				//logger.Debugf("%v is older than bnspotUSDTBalance %v", balance, bnspotUSDTBalance.EventTime)
 				continue
 			}
 			balance := balance
