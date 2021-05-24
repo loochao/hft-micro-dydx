@@ -7,7 +7,6 @@ import (
 )
 
 func handleSwapHttpAccount(account bnswap.Account) {
-	logger.Debugf("SWAP HTTP %v", account.EventTime)
 	for _, asset := range account.Assets {
 		if asset.Asset == "USDT" {
 			bnswapAssetUpdatedForReBalance = true

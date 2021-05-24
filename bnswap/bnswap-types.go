@@ -197,36 +197,41 @@ type ServerTime struct {
 	ServerTime int64 `json:"serverTime"`
 }
 
-//{
-//"entryPrice": "0.00000",
-//"marginType": "isolated",
-//"isAutoAddMargin": "false",
-//"isolatedMargin": "0.00000000",
-//"leverage": "10",
-//"liquidationPrice": "0",
-//"markPrice": "6679.50671178",
-//"maxNotionalValue": "20000000",
-//"positionAmt": "0.000",
-//"symbol": "BTCUSDT",
-//"unRealizedProfit": "0.00000000",
-//"positionSide": "BOTH",
-//},
+//  {
+//      "symbol": "BNBUSDT",
+//      "initialMargin": "2.00145712",
+//      "maintMargin": "0.26018942",
+//      "unrealizedProfit": "-2.08062798",
+//      "positionInitialMargin": "2.00145712",
+//      "openOrderInitialMargin": "0",
+//      "leverage": "20",
+//      "isolated": false,
+//      "entryPrice": "291.91165",
+//      "maxNotional": "250000",
+//      "positionSide": "BOTH",
+//      "positionAmt": "-0.13",
+//      "notional": "-40.02914248",
+//      "isolatedWallet": "0",
+//      "updateTime": 1621859418346
+//    }
 
 type Position struct {
-	EntryPrice       float64 `json:"entryPrice,string"`
-	MarginType       string  `json:"marginType"`
-	IsAutoAddMargin  bool    `json:"isAutoAddMargin,string"`
-	IsolatedMargin   float64 `json:"isolatedMargin,string"`
-	Leverage         int64   `json:"leverage,string"`
-	LiquidationPrice float64 `json:"liquidationPrice,string"`
-	MarkPrice        float64 `json:"markPrice,string"`
-	MaxNotionalValue int64   `json:"maxNotionalValue,string"`
-	PositionAmt      float64 `json:"positionAmt,string"`
-	Symbol           string
-	UnRealizedProfit float64   `json:"unRealizedProfit,string"`
-	PositionSide     string    `json:"positionSide"`
-	ParseTime        time.Time `json:"-"`
-	EventTime        time.Time `json:"-"`
+	Symbol                 string
+	InitialMargin          float64   `json:"initialMargin,string"`
+	MaintMargin            float64   `json:"maintMargin,string"`
+	UnrealizedProfit       float64   `json:"unrealizedProfit,string"`
+	PositionInitialMargin  float64   `json:"positionInitialMargin,string"`
+	OpenOrderInitialMargin float64   `json:"openOrderInitialMargin,string"`
+	Leverage               int64     `json:"leverage,string"`
+	Isolated               bool      `json:"isolated"`
+	EntryPrice             float64   `json:"entryPrice,string"`
+	MaxNotional            float64   `json:"maxNotional,string"`
+	PositionSide           string    `json:"positionSide"`
+	PositionAmt            float64   `json:"positionAmt,string"`
+	Notional               float64   `json:"notional,string"`
+	IsolatedWallet         float64   `json:"isolatedWallet,string"`
+	ParseTime              time.Time `json:"-"`
+	EventTime              time.Time `json:"-"`
 }
 
 func (position *Position) GetSymbol() string {
@@ -242,13 +247,45 @@ func (position *Position) GetPrice() float64 {
 }
 
 func (position *Position) GetTime() time.Time {
-	return position.ParseTime
+	return position.EventTime
 }
 
 func (position *Position) ToString() string {
 	return fmt.Sprintf("Market=%s,EntryPrice=%f,PositionAmt=%f", position.Symbol, position.EntryPrice, position.PositionAmt)
 }
 
+func (position *Position) UnmarshalJSON(data []byte) error {
+	type Alias Position
+	aux := &struct {
+		*Alias
+		EventTime int64 `json:"updateTime"`
+	}{
+		Alias: (*Alias)(position),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	position.ParseTime = time.Now()
+	position.EventTime = time.Unix(0, aux.EventTime*1000000)
+	return nil
+}
+
+// {
+//      "asset": "BNB",
+//      "walletBalance": "0.05630802",
+//      "unrealizedProfit": "0.00000000",
+//      "marginBalance": "0.05630802",
+//      "maintMargin": "0.00000000",
+//      "initialMargin": "0.00000000",
+//      "positionInitialMargin": "0.00000000",
+//      "openOrderInitialMargin": "0.00000000",
+//      "maxWithdrawAmount": "0.05630802",
+//      "crossWalletBalance": "0.00000000",
+//      "crossUnPnl": "0.00000000",
+//      "availableBalance": "0.00000000",
+//      "marginAvailable": false,
+//      "updateTime": 1621863019452
+//    }
 type Asset struct {
 	Asset                  string
 	InitialMargin          *float64  `json:"initialMargin,string,omitempty"`
@@ -264,6 +301,22 @@ type Asset struct {
 	AvailableBalance       *float64  `json:"availableBalance,string,omitempty"`
 	EventTime              time.Time `json:"-"`
 	ParseTime              time.Time `json:"-"`
+}
+
+func (a *Asset) UnmarshalJSON(data []byte) error {
+	type Alias Asset
+	aux := &struct {
+		*Alias
+		EventTime int64 `json:"updateTime"`
+	}{
+		Alias: (*Alias)(a),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	a.ParseTime = time.Now()
+	a.EventTime = time.Unix(0, aux.EventTime*1000000)
+	return nil
 }
 
 func (a Asset) GetCurrency() string {
@@ -414,21 +467,21 @@ type Account struct {
 	CanDeposit  bool    `json:"canDeposit"`
 	CanWithdraw bool    `json:"canWithdraw"`
 
-	TotalInitialMargin          float64    `json:"totalInitialMargin,string"`
-	TotalMaintMargin            float64    `json:"totalMaintMargin,string"`
-	TotalWalletBalance          float64    `json:"totalWalletBalance,string"`
-	TotalUnrealizedProfit       float64    `json:"totalUnrealizedProfit,string"`
-	TotalMarginBalance          float64    `json:"totalMarginBalance,string"`
-	TotalPositionInitialMargin  float64    `json:"totalPositionInitialMargin,string"`
-	TotalOpenOrderInitialMargin float64    `json:"totalOpenOrderInitialMargin,string"`
-	TotalCrossWalletBalance     float64    `json:"totalCrossWalletBalance,string"`
-	TotalCrossUnPnl             float64    `json:"totalCrossUnPnl,string"`
-	AvailableBalance            float64    `json:"availableBalance,string"`
-	MaxWithdrawAmount           float64    `json:"maxWithdrawAmount,string"`
+	TotalInitialMargin          float64 `json:"totalInitialMargin,string"`
+	TotalMaintMargin            float64 `json:"totalMaintMargin,string"`
+	TotalWalletBalance          float64 `json:"totalWalletBalance,string"`
+	TotalUnrealizedProfit       float64 `json:"totalUnrealizedProfit,string"`
+	TotalMarginBalance          float64 `json:"totalMarginBalance,string"`
+	TotalPositionInitialMargin  float64 `json:"totalPositionInitialMargin,string"`
+	TotalOpenOrderInitialMargin float64 `json:"totalOpenOrderInitialMargin,string"`
+	TotalCrossWalletBalance     float64 `json:"totalCrossWalletBalance,string"`
+	TotalCrossUnPnl             float64 `json:"totalCrossUnPnl,string"`
+	AvailableBalance            float64 `json:"availableBalance,string"`
+	MaxWithdrawAmount           float64 `json:"maxWithdrawAmount,string"`
 
-	Positions                   []Position `json:"positions"`
-	EventTime                   time.Time  `json:"-"`
-	ParseTime                   time.Time  `json:"-"`
+	Positions []Position `json:"positions"`
+	EventTime time.Time  `json:"-"`
+	ParseTime time.Time  `json:"-"`
 }
 
 func (account *Account) UnmarshalJSON(data []byte) error {
@@ -444,14 +497,6 @@ func (account *Account) UnmarshalJSON(data []byte) error {
 	}
 	account.ParseTime = time.Now()
 	account.EventTime = time.Unix(0, aux.EventTime*1000000)
-	for i := range account.Assets {
-		account.Assets[i].EventTime = account.EventTime
-		account.Assets[i].ParseTime = account.ParseTime
-	}
-	for i := range account.Positions {
-		account.Positions[i].EventTime = account.EventTime
-		account.Positions[i].EventTime = account.EventTime
-	}
 	return nil
 }
 

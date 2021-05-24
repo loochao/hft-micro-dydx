@@ -12,7 +12,6 @@ import (
 )
 
 func handleSpotHttpAccount(account bnspot.Account) {
-	logger.Debugf("SPOT HTTP %v", account.EventTime)
 	hasUSDT := false
 	hasSpotBalances := make(map[string]time.Time)
 	for _, balance := range account.Balances {
