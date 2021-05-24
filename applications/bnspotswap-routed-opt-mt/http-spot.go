@@ -12,26 +12,32 @@ import (
 )
 
 func handleSpotHttpAccount(account bnspot.Account) {
+
 	hasUSDT := false
-	hasSpotBalances := make(map[string]bool)
+	hasSpotBalances := make(map[string]time.Time)
 	for _, balance := range account.Balances {
 		if balance.Asset == "USDT" {
 			hasUSDT = true
+			bnspotBalanceUpdatedForInflux = true
+			bnspotBalanceUpdatedForExternalInflux = true
+			bnspotBalanceUpdatedForReBalance = true
+			if bnspotUSDTBalance != nil &&
+				bnspotUSDTBalance.EventTime.Sub(balance.EventTime) > 0 {
+				logger.Debugf("%v is older than bnspotUSDTBalance %v", balance, bnspotUSDTBalance.EventTime)
+				continue
+			}
 			balance := balance
 			if bnspotUSDTBalance == nil || bnspotUSDTBalance.Free != balance.Free {
 				logger.Debugf("SPOT HTTP BALANCE %s", balance.ToString())
 			}
 			bnspotUSDTBalance = &balance
-			bnspotBalanceUpdatedForInflux = true
-			bnspotBalanceUpdatedForExternalInflux = true
-			bnspotBalanceUpdatedForReBalance = true
 			continue
 		}
 		symbol := balance.Asset + "USDT"
 		if _, ok := bnspotOffsets[symbol]; !ok {
 			continue
 		}
-		hasSpotBalances[symbol] = true
+		hasSpotBalances[symbol] = balance.EventTime
 		if bnspotHttpBalanceUpdateSilentTimes[symbol].Sub(time.Now()) > 0 {
 			continue
 		}
@@ -39,6 +45,11 @@ func handleSpotHttpAccount(account bnspot.Account) {
 		if b, ok := bnspotBalances[symbol]; ok {
 			b := b
 			lastBalance = &b
+		}
+		if lastBalance != nil &&
+			lastBalance.EventTime.Sub(balance.EventTime) > 0 {
+			logger.Debugf("%v is older than %s %v", balance, lastBalance.Asset, lastBalance.EventTime)
+			continue
 		}
 		bnspotBalances[symbol] = balance
 		bnspotBalancesUpdateTimes[symbol] = time.Now()
@@ -58,11 +69,15 @@ func handleSpotHttpAccount(account bnspot.Account) {
 			bnLoopTimer.Reset(time.Nanosecond)
 		}
 	}
-	if !hasUSDT {
+
+	if !hasUSDT && (bnspotUSDTBalance == nil ||
+		bnspotUSDTBalance.EventTime.Sub(account.EventTime) <= 0) {
 		balance := bnspot.Balance{
-			Free:   0,
-			Locked: 0,
-			Asset:  "USDT",
+			Free:      0,
+			Locked:    0,
+			Asset:     "USDT",
+			EventTime: account.EventTime,
+			ParseTime: account.ParseTime,
 		}
 		if bnspotUSDTBalance == nil || bnspotUSDTBalance.Free != balance.Free {
 			logger.Debugf("SPOT HTTP BALANCE %s", balance.ToString())
@@ -76,11 +91,17 @@ func handleSpotHttpAccount(account bnspot.Account) {
 	for _, symbol := range bnSymbols {
 		if _, ok := hasSpotBalances[symbol]; !ok {
 			balance := bnspot.Balance{
-				Asset:  strings.Replace(symbol, "USDT", "", -1),
-				Free:   0.0,
-				Locked: 0.0,
+				Asset:     strings.Replace(symbol, "USDT", "", -1),
+				Free:      0.0,
+				Locked:    0.0,
+				EventTime: account.EventTime,
+				ParseTime: account.ParseTime,
 			}
 			lastBalance, hasLast := bnspotBalances[symbol]
+			//如果已经有balance数据，更新时间又比他大，不操作
+			if hasLast && lastBalance.EventTime.Sub(account.EventTime) > 0 {
+				continue
+			}
 			if !hasLast ||
 				lastBalance.Free+lastBalance.Locked != balance.Free+balance.Locked {
 				logger.Debugf("SPOT HTTP BALANCE %s", balance.ToString())

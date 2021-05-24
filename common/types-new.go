@@ -50,6 +50,7 @@ type Exchange interface {
 
 	WatchOrders(ctx context.Context, requestChannels map[string]chan OrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
 	GenerateClientID() string
+	IsSpot() bool
 }
 
 type OrderError struct {

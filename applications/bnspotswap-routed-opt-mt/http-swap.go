@@ -6,8 +6,24 @@ import (
 	"time"
 )
 
-func handleSwapHttpPositions(positions []bnswap.Position) {
-	for _, nextPos := range positions {
+func handleSwapHttpAccount(account bnswap.Account) {
+	for _, asset := range account.Assets {
+		if asset.Asset == "USDT" {
+			asset := asset
+			bnswapUSDTAsset = &asset
+			bnswapAssetUpdatedForReBalance = true
+			bnswapAssetUpdatedForInflux = true
+			bnswapAssetUpdatedForExternalInflux = true
+			bnLoopTimer.Reset(time.Nanosecond)
+			continue
+		}
+		if asset.Asset == "BNB" {
+			asset := asset
+			bnswapBNBAsset = &asset
+			continue
+		}
+	}
+	for _, nextPos := range account.Positions {
 		if _, ok := bnspotOffsets[nextPos.Symbol]; !ok {
 			return
 		}
@@ -38,25 +54,6 @@ func handleSwapHttpPositions(positions []bnswap.Position) {
 			if lastPosition != nil {
 				logger.Debugf("SWAP %s POS OLD TIME %v NEW TIME %v", nextPos.Symbol, lastPosition.EventTime, nextPos.EventTime)
 			}
-		}
-	}
-}
-
-func handleSwapHttpAccount(account bnswap.Account) {
-	for _, asset := range account.Assets {
-		if asset.Asset == "USDT" {
-			asset := asset
-			bnswapUSDTAsset = &asset
-			bnswapAssetUpdatedForReBalance = true
-			bnswapAssetUpdatedForInflux = true
-			bnswapAssetUpdatedForExternalInflux = true
-			bnLoopTimer.Reset(time.Nanosecond)
-			continue
-		}
-		if asset.Asset == "BNB" {
-			asset := asset
-			bnswapBNBAsset = &asset
-			continue
 		}
 	}
 }

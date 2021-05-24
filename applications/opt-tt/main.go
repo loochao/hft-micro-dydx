@@ -282,7 +282,10 @@ mainLoop:
 				xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
 			}
 			break
-		case xAccount = <-xAccountCh:
+		case account := <-xAccountCh:
+			if account.GetTime().Sub(xAccount.GetTime()) >= 0 {
+				xAccount = account
+			}
 			//logger.Debugf("x account %s %f %f %f", xAccount.GetCurrency(), xAccount.GetBalance(), xAccount.GetFree(), xAccount.GetUsed())
 			break
 		case nextPos := <-yPositionCh:
@@ -300,7 +303,10 @@ mainLoop:
 				yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetTime()
 			}
 			break
-		case yAccount = <-yAccountCh:
+		case account := <-yAccountCh:
+			if account.GetTime().Sub(yAccount.GetTime()) >= 0 {
+				yAccount = account
+			}
 			//logger.Debugf("y account %s %f %f %f", yAccount.GetCurrency(), yAccount.GetBalance(), yAccount.GetFree(), yAccount.GetUsed())
 			break
 		case xOrder := <-xOrderCh:

@@ -57,7 +57,6 @@ var bnMergedStepSizes = make(map[string]float64)
 
 var bnGlobalCtx context.Context
 var bnGlobalCancel context.CancelFunc
-var bnswapPositionCh = make(chan []bnswap.Position, 10)
 var bnswapPositions = make(map[string]bnswap.Position)
 
 var bnspotBalances = make(map[string]bnspot.Balance)
@@ -119,7 +118,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210524 03:47:02  ####")
+	logger.Debug("####  BUILD @ 20210524 13:35:45  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/ftxperp"
@@ -120,6 +121,8 @@ func init() {
 		xExchange = &bnswap.Bnswap{}
 	case "kcperp":
 		xExchange = &kcperp.Kcperp{}
+	case "bnspot":
+		xExchange = &bnspot.Bnspot{}
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -131,6 +134,8 @@ func init() {
 		yExchange = &bnswap.Bnswap{}
 	case "kcperp":
 		yExchange = &kcperp.Kcperp{}
+	case "bnspot":
+		yExchange = &bnspot.Bnspot{}
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
 	}

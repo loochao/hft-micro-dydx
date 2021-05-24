@@ -190,10 +190,6 @@ func main() {
 	defer reBalanceTimer.Stop()
 	defer frRankUpdatedTimer.Stop()
 
-	go bnswap.WatchPositionsFromHttp(
-		bnGlobalCtx, bnswapAPI,
-		bnSymbols, *bnConfig.PullInterval, bnswapPositionCh,
-	)
 	go bnswap.WatchAccountFromHttp(
 		bnGlobalCtx, bnswapAPI,
 		*bnConfig.PullInterval, bnswapAccountCh,
@@ -442,9 +438,6 @@ func main() {
 				}
 			}
 			reBalanceTimer.Reset(*bnConfig.ReBalanceInterval)
-			break
-		case p := <-bnswapPositionCh:
-			handleSwapHttpPositions(p)
 			break
 		case account := <-bnswapAccountCh:
 			handleSwapHttpAccount(account)

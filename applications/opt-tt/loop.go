@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func hedgeYSymbol(ySymbol, xSymbol string) float64{
+func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 	yPosition, okYPosition := yPositions[ySymbol]
 	_, okXPosition := xPositions[xSymbol]
 	targetSize, okTargetSize := yTargetPositionSizes[ySymbol]
@@ -29,7 +29,6 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64{
 	} else if ySizeDiff > 0 && yPosition.GetSize() >= 0 && ySizeDiff*yDepth.BestAskPrice < yMinNotional {
 		return 0
 	}
-
 
 	logger.Debugf("updateYPositions %s size %f position %f -> %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize)
 
@@ -92,7 +91,7 @@ func updateYPositions() {
 	xyUnHedgeValue = unHedgedValue
 }
 
-func hedgeXSymbol(xSymbol, ySymbol string){
+func hedgeXSymbol(xSymbol, ySymbol string) {
 	xPosition, okXPosition := xPositions[xSymbol]
 	_, okYPosition := yPositions[ySymbol]
 	xTargetSize, okXTargetSize := xTargetPositionSizes[xSymbol]
@@ -201,7 +200,7 @@ func updateTargetPositionSizes() {
 				if xPosition.GetSize() >= 0 {
 					xTargetPositionSizes[xSymbol] = minSize
 					yTargetPositionSizes[ySymbol] = -minSize
-				}else{
+				} else {
 					xTargetPositionSizes[xSymbol] = -minSize
 					yTargetPositionSizes[ySymbol] = minSize
 				}
@@ -290,7 +289,6 @@ func updateTargetPositionSizes() {
 
 		xSize := xPosition.GetSize()
 		midPrice := (xDepth.MidPrice + yDepth.MidPrice) * 0.5
-
 
 		if spread.ShortLastLeave < shortBot &&
 			spread.ShortMedianLeave < shortBot &&
@@ -389,7 +387,8 @@ func updateTargetPositionSizes() {
 				spread.LongMedianLeave, longTop,
 				size,
 			)
-		} else if spread.ShortLastEnter > shortTop &&
+		} else if !yExchange.IsSpot() &&
+			spread.ShortLastEnter > shortTop &&
 			spread.ShortMedianEnter > shortTop &&
 			fundingRate > xyConfig.MinimalEnterFundingRate &&
 			xSize >= 0 {
@@ -457,7 +456,8 @@ func updateTargetPositionSizes() {
 				spread.ShortMedianEnter, shortTop,
 				size,
 			)
-		} else if spread.LongLastEnter < longBot &&
+		} else if !xExchange.IsSpot() &&
+			spread.LongLastEnter < longBot &&
 			spread.LongMedianEnter < longBot &&
 			fundingRate < -xyConfig.MinimalEnterFundingRate &&
 			xSize <= 0 {

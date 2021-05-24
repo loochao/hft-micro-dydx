@@ -20,6 +20,10 @@ type Ftxperp struct {
 	settings common.ExchangeSettings
 }
 
+func (ftx *Ftxperp) IsSpot() bool {
+	return false
+}
+
 func (ftx *Ftxperp) GenerateClientID() string {
 	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 }

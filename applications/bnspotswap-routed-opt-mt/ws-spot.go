@@ -10,17 +10,11 @@ func handleSpotWSOutboundAccountPosition(account *bnspot.AccountUpdateEvent) {
 	for _, wsBalance := range account.Balances {
 
 		if wsBalance.Asset == "USDT" {
-			balance := wsBalance.ToBalance()
-			//if bnspotUSDTBalance != nil &&
-			//	(bnspotUSDTBalance.Free != balance.Free ||
-			//		bnspotUSDTBalance.Locked != balance.Locked) {
-			//	logger.Debugf(
-			//		"USDT CHANGE Free %f->%f Locked %f->%f",
-			//		bnspotUSDTBalance.Free, balance.Free,
-			//		bnspotUSDTBalance.Locked, balance.Locked,
-			//	)
-			//}
-			bnspotUSDTBalance = &balance
+			if bnspotUSDTBalance == nil ||
+				wsBalance.EventTime.Sub(bnspotUSDTBalance.EventTime) >= 0 {
+				balance := wsBalance.ToBalance()
+				bnspotUSDTBalance = &balance
+			}
 			bnspotBalanceUpdatedForInflux = true
 			bnspotBalanceUpdatedForExternalInflux = true
 			bnspotBalanceUpdatedForReBalance = true
@@ -35,6 +29,11 @@ func handleSpotWSOutboundAccountPosition(account *bnspot.AccountUpdateEvent) {
 		if b, ok := bnspotBalances[symbol]; ok {
 			b := b
 			lastBalance = &b
+		}
+
+		if lastBalance != nil &&
+			lastBalance.EventTime.Sub(wsBalance.EventTime) > 0 {
+			continue
 		}
 
 		bnspotBalances[symbol] = wsBalance.ToBalance()

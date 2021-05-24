@@ -65,6 +65,8 @@ func (wsb *WSBalance) ToBalance() Balance {
 		Asset:  wsb.Asset,
 		Free:   wsb.FreeAmount,
 		Locked: wsb.LockedAmount,
+		EventTime: wsb.EventTime,
+		ParseTime: wsb.ParseTime,
 	}
 }
 
@@ -171,8 +173,8 @@ func (o OrderUpdateEvent) GetFilledSize() float64 {
 
 func (o OrderUpdateEvent) GetFilledPrice() float64 {
 	if o.CumulativeFilledQuantity != 0 {
-		return o.CumulativeQuoteAssetTransactedQuantity/o.CumulativeFilledQuantity
-	}else{
+		return o.CumulativeQuoteAssetTransactedQuantity / o.CumulativeFilledQuantity
+	} else {
 		return 0.0
 	}
 }
@@ -189,7 +191,11 @@ func (o OrderUpdateEvent) GetSide() common.OrderSide {
 }
 
 func (o OrderUpdateEvent) GetClientID() string {
-	return o.ClientOrderID
+	if o.CurrentOrderStatus == OrderStatusCancelled {
+		return o.OriginalClientOrderID
+	} else {
+		return o.ClientOrderID
+	}
 }
 
 func (o OrderUpdateEvent) GetID() string {
@@ -231,7 +237,7 @@ func (o OrderUpdateEvent) GetType() common.OrderType {
 func (o OrderUpdateEvent) GetPostOnly() bool {
 	if o.OrderType == OrderTypeLimitMarker {
 		return true
-	}else{
+	} else {
 		return false
 	}
 }

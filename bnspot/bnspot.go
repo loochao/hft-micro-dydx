@@ -21,6 +21,10 @@ type Bnspot struct {
 	settings common.ExchangeSettings
 }
 
+func (bn *Bnspot) IsSpot() bool {
+	return true
+}
+
 func (bn *Bnspot) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	panic("implement me")
 }

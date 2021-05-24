@@ -20,6 +20,10 @@ type Kcperp struct {
 	settings common.ExchangeSettings
 }
 
+func (k *Kcperp) IsSpot() bool {
+	return false
+}
+
 func (k *Kcperp) Done() chan interface{} {
 	return k.done
 }
