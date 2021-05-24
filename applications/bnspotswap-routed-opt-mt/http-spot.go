@@ -27,7 +27,7 @@ func handleSpotHttpAccount(account bnspot.Account) {
 			}
 			balance := balance
 			if bnspotUSDTBalance == nil || bnspotUSDTBalance.Free != balance.Free {
-				logger.Debugf("SPOT HTTP BALANCE %s", balance.ToString())
+				logger.Debugf("%s SPOT HTTP BALANCE %s", balance.Asset, balance.ToString())
 			}
 			bnspotUSDTBalance = &balance
 			continue
@@ -56,7 +56,7 @@ func handleSpotHttpAccount(account bnspot.Account) {
 
 		if lastBalance == nil ||
 			lastBalance.Free+lastBalance.Locked != balance.Free+balance.Locked {
-			logger.Debugf("SPOT HTTP BALANCE %s", balance.ToString())
+			logger.Debugf("%s SPOT HTTP BALANCE CHANGED %s", balance.Asset, balance.ToString())
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			if symbol == bnBNBSymbol {
 				bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.PullInterval * 3)
@@ -80,7 +80,7 @@ func handleSpotHttpAccount(account bnspot.Account) {
 			ParseTime: account.ParseTime,
 		}
 		if bnspotUSDTBalance == nil || bnspotUSDTBalance.Free != balance.Free {
-			logger.Debugf("SPOT HTTP BALANCE %s", balance.ToString())
+			logger.Debugf("%s SPOT HTTP BALANCE CHANGED %s", balance.Asset, balance.ToString())
 		}
 		bnspotUSDTBalance = &balance
 		bnspotBalanceUpdatedForInflux = true
@@ -104,7 +104,7 @@ func handleSpotHttpAccount(account bnspot.Account) {
 			}
 			if !hasLast ||
 				lastBalance.Free+lastBalance.Locked != balance.Free+balance.Locked {
-				logger.Debugf("SPOT HTTP BALANCE %s", balance.ToString())
+				logger.Debugf("%s SPOT HTTP BALANCE CHANGED %s", balance.Asset, balance.ToString())
 				//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 				if symbol == bnBNBSymbol {
 					bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.PullInterval * 3)

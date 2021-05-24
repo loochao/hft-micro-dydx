@@ -45,10 +45,10 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 		if lastPosition == nil ||
 			lastPosition.PositionAmt != bnswapPositions[nextPos.Symbol].PositionAmt ||
 			lastPosition.EntryPrice != bnswapPositions[nextPos.Symbol].EntryPrice {
-			logger.Debugf("WS POSITION CHANGED NEW %s", nextPos.ToString())
-			if lastPosition != nil {
-				logger.Debugf("SWAP %s POS OLD TIME %v NEW TIME %v", nextPos.Symbol, lastPosition.EventTime, nextPos.EventTime)
-			}
+			logger.Debugf("%s WS POSITION CHANGED NEW %s", nextPos.Symbol, nextPos.ToString())
+			//if lastPosition != nil {
+			//	logger.Debugf("SWAP %s POS OLD TIME %v NEW TIME %v", nextPos.Symbol, lastPosition.EventTime, nextPos.EventTime)
+			//}
 			bnswapHttpPositionUpdateSilentTimes[nextPos.Symbol] = time.Now().Add(*bnConfig.HttpSilent)
 			bnLoopTimer.Reset(time.Nanosecond)
 		}

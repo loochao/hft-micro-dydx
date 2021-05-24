@@ -43,7 +43,7 @@ func handleSpotWSOutboundAccountPosition(account *bnspot.AccountUpdateEvent) {
 
 		if lastBalance == nil ||
 			lastBalance.Free+lastBalance.Locked != bnspotBalances[symbol].Free+bnspotBalances[symbol].Locked {
-			logger.Debugf("SPOT WS BALANCE CHANGED NEW %s", wsBalance.ToString())
+			logger.Debugf("%s SPOT WS BALANCE CHANGED NEW %s", wsBalance.Asset, wsBalance.ToString())
 			//如果SPOT变仓，立刻调SWAP，如果SWAP变仓，等ORDER SILENT TIMEOUT
 			if symbol == bnBNBSymbol {
 				bnswapOrderSilentTimes[symbol] = time.Now().Add(*bnConfig.PullInterval * 3)
