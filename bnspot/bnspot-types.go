@@ -249,7 +249,7 @@ func (b *Balance) GetTime() time.Time {
 }
 
 func (b *Balance) ToString() string {
-	return fmt.Sprintf("Asset=%s,Free=%f,Locked=%f", b.Asset, b.Free, b.Locked)
+	return fmt.Sprintf("Asset=%s,Free=%f,Locked=%f,Time=%v", b.Asset, b.Free, b.Locked, b.EventTime)
 }
 
 type TransferResponse struct {
