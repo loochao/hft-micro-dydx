@@ -283,7 +283,7 @@ mainLoop:
 			}
 			break
 		case account := <-xAccountCh:
-			if account.GetTime().Sub(xAccount.GetTime()) >= 0 {
+			if xAccount == nil || account.GetTime().Sub(xAccount.GetTime()) >= 0 {
 				xAccount = account
 			}
 			//logger.Debugf("x account %s %f %f %f", xAccount.GetCurrency(), xAccount.GetBalance(), xAccount.GetFree(), xAccount.GetUsed())
@@ -304,7 +304,7 @@ mainLoop:
 			}
 			break
 		case account := <-yAccountCh:
-			if account.GetTime().Sub(yAccount.GetTime()) >= 0 {
+			if yAccount == nil || account.GetTime().Sub(yAccount.GetTime()) >= 0 {
 				yAccount = account
 			}
 			//logger.Debugf("y account %s %f %f %f", yAccount.GetCurrency(), yAccount.GetBalance(), yAccount.GetFree(), yAccount.GetUsed())
