@@ -27,7 +27,7 @@ func handleWSAccountEvent(data *bnswap.BalanceAndPositionUpdateEvent) {
 			}
 		} else {
 			if currentPosition.EventTime.Sub(nextPos.EventTime) > 0 {
-				logger.Debugf("%s nextPos EventTime is older %v < %v", nextPos.EventTime, currentPosition.EventTime)
+				//logger.Debugf("%s nextPos EventTime is older %v < %v", nextPos.EventTime, currentPosition.EventTime)
 				continue
 			}
 			lastPosition = &bnswap.Position{}

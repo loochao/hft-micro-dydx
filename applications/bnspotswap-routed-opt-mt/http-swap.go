@@ -14,7 +14,7 @@ func handleSwapHttpAccount(account bnswap.Account) {
 			bnswapAssetUpdatedForExternalInflux = true
 			if bnswapUSDTAsset != nil &&
 				bnswapUSDTAsset.EventTime.Sub(asset.EventTime) > 0 {
-				logger.Debugf("%v is older than USDT %v", asset, bnswapUSDTAsset.EventTime)
+				//logger.Debugf("%v is older than USDT %v", asset, bnswapUSDTAsset.EventTime)
 				continue
 			}
 			asset := asset
@@ -25,7 +25,7 @@ func handleSwapHttpAccount(account bnswap.Account) {
 		if asset.Asset == "BNB" {
 			if bnswapBNBAsset != nil &&
 				bnswapBNBAsset.EventTime.Sub(asset.EventTime) > 0 {
-				logger.Debugf("%s %v is older than USDT %v", asset.Asset, asset, bnswapBNBAsset.EventTime)
+				//logger.Debugf("%s %v is older than USDT %v", asset.Asset, asset, bnswapBNBAsset.EventTime)
 				continue
 			}
 			asset := asset
@@ -49,7 +49,7 @@ func handleSwapHttpAccount(account bnswap.Account) {
 		var lastPosition *bnswap.Position
 		if currentPosition, ok := bnswapPositions[nextPos.Symbol]; ok {
 			if currentPosition.EventTime.Sub(nextPos.EventTime) > 0 {
-				logger.Debugf("%s %s nextPos EventTime is older %v < %v", nextPos.Symbol, nextPos.EventTime, currentPosition.EventTime)
+				//logger.Debugf("%s %s nextPos EventTime is older %v < %v", nextPos.Symbol, nextPos.EventTime, currentPosition.EventTime)
 				continue
 			}
 			lastPosition = &bnswap.Position{}

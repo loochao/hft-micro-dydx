@@ -50,7 +50,7 @@ func handleSpotHttpAccount(account bnspot.Account) {
 		}
 		if lastBalance != nil &&
 			lastBalance.EventTime.Sub(balance.EventTime) > 0 {
-			logger.Debugf("%v is older than %s %v", balance, lastBalance.Asset, lastBalance.EventTime)
+			//logger.Debugf("%v is older than %s %v", balance, lastBalance.Asset, lastBalance.EventTime)
 			continue
 		}
 
