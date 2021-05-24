@@ -260,9 +260,9 @@ func updateTargetPositionSizes() {
 		yPosition, okYPosition := yPositions[ySymbol]
 		fundingRate, okFundingRate := xyFundingRates[xSymbol]
 		if !okSpread || !okXPosition || !okYPosition || !okFundingRate {
-			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			//	logger.Debugf("%s %s spread %v x position %v y position %v fundingRate %v", xSymbol, ySymbol, okSpread, okXPosition, okYPosition, okFundingRate)
-			//}
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("%s %s spread %v x position %v y position %v fundingRate %v", xSymbol, ySymbol, okSpread, okXPosition, okYPosition, okFundingRate)
+			}
 			continue
 		}
 
