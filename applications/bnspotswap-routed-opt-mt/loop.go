@@ -47,7 +47,7 @@ func updateSwapPositions() {
 			continue
 		}
 		if swapSize > 0 && swapPosition.PositionAmt >= 0 {
-			logger.Debugf("swap hedge error %s, can't add %f to pos %f", symbol, swapSize, swapPosition.PositionAmt)
+			logger.Debugf("%s swap hedge error, can't add %f to pos %f", symbol, swapSize, swapPosition.PositionAmt)
 			continue
 		}
 		if swapSize > 0 && swapSize > -swapPosition.PositionAmt {
@@ -58,7 +58,7 @@ func updateSwapPositions() {
 			unHedgedValue += math.Abs(swapSize * (spread.TakerDepth.MakerAsk + spread.TakerDepth.TakerBid) * 0.5)
 		}
 
-		logger.Debugf("updateSwapPositions %s SIZE %f POS %f -> %f", symbol, swapSize, swapPosition.PositionAmt, -(spotBalance.Locked + spotBalance.Free))
+		logger.Debugf("%s updateSwapPositions SIZE %f POS %f -> %f", symbol, swapSize, swapPosition.PositionAmt, -(spotBalance.Locked + spotBalance.Free))
 
 		reduceOnly := false
 		if swapSize*swapPosition.PositionAmt < 0 && math.Abs(swapSize) <= math.Abs(swapPosition.PositionAmt) {
@@ -178,7 +178,7 @@ func updateMakerNewOrders() {
 				}
 				if quantity > 0 {
 					logger.Debugf(
-						"BOT REDUCE %s %f < %f, %f < %f, SIZE %f",
+						"%s BOT REDUCE %f < %f, %f < %f, SIZE %f",
 						symbol,
 						spread.ShortLastLeave, exitDelta,
 						spread.ShortMedianLeave, exitDelta,
@@ -242,10 +242,10 @@ func updateMakerNewOrders() {
 			if entryValue > usdtAvailable {
 				if time.Now().Sub(bnOpenLogSilentTimes[symbol]) > 0 {
 					logger.Debugf(
-						"FAILED TOP OPEN, ENTRY VALUE %f MORE THAN FREE USDT %f, %s %f > %f, %f > %f, SIZE %f",
+						"%s FAILED TOP OPEN, ENTRY VALUE %f MORE THAN FREE USDT %f, %f > %f, %f > %f, SIZE %f",
+						symbol,
 						entryValue,
 						usdtAvailable,
-						symbol,
 						spread.ShortLastEnter, enterDelta,
 						spread.ShortMedianEnter, enterDelta,
 						quantity,
@@ -256,7 +256,7 @@ func updateMakerNewOrders() {
 			}
 			bnOpenLogSilentTimes[symbol] = time.Now()
 			logger.Debugf(
-				"TOP OPEN %s %f > %f, %f > %f, SIZE %f",
+				"%s TOP OPEN %f > %f, %f > %f, SIZE %f",
 				symbol,
 				spread.ShortLastEnter, enterDelta,
 				spread.ShortMedianEnter, enterDelta,
