@@ -216,6 +216,14 @@ type Balance struct {
 	ParseTime time.Time `json:"-"`
 }
 
+func (b *Balance) GetEventTime() time.Time {
+	return b.EventTime
+}
+
+func (b *Balance) GetParseTime() time.Time {
+	return b.ParseTime
+}
+
 func (b *Balance) GetSymbol() string {
 	return b.Asset + "USDT"
 }
@@ -242,10 +250,6 @@ func (b *Balance) GetFree() float64 {
 
 func (b *Balance) GetUsed() float64 {
 	return b.Locked
-}
-
-func (b *Balance) GetTime() time.Time {
-	return b.EventTime
 }
 
 func (b *Balance) ToString() string {

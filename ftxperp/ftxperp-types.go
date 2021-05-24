@@ -247,6 +247,15 @@ type Position struct {
 	CollateralUsed               float64   `json:"collateralUsed"`
 	EstimatedLiquidationPrice    float64   `json:"estimatedLiquidationPrice"`
 	ParseTime                    time.Time `json:"-"`
+	EventTime                    time.Time `json:"-"`
+}
+
+func (position *Position) GetEventTime() time.Time {
+	return position.EventTime
+}
+
+func (position *Position) GetParseTime() time.Time {
+	return position.ParseTime
 }
 
 func (position *Position) UnmarshalJSON(data []byte) error {
@@ -260,6 +269,7 @@ func (position *Position) UnmarshalJSON(data []byte) error {
 		return err
 	} else {
 		position.ParseTime = time.Now()
+		position.EventTime = time.Now()
 	}
 	return nil
 }
