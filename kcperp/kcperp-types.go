@@ -645,7 +645,7 @@ func (a Account) GetUsed() float64 {
 }
 
 func (a Account) GetTime() time.Time {
-	panic("implement me")
+	return a.EventTime
 }
 
 type MarkPrice struct {
