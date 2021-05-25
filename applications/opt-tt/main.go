@@ -260,7 +260,7 @@ mainLoop:
 			}
 			break
 		case nextPos := <-xPositionCh:
-			//logger.Debugf("x position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize())
+			logger.Debugf("x position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := xPositions[nextPos.GetSymbol()]; ok {
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 					xPositions[nextPos.GetSymbol()] = nextPos
@@ -281,7 +281,7 @@ mainLoop:
 			//logger.Debugf("x account %s %f %f %f", xAccount.GetCurrency(), xAccount.GetBalance(), xAccount.GetFree(), xAccount.GetUsed())
 			break
 		case nextPos := <-yPositionCh:
-			logger.Debugf("y position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize())
+			logger.Debugf("y position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := yPositions[nextPos.GetSymbol()]; ok {
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 					yPositions[nextPos.GetSymbol()] = nextPos
