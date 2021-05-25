@@ -222,9 +222,16 @@ func updateTargetPositionSizes() {
 			continue
 		}
 		//其他时间以仓位小的为准
-		if xPosition, okXPosition := xPositions[xSymbol]; okXPosition {
-			xTargetPositionSizes[xSymbol] = xPosition.GetSize()
-			yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
+		if xyConfig.HedgeTargetExchange == "X" {
+			if xPosition, okXPosition := xPositions[xSymbol]; okXPosition {
+				xTargetPositionSizes[xSymbol] = xPosition.GetSize()
+				yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
+			}
+		}else{
+			if yPosition, okYPosition := yPositions[ySymbol]; okYPosition {
+				yTargetPositionSizes[ySymbol] = yPosition.GetSize()
+				xTargetPositionSizes[xSymbol] = -yPosition.GetSize()
+			}
 		}
 	}
 

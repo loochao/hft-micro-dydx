@@ -18,6 +18,8 @@ type Config struct {
 	XExchange common.ExchangeSettings `yaml:"xExchange"`
 	YExchange common.ExchangeSettings `yaml:"yExchange"`
 
+	HedgeTargetExchange string `yaml:"hedgeTargetExchange"`
+
 	LoopInterval          time.Duration `yaml:"loopInterval"`
 	LogInterval           time.Duration `yaml:"logInterval"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
@@ -59,7 +61,7 @@ type Config struct {
 	RestartSilent time.Duration `yaml:"restartSilent"`
 	HttpSilent    time.Duration `yaml:"httpSilent"`
 
-	XYPairs map[string]string `yaml:"xyPairs"`
+	XYPairs       map[string]string `yaml:"xyPairs"`
 	NotTradePairs map[string]string `yaml:"notTradePairs"`
 }
 
