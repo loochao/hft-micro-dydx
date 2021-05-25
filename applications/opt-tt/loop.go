@@ -59,7 +59,7 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 		ReduceOnly: reduceOnly,
 		ClientID:   yExchange.GenerateClientID(),
 	}
-	//logger.Debugf("y order %v", yOrder)
+	logger.Debugf("y order %v", yOrder)
 	if !xyConfig.DryRun {
 		select {
 		case yOrderRequestChMap[ySymbol] <- common.OrderRequest{
@@ -155,7 +155,7 @@ func hedgeXSymbol(xSymbol, ySymbol string) {
 		ReduceOnly: reduceOnly,
 		ClientID:   xExchange.GenerateClientID(),
 	}
-	//logger.Debugf("x order %v", yOrder)
+	logger.Debugf("x order %v", yOrder)
 	if !xyConfig.DryRun {
 		select {
 		case xOrderRequestChMap[xSymbol] <- common.OrderRequest{
