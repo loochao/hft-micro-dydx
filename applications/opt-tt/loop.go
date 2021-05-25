@@ -30,7 +30,7 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 		} else if ySizeDiff > 0 && ySizeDiff*yDepth.BestAskPrice < yMinNotional {
 			return 0
 		}
-	}else{
+	} else {
 		if math.Abs(ySizeDiff) < yStepSize {
 			return 0
 		} else if ySizeDiff < 0 && yPosition.GetSize() <= 0 && -ySizeDiff*yDepth.BestBidPrice < yMinNotional {
@@ -126,7 +126,7 @@ func hedgeXSymbol(xSymbol, ySymbol string) {
 		} else if xSizeDiff > 0 && xSizeDiff*xDepth.BestAskPrice < xMinNotional {
 			return
 		}
-	}else{
+	} else {
 		if math.Abs(xSizeDiff) < xStepSize {
 			return
 		} else if xSizeDiff < 0 && xPosition.GetSize() <= 0 && -xSizeDiff*xDepth.BestBidPrice < xMinNotional {
@@ -135,7 +135,6 @@ func hedgeXSymbol(xSymbol, ySymbol string) {
 			return
 		}
 	}
-
 
 	logger.Debugf("updateXPositions %s size %f position %f -> %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize)
 
@@ -224,16 +223,8 @@ func updateTargetPositionSizes() {
 		}
 		//其他时间以仓位小的为准
 		if xPosition, okXPosition := xPositions[xSymbol]; okXPosition {
-			if yPosition, okYPosition := yPositions[ySymbol]; okYPosition {
-				minSize := math.Min(math.Abs(xPosition.GetSize()), math.Abs(yPosition.GetSize()))
-				if xPosition.GetSize() >= 0 {
-					xTargetPositionSizes[xSymbol] = minSize
-					yTargetPositionSizes[ySymbol] = -minSize
-				} else {
-					xTargetPositionSizes[xSymbol] = -minSize
-					yTargetPositionSizes[ySymbol] = minSize
-				}
-			}
+			xTargetPositionSizes[xSymbol] = xPosition.GetSize()
+			yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
 		}
 	}
 

@@ -321,6 +321,10 @@ mainLoop:
 							if ySellPrice, ok := yLastFilledSellPrices[ySymbol]; ok {
 								xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / ySellPrice
 								logger.Debugf("%s - %s realised short spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
+								delete(xLastFilledBuyPrices, xSymbol)
+								delete(xLastFilledSellPrices, xSymbol)
+								delete(yLastFilledBuyPrices, ySymbol)
+								delete(yLastFilledSellPrices, ySymbol)
 							}
 						} else if xOrder.GetSide() == common.OrderSideSell {
 							xSellPrice := xOrder.GetFilledPrice()
@@ -328,6 +332,10 @@ mainLoop:
 							if yBuyPrice, ok := yLastFilledBuyPrices[ySymbol]; ok {
 								xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
 								logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
+								delete(xLastFilledBuyPrices, xSymbol)
+								delete(xLastFilledSellPrices, xSymbol)
+								delete(yLastFilledBuyPrices, ySymbol)
+								delete(yLastFilledSellPrices, ySymbol)
 							}
 						}
 					}
@@ -355,6 +363,10 @@ mainLoop:
 							if xSellPrice, ok := xLastFilledSellPrices[xSymbol]; ok {
 								xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
 								logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
+								delete(xLastFilledBuyPrices, xSymbol)
+								delete(xLastFilledSellPrices, xSymbol)
+								delete(yLastFilledBuyPrices, ySymbol)
+								delete(yLastFilledSellPrices, ySymbol)
 							}
 						} else if yOrder.GetSide() == common.OrderSideSell {
 							ySellPrice := yOrder.GetFilledPrice()
@@ -363,6 +375,10 @@ mainLoop:
 							if xBuyPrice, ok := xLastFilledBuyPrices[xSymbol]; ok {
 								xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / ySellPrice
 								logger.Debugf("%s - %s realised short spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
+								delete(xLastFilledBuyPrices, xSymbol)
+								delete(xLastFilledSellPrices, xSymbol)
+								delete(yLastFilledBuyPrices, ySymbol)
+								delete(yLastFilledSellPrices, ySymbol)
 							}
 						}
 					}
