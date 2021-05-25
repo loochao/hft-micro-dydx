@@ -5,12 +5,6 @@ import (
 	"time"
 )
 
-type EnterTradeOrder string
-
-var EnterTradeOrderXY = EnterTradeOrder("XY")
-var EnterTradeOrderYX = EnterTradeOrder("YX")
-var EnterTradeOrderUnknown = EnterTradeOrder("UNKNOWN")
-
 type XYSpread struct {
 	XSymbol          string
 	YSymbol          string
