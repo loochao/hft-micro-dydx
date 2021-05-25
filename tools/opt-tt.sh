@@ -16,3 +16,6 @@ chmod 755 "./dist/hft-mirco-opt-tt.$dt"
 
 echo "wenzhe"
 rsync -avx --progress "./dist/hft-mirco-opt-tt.$dt" wenzhe:/usr/local/bin/
+
+echo "pd02"
+rsync -avx --progress "./dist/hft-mirco-opt-tt.$dt" wenzhe:/usr/local/bin/
