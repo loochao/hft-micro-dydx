@@ -22,12 +22,22 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 	ySizeDiff := targetSize - yPosition.GetSize()
 	ySizeDiff = math.Round(ySizeDiff/yStepSize) * yStepSize
 
-	if math.Abs(ySizeDiff) < yStepSize {
-		return 0
-	} else if ySizeDiff < 0 && -ySizeDiff*yDepth.BestBidPrice < yMinNotional {
-		return 0
-	} else if ySizeDiff > 0 && ySizeDiff*yDepth.BestAskPrice < yMinNotional {
-		return 0
+	if yExchange.IsSpot() {
+		if math.Abs(ySizeDiff) < yStepSize {
+			return 0
+		} else if ySizeDiff < 0 && -ySizeDiff*yDepth.BestBidPrice < yMinNotional {
+			return 0
+		} else if ySizeDiff > 0 && ySizeDiff*yDepth.BestAskPrice < yMinNotional {
+			return 0
+		}
+	}else{
+		if math.Abs(ySizeDiff) < yStepSize {
+			return 0
+		} else if ySizeDiff < 0 && yPosition.GetSize() <= 0 && -ySizeDiff*yDepth.BestBidPrice < yMinNotional {
+			return 0
+		} else if ySizeDiff > 0 && yPosition.GetSize() >= 0 && ySizeDiff*yDepth.BestAskPrice < yMinNotional {
+			return 0
+		}
 	}
 
 	logger.Debugf("updateYPositions %s size %f position %f -> %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize)
@@ -108,14 +118,24 @@ func hedgeXSymbol(xSymbol, ySymbol string) {
 	xMinNotional := xMinNotionals[xSymbol]
 	xSizeDiff := xTargetSize - xPosition.GetSize()
 	xSizeDiff = math.Round(xSizeDiff/xStepSize) * xStepSize
-
-	if math.Abs(xSizeDiff) < xStepSize {
-		return
-	} else if xSizeDiff < 0 && -xSizeDiff*xDepth.BestBidPrice < xMinNotional {
-		return
-	} else if xSizeDiff > 0 && xSizeDiff*xDepth.BestAskPrice < xMinNotional {
-		return
+	if xExchange.IsSpot() {
+		if math.Abs(xSizeDiff) < xStepSize {
+			return
+		} else if xSizeDiff < 0 && -xSizeDiff*xDepth.BestBidPrice < xMinNotional {
+			return
+		} else if xSizeDiff > 0 && xSizeDiff*xDepth.BestAskPrice < xMinNotional {
+			return
+		}
+	}else{
+		if math.Abs(xSizeDiff) < xStepSize {
+			return
+		} else if xSizeDiff < 0 && xPosition.GetSize() <= 0 && -xSizeDiff*xDepth.BestBidPrice < xMinNotional {
+			return
+		} else if xSizeDiff > 0 && xPosition.GetSize() >= 0 && xSizeDiff*xDepth.BestAskPrice < xMinNotional {
+			return
+		}
 	}
+
 
 	logger.Debugf("updateXPositions %s size %f position %f -> %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize)
 
