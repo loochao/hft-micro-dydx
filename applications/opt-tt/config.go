@@ -60,6 +60,7 @@ type Config struct {
 	HttpSilent    time.Duration `yaml:"httpSilent"`
 
 	XYPairs map[string]string `yaml:"xyPairs"`
+	NotTradePairs map[string]string `yaml:"notTradePairs"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {

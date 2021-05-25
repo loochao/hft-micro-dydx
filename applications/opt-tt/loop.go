@@ -80,6 +80,9 @@ func updateYPositions() {
 	unHedgedValue := 0.0
 	for _, ySymbol := range ySymbols {
 		xSymbol := yxSymbolsMap[ySymbol]
+		if _, ok := xyConfig.NotTradePairs[xSymbol]; ok {
+			continue
+		}
 		if time.Now().Sub(yPositionsUpdateTimes[ySymbol]) > xyConfig.BalancePositionMaxAge {
 			continue
 		}
@@ -162,6 +165,9 @@ func updateXPositions() {
 	}
 	for _, xSymbol := range xSymbols {
 		ySymbol := xySymbolsMap[xSymbol]
+		if _, ok := xyConfig.NotTradePairs[xSymbol]; ok {
+			continue
+		}
 		if time.Now().Sub(xPositionsUpdateTimes[xSymbol]) > xyConfig.BalancePositionMaxAge {
 			continue
 		}
@@ -189,6 +195,9 @@ func updateTargetPositionSizes() {
 
 	//第一步，默认以X为准，对冲Y
 	for xSymbol, ySymbol := range xySymbolsMap {
+		if _, ok := xyConfig.NotTradePairs[xSymbol]; ok {
+			continue
+		}
 		//在信号触发期间，以信号为准
 		if time.Now().Sub(xyTargetPositionUpdateSilentTimes[xSymbol]) < 0 {
 			continue
@@ -235,6 +244,9 @@ func updateTargetPositionSizes() {
 	for _, rank := range xyDualEnds {
 		xSymbol := xyRankSymbolMap[rank]
 		ySymbol := xySymbolsMap[xSymbol]
+		if _, ok := xyConfig.NotTradePairs[xSymbol]; ok {
+			continue
+		}
 
 		spread, okSpread := xySpreads[xSymbol]
 		//需要保证两边都有仓位更新，才调整现货仓位
