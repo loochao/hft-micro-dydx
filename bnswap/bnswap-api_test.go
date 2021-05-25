@@ -26,7 +26,7 @@ func TestAPI_GetServerTime(t *testing.T) {
 }
 
 func TestAPI_GetExchangeInfo(t *testing.T) {
-	proxy := "socks5://127.0.0.1:1081"
+	proxy := "socks5://127.0.0.1:1080"
 
 	api, err := NewAPI(&common.Credentials{}, proxy)
 	if err != nil {

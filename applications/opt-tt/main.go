@@ -104,22 +104,14 @@ func main() {
 	}
 	defer xyExternalInfluxWriter.Stop()
 
-	internalInfluxSaveTimer := time.NewTimer(
+	influxSaveTimer := time.NewTimer(
 		time.Now().Truncate(
 			xyConfig.InternalInflux.SaveInterval,
 		).Add(
 			xyConfig.InternalInflux.SaveInterval * 3,
 		).Sub(time.Now()),
 	)
-	externalInfluxSaveTimer := time.NewTimer(
-		time.Now().Truncate(
-			xyConfig.ExternalInflux.SaveInterval,
-		).Add(
-			xyConfig.ExternalInflux.SaveInterval * 3,
-		).Sub(time.Now()),
-	)
-	defer internalInfluxSaveTimer.Stop()
-	defer externalInfluxSaveTimer.Stop()
+	defer influxSaveTimer.Stop()
 
 	xyLoopTimer = time.NewTimer(time.Second)
 	defer xyLoopTimer.Stop()
@@ -268,7 +260,7 @@ mainLoop:
 			}
 			break
 		case nextPos := <-xPositionCh:
-			//logger.Debugf("x position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
+			//logger.Debugf("x position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := xPositions[nextPos.GetSymbol()]; ok {
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 					xPositions[nextPos.GetSymbol()] = nextPos
@@ -388,23 +380,13 @@ mainLoop:
 			yFundingRates[fr.GetSymbol()] = fr
 			handleUpdateFundingRates()
 			break
-		case <-internalInfluxSaveTimer.C:
-			handleInternalSave()
-			internalInfluxSaveTimer.Reset(
+		case <-influxSaveTimer.C:
+			handleSave()
+			influxSaveTimer.Reset(
 				time.Now().Truncate(
 					xyConfig.InternalInflux.SaveInterval,
 				).Add(
 					xyConfig.InternalInflux.SaveInterval + time.Second*15,
-				).Sub(time.Now()),
-			)
-			break
-		case <-externalInfluxSaveTimer.C:
-			handleExternalInfluxSave()
-			externalInfluxSaveTimer.Reset(
-				time.Now().Truncate(
-					xyConfig.ExternalInflux.SaveInterval,
-				).Add(
-					xyConfig.ExternalInflux.SaveInterval + time.Second*15,
 				).Sub(time.Now()),
 			)
 			break

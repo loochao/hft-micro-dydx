@@ -199,7 +199,7 @@ func (o OrderUpdateEvent) GetClientID() string {
 }
 
 func (o OrderUpdateEvent) GetID() string {
-	return fmt.Sprintf("%s", o.OrderID)
+	return fmt.Sprintf("%d", o.OrderID)
 }
 
 func (o OrderUpdateEvent) GetStatus() common.OrderStatus {

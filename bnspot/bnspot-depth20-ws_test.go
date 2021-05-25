@@ -13,14 +13,19 @@ func TestNewDepth20Ws(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute*5)
 	symbols := []string{"BTCUSDT", "ETHUSDT", "FLMUSDT", "BLZUSDT", "TRXUSDT", "EOSUSDT"}
 	proxy := "socks5://127.0.0.1:1081"
-	ws := NewDepth20WS(ctx, symbols[:1], proxy)
+	channels := make(map[string]chan common.Depth)
+	ch := make(chan common.Depth)
+	for _, symbol := range symbols {
+		channels[symbol] = ch
+	}
+	ws := NewDepth20WS(ctx,  proxy, channels)
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ws.Done():
 			return
-		case depth20 := <-ws.DataCh:
+		case depth20 := <-ch:
 			wd, _ := common.WalkMakerTakerDepth20(depth20, 1000.0, 10000.0)
 			//_ = depth20
 			logger.Debugf("%v", wd)

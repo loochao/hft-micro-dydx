@@ -193,7 +193,7 @@ func updateTargetPositionSizes() {
 		if time.Now().Sub(xyTargetPositionUpdateSilentTimes[xSymbol]) < 0 {
 			continue
 		}
-		//其他时间以X为准
+		//其他时间以仓位小的为准
 		if xPosition, okXPosition := xPositions[xSymbol]; okXPosition {
 			if yPosition, okYPosition := yPositions[ySymbol]; okYPosition {
 				minSize := math.Min(math.Abs(xPosition.GetSize()), math.Abs(yPosition.GetSize()))
@@ -279,15 +279,16 @@ func updateTargetPositionSizes() {
 		yMinNotional := yMinNotionals[ySymbol]
 
 		xyStepSize := xyStepSizes[xSymbol]
-		xValue := math.Abs(xPosition.GetSize()) * xPosition.GetPrice()
-		yValue := math.Abs(yPosition.GetSize()) * yPosition.GetPrice()
+		xSize := xPosition.GetSize()
+		ySize := yPosition.GetSize()
+		xValue := math.Abs(xSize) * spread.XDepth.MidPrice
+		yValue := math.Abs(ySize) * spread.YDepth.MidPrice
 		offsetFactor := (xValue + yValue) * 0.5 / entryTarget
 		shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
-		shortBot := xyConfig.ShortExitDelta
+		shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*offsetFactor
 		longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
-		longTop := xyConfig.LongExitDelta
+		longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*offsetFactor
 
-		xSize := xPosition.GetSize()
 		midPrice := (xDepth.MidPrice + yDepth.MidPrice) * 0.5
 
 		if spread.ShortLastLeave < shortBot &&

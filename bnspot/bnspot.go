@@ -131,6 +131,8 @@ func (bn *Bnspot) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 					if wsBalance.EventTime.Sub(usdtBalance.EventTime) > 0 {
 						usdtBalance.Free = wsBalance.FreeAmount
 						usdtBalance.Locked = wsBalance.LockedAmount
+						usdtBalance.EventTime = wsBalance.EventTime
+						usdtBalance.ParseTime = wsBalance.ParseTime
 						select {
 						case accountCh <- usdtBalance:
 						default:
@@ -176,6 +178,7 @@ func (bn *Bnspot) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 			}
 			break
 		case account := <-internalAccountCh:
+			hasBalances := make(map[string]bool)
 			for _, balance := range account.Balances {
 				balance := balance
 				if balance.Asset == "USDT" {
@@ -194,15 +197,33 @@ func (bn *Bnspot) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 				}
 				symbol := balance.Asset + "USDT"
 				lastBalance, ok := balancesMap[balance.Asset]
-				if !ok || balance.EventTime.Sub(lastBalance.EventTime) < 0 {
+				if ok && balance.EventTime.Sub(lastBalance.EventTime) < 0 {
 					continue
 				}
 				balancesMap[symbol] = &balance
 			}
 			for symbol := range balancesMap {
 				if ch, ok := positionChMap[symbol]; ok {
+					//logger.Debugf("%s %v %v", balancesMap[symbol].Asset, balancesMap[symbol].EventTime, balancesMap[symbol].ParseTime)
+					hasBalances[symbol] = true
 					select {
 					case ch <- balancesMap[symbol]:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("ch <- balance failed, ch len %d", len(ch))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
+					}
+				}
+			}
+			for symbol, ch := range positionChMap {
+				if _, ok := hasBalances[symbol]; !ok {
+					select {
+					case ch <- &Balance{
+						Asset: strings.Replace(symbol, "USDT", "", -1),
+						EventTime: account.EventTime,
+						ParseTime: account.ParseTime,
+					}:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logger.Debugf("ch <- balance failed, ch len %d", len(ch))

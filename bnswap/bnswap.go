@@ -106,7 +106,7 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 		case <-userWS.RestartCh:
 			select {
 			case statusCh <- common.SystemStatusRestart:
-				restartToReadyTimer.Reset(time.Minute*3)
+				restartToReadyTimer.Reset(time.Minute * 3)
 			default:
 				logger.Debugf("statusCh <- common.SystemStatusRestart failed ch len %d", len(statusCh))
 			}
@@ -130,7 +130,7 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 			}
 			for _, balance := range bp.Account.Balances {
 				if balance.Asset == "USDT" {
-					if usdtAsset != nil && usdtAsset.EventTime.Sub(balance.EventTime) < 0{
+					if usdtAsset != nil && usdtAsset.EventTime.Sub(balance.EventTime) < 0 {
 						usdtAsset.WalletBalance = &balance.WalletBalance
 						usdtAsset.CrossWalletBalance = &balance.CrossWalletBalance
 						select {
@@ -174,18 +174,37 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 					break
 				}
 			}
+			hasPositions := make(map[string]bool)
 			for _, nextPos := range account.Positions {
-				logger.Debugf("%s %v", nextPos.Symbol, nextPos.EventTime)
+				//logger.Debugf("%s %v", nextPos.Symbol, nextPos.EventTime)
 				if nextPos.PositionSide != "BOTH" {
 					continue
 				}
 				if outputCh, ok := positionChMap[nextPos.Symbol]; ok {
+					hasPositions[nextPos.Symbol] = true
 					nextPos := nextPos
 					select {
 					case outputCh <- &nextPos:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logger.Debugf("outputCh <- &nextPos failed, ch len %d", len(outputCh))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
+					}
+				}
+			}
+			for symbol, ch := range positionChMap {
+				if _, ok := hasPositions[symbol]; !ok {
+					select {
+					case ch <- &Position{
+						Symbol:       symbol,
+						PositionSide: "BOTH",
+						EventTime:    account.EventTime,
+						ParseTime:    account.ParseTime,
+					}:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("ch <- &Position failed, %s ch len %d", symbol, len(ch))
 							logSilentTime = time.Now().Add(time.Minute)
 						}
 					}

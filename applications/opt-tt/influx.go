@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func handleInternalSave() {
+func handleSave() {
 
 	entryTarget := 0.0
 	if xAccount != nil && yAccount != nil {
@@ -22,59 +22,55 @@ func handleInternalSave() {
 	}
 
 	totalUnHedgeValue := 0.0
+	totalXSymbolValue := 0.0
+	totalYSymbolValue := 0.0
 	yURPnl := 0.0
 	xURPnl := 0.0
+	totalURPnl := 0.0
+	hasAllSymbols := true
 	for _, xSymbol := range xSymbols {
 		ySymbol := xySymbolsMap[xSymbol]
+		xPosition, okXPosition := xPositions[xSymbol]
+		yPosition, okYPosition := yPositions[ySymbol]
+		spread, okSpread := xySpreads[xSymbol]
+
 		fields := make(map[string]interface{})
-		if xPosition, ok := xPositions[xSymbol]; ok {
-			fields["makerSize"] = xPosition.GetSize()
-			if spread, ok := xySpreads[xSymbol]; ok {
-				xValue := xPosition.GetSize() * xPosition.GetPrice()
-				fields["xValue"] = xValue
+		if okXPosition && okYPosition && okSpread {
+			xSize := xPosition.GetSize()
+			xValue := xPosition.GetSize() * spread.XDepth.MidPrice
+			ySize := yPosition.GetSize()
+			yValue := yPosition.GetSize() * spread.YDepth.MidPrice
+			totalXSymbolValue += xValue
+			totalYSymbolValue += yValue
 
-				if yPosition, ok := yPositions[ySymbol]; ok {
-					if entryTarget != 0 {
-						xValue := math.Abs(xPosition.GetSize()) * xPosition.GetPrice()
-						yValue := math.Abs(yPosition.GetSize()) * yPosition.GetPrice()
-						offsetFactor := (xValue + yValue) * 0.5 / entryTarget
-						shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
-						shortBot := xyConfig.ShortExitDelta
-						longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
-						longTop := xyConfig.LongExitDelta
-						fields["shortTop"] = shortTop
-						fields["shortBot"] = shortBot
-						fields["longBot"] = longBot
-						fields["longTop"] = longTop
-					}
-					unHedgedValue := (yPosition.GetSize() + xPosition.GetSize()) * spread.XDepth.MidPrice
-					fields["unHedgedValue"] = unHedgedValue
-					totalUnHedgeValue += math.Abs(unHedgedValue)
-					if yPosition.GetPrice() != 0 {
-						yURPnl += yPosition.GetSize() * (spread.YDepth.MidPrice - yPosition.GetPrice())
-					}
-				}
+			fields["xPosEventTime"] = xPosition.GetEventTime().UnixNano()
+			fields["xPosParseTime"] = xPosition.GetParseTime().UnixNano()
+			fields["yPosEventTime"] = yPosition.GetEventTime().UnixNano()
+			fields["yPosParseTime"] = yPosition.GetParseTime().UnixNano()
+			fields["xSize"] = xSize
+			fields["xValue"] = xValue
+			fields["ySize"] = ySize
+			fields["yValue"] = yValue
+			fields["xyValue"] = xValue + yValue
+			totalURPnl += xValue + yValue
+			offsetFactor := (math.Abs(xValue) + math.Abs(yValue)) * 0.5 / entryTarget
+			shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
+			shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*offsetFactor
+			longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
+			longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*offsetFactor
+			fields["shortTop"] = shortTop
+			fields["shortBot"] = shortBot
+			fields["longBot"] = longBot
+			fields["longTop"] = longTop
 
-				if xPosition.GetPrice() != 0 {
-					xURPnl += xPosition.GetSize() * (spread.XDepth.MidPrice - xPosition.GetPrice())
-				}
+			if yPosition.GetPrice() != 0 {
+				yURPnl += yPosition.GetSize() * (spread.YDepth.MidPrice - yPosition.GetPrice())
 			}
-		}
-		if yPosition, ok := yPositions[ySymbol]; ok {
-			fields["ySize"] = yPosition.GetSize()
-			fields["yValue"] = yPosition.GetPrice() * yPosition.GetSize()
-		}
-		if fr, ok := xFundingRates[xSymbol]; ok {
-			fields["xFundingRate"] = fr.GetFundingRate()
-		}
-		if fr, ok := yFundingRates[ySymbol]; ok {
-			fields["yFundingRate"] = fr.GetFundingRate()
-		}
-		if fr, ok := xyFundingRates[xSymbol]; ok {
-			fields["fundingRate"] = fr
-		}
-		if spread, ok := xySpreads[xSymbol]; ok {
+			if xPosition.GetPrice() != 0 {
+				xURPnl += xPosition.GetSize() * (spread.XDepth.MidPrice - xPosition.GetPrice())
+			}
 
+			fields["spreadTime"] = spread.Time.UnixNano()
 			fields["spreadShortLastEnter"] = spread.ShortLastEnter
 			fields["spreadShortLastLeave"] = spread.ShortLastLeave
 			fields["spreadShortMedianEnter"] = spread.ShortMedianEnter
@@ -101,6 +97,17 @@ func handleInternalSave() {
 
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
+		} else {
+			hasAllSymbols = false
+		}
+		if fr, ok := xFundingRates[xSymbol]; ok {
+			fields["xFundingRate"] = fr.GetFundingRate()
+		}
+		if fr, ok := yFundingRates[ySymbol]; ok {
+			fields["yFundingRate"] = fr.GetFundingRate()
+		}
+		if fr, ok := xyFundingRates[xSymbol]; ok {
+			fields["fundingRate"] = fr
 		}
 		if realisedSpread, ok := xyRealisedSpread[xSymbol]; ok {
 			fields["realisedSpread"] = realisedSpread
@@ -136,21 +143,30 @@ func handleInternalSave() {
 	}
 
 	if yAccount != nil &&
-		xAccount != nil {
-		totalBalance := yAccount.GetBalance() + xAccount.GetBalance()
+		xAccount != nil &&
+		hasAllSymbols {
+		xBalance := xAccount.GetBalance()
+		yBalance := yAccount.GetBalance()
+		if xExchange.IsSpot() {
+			xBalance += totalXSymbolValue
+		}
+		if yExchange.IsSpot() {
+			yBalance += totalYSymbolValue
+		}
+		totalBalance := xBalance + yBalance
 		netWorth := totalBalance / xyConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalUnHedgeValue"] = totalUnHedgeValue
 		fields["totalBalance"] = totalBalance
-		fields["yBalance"] = yAccount.GetBalance()
-		fields["xBalance"] = xAccount.GetBalance()
-		fields["netWorth"] = netWorth
-		fields["startValue"] = xyConfig.StartValue
-		fields["netWorth"] = netWorth
+		fields["yBalance"] = yBalance
+		fields["xBalance"] = xBalance
 		fields["yAvailable"] = yAccount.GetFree()
-		fields["yURPnl"] = yURPnl
 		fields["xAvailable"] = xAccount.GetFree()
 		fields["xURPnl"] = xURPnl
+		fields["yURPnl"] = yURPnl
+		fields["xyURPnl"] = totalURPnl
+		fields["netWorth"] = netWorth
+		fields["startValue"] = xyConfig.StartValue
 		pt, err := client.NewPoint(
 			xyConfig.InternalInflux.Measurement,
 			map[string]string{
@@ -167,15 +183,8 @@ func handleInternalSave() {
 				logger.Debugf("xyInfluxWriter.PushPoint error %v", err)
 			}
 		}
-	}
-}
 
-func handleExternalInfluxSave() {
-
-	if yAccount != nil && xAccount != nil {
-		totalBalance := yAccount.GetBalance() + xAccount.GetBalance()
-		netWorth := totalBalance / xyConfig.StartValue
-		fields := make(map[string]interface{})
+		fields = make(map[string]interface{})
 		fields["netWorth"] = netWorth
 		for name, start := range xyConfig.StartValues {
 			if start > 0 {
@@ -200,6 +209,7 @@ func handleExternalInfluxSave() {
 				}
 			}
 		}
+
 	}
 }
 

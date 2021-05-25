@@ -23,6 +23,7 @@ type Config struct {
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
 
 	EnterOffsetDelta        float64 `yaml:"enterOffsetDelta"`
+	ExitOffsetDelta         float64 `yaml:"exitOffsetDelta"`
 	LongEnterDelta          float64 `yaml:"longEnterDelta"`
 	ShortEnterDelta         float64 `yaml:"shortEnterDelta"`
 	LongExitDelta           float64 `yaml:"longExitDelta"`
