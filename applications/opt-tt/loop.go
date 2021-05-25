@@ -224,11 +224,17 @@ func updateTargetPositionSizes() {
 		//其他时间以仓位小的为准
 		if xyConfig.HedgeTargetExchange == "X" {
 			if xPosition, okXPosition := xPositions[xSymbol]; okXPosition {
+				if xTargetPositionSizes[xSymbol] != xPosition.GetSize() {
+					logger.Debugf("update target size x %f->%f y %f->%f", xTargetPositionSizes[xSymbol], xPosition.GetSize(), yTargetPositionSizes[ySymbol], -xPosition.GetSize())
+				}
 				xTargetPositionSizes[xSymbol] = xPosition.GetSize()
 				yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
 			}
-		}else{
+		} else {
 			if yPosition, okYPosition := yPositions[ySymbol]; okYPosition {
+				if yTargetPositionSizes[ySymbol] != yPosition.GetSize() {
+					logger.Debugf("update target size x %f->%f y %f->%f", xTargetPositionSizes[xSymbol], -yPosition.GetSize(), yTargetPositionSizes[ySymbol], yPosition.GetSize())
+				}
 				yTargetPositionSizes[ySymbol] = yPosition.GetSize()
 				xTargetPositionSizes[xSymbol] = -yPosition.GetSize()
 			}
@@ -363,11 +369,13 @@ func updateTargetPositionSizes() {
 			hedgeXSymbol(xSymbol, ySymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
-				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f",
+				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, TARGET X %f TARGET Y %f",
 				xSymbol, ySymbol,
 				spread.ShortLastLeave, shortBot,
 				spread.ShortMedianLeave, shortBot,
 				size,
+				xTargetPositionSizes[xSymbol],
+				yTargetPositionSizes[ySymbol],
 			)
 		} else if spread.LongLastLeave > longTop &&
 			spread.LongMedianLeave > longTop &&
@@ -412,11 +420,13 @@ func updateTargetPositionSizes() {
 			hedgeXSymbol(xSymbol, ySymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f",
+				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f",
 				xSymbol, ySymbol,
 				spread.LongLastLeave, longTop,
 				spread.LongMedianLeave, longTop,
 				size,
+				xTargetPositionSizes[xSymbol],
+				yTargetPositionSizes[ySymbol],
 			)
 		} else if !yExchange.IsSpot() &&
 			spread.ShortLastEnter > shortTop &&
@@ -481,11 +491,13 @@ func updateTargetPositionSizes() {
 			hedgeXSymbol(xSymbol, ySymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
-				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f",
+				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f",
 				xSymbol, ySymbol,
 				spread.ShortLastEnter, shortTop,
 				spread.ShortMedianEnter, shortTop,
 				size,
+				xTargetPositionSizes[xSymbol],
+				yTargetPositionSizes[ySymbol],
 			)
 		} else if !xExchange.IsSpot() &&
 			spread.LongLastEnter < longBot &&
@@ -549,11 +561,13 @@ func updateTargetPositionSizes() {
 			hedgeXSymbol(xSymbol, ySymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
-				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f",
+				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, TARGET X %f, TARGET Y %f",
 				xSymbol, ySymbol,
 				spread.LongLastEnter, longBot,
 				spread.LongMedianEnter, longBot,
 				size,
+				xTargetPositionSizes[xSymbol],
+				yTargetPositionSizes[ySymbol],
 			)
 		}
 	}
