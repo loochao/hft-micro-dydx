@@ -33,7 +33,6 @@ type Config struct {
 
 	DepthTimeDeltaMax   time.Duration `yaml:"depthTimeDeltaMax"`
 	DepthTimeDeltaMin   time.Duration `yaml:"depthTimeDeltaMin"`
-	XYDirRatio          float64       `yaml:"xyDirRatio"`
 	DepthYDecay         float64       `yaml:"depthYDecay"`
 	DepthXDecay         float64       `yaml:"depthXDecay"`
 	DepthYBias          time.Duration `yaml:"depthYBias"`

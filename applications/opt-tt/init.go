@@ -87,7 +87,7 @@ var yExchange common.Exchange
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210525 04:57:45  ####")
+	logger.Debug("####  BUILD @ 20210525 05:04:02  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

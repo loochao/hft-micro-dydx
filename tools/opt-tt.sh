@@ -18,4 +18,4 @@ echo "wenzhe"
 rsync -avx --progress "./dist/hft-mirco-opt-tt.$dt" wenzhe:/usr/local/bin/
 
 echo "pd02"
-rsync -avx --progress "./dist/hft-mirco-opt-tt.$dt" wenzhe:/usr/local/bin/
+rsync -avx --progress "./dist/hft-mirco-opt-tt.$dt" pd02:/usr/local/bin/
