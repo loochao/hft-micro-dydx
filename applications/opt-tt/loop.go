@@ -230,16 +230,16 @@ func updateTargetPositionSizes() {
 		//其他时间以仓位小的为准
 		if xyConfig.HedgeTargetExchange == "X" {
 			if xPosition, okXPosition := xPositions[xSymbol]; okXPosition {
-				if xTargetPositionSizes[xSymbol] != xPosition.GetSize() {
-					logger.Debugf("update target size x %f->%f y %f->%f", xTargetPositionSizes[xSymbol], xPosition.GetSize(), yTargetPositionSizes[ySymbol], -xPosition.GetSize())
+				if math.Abs(xTargetPositionSizes[xSymbol] - xPosition.GetSize()) >= xStepSizes[xSymbol] {
+					logger.Debugf("%s %s update target size x %f->%f y %f->%f", xSymbol, ySymbol, xTargetPositionSizes[xSymbol], xPosition.GetSize(), yTargetPositionSizes[ySymbol], -xPosition.GetSize())
 				}
 				xTargetPositionSizes[xSymbol] = xPosition.GetSize()
 				yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
 			}
 		} else {
 			if yPosition, okYPosition := yPositions[ySymbol]; okYPosition {
-				if yTargetPositionSizes[ySymbol] != yPosition.GetSize() {
-					logger.Debugf("update target size x %f->%f y %f->%f", xTargetPositionSizes[xSymbol], -yPosition.GetSize(), yTargetPositionSizes[ySymbol], yPosition.GetSize())
+				if math.Abs(yTargetPositionSizes[ySymbol] - yPosition.GetSize()) >= yStepSizes[ySymbol] {
+					logger.Debugf("%s %s update target size x %f->%f y %f->%f", xSymbol, ySymbol, xTargetPositionSizes[xSymbol], -yPosition.GetSize(), yTargetPositionSizes[ySymbol], yPosition.GetSize())
 				}
 				yTargetPositionSizes[ySymbol] = yPosition.GetSize()
 				xTargetPositionSizes[xSymbol] = -yPosition.GetSize()
