@@ -269,6 +269,7 @@ mainLoop:
 						logger.Debugf("%s x position change %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
 					}
 				}else{
+					xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 					logger.Debugf("late x position %s %v %f %f, current time", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize(), prevPos.GetEventTime())
 				}
 			} else {
@@ -293,6 +294,7 @@ mainLoop:
 						logger.Debugf("%s y position change %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
 					}
 				}else{
+					xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 					logger.Debugf("late y position %s %v %f %f current time ", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize(), prevPos.GetEventTime())
 				}
 			} else {
