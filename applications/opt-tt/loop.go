@@ -563,6 +563,7 @@ func updateTargetPositionSizes() {
 			delete(xLastFilledBuyPrices, xSymbol)
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
+			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
 				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, TARGET X %f, TARGET Y %f",
 				xSymbol, ySymbol,
@@ -571,7 +572,7 @@ func updateTargetPositionSizes() {
 				size,
 				xTargetPositionSizes[xSymbol],
 				yTargetPositionSizes[ySymbol],
-			)delete(yLastFilledSellPrices, ySymbol)
+			)
 			hedgeXSymbol(xSymbol, ySymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
 
