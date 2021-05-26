@@ -75,8 +75,8 @@ func handleSave() {
 			fields["avgFundingRate"] = *bnswapAvgFundingRate
 		}
 		if bnswapBNBAsset != nil && bnswapBNBAsset.MarginBalance != nil {
-			if markPrice, ok := bnswapPremiumIndexes[bnBNBSymbol]; ok {
-				balance := *bnswapBNBAsset.MarginBalance * markPrice.IndexPrice
+			if spread, ok := bnSpreads[bnBNBSymbol]; ok {
+				balance := *bnswapBNBAsset.MarginBalance * spread.MakerDepth.MidPrice
 				fields["swapBNBMarginBalance"] = *bnswapBNBAsset.MarginBalance
 				fields["swapBNBBalance"] = balance
 				totalSwapBnBBalance = &balance
