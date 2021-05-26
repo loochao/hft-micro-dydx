@@ -106,11 +106,6 @@ func updateMakerNewOrders() {
 		return
 	}
 
-	entryStep := (*bnswapUSDTAsset.AvailableBalance + bnspotUSDTBalance.Free) * *bnConfig.EnterFreePct
-	if entryStep < *bnConfig.EnterMinimalStep {
-		entryStep = *bnConfig.EnterMinimalStep
-	}
-	entryTarget := entryStep * *bnConfig.EnterTargetFactor
 
 	usdtAvailable := math.Min(bnspotUSDTBalance.Free, (*bnswapUSDTAsset.AvailableBalance-bnExpectedInsuranceFund)**bnConfig.Leverage)
 
@@ -156,6 +151,12 @@ func updateMakerNewOrders() {
 		currentSpotSize := spotBalance.Locked + spotBalance.Free
 		currentSpotValue := currentSpotSize * premiumIndex.IndexPrice
 		offset := bnspotOffsets[symbol]
+
+		entryStep := (*bnswapUSDTAsset.AvailableBalance + bnspotUSDTBalance.Free) * *bnConfig.EnterFreePct *bnConfig.FreePctScales[symbol]
+		if entryStep < *bnConfig.EnterMinimalStep {
+			entryStep = *bnConfig.EnterMinimalStep
+		}
+		entryTarget := entryStep * *bnConfig.EnterTargetFactor
 
 		enterDelta := *bnConfig.EnterDelta + *bnConfig.EnterOffset*(currentSpotValue/entryTarget)
 		exitDelta := *bnConfig.ExitDelta + *bnConfig.ExitOffset*((currentSpotValue-entryStep)/entryTarget)

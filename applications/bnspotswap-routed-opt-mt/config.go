@@ -84,7 +84,8 @@ type Config struct {
 	HttpSilent      *time.Duration `yaml:"httpSilent,omitempty"`
 	RestartSilent   *time.Duration `yaml:"restartSilent,omitempty"`
 
-	OrderOffsets map[string]string `yaml:"orderOffsets,omitempty"`
+	OrderOffsets  map[string]string `yaml:"orderOffsets,omitempty"`
+	FreePctScales map[string]float64 `yaml:"freePctScales,omitempty"`
 }
 
 func (config *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

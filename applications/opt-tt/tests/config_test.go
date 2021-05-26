@@ -5,11 +5,9 @@ import (
 	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/kcperp"
-	"github.com/geometrybase/hft-micro/logger"
 	"sort"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestConfig_SetDefaultIfNotSet(t *testing.T) {
@@ -32,6 +30,7 @@ func TestBnspotBnswapSymbols(t *testing.T) {
 	for _, symbol := range symbols {
 		fmt.Printf("  %s: %s\n", symbol, symbol)
 	}
-	logger.Debugf("%d", time.Now().UnixNano())
+	fmt.Printf("\n")
+	fmt.Printf("%s", strings.Join(symbols, ","))
 }
 

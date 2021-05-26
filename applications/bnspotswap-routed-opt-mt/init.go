@@ -118,7 +118,7 @@ const bnBNBSymbol = "BNBUSDT"
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210526 00:50:12  ####")
+	logger.Debug("####  BUILD @ 20210526 02:37:08  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -148,6 +148,9 @@ func init() {
 		bnspotOffsets[symbol], err = NewOffset(offsets)
 		if err != nil {
 			logger.Fatal(err)
+		}
+		if _, ok := bnConfig.FreePctScales[symbol]; !ok {
+			logger.Fatal("miss free pct scale for %s", symbol)
 		}
 		logger.Debugf("%s %s", symbol, bnspotOffsets[symbol].ToString())
 		bnswapOrderSilentTimes[symbol] = time.Now()

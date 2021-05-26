@@ -102,15 +102,6 @@ func handleSave() {
 	}
 
 	totalUnHedgeValue := 0.0
-	entryTarget := 0.0
-	entryStep := 0.0
-	if bnswapUSDTAsset != nil && bnspotUSDTBalance != nil {
-		entryStep = (*bnswapUSDTAsset.AvailableBalance + bnspotUSDTBalance.Free) * *bnConfig.EnterFreePct
-		if entryStep < *bnConfig.EnterMinimalStep {
-			entryStep = *bnConfig.EnterMinimalStep
-		}
-		entryTarget = entryStep * *bnConfig.EnterTargetFactor
-	}
 	for _, symbol := range bnSymbols {
 		fields := make(map[string]interface{})
 		if position, ok := bnswapPositions[symbol]; ok {
@@ -123,6 +114,15 @@ func handleSave() {
 			fields["spotBalance"] = spotBalance.Free + spotBalance.Locked
 			if spread, ok := bnSpreads[symbol]; ok {
 				fields["spotValue"] = spread.MakerDepth.MidPrice * (spotBalance.Free + spotBalance.Locked)
+				entryTarget := 0.0
+				entryStep := 0.0
+				if bnswapUSDTAsset != nil && bnspotUSDTBalance != nil {
+					entryStep = (*bnswapUSDTAsset.AvailableBalance + bnspotUSDTBalance.Free) * *bnConfig.EnterFreePct *bnConfig.FreePctScales[symbol]
+					if entryStep < *bnConfig.EnterMinimalStep {
+						entryStep = *bnConfig.EnterMinimalStep
+					}
+					entryTarget = entryStep * *bnConfig.EnterTargetFactor
+				}
 				if entryTarget != 0 {
 					fields["enterDelta"] = *bnConfig.EnterDelta + *bnConfig.EnterOffset*(spread.MakerDepth.MidPrice*(spotBalance.Free+spotBalance.Locked)/entryTarget)
 					fields["exitDelta"] = *bnConfig.ExitDelta + *bnConfig.ExitOffset*((spread.MakerDepth.MidPrice*(spotBalance.Free+spotBalance.Locked)-entryStep)/entryTarget)

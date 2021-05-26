@@ -69,11 +69,6 @@ func updateMakerOldOrders() {
 	if bnswapUSDTAsset == nil || bnspotUSDTBalance == nil {
 		return
 	}
-	entryStep := (*bnswapUSDTAsset.AvailableBalance + bnspotUSDTBalance.Free) * *bnConfig.EnterFreePct
-	if entryStep < *bnConfig.EnterMinimalStep {
-		entryStep = *bnConfig.EnterMinimalStep
-	}
-	entryTarget := entryStep * *bnConfig.EnterTargetFactor
 	for symbol, order := range bnspotOpenOrders {
 		//if bnspotOrderCancelCounts[symbol] > *bnConfig.OrderMaxCancelCount {
 		//	delete(bnspotOpenOrders, symbol)
@@ -90,6 +85,11 @@ func updateMakerOldOrders() {
 		if !ok {
 			continue
 		}
+		entryStep := (*bnswapUSDTAsset.AvailableBalance + bnspotUSDTBalance.Free) * *bnConfig.EnterFreePct *bnConfig.FreePctScales[symbol]
+		if entryStep < *bnConfig.EnterMinimalStep {
+			entryStep = *bnConfig.EnterMinimalStep
+		}
+		entryTarget := entryStep * *bnConfig.EnterTargetFactor
 		enterDelta := *bnConfig.EnterDelta + *bnConfig.EnterOffset*(premiumIndex.IndexPrice*(spotBalance.Free+spotBalance.Locked)/entryTarget)
 		exitDelta := *bnConfig.ExitDelta + *bnConfig.ExitOffset*((premiumIndex.IndexPrice*(spotBalance.Free+spotBalance.Locked)-entryStep)/entryTarget)
 
