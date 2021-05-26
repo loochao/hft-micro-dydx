@@ -187,8 +187,9 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 				if balance.OrderMargin != nil {
 					account.OrderMargin = *balance.OrderMargin
 				}
+				outputAccount := *account
 				select {
-				case accountCh <- account:
+				case accountCh <- &outputAccount:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("ch <- &order failed, ch len %d", len(accountCh))

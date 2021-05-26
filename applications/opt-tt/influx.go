@@ -98,8 +98,10 @@ func handleSave() {
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()
 		} else {
-			logger.Debugf("%s %s save failed, okXPosition %v okYPosition %v okSpread %v", xSymbol, ySymbol, okXPosition, okYPosition, okSpread)
-			hasAllSymbols = false
+			if !(okYPosition && okXPosition && xPosition.GetSize() == 0 && yPosition.GetSize() == 0) {
+				logger.Debugf("%s %s save failed, okXPosition %v okYPosition %v okSpread %v", xSymbol, ySymbol, okXPosition, okYPosition, okSpread)
+				hasAllSymbols = false
+			}
 		}
 		if fr, ok := xFundingRates[xSymbol]; ok {
 			fields["xFundingRate"] = fr.GetFundingRate()
