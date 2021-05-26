@@ -133,8 +133,9 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 					if usdtAsset != nil && usdtAsset.EventTime.Sub(balance.EventTime) < 0 {
 						usdtAsset.WalletBalance = &balance.WalletBalance
 						usdtAsset.CrossWalletBalance = &balance.CrossWalletBalance
+						outputAccount := *usdtAsset
 						select {
-						case accountCh <- usdtAsset:
+						case accountCh <- &outputAccount:
 						default:
 							if time.Now().Sub(logSilentTime) > 0 {
 								logger.Debugf("accountCh <- &asset failed, ch len %d", len(accountCh))
