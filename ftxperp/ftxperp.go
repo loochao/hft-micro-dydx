@@ -133,8 +133,9 @@ func (ftx *Ftxperp) StreamBasic(
 		case a := <-internalAccountCh:
 			if a != nil {
 				internalAccount = *a
+				outputAccount := *a
 				select {
-				case accountCh <- &internalAccount:
+				case accountCh <- &outputAccount:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("accountCh <- &internalAccount failed, ch len %d", len(accountCh))
