@@ -60,7 +60,7 @@ func watchXYSpread(
 				break
 			}
 			//需要用ema time delta 对age diff进行修正
-			adjustedAgeDiff = xWalkedDepth.Time.Sub(yWalkedDepth.Time) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
+			adjustedAgeDiff = xWalkedDepth.Time.Sub(yWalkedDepth.Time) - time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
 			//取新一点的时间为spread time
 			if xWalkedDepth.Time.Sub(yWalkedDepth.Time) < 0 {
 				//需要对时间进行补偿
