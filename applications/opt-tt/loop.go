@@ -372,8 +372,6 @@ func updateTargetPositionSizes() {
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
-			hedgeXSymbol(xSymbol, ySymbol)
-			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
 				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, TARGET X %f TARGET Y %f",
 				xSymbol, ySymbol,
@@ -383,6 +381,8 @@ func updateTargetPositionSizes() {
 				xTargetPositionSizes[xSymbol],
 				yTargetPositionSizes[ySymbol],
 			)
+			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeYSymbol(ySymbol, xSymbol)
 		} else if spread.LongLastLeave > longTop &&
 			spread.LongMedianLeave > longTop &&
 			fundingRate > -xyConfig.MinimalKeepFundingRate &&
@@ -423,8 +423,6 @@ func updateTargetPositionSizes() {
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
-			hedgeXSymbol(xSymbol, ySymbol)
-			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
 				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f",
 				xSymbol, ySymbol,
@@ -434,6 +432,8 @@ func updateTargetPositionSizes() {
 				xTargetPositionSizes[xSymbol],
 				yTargetPositionSizes[ySymbol],
 			)
+			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeYSymbol(ySymbol, xSymbol)
 		} else if !yExchange.IsSpot() &&
 			spread.ShortLastEnter > shortTop &&
 			spread.ShortMedianEnter > shortTop &&
@@ -494,8 +494,6 @@ func updateTargetPositionSizes() {
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
-			hedgeXSymbol(xSymbol, ySymbol)
-			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
 				"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f",
 				xSymbol, ySymbol,
@@ -505,6 +503,8 @@ func updateTargetPositionSizes() {
 				xTargetPositionSizes[xSymbol],
 				yTargetPositionSizes[ySymbol],
 			)
+			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeYSymbol(ySymbol, xSymbol)
 		} else if !xExchange.IsSpot() &&
 			spread.LongLastEnter < longBot &&
 			spread.LongMedianEnter < longBot &&
@@ -563,9 +563,6 @@ func updateTargetPositionSizes() {
 			delete(xLastFilledBuyPrices, xSymbol)
 			delete(xLastFilledSellPrices, xSymbol)
 			delete(yLastFilledBuyPrices, ySymbol)
-			delete(yLastFilledSellPrices, ySymbol)
-			hedgeXSymbol(xSymbol, ySymbol)
-			hedgeYSymbol(ySymbol, xSymbol)
 			logger.Debugf(
 				"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, TARGET X %f, TARGET Y %f",
 				xSymbol, ySymbol,
@@ -574,7 +571,10 @@ func updateTargetPositionSizes() {
 				size,
 				xTargetPositionSizes[xSymbol],
 				yTargetPositionSizes[ySymbol],
-			)
+			)delete(yLastFilledSellPrices, ySymbol)
+			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeYSymbol(ySymbol, xSymbol)
+
 		}
 	}
 }
