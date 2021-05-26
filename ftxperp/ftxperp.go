@@ -536,7 +536,8 @@ func (ftx *Ftxperp) submitOrder(ctx context.Context, param common.NewOrderParam,
 	newOrderParam.PostOnly = param.PostOnly
 	newOrderParam.ReduceOnly = param.ReduceOnly
 	if param.Price != 0 {
-		newOrderParam.Price = math.Round(param.Price/tickSize) * tickSize
+		price := math.Round(param.Price/tickSize) * tickSize
+		newOrderParam.Price = &price
 	}
 	newOrderParam.ClientID = param.ClientID
 	order, err := ftx.api.PlaceOrder(ctx, newOrderParam)

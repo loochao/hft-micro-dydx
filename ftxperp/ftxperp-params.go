@@ -38,7 +38,7 @@ type LeverageParam struct {
 type NewOrderParam struct {
 	Market     string  `json:"market,omitempty"`
 	Side       string  `json:"side,omitempty"`
-	Price      float64 `json:"price,omitempty"`
+	Price      *float64 `json:"price"`
 	Type       string  `json:"type,omitempty"`
 	Size       float64 `json:"size,omitempty"`
 	ReduceOnly bool    `json:"reduceOnly,omitempty"`
