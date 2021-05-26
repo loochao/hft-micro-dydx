@@ -234,6 +234,10 @@ func main() {
 	logger.Debugf("start main loop")
 	fundingInterval := time.Hour * 8
 	fundingSilent := time.Minute * 5
+
+	restartTimer := time.NewTimer(xyConfig.RestartInterval)
+	defer restartTimer.Stop()
+
 mainLoop:
 	for {
 		select {
@@ -247,6 +251,10 @@ mainLoop:
 			break mainLoop
 		case <-yExchange.Done():
 			logger.Debugf("y exchange done, exit main loop")
+			xyGlobalCancel()
+			break mainLoop
+		case <-restartTimer.C:
+			logger.Debugf("timed restart in %v", xyConfig.RestartInterval)
 			xyGlobalCancel()
 			break mainLoop
 		case xSystemStatus = <-xSystemStatusCh:

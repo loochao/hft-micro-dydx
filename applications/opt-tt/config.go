@@ -60,6 +60,7 @@ type Config struct {
 	EnterSilent   time.Duration `yaml:"enterSilent"`
 	RestartSilent time.Duration `yaml:"restartSilent"`
 	HttpSilent    time.Duration `yaml:"httpSilent"`
+	RestartInterval time.Duration `yaml:"restartInterval"`
 
 	XYPairs       map[string]string `yaml:"xyPairs"`
 	NotTradePairs map[string]string `yaml:"notTradePairs"`
@@ -113,5 +114,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.SpreadLookback == 0 {
 		config.SpreadLookback = time.Second
+	}
+	if config.RestartInterval == 0 {
+		config.RestartInterval = time.Hour*9999
 	}
 }
