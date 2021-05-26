@@ -266,7 +266,7 @@ mainLoop:
 					xPositions[nextPos.GetSymbol()] = nextPos
 					xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
-						logger.Debugf("%s x position change %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
+						logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 					}
 				}else{
 					xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
@@ -291,7 +291,7 @@ mainLoop:
 					yPositions[nextPos.GetSymbol()] = nextPos
 					yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
-						logger.Debugf("%s y position change %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
+						logger.Debugf("%s y position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 					}
 				}else{
 					xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
