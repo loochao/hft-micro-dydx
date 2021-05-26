@@ -151,7 +151,7 @@ func watchXYSpread(
 			}
 			xDepth = newXDepth
 			if !xDepthFilter.Filter(xDepth) && yDepth != nil {
-				adjustedAgeDiff = xDepth.GetTime().Sub(yDepth.GetTime()) + time.Duration(math.Abs(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma))*time.Millisecond
+				adjustedAgeDiff = xDepth.GetTime().Sub(yDepth.GetTime()) - time.Duration(math.Abs(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma))*time.Millisecond
 				if adjustedAgeDiff > maxAgeDiffBias {
 					//taker已经过期
 					yExpireCount++
@@ -197,7 +197,7 @@ func watchXYSpread(
 			}
 			yDepth = newYDepth
 			if !yDepthFilter.Filter(yDepth) && xDepth != nil {
-				adjustedAgeDiff = xDepth.GetTime().Sub(yDepth.GetTime()) + time.Duration(math.Abs(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma))*time.Millisecond
+				adjustedAgeDiff = xDepth.GetTime().Sub(yDepth.GetTime()) - time.Duration(math.Abs(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma))*time.Millisecond
 				if adjustedAgeDiff > maxAgeDiffBias {
 					//taker已经过期
 					yExpireCount++
