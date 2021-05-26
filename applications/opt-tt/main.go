@@ -262,16 +262,20 @@ mainLoop:
 		case nextPos := <-xPositionCh:
 			//logger.Debugf("x position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := xPositions[nextPos.GetSymbol()]; ok {
+				if prevPos == nextPos {
+					logger.Debugf("bad prevPos == nextPos pass same pointer")
+				}
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 					xPositions[nextPos.GetSymbol()] = nextPos
-					xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
+					//xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
 						logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 					}
-				}else{
-					xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
-					logger.Debugf("late x position %s %v %f %f, current time %v", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize(), prevPos.GetEventTime())
+					//}else{
+					//	xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
+					//	logger.Debugf("late x position %s %v %f %f, current time %v", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize(), prevPos.GetEventTime())
 				}
+				xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 			} else {
 				xPositions[nextPos.GetSymbol()] = nextPos
 				xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
@@ -279,6 +283,9 @@ mainLoop:
 			}
 			break
 		case account := <-xAccountCh:
+			if xAccount == account {
+				logger.Debugf("bad xAccount == account pass same pointer")
+			}
 			if xAccount == nil || account.GetTime().Sub(xAccount.GetTime()) >= 0 {
 				xAccount = account
 			}
@@ -287,16 +294,19 @@ mainLoop:
 		case nextPos := <-yPositionCh:
 			//logger.Debugf("y position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := yPositions[nextPos.GetSymbol()]; ok {
+				if prevPos == nextPos {
+					logger.Debugf("bad prevPos == nextPos pass same pointer")
+				}
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 					yPositions[nextPos.GetSymbol()] = nextPos
-					yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
 						logger.Debugf("%s y position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 					}
-				}else{
-					yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
-					logger.Debugf("late y position %s %v %f %f current time %v", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize(), prevPos.GetEventTime())
+					//}else{
+					//	yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
+					//	logger.Debugf("late y position %s %v %f %f current time %v", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize(), prevPos.GetEventTime())
 				}
+				yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 			} else {
 				yPositions[nextPos.GetSymbol()] = nextPos
 				yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
@@ -304,6 +314,9 @@ mainLoop:
 			}
 			break
 		case account := <-yAccountCh:
+			if yAccount == account {
+				logger.Debugf("bad  yAccount == account pass same pointer")
+			}
 			if yAccount == nil || account.GetTime().Sub(yAccount.GetTime()) >= 0 {
 				yAccount = account
 			}
