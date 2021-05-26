@@ -88,7 +88,6 @@ func (ftx *Ftxperp) StreamBasic(
 	internalPositions := make(map[string]Position)
 	internalPositionsCh := make(chan []Position, 100)
 	go ftx.positionsLoop(ctx, positionMarkets, internalPositionsCh)
-	internalAccount := Account{}
 	internalAccountCh := make(chan *Account, 100)
 	go ftx.accountLoop(ctx, internalAccountCh)
 
@@ -132,7 +131,6 @@ func (ftx *Ftxperp) StreamBasic(
 			}
 		case a := <-internalAccountCh:
 			if a != nil {
-				internalAccount = *a
 				outputAccount := *a
 				select {
 				case accountCh <- &outputAccount:
