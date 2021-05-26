@@ -15,8 +15,8 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 	if !okYPosition || !okSpread || !okTargetSize || !okXPosition {
 		return 0
 	}
-	yDepth := spread.YDepth
 
+	yDepth := spread.YDepth
 	yStepSize := yStepSizes[ySymbol]
 	yMinNotional := yMinNotionals[ySymbol]
 	ySizeDiff := targetSize - yPosition.GetSize()

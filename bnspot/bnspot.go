@@ -91,7 +91,7 @@ func (bn *Bnspot) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 	go bn.watchSystemStatus(ctx, statusCh)
 	logSilentTime := time.Now()
 
-	usdtBalance := &Balance{
+	usdtBalance := Balance{
 		Asset:     "USDT",
 		Free:      0,
 		Locked:    0,
@@ -133,8 +133,9 @@ func (bn *Bnspot) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 						usdtBalance.Locked = wsBalance.LockedAmount
 						usdtBalance.EventTime = wsBalance.EventTime
 						usdtBalance.ParseTime = wsBalance.ParseTime
+						outUsdtBalance := usdtBalance
 						select {
-						case accountCh <- usdtBalance:
+						case accountCh <- &outUsdtBalance:
 						default:
 							if time.Now().Sub(logSilentTime) > 0 {
 								logger.Debugf("accountCh <- usdtBalance failed, ch len %d", len(accountCh))
@@ -154,8 +155,9 @@ func (bn *Bnspot) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 				balancesMap[symbol].Free = wsBalance.FreeAmount
 				balancesMap[symbol].Locked = wsBalance.LockedAmount
 				if ch, ok := positionChMap[symbol]; ok {
+					outBalance := *balancesMap[symbol]
 					select {
-					case ch <- balancesMap[symbol]:
+					case ch <- &outBalance:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logger.Debugf("ch <- balance failed, ch len %d", len(ch))
@@ -183,9 +185,9 @@ func (bn *Bnspot) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 				balance := balance
 				if balance.Asset == "USDT" {
 					if balance.EventTime.Sub(usdtBalance.EventTime) > 0 {
-						usdtBalance = &balance
+						usdtBalance = balance
 						select {
-						case accountCh <- usdtBalance:
+						case accountCh <- &balance:
 						default:
 							if time.Now().Sub(logSilentTime) > 0 {
 								logger.Debugf("accountCh <- usdtBalance failed, ch len %d", len(accountCh))
@@ -206,8 +208,9 @@ func (bn *Bnspot) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 				if ch, ok := positionChMap[symbol]; ok {
 					//logger.Debugf("%s %v %v", balancesMap[symbol].Asset, balancesMap[symbol].EventTime, balancesMap[symbol].ParseTime)
 					hasBalances[symbol] = true
+					outBalance := *balancesMap[symbol]
 					select {
-					case ch <- balancesMap[symbol]:
+					case ch <- &outBalance:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logger.Debugf("ch <- balance failed, ch len %d", len(ch))
