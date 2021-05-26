@@ -25,11 +25,11 @@ func handleSave() {
 		getAllBalances := true
 		for _, symbol := range bnSymbols {
 			balance, okBalance := bnspotBalances[symbol]
-			premiumIndex, okPremiumIndex := bnswapPremiumIndexes[symbol]
-			if okBalance && okPremiumIndex {
-				spotBalance += premiumIndex.IndexPrice * (balance.Free + balance.Locked)
+			spread, okSpread := bnSpreads[symbol]
+			if okBalance && okSpread {
+				spotBalance += spread.MakerDepth.MidPrice * (balance.Free + balance.Locked)
 			} else {
-				logger.Debugf("%s miss balance %v or premium index %v", symbol, okBalance, okPremiumIndex)
+				logger.Debugf("%s miss okBalance %v or okSpread %v", symbol, okBalance, okSpread)
 				getAllBalances = false
 				break
 			}
@@ -115,26 +115,26 @@ func handleSave() {
 		fields := make(map[string]interface{})
 		if position, ok := bnswapPositions[symbol]; ok {
 			fields["swapBalance"] = position.PositionAmt
-			if premiumIndex, ok := bnswapPremiumIndexes[symbol]; ok {
-				fields["swapValue"] = premiumIndex.IndexPrice * position.PositionAmt
+			if spread, ok := bnSpreads[symbol]; ok {
+				fields["swapValue"] = spread.TakerDepth.MidPrice * position.PositionAmt
 			}
 		}
 		if spotBalance, ok := bnspotBalances[symbol]; ok {
 			fields["spotBalance"] = spotBalance.Free + spotBalance.Locked
-			if premiumIndex, ok := bnswapPremiumIndexes[symbol]; ok {
-				fields["spotValue"] = premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)
+			if spread, ok := bnSpreads[symbol]; ok {
+				fields["spotValue"] = spread.MakerDepth.MidPrice * (spotBalance.Free + spotBalance.Locked)
 				if entryTarget != 0 {
-					fields["enterDelta"] = *bnConfig.EnterDelta + *bnConfig.EnterOffset*(premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)/entryTarget)
-					fields["exitDelta"] = *bnConfig.ExitDelta + *bnConfig.ExitOffset*((premiumIndex.IndexPrice * (spotBalance.Free + spotBalance.Locked)-entryStep)/entryTarget)
+					fields["enterDelta"] = *bnConfig.EnterDelta + *bnConfig.EnterOffset*(spread.MakerDepth.MidPrice*(spotBalance.Free+spotBalance.Locked)/entryTarget)
+					fields["exitDelta"] = *bnConfig.ExitDelta + *bnConfig.ExitOffset*((spread.MakerDepth.MidPrice*(spotBalance.Free+spotBalance.Locked)-entryStep)/entryTarget)
 				}
 
 				if position, ok := bnswapPositions[symbol]; ok {
 					if symbol == bnBNBSymbol {
-						fields["unHedgeValue"] = (position.PositionAmt + spotBalance.Free + spotBalance.Locked + *bnswapBNBAsset.MarginBalance) * premiumIndex.IndexPrice
-						totalUnHedgeValue += (position.PositionAmt + spotBalance.Free + spotBalance.Locked + *bnswapBNBAsset.MarginBalance) * premiumIndex.IndexPrice
+						fields["unHedgeValue"] = (position.PositionAmt + spotBalance.Free + spotBalance.Locked + *bnswapBNBAsset.MarginBalance) * spread.MakerDepth.MidPrice
+						totalUnHedgeValue += (position.PositionAmt + spotBalance.Free + spotBalance.Locked + *bnswapBNBAsset.MarginBalance) * spread.MakerDepth.MidPrice
 					} else {
-						fields["unHedgeValue"] = (position.PositionAmt + spotBalance.Free + spotBalance.Locked) * premiumIndex.IndexPrice
-						totalUnHedgeValue += (position.PositionAmt + spotBalance.Free + spotBalance.Locked) * premiumIndex.IndexPrice
+						fields["unHedgeValue"] = (position.PositionAmt + spotBalance.Free + spotBalance.Locked) * spread.MakerDepth.MidPrice
+						totalUnHedgeValue += (position.PositionAmt + spotBalance.Free + spotBalance.Locked) * spread.MakerDepth.MidPrice
 					}
 				}
 			}
@@ -254,9 +254,9 @@ func handleExternalInfluxSave() {
 		getAllBalances := true
 		for _, symbol := range bnSymbols {
 			balance, okBalance := bnspotBalances[symbol]
-			markPrice, okMP := bnswapPremiumIndexes[symbol]
-			if okBalance && okMP {
-				spotBalance += markPrice.IndexPrice * (balance.Free + balance.Locked)
+			spread, okSpread := bnSpreads[symbol]
+			if okBalance && okSpread {
+				spotBalance += spread.MakerDepth.MidPrice * (balance.Free + balance.Locked)
 			} else {
 				getAllBalances = false
 				break
