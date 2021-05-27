@@ -145,6 +145,10 @@ func watchXYSpread(
 			break
 
 		case newXDepth = <-makerDepthCh:
+			if newXDepth == xDepth && time.Now().Sub(logSilentTime) > 0{
+				logger.Debugf("%s bad newXDepth == xDept, same pointer", xSymbol)
+				logSilentTime = time.Now().Add(time.Minute)
+			}
 			if xDepth != nil && xDepth.GetTime().Sub(newXDepth.GetTime()) >= 0 {
 				break
 			}
@@ -190,6 +194,10 @@ func watchXYSpread(
 			}
 			break
 		case newYDepth = <-takerDepthCh:
+			if newYDepth == yDepth && time.Now().Sub(logSilentTime) > 0{
+				logger.Debugf("%s bad newYDepth == yDepth, same pointer", ySymbol)
+				logSilentTime = time.Now().Add(time.Minute)
+			}
 			if yDepth != nil &&
 				yDepth.GetTime().Sub(newYDepth.GetTime()) >= 0 {
 				break
