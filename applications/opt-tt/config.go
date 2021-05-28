@@ -10,7 +10,6 @@ type Config struct {
 
 	CpuProfile   string `yaml:"CpuProfile"`
 	DryRun       bool   `yaml:"dryRun"`
-	ProxyAddress string `yaml:"proxyAddress"`
 
 	InternalInflux common.InfluxSettings `yaml:"internalInflux"`
 	ExternalInflux common.InfluxSettings `yaml:"externalInflux"`

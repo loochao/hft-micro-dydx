@@ -1,0 +1,835 @@
+[
+  {
+    "poolId": 2,
+    "poolName": "BUSD/USDT",
+    "updateTime": 1622183111000,
+    "liquidity": {
+      "USDT": "27314820.86865135",
+      "BUSD": "151058296.15223553"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BUSD": "0",
+        "USDT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 3,
+    "poolName": "BUSD/DAI",
+    "updateTime": 1622183057000,
+    "liquidity": {
+      "BUSD": "98673565.39097427",
+      "DAI": "18597087.27018565"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BUSD": "0",
+        "DAI": "0"
+      }
+    }
+  },
+  {
+    "poolId": 4,
+    "poolName": "USDT/DAI",
+    "updateTime": 1622182986000,
+    "liquidity": {
+      "USDT": "58138187.38675344",
+      "DAI": "75769553.21583936"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "DAI": "0",
+        "USDT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 5,
+    "poolName": "USDC/USDT",
+    "updateTime": 1622182994000,
+    "liquidity": {
+      "USDT": "28083078.24270296",
+      "USDC": "137438754.00633422"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "USDT": "0",
+        "USDC": "0"
+      }
+    }
+  },
+  {
+    "poolId": 7,
+    "poolName": "GBP/USDT",
+    "updateTime": 1622182834000,
+    "liquidity": {
+      "GBP": "3409101.78195193",
+      "USDT": "4823257.70384281"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "GBP": "0",
+        "USDT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 8,
+    "poolName": "EUR/BUSD",
+    "updateTime": 1622182729000,
+    "liquidity": {
+      "EUR": "4800679.03175333",
+      "BUSD": "5839051.53408169"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "EUR": "0",
+        "BUSD": "0"
+      }
+    }
+  },
+  {
+    "poolId": 9,
+    "poolName": "ETH/BUSD",
+    "updateTime": 1622183132000,
+    "liquidity": {
+      "ETH": "11326.97912707",
+      "BUSD": "28862350.80536927"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "ETH": "0",
+        "BUSD": "0"
+      }
+    }
+  },
+  {
+    "poolId": 10,
+    "poolName": "WBTC/ETH",
+    "updateTime": 1622183148000,
+    "liquidity": {
+      "WBTC": "257.39407837",
+      "ETH": "3723.54519981"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "ETH": "0",
+        "WBTC": "0"
+      }
+    }
+  },
+  {
+    "poolId": 11,
+    "poolName": "AUD/BUSD",
+    "updateTime": 1622183146000,
+    "liquidity": {
+      "AUD": "1467283.58668661",
+      "BUSD": "1130875.02093222"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BUSD": "0",
+        "AUD": "0"
+      }
+    }
+  },
+  {
+    "poolId": 13,
+    "poolName": "BTC/ETH",
+    "updateTime": 1622183147000,
+    "liquidity": {
+      "BTC": "1803.14131094",
+      "ETH": "26054.56836824"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "ETH": "0",
+        "BTC": "0"
+      }
+    }
+  },
+  {
+    "poolId": 14,
+    "poolName": "ETH/DAI",
+    "updateTime": 1622183148000,
+    "liquidity": {
+      "ETH": "8598.00285872",
+      "DAI": "21866235.78643432"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "ETH": "0",
+        "DAI": "0"
+      }
+    }
+  },
+  {
+    "poolId": 15,
+    "poolName": "BTC/WBTC",
+    "updateTime": 1622183131000,
+    "liquidity": {
+      "BTC": "5971.55418975",
+      "WBTC": "1155.575634"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BTC": "0",
+        "WBTC": "0"
+      }
+    }
+  },
+  {
+    "poolId": 16,
+    "poolName": "BTC/BUSD",
+    "updateTime": 1622183146000,
+    "liquidity": {
+      "BTC": "724.95970206",
+      "BUSD": "26689239.05305517"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BUSD": "0",
+        "BTC": "0"
+      }
+    }
+  },
+  {
+    "poolId": 17,
+    "poolName": "BNB/BUSD",
+    "updateTime": 1622183148000,
+    "liquidity": {
+      "BNB": "58105.10782875",
+      "BUSD": "19714327.09441224"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "BUSD": "0"
+      }
+    }
+  },
+  {
+    "poolId": 18,
+    "poolName": "BNB/BTC",
+    "updateTime": 1622183149000,
+    "liquidity": {
+      "BTC": "670.5389584",
+      "BNB": "72672.0318648"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "BTC": "0"
+      }
+    }
+  },
+  {
+    "poolId": 19,
+    "poolName": "BNB/ETH",
+    "updateTime": 1622183147000,
+    "liquidity": {
+      "BNB": "82962.54334249",
+      "ETH": "11048.12765705"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "ETH": "0"
+      }
+    }
+  },
+  {
+    "poolId": 21,
+    "poolName": "LINK/BTC",
+    "updateTime": 1622183115000,
+    "liquidity": {
+      "BTC": "220.39727885",
+      "LINK": "282434.37889673"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BTC": "0",
+        "LINK": "0"
+      }
+    }
+  },
+  {
+    "poolId": 22,
+    "poolName": "LINK/ETH",
+    "updateTime": 1622183146000,
+    "liquidity": {
+      "ETH": "3835.64709439",
+      "LINK": "340183.67542895"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "ETH": "0",
+        "LINK": "0"
+      }
+    }
+  },
+  {
+    "poolId": 23,
+    "poolName": "DOT/BNB",
+    "updateTime": 1622183148000,
+    "liquidity": {
+      "BNB": "34678.23487475",
+      "DOT": "518125.69481907"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "DOT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 24,
+    "poolName": "DOT/BTC",
+    "updateTime": 1622183149000,
+    "liquidity": {
+      "BTC": "368.75332049",
+      "DOT": "597765.28648146"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BTC": "0",
+        "DOT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 25,
+    "poolName": "ETH/BETH",
+    "updateTime": 1622182994000,
+    "liquidity": {
+      "ETH": "14035.23771643",
+      "BETH": "15344.87325241"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BETH": "0",
+        "ETH": "0"
+      }
+    }
+  },
+  {
+    "poolId": 26,
+    "poolName": "CHR/BNB",
+    "updateTime": 1622183149000,
+    "liquidity": {
+      "BNB": "4431.28714887",
+      "CHR": "7440900.80673915"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "CHR": "0"
+      }
+    }
+  },
+  {
+    "poolId": 27,
+    "poolName": "UNI/BNB",
+    "updateTime": 1622183149000,
+    "liquidity": {
+      "UNI": "151974.44018407",
+      "BNB": "11797.13257098"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "UNI": "0"
+      }
+    }
+  },
+  {
+    "poolId": 28,
+    "poolName": "UNI/BTC",
+    "updateTime": 1622183149000,
+    "liquidity": {
+      "BTC": "98.93983015",
+      "UNI": "138265.98624889"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "UNI": "0",
+        "BTC": "0"
+      }
+    }
+  },
+  {
+    "poolId": 29,
+    "poolName": "COMP/BTC",
+    "updateTime": 1622183132000,
+    "liquidity": {
+      "COMP": "5671.40188966",
+      "BTC": "59.70376829"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BTC": "0",
+        "COMP": "0"
+      }
+    }
+  },
+  {
+    "poolId": 30,
+    "poolName": "SUSHI/BNB",
+    "updateTime": 1622183149000,
+    "liquidity": {
+      "BNB": "7551.97352423",
+      "SUSHI": "224690.08308454"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "SUSHI": "0"
+      }
+    }
+  },
+  {
+    "poolId": 31,
+    "poolName": "SUSHI/BTC",
+    "updateTime": 1622183141000,
+    "liquidity": {
+      "BTC": "85.81032224",
+      "SUSHI": "276760.88552317"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "SUSHI": "0",
+        "BTC": "0"
+      }
+    }
+  },
+  {
+    "poolId": 32,
+    "poolName": "BNB/USDT",
+    "updateTime": 1622183148000,
+    "liquidity": {
+      "BNB": "26036.71280807",
+      "USDT": "8833126.8105842"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "USDT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 33,
+    "poolName": "BTC/USDT",
+    "updateTime": 1622183144000,
+    "liquidity": {
+      "BTC": "185.0921923",
+      "USDT": "6802070.81238727"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BTC": "0",
+        "USDT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 34,
+    "poolName": "ETH/USDT",
+    "updateTime": 1622183144000,
+    "liquidity": {
+      "ETH": "4710.42631411",
+      "USDT": "11986862.86929963"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "ETH": "0",
+        "USDT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 35,
+    "poolName": "LINK/USDT",
+    "updateTime": 1622183148000,
+    "liquidity": {
+      "USDT": "3440901.13830899",
+      "LINK": "119955.19076463"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "USDT": "0",
+        "LINK": "0"
+      }
+    }
+  },
+  {
+    "poolId": 36,
+    "poolName": "DOT/USDT",
+    "updateTime": 1622183149000,
+    "liquidity": {
+      "DOT": "193347.33278969",
+      "USDT": "4376044.44595942"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "USDT": "0",
+        "DOT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 37,
+    "poolName": "COS/BNB",
+    "updateTime": 1622183137000,
+    "liquidity": {
+      "COS": "42257728.45578864",
+      "BNB": "1794.59465413"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "COS": "0"
+      }
+    }
+  },
+  {
+    "poolId": 38,
+    "poolName": "INJ/BNB",
+    "updateTime": 1622182909000,
+    "liquidity": {
+      "INJ": "168124.1578425",
+      "BNB": "4916.20779581"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "INJ": "0"
+      }
+    }
+  },
+  {
+    "poolId": 39,
+    "poolName": "CTSI/BNB",
+    "updateTime": 1622183124000,
+    "liquidity": {
+      "BNB": "7282.93855449",
+      "CTSI": "3504500.24504109"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "CTSI": "0"
+      }
+    }
+  },
+  {
+    "poolId": 40,
+    "poolName": "RAMP/BUSD",
+    "updateTime": 1622183115000,
+    "liquidity": {
+      "RAMP": "6189533.63581858",
+      "BUSD": "1619249.03007598"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BUSD": "0",
+        "RAMP": "0"
+      }
+    }
+  },
+  {
+    "poolId": 42,
+    "poolName": "DOGE/USDT",
+    "updateTime": 1622183135000,
+    "liquidity": {
+      "DOGE": "18403919.84950915",
+      "USDT": "5818306.88794797"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "DOGE": "0",
+        "USDT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 43,
+    "poolName": "DOGE/BTC",
+    "updateTime": 1622183132000,
+    "liquidity": {
+      "BTC": "139.4067134",
+      "DOGE": "16227214.85452342"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "DOGE": "0",
+        "BTC": "0"
+      }
+    }
+  },
+  {
+    "poolId": 44,
+    "poolName": "FRONT/BUSD",
+    "updateTime": 1622183130000,
+    "liquidity": {
+      "FRONT": "1698698.7896699",
+      "BUSD": "1980239.05698561"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BUSD": "0",
+        "FRONT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 45,
+    "poolName": "AAVE/BNB",
+    "updateTime": 1622182794000,
+    "liquidity": {
+      "AAVE": "4227.23394467",
+      "BNB": "4202.28311242"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "AAVE": "0"
+      }
+    }
+  },
+  {
+    "poolId": 46,
+    "poolName": "AAVE/BTC",
+    "updateTime": 1622183149000,
+    "liquidity": {
+      "BTC": "41.17671591",
+      "AAVE": "4485.76404242"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BTC": "0",
+        "AAVE": "0"
+      }
+    }
+  },
+  {
+    "poolId": 47,
+    "poolName": "AAVE/USDT",
+    "updateTime": 1622183148000,
+    "liquidity": {
+      "AAVE": "6296.85721026",
+      "USDT": "2124952.36715114"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "AAVE": "0",
+        "USDT": "0"
+      }
+    }
+  },
+  {
+    "poolId": 48,
+    "poolName": "ADA/ETH",
+    "updateTime": 1622183051000,
+    "liquidity": {
+      "ETH": "1070.16083699",
+      "ADA": "1767993.00225519"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "ETH": "0",
+        "ADA": "0"
+      }
+    }
+  },
+  {
+    "poolId": 49,
+    "poolName": "ADA/BNB",
+    "updateTime": 1622182828000,
+    "liquidity": {
+      "BNB": "7011.27750143",
+      "ADA": "1540180.4941415"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "ADA": "0"
+      }
+    }
+  },
+  {
+    "poolId": 50,
+    "poolName": "ADA/BTC",
+    "updateTime": 1622183126000,
+    "liquidity": {
+      "BTC": "70.85283561",
+      "ADA": "1693186.54598536"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BTC": "0",
+        "ADA": "0"
+      }
+    }
+  },
+  {
+    "poolId": 51,
+    "poolName": "ADA/USDT",
+    "updateTime": 1622183148000,
+    "liquidity": {
+      "USDT": "2762610.90702586",
+      "ADA": "1795573.54880222"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "USDT": "0",
+        "ADA": "0"
+      }
+    }
+  },
+  {
+    "poolId": 52,
+    "poolName": "FIL/BNB",
+    "updateTime": 1622183062000,
+    "liquidity": {
+      "BNB": "4173.81846496",
+      "FIL": "20969.52934332"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BNB": "0",
+        "FIL": "0"
+      }
+    }
+  },
+  {
+    "poolId": 53,
+    "poolName": "FIL/BTC",
+    "updateTime": 1622183140000,
+    "liquidity": {
+      "BTC": "33.45302783",
+      "FIL": "18263.30940028"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "BTC": "0",
+        "FIL": "0"
+      }
+    }
+  },
+  {
+    "poolId": 54,
+    "poolName": "FIL/USDT",
+    "updateTime": 1622183148000,
+    "liquidity": {
+      "FIL": "25176.54300477",
+      "USDT": "1694465.90655486"
+    },
+    "share": {
+      "shareAmount": "0",
+      "sharePercentage": "0",
+      "asset": {
+        "USDT": "0",
+        "FIL": "0"
+      }
+    }
+  }
+]

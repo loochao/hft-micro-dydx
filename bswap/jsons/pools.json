@@ -1,0 +1,394 @@
+[
+  {
+    "poolId": 44,
+    "poolName": "FRONT/BUSD",
+    "assets": [
+      "FRONT",
+      "BUSD"
+    ]
+  },
+  {
+    "poolId": 43,
+    "poolName": "DOGE/BTC",
+    "assets": [
+      "BTC",
+      "DOGE"
+    ]
+  },
+  {
+    "poolId": 42,
+    "poolName": "DOGE/USDT",
+    "assets": [
+      "DOGE",
+      "USDT"
+    ]
+  },
+  {
+    "poolId": 40,
+    "poolName": "RAMP/BUSD",
+    "assets": [
+      "RAMP",
+      "BUSD"
+    ]
+  },
+  {
+    "poolId": 39,
+    "poolName": "CTSI/BNB",
+    "assets": [
+      "BNB",
+      "CTSI"
+    ]
+  },
+  {
+    "poolId": 37,
+    "poolName": "COS/BNB",
+    "assets": [
+      "COS",
+      "BNB"
+    ]
+  },
+  {
+    "poolId": 38,
+    "poolName": "INJ/BNB",
+    "assets": [
+      "INJ",
+      "BNB"
+    ]
+  },
+  {
+    "poolId": 26,
+    "poolName": "CHR/BNB",
+    "assets": [
+      "BNB",
+      "CHR"
+    ]
+  },
+  {
+    "poolId": 15,
+    "poolName": "BTC/WBTC",
+    "assets": [
+      "BTC",
+      "WBTC"
+    ]
+  },
+  {
+    "poolId": 2,
+    "poolName": "BUSD/USDT",
+    "assets": [
+      "USDT",
+      "BUSD"
+    ]
+  },
+  {
+    "poolId": 3,
+    "poolName": "BUSD/DAI",
+    "assets": [
+      "BUSD",
+      "DAI"
+    ]
+  },
+  {
+    "poolId": 4,
+    "poolName": "USDT/DAI",
+    "assets": [
+      "USDT",
+      "DAI"
+    ]
+  },
+  {
+    "poolId": 5,
+    "poolName": "USDC/USDT",
+    "assets": [
+      "USDT",
+      "USDC"
+    ]
+  },
+  {
+    "poolId": 32,
+    "poolName": "BNB/USDT",
+    "assets": [
+      "BNB",
+      "USDT"
+    ]
+  },
+  {
+    "poolId": 33,
+    "poolName": "BTC/USDT",
+    "assets": [
+      "BTC",
+      "USDT"
+    ]
+  },
+  {
+    "poolId": 34,
+    "poolName": "ETH/USDT",
+    "assets": [
+      "ETH",
+      "USDT"
+    ]
+  },
+  {
+    "poolId": 35,
+    "poolName": "LINK/USDT",
+    "assets": [
+      "LINK",
+      "USDT"
+    ]
+  },
+  {
+    "poolId": 36,
+    "poolName": "DOT/USDT",
+    "assets": [
+      "DOT",
+      "USDT"
+    ]
+  },
+  {
+    "poolId": 27,
+    "poolName": "UNI/BNB",
+    "assets": [
+      "UNI",
+      "BNB"
+    ]
+  },
+  {
+    "poolId": 28,
+    "poolName": "UNI/BTC",
+    "assets": [
+      "BTC",
+      "UNI"
+    ]
+  },
+  {
+    "poolId": 29,
+    "poolName": "COMP/BTC",
+    "assets": [
+      "COMP",
+      "BTC"
+    ]
+  },
+  {
+    "poolId": 30,
+    "poolName": "SUSHI/BNB",
+    "assets": [
+      "BNB",
+      "SUSHI"
+    ]
+  },
+  {
+    "poolId": 31,
+    "poolName": "SUSHI/BTC",
+    "assets": [
+      "BTC",
+      "SUSHI"
+    ]
+  },
+  {
+    "poolId": 23,
+    "poolName": "DOT/BNB",
+    "assets": [
+      "BNB",
+      "DOT"
+    ]
+  },
+  {
+    "poolId": 24,
+    "poolName": "DOT/BTC",
+    "assets": [
+      "BTC",
+      "DOT"
+    ]
+  },
+  {
+    "poolId": 25,
+    "poolName": "ETH/BETH",
+    "assets": [
+      "ETH",
+      "BETH"
+    ]
+  },
+  {
+    "poolId": 22,
+    "poolName": "LINK/ETH",
+    "assets": [
+      "ETH",
+      "LINK"
+    ]
+  },
+  {
+    "poolId": 21,
+    "poolName": "LINK/BTC",
+    "assets": [
+      "BTC",
+      "LINK"
+    ]
+  },
+  {
+    "poolId": 17,
+    "poolName": "BNB/BUSD",
+    "assets": [
+      "BNB",
+      "BUSD"
+    ]
+  },
+  {
+    "poolId": 18,
+    "poolName": "BNB/BTC",
+    "assets": [
+      "BTC",
+      "BNB"
+    ]
+  },
+  {
+    "poolId": 19,
+    "poolName": "BNB/ETH",
+    "assets": [
+      "BNB",
+      "ETH"
+    ]
+  },
+  {
+    "poolId": 16,
+    "poolName": "BTC/BUSD",
+    "assets": [
+      "BTC",
+      "BUSD"
+    ]
+  },
+  {
+    "poolId": 13,
+    "poolName": "BTC/ETH",
+    "assets": [
+      "BTC",
+      "ETH"
+    ]
+  },
+  {
+    "poolId": 10,
+    "poolName": "WBTC/ETH",
+    "assets": [
+      "WBTC",
+      "ETH"
+    ]
+  },
+  {
+    "poolId": 9,
+    "poolName": "ETH/BUSD",
+    "assets": [
+      "ETH",
+      "BUSD"
+    ]
+  },
+  {
+    "poolId": 14,
+    "poolName": "ETH/DAI",
+    "assets": [
+      "ETH",
+      "DAI"
+    ]
+  },
+  {
+    "poolId": 8,
+    "poolName": "EUR/BUSD",
+    "assets": [
+      "EUR",
+      "BUSD"
+    ]
+  },
+  {
+    "poolId": 7,
+    "poolName": "GBP/USDT",
+    "assets": [
+      "GBP",
+      "USDT"
+    ]
+  },
+  {
+    "poolId": 11,
+    "poolName": "AUD/BUSD",
+    "assets": [
+      "AUD",
+      "BUSD"
+    ]
+  },
+  {
+    "poolId": 45,
+    "poolName": "AAVE/BNB",
+    "assets": [
+      "AAVE",
+      "BNB"
+    ]
+  },
+  {
+    "poolId": 46,
+    "poolName": "AAVE/BTC",
+    "assets": [
+      "BTC",
+      "AAVE"
+    ]
+  },
+  {
+    "poolId": 47,
+    "poolName": "AAVE/USDT",
+    "assets": [
+      "AAVE",
+      "USDT"
+    ]
+  },
+  {
+    "poolId": 48,
+    "poolName": "ADA/ETH",
+    "assets": [
+      "ETH",
+      "ADA"
+    ]
+  },
+  {
+    "poolId": 49,
+    "poolName": "ADA/BNB",
+    "assets": [
+      "BNB",
+      "ADA"
+    ]
+  },
+  {
+    "poolId": 50,
+    "poolName": "ADA/BTC",
+    "assets": [
+      "BTC",
+      "ADA"
+    ]
+  },
+  {
+    "poolId": 51,
+    "poolName": "ADA/USDT",
+    "assets": [
+      "USDT",
+      "ADA"
+    ]
+  },
+  {
+    "poolId": 52,
+    "poolName": "FIL/BNB",
+    "assets": [
+      "BNB",
+      "FIL"
+    ]
+  },
+  {
+    "poolId": 53,
+    "poolName": "FIL/BTC",
+    "assets": [
+      "BTC",
+      "FIL"
+    ]
+  },
+  {
+    "poolId": 54,
+    "poolName": "FIL/USDT",
+    "assets": [
+      "FIL",
+      "USDT"
+    ]
+  }
+]

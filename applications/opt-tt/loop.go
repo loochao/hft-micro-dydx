@@ -227,24 +227,41 @@ func updateTargetPositionSizes() {
 		if time.Now().Sub(xyTargetPositionUpdateSilentTimes[xSymbol]) < 0 {
 			continue
 		}
+
+		xPosition, okXPosition := xPositions[xSymbol]
+		yPosition, okYPosition := yPositions[ySymbol]
+		xyStepSize := xyStepSizes[xSymbol]
+
 		//其他时间以仓位小的为准
-		if xyConfig.HedgeTargetExchange == "X" {
-			if xPosition, okXPosition := xPositions[xSymbol]; okXPosition {
-				if math.Abs(xTargetPositionSizes[xSymbol] - xPosition.GetSize()) >= xStepSizes[xSymbol] {
-					logger.Debugf("%s %s update target size x %f->%f y %f->%f", xSymbol, ySymbol, xTargetPositionSizes[xSymbol], xPosition.GetSize(), yTargetPositionSizes[ySymbol], -xPosition.GetSize())
-				}
-				xTargetPositionSizes[xSymbol] = xPosition.GetSize()
-				yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
-			}
-		} else {
-			if yPosition, okYPosition := yPositions[ySymbol]; okYPosition {
-				if math.Abs(yTargetPositionSizes[ySymbol] - yPosition.GetSize()) >= yStepSizes[ySymbol] {
-					logger.Debugf("%s %s update target size x %f->%f y %f->%f", xSymbol, ySymbol, xTargetPositionSizes[xSymbol], -yPosition.GetSize(), yTargetPositionSizes[ySymbol], yPosition.GetSize())
-				}
+		if okXPosition && okYPosition {
+			if math.Abs(xPosition.GetSize())-math.Abs(yPosition.GetSize()) >= xyStepSize {
 				yTargetPositionSizes[ySymbol] = yPosition.GetSize()
 				xTargetPositionSizes[xSymbol] = -yPosition.GetSize()
+			} else if math.Abs(xPosition.GetSize())-math.Abs(yPosition.GetSize()) <= -xyStepSize {
+				xTargetPositionSizes[xSymbol] = xPosition.GetSize()
+				yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
+			} else {
+				xTargetPositionSizes[xSymbol] = xPosition.GetSize()
+				yTargetPositionSizes[ySymbol] = yPosition.GetSize()
 			}
 		}
+		//if xyConfig.HedgeTargetExchange == "X" {
+		//	if xPosition, okXPosition := xPositions[xSymbol]; okXPosition {
+		//		if math.Abs(xTargetPositionSizes[xSymbol]-xPosition.GetSize()) >= xStepSizes[xSymbol] {
+		//			logger.Debugf("%s %s update target size x %f->%f y %f->%f", xSymbol, ySymbol, xTargetPositionSizes[xSymbol], xPosition.GetSize(), yTargetPositionSizes[ySymbol], -xPosition.GetSize())
+		//		}
+		//		xTargetPositionSizes[xSymbol] = xPosition.GetSize()
+		//		yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
+		//	}
+		//} else {
+		//	if yPosition, okYPosition := yPositions[ySymbol]; okYPosition {
+		//		if math.Abs(yTargetPositionSizes[ySymbol]-yPosition.GetSize()) >= yStepSizes[ySymbol] {
+		//			logger.Debugf("%s %s update target size x %f->%f y %f->%f", xSymbol, ySymbol, xTargetPositionSizes[xSymbol], -yPosition.GetSize(), yTargetPositionSizes[ySymbol], yPosition.GetSize())
+		//		}
+		//		yTargetPositionSizes[ySymbol] = yPosition.GetSize()
+		//		xTargetPositionSizes[xSymbol] = -yPosition.GetSize()
+		//	}
+		//}
 	}
 
 	if len(xyRankSymbolMap) == 0 {

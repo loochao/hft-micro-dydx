@@ -132,6 +132,7 @@ func main()  {
 		if scale < 0.25 {
 			scale = 0.25
 		}
+		scale = 1.0/scale
 		fmt.Printf("  %s: %.2f\n", symbol,scale)
 	}
 	fmt.Printf("\n\n")
