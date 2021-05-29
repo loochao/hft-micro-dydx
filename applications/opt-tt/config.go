@@ -8,8 +8,8 @@ import (
 type Config struct {
 	Name *string `yaml:"name"`
 
-	CpuProfile   string `yaml:"CpuProfile"`
-	DryRun       bool   `yaml:"dryRun"`
+	CpuProfile string `yaml:"CpuProfile"`
+	DryRun     bool   `yaml:"dryRun"`
 
 	InternalInflux common.InfluxSettings `yaml:"internalInflux"`
 	ExternalInflux common.InfluxSettings `yaml:"externalInflux"`
@@ -21,6 +21,7 @@ type Config struct {
 
 	LoopInterval          time.Duration `yaml:"loopInterval"`
 	LogInterval           time.Duration `yaml:"logInterval"`
+	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
 
 	EnterOffsetDelta        float64 `yaml:"enterOffsetDelta"`
@@ -53,12 +54,12 @@ type Config struct {
 	MaxUnHedgeValue   float64            `yaml:"maxUnHedgeValue"`
 	StartValues       map[string]float64 `yaml:"startValues"`
 
-	OrderTimeout  time.Duration `yaml:"orderTimeout"`
-	OrderSilent   time.Duration `yaml:"orderSilent"`
-	CancelSilent  time.Duration `yaml:"cancelSilent"`
-	EnterSilent   time.Duration `yaml:"enterSilent"`
-	RestartSilent time.Duration `yaml:"restartSilent"`
-	HttpSilent    time.Duration `yaml:"httpSilent"`
+	OrderTimeout    time.Duration `yaml:"orderTimeout"`
+	OrderSilent     time.Duration `yaml:"orderSilent"`
+	CancelSilent    time.Duration `yaml:"cancelSilent"`
+	EnterSilent     time.Duration `yaml:"enterSilent"`
+	RestartSilent   time.Duration `yaml:"restartSilent"`
+	HttpSilent      time.Duration `yaml:"httpSilent"`
 	RestartInterval time.Duration `yaml:"restartInterval"`
 
 	XYPairs       map[string]string `yaml:"xyPairs"`
@@ -115,6 +116,9 @@ func (config *Config) SetDefaultIfNotSet() {
 		config.SpreadLookback = time.Second
 	}
 	if config.RestartInterval == 0 {
-		config.RestartInterval = time.Hour*9999
+		config.RestartInterval = time.Hour * 9999
+	}
+	if config.TurnoverLookback == 0 {
+		config.TurnoverLookback = time.Hour*24
 	}
 }

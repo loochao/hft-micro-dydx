@@ -84,10 +84,12 @@ var xyConfig *Config
 var xExchange common.Exchange
 var yExchange common.Exchange
 
+var xTimedPositionChange *common.TimedSum
+var yTimedPositionChange *common.TimedSum
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210528 07:11:43  ####")
+	logger.Debug("####  BUILD @ 20210529 00:57:17  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -139,6 +141,8 @@ func init() {
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
 	}
+	xTimedPositionChange = common.NewTimedSum(xyConfig.TurnoverLookback)
+	yTimedPositionChange = common.NewTimedSum(xyConfig.TurnoverLookback)
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)

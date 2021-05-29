@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"os"
 	"os/signal"
 	"runtime/pprof"
@@ -274,14 +275,13 @@ mainLoop:
 					logger.Debugf("bad prevPos == nextPos pass same pointer")
 				}
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
+					if spread, ok := xySpreads[nextPos.GetSymbol()]; ok {
+						xTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*spread.XDepth.MidPrice)
+					}
 					xPositions[nextPos.GetSymbol()] = nextPos
-					//xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 					if prevPos.GetSize() != nextPos.GetSize() {
 						logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 					}
-					//}else{
-					//	xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
-					//	logger.Debugf("late x position %s %v %f %f, current time %v", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize(), prevPos.GetEventTime())
 				}
 				xPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 			} else {
@@ -308,11 +308,11 @@ mainLoop:
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 					yPositions[nextPos.GetSymbol()] = nextPos
 					if prevPos.GetSize() != nextPos.GetSize() {
+						if spread, ok := xySpreads[nextPos.GetSymbol()]; ok {
+							yTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*spread.YDepth.MidPrice)
+						}
 						logger.Debugf("%s y position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 					}
-					//}else{
-					//	yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
-					//	logger.Debugf("late y position %s %v %f %f current time %v", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetPrice(), nextPos.GetSize(), prevPos.GetEventTime())
 				}
 				yPositionsUpdateTimes[nextPos.GetSymbol()] = nextPos.GetParseTime()
 			} else {

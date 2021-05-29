@@ -126,13 +126,13 @@ func (api *API) GetLiquidity(ctx context.Context) ([]Liquidity, error) {
 	return liquidity, nil
 }
 
-func (api *API) GetQuote(ctx context.Context, param QuoteParam) ([]Liquidity, error) {
-	liquidity := make([]Liquidity, 0)
-	err := api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/sapi/v1/bswap/liquidity", nil, &liquidity)
+func (api *API) GetQuote(ctx context.Context, param QuoteParam) (*Quote, error) {
+	quote := Quote{}
+	err := api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/sapi/v1/bswap/quote", &param, &quote)
 	if err != nil {
 		return nil, err
 	}
-	return liquidity, nil
+	return &quote, nil
 }
 
 func NewAPI(credentials *common.Credentials, proxy string) (*API, error) {

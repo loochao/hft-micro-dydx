@@ -2,6 +2,7 @@ package bswap
 
 import (
 	"encoding/json"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -80,17 +81,45 @@ type QuoteParam struct {
 	QuoteQty   float64 `json:"quoteQty"`
 }
 
+func (q QuoteParam) ToUrlValues() url.Values {
+	urlValues := url.Values{}
+	urlValues.Set("quoteAsset", q.QuoteAsset)
+	urlValues.Set("baseAsset", q.BaseAsset)
+	urlValues.Set("quoteQty", strconv.FormatFloat(q.QuoteQty, 'f', -1, 64))
+	return urlValues
+}
+
 type Quote struct {
 	QuoteAsset string  `json:"quoteAsset"`
 	BaseAsset  string  `json:"baseAsset"`
-	QuoteQty   float64 `json:"quoteQty"`
-	BaseQty    float64 `json:"baseQty"`
+	QuoteQty   float64 `json:"quoteQty,string"`
+	BaseQty    float64 `json:"baseQty,string"`
+	Price      float64 `json:"price,string"`
+	Slippage   float64 `json:"slippage,string"`
+	Fee        float64 `json:"fee,string"`
+}
 
-	"quoteAsset": "USDT",
-	"baseAsset": "BUSD",
-	"quoteQty": 300000,
-	"baseQty": 299975,
-	"price": 1.00008334,
-	"slippage": 0.00007245,
-	"fee": 120
+type SwapParam struct {
+	SwapAsset string  `json:"quoteAsset"`
+	BaseAsset string  `json:"baseAsset"`
+	SwapQty   float64 `json:"quoteQty"`
+}
+
+func (q SwapParam) ToUrlValues() url.Values {
+	urlValues := url.Values{}
+	urlValues.Set("quoteAsset", q.SwapAsset)
+	urlValues.Set("baseAsset", q.BaseAsset)
+	urlValues.Set("quoteQty", strconv.FormatFloat(q.SwapQty, 'f', -1, 64))
+	return urlValues
+}
+
+type Depth struct {
+	Symbol       string
+	BuyPrice     float64
+	SellPrice    float64
+	BuyFee       float64
+	SellFee      float64
+	BuySlippage  float64
+	SellSlippage float64
+	Time         time.Time
 }

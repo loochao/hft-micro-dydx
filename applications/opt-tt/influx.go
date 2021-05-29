@@ -167,6 +167,9 @@ func handleSave() {
 		fields["xAvailable"] = xAccount.GetFree()
 		fields["xURPnl"] = xURPnl
 		fields["yURPnl"] = yURPnl
+		fields["xyTurnover"] = (xTimedPositionChange.Sum()+yTimedPositionChange.Sum())/totalBalance
+		fields["xTurnover"] = xTimedPositionChange.Sum()/xBalance
+		fields["yTurnover"] = yTimedPositionChange.Sum()/yBalance
 		fields["xyURPnl"] = totalURPnl
 		fields["netWorth"] = netWorth
 		fields["startValue"] = xyConfig.StartValue
