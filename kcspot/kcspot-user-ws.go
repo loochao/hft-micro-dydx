@@ -438,9 +438,9 @@ func NewUserWebsocket(
 	}
 	go ws.mainLoop(ctx, api, []string{"/account/balance", "/spotMarket/tradeOrders"}, proxy)
 	go ws.dataHandleLoop(ctx, 1)
-	go ws.dataHandleLoop(ctx, 2)
-	go ws.dataHandleLoop(ctx, 3)
-	go ws.dataHandleLoop(ctx, 4)
+	//go ws.dataHandleLoop(ctx, 2)
+	//go ws.dataHandleLoop(ctx, 3)
+	//go ws.dataHandleLoop(ctx, 4)
 	ws.reconnectCh <- nil
 	return &ws
 }

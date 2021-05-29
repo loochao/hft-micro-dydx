@@ -2,11 +2,14 @@ package kcspot
 
 import (
 	"context"
+	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
+	"sort"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -60,6 +63,87 @@ func TestAPI_GetSymbols(t *testing.T) {
 		}
 	}
 	logger.Debugf("%d", len(usdSymbols))
+}
+
+func TestAPI_GetLimits(t *testing.T) {
+	var api *API
+	var ctx = context.Background()
+	var err error
+	api, err = NewAPI(
+		os.Getenv("KCSPOT_KEY"),
+		os.Getenv("KCSPOT_SECRET"),
+		os.Getenv("KCSPOT_PASSPHRASE"),
+		"socks5://127.0.0.1:1080")
+	if err != nil {
+		log.Fatal(err)
+	}
+	symbols, err := api.GetSymbols(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	usdtSymbols := make([]Symbol, 0)
+	for _, s := range symbols {
+		if s.QuoteCurrency == "USDT" && s.Market == "USDS" && s.EnableTrading {
+			s := s
+			usdtSymbols = append(usdtSymbols, s)
+		}
+	}
+	stepSizes := make(map[string]float64)
+	tickSizes := make(map[string]float64)
+	minSizes := make(map[string]float64)
+	maxSizes := make(map[string]float64)
+	minNotionals := make(map[string]float64)
+	maxNotionals := make(map[string]float64)
+	ss := make([]string, 0)
+	for _, s := range symbols {
+		if s.QuoteCurrency == "USDT" && s.Market == "USDS" && s.EnableTrading {
+			stepSizes[s.Symbol] = s.BaseIncrement
+			tickSizes[s.Symbol] = s.BaseMinSize
+			minSizes[s.Symbol] = s.BaseMinSize
+			maxSizes[s.Symbol] = s.BaseMaxSize
+			minNotionals[s.Symbol] = s.QuoteMinSize
+			maxNotionals[s.Symbol] = s.QuoteMaxSize
+			ss = append(ss, s.Symbol)
+		}
+	}
+	sort.Strings(ss)
+	str := "var StepSizes = map[string]float64{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf(`  "%s": %s,
+`, symbol, strconv.FormatFloat(stepSizes[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var TickSizes = map[string]float64{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf(`  "%s": %s,
+`, symbol, strconv.FormatFloat(tickSizes[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var MinSizes = map[string]float64{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf(`  "%s": %s,
+`, symbol, strconv.FormatFloat(minSizes[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var MaxSizes = map[string]float64{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf(`  "%s": %s,
+`, symbol, strconv.FormatFloat(maxSizes[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var MinNotionals = map[string]float64{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf(`  "%s": %s,
+`, symbol, strconv.FormatFloat(minNotionals[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var MaxNotionals = map[string]float64{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf(`  "%s": %s,
+`, symbol, strconv.FormatFloat(maxNotionals[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	fmt.Printf(str)
 }
 
 func TestAPI_GetCandles(t *testing.T) {

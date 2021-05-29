@@ -211,6 +211,63 @@ type Account struct {
 	Available float64   `json:"available,string"`
 	Holds     float64   `json:"holds,string"`
 	EventTime time.Time `json:"-"`
+	ParseTime time.Time `json:"-"`
+}
+
+func (a *Account) GetSymbol() string {
+	return a.Currency + "-USDT"
+}
+
+func (a *Account) GetSize() float64 {
+	return a.Balance
+}
+
+func (a *Account) GetPrice() float64 {
+	return 0.0
+}
+
+func (a *Account) GetEventTime() time.Time {
+	return a.EventTime
+}
+
+func (a *Account) GetParseTime() time.Time {
+	return a.ParseTime
+}
+
+func (a *Account) GetCurrency() string {
+	return a.Currency
+}
+
+func (a *Account) GetBalance() float64 {
+	return a.Balance
+}
+
+func (a *Account) GetFree() float64 {
+	return a.Available
+}
+
+func (a *Account) GetUsed() float64 {
+	return a.Holds
+}
+
+func (a *Account) GetTime() time.Time {
+	return a.EventTime
+}
+
+func (a *Account) UnmarshalJSON(data []byte) error {
+	type Alias Account
+	aux := struct {
+		*Alias
+	}{
+		Alias: (*Alias)(a),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("UnmarshalJSON WsOrder error %v", err)
+		return err
+	}
+	a.EventTime = time.Now()
+	a.ParseTime = time.Now()
+	return nil
 }
 
 // Signer interface contains Sign() method.
@@ -430,7 +487,7 @@ func (trade *Trade) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	} else {
-		timestamp, err := common.ParseInt(aux.Time[1:len(aux.Time)-1])
+		timestamp, err := common.ParseInt(aux.Time[1 : len(aux.Time)-1])
 		if err != nil {
 			return err
 		}
@@ -455,5 +512,4 @@ func (trade *Trade) GetSymbol() string  { return trade.Symbol }
 func (trade *Trade) GetSize() float64   { return trade.Size }
 func (trade *Trade) GetPrice() float64  { return trade.Price }
 func (trade *Trade) GetTime() time.Time { return trade.Time }
-func (trade *Trade) IsUpTick() bool        { return trade.Side == TradeSideBuy }
-
+func (trade *Trade) IsUpTick() bool     { return trade.Side == TradeSideBuy }
