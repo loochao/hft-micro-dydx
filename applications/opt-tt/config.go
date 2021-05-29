@@ -17,8 +17,6 @@ type Config struct {
 	XExchange common.ExchangeSettings `yaml:"xExchange"`
 	YExchange common.ExchangeSettings `yaml:"yExchange"`
 
-	//HedgeTargetExchange string `yaml:"hedgeTargetExchange"`
-
 	LoopInterval          time.Duration `yaml:"loopInterval"`
 	LogInterval           time.Duration `yaml:"logInterval"`
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`

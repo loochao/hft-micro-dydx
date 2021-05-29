@@ -308,7 +308,7 @@ mainLoop:
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 					yPositions[nextPos.GetSymbol()] = nextPos
 					if prevPos.GetSize() != nextPos.GetSize() {
-						if spread, ok := xySpreads[nextPos.GetSymbol()]; ok {
+						if spread, ok := xySpreads[xySymbolsMap[nextPos.GetSymbol()]]; ok {
 							yTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*spread.YDepth.MidPrice)
 						}
 						logger.Debugf("%s y position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
