@@ -65,7 +65,7 @@ func updateMakerNewOrders() {
 		}
 
 		if (mConfig.TradeDir < 0 && makerPosition.GetSize() > 0) ||
-			(makerPosition.GetSize() > 0 && walkedDepth.MakerBid > makerPosition.GetPrice()*(1.0+offset.Top)) {
+			(makerPosition.GetSize() > 0 && walkedDepth.MakerBid > makerPosition.GetPrice()*(1.0+offset.FarTop)) {
 			order := common.NewOrderParam{
 				Symbol:     makerSymbol,
 				Side:       common.OrderSideSell,
@@ -81,7 +81,7 @@ func updateMakerNewOrders() {
 			}
 			continue
 		} else if (mConfig.TradeDir > 0 && makerPosition.GetSize() < 0) ||
-			(makerPosition.GetSize() < 0 && walkedDepth.MakerAsk < makerPosition.GetPrice()*(1.0+offset.Bot)) {
+			(makerPosition.GetSize() < 0 && walkedDepth.MakerAsk < makerPosition.GetPrice()*(1.0+offset.FarBot)) {
 			order := common.NewOrderParam{
 				Symbol:     makerSymbol,
 				Side:       common.OrderSideBuy,
