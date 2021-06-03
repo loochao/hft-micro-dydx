@@ -43,12 +43,12 @@ func updateMakerNewOrders() {
 		makerMinNotional := mMinNotional[makerSymbol]
 		makerValue := makerPosition.GetSize() * makerPosition.GetPrice()
 
-		if time.Now().Sub(walkedDepth.Time) > mConfig.DepthTimeToLive {
-			//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
-			//	logger.Debugf("walkedDepth too old %s %v", makerSymbol, walkedDepth.Time)
-			//}
-			continue
-		}
+		//if time.Now().Sub(walkedDepth.Time) > mConfig.DepthTimeToLive {
+		//	//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
+		//	//	logger.Debugf("walkedDepth too old %s %v", makerSymbol, walkedDepth.Time)
+		//	//}
+		//	continue
+		//}
 
 		//需要保证两边都有仓位更新，才调整现货仓位
 		if time.Now().Sub(mPositionsUpdateTimes[makerSymbol]) > mConfig.BalancePositionMaxAge {
@@ -65,7 +65,7 @@ func updateMakerNewOrders() {
 		}
 
 		if (mConfig.TradeDir < 0 && makerPosition.GetSize() > 0) ||
-			(makerPosition.GetSize() > 0 && walkedDepth.MakerBid > makerPosition.GetPrice()*(1.0+offset.Top)) {
+			(makerPosition.GetSize() > 0 && walkedDepth.MakerBid > makerPosition.GetPrice()*(1.0+offset.FarTop)) {
 			order := common.NewOrderParam{
 				Symbol:     makerSymbol,
 				Side:       common.OrderSideSell,
@@ -81,7 +81,7 @@ func updateMakerNewOrders() {
 			}
 			continue
 		} else if (mConfig.TradeDir > 0 && makerPosition.GetSize() < 0) ||
-			(makerPosition.GetSize() < 0 && walkedDepth.MakerAsk < makerPosition.GetPrice()*(1.0+offset.Bot)) {
+			(makerPosition.GetSize() < 0 && walkedDepth.MakerAsk < makerPosition.GetPrice()*(1.0+offset.FarBot)) {
 			order := common.NewOrderParam{
 				Symbol:     makerSymbol,
 				Side:       common.OrderSideBuy,

@@ -50,7 +50,7 @@ var mExchange common.Exchange
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210603 16:49:03  ####")
+	logger.Debug("####  BUILD @ 20210603 23:06:15  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
