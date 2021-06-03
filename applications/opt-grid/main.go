@@ -150,15 +150,13 @@ func main() {
 		)
 	}
 
-	if mConfig.CpuProfile != "" {
-		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-		go func() {
-			sig := <-sigs
-			logger.Debugf("catch exit signal %v", sig)
-			mGlobalCancel()
-		}()
-	}
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-sigs
+		logger.Debugf("catch exit signal %v", sig)
+		mGlobalCancel()
+	}()
 
 	if !mConfig.DryRun {
 		go func() {
