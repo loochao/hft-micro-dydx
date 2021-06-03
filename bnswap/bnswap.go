@@ -360,7 +360,7 @@ func (bn *Bnswap) WatchOrders(ctx context.Context, requestChannels map[string]ch
 			logger.Debugf("miss size increment for %s, exit", symbol)
 			return
 		}
-		logger.Debugf("%v", responseChannels)
+		//logger.Debugf("%v", responseChannels)
 		respCh, ok := responseChannels[symbol]
 		if !ok {
 			logger.Debugf("miss response ch for %s, exit", symbol)
@@ -650,7 +650,7 @@ func (bn *Bnswap) submitOrder(ctx context.Context, param common.NewOrderParam, t
 
 func (bn *Bnswap) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
 
-	if param.ClientID != "" || param.Symbol != "" {
+	if param.ClientID != "" && param.Symbol != "" {
 		cancelOrderParam := CancelOrderParam{
 			Symbol:            param.Symbol,
 			OrigClientOrderId: param.ClientID,
