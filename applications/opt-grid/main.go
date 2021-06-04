@@ -199,7 +199,6 @@ func main() {
 			if prevPos, ok := mPositions[nextPos.GetSymbol()]; ok {
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= -time.Second {
 					mPositions[nextPos.GetSymbol()] = nextPos
-					mPositionsUpdateTimes[nextPos.GetSymbol()] = time.Now()
 					if prevPos.GetSize() != nextPos.GetSize() {
 						logger.Debugf("%s POS CHANGE %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
 						if nextPos.GetSize() != 0 {
@@ -212,8 +211,8 @@ func main() {
 			} else {
 				logger.Debugf("%s POS CHANGE nil -> %f", nextPos.GetSymbol(),  nextPos.GetSize())
 				mPositions[nextPos.GetSymbol()] = nextPos
-				mPositionsUpdateTimes[nextPos.GetSymbol()] = time.Now()
 			}
+			mPositionsUpdateTimes[nextPos.GetSymbol()] = time.Now()
 			break
 		case mAccount = <-mAccountCh:
 			break

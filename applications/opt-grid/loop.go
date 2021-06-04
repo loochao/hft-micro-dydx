@@ -133,29 +133,29 @@ func updateMakerNewOrders() {
 			entryValue = size * buyPrice
 
 			if entryValue > makerUSDTAvailable {
-				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED OPEN LONG, ENTRY VALUE %f MORE THAN Available USDT %f, %s, SIZE %f PRICE %f",
-						entryValue,
-						makerUSDTAvailable,
-						makerSymbol,
-						size, buyPrice,
-					)
-					mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
-				}
+				//if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
+				//	logger.Debugf(
+				//		"FAILED OPEN LONG, ENTRY VALUE %f MORE THAN Available USDT %f, %s, SIZE %f PRICE %f",
+				//		entryValue,
+				//		makerUSDTAvailable,
+				//		makerSymbol,
+				//		size, buyPrice,
+				//	)
+				//	mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
+				//}
 				continue
 			}
 			if entryValue < makerMinNotional {
-				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED OPEN LONG, ORDER VALUE %f LESS THAN MIN NOTIONAL %f, %s SIZE %f PRICE %f",
-						entryValue,
-						makerMinNotional,
-						makerSymbol,
-						size, buyPrice,
-					)
-					mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
-				}
+				//if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
+				//	logger.Debugf(
+				//		"FAILED OPEN LONG, ORDER VALUE %f LESS THAN MIN NOTIONAL %f, %s SIZE %f PRICE %f",
+				//		entryValue,
+				//		makerMinNotional,
+				//		makerSymbol,
+				//		size, buyPrice,
+				//	)
+				//	mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
+				//}
 				continue
 			}
 			mLogSilentTimes[makerSymbol] = time.Now()
@@ -174,7 +174,7 @@ func updateMakerNewOrders() {
 			mOpenOrders[makerSymbol] = order
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(mConfig.OrderSilent)
 			if !mConfig.DryRun {
-				logger.Debugf("ORDER %s BUY %s", order.Symbol, order.ClientID)
+				//logger.Debugf("ORDER %s BUY %s", order.Symbol, order.ClientID)
 				mOrderRequestChMap[makerSymbol] <- common.OrderRequest{New: &order}
 			}
 		} else if mConfig.TradeDir < 0 &&
@@ -193,29 +193,29 @@ func updateMakerNewOrders() {
 			entryValue = size * sellPrice
 
 			if entryValue > makerUSDTAvailable {
-				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED OPEN SHORT, ENTRY VALUE %f MORE THAN Available USDT %f, %s SIZE %f PRICE %f",
-						entryValue,
-						makerUSDTAvailable,
-						makerSymbol,
-						size, sellPrice,
-					)
-					mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
-				}
+				//if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
+				//	logger.Debugf(
+				//		"FAILED OPEN SHORT, ENTRY VALUE %f MORE THAN Available USDT %f, %s SIZE %f PRICE %f",
+				//		entryValue,
+				//		makerUSDTAvailable,
+				//		makerSymbol,
+				//		size, sellPrice,
+				//	)
+				//	mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
+				//}
 				continue
 			}
 			if entryValue < makerMinNotional {
-				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
-					logger.Debugf(
-						"FAILED OPEN SHORT, ORDER VALUE %f LESS THAN MIN NOTIONAL %f, %s SIZE %f PRICE %f",
-						entryValue,
-						makerMinNotional,
-						makerSymbol,
-						size, sellPrice,
-					)
-					mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
-				}
+				//if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
+				//	logger.Debugf(
+				//		"FAILED OPEN SHORT, ORDER VALUE %f LESS THAN MIN NOTIONAL %f, %s SIZE %f PRICE %f",
+				//		entryValue,
+				//		makerMinNotional,
+				//		makerSymbol,
+				//		size, sellPrice,
+				//	)
+				//	mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
+				//}
 				continue
 			}
 			mLogSilentTimes[makerSymbol] = time.Now()
@@ -234,7 +234,7 @@ func updateMakerNewOrders() {
 			mOpenOrders[makerSymbol] = order
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(mConfig.OrderSilent)
 			if !mConfig.DryRun {
-				logger.Debugf("ORDER %s SELL %s", order.Symbol, order.ClientID)
+				//logger.Debugf("ORDER %s SELL %s", order.Symbol, order.ClientID)
 				mOrderRequestChMap[makerSymbol] <- common.OrderRequest{New: &order}
 			}
 		}
