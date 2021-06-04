@@ -115,8 +115,8 @@ func updateMakerNewOrders() {
 		//	logger.Debugf("loop %s", makerSymbol)
 		//}
 
-		buyPrice := math.Floor(walkedDepth.MakerBid*(1.0+offset.Bot)/makerTickSize) * makerTickSize
-		sellPrice := math.Ceil(walkedDepth.MakerAsk*(1.0+offset.Top)/makerTickSize) * makerTickSize
+		buyPrice := math.Floor(walkedDepth.MakerBid*(1.0+offset.FarBot)/makerTickSize) * makerTickSize
+		sellPrice := math.Ceil(walkedDepth.MakerAsk*(1.0+offset.FarTop)/makerTickSize) * makerTickSize
 		if mConfig.TradeDir > 0 &&
 			(makerPosition.GetSize() == 0 || buyPrice < makerPosition.GetPrice()) {
 			targetValue := makerValue + entryStep
