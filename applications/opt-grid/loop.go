@@ -65,7 +65,7 @@ func updateMakerNewOrders() {
 		}
 
 		if (mConfig.TradeDir < 0 && makerPosition.GetSize() > 0) ||
-			(makerPosition.GetSize() > 0 && walkedDepth.MakerBid > makerPosition.GetPrice()*(1.0+offset.Top)) {
+			(makerPosition.GetSize() > 0 && walkedDepth.MakerBid > makerPosition.GetPrice()*(1.0+offset.FarTop)) {
 			order := common.NewOrderParam{
 				Symbol:     makerSymbol,
 				Side:       common.OrderSideSell,
@@ -81,7 +81,7 @@ func updateMakerNewOrders() {
 			}
 			continue
 		} else if (mConfig.TradeDir > 0 && makerPosition.GetSize() < 0) ||
-			(makerPosition.GetSize() < 0 && walkedDepth.MakerAsk < makerPosition.GetPrice()*(1.0+offset.Bot)) {
+			(makerPosition.GetSize() < 0 && walkedDepth.MakerAsk < makerPosition.GetPrice()*(1.0+offset.FarBot)) {
 			order := common.NewOrderParam{
 				Symbol:     makerSymbol,
 				Side:       common.OrderSideBuy,
@@ -115,8 +115,8 @@ func updateMakerNewOrders() {
 		//	logger.Debugf("loop %s", makerSymbol)
 		//}
 
-		buyPrice := math.Floor(walkedDepth.MakerBid*(1.0+offset.FarBot)/makerTickSize) * makerTickSize
-		sellPrice := math.Ceil(walkedDepth.MakerAsk*(1.0+offset.FarTop)/makerTickSize) * makerTickSize
+		buyPrice := math.Floor(walkedDepth.MakerBid*(1.0+offset.Bot)/makerTickSize) * makerTickSize
+		sellPrice := math.Ceil(walkedDepth.MakerAsk*(1.0+offset.Top)/makerTickSize) * makerTickSize
 		if mConfig.TradeDir > 0 &&
 			(makerPosition.GetSize() == 0 || buyPrice < makerPosition.GetPrice()) {
 			targetValue := makerValue + entryStep
