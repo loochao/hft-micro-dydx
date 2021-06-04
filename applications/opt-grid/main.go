@@ -230,8 +230,7 @@ func main() {
 						makerOrder.GetSymbol(), makerOrder.GetSide(), makerOrder.GetFilledSize(), makerOrder.GetFilledPrice(),
 					)
 				} else {
-					logger.Debugf("ORDER %s %s %s", makerOrder.GetSymbol(), makerOrder.GetStatus(), makerOrder.GetClientID())
-					//logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
+					//logger.Debugf("ORDER %s %s %s", makerOrder.GetSymbol(), makerOrder.GetStatus(), makerOrder.GetClientID())
 					mOrderSilentTimes[makerOrder.GetSymbol()] = time.Now().Add(time.Second)
 					mPositionsUpdateTimes[makerOrder.GetSymbol()] = time.Now()
 				}
