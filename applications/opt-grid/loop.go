@@ -111,13 +111,14 @@ func updateMakerNewOrders() {
 			continue
 		}
 
-
 		//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
 		//	logger.Debugf("loop %s", makerSymbol)
 		//}
 
-		if mConfig.TradeDir > 0 {
-			price := math.Floor(walkedDepth.MakerBid*(1.0+offset.Bot)/makerTickSize) * makerTickSize
+		buyPrice := math.Floor(walkedDepth.MakerBid*(1.0+offset.Bot)/makerTickSize) * makerTickSize
+		sellPrice := math.Ceil(walkedDepth.MakerAsk*(1.0+offset.Top)/makerTickSize) * makerTickSize
+		if mConfig.TradeDir > 0 &&
+			(makerPosition.GetSize() == 0 || buyPrice < makerPosition.GetPrice()) {
 			targetValue := makerValue + entryStep
 			if targetValue > entryTarget {
 				targetValue = entryTarget
@@ -126,10 +127,10 @@ func updateMakerNewOrders() {
 			if entryValue > makerUSDTAvailable*0.8 {
 				entryValue = makerUSDTAvailable * 0.8
 			}
-			size := entryValue / price
+			size := entryValue / buyPrice
 			size = math.Round(size/makerStepSize) * makerStepSize
 
-			entryValue = size * price
+			entryValue = size * buyPrice
 
 			if entryValue > makerUSDTAvailable {
 				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
@@ -138,7 +139,7 @@ func updateMakerNewOrders() {
 						entryValue,
 						makerUSDTAvailable,
 						makerSymbol,
-						size, price,
+						size, buyPrice,
 					)
 					mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
 				}
@@ -151,7 +152,7 @@ func updateMakerNewOrders() {
 						entryValue,
 						makerMinNotional,
 						makerSymbol,
-						size, price,
+						size, buyPrice,
 					)
 					mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
 				}
@@ -163,7 +164,7 @@ func updateMakerNewOrders() {
 				Symbol:      makerSymbol,
 				Side:        common.OrderSideBuy,
 				Type:        common.OrderTypeLimit,
-				Price:       price,
+				Price:       buyPrice,
 				TimeInForce: common.OrderTimeInForceGTC,
 				Size:        size,
 				PostOnly:    true,
@@ -176,8 +177,8 @@ func updateMakerNewOrders() {
 				logger.Debugf("ORDER %s BUY %s", order.Symbol, order.ClientID)
 				mOrderRequestChMap[makerSymbol] <- common.OrderRequest{New: &order}
 			}
-		} else if mConfig.TradeDir < 0 {
-			price := math.Ceil(walkedDepth.MakerAsk*(1.0+offset.Top)/makerTickSize) * makerTickSize
+		} else if mConfig.TradeDir < 0 &&
+			(makerPosition.GetSize() == 0 || sellPrice > makerPosition.GetPrice()) {
 			targetValue := makerValue + entryStep
 			if targetValue > entryTarget {
 				targetValue = entryTarget
@@ -186,10 +187,10 @@ func updateMakerNewOrders() {
 			if entryValue > makerUSDTAvailable*0.8 {
 				entryValue = makerUSDTAvailable * 0.8
 			}
-			size := entryValue / price
+			size := entryValue / sellPrice
 			size = math.Round(size/makerStepSize) * makerStepSize
 
-			entryValue = size * price
+			entryValue = size * sellPrice
 
 			if entryValue > makerUSDTAvailable {
 				if time.Now().Sub(mLogSilentTimes[makerSymbol]) > 0 {
@@ -198,7 +199,7 @@ func updateMakerNewOrders() {
 						entryValue,
 						makerUSDTAvailable,
 						makerSymbol,
-						size, price,
+						size, sellPrice,
 					)
 					mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
 				}
@@ -211,7 +212,7 @@ func updateMakerNewOrders() {
 						entryValue,
 						makerMinNotional,
 						makerSymbol,
-						size, price,
+						size, sellPrice,
 					)
 					mLogSilentTimes[makerSymbol] = time.Now().Add(mConfig.LogInterval)
 				}
@@ -223,7 +224,7 @@ func updateMakerNewOrders() {
 				Symbol:      makerSymbol,
 				Side:        common.OrderSideSell,
 				Type:        common.OrderTypeLimit,
-				Price:       price,
+				Price:       sellPrice,
 				TimeInForce: common.OrderTimeInForceGTC,
 				Size:        size,
 				PostOnly:    true,
@@ -239,4 +240,3 @@ func updateMakerNewOrders() {
 		}
 	}
 }
-
