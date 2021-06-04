@@ -14,7 +14,7 @@ git add -A
 git commit -m "build opt-grid.$dt"
 git push origin master
 
-#chmod 755 "./dist/hft-mirco-opt-grid.$dt"
+chmod 755 "./dist/opt-grid.linux.amd64.$dt"
 
-#echo "ff05"
-#rsync -avx --progress "./dist/hft-mirco-opt-grid.$dt" ff05:/usr/local/bin/
+echo "ff05"
+rsync -avx --progress "./dist/opt-grid.linux.amd64.$dt" ff05:/usr/local/bin/
