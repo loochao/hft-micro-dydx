@@ -52,15 +52,15 @@ func updateMakerNewOrders() {
 
 		//需要保证两边都有仓位更新，才调整现货仓位
 		if time.Now().Sub(mPositionsUpdateTimes[makerSymbol]) > mConfig.BalancePositionMaxAge {
-			if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
-				logger.Debugf("maker position too old %s", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
+			//	logger.Debugf("maker position too old %s", makerSymbol)
+			//}
 			continue
 		}
 		if time.Now().Sub(mOrderSilentTimes[makerSymbol]) < 0 {
-			if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
-				logger.Debugf("taker order silent %s", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
+				//logger.Debugf("taker order silent %s", makerSymbol)
+			//}
 			continue
 		}
 
