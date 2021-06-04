@@ -6,13 +6,15 @@ echo "$version"
 sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/opt-grid/init.go
 
 
-env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-mirco-opt-grid.$dt" ./applications/opt-grid
+env GOOS=linux GOARCH=amd64 go build -o "./dist/opt-grid.linux.amd64.$dt" ./applications/opt-grid
+env GOOS=darwin GOARCH=amd64 go build -o "./dist/opt-grid.darwin.amd64.$dt" ./applications/opt-grid
+env GOOS=windows GOARCH=amd64 go build -o "./dist/opt-grid.windows.amd64.$dt.exe" ./applications/opt-grid
 
 git add -A
-git commit -m "build hft-mirco-opt-grid.$dt"
+git commit -m "build opt-grid.$dt"
 git push origin master
 
-chmod 755 "./dist/hft-mirco-opt-grid.$dt"
+#chmod 755 "./dist/hft-mirco-opt-grid.$dt"
 
-echo "ff05"
-rsync -avx --progress "./dist/hft-mirco-opt-grid.$dt" ff05:/usr/local/bin/
+#echo "ff05"
+#rsync -avx --progress "./dist/hft-mirco-opt-grid.$dt" ff05:/usr/local/bin/
