@@ -197,7 +197,7 @@ func main() {
 		case nextPos := <-mPositionCh:
 			//logger.Debugf("maker position %s %v %f %f", nextPos.GetSymbol(), nextPos.GetTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := mPositions[nextPos.GetSymbol()]; ok {
-				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
+				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= -time.Second {
 					mPositions[nextPos.GetSymbol()] = nextPos
 					mPositionsUpdateTimes[nextPos.GetSymbol()] = time.Now()
 					if prevPos.GetSize() != nextPos.GetSize() {
