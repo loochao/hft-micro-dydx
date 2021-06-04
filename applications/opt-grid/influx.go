@@ -66,6 +66,7 @@ func handleInternalSave() {
 		fields["totalBalance"] = totalBalance
 		fields["makerBalance"] = mAccount.GetBalance()
 		fields["netWorth"] = netWorth
+		fields["turnover"] = mTimedPositionChange.Sum()/totalBalance
 		fields["startValue"] = mConfig.StartValue
 		fields["netWorth"] = netWorth
 		fields["makerAvailable"] = mAccount.GetFree()

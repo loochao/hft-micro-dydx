@@ -46,6 +46,7 @@ type Config struct {
 	EnterSilent   time.Duration `yaml:"enterSilent"`
 	RestartSilent time.Duration `yaml:"restartSilent"`
 	HttpSilent    time.Duration `yaml:"httpSilent"`
+	TurnoverLookback time.Duration `yaml:"turnoverLookback"`
 
 	MakerOrderOffsets   map[string]string `yaml:"makerOrderOffsets"`
 }
@@ -96,5 +97,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.DepthTimeToLive == 0 {
 		config.DepthTimeToLive = time.Second * 3
+	}
+	if config.TurnoverLookback == 0 {
+		config.TurnoverLookback = time.Hour*24
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"os"
 	"os/signal"
 	"syscall"
@@ -201,15 +202,14 @@ func main() {
 					mPositions[nextPos.GetSymbol()] = nextPos
 					if prevPos.GetSize() != nextPos.GetSize() {
 						logger.Debugf("%s POS CHANGE %f -> %f", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize())
-						if nextPos.GetSize() != 0 {
-							mEnterSilentTimes[nextPos.GetSymbol()] = time.Now().Add(mConfig.EnterSilent)
-						}else{
-							mEnterSilentTimes[nextPos.GetSymbol()] = time.Now()
+						if walkedDepth, ok := mWalkedDepths[nextPos.GetSymbol()]; ok {
+							mTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*walkedDepth.MidPrice)
 						}
+						mEnterSilentTimes[nextPos.GetSymbol()] = time.Now().Add(mConfig.EnterSilent)
 					}
 				}
 			} else {
-				logger.Debugf("%s POS CHANGE nil -> %f", nextPos.GetSymbol(),  nextPos.GetSize())
+				logger.Debugf("%s POS CHANGE nil -> %f", nextPos.GetSymbol(), nextPos.GetSize())
 				mPositions[nextPos.GetSymbol()] = nextPos
 			}
 			mPositionsUpdateTimes[nextPos.GetSymbol()] = time.Now()

@@ -47,10 +47,12 @@ var mWalkedDepths = make(map[string]*common.WalkedMakerTakerDepth)
 
 var mConfig *Config
 var mExchange common.Exchange
+var mTimedPositionChange *common.TimedSum
+
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210604 14:21:20  ####")
+	logger.Debug("####  BUILD @ 20210604 15:55:11  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -100,4 +102,5 @@ func init() {
 		mCancelSilentTimes[makerSymbol] = time.Now()
 	}
 	mConfig.MakerExchange.Symbols = mSymbols
+	mTimedPositionChange = common.NewTimedSum(mConfig.TurnoverLookback)
 }
