@@ -527,7 +527,7 @@ func (k *Kcperp) accountLoop(
 func (k *Kcperp) positionsLoop(
 	ctx context.Context,
 	symbols []string,
-	outputChs chan map[string]Position,
+	outputCh chan map[string]Position,
 ) {
 	k.mu.Lock()
 	pullInterval := k.settings.PullInterval
@@ -558,9 +558,9 @@ func (k *Kcperp) positionsLoop(
 					positionBySymbols[position.Symbol] = position
 				}
 				select {
-				case outputChs <- positionBySymbols:
+				case outputCh <- positionBySymbols:
 				default:
-					logger.Debugf("outputChs <- positionBySymbols failed, ch len %d", len(outputChs))
+					logger.Debugf("outputCh <- positionBySymbols failed, ch len %d", len(outputCh))
 				}
 			}
 			timer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))

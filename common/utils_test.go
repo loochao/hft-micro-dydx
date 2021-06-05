@@ -73,11 +73,20 @@ func BenchmarkStdLibParseFloat64(t *testing.B) {
 }
 
 func BenchmarkParseBinanceFloat(t *testing.B) {
-	b := []byte("3.14159265")
+	b := []byte("376.720000")
 	t.ReportAllocs()
 	for n := 0; n < t.N; n++ {
 		_, _ = ParseFloat(b)
 	}
+}
+
+func TestParseFloat(t *testing.T) {
+	b := []byte("376.7200000000010000000000001")
+	f, err := ParseFloat(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 376.7200000000000000000000001, f)
 }
 
 func BenchmarkParseInt(t *testing.B) {

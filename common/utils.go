@@ -94,9 +94,9 @@ func GetHMAC(hashType int, input, key []byte) []byte {
 //}
 
 var float64pow10 = []float64{
-	1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
-	1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19,
-	1e20, 1e21, 1e22,
+	1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10,
+	//1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19,
+	//1e20, 1e21, 1e22,
 }
 
 func ParseFloat(s []byte) (float64, error) {
@@ -131,6 +131,11 @@ loop:
 			nd++
 			mantissa *= base
 			mantissa += uint64(c - '0')
+			if sawDot && dp - nd == -10 {
+				//10位小数以上忽略
+				//logger.Debugf("%v %v", mantissa, dp-nd)
+				break loop
+			}
 			continue
 		}
 		v, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&s)), 64)
@@ -154,7 +159,7 @@ loop:
 	if mantissa != 0 {
 		exp = dp - nd
 	}
-	if -exp < 0 || -exp > 23 {
+	if -exp < 0 || -exp > 10 {
 		return 0, fmt.Errorf("bad -exp %d %s", -exp, s)
 	}
 	if !negative {
