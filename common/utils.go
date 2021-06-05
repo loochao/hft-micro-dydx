@@ -160,7 +160,7 @@ loop:
 		exp = dp - nd
 	}
 	if exp > 0 || exp < -10 {
-		return 0, fmt.Errorf("bad -exp %d %s", -exp, s)
+		return 0, fmt.Errorf("bad exp %d %s", exp, s)
 	}
 	if !negative {
 		return float64(mantissa) / float64pow10[-exp], nil
