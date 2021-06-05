@@ -99,6 +99,12 @@ func TestParseFloat(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(t, 0.00141592, f)
+	b = []byte("141592")
+	f, err = ParseFloat(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 141592.0, f)
 }
 
 func BenchmarkParseInt(t *testing.B) {
