@@ -205,7 +205,11 @@ func main() {
 						if walkedDepth, ok := mWalkedDepths[nextPos.GetSymbol()]; ok {
 							mTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*walkedDepth.MidPrice)
 						}
-						mEnterSilentTimes[nextPos.GetSymbol()] = time.Now().Add(mConfig.EnterSilent)
+						if nextPos.GetSize() != 0 {
+							mEnterSilentTimes[nextPos.GetSymbol()] = time.Now().Add(mConfig.EnterSilent)
+						}else{
+							mEnterSilentTimes[nextPos.GetSymbol()] = time.Now()
+						}
 					}
 				}
 			} else {
