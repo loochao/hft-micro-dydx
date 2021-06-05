@@ -89,7 +89,7 @@ var yTimedPositionChange *common.TimedSum
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210605 11:20:06  ####")
+	logger.Debug("####  BUILD @ 20210605 11:40:43  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

@@ -104,9 +104,8 @@ func ParseFloat(s []byte) (float64, error) {
 	exp := 0
 	base := uint64(10)
 	sawDot := false
-	sawDigits := false
-	nd := 0
-	dp := 0
+	//sawDigits := false
+	isLeading := true
 	negative := false
 loop:
 	for i := 0; i < len(s); i++ {
@@ -118,23 +117,23 @@ loop:
 			if sawDot {
 				break loop
 			}
+			isLeading = false //zero after dot is not leading zeros
 			sawDot = true
-			dp = nd
+			exp = 0
 			continue
 
 		case '0' <= c && c <= '9':
-			sawDigits = true
-			if c == '0' && nd == 0 { // ignore leading zeros
-				dp--
+			//sawDigits = true
+			if c == '0' && isLeading { // ignore leading zeros
 				continue
 			}
-			nd++
 			mantissa *= base
 			mantissa += uint64(c - '0')
-			if sawDot && dp - nd == -10 {
-				//10位小数以上忽略
-				//logger.Debugf("%v %v", mantissa, dp-nd)
-				break loop
+			if sawDot {
+				exp--
+				if exp == -10 {
+					break loop
+				}
 			}
 			continue
 		}
@@ -145,23 +144,23 @@ loop:
 			return v, nil
 		}
 	}
-	if !sawDigits {
-		v, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&s)), 64)
-		if err != nil {
-			return 0, errors.New("ParseFloat error no digits")
-		} else {
-			return v, nil
-		}
-	}
-	if !sawDot {
-		dp = nd
-	}
-	if mantissa != 0 {
-		exp = dp - nd
-	}
-	if -exp < 0 || -exp > 10 {
-		return 0, fmt.Errorf("bad -exp %d %s", -exp, s)
-	}
+	//if !sawDigits {
+	//	v, err := strconv.ParseFloat(*(*string)(unsafe.Pointer(&s)), 64)
+	//	if err != nil {
+	//		return 0, errors.New("ParseFloat error no digits")
+	//	} else {
+	//		return v, nil
+	//	}
+	//}
+	//if !sawDot {
+	//	dp = nd
+	//}
+	//if mantissa != 0 {
+	//	exp = dp - nd
+	//}
+	//if -exp < 0 || -exp > 10 {
+	//	return 0, fmt.Errorf("bad -exp %d %s", -exp, s)
+	//}
 	if !negative {
 		return float64(mantissa) / float64pow10[-exp], nil
 	} else {
