@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -326,6 +327,7 @@ func NewUserWebsocket(
 	}
 	go func(ctx context.Context, ws *UserWebsocket, listenKey ListenKey) {
 		timer := time.NewTimer(time.Minute * 20)
+		retryCounter := 0
 		for {
 			select {
 			case <-ctx.Done():
@@ -343,11 +345,17 @@ func NewUserWebsocket(
 					&resp,
 				)
 				if err != nil {
+					if strings.Contains(err.Error(), "connection reset by peer") && retryCounter < 10 {
+						retryCounter++
+						timer.Reset(time.Second * 15)
+						continue
+					}
 					logger.Debugf("UPDATE LISTEN KEY FAILED %v, STOP WS!", err)
 					ws.Stop()
 					return
 				}
-				timer.Reset(time.Minute * 20)
+				retryCounter = 0
+				timer.Reset(time.Minute * 15)
 			}
 		}
 	}(ctx, &ws, listenKey)

@@ -1,4 +1,4 @@
-package bnspot
+package bncoinfuture
 
 import (
 	"context"
@@ -9,25 +9,23 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync/atomic"
 	"time"
 )
 
 type UserWebsocket struct {
-	AccountUpdateEventCh chan *AccountUpdateEvent
-	OrderUpdateEventCh   chan *OrderUpdateEvent
-	messageCh            chan []byte
-	done                 chan interface{}
-	reconnectCh          chan interface{}
-	RestartCh            chan interface{}
-	stopped              int32
+	messageCh                       chan []byte
+	BalanceAndPositionUpdateEventCh chan *BalanceAndPositionUpdateEvent
+	OrderUpdateEventCh              chan *OrderUpdateEvent
+	done                            chan interface{}
+	reconnectCh                     chan interface{}
+	RestartCh                       chan interface{}
+	stopped                         int32
 }
 
 func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
-	logSilentTime := time.Now()
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Hour * 4))
 		if err != nil {
@@ -50,10 +48,7 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 		select {
 		case w.messageCh <- msg:
 		default:
-			if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("w.messageCh <- msg failed, len(w.messageCh) = %d, msg %s", len(w.messageCh), msg)
-				logSilentTime = time.Now().Add(time.Minute / 2)
-			}
+			logger.Debugf("w.messageCh <- msg failed len(w.messageCh) = %d %s", len(w.messageCh), msg)
 		}
 	}
 }
@@ -77,9 +72,10 @@ func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
 }
 
 func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
-	logger.Debugf("START dataHandleLoop %d", id)
+	logger.Debugf("START dataHandleLoop")
 	defer logger.Debugf("EXIT dataHandleLoop %d", id)
-	logSilentTime := time.Now()
+	totalLen := 0
+	totalCount := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -87,52 +83,44 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
+			totalCount += 1
+			totalLen += len(msg)
+			if totalLen > 1000000 {
+				logger.Debugf("BNSWAP USER WS AVERAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
+				totalLen = 0
+				totalCount = 0
+			}
+			//{"e":"ACCOUNT_UPDATE","T":1616821544492,"E":1616821544496,"a":{"B":[{"a":"BNB","wb":"0.06858897","cw":"0"}],"P":[],"m":"DEPOSIT"}}
 			if msg[0] == '{' && len(msg) > 14 {
-				if msg[2] == 'e' && msg[6] == 'o' {
-					accountUpdateEvent := AccountUpdateEvent{}
-					err := json.Unmarshal(msg, &accountUpdateEvent)
+				if msg[2] == 'e' && msg[6] == 'A' && msg[14] == 'U' {
+					balanceAndPositionUpdateEvent := BalanceAndPositionUpdateEvent{}
+					//logger.Debugf("%s", msg)
+					err := json.Unmarshal(msg, &balanceAndPositionUpdateEvent)
 					if err != nil {
-						logger.Debugf("json.Unmarshal(msg, &accountUpdateEvent) error %s %s", err, msg)
-						continue
+						logger.Debugf("json.Unmarshal error %v %s", err, msg)
+						break
 					}
 					select {
-					case w.AccountUpdateEventCh <- &accountUpdateEvent:
+					case w.BalanceAndPositionUpdateEventCh <- &balanceAndPositionUpdateEvent:
 					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("w.AccountUpdateEventCh <- failed, len(w.AccountUpdateEventCh) = %d, msg %s", len(w.AccountUpdateEventCh), msg)
-							logSilentTime = time.Now().Add(time.Minute / 2)
-						}
+						logger.Warnf("w.BalanceAndPositionUpdateEventCh <- &balanceAndPositionUpdateEvent failed, len(w.BalanceAndPositionUpdateEventCh) = %d %s", len(w.BalanceAndPositionUpdateEventCh), msg)
 					}
 
-				} else if msg[2] == 'e' && msg[6] == 'e' {
+				} else if msg[2] == 'e' && msg[6] == 'O' {
+					//{"e":"ORDER_TRADE_UPDATE","T":1616821790804,"E":1616821790808,"o":{"s":"LTCUSDT","c":"web_g5yhWZ53GcE18wViaj4O","S":"SELL","o":"LIMIT","f":"GTC","q":"0.100","p":"200","ap":"0","sp":"0","x":"NEW","X":"NEW","i":11207370007,"l":"0","z":"0","L":"0","T":1616821790804,"t":0,"b":"0","a":"20","m":false,"R":false,"wt":"CONTRACT_PRICE","ot":"LIMIT","ps":"BOTH","cp":false,"rp":"0","pP":false,"si":0,"ss":0}}
 					orderUpdateEvent := OrderUpdateEvent{}
-					//logger.Debugf("%s", msg)
 					err := json.Unmarshal(msg, &orderUpdateEvent)
 					if err != nil {
-						logger.Debugf("json.Unmarshal(msg, &orderUpdateEvent) error %v %s", err, msg)
-						continue
+						logger.Debugf("json.Unmarshal error %v msg %s", err, msg)
+						break
 					}
 					select {
 					case w.OrderUpdateEventCh <- &orderUpdateEvent:
 					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("w.OrderUpdateEventCh <- failed, len(w.OrderUpdateEventCh) = %d, msg %s", len(w.OrderUpdateEventCh), msg)
-							logSilentTime = time.Now().Add(time.Minute / 2)
-						}
+						logger.Debugf("w.OrderUpdateEventCh <- &orderUpdateEvent failed, len(w.OrderUpdateEventCh) = %d msg %s", len(w.OrderUpdateEventCh), msg)
 					}
-					continue
-				} else if msg[2] == 'e' && msg[6] == 'b' {
-					continue
 				} else {
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("other msg %s", msg)
-						logSilentTime = time.Now().Add(time.Minute / 2)
-					}
-				}
-			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
-					logSilentTime = time.Now().Add(time.Minute / 2)
 				}
 			}
 		}
@@ -142,7 +130,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
-		logger.Debugf("RECONNECT %s, %d RETRIES", wsUrl, counter)
+		logger.Debugf("reconnect %s, %d retries", wsUrl, counter)
 	}
 
 	var dialer *websocket.Dialer
@@ -191,11 +179,14 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, urlStr string, proxy strin
 	var internalCancel context.CancelFunc
 
 	defer func() {
-		cancel()
-		w.Stop()
 		logger.Debugf("EXIT mainLoop")
+		w.Stop()
+		if internalCancel != nil {
+			internalCancel()
+		}
+		cancel()
 	}()
-	reconnectTimer := time.NewTimer(time.Hour * 999)
+	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 	for {
 		select {
@@ -214,13 +205,14 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, urlStr string, proxy strin
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
 				internalCancel()
-				internalCancel = nil
 			}
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
-				logger.Debugf("w.reconnect error %v", err)
 				internalCancel()
+				internalCancel = nil
+				logger.Debugf("w.reconnect error %v, stop ws", err)
+				w.Stop()
 				return
 			}
 			go w.readLoop(conn)
@@ -240,6 +232,7 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn)
 	}()
 
 	trafficCh := make(chan interface{})
+
 	conn.SetPingHandler(func(msg string) error {
 		select {
 		case trafficCh <- nil:
@@ -247,7 +240,12 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn)
 		}
 		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
-			go w.restart()
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				go w.restart()
+			}
 			return nil
 		}
 		return nil
@@ -257,16 +255,16 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn)
 
 	for {
 		select {
+		case <-timer.C:
+			logger.Warnf("no traffic in %v, restart ws", time.Minute*15)
+			w.restart()
+			return
+		case <-trafficCh:
+			timer.Reset(time.Minute * 15)
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case <-timer.C:
-			w.restart()
-			logger.Debugf("no traffic in %v, restart ws", time.Minute*15)
-			return
-		case <-trafficCh:
-			timer.Reset(time.Minute * 15)
 		}
 	}
 
@@ -284,13 +282,15 @@ func (w *UserWebsocket) restart() {
 	select {
 	case w.RestartCh <- nil:
 	default:
-		logger.Debugf("w.RestartCh <- nil failed, len(w.RestartCh) = %d", len(w.RestartCh))
+		logger.Debugf("w.RestartCh <- nil failed")
 	}
 	select {
 	case <-w.done:
+	case <-time.After(time.Second):
+		logger.Debugf("w.reconnectCh <- nil timeout in 1s, stop ws")
+		w.Stop()
 	case w.reconnectCh <- nil:
-	default:
-		logger.Debugf("w.reconnectCh <- nil failed, len(w.reconnectCh) = %d, restart ws", len(w.reconnectCh))
+		logger.Debugf("restart")
 	}
 }
 
@@ -304,29 +304,28 @@ func NewUserWebsocket(
 	proxy string,
 ) (*UserWebsocket, error) {
 	var listenKey ListenKey
-	_, err := api.SendAuthenticatedHTTPRequest(
+	err := api.SendAuthenticatedHTTPRequest(
 		ctx,
 		http.MethodPost,
-		"/api/v3/userDataStream",
+		"/dapi/v1/listenKey",
 		nil,
 		&listenKey,
 	)
 	if err != nil {
 		return nil, err
 	}
-	wsUrl := "wss://stream.binance.com:9443/ws/" + listenKey.ListenKey
+	wsUrl := "wss://fstream.binance.com/ws/" + listenKey.ListenKey
 	ws := UserWebsocket{
-		done:                 make(chan interface{}),
-		reconnectCh:          make(chan interface{}),
-		RestartCh:            make(chan interface{}, 100),
-		OrderUpdateEventCh:   make(chan *OrderUpdateEvent, 100),
-		AccountUpdateEventCh: make(chan *AccountUpdateEvent, 100),
-		messageCh:            make(chan []byte, 10000),
-		stopped:              0,
+		done:                            make(chan interface{}),
+		reconnectCh:                     make(chan interface{}),
+		RestartCh:                       make(chan interface{}, 100),
+		OrderUpdateEventCh:              make(chan *OrderUpdateEvent, 10),
+		BalanceAndPositionUpdateEventCh: make(chan *BalanceAndPositionUpdateEvent, 10),
+		messageCh:                       make(chan []byte, 10000),
+		stopped:                         0,
 	}
 	go func(ctx context.Context, ws *UserWebsocket, listenKey ListenKey) {
 		timer := time.NewTimer(time.Minute * 20)
-		retryCounter := 0
 		for {
 			select {
 			case <-ctx.Done():
@@ -336,24 +335,18 @@ func NewUserWebsocket(
 			case <-timer.C:
 				var resp interface{}
 				ctx, _ := context.WithTimeout(ctx, time.Minute)
-				_, err := api.SendAuthenticatedHTTPRequest(
+				err := api.SendAuthenticatedHTTPRequest(
 					ctx,
 					http.MethodPut,
-					"/api/v3/userDataStream",
+					"/dapi/v1/listenKey",
 					&listenKey,
 					&resp,
 				)
 				if err != nil {
-					if strings.Contains(err.Error(), "connection reset by peer") && retryCounter < 10 {
-						retryCounter++
-						timer.Reset(time.Second * 15)
-						continue
-					}
-					logger.Debugf("api.SendAuthenticatedHTTPRequest error %v", err)
+					logger.Debugf("UPDATE LISTEN KEY FAILED %v, STOP WS!", err)
 					ws.Stop()
 					return
 				}
-				retryCounter = 0
 				timer.Reset(time.Minute * 20)
 			}
 		}

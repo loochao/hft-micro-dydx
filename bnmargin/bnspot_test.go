@@ -1,29 +1,12 @@
-package bnswap
+package bnmargin
 
 import (
 	"context"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
 	"strconv"
 	"testing"
-	"time"
 )
-
-func TestAPI_GetServerTime(t *testing.T) {
-	proxy := "socks5://127.0.0.1:1081"
-
-	api, err := NewAPI(&common.Credentials{}, proxy)
-	if err != nil {
-		t.Fatal(err)
-	}
-	tt, err := api.GetServerTime(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	diff := time.Now().UnixNano()/1000000 - tt.ServerTime
-	logger.Debugf("DIFF %v", diff)
-}
 
 func TestAPI_GetExchangeInfo(t *testing.T) {
 	proxy := "socks5://127.0.0.1:1080"
@@ -45,22 +28,23 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	multiplierDowns := make(map[string]float64)
 	minNotional := make(map[string]float64)
 	for _, symbol := range exchangeInfo.Symbols {
-		logger.Debugf("%s", symbol.ContractType)
-		if symbol.ContractType != "PERPETUAL" && symbol.Status != "TRADING" {
+		//logger.Debugf(symbol.Status)
+		if symbol.Status !=  "TRADING" {
 			continue
 		}
 		for _, filter := range symbol.Filters {
+			//logger.Debugf("%s", filter.FilterType)
 			switch filter.FilterType {
 			case "PRICE_FILTER":
 				tickSizes[symbol.Symbol] = filter.TickSize
-			case "MARKET_LOT_SIZE":
+			case "LOT_SIZE":
 				stepSizes[symbol.Symbol] = filter.StepSize
 				minSizes[symbol.Symbol] = filter.MinQty
 			case "PERCENT_PRICE":
 				multiplierUps[symbol.Symbol] = filter.MultiplierUp
 				multiplierDowns[symbol.Symbol] = filter.MultiplierDown
 			case "MIN_NOTIONAL":
-				minNotional[symbol.Symbol] = filter.Notional
+				minNotional[symbol.Symbol] = filter.MinNotional
 			}
 		}
 	}
@@ -79,7 +63,7 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
-	str += "var MinNotional = map[string]float64{\n"
+	str += "var MinNotionals = map[string]float64{\n"
 	for symbol, value := range minNotional {
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}

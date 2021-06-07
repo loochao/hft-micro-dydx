@@ -1,4 +1,4 @@
-package bnspot
+package bnmargin
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -129,7 +128,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
 						logSilentTime = time.Now().Add(time.Minute / 2)
 					}
 				}
-			} else {
+			}else{
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
 					logSilentTime = time.Now().Add(time.Minute / 2)
@@ -326,7 +325,6 @@ func NewUserWebsocket(
 	}
 	go func(ctx context.Context, ws *UserWebsocket, listenKey ListenKey) {
 		timer := time.NewTimer(time.Minute * 20)
-		retryCounter := 0
 		for {
 			select {
 			case <-ctx.Done():
@@ -344,16 +342,12 @@ func NewUserWebsocket(
 					&resp,
 				)
 				if err != nil {
-					if strings.Contains(err.Error(), "connection reset by peer") && retryCounter < 10 {
-						retryCounter++
-						timer.Reset(time.Second * 15)
-						continue
-					}
 					logger.Debugf("api.SendAuthenticatedHTTPRequest error %v", err)
 					ws.Stop()
 					return
+				//}else{
+				//	logger.Debugf("%v", resp)
 				}
-				retryCounter = 0
 				timer.Reset(time.Minute * 20)
 			}
 		}

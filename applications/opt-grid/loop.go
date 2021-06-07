@@ -31,9 +31,9 @@ func updateMakerNewOrders() {
 		makerPosition, okMakerPosition := mPositions[makerSymbol]
 
 		if !okDepth || !okMakerPosition {
-			if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
-				logger.Debugf("walkedDepth %v maker position %v %s", okDepth, okMakerPosition, makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
+			//	logger.Debugf("walkedDepth %v maker position %v %s", okDepth, okMakerPosition, makerSymbol)
+			//}
 			continue
 		}
 
@@ -52,15 +52,15 @@ func updateMakerNewOrders() {
 
 		//需要保证两边都有仓位更新，才调整现货仓位
 		if time.Now().Sub(mPositionsUpdateTimes[makerSymbol]) > mConfig.BalancePositionMaxAge {
-			if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
-				logger.Debugf("maker position too old %s", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
+			//	logger.Debugf("maker position too old %s", makerSymbol)
+			//}
 			continue
 		}
 		if time.Now().Sub(mOrderSilentTimes[makerSymbol]) < 0 {
-			if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
-				logger.Debugf("taker order silent %s", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
+				//logger.Debugf("taker order silent %s", makerSymbol)
+			//}
 			continue
 		}
 
@@ -99,15 +99,15 @@ func updateMakerNewOrders() {
 		}
 
 		if time.Now().Sub(mEnterSilentTimes[makerSymbol]) < 0 {
-			if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
-				logger.Debugf("maker enter silent %s", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
+			//	logger.Debugf("maker enter silent %s", makerSymbol)
+			//}
 			continue
 		}
 		if _, ok := mOpenOrders[makerSymbol]; ok {
-			if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
-				logger.Debugf("has open order %s", makerSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
+			//	logger.Debugf("has open order %s", makerSymbol)
+			//}
 			continue
 		}
 
@@ -174,7 +174,7 @@ func updateMakerNewOrders() {
 			mOpenOrders[makerSymbol] = order
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(mConfig.OrderSilent)
 			if !mConfig.DryRun {
-				logger.Debugf("ORDER %s BUY %s", order.Symbol, order.ClientID)
+				//logger.Debugf("ORDER %s BUY %s", order.Symbol, order.ClientID)
 				mOrderRequestChMap[makerSymbol] <- common.OrderRequest{New: &order}
 			}
 		} else if mConfig.TradeDir < 0 &&
@@ -234,7 +234,7 @@ func updateMakerNewOrders() {
 			mOpenOrders[makerSymbol] = order
 			mOrderSilentTimes[makerSymbol] = time.Now().Add(mConfig.OrderSilent)
 			if !mConfig.DryRun {
-				logger.Debugf("ORDER %s SELL %s", order.Symbol, order.ClientID)
+				//logger.Debugf("ORDER %s SELL %s", order.Symbol, order.ClientID)
 				mOrderRequestChMap[makerSymbol] <- common.OrderRequest{New: &order}
 			}
 		}

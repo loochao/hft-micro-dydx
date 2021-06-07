@@ -1,19 +1,19 @@
-package bnswap
+package bncoinfuture
 
 import (
 	"context"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"github.com/stretchr/testify/assert"
+	"os"
 	"strconv"
 	"testing"
 	"time"
 )
 
 func TestAPI_GetServerTime(t *testing.T) {
-	proxy := "socks5://127.0.0.1:1081"
-
-	api, err := NewAPI(&common.Credentials{}, proxy)
+	api, err := NewAPI(&common.Credentials{}, os.Getenv("BN_TEST_PROXY"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,9 +26,7 @@ func TestAPI_GetServerTime(t *testing.T) {
 }
 
 func TestAPI_GetExchangeInfo(t *testing.T) {
-	proxy := "socks5://127.0.0.1:1080"
-
-	api, err := NewAPI(&common.Credentials{}, proxy)
+	api, err := NewAPI(&common.Credentials{}, os.Getenv("BN_TEST_PROXY"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,10 +41,9 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	minSizes := make(map[string]float64)
 	multiplierUps := make(map[string]float64)
 	multiplierDowns := make(map[string]float64)
-	minNotional := make(map[string]float64)
 	for _, symbol := range exchangeInfo.Symbols {
-		logger.Debugf("%s", symbol.ContractType)
-		if symbol.ContractType != "PERPETUAL" && symbol.Status != "TRADING" {
+		logger.Debugf("%v", symbol)
+		if symbol.ContractStatus != "TRADING" {
 			continue
 		}
 		for _, filter := range symbol.Filters {
@@ -59,8 +56,6 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 			case "PERCENT_PRICE":
 				multiplierUps[symbol.Symbol] = filter.MultiplierUp
 				multiplierDowns[symbol.Symbol] = filter.MultiplierDown
-			case "MIN_NOTIONAL":
-				minNotional[symbol.Symbol] = filter.Notional
 			}
 		}
 	}
@@ -79,11 +74,6 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
-	str += "var MinNotional = map[string]float64{\n"
-	for symbol, value := range minNotional {
-		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
-	}
-	str += "}\n\n"
 	str += "var MultiplierUps = map[string]float64{\n"
 	for symbol, value := range multiplierUps {
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
@@ -95,4 +85,33 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	}
 	str += "}\n\n"
 	fmt.Printf("%s", str)
+}
+
+func TestAPI_GetPremiumIndex(t *testing.T) {
+	api, err := NewAPI(&common.Credentials{}, os.Getenv("BN_TEST_PROXY"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	indexes, err := api.GetPremiumIndex(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%v", indexes)
+}
+
+func TestAPI_GetKLines(t *testing.T) {
+	api, err := NewAPI(&common.Credentials{}, os.Getenv("BN_TEST_PROXY"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	klines, err := api.GetKLines(context.Background(), KlineParams{
+		Symbol: "LTCUSD_PERP",
+		Limit: 10,
+		Interval: KlineInterval1d,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 10, len(klines))
+	assert.Equal(t, time.Duration(0),time.Now().Truncate(time.Hour*24).Add(time.Hour*24).Sub(klines[len(klines)-1].Timestamp))
 }
