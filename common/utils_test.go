@@ -72,7 +72,7 @@ func BenchmarkStdLibParseFloat64(t *testing.B) {
 	}
 }
 
-func BenchmarkParseBinanceFloat(t *testing.B) {
+func BenchmarkParseFloat(t *testing.B) {
 	b := []byte("3.14159265")
 	t.ReportAllocs()
 	for n := 0; n < t.N; n++ {
@@ -457,6 +457,24 @@ func TestSelect(t *testing.T) {
 		default:
 			logger.Debugf("LOOP %d default", i)
 		}
+	}
+}
+
+
+func TestUnsafeBytesToString(t *testing.T) {
+	s := `{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060],[18.082,11060],[17.779,407]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,"timestamp":1618717277315},"subject":"level2","topic":"/contractMarket/level2Depth5:ATOMUSDTM","type":"message"}`
+	b := []byte(s)
+	ss := UnsafeBytesToString(b)
+	assert.Equal(t, s, ss)
+}
+
+func BenchmarkUnsafeBytesToString(t *testing.B) {
+	s := `{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060],[18.082,11060],[17.779,407]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,"timestamp":1618717277315},"subject":"level2","topic":"/contractMarket/level2Depth5:ATOMUSDTM","type":"message"}`
+	b := []byte(s)
+	t.ReportAllocs()
+	t.ResetTimer()
+	for n := 0; n < t.N; n++ {
+		_ = UnsafeBytesToString(b)
 	}
 }
 

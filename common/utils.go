@@ -13,6 +13,7 @@ import (
 	"hash"
 	"math"
 	"net/url"
+	"reflect"
 	"sort"
 	"strconv"
 	"time"
@@ -179,12 +180,7 @@ func ParseInt(s []byte) (int64, error) {
 			n += int64(c - '0')
 			continue
 		}
-		v, err := strconv.ParseInt(*(*string)(unsafe.Pointer(&s)), 10, 64)
-		if err != nil {
-			return 0, fmt.Errorf("ParseInt error bad byte %v @ %d in %s", s[i], i, s)
-		} else {
-			return v, nil
-		}
+		return strconv.ParseInt(UnsafeBytesToString(s), 10, 64)
 	}
 	if negative {
 		return -n, nil
@@ -268,3 +264,15 @@ func LCM(a, b int, integers ...int) int {
 
 	return result
 }
+
+func UnsafeBytesToString(b []byte) (s string) {
+	var length = len(b)
+	if length == 0 {
+		return ""
+	}
+	stringHeader := (*reflect.StringHeader)(unsafe.Pointer(&s))
+	stringHeader.Data = uintptr(unsafe.Pointer(&b[0]))
+	stringHeader.Len = length
+	return s
+}
+

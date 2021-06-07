@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"strconv"
 	"time"
 	"unsafe"
 )
@@ -147,7 +148,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 			}
 		case common.JsonKeyBids:
 			if bytes[offset] == ',' || bytes[offset] == ']' {
-				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
+				orderBook.Bids[counter/2][counter%2], err = common.ParseDecimal(bytes[collectStart:offset])
 				if err != nil {
 					return nil, fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
@@ -168,7 +169,7 @@ func ParseDepth5(bytes []byte) (*Depth5, error) {
 			break
 		case common.JsonKeyAsks:
 			if bytes[offset] == ',' || bytes[offset] == ']' {
-				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
+				orderBook.Asks[counter/2][counter%2], err = common.ParseDecimal(bytes[collectStart:offset])
 				if err != nil {
 					return nil, fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
@@ -386,4 +387,132 @@ func FundingRateLoop(
 			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
 		}
 	}
+}
+
+func ParseDepth5JsonWalker(data []byte) (*Depth5, error) {
+	var err error
+	orderBook := Depth5{
+		Bids:      [5][2]float64{},
+		Asks:      [5][2]float64{},
+		ParseTime: time.Now(),
+	}
+	walker := common.NewJsonWalker(data)
+	if !walker.Advance(16) {
+		return nil, fmt.Errorf("bad bytes %s", data)
+	}
+	walker.ResetStart()
+	if !walker.Advance(3) {
+		return nil, fmt.Errorf("bad bytes %s", data)
+	}
+	if walker.CollectString() != "ce\"" {
+		return nil, fmt.Errorf("bad bytes %s", data)
+	}
+	if !walker.Advance(17) {
+		return nil, fmt.Errorf("bad bytes %s", data)
+	}
+	walker.ResetStart()
+	counter := 0
+	currentKey := common.JsonKeyLastUpdateId
+	for walker.Advance(1) && walker.End() < walker.Len()-6 {
+		switch currentKey {
+		case common.JsonKeyLastUpdateId:
+			if walker.Get(0) == ',' {
+				orderBook.Sequence, err = common.ParseInt(walker.Collect())
+				if err != nil {
+					return nil, fmt.Errorf("JsonKeyLastUpdateId error %v mainLoop %d end %d %s", err, walker.Start(), walker.End(), walker.Collect())
+				}
+				if walker.Get(4) != 'k' && walker.Get(5) != 's' && walker.Get(6) != '"' {
+					return nil, fmt.Errorf("bad bytes %s", data)
+				}
+				currentKey = common.JsonKeyAsks
+				if !walker.Advance(10) {
+					return nil, fmt.Errorf("bad bytes %s", data)
+				}
+				walker.ResetStart()
+			}
+		case common.JsonKeyBids:
+			if walker.Get(0) == ',' || walker.Get(0) == ']' {
+				orderBook.Bids[counter/2][counter%2], err = common.ParseDecimal(walker.Collect())
+				if err != nil {
+					return nil, fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, walker.Start(), walker.End(), walker.Collect())
+				}
+				counter += 1
+				if counter >= 10 || walker.Get(1) == ']' {
+					currentKey = common.JsonKeyEventTime
+					if !walker.Advance(8) {
+						return nil, fmt.Errorf("bad bytes %s", data)
+					}
+					walker.ResetStart()
+				} else if counter%2 == 0 {
+					if !walker.Advance(3) {
+						return nil, fmt.Errorf("bad bytes %s", data)
+					}
+					walker.ResetStart()
+				} else {
+					if !walker.Advance(1) {
+						return nil, fmt.Errorf("bad bytes %s", data)
+					}
+					walker.ResetStart()
+				}
+				continue
+			}
+			break
+		case common.JsonKeyAsks:
+			if walker.Get(0) == ',' || walker.Get(0) == ']' {
+				orderBook.Asks[counter/2][counter%2], err = common.ParseDecimal(walker.Collect())
+				if err != nil {
+					return nil, fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, walker.Start(), walker.End(), walker.Collect())
+				}
+				counter += 1
+				if counter >= 10 || walker.Get(1) == ']' {
+					currentKey = common.JsonKeyBids
+					if !walker.Advance(12) {
+						return nil, fmt.Errorf("bad bytes %s", data)
+					}
+					walker.ResetStart()
+					counter = 0
+				} else if counter%2 == 0 {
+					if !walker.Advance(3) {
+						return nil, fmt.Errorf("bad bytes %s", data)
+					}
+					walker.ResetStart()
+				} else {
+					if !walker.Advance(1) {
+						return nil, fmt.Errorf("bad bytes %s", data)
+					}
+					walker.ResetStart()
+				}
+				continue
+			}
+			break
+		case common.JsonKeyEventTime:
+			if !walker.Advance(13) {
+				return nil, fmt.Errorf("bad bytes %s", data)
+			}
+			walker.ResetStart()
+			timestamp, err := strconv.ParseInt(common.UnsafeBytesToString(walker.Collect()), 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("JsonKeyEventTime error %v mainLoop %d end %d %s", err, walker.Start(), walker.End(), walker.Collect())
+			}
+			orderBook.EventTime = time.Unix(0, timestamp*1000000)
+			if !walker.Advance(85) {
+				return nil, fmt.Errorf("bad bytes %s", data)
+			}
+			walker.ResetStart()
+			if !walker.Advance(6) {
+				return nil, fmt.Errorf("bad bytes %s", data)
+			}
+			currentKey = common.JsonKeySymbol
+			continue
+		case common.JsonKeySymbol:
+			if walker.Get(0) == '"' {
+				orderBook.Symbol = common.UnsafeBytesToString(walker.Collect())
+				walker.Advance(walker.Len())
+				//在此退出
+				continue
+			}
+			break
+		}
+	}
+	return &orderBook, nil
 }
