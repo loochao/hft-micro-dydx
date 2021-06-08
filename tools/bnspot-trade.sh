@@ -14,5 +14,5 @@ chmod 755 "./dist/hft-recorder-bnspot-trade.$dt"
 
 echo "data01"
 rsync -avx --progress "./dist/hft-recorder-bnspot-trade.$dt" ir:/mnt/d1/data-tmp/bin/
-rsync ir "rsync -avx --progress /mnt/d1/data-tmp/bin/hft-recorder-bnspot-trade.$dt data01:/usr/local/bin/"
+ssh ir "rsync -avx --progress /mnt/d1/data-tmp/bin/hft-recorder-bnspot-trade.$dt data01:/usr/local/bin/"
 
