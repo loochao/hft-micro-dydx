@@ -54,7 +54,10 @@ func (w *Depth20RoutedWebsocket) readLoop(conn *websocket.Conn, symbols []string
 		if len(msg) < 128 {
 			continue
 		}
-		if msg[18] == '@' {
+		if msg[17] == '@' {
+			symbolBytes = msg[11:17]
+			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
+		}else if msg[18] == '@' {
 			symbolBytes = msg[11:18]
 			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
 		} else if msg[19] == '@' {
