@@ -23,16 +23,16 @@ type Config struct {
 	RequestInterval       time.Duration `yaml:"requestInterval"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
 
-	DepthTimeDeltaMax   time.Duration     `yaml:"depthTimeDeltaMax"`
-	DepthTimeDeltaMin   time.Duration     `yaml:"depthTimeDeltaMin"`
-	DepthMakerDecay     float64           `yaml:"depthMakerDecay"`
-	DepthMakerBias      time.Duration     `yaml:"depthMakerBias"`
-	BatchSize           int               `yaml:"depthBatchSize"`
-	DepthMakerImpact    float64           `yaml:"depthMakerImpact"`
-	DepthTakerImpact    float64           `yaml:"depthTakerImpact"`
-	DepthTimeToLive     time.Duration     `yaml:"depthTimeToLive"`
+	DepthTimeDeltaMax time.Duration `yaml:"depthTimeDeltaMax"`
+	DepthTimeDeltaMin time.Duration `yaml:"depthTimeDeltaMin"`
+	DepthMakerDecay   float64       `yaml:"depthMakerDecay"`
+	DepthMakerBias    time.Duration `yaml:"depthMakerBias"`
+	BatchSize         int           `yaml:"depthBatchSize"`
+	DepthMakerImpact  float64       `yaml:"depthMakerImpact"`
+	DepthTakerImpact  float64       `yaml:"depthTakerImpact"`
+	DepthTimeToLive   time.Duration `yaml:"depthTimeToLive"`
 
-	TradeDir           int          `yaml:"tradeDir"`
+	TradeDir int `yaml:"tradeDir"`
 
 	StartValue        float64            `yaml:"startValue"`
 	EnterFreePct      float64            `yaml:"enterFreePct"`
@@ -40,15 +40,19 @@ type Config struct {
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
 	StartValues       map[string]float64 `yaml:"startValues"`
 
-	OrderTimeout  time.Duration `yaml:"orderTimeout"`
-	OrderSilent   time.Duration `yaml:"orderSilent"`
-	CancelSilent  time.Duration `yaml:"cancelSilent"`
-	EnterSilent   time.Duration `yaml:"enterSilent"`
-	RestartSilent time.Duration `yaml:"restartSilent"`
-	HttpSilent    time.Duration `yaml:"httpSilent"`
-	TurnoverLookback time.Duration `yaml:"turnoverLookback"`
+	OrderTimeout            time.Duration `yaml:"orderTimeout"`
+	OrderSilent             time.Duration `yaml:"orderSilent"`
+	CancelSilent            time.Duration `yaml:"cancelSilent"`
+	EnterSilent             time.Duration `yaml:"enterSilent"`
+	RestartSilent           time.Duration `yaml:"restartSilent"`
+	HttpSilent              time.Duration `yaml:"httpSilent"`
+	TurnoverLookback        time.Duration `yaml:"turnoverLookback"`
+	EnterTriggerFilterRatio time.Duration `yaml:"enterTriggerFilterRatio"`
+	EnterTriggerDelay       time.Duration `yaml:"enterTriggerDelay"`
+	EnterDuration           time.Duration `yaml:"enterDuration"`
+	ReportCount             int           `yaml:"reportCount"`
 
-	MakerOrderOffsets   map[string]string `yaml:"makerOrderOffsets"`
+	MakerOrderOffsets map[string]string `yaml:"makerOrderOffsets"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -99,6 +103,6 @@ func (config *Config) SetDefaultIfNotSet() {
 		config.DepthTimeToLive = time.Second * 3
 	}
 	if config.TurnoverLookback == 0 {
-		config.TurnoverLookback = time.Hour*24
+		config.TurnoverLookback = time.Hour * 24
 	}
 }

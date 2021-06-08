@@ -49,6 +49,9 @@ var mConfig *Config
 var mExchange common.Exchange
 var mTimedPositionChange *common.TimedSum
 
+var mFilterReports = make(map[string]common.TimeReport)
+var mFilterReportCh = make(chan common.TimeReport, 10000)
+var mEnterTriggerTimes = make(map[string]time.Time)
 
 func init() {
 
@@ -100,6 +103,7 @@ func init() {
 		mEnterSilentTimes[makerSymbol] = time.Now()
 		mPositionsUpdateTimes[makerSymbol] = time.Unix(0, 0)
 		mCancelSilentTimes[makerSymbol] = time.Now()
+		mEnterTriggerTimes[makerSymbol] = time.Unix(0, 0)
 	}
 	mConfig.MakerExchange.Symbols = mSymbols
 	mTimedPositionChange = common.NewTimedSum(mConfig.TurnoverLookback)
