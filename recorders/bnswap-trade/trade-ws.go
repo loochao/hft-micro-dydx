@@ -51,10 +51,14 @@ func (w *Depth20RoutedWebsocket) readLoop(conn *websocket.Conn, symbols []string
 			return
 		}
 		//{"stream":"btcusdt@trade","data":{"e":"trade","E":1620011599983,"s":"BTCUSDT","t":804764023,"p":"58095.95000000","q":"0.02123000","b":5757184069,"a":5757184083,"T":1620011599982,"m":true,"M":true}}
+		//{"stream":"scusdt@trade","data":{"e":"trade","E":1623166064549,"s":"SCUSDT","t":17318895,"p":"0.01451000","q":"1614.00000000","b":174967945,"a":174967958,"T":1623166064548,"m":true,"M":true}}
 		if len(msg) < 128 {
 			continue
 		}
-		if msg[18] == '@' {
+		if msg[17] == '@' {
+			symbolBytes = msg[11:17]
+			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
+		}else if msg[18] == '@' {
 			symbolBytes = msg[11:18]
 			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
 		} else if msg[19] == '@' {
