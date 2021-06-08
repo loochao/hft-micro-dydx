@@ -11,9 +11,9 @@ type Logger log.Logger
 func getLogger(prefix string) *log.Logger{
 	isProduction := os.Getenv("PRODUCTION") != ""
 	if	isProduction {
-		return log.New(os.Stderr, prefix, log.Lshortfile)
+		return log.New(os.Stdout, prefix, log.Lshortfile)
 	}else{
-		return log.New(os.Stderr, prefix, log.Lshortfile | log.LstdFlags | log.Lmicroseconds)
+		return log.New(os.Stdout, prefix, log.Lshortfile | log.LstdFlags | log.Lmicroseconds)
 	}
 }
 
