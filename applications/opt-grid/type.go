@@ -43,3 +43,7 @@ func NewOffset(msg string) (Offset, error) {
 	}, nil
 }
 
+type FilterRatio struct {
+	Symbol string
+	Value  float64
+}

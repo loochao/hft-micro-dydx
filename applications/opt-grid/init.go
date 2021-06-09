@@ -49,13 +49,13 @@ var mConfig *Config
 var mExchange common.Exchange
 var mTimedPositionChange *common.TimedSum
 
-var mFilterReports = make(map[string]common.TimeReport)
-var mFilterReportCh = make(chan common.TimeReport, 10000)
+var mFilterRatios = make(map[string]FilterRatio)
+var mFilterRatioCh = make(chan FilterRatio, 10000)
 var mEnterTriggerTimes = make(map[string]time.Time)
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210607 12:26:43  ####")
+	logger.Debug("####  BUILD @ 20210609 14:56:16  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

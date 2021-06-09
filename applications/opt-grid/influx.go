@@ -21,11 +21,15 @@ func handleInternalSave() {
 			fields["makerSize"] = makerPosition.GetSize()
 			makerValue := makerPosition.GetSize() * makerPosition.GetPrice()
 			fields["makerValue"] = makerValue
+			fields["makerPrice"] = makerPosition.GetPrice()
 			if spread, ok := mWalkedDepths[makerSymbol]; ok {
 				if makerPosition.GetPrice() != 0 {
 					makerURPnl += makerPosition.GetSize() * (spread.MidPrice - makerPosition.GetPrice())
 				}
 			}
+		}
+		if filterRatio, ok := mFilterRatios[makerSymbol]; ok {
+			fields["filterRatio"] = filterRatio.Value
 		}
 		if depth, ok := mWalkedDepths[makerSymbol]; ok {
 
@@ -66,7 +70,7 @@ func handleInternalSave() {
 		fields["totalBalance"] = totalBalance
 		fields["makerBalance"] = mAccount.GetBalance()
 		fields["netWorth"] = netWorth
-		fields["turnover"] = mTimedPositionChange.Sum()/totalBalance
+		fields["turnover"] = mTimedPositionChange.Sum() / totalBalance
 		fields["startValue"] = mConfig.StartValue
 		fields["netWorth"] = netWorth
 		fields["makerAvailable"] = mAccount.GetFree()

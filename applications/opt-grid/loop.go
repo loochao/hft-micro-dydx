@@ -59,7 +59,7 @@ func updateMakerNewOrders() {
 		}
 		if time.Now().Sub(mOrderSilentTimes[makerSymbol]) < 0 {
 			//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
-				//logger.Debugf("taker order silent %s", makerSymbol)
+			//logger.Debugf("taker order silent %s", makerSymbol)
 			//}
 			continue
 		}
@@ -114,6 +114,11 @@ func updateMakerNewOrders() {
 		//if time.Now().Sub(time.Now().Truncate(mConfig.LogInterval)) < mConfig.LoopInterval {
 		//	logger.Debugf("loop %s", makerSymbol)
 		//}
+
+		triggerTime, ok := mEnterTriggerTimes[makerSymbol]
+		if !ok || time.Now().Sub(triggerTime) > mConfig.EnterDuration || time.Now().Sub(triggerTime) < mConfig.EnterTriggerDelay {
+			continue
+		}
 
 		buyPrice := math.Floor(walkedDepth.MakerBid*(1.0+offset.Bot)/makerTickSize) * makerTickSize
 		sellPrice := math.Ceil(walkedDepth.MakerAsk*(1.0+offset.Top)/makerTickSize) * makerTickSize

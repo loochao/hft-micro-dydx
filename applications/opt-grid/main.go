@@ -146,8 +146,10 @@ func main() {
 			mConfig.DepthMakerBias,
 			mConfig.DepthTimeDeltaMin,
 			mConfig.DepthTimeDeltaMax,
+			mConfig.ReportCount,
 			makerDepthChMap[makerSymbol],
 			wakedDepthCh,
+			mFilterRatioCh,
 		)
 	}
 
@@ -207,7 +209,7 @@ func main() {
 						}
 						if nextPos.GetSize() != 0 {
 							mEnterSilentTimes[nextPos.GetSymbol()] = time.Now().Add(mConfig.EnterSilent)
-						}else{
+						} else {
 							mEnterSilentTimes[nextPos.GetSymbol()] = time.Now()
 						}
 					}
@@ -271,7 +273,11 @@ func main() {
 				mOrderSilentTimes[makerNewError.New.Symbol] = time.Now().Add(mConfig.OrderSilent)
 			}
 			break
-
+		case report := <-mFilterRatioCh:
+			mFilterRatios[report.Symbol] = report
+			if report.Value > mConfig.EnterTriggerFilterRatio {
+				mEnterTriggerTimes[report.Symbol] = time.Now()
+			}
 		case <-mLoopTimer.C:
 			if mSystemStatus == common.SystemStatusReady {
 				updateMakerOldOrders()

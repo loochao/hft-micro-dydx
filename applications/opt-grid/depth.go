@@ -14,9 +14,10 @@ func walkMakerDepth(
 	makerDecay float64,
 	makerBias time.Duration,
 	minTimeDelta, maxTimeDelta time.Duration,
+	reportCount int,
 	makerDepthCh chan common.Depth,
 	depthOutputCh chan *common.WalkedMakerTakerDepth,
-	reportOutputCh chan common.TimeReport,
+	reportOutputCh chan FilterRatio,
 ) {
 	var err error
 	var makerDepth, newMakerDepth common.Depth
@@ -25,11 +26,10 @@ func walkMakerDepth(
 	var minTimeDeltaInMs = float64(minTimeDelta / time.Millisecond)
 	var maxTimeDeltaInMs = float64(maxTimeDelta / time.Millisecond)
 	var makerDepthFilter = common.NewDepthFilter(makerDecay, makerBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
-	var reportOutputTimer = time.NewTimer(time.Minute)
-	var reportCount = 1000
 	logSilentTime := time.Now()
 	makerWalkDepthTimer := time.NewTimer(time.Hour * 999)
 	expectedChanSendingTime := time.Nanosecond * 300
+	counter := 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -59,20 +59,27 @@ func walkMakerDepth(
 				break
 			}
 			makerDepth = newMakerDepth
+			counter++
 			if !makerDepthFilter.Filter(makerDepth) {
 				makerWalkDepthTimer.Reset(expectedChanSendingTime)
 			}
-			break
-		case <-reportOutputTimer.C:
-			makerDepthFilter.GenerateReport()
-			select {
-			case reportOutputCh <- makerDepthFilter.Report:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("reportOutputCh <- makerDepthFilter.Report failed, ch len %s %d", makerSymbol, len(reportOutputCh))
-					logSilentTime = time.Now().Add(time.Minute)
+			if counter > reportCount {
+				makerDepthFilter.GenerateReport()
+				select {
+				case reportOutputCh <-  FilterRatio{
+					Symbol: makerSymbol,
+					Value:  makerDepthFilter.Report.FilterRatio,
+				}:
+					counter = 0
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("reportOutputCh <-  FilterRatio{ failed, ch len %s %d", makerSymbol, len(reportOutputCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 			}
+			break
+
 		}
 	}
 }
