@@ -14,5 +14,5 @@ git push origin master
 
 chmod 755 "./dist/hft-recorder-bnswap-depth20.$dt"
 
-echo "tokyo1"
-rsync -avx --progress "./dist/hft-recorder-bnswap-depth20.$dt" tokyo1:/usr/local/bin/
+echo "hk01"
+rsync -avx --progress "./dist/hft-recorder-bnswap-depth20.$dt" hk01:/usr/local/bin/

@@ -29,6 +29,7 @@ func (kp *KlineParams) ToUrlValues() url.Values {
 	return values
 }
 
+
 type ChangePositionModeParam struct {
 	DualSidePosition bool
 }
