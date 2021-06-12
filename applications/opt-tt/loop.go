@@ -43,7 +43,7 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 		}
 	}
 
-	logger.Debugf("updateYPositions %s size %f position %f -> %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize)
+	//logger.Debugf("updateYPositions %s size %f position %f -> %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize)
 
 	reduceOnly := false
 	if ySizeDiff*yPosition.GetSize() < 0 && math.Abs(ySizeDiff) <= math.Abs(yPosition.GetSize()) {
@@ -62,7 +62,6 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 		ReduceOnly: reduceOnly,
 		ClientID:   yExchange.GenerateClientID(),
 	}
-	logger.Debugf("y order %v", yOrder)
 	if !xyConfig.DryRun {
 		select {
 		case yOrderRequestChMap[ySymbol] <- common.OrderRequest{
@@ -145,7 +144,7 @@ func hedgeXSymbol(xSymbol, ySymbol string) {
 		}
 	}
 
-	logger.Debugf("updateXPositions %s size %f position %f -> %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize)
+	//logger.Debugf("updateXPositions %s size %f position %f -> %f", xSymbol, xSizeDiff, xPosition.GetSize(), xTargetSize)
 
 	reduceOnly := false
 	if xSizeDiff*xPosition.GetSize() < 0 && math.Abs(xSizeDiff) <= math.Abs(xPosition.GetSize()) {
@@ -164,7 +163,6 @@ func hedgeXSymbol(xSymbol, ySymbol string) {
 		ReduceOnly: reduceOnly,
 		ClientID:   xExchange.GenerateClientID(),
 	}
-	logger.Debugf("x order %v", yOrder)
 	if !xyConfig.DryRun {
 		select {
 		case xOrderRequestChMap[xSymbol] <- common.OrderRequest{

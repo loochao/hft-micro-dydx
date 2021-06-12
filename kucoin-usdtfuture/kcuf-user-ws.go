@@ -164,7 +164,6 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 					logger.Debugf("Unmarshal wsOrder error %v %s", err, msg)
 					continue
 				}
-				logger.Debugf("%v", order)
 				select {
 				case <-ctx.Done():
 					return
