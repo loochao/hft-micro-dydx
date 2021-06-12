@@ -145,9 +145,9 @@ func watchMakerTakerSpread(
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						if makerRawDepth == nil {
-							logger.Debugf("maker common.WalkMakerTakerDepth20 error %v %s", err, makerSymbol)
+							logger.Debugf("maker common.WalkMakerTakerDepth error %v %s", err, makerSymbol)
 						} else {
-							logger.Debugf("maker common.WalkMakerTakerDepth20 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
+							logger.Debugf("maker common.WalkMakerTakerDepth error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
 						}
 						logSilentTime = time.Now().Add(time.Minute)
 					}

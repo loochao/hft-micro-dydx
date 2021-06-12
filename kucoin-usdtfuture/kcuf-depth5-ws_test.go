@@ -3,6 +3,7 @@ package kucoin_usdtfuture
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"log"
 	"os"
 	"testing"
@@ -23,11 +24,11 @@ func TestNewDepth5WS(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//symbols := []string{"XBTUSDTM", "ATOMUSDTM", "WAVESUSDTM"}
-	symbols := make([]string, 0)
-	for symbol := range TickSizes {
-		symbols = append(symbols, symbol)
-	}
+	symbols := []string{"XBTUSDTM", "ATOMUSDTM", "WAVESUSDTM"}
+	//symbols := make([]string, 0)
+	//for symbol := range TickSizes {
+	//	symbols = append(symbols, symbol)
+	//}
 	channels := make(map[string]chan common.Depth)
 	outputCh := make(chan common.Depth, 128)
 	for _, symbol := range symbols {
@@ -41,8 +42,7 @@ func TestNewDepth5WS(t *testing.T) {
 	for {
 		select {
 		case d := <-outputCh:
-			_ = d
-			//logger.Debugf("%s %v", d.GetSymbol(), d.GetTime())
+			logger.Debugf("%s %v", d.GetSymbol(), d.GetTime())
 		}
 	}
 }

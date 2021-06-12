@@ -12,6 +12,10 @@ import (
 
 func handleSave() {
 
+	if xyConfig.InternalInflux.Address == "" {
+		return
+	}
+
 	entryTarget := 0.0
 	if xAccount != nil && yAccount != nil {
 		entryStep := (xAccount.GetFree() + yAccount.GetFree()) * xyConfig.EnterFreePct
@@ -239,6 +243,10 @@ func reportsSaveLoop(
 			spreadReports[spreadReport.XSymbol] = spreadReport
 			break
 		case <-saveTimer.C:
+			if influxConfig.Address == "" {
+				saveTimer.Reset(influxConfig.SaveInterval)
+				break
+			}
 			for _, report := range spreadReports {
 				fields := make(map[string]interface{})
 				fields["matchRatio"] = report.MatchRatio

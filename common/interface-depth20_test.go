@@ -32,7 +32,7 @@ package common
 //		depth20.Asks[i][1] = 1
 //	}
 //
-//	wd, _ := WalkMakerTakerDepth20(depth20, 21, 21)
+//	wd, _ := WalkMakerTakerDepth(depth20, 21, 21)
 //
 //	assert.Equal(t, 20./20.+1./19., wd.MakerBidSize)
 //	assert.Equal(t, math.Floor(21./(20./20.+1./19.)*1000), math.Floor(wd.MakerBid*1000))
@@ -50,7 +50,7 @@ package common
 //	assert.Equal(t, math.Floor(21.*1000), math.Floor(wd.TakerAsk*1000))
 //	assert.Equal(t, 21., wd.TakerFarAsk)
 //
-//	wd, _= WalkMakerTakerDepth20(depth20, 40, 20)
+//	wd, _= WalkMakerTakerDepth(depth20, 40, 20)
 //	assert.Equal(t, 20./20.+19./19.+1./18., wd.MakerBidSize)
 //	assert.Equal(t, math.Floor(40./(20./20.+19./19.+1./18.)*1000), math.Floor(wd.MakerBid*1000))
 //	assert.Equal(t, 18., wd.MakerFarBid)
@@ -59,7 +59,7 @@ package common
 //	assert.Equal(t, 20., wd.TakerBid)
 //	assert.Equal(t, 20., wd.TakerFarBid)
 //
-//	wd, _ = WalkMakerTakerDepth20(depth20, 1., 2000000)
+//	wd, _ = WalkMakerTakerDepth(depth20, 1., 2000000)
 //	assert.Equal(t, 1./20.0, wd.MakerBidSize)
 //	assert.Equal(t, 20., wd.MakerBid)
 //

@@ -77,33 +77,37 @@ func main() {
 	}
 	logger.Debugf("merged step sizes: %v", xyStepSizes)
 
-	xyInfluxWriter, err = common.NewInfluxWriter(
-		xyGlobalCtx,
-		xyConfig.InternalInflux.Address,
-		xyConfig.InternalInflux.Username,
-		xyConfig.InternalInflux.Password,
-		xyConfig.InternalInflux.Database,
-		xyConfig.InternalInflux.BatchSize,
-	)
-	if err != nil {
-		logger.Debugf("common.NewInfluxWriter error %v", err)
-		return
+	if xyConfig.InternalInflux.Address != "" {
+		xyInfluxWriter, err = common.NewInfluxWriter(
+			xyGlobalCtx,
+			xyConfig.InternalInflux.Address,
+			xyConfig.InternalInflux.Username,
+			xyConfig.InternalInflux.Password,
+			xyConfig.InternalInflux.Database,
+			xyConfig.InternalInflux.BatchSize,
+		)
+		if err != nil {
+			logger.Debugf("common.NewInfluxWriter error %v", err)
+			return
+		}
+		defer xyInfluxWriter.Stop()
 	}
-	defer xyInfluxWriter.Stop()
 
-	xyExternalInfluxWriter, err = common.NewInfluxWriter(
-		xyGlobalCtx,
-		xyConfig.ExternalInflux.Address,
-		xyConfig.ExternalInflux.Username,
-		xyConfig.ExternalInflux.Password,
-		xyConfig.ExternalInflux.Database,
-		xyConfig.ExternalInflux.BatchSize,
-	)
-	if err != nil {
-		logger.Debugf("common.NewInfluxWriter error %v", err)
-		return
+	if xyConfig.ExternalInflux.Address != "" {
+		xyExternalInfluxWriter, err = common.NewInfluxWriter(
+			xyGlobalCtx,
+			xyConfig.ExternalInflux.Address,
+			xyConfig.ExternalInflux.Username,
+			xyConfig.ExternalInflux.Password,
+			xyConfig.ExternalInflux.Database,
+			xyConfig.ExternalInflux.BatchSize,
+		)
+		if err != nil {
+			logger.Debugf("common.NewInfluxWriter error %v", err)
+			return
+		}
+		defer xyExternalInfluxWriter.Stop()
 	}
-	defer xyExternalInfluxWriter.Stop()
 
 	influxSaveTimer := time.NewTimer(
 		time.Now().Truncate(
@@ -202,6 +206,7 @@ func main() {
 		xyConfig.InternalInflux,
 		spreadReportCh,
 	)
+
 
 	spreadCh := make(chan *XYSpread, len(xSymbols)*100)
 	for xSymbol, ySymbol := range xyConfig.XYPairs {

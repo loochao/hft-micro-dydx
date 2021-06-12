@@ -42,9 +42,9 @@ func StreamWalkedDepth(
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						if takerRawDepth == nil {
-							logger.Debugf("common.WalkMakerTakerDepth20 error %v %s", err, symbol)
+							logger.Debugf("common.WalkMakerTakerDepth error %v %s", err, symbol)
 						} else {
-							logger.Debugf("common.WalkMakerTakerDepth20 error %v %s %s", err, symbol, takerRawDepth.Depth)
+							logger.Debugf("common.WalkMakerTakerDepth error %v %s %s", err, symbol, takerRawDepth.Depth)
 						}
 						logSilentTime = time.Now().Add(time.Minute)
 					}

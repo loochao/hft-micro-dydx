@@ -165,7 +165,7 @@ func watchMakerTakerSpread(
 			break
 		case <-makerWalkDepthTimer.C:
 			if makerDepth != nil {
-				makerWalkedDepth, err = common.WalkMakerTakerDepth20(makerDepth, makerImpact, takerImpact)
+				makerWalkedDepth, err = common.WalkMakerTakerDepth(makerDepth, makerImpact, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("common.WalkMakerTakerDepth5 error %v %s", err, makerSymbol)
@@ -178,7 +178,7 @@ func watchMakerTakerSpread(
 			break
 		case <-takerWalkDepthTimer.C:
 			if takerDepth != nil {
-				takerWalkedDepth, err = common.WalkMakerTakerDepth20(takerDepth, makerImpact, takerImpact)
+				takerWalkedDepth, err = common.WalkMakerTakerDepth(takerDepth, makerImpact, takerImpact)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("common.WalkMakerTakerDepth5 error %v %s", err, takerSymbol)

@@ -110,11 +110,11 @@ func (s *SpreadReport) ToString() string {
 	)
 }
 
-func WalkMakerTakerDepth20(depth20 Depth, makerImpact, takerImpact float64) (*WalkedMakerTakerDepth, error) {
+func WalkMakerTakerDepth(depth Depth, makerImpact, takerImpact float64) (*WalkedMakerTakerDepth, error) {
 
 	wd, hasMakerData, hasTakerData := &WalkedMakerTakerDepth{
-		Symbol:       depth20.GetSymbol(),
-		Time:         depth20.GetTime(),
+		Symbol:       depth.GetSymbol(),
+		Time:         depth.GetTime(),
 		TakerAsk:     0,
 		TakerBid:     0,
 		MakerAsk:     0,
@@ -125,7 +125,7 @@ func WalkMakerTakerDepth20(depth20 Depth, makerImpact, takerImpact float64) (*Wa
 		MakerBidSize: 0,
 	}, false, false
 
-	bids := depth20.GetBids()
+	bids := depth.GetBids()
 	bidLen := len(bids)
 	if bidLen > 20 {
 		bidLen = 20
@@ -160,14 +160,14 @@ func WalkMakerTakerDepth20(depth20 Depth, makerImpact, takerImpact float64) (*Wa
 		}
 	}
 	if wd.TakerBidSize == 0 || wd.MakerBidSize == 0 {
-		return nil, fmt.Errorf("bad depth bids %v", depth20.GetBids())
+		return nil, fmt.Errorf("bad depth bids %v", depth.GetBids())
 	}
 	wd.TakerBid /= wd.TakerBidSize
 	wd.MakerBid /= wd.MakerBidSize
 
 	hasMakerData = false
 	hasTakerData = false
-	asks := depth20.GetAsks()
+	asks := depth.GetAsks()
 	askLen := len(asks)
 	if askLen > 20 {
 		askLen = 20
@@ -202,13 +202,13 @@ func WalkMakerTakerDepth20(depth20 Depth, makerImpact, takerImpact float64) (*Wa
 		}
 	}
 	if wd.TakerAskSize == 0 || wd.MakerAskSize == 0 {
-		return nil, fmt.Errorf("bad depth ask %v", depth20.GetAsks())
+		return nil, fmt.Errorf("bad depth ask %v", depth.GetAsks())
 	}
 	wd.TakerAsk /= wd.TakerAskSize
 	wd.MakerAsk /= wd.MakerAskSize
-	wd.MidPrice = (depth20.GetBids()[0][0] + depth20.GetAsks()[0][0]) * 0.5
-	wd.BestBidPrice = depth20.GetBids()[0][0]
-	wd.BestAskPrice = depth20.GetAsks()[0][0]
+	wd.MidPrice = (depth.GetBids()[0][0] + depth.GetAsks()[0][0]) * 0.5
+	wd.BestBidPrice = depth.GetBids()[0][0]
+	wd.BestAskPrice = depth.GetAsks()[0][0]
 	return wd, nil
 }
 

@@ -26,7 +26,7 @@ func TestNewDepth20Ws(t *testing.T) {
 		case <-ws.Done():
 			return
 		case depth20 := <-ch:
-			wd, _ := common.WalkMakerTakerDepth20(depth20, 1000.0, 10000.0)
+			wd, _ := common.WalkMakerTakerDepth(depth20, 1000.0, 10000.0)
 			//_ = depth20
 			logger.Debugf("%v", wd)
 			assert.GreaterOrEqual(t, wd.TakerFarAsk, wd.MakerFarAsk)
