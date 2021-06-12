@@ -71,10 +71,10 @@ func watchXYSpread(
 			}
 			if adjustedAgeDiff > maxAgeDiffBias {
 				yExpireCount++
-				logger.Debugf("%s x expire y %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
+				logger.Debugf("%s x expire y %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 				break
 			} else if adjustedAgeDiff < -maxAgeDiffBias {
-				logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
+				logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 				xExpireCount++
 				break
 			}
@@ -155,11 +155,11 @@ func watchXYSpread(
 				if adjustedAgeDiff > maxAgeDiffBias {
 					//taker已经过期
 					yExpireCount++
-					logger.Debugf("%s x expire y %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
+					logger.Debugf("%s x expire y %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 				} else if adjustedAgeDiff < -maxAgeDiffBias {
 					//maker已经过期
 					xExpireCount++
-					logger.Debugf("%s y expire x %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
+					logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 				} else if adjustedAgeDiff < -maxAgeDiffBias {
 				} else {
 					xWalkDepthTimer.Reset(expectedChanSendingTime)
@@ -205,10 +205,10 @@ func watchXYSpread(
 				adjustedAgeDiff = xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
 				if adjustedAgeDiff < -maxAgeDiffBias {
 					//maker已经过期
-					logger.Debugf("%s y expire x %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
+					logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 					xExpireCount++
 				} else if adjustedAgeDiff > maxAgeDiffBias {
-					logger.Debugf("%s x expire y %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
+					logger.Debugf("%s x expire y %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 					//taker已经过期
 					yExpireCount++
 				} else {
