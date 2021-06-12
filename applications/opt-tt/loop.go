@@ -73,6 +73,9 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 		default:
 			logger.Debugf("yOrderRequestChMap[ySymbol] <- common.OrderRequest %s failed, ch len %d", ySymbol, len(yOrderRequestChMap[ySymbol]))
 		}
+	}else{
+		yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.OrderSilent)
+		yPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
 	}
 	return math.Abs(ySizeDiff * yDepth.MidPrice)
 }
@@ -172,6 +175,9 @@ func hedgeXSymbol(xSymbol, ySymbol string) {
 		default:
 			logger.Debugf("xOrderRequestChMap[xSymbol] <- common.OrderRequest %s failed, ch len %d", xSymbol, len(xOrderRequestChMap[xSymbol]))
 		}
+	}else{
+		xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.OrderSilent)
+		xPositionsUpdateTimes[xSymbol] = time.Unix(0, 0)
 	}
 }
 
