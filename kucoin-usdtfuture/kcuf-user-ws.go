@@ -40,15 +40,15 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 		case <-w.done:
 			return
 		case msg := <-w.writeCh:
-			var bytes []byte
+			var msgBytes []byte
 			var err error
 			switch d := msg.(type) {
 			case []byte:
-				bytes = d
+				msgBytes = d
 			case string:
-				bytes = ([]byte)(d)
+				msgBytes = ([]byte)(d)
 			default:
-				bytes, err = json.Marshal(msg)
+				msgBytes, err = json.Marshal(msg)
 				if err != nil {
 					logger.Warnf("json.Marshal error %v", err)
 					continue
@@ -60,9 +60,10 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 				w.restart()
 				return
 			}
-			err = conn.WriteMessage(websocket.TextMessage, bytes)
+			logger.Debugf("%s", msgBytes)
+			err = conn.WriteMessage(websocket.TextMessage, msgBytes)
 			if err != nil {
-				logger.Warnf("conn.WriteMessage %s error %v", string(bytes), err)
+				logger.Warnf("conn.WriteMessage %s error %v", string(msgBytes), err)
 				w.restart()
 				return
 			}
