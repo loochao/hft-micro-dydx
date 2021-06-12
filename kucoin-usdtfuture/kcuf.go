@@ -106,11 +106,11 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 		return
 	}
 	userWS := NewUserWebsocket(
+		ctx,
 		k.api,
 		symbols[:],
 		settings.Proxy,
 	)
-	go userWS.Start(ctx)
 	go k.systemStatusLoop(ctx, statusCh)
 	httpPositionsCh := make(chan map[string]Position)
 	go k.positionsLoop(ctx, symbols, httpPositionsCh)
