@@ -101,9 +101,7 @@ func handleSave() {
 			fields["xTakerAsk"] = spread.XDepth.TakerAsk
 			fields["xBestBidPrice"] = spread.XDepth.BestBidPrice
 			fields["xBestAskPrice"] = spread.XDepth.BestAskPrice
-
 			fields["age"] = spread.Age.Seconds()
-			fields["ageDiff"] = spread.AgeDiff.Seconds()
 		} else {
 			if !(okYPosition && okXPosition && xPosition.GetSize() == 0 && yPosition.GetSize() == 0) {
 				logger.Debugf("%s %s save failed, okXPosition %v okYPosition %v okSpread %v", xSymbol, ySymbol, okXPosition, okYPosition, okSpread)
@@ -260,8 +258,6 @@ func reportsSaveLoop(
 				fields["xExpireRatio"] = report.XExpireRatio
 				fields["yExpireRatio"] = report.YExpireRatio
 				fields["ageDiff"] = report.AgeDiff.Seconds()
-				fields["xTimestamp"] = report.XTimestamp
-				fields["yTimestamp"] = report.YTimestamp
 
 				if len(fields) > 0 {
 					pt, err := client.NewPoint(

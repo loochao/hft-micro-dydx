@@ -28,7 +28,6 @@ func watchXYSpread(
 	var xWalkedDepth, yWalkedDepth *common.WalkedMakerTakerDepth
 	var spreadTime time.Time
 	var adjustedAgeDiff time.Duration
-	var ageDiff time.Duration
 	var xBiasInMs = float64(xBias / time.Millisecond)
 	var yBiasInMs = float64(yBias / time.Millisecond)
 	var minTimeDeltaInMs = float64(minTimeDelta / time.Millisecond)
@@ -60,9 +59,8 @@ func watchXYSpread(
 			if xWalkedDepth == nil || yWalkedDepth == nil {
 				break
 			}
-			ageDiff = xWalkedDepth.Time.Sub(yWalkedDepth.Time)
 			//需要用ema time delta 对age diff进行修正
-			adjustedAgeDiff = ageDiff + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
+			adjustedAgeDiff = xWalkedDepth.Time.Sub(yWalkedDepth.Time) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
 			//取新一点的时间为spread time
 			if xWalkedDepth.Time.Sub(yWalkedDepth.Time) < 0 {
 				//需要对时间进行补偿
@@ -111,8 +109,6 @@ func watchXYSpread(
 				LongLastLeave:   shortLastEnter,
 				LongMedianEnter: longEnterTimedMedian.Median(),
 				LongMedianLeave: shortEnterTimedMedian.Median(),
-
-				AgeDiff: adjustedAgeDiff,
 				Time:    spreadTime,
 			}:
 			default:
@@ -172,14 +168,7 @@ func watchXYSpread(
 			if depthCount > reportCount {
 				xDepthFilter.GenerateReport()
 				yDepthFilter.GenerateReport()
-				if xDepth != nil && yDepth != nil {
-					ageDiff = xDepthTime.Sub(yDepthTime)
-					adjustedAgeDiff = ageDiff + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
-				}
-				select {
-				case reportCh <- SpreadReport{
-					AgeDiff:           xDepthTime.Sub(yDepthTime),
-					AdjustedAgeDiff:   xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond,
+				report := SpreadReport{
 					MatchRatio:        float64(matchCount) / float64(depthCount),
 					XSymbol:           xSymbol,
 					YSymbol:           ySymbol,
@@ -191,9 +180,13 @@ func watchXYSpread(
 					YDepthFilterRatio: yDepthFilter.Report.FilterRatio,
 					XExpireRatio:      float64(xExpireCount) / float64(depthCount),
 					YExpireRatio:      float64(yExpireCount) / float64(depthCount),
-					XTimestamp:        xDepthTime.UnixNano(),
-					YTimestamp:        yDepthTime.UnixNano(),
-				}:
+				}
+				if xDepth != nil && yDepth != nil {
+					report.AgeDiff = xDepthTime.Sub(yDepthTime)
+					report.AgeDiff = xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
+				}
+				select {
+				case reportCh <- report:
 				default:
 				}
 				matchCount = 0
@@ -226,8 +219,6 @@ func watchXYSpread(
 				xDepthFilter.GenerateReport()
 				yDepthFilter.GenerateReport()
 				report := SpreadReport{
-					AgeDiff:           xDepthTime.Sub(yDepthTime),
-					AdjustedAgeDiff:   xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond,
 					MatchRatio:        float64(matchCount) / float64(depthCount),
 					XSymbol:           xSymbol,
 					YSymbol:           ySymbol,
@@ -239,8 +230,10 @@ func watchXYSpread(
 					YDepthFilterRatio: yDepthFilter.Report.FilterRatio,
 					XExpireRatio:      float64(xExpireCount) / float64(depthCount),
 					YExpireRatio:      float64(yExpireCount) / float64(depthCount),
-					XTimestamp:        xDepthTime.UnixNano(),
-					YTimestamp:        yDepthTime.UnixNano(),
+				}
+				if xDepth != nil && yDepth != nil {
+					report.AgeDiff = xDepthTime.Sub(yDepthTime)
+					report.AgeDiff = xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
 				}
 				select {
 				case reportCh <- report:
