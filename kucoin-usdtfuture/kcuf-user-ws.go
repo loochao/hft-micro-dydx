@@ -370,8 +370,8 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 			return
 		case topic := <-w.topicCh:
 			if _, ok := topicUpdatedTimes[topic]; ok {
-				//logger.Debugf("TOPIC %s add 4 hours", topic)
-				topicUpdatedTimes[topic] = time.Now().Add(time.Hour * 4)
+				//logger.Debugf("TOPIC %s add 1 hour", topic)
+				topicUpdatedTimes[topic] = time.Now().Add(time.Hour)
 			}
 			break
 		case <-pingTimer.C:
