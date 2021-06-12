@@ -389,7 +389,6 @@ func ParseDepth5JsonWalker(data []byte) (*Depth5, error) {
 	orderBook := Depth5{
 		Bids:      [5][2]float64{},
 		Asks:      [5][2]float64{},
-		ParseTime: time.Now(),
 	}
 	walker := common.NewJsonWalker(data)
 	if !walker.Advance(16) {
