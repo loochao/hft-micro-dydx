@@ -39,4 +39,6 @@ type SpreadReport struct {
 	YSymbol           string
 	XExpireRatio      float64
 	YExpireRatio      float64
+	XTimestamp        int64
+	YTimestamp        int64
 }

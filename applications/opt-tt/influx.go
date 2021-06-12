@@ -252,6 +252,9 @@ func reportsSaveLoop(
 				fields["xExpireRatio"] = report.XExpireRatio
 				fields["yExpireRatio"] = report.YExpireRatio
 				fields["ageDiff"] = report.AgeDiff.Seconds()
+				fields["xTimestamp"] = report.XTimestamp
+				fields["yTimestamp"] = report.YTimestamp
+
 				if len(fields) > 0 {
 					pt, err := client.NewPoint(
 						influxConfig.Measurement,
