@@ -175,8 +175,8 @@ func watchXYSpread(
 				}
 				select {
 				case reportCh <- SpreadReport{
-					AgeDiff:           ageDiff,
-					AdjustedAgeDiff:   adjustedAgeDiff,
+					AgeDiff:           xDepthTime.Sub(yDepthTime),
+					AdjustedAgeDiff:   xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond,
 					MatchRatio:        float64(matchCount) / float64(depthCount),
 					XSymbol:           xSymbol,
 					YSymbol:           ySymbol,
@@ -188,6 +188,8 @@ func watchXYSpread(
 					YDepthFilterRatio: yDepthFilter.Report.FilterRatio,
 					XExpireRatio:      float64(xExpireCount) / float64(depthCount),
 					YExpireRatio:      float64(yExpireCount) / float64(depthCount),
+					XTimestamp:        xDepthTime.UnixNano(),
+					YTimestamp:        yDepthTime.UnixNano(),
 				}:
 				default:
 				}
@@ -219,10 +221,9 @@ func watchXYSpread(
 			if depthCount > reportCount {
 				xDepthFilter.GenerateReport()
 				yDepthFilter.GenerateReport()
-
 				report := SpreadReport{
-					AgeDiff:           ageDiff,
-					AdjustedAgeDiff:   adjustedAgeDiff,
+					AgeDiff:           xDepthTime.Sub(yDepthTime),
+					AdjustedAgeDiff:   xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond,
 					MatchRatio:        float64(matchCount) / float64(depthCount),
 					XSymbol:           xSymbol,
 					YSymbol:           ySymbol,
@@ -234,17 +235,8 @@ func watchXYSpread(
 					YDepthFilterRatio: yDepthFilter.Report.FilterRatio,
 					XExpireRatio:      float64(xExpireCount) / float64(depthCount),
 					YExpireRatio:      float64(yExpireCount) / float64(depthCount),
-				}
-
-				if xDepth != nil && yDepth != nil {
-					report.AgeDiff = xDepthTime.Sub(yDepthTime)
-					report.AdjustedAgeDiff = ageDiff + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
-				}
-				if xDepth != nil {
-					report.XTimestamp = xDepth.GetTime().UnixNano()
-				}
-				if yDepth != nil {
-					report.YTimestamp = yDepth.GetTime().UnixNano()
+					XTimestamp:        xDepthTime.UnixNano(),
+					YTimestamp:        yDepthTime.UnixNano(),
 				}
 				select {
 				case reportCh <- report:
