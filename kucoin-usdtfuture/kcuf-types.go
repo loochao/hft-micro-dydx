@@ -139,7 +139,6 @@ type Depth5 struct {
 	Bids      [5][2]float64 `json:"bids,omitempty"`
 	Asks      [5][2]float64 `json:"asks,omitempty"`
 	Sequence  int64         `json:"sequence"`
-	ParseTime time.Time     `json:"-"`
 	EventTime time.Time     `json:"-"`
 }
 
@@ -167,7 +166,6 @@ func (depth *Depth5) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	depth.EventTime = time.Unix(0, aux.EventTime*1000000)
-	depth.ParseTime = time.Now()
 	return nil
 }
 

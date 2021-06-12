@@ -73,8 +73,10 @@ func watchXYSpread(
 			}
 			if adjustedAgeDiff > maxAgeDiffBias {
 				yExpireCount++
+				logger.Debugf("x expire y %v %v", xDepthTime.Sub(yDepthTime), adjustedAgeDiff)
 				break
 			} else if adjustedAgeDiff < -maxAgeDiffBias {
+				logger.Debugf("y expire x %v %v", xDepthTime.Sub(yDepthTime), adjustedAgeDiff)
 				xExpireCount++
 				break
 			}
@@ -158,10 +160,11 @@ func watchXYSpread(
 				if adjustedAgeDiff > maxAgeDiffBias {
 					//taker已经过期
 					yExpireCount++
-				}
-				if adjustedAgeDiff < -maxAgeDiffBias {
+					logger.Debugf("x expire y %v %v", xDepthTime.Sub(yDepthTime), adjustedAgeDiff)
+				}else if adjustedAgeDiff < -maxAgeDiffBias {
 					//maker已经过期
 					xExpireCount++
+					logger.Debugf("y expire x %v %v", xDepthTime.Sub(yDepthTime), adjustedAgeDiff)
 				} else {
 					xWalkDepthTimer.Reset(expectedChanSendingTime)
 				}
@@ -201,22 +204,22 @@ func watchXYSpread(
 			}
 			break
 		case yDepth = <-takerDepthCh:
-			logger.Debugf("%v", yDepth)
 			if yDepth.GetTime().Sub(yDepthTime) < 0 {
 				break
 			}
 			yDepthTime = yDepth.GetTime()
 			if !yDepthFilter.Filter(yDepth) && xDepth != nil {
 				adjustedAgeDiff = xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
-				if adjustedAgeDiff > maxAgeDiffBias {
+				if adjustedAgeDiff < -maxAgeDiffBias {
+					//maker已经过期
+					logger.Debugf("y expire x %v %v", xDepthTime.Sub(yDepthTime), adjustedAgeDiff)
+					xExpireCount++
+				}else if adjustedAgeDiff > maxAgeDiffBias {
+					logger.Debugf("y expire y %v %v", xDepthTime.Sub(yDepthTime), adjustedAgeDiff)
 					//taker已经过期
 					yExpireCount++
 				} else {
 					yWalkDepthTimer.Reset(expectedChanSendingTime)
-				}
-				if adjustedAgeDiff < -maxAgeDiffBias {
-					//maker已经过期
-					xExpireCount++
 				}
 			}
 			depthCount++
