@@ -403,6 +403,8 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 					}:
 						topicUpdatedTimes[topic] = time.Now().Add(topicCheckInterval * time.Duration(len(topics)*2))
 						break loop
+					default:
+						logger.Debugf("w.writeCh <- SubscribeMsg failed, ch len %d", len(w.writeCh))
 					}
 				}
 			}
