@@ -95,7 +95,7 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn, pingInterval time.Duratio
 			go w.restart()
 			return
 		}
-		logger.Debugf("%s", msg)
+		//logger.Debugf("%s", msg)
 		select {
 		case w.messageCh <- msg:
 		default:
