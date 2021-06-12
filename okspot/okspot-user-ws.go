@@ -76,7 +76,6 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 		}
 	}
 }
-
 func (w *UserWebsocket) parseBinaryResponse(resp []byte) ([]byte, error) {
 	var standardMessage []byte
 	var err error

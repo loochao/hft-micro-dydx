@@ -950,3 +950,23 @@ func (depth *Depth) GetAsks() common.Asks {
 func (depth *Depth) GetBids() common.Bids {
 	return depth.Bids[:]
 }
+
+type MultiAssetsMarginParam struct {
+	MultiAssetsMargin bool
+}
+
+func (cpmp *MultiAssetsMarginParam) ToUrlValues() url.Values {
+	values := url.Values{}
+	if cpmp.MultiAssetsMargin {
+		values.Set("multiAssetsMargin", "true")
+	} else {
+		values.Set("multiAssetsMargin", "false")
+	}
+	return values
+}
+
+
+type MultiAssetsMargin struct {
+	MultiAssetsMargin bool `json:"multiAssetsMargin"`
+}
+

@@ -412,6 +412,36 @@ func (api *API) CancelOrder(ctx context.Context, params CancelOrderParam) (*Orde
 	return &order, nil
 }
 
+func (api *API) GetMultiAssetsMargin(ctx context.Context) (*MultiAssetsMargin, error) {
+	var resp MultiAssetsMargin
+	err := api.SendAuthenticatedHTTPRequest(
+		ctx,
+		http.MethodGet,
+		"/fapi/v1/multiAssetsMargin",
+		nil,
+		&resp,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+func (api *API) ChangeMultiAssetsMargin(ctx context.Context, params MultiAssetsMarginParam) (*Response, error) {
+	var resp Response
+	err := api.SendAuthenticatedHTTPRequest(
+		ctx,
+		http.MethodPost,
+		"/fapi/v1/multiAssetsMargin",
+		&params,
+		&resp,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
 func NewAPI(credentials *common.Credentials, proxy string) (*API, error) {
 	var client *http.Client
 	if proxy != "" {

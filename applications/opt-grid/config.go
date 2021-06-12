@@ -47,6 +47,7 @@ type Config struct {
 	RestartSilent           time.Duration `yaml:"restartSilent"`
 	HttpSilent              time.Duration `yaml:"httpSilent"`
 	TurnoverLookback        time.Duration `yaml:"turnoverLookback"`
+
 	EnterTriggerFilterRatio float64       `yaml:"enterTriggerFilterRatio"`
 	EnterTriggerDelay       time.Duration `yaml:"enterTriggerDelay"`
 	EnterDuration           time.Duration `yaml:"enterDuration"`

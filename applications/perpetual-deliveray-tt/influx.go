@@ -1,0 +1,235 @@
+package main
+
+import (
+	"context"
+	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/influx/client"
+	"github.com/geometrybase/hft-micro/logger"
+	"math"
+	"strings"
+	"time"
+)
+
+func handleSave() {
+
+	totalUnHedgeValue := 0.0
+	totalValue := 0.0
+	hasAllSymbols := true
+	for _, xSymbol := range xSymbols {
+		ySymbol := xySymbolsMap[xSymbol]
+		xPosition, okXPosition := xyPositions[xSymbol]
+		yPosition, okYPosition := xyPositions[ySymbol]
+		balance, okBalance := xyBalanceMap[xyConfig.SymbolAssetMap[xSymbol]]
+		spread, okSpread := xySpreads[xSymbol]
+
+		fields := make(map[string]interface{})
+		if okXPosition && okYPosition && okSpread && okBalance {
+
+			xContractSize := xyContractSizes[xSymbol]
+			yContractSize := xyContractSizes[ySymbol]
+			xDepth := spread.XDepth
+			//yDepth := spread.YDepth
+			xSize := xPosition.GetSize()
+			xValue := xSize * xContractSize
+			ySize := yPosition.GetSize()
+			yValue := ySize * yContractSize
+			spotValue := balance.GetBalance() * xDepth.MidPrice
+			logger.Debugf("%s spotValue %f", xSymbol, spotValue)
+			totalValue += spotValue
+
+			fields["xPosEventTime"] = xPosition.GetEventTime().UnixNano()
+			fields["xPosParseTime"] = xPosition.GetParseTime().UnixNano()
+			fields["yPosEventTime"] = yPosition.GetEventTime().UnixNano()
+			fields["yPosParseTime"] = yPosition.GetParseTime().UnixNano()
+			fields["xSize"] = xSize
+			fields["ySize"] = ySize
+			fields["xValue"] = xValue
+			fields["yValue"] = yValue
+			fields["xAdjValue"] = xValue + spotValue
+			fields["xyUnHedgeValue"] = xValue + yValue + spotValue
+
+			offsetFactor := math.Abs(yValue) / spotValue / xyConfig.EnterTarget
+			offsetStep := xyConfig.EnterStep/xyConfig.EnterTarget
+			shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
+			shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)
+			longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
+			longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)
+
+			fields["shortTop"] = shortTop
+			fields["shortBot"] = shortBot
+			fields["longBot"] = longBot
+			fields["longTop"] = longTop
+
+			fields["spreadTime"] = spread.Time.UnixNano()
+			fields["spreadShortLastEnter"] = spread.ShortLastEnter
+			fields["spreadShortLastLeave"] = spread.ShortLastLeave
+			fields["spreadShortMedianEnter"] = spread.ShortMedianEnter
+			fields["spreadShortMedianLeave"] = spread.ShortMedianLeave
+
+			fields["spreadLongLastEnter"] = spread.LongLastEnter
+			fields["spreadLongLastLeave"] = spread.LongLastLeave
+			fields["spreadLongMedianEnter"] = spread.LongMedianEnter
+			fields["spreadLongMedianLeave"] = spread.LongMedianLeave
+
+			fields["yMakerBid"] = spread.YDepth.MakerBid
+			fields["yMakerAsk"] = spread.YDepth.MakerAsk
+			fields["yTakerBid"] = spread.YDepth.TakerBid
+			fields["yTakerAsk"] = spread.YDepth.TakerAsk
+			fields["yBestBidPrice"] = spread.YDepth.BestBidPrice
+			fields["yBestAskPrice"] = spread.YDepth.BestAskPrice
+
+			fields["xMakerBid"] = spread.XDepth.MakerBid
+			fields["xMakerAsk"] = spread.XDepth.MakerAsk
+			fields["xTakerBid"] = spread.XDepth.TakerBid
+			fields["xTakerAsk"] = spread.XDepth.TakerAsk
+			fields["xBestBidPrice"] = spread.XDepth.BestBidPrice
+			fields["xBestAskPrice"] = spread.XDepth.BestAskPrice
+
+			fields["age"] = spread.Age.Seconds()
+			fields["ageDiff"] = spread.AgeDiff.Seconds()
+		} else {
+			logger.Debugf("%s %s save failed, okXPosition %v okYPosition %v okSpread %v okBalance %v", xSymbol, ySymbol, okXPosition, okYPosition, okSpread, okBalance)
+			hasAllSymbols = false
+		}
+		if fr, ok := xFundingRates[xSymbol]; ok {
+			fields["xFundingRate"] = fr.GetFundingRate()
+		}
+		if realisedSpread, ok := xyRealisedSpread[xSymbol]; ok {
+			fields["realisedSpread"] = realisedSpread
+		}
+		if xySystemStatus == common.SystemStatusReady {
+			fields["xySystemStatus"] = 1.0
+		} else {
+			fields["xySystemStatus"] = -1.0
+		}
+		pt, err := client.NewPoint(
+			xyConfig.InternalInflux.Measurement,
+			map[string]string{
+				"ySymbol": ySymbol,
+				"xSymbol": xSymbol,
+				"type":    "symbol",
+			},
+			fields,
+			time.Now().UTC(),
+		)
+		if err != nil {
+			logger.Debugf("client.NewPoint error %v", err)
+		} else {
+			err = xyInfluxWriter.PushPoint(pt)
+			if err != nil {
+				logger.Debugf("xyInfluxWriter.PushPoint error %v", err)
+			}
+		}
+	}
+
+	if hasAllSymbols {
+		totalBalance := totalValue
+		netWorth := totalBalance / xyConfig.StartValue
+		fields := make(map[string]interface{})
+		fields["totalUnHedgeValue"] = totalUnHedgeValue
+		fields["totalBalance"] = totalBalance
+
+		fields["xyTurnover"] = xyTimedPositionChange.Sum() / totalBalance
+		fields["netWorth"] = netWorth
+		fields["startValue"] = xyConfig.StartValue
+		pt, err := client.NewPoint(
+			xyConfig.InternalInflux.Measurement,
+			map[string]string{
+				"type": "balance",
+			},
+			fields,
+			time.Now().UTC(),
+		)
+		if err != nil {
+			logger.Debugf("client.NewPoint error %v", err)
+		} else {
+			err = xyInfluxWriter.PushPoint(pt)
+			if err != nil {
+				logger.Debugf("xyInfluxWriter.PushPoint error %v", err)
+			}
+		}
+
+		fields = make(map[string]interface{})
+		fields["netWorth"] = netWorth
+		for name, start := range xyConfig.StartValues {
+			if start > 0 {
+				fields["currentValue_"+strings.ToLower(name)] = netWorth * start
+			}
+		}
+		if len(fields) > 0 {
+			pt, err := client.NewPoint(
+				xyConfig.ExternalInflux.Measurement,
+				map[string]string{
+					"name": *xyConfig.Name,
+				},
+				fields,
+				time.Now().UTC(),
+			)
+			if err != nil {
+				logger.Debugf("client.NewPoint error %v", err)
+			} else {
+				err = xyExternalInfluxWriter.PushPoint(pt)
+				if err != nil {
+					logger.Debugf("xyExternalInfluxWriter.PushPoint error %v", err)
+				}
+			}
+		}
+
+	}
+}
+
+func reportsSaveLoop(
+	ctx context.Context,
+	influxWriter *common.InfluxWriter,
+	influxConfig common.InfluxSettings,
+	spreadReportCh chan SpreadReport,
+) {
+	spreadReports := make(map[string]SpreadReport)
+	saveTimer := time.NewTimer(influxConfig.SaveInterval)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case spreadReport := <-spreadReportCh:
+			//logger.Debugf("%s", spreadReport.ToString())
+			spreadReports[spreadReport.XSymbol] = spreadReport
+			break
+		case <-saveTimer.C:
+			for _, report := range spreadReports {
+				fields := make(map[string]interface{})
+				fields["matchRatio"] = report.MatchRatio
+				fields["adjustedAgeDiff"] = float64(report.AdjustedAgeDiff / time.Millisecond)
+				fields["xTimeDeltaEma"] = report.XTimeDeltaEma
+				fields["yTimeDeltaEma"] = report.YTimeDeltaEma
+				fields["xTimeDelta"] = report.XTimeDelta
+				fields["yTimeDelta"] = report.YTimeDelta
+				fields["xDepthFilterRatio"] = report.XDepthFilterRatio
+				fields["yDepthFilterRatio"] = report.XDepthFilterRatio
+				fields["xExpireRatio"] = report.XExpireRatio
+				fields["yExpireRatio"] = report.YExpireRatio
+				if len(fields) > 0 {
+					pt, err := client.NewPoint(
+						influxConfig.Measurement,
+						map[string]string{
+							"xSymbol": report.XSymbol,
+							"ySymbol": report.YSymbol,
+							"type":    "spread-report",
+						},
+						fields,
+						time.Now().UTC(),
+					)
+					if err != nil {
+						logger.Debugf("client.NewPoint error %v", err)
+					} else {
+						err = influxWriter.PushPoint(pt)
+						if err != nil {
+							logger.Debugf("influxWriter.PushPoint error %v", err)
+						}
+					}
+				}
+			}
+			saveTimer.Reset(influxConfig.SaveInterval)
+			break
+		}
+	}
+}
