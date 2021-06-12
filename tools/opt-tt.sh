@@ -7,6 +7,7 @@ sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/opt-tt/init.go
 
 
 env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-mirco-opt-tt.$dt" ./applications/opt-tt
+env GOOS=linux GOARCH=arm64 go build -o "./dist/opt-tt.linux.arm64.$dt" ./applications/opt-tt
 
 git add -A
 git commit -m "build hft-mirco-opt-tt.$dt"
