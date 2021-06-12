@@ -401,6 +401,7 @@ func (bn *BinanceUsdtFuture) Setup(ctx context.Context, settings common.Exchange
 	if err != nil {
 		return
 	}
+	logger.Debugf("%v", TickSizes)
 	for _, symbol := range settings.Symbols {
 		if _, ok := TickSizes[symbol]; !ok {
 			return fmt.Errorf("tick size not found for %s", symbol)
