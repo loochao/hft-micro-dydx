@@ -92,13 +92,13 @@ func (depth *DepthFast) UnmarshalJSON(data []byte) error {
 	depth.Bids = make([][2]float64, 0)
 	depth.Asks = make([][2]float64, 0)
 	for _, d := range aux.Bids {
-		price, _ := common.ParseFloat(d[0])
-		size, _ := common.ParseFloat(d[1])
+		price, _ := common.ParseDecimal(d[0])
+		size, _ := common.ParseDecimal(d[1])
 		depth.Bids = append(depth.Bids, [2]float64{price, size})
 	}
 	for _, d := range aux.Asks {
-		price, _ := common.ParseFloat(d[0])
-		size, _ := common.ParseFloat(d[1])
+		price, _ := common.ParseDecimal(d[0])
+		size, _ := common.ParseDecimal(d[1])
 		depth.Asks = append(depth.Asks, [2]float64{price, size})
 	}
 	eventTime, _ := common.ParseInt(aux.EventTime)

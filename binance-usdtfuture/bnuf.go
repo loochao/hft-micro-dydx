@@ -67,7 +67,7 @@ func (bn *BinanceUsdtFuture) GetTickSize(symbol string) (float64, error) {
 func (bn *BinanceUsdtFuture) StreamBasic(
 	ctx context.Context,
 	statusCh chan common.SystemStatus,
-	accountCh chan common.Balance,
+	accountChMap map[string]chan common.Balance,
 	positionChMap map[string]chan common.Position,
 	orderChMap map[string]chan common.Order,
 ) {
@@ -135,7 +135,7 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 				}
 			}
 			for _, balance := range bp.Account.Balances {
-				if balance.Asset == "USDT" {
+				if accountCh, ok := accountChMap[balance.Asset]; ok {
 					if usdtAsset != nil && usdtAsset.EventTime.Sub(balance.EventTime) < 0 {
 						usdtAsset.WalletBalance = &balance.WalletBalance
 						usdtAsset.CrossWalletBalance = &balance.CrossWalletBalance
@@ -167,7 +167,7 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 			break
 		case account := <-internalAccountCh:
 			for _, asset := range account.Assets {
-				if asset.Asset == "USDT" {
+				if accountCh, ok := accountChMap[asset.Asset]; ok {
 					asset := asset
 					usdtAsset = &asset
 					select {
@@ -247,7 +247,7 @@ func (bn *BinanceUsdtFuture) StreamDepth(ctx context.Context, channels map[strin
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
-			ws := NewDepth20WS(ctx, proxy, channels)
+			ws := NewDepth5WS(ctx, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
@@ -687,4 +687,58 @@ func (bn *BinanceUsdtFuture) cancelOrder(ctx context.Context, param common.Cance
 			}
 		}
 	}
+}
+
+
+type BinanceUsdtFutureWidthDepth20 struct {
+	BinanceUsdtFuture
+}
+
+func (bn *BinanceUsdtFutureWidthDepth20) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
+	logger.Debugf("START StreamDepth")
+	defer logger.Debugf("STOP StreamDepth")
+	defer bn.Stop()
+
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+
+	bn.mu.Lock()
+	proxy := bn.settings.Proxy
+	bn.mu.Unlock()
+
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Depth)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
+			ws := NewDepth5WS(ctx, proxy, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-bn.done:
+			return
+		}
+	}
+}
+
+type BinanceUsdtFutureWidthDepth5 struct {
+	BinanceUsdtFuture
 }

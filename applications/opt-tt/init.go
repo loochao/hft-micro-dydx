@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/geometrybase/hft-micro/bnswap"
+	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
@@ -87,7 +87,7 @@ var yTimedPositionChange *common.TimedSum
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210605 12:02:22  ####")
+	logger.Debug("####  BUILD @ 20210612 16:15:08  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -117,10 +117,12 @@ func init() {
 	switch xyConfig.XExchange.Name {
 	//case "ftxperp":
 	//	xExchange = &ftxperp.Ftxperp{}
-	case "bnswap":
-		xExchange = &bnswap.Bnswap{}
-	case "kucoin-usdtfuture":
-		xExchange = &kucoin_usdtfuture.Kcperp{}
+	case "binanceUsdtFutureWithDepth5":
+		xExchange = &binance_usdtfuture.BinanceUsdtFutureWidthDepth5{}
+	case "binanceUsdtFutureWithDepth20":
+		xExchange = &binance_usdtfuture.BinanceUsdtFutureWidthDepth20{}
+	case "kucoinUsdtFutureWithDepth5":
+		xExchange = &kucoin_usdtfuture.KucoinUsdtFutureWithDepth5{}
 	//case "bnspot":
 	//	xExchange = &bnspot.Bnspot{}
 	default:
@@ -130,10 +132,12 @@ func init() {
 	switch xyConfig.YExchange.Name {
 	//case "ftxperp":
 	//	yExchange = &ftxperp.Ftxperp{}
-	case "bnswap":
-		yExchange = &bnswap.Bnswap{}
-	case "kucoin-usdtfuture":
-		yExchange = &kucoin_usdtfuture.Kcperp{}
+	case "binanceUsdtFutureWithDepth5":
+		xExchange = &binance_usdtfuture.BinanceUsdtFutureWidthDepth5{}
+	case "binanceUsdtFutureWithDepth20":
+		xExchange = &binance_usdtfuture.BinanceUsdtFutureWidthDepth20{}
+	case "kucoinUsdtFutureWithDepth5":
+		xExchange = &kucoin_usdtfuture.KucoinUsdtFutureWithDepth5{}
 	//case "bnspot":
 	//	yExchange = &bnspot.Bnspot{}
 	default:

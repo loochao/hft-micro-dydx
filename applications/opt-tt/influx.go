@@ -40,6 +40,8 @@ func handleSave() {
 			xValue := xPosition.GetSize() * spread.XDepth.MidPrice
 			ySize := yPosition.GetSize()
 			yValue := yPosition.GetSize() * spread.YDepth.MidPrice
+			unHedgeValue := math.Abs(xPosition.GetSize() + yPosition.GetSize())*(spread.XDepth.MidPrice+spread.YDepth.MidPrice)*0.5
+			totalUnHedgeValue += unHedgeValue
 			totalXSymbolValue += xValue
 			totalYSymbolValue += yValue
 
@@ -47,6 +49,7 @@ func handleSave() {
 			fields["xPosParseTime"] = xPosition.GetParseTime().UnixNano()
 			fields["yPosEventTime"] = yPosition.GetEventTime().UnixNano()
 			fields["yPosParseTime"] = yPosition.GetParseTime().UnixNano()
+			fields["unHedgeValue"] = unHedgeValue
 			fields["xSize"] = xSize
 			fields["xValue"] = xValue
 			fields["ySize"] = ySize

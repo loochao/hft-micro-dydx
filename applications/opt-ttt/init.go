@@ -126,7 +126,7 @@ func init() {
 	case "bnswap":
 		xExchange = &bnswap.Bnswap{}
 	case "kucoin-usdtfuture":
-		xExchange = &kucoin_usdtfuture.Kcperp{}
+		xExchange = &kucoin_usdtfuture.KucoinUsdtFuture{}
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -137,7 +137,7 @@ func init() {
 	case "bnswap":
 		yExchange = &bnswap.Bnswap{}
 	case "kucoin-usdtfuture":
-		yExchange = &kucoin_usdtfuture.Kcperp{}
+		yExchange = &kucoin_usdtfuture.KucoinUsdtFuture{}
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
 	}

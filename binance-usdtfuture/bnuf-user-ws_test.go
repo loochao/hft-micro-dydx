@@ -11,10 +11,10 @@ import (
 
 func TestNewUserWebsocket(t *testing.T) {
 	credentials := common.Credentials{
-		Key:    os.Getenv("BN_KEY"),
-		Secret: os.Getenv("BN_SECRET"),
+		Key:    os.Getenv("BN_TEST_KEY"),
+		Secret: os.Getenv("BN_TEST_SECRET"),
 	}
-	proxy := os.Getenv("BN_PROXY")
+	proxy := os.Getenv("BN_TEST_PROXY")
 	api, err := NewAPI(&credentials, proxy)
 	if err != nil {
 		t.Fatal(err)

@@ -22,7 +22,7 @@ func ParseTrade(bytes []byte) (*Trade, error) {
 		switch currentKey {
 		case common.JsonKeyPrice:
 			if bytes[offset] == '"' {
-				trade.Price, err = common.ParseFloat(bytes[collectStart:offset])
+				trade.Price, err = common.ParseDecimal(bytes[collectStart:offset])
 				if err != nil {
 					return nil, fmt.Errorf("JsonKeyPrice error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
@@ -33,7 +33,7 @@ func ParseTrade(bytes []byte) (*Trade, error) {
 			break
 		case common.JsonKeyQuantity:
 			if bytes[offset] == '"' {
-				trade.Quantity, err = common.ParseFloat(bytes[collectStart:offset])
+				trade.Quantity, err = common.ParseDecimal(bytes[collectStart:offset])
 				if err != nil {
 					return nil, fmt.Errorf("JsonKeyQuantity error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
@@ -218,7 +218,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			break
 		case common.JsonKeyMarkPrice:
 			if bytes[offset] == '"' {
-				markPrice.MarkPrice, err = common.ParseFloat(bytes[collectStart:offset])
+				markPrice.MarkPrice, err = common.ParseDecimal(bytes[collectStart:offset])
 				if err != nil {
 					return nil, fmt.Errorf("JsonKeyMarkPrice error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
@@ -229,7 +229,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			break
 		case common.JsonKeyIndexPrice:
 			if bytes[offset] == '"' {
-				markPrice.IndexPrice, err = common.ParseFloat(bytes[collectStart:offset])
+				markPrice.IndexPrice, err = common.ParseDecimal(bytes[collectStart:offset])
 				if err != nil {
 					return nil, fmt.Errorf("JsonKeyIndexPrice error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
@@ -240,7 +240,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			break
 		case common.JsonKeyEstimatedSettlePrice:
 			if bytes[offset] == '"' {
-				markPrice.EstimatedSettlePrice, err = common.ParseFloat(bytes[collectStart:offset])
+				markPrice.EstimatedSettlePrice, err = common.ParseDecimal(bytes[collectStart:offset])
 				if err != nil {
 					return nil, fmt.Errorf("JsonKeyEstimatedSettlePrice error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
@@ -251,7 +251,7 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 			break
 		case common.JsonKeyFundingRate:
 			if bytes[offset] == '"' {
-				markPrice.FundingRate, err = common.ParseFloat(bytes[collectStart:offset])
+				markPrice.FundingRate, err = common.ParseDecimal(bytes[collectStart:offset])
 				if err != nil {
 					return nil, fmt.Errorf("JsonKeyFundingRate error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
