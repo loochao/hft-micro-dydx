@@ -326,6 +326,8 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, api *API, symbols []string
 			}
 			urlStr := connectToken.InstanceServers[0].Endpoint + "?token=" + connectToken.Token
 
+			logger.Debugf("%s", urlStr)
+
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
 				logger.Debugf("w.reconnect error %v", err)
