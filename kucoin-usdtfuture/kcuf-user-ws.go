@@ -124,9 +124,9 @@ func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
-	logger.Debugf("START dataHandleLoop %d", id)
-	defer logger.Debugf("EXIT dataHandleLoop %d", id)
+func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
+	logger.Debugf("START dataHandleLoop")
+	defer logger.Debugf("EXIT dataHandleLoop")
 	for {
 		select {
 		case <-ctx.Done():
@@ -443,10 +443,7 @@ func (w *UserWebsocket) Done() chan interface{} {
 
 func (w *UserWebsocket) Start(ctx context.Context) {
 	go w.mainLoop(ctx, w.api, w.symbols, w.proxy)
-	go w.dataHandleLoop(ctx, 1)
-	go w.dataHandleLoop(ctx, 2)
-	go w.dataHandleLoop(ctx, 3)
-	go w.dataHandleLoop(ctx, 4)
+	go w.dataHandleLoop(ctx)
 	w.reconnectCh <- nil
 }
 
@@ -492,10 +489,7 @@ func NewUserWebsocketAndStart(
 		stopped:     0,
 	}
 	go ws.mainLoop(ctx, api, symbols, proxy)
-	go ws.dataHandleLoop(ctx, 1)
-	//go ws.dataHandleLoop(ctx, 2)
-	//go ws.dataHandleLoop(ctx, 3)
-	//go ws.dataHandleLoop(ctx, 4)
+	go ws.dataHandleLoop(ctx)
 	ws.reconnectCh <- nil
 	return &ws
 }
