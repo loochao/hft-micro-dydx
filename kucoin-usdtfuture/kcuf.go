@@ -90,7 +90,6 @@ func (k *KucoinUsdtFuture) GetTickSize(symbol string) (float64, error) {
 	if v, ok := TickSizes[symbol]; ok {
 		return v, nil
 	} else {
-		logger.Debugf("%v", TickSizes, symbol)
 		return 0.0, fmt.Errorf(common.TickSizeNotFoundError, symbol)
 	}
 }
