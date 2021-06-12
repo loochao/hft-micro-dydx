@@ -74,7 +74,7 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 func (w *UserWebsocket) readLoop(conn *websocket.Conn, pingInterval time.Duration) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
-	logSilentTime := time.Now()
+	//logSilentTime := time.Now()
 	pingInterval *= 10
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(pingInterval))
@@ -97,12 +97,9 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn, pingInterval time.Duratio
 		}
 		logger.Debugf("%s", msg)
 		select {
-		case <-time.After(time.Millisecond):
-			if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debug("msg to w.messageCh timeout in 1ms")
-				logSilentTime = time.Now().Add(time.Minute)
-			}
 		case w.messageCh <- msg:
+		default:
+			logger.Debugf("w.messageCh <- msg failed, ch len %d", len(w.messageCh))
 		}
 	}
 
@@ -144,9 +141,11 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 			}
 			if len(msg) < 128 {
 				if wsCap.Type == "ack" {
+					logger.Debugf("SUB SUCCESS %s", wsCap.ID)
 					select {
 					case w.topicCh <- wsCap.ID:
 					default:
+						logger.Debugf("w.topicCh <- wsCap.ID failed, ch len %d", len(w.topicCh))
 					}
 				} else if wsCap.Type == "pong" || wsCap.Type == "welcome" {
 				} else if wsCap.Topic == "" {
@@ -165,6 +164,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 					logger.Debugf("Unmarshal wsOrder error %v %s", err, msg)
 					continue
 				}
+				logger.Debugf("%v", order)
 				select {
 				case <-ctx.Done():
 					return
@@ -456,8 +456,8 @@ func NewUserWebsocket(
 	ws := UserWebsocket{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		OrderCh:     make(chan *WSOrder, 100),
-		BalanceCh:   make(chan *WsBalanceEvent, 100),
+		OrderCh:     make(chan *WSOrder, 10000),
+		BalanceCh:   make(chan *WsBalanceEvent, 10000),
 		PositionCh:  make(chan *WSPosition, 100),
 		RestartCh:   make(chan interface{}, 100),
 		messageCh:   make(chan []byte, 10000),
