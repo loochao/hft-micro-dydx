@@ -124,9 +124,9 @@ func (w *Depth5WS) readLoop(
 					}
 				}
 			}
-		}else{
+		} else {
 			//{"id":"/contract/position:BNBUSDTM","type":"ack"}
-			if len(msg) > 3 && msg[2] == 'i' {
+			if len(msg) > 3 && msg[2] == 'i' && msg[len(msg)-3] == 'k' {
 				logger.Debugf("%s", msg)
 			}
 		}
