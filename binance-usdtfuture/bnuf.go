@@ -718,7 +718,7 @@ func (bn *BinanceUsdtFutureWidthDepth20) StreamDepth(ctx context.Context, channe
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
-			ws := NewDepth5WS(ctx, proxy, channels)
+			ws := NewDepth20WS(ctx, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():

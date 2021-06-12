@@ -165,7 +165,7 @@ func (w *Depth5WS) mainLoop(ctx context.Context, proxy string, channels map[stri
 		)
 	}
 	urlStr = urlStr[:len(urlStr)-1]
-	logger.Debugf("START mainLoop %s", symbols)
+	logger.Debugf("START mainLoop %s", urlStr)
 
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
