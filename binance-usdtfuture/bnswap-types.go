@@ -884,7 +884,6 @@ type Depth5 struct {
 	LastUpdateId int64         `json:"u,omitempty"`
 	Bids         [5][2]float64 `json:"b,omitempty"`
 	Asks         [5][2]float64 `json:"a,omitempty"`
-	ParseTime    time.Time     `json:"-"`
 }
 
 func (depth *Depth5) GetBids() common.Bids {
