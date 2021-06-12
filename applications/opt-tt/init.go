@@ -87,7 +87,7 @@ var yTimedPositionChange *common.TimedSum
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210612 16:22:26  ####")
+	logger.Debug("####  BUILD @ 20210612 16:24:02  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -119,10 +119,13 @@ func init() {
 	//	xExchange = &ftxperp.Ftxperp{}
 	case "binanceUsdtFutureWithDepth5":
 		xExchange = &binance_usdtfuture.BinanceUsdtFutureWidthDepth5{}
+		break
 	case "binanceUsdtFutureWithDepth20":
 		xExchange = &binance_usdtfuture.BinanceUsdtFutureWidthDepth20{}
+		break
 	case "kucoinUsdtFutureWithDepth5":
 		xExchange = &kucoin_usdtfuture.KucoinUsdtFutureWithDepth5{}
+		break
 	//case "bnspot":
 	//	xExchange = &bnspot.Bnspot{}
 	default:
@@ -133,11 +136,14 @@ func init() {
 	//case "ftxperp":
 	//	yExchange = &ftxperp.Ftxperp{}
 	case "binanceUsdtFutureWithDepth5":
-		xExchange = &binance_usdtfuture.BinanceUsdtFutureWidthDepth5{}
+		yExchange = &binance_usdtfuture.BinanceUsdtFutureWidthDepth5{}
+		break
 	case "binanceUsdtFutureWithDepth20":
-		xExchange = &binance_usdtfuture.BinanceUsdtFutureWidthDepth20{}
+		yExchange = &binance_usdtfuture.BinanceUsdtFutureWidthDepth20{}
+		break
 	case "kucoinUsdtFutureWithDepth5":
-		xExchange = &kucoin_usdtfuture.KucoinUsdtFutureWithDepth5{}
+		yExchange = &kucoin_usdtfuture.KucoinUsdtFutureWithDepth5{}
+		break
 	//case "bnspot":
 	//	yExchange = &bnspot.Bnspot{}
 	default:
