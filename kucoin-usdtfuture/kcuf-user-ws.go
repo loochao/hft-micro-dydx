@@ -382,7 +382,7 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 			case <-time.After(time.Millisecond):
 				logger.Debug("w.writeCh <- Ping timeout in 1ms")
 			case w.writeCh <- Ping{
-				ID:   fmt.Sprintf("%d", time.Now().Nanosecond()/1000000),
+				ID:   fmt.Sprintf("%d", time.Now().UnixNano()/1000000),
 				Type: "ping",
 			}:
 			}
