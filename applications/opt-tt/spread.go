@@ -150,8 +150,7 @@ func watchXYSpread(
 			break
 
 		case xDepth = <-makerDepthCh:
-			logger.Debugf("%v", xDepth)
-			if xDepth.GetTime().Sub(xDepthTime) >= 0 {
+			if xDepth.GetTime().Sub(xDepthTime) < 0 {
 				break
 			}
 			xDepthTime = xDepth.GetTime()
