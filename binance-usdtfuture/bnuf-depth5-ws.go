@@ -294,8 +294,8 @@ func (w *Depth5WS) Done() chan interface{} {
 }
 
 func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Depth) {
-	logger.Debugf("START dataHandleLoop %s", symbol)
-	defer logger.Debugf("EXIT dataHandleLoop %s", symbol)
+	//logger.Debugf("START dataHandleLoop %s", symbol)
+	//defer logger.Debugf("EXIT dataHandleLoop %s", symbol)
 	logSilentTime := time.Now()
 	depth5 := &Depth5{
 		Symbol: symbol,
