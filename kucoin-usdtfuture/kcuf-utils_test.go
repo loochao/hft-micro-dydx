@@ -1,7 +1,8 @@
-package kcperp
+package kucoin_usdtfuture
 
 import (
 	"encoding/json"
+	"github.com/geometrybase/hft-micro/logger"
 	"github.com/minio/simdjson-go"
 	"github.com/stretchr/testify/assert"
 	"strings"
@@ -25,7 +26,7 @@ func TestSimdJson(t *testing.T) {
 	if typ != simdjson.TypeRoot {
 		return
 	}
-	typ, tmp, err  = iter.Root(tmp)
+	typ, tmp, err = iter.Root(tmp)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,12 +35,11 @@ func TestSimdJson(t *testing.T) {
 		return
 	}
 	e := obj.FindKey("data", &elem)
-	if e == nil && elem.Type != simdjson.TypeObject{
+	if e == nil && elem.Type != simdjson.TypeObject {
 		return
 	}
 
 	elem.Iter.Advance()
-
 
 	//for {
 	//	typ := iter.Advance()
@@ -123,61 +123,39 @@ func BenchmarkJsonParseDepth50(t *testing.B) {
 }
 
 func TestParseDepth5(t *testing.T) {
-	bytes := []byte(`{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,"timestamp":1618717277315},"subject":"level2","topic":"/contractMarket/level2Depth5:ATOMUSDTM","type":"message"}`)
-	wsCap := WsCap{}
-	err := json.Unmarshal(bytes, &wsCap)
-	if err != nil {
-		t.Fatal(err)
-	}
-	jsonD := Depth5{}
-	err = json.Unmarshal(wsCap.Data, &jsonD)
-	if err != nil {
-		t.Fatal(err)
-	}
-	jsonD.Symbol = strings.Split(wsCap.Topic, ":")[1]
-	depth5, err := ParseDepth5(bytes)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, jsonD.Symbol, depth5.Symbol)
-	assert.Equal(t, jsonD.EventTime, depth5.EventTime)
-	assert.Equal(t, jsonD.Sequence, depth5.Sequence)
-	for i := 0; i < 5; i++ {
-		assert.Equal(t, jsonD.Bids[i][0], depth5.Bids[i][0])
-		assert.Equal(t, jsonD.Bids[i][1], depth5.Bids[i][1])
-		assert.Equal(t, jsonD.Asks[i][0], depth5.Asks[i][0])
-		assert.Equal(t, jsonD.Asks[i][1], depth5.Asks[i][1])
-	}
-}
-
-func TestParseDepth52(t *testing.T) {
-	bytes := []byte(`{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060],[18.082,11060],[17.779,407]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,"timestamp":1618717277315},"subject":"level2","topic":"/contractMarket/level2Depth5:ATOMUSDTM","type":"message"}`)
-	wsCap := WsCap{}
-	err := json.Unmarshal(bytes, &wsCap)
-	if err != nil {
-		t.Fatal(err)
-	}
-	jsonD := Depth5{}
-	err = json.Unmarshal(wsCap.Data, &jsonD)
-	if err != nil {
-		t.Fatal(err)
-	}
-	jsonD.Symbol = strings.Split(wsCap.Topic, ":")[1]
-	depth5, err := ParseDepth5(bytes)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, jsonD.Symbol, depth5.Symbol)
-	assert.Equal(t, jsonD.EventTime, depth5.EventTime)
-	assert.Equal(t, jsonD.Sequence, depth5.Sequence)
-	for i := 0; i < 5; i++ {
-		assert.Equal(t, jsonD.Bids[i][0], depth5.Bids[i][0])
-		assert.Equal(t, jsonD.Bids[i][1], depth5.Bids[i][1])
-		assert.Equal(t, jsonD.Asks[i][0], depth5.Asks[i][0])
-		assert.Equal(t, jsonD.Asks[i][1], depth5.Asks[i][1])
+	for _, line := range strings.Split(Depth5SampleLines, "\n") {
+		logger.Debugf("%s", line)
+		wsCap := WsCap{}
+		err := json.Unmarshal([]byte(line), &wsCap)
+		if err != nil {
+			t.Fatal(err)
+		}
+		jsonD := Depth5{}
+		err = json.Unmarshal(wsCap.Data, &jsonD)
+		if err != nil {
+			t.Fatal(err)
+		}
+		jsonD.Symbol = strings.Split(wsCap.Topic, ":")[1]
+		depth5 := &Depth5{}
+		err = ParseDepth5([]byte(line), depth5)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, jsonD.Symbol, depth5.Symbol)
+		assert.Equal(t, jsonD.EventTime, depth5.EventTime)
+		assert.Equal(t, jsonD.Sequence, depth5.Sequence)
+		assert.Equal(t, 5, len(jsonD.Bids))
+		assert.Equal(t, 5, len(jsonD.Asks))
+		assert.Equal(t, 5, len(depth5.Bids))
+		assert.Equal(t, 5, len(depth5.Asks))
+		for i := 0; i < 5; i++ {
+			assert.Equal(t, jsonD.Bids[i][0], depth5.Bids[i][0])
+			assert.Equal(t, jsonD.Bids[i][1], depth5.Bids[i][1])
+			assert.Equal(t, jsonD.Asks[i][0], depth5.Asks[i][0])
+			assert.Equal(t, jsonD.Asks[i][1], depth5.Asks[i][1])
+		}
 	}
 }
-
 
 var GlobalD *Depth5
 
@@ -186,7 +164,7 @@ func BenchmarkParseDepth5(t *testing.B) {
 	x := &Depth5{}
 	t.ReportAllocs()
 	for i := 0; i < t.N; i++ {
-		x, _ = ParseDepth5(b)
+		_ = ParseDepth5(b, x)
 	}
 	GlobalD = x
 }
@@ -200,8 +178,6 @@ func BenchmarkParseDepth5StrConv(t *testing.B) {
 	}
 	GlobalD = x
 }
-
-
 
 func BenchmarkParseDepth5StdJson(t *testing.B) {
 	b := []byte(`{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060],[18.082,11060],[17.779,407]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,"timestamp":1618717277315},"subject":"level2","topic":"/contractMarket/level2Depth5:ATOMUSDTM","type":"message"}`)

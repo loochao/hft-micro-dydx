@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/kcspot"
 	"strings"
 )
 
 type PerpOrderNewError struct {
 	Error  error
-	Params kcperp.NewOrderParam
+	Params kucoin_usdtfuture.NewOrderParam
 }
 
 type SpotOrderNewError struct {

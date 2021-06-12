@@ -64,7 +64,7 @@ func (bn *Bnswap) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Account, positionChMap map[string]chan common.Position, orderChMap map[string]chan common.Order) {
+func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountMapCh map[string]chan common.Balance, positionChMap map[string]chan common.Position, orderChMap map[string]chan common.Order) {
 	defer bn.Stop()
 	bn.mu.Lock()
 	proxy := bn.settings.Proxy
@@ -129,7 +129,7 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 				}
 			}
 			for _, balance := range bp.Account.Balances {
-				if balance.Asset == "USDT" {
+				if accountCh, ok := accountMapCh[balance.Asset]; ok {
 					if usdtAsset != nil && usdtAsset.EventTime.Sub(balance.EventTime) < 0 {
 						usdtAsset.WalletBalance = &balance.WalletBalance
 						usdtAsset.CrossWalletBalance = &balance.CrossWalletBalance
@@ -161,7 +161,7 @@ func (bn *Bnswap) StreamBasic(ctx context.Context, statusCh chan common.SystemSt
 			break
 		case account := <-internalAccountCh:
 			for _, asset := range account.Assets {
-				if asset.Asset == "USDT" {
+				if accountCh, ok := accountMapCh[asset.Asset]; ok {
 					asset := asset
 					usdtAsset = &asset
 					select {

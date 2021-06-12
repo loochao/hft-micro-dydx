@@ -5,7 +5,7 @@ import (
 	"flag"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -22,10 +22,10 @@ var mtGlobalCancel context.CancelFunc
 var mtInfluxWriter *common.InfluxWriter
 var mtExternalInfluxWriter *common.InfluxWriter
 
-var mAPI *kcperp.API
+var mAPI *kucoin_usdtfuture.API
 var tAPI *bnswap.API
 
-var mUserWebsocket *kcperp.UserWebsocket
+var mUserWebsocket *kucoin_usdtfuture.UserWebsocket
 var tUserWebsocket *bnswap.UserWebsocket
 
 var mHttpPositionUpdateSilentTimes = make(map[string]time.Time)
@@ -38,10 +38,10 @@ var tStepSizes = make(map[string]float64)
 var tMinNotional = make(map[string]float64)
 var mtStepSizes = make(map[string]float64)
 
-var mAccount *kcperp.Account
-var mAccountCh = make(chan kcperp.Account, 10)
-var mPositionCh = make(chan []kcperp.Position, 10)
-var mPositions = make(map[string]kcperp.Position)
+var mAccount *kucoin_usdtfuture.Account
+var mAccountCh = make(chan kucoin_usdtfuture.Account, 10)
+var mPositionCh = make(chan []kucoin_usdtfuture.Position, 10)
+var mPositions = make(map[string]kucoin_usdtfuture.Position)
 var mPositionsUpdateTimes = make(map[string]time.Time)
 var mOrderRequestChs = make(map[string]chan MakerOrderRequest)
 var mNewOrderErrorCh chan MakerOrderNewError
@@ -66,8 +66,8 @@ var tNewOrderErrorCh = make(chan TakerOrderNewError, 10)
 var tOrderRequestChs = make(map[string]chan TakerOrderRequest)
 var tOrderSilentTimes = make(map[string]time.Time)
 
-var mFundingRates = make(map[string]kcperp.CurrentFundingRate)
-var mFundingRatesCh = make(chan kcperp.CurrentFundingRate, 10)
+var mFundingRates = make(map[string]kucoin_usdtfuture.CurrentFundingRate)
+var mFundingRatesCh = make(chan kucoin_usdtfuture.CurrentFundingRate, 10)
 var tPremiumIndexes map[string]bnswap.PremiumIndex
 var tPremiumIndexesCh = make(chan map[string]bnswap.PremiumIndex, 10)
 var mtFundingRates = make(map[string]float64)

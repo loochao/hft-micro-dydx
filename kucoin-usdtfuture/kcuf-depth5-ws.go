@@ -1,4 +1,4 @@
-package kcperp
+package kucoin_usdtfuture
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type Depth5RoutedWS struct {
+type Depth5WS struct {
 	RestartCh   chan interface{}
 	writeCh     chan interface{}
 	done        chan interface{}
@@ -22,10 +22,9 @@ type Depth5RoutedWS struct {
 	symbolCh    chan string
 	stopped     bool
 	mu          sync.Mutex
-	messageCh   chan []byte
 }
 
-func (w *Depth5RoutedWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth5WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer func() {
 		logger.Debugf("EXIT writeLoop")
@@ -68,14 +67,19 @@ func (w *Depth5RoutedWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *Depth5RoutedWS) readLoop(
+func (w *Depth5WS) readLoop(
 	conn *websocket.Conn,
+	channels map[string]chan []byte,
 ) {
 	logger.Debugf("START readLoop")
 	defer func() {
 		logger.Debugf("EXIT readLoop")
 	}()
 	logSilentTime := time.Now()
+	var symbol string
+	var ch chan []byte
+	var ok bool
+	var msgLen int
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -96,20 +100,35 @@ func (w *Depth5RoutedWS) readLoop(
 			return
 		}
 		//{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,
-		if len(msg) > 128 {
-			select {
-			case w.messageCh <- msg:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("w.messageCh <- msg failed, ch len %d", len(w.messageCh))
-					logSilentTime = time.Now().Add(time.Minute)
+		msgLen = len(msg)
+		if msgLen > 128 {
+			if msg[msgLen-28] == ':' {
+				symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
+			} else if msg[msgLen-29] == ':' {
+				symbol = common.UnsafeBytesToString(msg[msgLen-28 : msgLen-19])
+			} else if msg[msgLen-30] == ':' {
+				symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
+			} else if msg[msgLen-31] == ':' {
+				symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
+			} else {
+				logger.Debugf("OTHER MSG %s", msg)
+				continue
+			}
+			if ch, ok = channels[symbol]; ok {
+				select {
+				case ch <- msg:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 			}
 		}
 	}
 }
 
-func (w *Depth5RoutedWS) readAll(r io.Reader) ([]byte, error) {
+func (w *Depth5WS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 512)
 	for {
 		if len(b) == cap(b) {
@@ -127,7 +146,7 @@ func (w *Depth5RoutedWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *Depth5RoutedWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *Depth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %d %s", counter, wsUrl)
@@ -172,10 +191,10 @@ func (w *Depth5RoutedWS) reconnect(ctx context.Context, wsUrl string, proxy stri
 	return conn, nil
 }
 
-func (w *Depth5RoutedWS) mainLoop(
+func (w *Depth5WS) mainLoop(
 	ctx context.Context, api *API,
 	proxy string,
-	channels map[string]chan common.Depth,
+	channels map[string]chan []byte,
 ) {
 
 	logger.Debugf("START mainLoop")
@@ -244,14 +263,14 @@ func (w *Depth5RoutedWS) mainLoop(
 				logger.Debugf("w.reconnect error %v, stop ws", err)
 				return
 			}
-			go w.readLoop(conn)
+			go w.readLoop(conn, channels)
 			go w.writeLoop(internalCtx, conn)
 			go w.heartbeatLoop(internalCtx, conn, symbols, time.Millisecond*time.Duration(connectToken.InstanceServers[0].PingInterval))
 		}
 	}
 }
 
-func (w *Depth5RoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string, pingInterval time.Duration) {
+func (w *Depth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string, pingInterval time.Duration) {
 
 	logger.Debugf("START heartbeatLoop")
 
@@ -268,7 +287,9 @@ func (w *Depth5RoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn
 	symbolCheckTimer := time.NewTimer(time.Second)
 	defer symbolCheckTimer.Stop()
 	symbolUpdatedTimes := make(map[string]time.Time)
+	resubCounters := make(map[string]int)
 	for _, symbol := range symbols {
+		resubCounters[symbol] = 0
 		symbolUpdatedTimes[symbol] = time.Unix(0, 0)
 	}
 
@@ -280,6 +301,7 @@ func (w *Depth5RoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn
 			return
 		case symbol := <-w.symbolCh:
 			symbolUpdatedTimes[symbol] = time.Now()
+			resubCounters[symbol] = 0
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)
 			select {
@@ -297,6 +319,12 @@ func (w *Depth5RoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn
 		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
+					resubCounters[symbol] ++
+					if resubCounters[symbol] > 10 {
+						logger.Debugf("%s SUBSCRIBE 10 TIMES FAILED, RESTART WS", symbol)
+						w.restart()
+						return
+					}
 					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/contractMarket/level2Depth5:%s", symbol))
 					select {
 					case <-ctx.Done():
@@ -322,7 +350,7 @@ func (w *Depth5RoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn
 
 }
 
-func (w *Depth5RoutedWS) Stop() {
+func (w *Depth5WS) Stop() {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if !w.stopped {
@@ -332,7 +360,7 @@ func (w *Depth5RoutedWS) Stop() {
 	}
 }
 
-func (w *Depth5RoutedWS) restart() {
+func (w *Depth5WS) restart() {
 	select {
 	case <-w.done:
 	case <-time.After(time.Millisecond):
@@ -348,75 +376,77 @@ func (w *Depth5RoutedWS) restart() {
 	}
 }
 
-
-func (w *Depth5RoutedWS) dataHandleLoop(ctx context.Context, id int, channels map[string]chan common.Depth) {
-	logger.Debugf("START dataHandleLoop %d", id)
+func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Depth) {
+	logger.Debugf("START dataHandleLoop %s", symbol)
 	defer func() {
-		logger.Debugf("EXIT dataHandleLoop %d", id)
+		logger.Debugf("EXIT dataHandleLoop %s", symbol)
 	}()
 	logSilentTime := time.Now()
+	depth5 := &Depth5{
+		Symbol: symbol,
+	}
+	var logMsg = true
+	var err error
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case msg := <-w.messageCh:
-			if msg[2] == 'd' && msg[5] == 'a' {
-				depth5, err := ParseDepth5(msg)
-				if err != nil {
-					logger.Debugf("ParseDepth5(msg) error %v %s", err, msg)
-					continue
-				}
-				if ch, ok := channels[depth5.Symbol]; ok {
-					select {
-					case ch <- depth5:
-						select {
-						case w.symbolCh <- depth5.Symbol:
-						default:
-							if time.Now().Sub(logSilentTime) > 0 {
-								logger.Debugf("w.symbolCh <- depth5.Symbol failed, ch len %d", len(ch))
-								logSilentTime = time.Now().Add(time.Minute)
-							}
-						}
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("ch <- depth5 failed, ch len %d", len(ch))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
+		case msg := <-inputCh:
+			if logMsg {
+				fmt.Printf("%s\n", msg)
+				logMsg = false
+			}
+			err = ParseDepth5(msg, depth5)
+			if err != nil {
+				logger.Debugf("ParseDepth5(msg) error %v %s", err, msg)
+				continue
+			}
+			select {
+			case outputCh <- depth5:
+				select {
+				case w.symbolCh <- symbol:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.symbolCh <- symbol failed, ch len %d", len(w.symbolCh))
+						logSilentTime = time.Now().Add(time.Minute)
 					}
+				}
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("outputCh <- depth5 failed, ch len %d", len(outputCh))
+					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
 		}
 	}
 }
 
-
-func (w *Depth5RoutedWS) Done() chan interface{} {
+func (w *Depth5WS) Done() chan interface{} {
 	return w.done
 }
 
-
-
-func NewDepth5RoutedWS(
+func NewDepth5WS(
 	ctx context.Context,
 	api *API,
 	proxy string,
 	channels map[string]chan common.Depth,
-) *Depth5RoutedWS {
-	ws := Depth5RoutedWS{
+) *Depth5WS {
+	ws := Depth5WS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
 		RestartCh:   make(chan interface{}, 100),
 		writeCh:     make(chan interface{}, 100*len(channels)),
 		symbolCh:    make(chan string, 100*len(channels)),
 		stopped:     false,
-		messageCh:   make(chan []byte, 100*len(channels)),
 	}
-	go ws.mainLoop(ctx, api, proxy, channels)
-	for i := 0; i < 4; i++ {
-		go ws.dataHandleLoop(ctx, i, channels)
+	messageChs := make(map[string]chan []byte)
+	for symbol, ch := range channels {
+		messageChs[symbol] = make(chan []byte, 128)
+		go ws.dataHandleLoop(ctx, symbol, messageChs[symbol], ch)
 	}
+	go ws.mainLoop(ctx, api, proxy, messageChs)
 	ws.reconnectCh <- nil
 	return &ws
 }

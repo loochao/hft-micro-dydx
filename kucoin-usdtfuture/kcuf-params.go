@@ -1,4 +1,4 @@
-package kcperp
+package kucoin_usdtfuture
 
 import (
 	"fmt"

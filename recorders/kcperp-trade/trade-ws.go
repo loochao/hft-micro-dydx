@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -243,7 +243,7 @@ func (w *TradeWS) mainLoop(
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 
-	api, err := kcperp.NewAPI("", "", "", proxy)
+	api, err := kucoin_usdtfuture.NewAPI("", "", "", proxy)
 	if err != nil {
 		logger.Debugf("NewAPI error %v", err)
 		return
@@ -334,12 +334,12 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)
 			select {
-			case w.writeCh <- kcperp.Ping{
+			case w.writeCh <- kucoin_usdtfuture.Ping{
 				ID:   fmt.Sprintf("%d", time.Now().Nanosecond()/1000000),
 				Type: "ping",
 			}:
 			default:
-				logger.Debugf("w.writeCh <- kcperp.Ping failed ch len %d", len(w.writeCh))
+				logger.Debugf("w.writeCh <- kucoin-usdtfuture.Ping failed ch len %d", len(w.writeCh))
 
 			}
 			break
@@ -349,7 +349,7 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 				if time.Now().Sub(updateTime) > symbolTimeout {
 					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/contractMarket/execution:%s", symbol))
 					select {
-					case w.writeCh <- kcperp.SubscribeMsg{
+					case w.writeCh <- kucoin_usdtfuture.SubscribeMsg{
 						ID:             fmt.Sprintf("/contractMarket/execution:%s", symbol),
 						Type:           "subscribe",
 						Topic:          fmt.Sprintf("/contractMarket/execution:%s", symbol),
@@ -359,7 +359,7 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval * time.Duration(len(symbols)*2))
 						break loop
 					default:
-						logger.Debugf("w.writeCh <- kcperp.SubscribeMsg failed, ch len %d", len(w.writeCh))
+						logger.Debugf("w.writeCh <- kucoin-usdtfuture.SubscribeMsg failed, ch len %d", len(w.writeCh))
 					}
 				}
 			}
@@ -445,7 +445,7 @@ func (w *TradeWS) saveLoop(ctx context.Context, savePath, symbol string, inputCh
 				}
 			}
 			dayTime = time.Now().Truncate(time.Hour * 24)
-			outPath = fmt.Sprintf("%s/%s-%s.kcperp.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
+			outPath = fmt.Sprintf("%s/%s-%s.kucoin-usdtfuture.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				w.Stop()

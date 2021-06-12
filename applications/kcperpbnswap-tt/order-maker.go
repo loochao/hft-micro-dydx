@@ -2,17 +2,17 @@ package main
 
 import (
 	"context"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
 func watchMakerOrderRequest(
 	ctx context.Context,
-	api *kcperp.API,
+	api *kucoin_usdtfuture.API,
 	timeout time.Duration,
 	dryRun bool,
-	orderRequestCh chan kcperp.NewOrderParam,
+	orderRequestCh chan kucoin_usdtfuture.NewOrderParam,
 	outputOrderErrorCh chan MakerOrderNewError,
 ) {
 	defer func() {

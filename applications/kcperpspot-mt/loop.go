@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/kcspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
@@ -63,18 +63,18 @@ func updatePerpPositions() {
 			reduceOnly = true
 		}
 		price := math.Round(perpOrderBook.MakerAsk*(1.0+*kcConfig.EnterSlippage)/perpTickSize) * perpTickSize
-		side := kcperp.OrderSideBuy
+		side := kucoin_usdtfuture.OrderSideBuy
 		if perpSize < 0 {
-			side = kcperp.OrderSideSell
+			side = kucoin_usdtfuture.OrderSideSell
 			perpSize = -perpSize
 			price = math.Round(perpOrderBook.MakerBid*(1.0-*kcConfig.EnterSlippage)/perpTickSize) * perpTickSize
 		}
-		order := kcperp.NewOrderParam{
+		order := kucoin_usdtfuture.NewOrderParam{
 			Symbol:      perpSymbol,
 			Side:        side,
-			Type:        kcperp.OrderTypeLimit,
+			Type:        kucoin_usdtfuture.OrderTypeLimit,
 			Price:       common.Float64(price),
-			TimeInForce: kcperp.OrderTimeInForceIOC,
+			TimeInForce: kucoin_usdtfuture.OrderTimeInForceIOC,
 			Size:        int64(perpSize),
 			ReduceOnly:  reduceOnly,
 			ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),

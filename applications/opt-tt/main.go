@@ -133,7 +133,9 @@ func main() {
 	go xExchange.StreamBasic(
 		xyGlobalCtx,
 		xSystemStatusCh,
-		xAccountCh,
+		map[string]chan common.Balance{
+			"USDT":xAccountCh,
+		},
 		xPositionChMap,
 		xOrderChMap,
 	)
@@ -170,7 +172,9 @@ func main() {
 	go yExchange.StreamBasic(
 		xyGlobalCtx,
 		ySystemStatusCh,
-		yAccountCh,
+		map[string]chan common.Balance{
+			"USDT":yAccountCh,
+		},
 		yPositionChMap,
 		yOrderChMap,
 	)

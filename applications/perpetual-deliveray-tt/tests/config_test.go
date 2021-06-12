@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/bnswap"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"sort"
 	"strings"
 	"testing"
 )
 
 func TestConfig_SetDefaultIfNotSet(t *testing.T) {
-	for xSymbol := range kcperp.TickSizes {
+	for xSymbol := range kucoin_usdtfuture.TickSizes {
 		ySymbol := strings.Replace(xSymbol, "USDTM", "USDT", -1)
 		if _, ok := bnswap.TickSizes[ySymbol]; ok {
 			fmt.Printf("  %s: %s\n", xSymbol, ySymbol)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"os/signal"
@@ -30,14 +30,14 @@ func main() {
 	}
 
 	var err error
-	mAPI, err = kcperp.NewAPI(
+	mAPI, err = kucoin_usdtfuture.NewAPI(
 		*mtConfig.KcApiKey,
 		*mtConfig.KcApiSecret,
 		*mtConfig.KcApiPassphrase,
 		*mtConfig.ProxyAddress,
 	)
 	if err != nil {
-		logger.Debugf("kcperp.NewAPI error %v", err)
+		logger.Debugf("kucoin-usdtfuture.NewAPI error %v", err)
 		return
 	}
 	tAPI, err = bnswap.NewAPI(
@@ -79,9 +79,9 @@ func main() {
 			time.Sleep(time.Second)
 		}
 	}
-	_, mMultipliers, mTickSizes, _, err = kcperp.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
+	_, mMultipliers, mTickSizes, _, err = kucoin_usdtfuture.GetOrderLimits(mtGlobalCtx, mAPI, mSymbols)
 	if err != nil {
-		logger.Debugf("kcperp.GetOrderLimits error %v", err)
+		logger.Debugf("kucoin-usdtfuture.GetOrderLimits error %v", err)
 		return
 	}
 	tTickSizes, tStepSizes, _, tMinNotional, _, _, err = bnswap.GetOrderLimits(mtGlobalCtx, tAPI, tSymbols)
@@ -147,7 +147,7 @@ func main() {
 	}
 	defer tUserWebsocket.Stop()
 
-	mUserWebsocket = kcperp.NewUserWebsocketAndStart(
+	mUserWebsocket = kucoin_usdtfuture.NewUserWebsocketAndStart(
 		mtGlobalCtx,
 		mAPI,
 		mSymbols,
@@ -174,17 +174,17 @@ func main() {
 	defer mtLoopTimer.Stop()
 	defer externalInfluxSaveTimer.Stop()
 
-	go kcperp.PositionsHttpLoop(
+	go kucoin_usdtfuture.PositionsHttpLoop(
 		mtGlobalCtx, mAPI,
 		mSymbols, *mtConfig.PullInterval,
 		mPositionCh,
 	)
-	go kcperp.AccountHttpLoop(
+	go kucoin_usdtfuture.AccountHttpLoop(
 		mtGlobalCtx, mAPI,
-		kcperp.AccountParam{Currency: "USDT"},
+		kucoin_usdtfuture.AccountParam{Currency: "USDT"},
 		*mtConfig.PullInterval, mAccountCh,
 	)
-	go kcperp.FundingRateLoop(
+	go kucoin_usdtfuture.FundingRateLoop(
 		mtGlobalCtx, mAPI,
 		mSymbols,
 		*mtConfig.PullInterval*10,
@@ -336,7 +336,7 @@ func main() {
 		)
 	}
 
-	go kcperp.WatchSystemStatusHttp(
+	go kucoin_usdtfuture.WatchSystemStatusHttp(
 		mtGlobalCtx,
 		mAPI,
 		*mtConfig.PullInterval/2,
@@ -371,7 +371,7 @@ func main() {
 				case <-mtGlobalCtx.Done():
 					return
 				case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
-					Cancel: &kcperp.CancelAllOrdersParam{
+					Cancel: &kucoin_usdtfuture.CancelAllOrdersParam{
 						Symbol: makerSymbol,
 					},
 				}:
@@ -433,9 +433,9 @@ func main() {
 			handleMakerWSAccount(msg)
 			break
 		case makerOrder := <-mUserWebsocket.OrderCh:
-			if makerOrder.EventType == kcperp.OrderStatusCanceled ||
-				makerOrder.EventType == kcperp.OrderStatusMatch {
-				if makerOrder.EventType == kcperp.OrderStatusCanceled {
+			if makerOrder.EventType == kucoin_usdtfuture.OrderStatusCanceled ||
+				makerOrder.EventType == kucoin_usdtfuture.OrderStatusMatch {
+				if makerOrder.EventType == kucoin_usdtfuture.OrderStatusCanceled {
 					logger.Debugf("MAKER WS ORDER CANCELED %v ", makerOrder)
 					mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
 					mPositionsUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)

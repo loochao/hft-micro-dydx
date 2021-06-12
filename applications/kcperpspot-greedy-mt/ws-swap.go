@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
-func handlePerpWSBalance(wsBalance *kcperp.WsBalanceEvent) {
+func handlePerpWSBalance(wsBalance *kucoin_usdtfuture.WsBalanceEvent) {
 	if kcperpUSDTAccount != nil {
 		if wsBalance.Currency != nil && kcperpUSDTAccount.Currency == *wsBalance.Currency {
 			if wsBalance.AvailableBalance != nil && kcperpUSDTAccount.AvailableBalance != *wsBalance.AvailableBalance {
@@ -38,7 +38,7 @@ func handlePerpWSBalance(wsBalance *kcperp.WsBalanceEvent) {
 	}
 }
 
-func handlePerpWSPosition(nextPos *kcperp.WSPosition) {
+func handlePerpWSPosition(nextPos *kucoin_usdtfuture.WSPosition) {
 	if _, ok := kcpsSymbolsMap[nextPos.Symbol]; ok {
 		if lastPos, ok := kcperpPositions[nextPos.Symbol]; ok && nextPos.EventTime.Sub(lastPos.EventTime) > 0 {
 			if nextPos.CurrentQty != nil {

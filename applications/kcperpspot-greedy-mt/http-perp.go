@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
-func handlePerpHttpPositions(positions []kcperp.Position) {
+func handlePerpHttpPositions(positions []kucoin_usdtfuture.Position) {
 	for _, nextPos := range positions {
 		if _, ok := kcpsSymbolsMap[nextPos.Symbol]; !ok {
 			continue
@@ -14,7 +14,7 @@ func handlePerpHttpPositions(positions []kcperp.Position) {
 		if time.Now().Sub(kcperpHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
 			continue
 		}
-		var lastPosition *kcperp.Position
+		var lastPosition *kucoin_usdtfuture.Position
 		if p, ok := kcperpPositions[nextPos.Symbol]; ok {
 			p := p
 			lastPosition = &p
@@ -32,7 +32,7 @@ func handlePerpHttpPositions(positions []kcperp.Position) {
 	}
 }
 
-func handlePerpHttpAccount(account kcperp.Account) {
+func handlePerpHttpAccount(account kucoin_usdtfuture.Account) {
 	if account.Currency == "USDT" {
 		if kcperpUSDTAccount == nil ||
 			kcperpUSDTAccount.AvailableBalance != account.AvailableBalance {

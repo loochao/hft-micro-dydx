@@ -1,4 +1,4 @@
-package kcperp
+package kucoin_usdtfuture
 
 var Multipliers = map[string]float64{
 	"1INCHUSDTM": 1,

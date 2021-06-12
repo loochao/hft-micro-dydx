@@ -211,7 +211,7 @@ func watchMakerTakerSpread(
 			newTakerDepth, err = hbcrossswap.ParseDepth20(takerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("kcperp.ParseDepth5 error %v %s %s", err, takerSymbol, takerRawDepth.Depth)
+					logger.Debugf("kucoin-usdtfuture.ParseDepth5 error %v %s %s", err, takerSymbol, takerRawDepth.Depth)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if takerDepth == nil || newTakerDepth.MRID > takerDepth.MRID {

@@ -4,11 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/ftxperp"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -31,8 +29,8 @@ var yStepSizes = make(map[string]float64)
 var yMinNotionals = make(map[string]float64)
 var xyStepSizes = make(map[string]float64)
 
-var xAccount common.Account
-var xAccountCh = make(chan common.Account, 200)
+var xAccount common.Balance
+var xAccountCh = make(chan common.Balance, 200)
 var xPositionCh = make(chan common.Position, 200)
 var xOrderCh = make(chan common.Order, 200)
 var xPositions = make(map[string]common.Position)
@@ -45,8 +43,8 @@ var yPositionCh = make(chan common.Position, 200)
 var yOrderCh = make(chan common.Order, 200)
 var yPositions = make(map[string]common.Position)
 var yPositionsUpdateTimes = make(map[string]time.Time)
-var yAccount common.Account
-var yAccountCh = make(chan common.Account, 200)
+var yAccount common.Balance
+var yAccountCh = make(chan common.Balance, 200)
 var yNewOrderErrorCh = make(chan common.OrderError, 200)
 var yOrderRequestChMap = make(map[string]chan common.OrderRequest)
 var yOrderSilentTimes = make(map[string]time.Time)
@@ -117,27 +115,27 @@ func init() {
 	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
 	switch xyConfig.XExchange.Name {
-	case "ftxperp":
-		xExchange = &ftxperp.Ftxperp{}
+	//case "ftxperp":
+	//	xExchange = &ftxperp.Ftxperp{}
 	case "bnswap":
 		xExchange = &bnswap.Bnswap{}
-	case "kcperp":
-		xExchange = &kcperp.Kcperp{}
-	case "bnspot":
-		xExchange = &bnspot.Bnspot{}
+	case "kucoin-usdtfuture":
+		xExchange = &kucoin_usdtfuture.Kcperp{}
+	//case "bnspot":
+	//	xExchange = &bnspot.Bnspot{}
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
 
 	switch xyConfig.YExchange.Name {
-	case "ftxperp":
-		yExchange = &ftxperp.Ftxperp{}
+	//case "ftxperp":
+	//	yExchange = &ftxperp.Ftxperp{}
 	case "bnswap":
 		yExchange = &bnswap.Bnswap{}
-	case "kcperp":
-		yExchange = &kcperp.Kcperp{}
-	case "bnspot":
-		yExchange = &bnspot.Bnspot{}
+	case "kucoin-usdtfuture":
+		yExchange = &kucoin_usdtfuture.Kcperp{}
+	//case "bnspot":
+	//	yExchange = &bnspot.Bnspot{}
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
 	}

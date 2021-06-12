@@ -1,4 +1,4 @@
-package kcperp
+package kucoin_usdtfuture
 
 import (
 	"context"
@@ -94,7 +94,7 @@ func (k *Kcperp) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Account, positionCh map[string]chan common.Position, orderChs map[string]chan common.Order) {
+func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountChMap map[string]chan common.Balance, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
 	defer k.Stop()
 	k.mu.Lock()
 	settings := k.settings
@@ -129,7 +129,7 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 			return
 		case positionsMap = <-httpPositionsCh:
 			for symbol, pos := range positionsMap {
-				if ch, ok := positionCh[symbol]; ok {
+				if ch, ok := positionChMap[symbol]; ok {
 					//logger.Debugf("%v", pos)
 					pos := pos
 					select {
@@ -153,12 +153,14 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 			}
 		case a := <-httpAccountCh:
 			account = &a
-			select {
-			case accountCh <- account:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("accountCh <- account failed, ch len %d", len(accountCh))
-					logSilentTime = time.Now().Add(time.Minute)
+			if accountCh, ok := accountChMap["USDT"]; ok {
+				select {
+				case accountCh <- account:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("accountCh <- account failed, ch len %d", len(accountCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 			}
 		case <-userWS.RestartCh:
@@ -188,24 +190,26 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 					account.OrderMargin = *balance.OrderMargin
 				}
 				outputAccount := *account
-				select {
-				case accountCh <- &outputAccount:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- &order failed, ch len %d", len(accountCh))
-						logSilentTime = time.Now().Add(time.Minute)
+				if accountCh, ok := accountChMap["USDT"]; ok {
+					select {
+					case accountCh <- &outputAccount:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("ch <- &order failed, ch len %d", len(accountCh))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
 					}
 				}
 			}
 		case order := <-userWS.OrderCh:
-			//DEBUG 2021/05/22 01:21:54.774559 kcperp.go:606: 	k.api.SubmitOrder {"clientOid":"16216465147940","side":"buy","symbol":"BNBUSDTM","type":"market","leverage":3,"size":24,"reduceOnly":true}
-			//DEBUG 2021/05/22 01:21:54.774573 kcperp-api.go:77: 	{"clientOid":"16216465147940","side":"buy","symbol":"BNBUSDTM","type":"market","leverage":3,"size":24,"reduceOnly":true}
-			//DEBUG 2021/05/22 01:21:54.824218 kcperp.go:608: 	k.api.SubmitOrder &{60a85cb28833a40006067120} <nil>
-			//DEBUG 2021/05/22 01:21:54.833944 kcperp-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"1","matchPrice":"325.7","matchSize":"1","tradeId":"60a85cb2b87b911178425c71","remainSize":"23","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
+			//DEBUG 2021/05/22 01:21:54.774559 kucoin-usdtfuture.go:606: 	k.api.SubmitOrder {"clientOid":"16216465147940","side":"buy","symbol":"BNBUSDTM","type":"market","leverage":3,"size":24,"reduceOnly":true}
+			//DEBUG 2021/05/22 01:21:54.774573 kucoin-usdtfuture-api.go:77: 	{"clientOid":"16216465147940","side":"buy","symbol":"BNBUSDTM","type":"market","leverage":3,"size":24,"reduceOnly":true}
+			//DEBUG 2021/05/22 01:21:54.824218 kucoin-usdtfuture.go:608: 	k.api.SubmitOrder &{60a85cb28833a40006067120} <nil>
+			//DEBUG 2021/05/22 01:21:54.833944 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"1","matchPrice":"325.7","matchSize":"1","tradeId":"60a85cb2b87b911178425c71","remainSize":"23","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
 			//DEBUG 2021/05/22 01:21:54.834155 main.go:326: 	x order filled BNBUSDTM FILLED size 1.000000 price 325.700000
-			//DEBUG 2021/05/22 01:21:54.839608 kcperp-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","type":"filled","orderTime":1621646514806444042,"size":"24","filledSize":"24","price":"","remainSize":"0","clientOid":"16216465147940","status":"done","ts":1621646514814245799}
-			//DEBUG 2021/05/22 01:21:54.839661 kcperp-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"24","matchPrice":"325.94","matchSize":"21","tradeId":"60a85cb2b87b911178425c73","remainSize":"0","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
-			//DEBUG 2021/05/22 01:21:54.839676 kcperp-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"3","matchPrice":"325.73","matchSize":"2","tradeId":"60a85cb2b87b911178425c72","remainSize":"21","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
+			//DEBUG 2021/05/22 01:21:54.839608 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","type":"filled","orderTime":1621646514806444042,"size":"24","filledSize":"24","price":"","remainSize":"0","clientOid":"16216465147940","status":"done","ts":1621646514814245799}
+			//DEBUG 2021/05/22 01:21:54.839661 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"24","matchPrice":"325.94","matchSize":"21","tradeId":"60a85cb2b87b911178425c73","remainSize":"0","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
+			//DEBUG 2021/05/22 01:21:54.839676 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"3","matchPrice":"325.73","matchSize":"2","tradeId":"60a85cb2b87b911178425c72","remainSize":"21","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
 			//滤掉没有价格的事件
 			if order.EventType == "filled" || order.EventType == "match" {
 				if order.FilledSize == 0 || order.MatchPrice == 0 {
@@ -244,7 +248,7 @@ func (k *Kcperp) StreamBasic(ctx context.Context, statusCh chan common.SystemSta
 					position.UnrealisedRoePcnt = *wsPosition.UnrealisedRoePcnt
 				}
 				positionsMap[wsPosition.Symbol] = position
-				if ch, ok := positionCh[position.Symbol]; ok {
+				if ch, ok := positionChMap[position.Symbol]; ok {
 					select {
 					case ch <- &position:
 					default:
@@ -343,7 +347,7 @@ func (k *Kcperp) StreamDepth(ctx context.Context, channels map[string]chan commo
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
-			ws := NewDepth5RoutedWS(ctx, k.api, proxy, channels)
+			ws := NewDepth5WS(ctx, k.api, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():

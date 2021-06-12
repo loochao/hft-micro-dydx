@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"time"
@@ -10,7 +10,7 @@ import (
 
 func watchMakerOrderRequest(
 	ctx context.Context,
-	api *kcperp.API,
+	api *kucoin_usdtfuture.API,
 	timeout time.Duration,
 	dryRun bool,
 	orderRequestCh chan MakerOrderRequest,
@@ -77,7 +77,7 @@ func cancelAllMakerOpenOrders() {
 		mCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &kcperp.CancelAllOrdersParam{Symbol: order.Symbol},
+			Cancel: &kucoin_usdtfuture.CancelAllOrdersParam{Symbol: order.Symbol},
 		}
 	}
 }
@@ -105,12 +105,12 @@ func updateMakerOldOrders() {
 		mCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &kcperp.CancelAllOrdersParam{Symbol: order.Symbol},
+			Cancel: &kucoin_usdtfuture.CancelAllOrdersParam{Symbol: order.Symbol},
 		}
 	}
 }
 
-func isOrderProfitable(order kcperp.NewOrderParam, entryTarget float64) bool {
+func isOrderProfitable(order kucoin_usdtfuture.NewOrderParam, entryTarget float64) bool {
 	spread, okSpread := mtSpreads[order.Symbol]
 	makerPosition, okMakerPosition := mPositions[order.Symbol]
 
@@ -127,7 +127,7 @@ func isOrderProfitable(order kcperp.NewOrderParam, entryTarget float64) bool {
 	longTop := -*mtConfig.ExitDelta + *mtConfig.OffsetDelta*(math.Min(makerValue, 0)/entryTarget)
 
 	//检查价格有没有在OFFSET范围内，不在撤掉
-	if order.Side == kcperp.OrderSideBuy &&
+	if order.Side == kucoin_usdtfuture.OrderSideBuy &&
 		float64(order.Price) < spread.MakerDepth.MakerBid*(1.0+offset.FarBot) {
 		logger.Debugf("%s BUY PRICE %f < FAR BOT %f, CANCEL",
 			order.Symbol,
@@ -135,7 +135,7 @@ func isOrderProfitable(order kcperp.NewOrderParam, entryTarget float64) bool {
 			spread.MakerDepth.MakerBid*(1.0+offset.FarBot),
 		)
 		return false
-	} else if order.Side == kcperp.OrderSideBuy &&
+	} else if order.Side == kucoin_usdtfuture.OrderSideBuy &&
 		float64(order.Price) > spread.MakerDepth.MakerBid*(1.0+offset.NearBot) {
 		logger.Debugf("%s BUY PRICE %f > NEAR BOT %f, CANCEL",
 			order.Symbol,
@@ -143,7 +143,7 @@ func isOrderProfitable(order kcperp.NewOrderParam, entryTarget float64) bool {
 			spread.MakerDepth.MakerBid*(1.0+offset.NearBot),
 		)
 		return false
-	} else if order.Side == kcperp.OrderSideSell &&
+	} else if order.Side == kucoin_usdtfuture.OrderSideSell &&
 		float64(order.Price) > spread.MakerDepth.MakerAsk*(1.0+offset.FarTop) {
 		logger.Debugf("%s SELL PRICE %f > FAR TOP %f, CANCEL ",
 			order.Symbol,
@@ -151,7 +151,7 @@ func isOrderProfitable(order kcperp.NewOrderParam, entryTarget float64) bool {
 			spread.MakerDepth.MakerAsk*(1.0+offset.FarTop),
 		)
 		return false
-	} else if order.Side == kcperp.OrderSideSell &&
+	} else if order.Side == kucoin_usdtfuture.OrderSideSell &&
 		float64(order.Price) < spread.MakerDepth.MakerAsk*(1.0+offset.NearTop) {
 		logger.Debugf("%s SELL PRICE %f < NEAR TOP %f, CANCEL ",
 			order.Symbol,
@@ -161,28 +161,28 @@ func isOrderProfitable(order kcperp.NewOrderParam, entryTarget float64) bool {
 		return false
 	}
 
-	if order.Side == kcperp.OrderSideBuy &&
+	if order.Side == kucoin_usdtfuture.OrderSideBuy &&
 		!order.ReduceOnly &&
 		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > shortTop {
 		//买入开多, 是开空价差, 参考ShortTop
 		return true
-	} else if order.Side == kcperp.OrderSideSell &&
+	} else if order.Side == kucoin_usdtfuture.OrderSideSell &&
 		order.ReduceOnly &&
 		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < shortBot {
 		//卖出平多, 是平空价, 参考ShortBot
 		return true
-	} else if order.Side == kcperp.OrderSideSell &&
+	} else if order.Side == kucoin_usdtfuture.OrderSideSell &&
 		!order.ReduceOnly &&
 		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < longBot {
 		//卖出开空, 是开多价差, 参考LongBot
 		return true
-	} else if order.Side == kcperp.OrderSideBuy &&
+	} else if order.Side == kucoin_usdtfuture.OrderSideBuy &&
 		order.ReduceOnly &&
 		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > longTop {
 		//买入平空, 是平多价差, 参考LongTop
 		return true
 	}
-	if order.Side == kcperp.OrderSideBuy {
+	if order.Side == kucoin_usdtfuture.OrderSideBuy {
 		logger.Debugf(
 			"NOT PROFITABLE %s BUY ORDER, CANCEL", order.Symbol,
 		)

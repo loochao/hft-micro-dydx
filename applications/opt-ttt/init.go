@@ -7,7 +7,7 @@ import (
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/ftxperp"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -125,8 +125,8 @@ func init() {
 		xExchange = &ftxperp.Ftxperp{}
 	case "bnswap":
 		xExchange = &bnswap.Bnswap{}
-	case "kcperp":
-		xExchange = &kcperp.Kcperp{}
+	case "kucoin-usdtfuture":
+		xExchange = &kucoin_usdtfuture.Kcperp{}
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -136,8 +136,8 @@ func init() {
 		yExchange = &ftxperp.Ftxperp{}
 	case "bnswap":
 		yExchange = &bnswap.Bnswap{}
-	case "kcperp":
-		yExchange = &kcperp.Kcperp{}
+	case "kucoin-usdtfuture":
+		yExchange = &kucoin_usdtfuture.Kcperp{}
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
 	}

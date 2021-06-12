@@ -24,17 +24,19 @@ func watchXYSpread(
 	outputCh chan *XYSpread,
 ) {
 	var err error
-	var xDepth, newXDepth common.Depth
-	var yDepth, newYDepth common.Depth
+	var xDepth, yDepth common.Depth
 	var xWalkedDepth, yWalkedDepth *common.WalkedMakerTakerDepth
 	var spreadTime time.Time
 	var adjustedAgeDiff time.Duration
+	var ageDiff time.Duration
 	var xBiasInMs = float64(xBias / time.Millisecond)
 	var yBiasInMs = float64(yBias / time.Millisecond)
 	var minTimeDeltaInMs = float64(minTimeDelta / time.Millisecond)
 	var maxTimeDeltaInMs = float64(maxTimeDelta / time.Millisecond)
 	var xDepthFilter = common.NewDepthFilter(xDecay, xBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
 	var yDepthFilter = common.NewDepthFilter(yDecay, yBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
+	var xDepthTime = time.Unix(0, 0)
+	var yDepthTime = time.Unix(0, 0)
 
 	logSilentTime := time.Now()
 	walkSpreadTimer := time.NewTimer(time.Hour * 999)
@@ -58,8 +60,9 @@ func watchXYSpread(
 			if xWalkedDepth == nil || yWalkedDepth == nil {
 				break
 			}
+			ageDiff = xWalkedDepth.Time.Sub(yWalkedDepth.Time)
 			//需要用ema time delta 对age diff进行修正
-			adjustedAgeDiff = xWalkedDepth.Time.Sub(yWalkedDepth.Time) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
+			adjustedAgeDiff = ageDiff + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
 			//取新一点的时间为spread time
 			if xWalkedDepth.Time.Sub(yWalkedDepth.Time) < 0 {
 				//需要对时间进行补偿
@@ -144,17 +147,13 @@ func watchXYSpread(
 			}
 			break
 
-		case newXDepth = <-makerDepthCh:
-			if newXDepth == xDepth && time.Now().Sub(logSilentTime) > 0{
-				logger.Debugf("%s bad newXDepth == xDept, same pointer", xSymbol)
-				logSilentTime = time.Now().Add(time.Minute)
-			}
-			if xDepth != nil && xDepth.GetTime().Sub(newXDepth.GetTime()) >= 0 {
+		case xDepth = <-makerDepthCh:
+			if xDepth.GetTime().Sub(xDepthTime) >= 0 {
 				break
 			}
-			xDepth = newXDepth
+			xDepthTime = xDepth.GetTime()
 			if !xDepthFilter.Filter(xDepth) && yDepth != nil {
-				adjustedAgeDiff = xDepth.GetTime().Sub(yDepth.GetTime()) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
+				adjustedAgeDiff = xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
 				if adjustedAgeDiff > maxAgeDiffBias {
 					//taker已经过期
 					yExpireCount++
@@ -170,8 +169,13 @@ func watchXYSpread(
 			if depthCount > reportCount {
 				xDepthFilter.GenerateReport()
 				yDepthFilter.GenerateReport()
+				if xDepth != nil && yDepth != nil {
+					ageDiff = xDepthTime.Sub(yDepthTime)
+					adjustedAgeDiff = ageDiff + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
+				}
 				select {
 				case reportCh <- SpreadReport{
+					AgeDiff:           ageDiff,
 					AdjustedAgeDiff:   adjustedAgeDiff,
 					MatchRatio:        float64(matchCount) / float64(depthCount),
 					XSymbol:           xSymbol,
@@ -193,18 +197,13 @@ func watchXYSpread(
 				xExpireCount = 0
 			}
 			break
-		case newYDepth = <-takerDepthCh:
-			if newYDepth == yDepth && time.Now().Sub(logSilentTime) > 0{
-				logger.Debugf("%s bad newYDepth == yDepth, same pointer", ySymbol)
-				logSilentTime = time.Now().Add(time.Minute)
-			}
-			if yDepth != nil &&
-				yDepth.GetTime().Sub(newYDepth.GetTime()) >= 0 {
+		case yDepth = <-takerDepthCh:
+			if yDepth.GetTime().Sub(yDepthTime) < 0 {
 				break
 			}
-			yDepth = newYDepth
+			yDepthTime = yDepth.GetTime()
 			if !yDepthFilter.Filter(yDepth) && xDepth != nil {
-				adjustedAgeDiff = xDepth.GetTime().Sub(yDepth.GetTime()) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
+				adjustedAgeDiff = xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
 				if adjustedAgeDiff > maxAgeDiffBias {
 					//taker已经过期
 					yExpireCount++
@@ -220,10 +219,15 @@ func watchXYSpread(
 			if depthCount > reportCount {
 				xDepthFilter.GenerateReport()
 				yDepthFilter.GenerateReport()
+				if xDepth != nil && yDepth != nil {
+					ageDiff = xDepthTime.Sub(yDepthTime)
+					adjustedAgeDiff = ageDiff + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
+				}
 				select {
 				case reportCh <- SpreadReport{
-					AdjustedAgeDiff:       adjustedAgeDiff,
-					MatchRatio:            float64(matchCount) / float64(depthCount),
+					AgeDiff:           ageDiff,
+					AdjustedAgeDiff:   adjustedAgeDiff,
+					MatchRatio:        float64(matchCount) / float64(depthCount),
 					XSymbol:           xSymbol,
 					YSymbol:           ySymbol,
 					XTimeDeltaEma:     xDepthFilter.TimeDeltaEma,

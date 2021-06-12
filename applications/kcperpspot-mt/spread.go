@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/kcspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
@@ -28,7 +28,7 @@ func watchMakerTakerSpread(
 	var err error
 	var makerRawDepth, takerRawDepth *common.DepthRawMessage
 	var makerDepth, newMakerDepth *kcspot.Depth5
-	var takerDepth, newTakerDepth *kcperp.Depth5
+	var takerDepth, newTakerDepth *kucoin_usdtfuture.Depth5
 	var makerWalkedDepth, takerWalkedDepth *common.WalkedMakerTakerDepth
 	var spreadTime time.Time
 	var ageDiff time.Duration
@@ -208,10 +208,10 @@ func watchMakerTakerSpread(
 			if takerRawDepth == nil {
 				break
 			}
-			newTakerDepth, err = kcperp.ParseDepth5(takerRawDepth.Depth)
+			newTakerDepth, err = kucoin_usdtfuture.ParseDepth5(takerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("kcperp.ParseDepth5 error %v %s %s", err, takerSymbol, takerRawDepth.Depth)
+					logger.Debugf("kucoin-usdtfuture.ParseDepth5 error %v %s %s", err, takerSymbol, takerRawDepth.Depth)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if takerDepth == nil || newTakerDepth.Sequence > takerDepth.Sequence {

@@ -478,3 +478,13 @@ func BenchmarkUnsafeBytesToString(t *testing.B) {
 	}
 }
 
+func TestParseDecimal2(t *testing.T) {
+	a := []byte("0.0001")
+	v, err := ParseDecimal(a)
+	if err != nil {
+		t.Fatal(err)
+	}else{
+		assert.Equal(t, 0.0001, v)
+	}
+}
+

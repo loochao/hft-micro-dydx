@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/kcspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
@@ -59,15 +59,15 @@ func updatePerpPositions() {
 		if perpSize*perpPosition.CurrentQty < 0 && math.Abs(perpSize) <= math.Abs(perpPosition.CurrentQty) {
 			reduceOnly = true
 		}
-		side := kcperp.OrderSideBuy
+		side := kucoin_usdtfuture.OrderSideBuy
 		if perpSize < 0 {
-			side = kcperp.OrderSideSell
+			side = kucoin_usdtfuture.OrderSideSell
 			perpSize = -perpSize
 		}
-		order := kcperp.NewOrderParam{
+		order := kucoin_usdtfuture.NewOrderParam{
 			Symbol:     perpSymbol,
 			Side:       side,
-			Type:       kcperp.OrderTypeMarket,
+			Type:       kucoin_usdtfuture.OrderTypeMarket,
 			Size:       int64(perpSize),
 			ReduceOnly: reduceOnly,
 			ClientOid:  fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),

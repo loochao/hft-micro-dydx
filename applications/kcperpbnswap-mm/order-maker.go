@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
 func watchMakerOrderRequest(
 	ctx context.Context,
-	api *kcperp.API,
+	api *kucoin_usdtfuture.API,
 	timeout time.Duration,
 	dryRun bool,
 	orderRequestCh chan MakerOrderRequest,
@@ -77,7 +77,7 @@ func cancelAllMakerOpenOrders() {
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &kcperp.CancelAllOrdersParam{Symbol: order.Symbol},
+			Cancel: &kucoin_usdtfuture.CancelAllOrdersParam{Symbol: order.Symbol},
 		}
 	}
 }
@@ -99,12 +99,12 @@ func updateMakerOldOrders() {
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &kcperp.CancelAllOrdersParam{Symbol: order.Symbol},
+			Cancel: &kucoin_usdtfuture.CancelAllOrdersParam{Symbol: order.Symbol},
 		}
 	}
 }
 
-func isOrderProfitable(order kcperp.NewOrderParam) bool {
+func isOrderProfitable(order kucoin_usdtfuture.NewOrderParam) bool {
 	spread, ok1 := mtSpreads[order.Symbol]
 	quantile, ok2 := mtQuantiles[order.Symbol]
 	if !ok1 || !ok2 || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
@@ -118,7 +118,7 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 		return false
 	}
 
-	if order.Side == kcperp.OrderSideBuy &&
+	if order.Side == kucoin_usdtfuture.OrderSideBuy &&
 		float64(order.Price) < spread.MakerDepth.BestBidPrice {
 		logger.Debugf("BUY %s %f < BEST BID %f",
 			order.Symbol,
@@ -126,7 +126,7 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 			spread.MakerDepth.BestBidPrice,
 		)
 		return false
-	} else if order.Side == kcperp.OrderSideSell &&
+	} else if order.Side == kucoin_usdtfuture.OrderSideSell &&
 		float64(order.Price) > spread.MakerDepth.BestAskPrice {
 		logger.Debugf("SELL %s %f > BEST ASK %f",
 			order.Symbol,
@@ -136,28 +136,28 @@ func isOrderProfitable(order kcperp.NewOrderParam) bool {
 		return false
 	}
 
-	if order.Side == kcperp.OrderSideBuy &&
+	if order.Side == kucoin_usdtfuture.OrderSideBuy &&
 		!order.ReduceOnly &&
 		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.ShortTop-*mtConfig.MakerOrderOffset {
 		//买入开多, 是开空价差, 参考ShortTop
 		return true
-	} else if order.Side == kcperp.OrderSideSell &&
+	} else if order.Side == kucoin_usdtfuture.OrderSideSell &&
 		order.ReduceOnly &&
 		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.ShortBot+*mtConfig.MakerOrderOffset {
 		//卖出平多, 是平空价, 参考ShortBot
 		return true
-	} else if order.Side == kcperp.OrderSideSell &&
+	} else if order.Side == kucoin_usdtfuture.OrderSideSell &&
 		!order.ReduceOnly &&
 		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.LongBot+*mtConfig.MakerOrderOffset {
 		//卖出开空, 是开多价差, 参考LongBot
 		return true
-	} else if order.Side == kcperp.OrderSideBuy &&
+	} else if order.Side == kucoin_usdtfuture.OrderSideBuy &&
 		order.ReduceOnly &&
 		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.LongTop-*mtConfig.MakerOrderOffset {
 		//买入平空, 是平多价差, 参考LongTop
 		return true
 	}
-	if order.Side == kcperp.OrderSideBuy {
+	if order.Side == kucoin_usdtfuture.OrderSideBuy {
 		logger.Debugf(
 			"NOT PROFITABLE %s SPREAD %f BUY ORDER, CANCEL", (spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price), order.Symbol,
 		)

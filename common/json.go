@@ -105,7 +105,7 @@ func ParseDecimal(s []byte) (float64, error) {
 			continue
 		case '0' <= c && c <= '9':
 			sawDigits = true
-			if c == '0' && nd == 0 { // ignore leading zeros
+			if c == '0' && nd == 0 && !sawDot{ // ignore leading zeros
 				continue
 			}
 			nd++

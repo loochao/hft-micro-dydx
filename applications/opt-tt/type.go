@@ -24,6 +24,7 @@ type XYSpread struct {
 }
 
 type SpreadReport struct {
+	AgeDiff           time.Duration
 	AdjustedAgeDiff   time.Duration
 	MatchRatio        float64
 	XDepthFilterRatio float64

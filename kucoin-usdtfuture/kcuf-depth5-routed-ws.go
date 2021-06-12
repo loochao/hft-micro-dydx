@@ -1,9 +1,10 @@
-package kcperp
+package kucoin_usdtfuture
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -11,11 +12,10 @@ import (
 	"net/url"
 	"sync/atomic"
 	"time"
+	"unsafe"
 )
 
-type Depth5Websocket struct {
-	messageCh   chan []byte
-	DataCh      chan *Depth5
+type Depth5RoutedWebsocket struct {
 	RestartCh   chan interface{}
 	writeCh     chan interface{}
 	done        chan interface{}
@@ -24,7 +24,7 @@ type Depth5Websocket struct {
 	stopped     int32
 }
 
-func (w *Depth5Websocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth5RoutedWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer func() {
 		logger.Debugf("EXIT writeLoop")
@@ -67,13 +67,21 @@ func (w *Depth5Websocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *Depth5Websocket) readLoop(conn *websocket.Conn) {
+func (w *Depth5RoutedWebsocket) readLoop(
+	conn *websocket.Conn,
+	channels map[string]chan *common.DepthRawMessage,
+) {
 	logger.Debugf("START readLoop")
 	defer func() {
 		logger.Debugf("EXIT readLoop")
 	}()
-	totalCount := 0
-	totalLen := 0
+	logSilentTime := time.Now()
+	var symbolBytes []byte
+	var symbol string
+	var ch chan *common.DepthRawMessage
+	var ok bool
+	var t int64
+	var msgLen int
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -93,22 +101,72 @@ func (w *Depth5Websocket) readLoop(conn *websocket.Conn) {
 			go w.restart()
 			return
 		}
-		totalCount += 1
-		totalLen += len(msg)
-		if totalCount > 10000 {
-			logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
-			totalLen = 0
-			totalCount = 0
-		}
-		select {
-		case w.messageCh <- msg:
-		default:
+		msgLen = len(msg)
+		//{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,
+		//"timestamp":1618717277315},"subject":"level2","topic":"/contractMarket/level2Depth5:ATOMUSDTM","type":"message"}
+		if msgLen > 128 {
+			if msg[msgLen-28] == ':' {
+				symbolBytes = msg[msgLen-27 : msgLen-19]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				t, err = common.ParseInt(msg[msgLen-99 : msgLen-86])
+				if err != nil {
+					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-99:msgLen-86])
+					continue
+				}
+			} else if msg[msgLen-29] == ':' {
+				symbolBytes = msg[msgLen-28 : msgLen-19]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				t, err = common.ParseInt(msg[msgLen-100 : msgLen-87])
+				if err != nil {
+					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-100:msgLen-87])
+					continue
+				}
+			} else if msg[msgLen-30] == ':' {
+				symbolBytes = msg[msgLen-29 : msgLen-19]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				t, err = common.ParseInt(msg[msgLen-101 : msgLen-88])
+				if err != nil {
+					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-101:msgLen-88])
+					continue
+				}
+			} else if msg[msgLen-31] == ':' {
+				symbolBytes = msg[msgLen-30 : msgLen-19]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				t, err = common.ParseInt(msg[msgLen-102 : msgLen-89])
+				if err != nil {
+					logger.Debugf("common.ParseInt error %v %s", err, msg[msgLen-102:msgLen-89])
+					continue
+				}
+			} else {
+				logger.Debugf("OTHER MSG %s", msg)
+				continue
+			}
+
+			//logger.Debugf("SYMBOL %s %v", symbol, time.Unix(0, t*1000000))
+
+			if ch, ok = channels[symbol]; ok {
+				select {
+				case ch <- &common.DepthRawMessage{
+					Symbol: symbol,
+					Time:   time.Unix(0, t*1000000),
+					Depth:  msg,
+				}:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("ch <- &common.DepthRawMessage failed %s len(ch) %d", symbol, len(ch))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
+				select {
+				case w.symbolCh <- symbol:
+				default:
+				}
+			}
 		}
 	}
-
 }
 
-func (w *Depth5Websocket) readAll(r io.Reader) ([]byte, error) {
+func (w *Depth5RoutedWebsocket) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 512)
 	for {
 		if len(b) == cap(b) {
@@ -126,43 +184,7 @@ func (w *Depth5Websocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *Depth5Websocket) depthParseLoop(ctx context.Context, id int) {
-	logger.Debugf("START depthParseLoop %d", id)
-	defer func() {
-		logger.Debugf("EXIT depthParseLoop %d", id)
-	}()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-w.done:
-			return
-		case msg := <-w.messageCh:
-			if msg[2] == 'd' && msg[5] == 'a' {
-				depth50, err := ParseDepth5(msg)
-				if err != nil {
-					logger.Debugf("ParseDepth5 error %v %s", err, msg)
-					continue
-				}
-				select {
-				case <-ctx.Done():
-					return
-				case <-w.done:
-					return
-				case <-time.After(time.Millisecond):
-					logger.Debugf("depth50 to dataCh timeout in 1ms")
-				case w.DataCh <- depth50:
-				}
-				select {
-				case w.symbolCh <- depth50.Symbol:
-				default:
-				}
-			}
-		}
-	}
-}
-
-func (w *Depth5Websocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *Depth5RoutedWebsocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %d %s", counter, wsUrl)
@@ -207,9 +229,18 @@ func (w *Depth5Websocket) reconnect(ctx context.Context, wsUrl string, proxy str
 	return conn, nil
 }
 
-func (w *Depth5Websocket) mainLoop(ctx context.Context, api *API, symbols []string, proxy string) {
+func (w *Depth5RoutedWebsocket) mainLoop(
+	ctx context.Context, api *API,
+	proxy string,
+	channels map[string]chan *common.DepthRawMessage,
+) {
+
 	logger.Debugf("START mainLoop")
 
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
@@ -270,14 +301,14 @@ func (w *Depth5Websocket) mainLoop(ctx context.Context, api *API, symbols []stri
 				logger.Debugf("w.reconnect error %v, stop ws", err)
 				return
 			}
-			go w.readLoop(conn)
+			go w.readLoop(conn, channels)
 			go w.writeLoop(internalCtx, conn)
 			go w.heartbeatLoop(internalCtx, conn, symbols, time.Millisecond*time.Duration(connectToken.InstanceServers[0].PingInterval))
 		}
 	}
 }
 
-func (w *Depth5Websocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string, pingInterval time.Duration) {
+func (w *Depth5RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string, pingInterval time.Duration) {
 
 	logger.Debugf("START heartbeatLoop")
 
@@ -306,14 +337,13 @@ func (w *Depth5Websocket) heartbeatLoop(ctx context.Context, conn *websocket.Con
 			return
 		case symbol := <-w.symbolCh:
 			symbolUpdatedTimes[symbol] = time.Now()
-			break
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)
 			select {
 			case <-ctx.Done():
 				return
 			case <-time.After(time.Millisecond):
-				logger.Debug("SEND PING TO WRITE TIMEOUT IN 1MS")
+				logger.Debug("send ping to writeCh timeout in 1ms")
 			case w.writeCh <- Ping{
 				ID:   fmt.Sprintf("%d", time.Now().Nanosecond()/1000000),
 				Type: "ping",
@@ -349,7 +379,7 @@ func (w *Depth5Websocket) heartbeatLoop(ctx context.Context, conn *websocket.Con
 
 }
 
-func (w *Depth5Websocket) Stop() {
+func (w *Depth5RoutedWebsocket) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -357,7 +387,7 @@ func (w *Depth5Websocket) Stop() {
 	}
 }
 
-func (w *Depth5Websocket) restart() {
+func (w *Depth5RoutedWebsocket) restart() {
 	select {
 	case <-w.done:
 	case <-time.After(time.Millisecond):
@@ -373,31 +403,25 @@ func (w *Depth5Websocket) restart() {
 	}
 }
 
-func (w *Depth5Websocket) Done() chan interface{} {
+func (w *Depth5RoutedWebsocket) Done() chan interface{} {
 	return w.done
 }
 
-func NewDepth5Websocket(
+func NewDepth5RoutedWebsocket(
 	ctx context.Context,
 	api *API,
-	symbols []string,
 	proxy string,
-) *Depth5Websocket {
-	ws := Depth5Websocket{
+	channels map[string]chan *common.DepthRawMessage,
+) *Depth5RoutedWebsocket {
+	ws := Depth5RoutedWebsocket{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		DataCh:      make(chan *Depth5, 100*len(symbols)),
 		RestartCh:   make(chan interface{}, 100),
-		messageCh:   make(chan []byte, 100*len(symbols)),
-		writeCh:     make(chan interface{}, 100*len(symbols)),
-		symbolCh:    make(chan string, 100*len(symbols)),
+		writeCh:     make(chan interface{}, 100*len(channels)),
+		symbolCh:    make(chan string, 100*len(channels)),
 		stopped:     0,
 	}
-	go ws.mainLoop(ctx, api, symbols, proxy)
-	go ws.depthParseLoop(ctx, 1)
-	go ws.depthParseLoop(ctx, 2)
-	go ws.depthParseLoop(ctx, 3)
-	go ws.depthParseLoop(ctx, 4)
+	go ws.mainLoop(ctx, api, proxy, channels)
 	ws.reconnectCh <- nil
 	return &ws
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"strings"
 )
 
@@ -15,16 +15,16 @@ type TakerOrderNewError struct {
 
 type MakerOrderNewError struct {
 	Error  error
-	Params kcperp.NewOrderParam
+	Params kucoin_usdtfuture.NewOrderParam
 }
 
 type MakerOrderRequest struct {
-	New    *kcperp.NewOrderParam
-	Cancel *kcperp.CancelAllOrdersParam
+	New    *kucoin_usdtfuture.NewOrderParam
+	Cancel *kucoin_usdtfuture.CancelAllOrdersParam
 }
 
 type MakerOpenOrder struct {
-	*kcperp.NewOrderParam
+	*kucoin_usdtfuture.NewOrderParam
 	ResponseOrderID string
 	Symbol          string
 }

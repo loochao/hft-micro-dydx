@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/kcspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
@@ -28,7 +28,7 @@ func main() {
 	}
 
 	var err error
-	kcperpAPI, err = kcperp.NewAPI(
+	kcperpAPI, err = kucoin_usdtfuture.NewAPI(
 		*kcConfig.PerpApiKey,
 		*kcConfig.PerpApiSecret,
 		*kcConfig.PerpApiPassphrase,
@@ -50,7 +50,7 @@ func main() {
 	kcGlobalCtx, kcGlobalCancel = context.WithCancel(context.Background())
 	defer kcGlobalCancel()
 
-	_, kcperpMultipliers, kcperpTickSizes, _, err = kcperp.GetOrderLimits(kcGlobalCtx, kcperpAPI, kcperpSymbols)
+	_, kcperpMultipliers, kcperpTickSizes, _, err = kucoin_usdtfuture.GetOrderLimits(kcGlobalCtx, kcperpAPI, kcperpSymbols)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func main() {
 
 	if *kcConfig.ChangeAutoDepositStatus {
 		for _, symbol := range kcperpSymbols {
-			res, err := kcperpAPI.ChangeAutoDepositStatus(kcGlobalCtx, kcperp.AutoDepositStatusParam{
+			res, err := kcperpAPI.ChangeAutoDepositStatus(kcGlobalCtx, kucoin_usdtfuture.AutoDepositStatusParam{
 				Symbol: symbol,
 				Status: true,
 			})
@@ -111,7 +111,7 @@ func main() {
 	)
 	defer kcspotUserWebsocket.Stop()
 
-	kcperpUserWebsocket = kcperp.NewUserWebsocketAndStart(
+	kcperpUserWebsocket = kucoin_usdtfuture.NewUserWebsocketAndStart(
 		kcGlobalCtx,
 		kcperpAPI,
 		kcperpSymbols,
@@ -140,14 +140,14 @@ func main() {
 	defer kcLoopTimer.Stop()
 	defer frRankUpdatedTimer.Stop()
 
-	go kcperp.PositionsHttpLoop(
+	go kucoin_usdtfuture.PositionsHttpLoop(
 		kcGlobalCtx, kcperpAPI,
 		kcperpSymbols, *kcConfig.PullInterval,
 		kcperpPositionCh,
 	)
-	go kcperp.AccountHttpLoop(
+	go kucoin_usdtfuture.AccountHttpLoop(
 		kcGlobalCtx, kcperpAPI,
-		kcperp.AccountParam{Currency: "USDT"},
+		kucoin_usdtfuture.AccountParam{Currency: "USDT"},
 		*kcConfig.PullInterval, kcperpAccountCh,
 	)
 	go kcspot.AccountHttpLoop(
@@ -155,7 +155,7 @@ func main() {
 		kcspot.AccountsParam{},
 		*kcConfig.PullInterval, kcspotAccountCh,
 	)
-	go kcperp.FundingRateLoop(
+	go kucoin_usdtfuture.FundingRateLoop(
 		kcGlobalCtx, kcperpAPI,
 		kcperpSymbols,
 		*kcConfig.PullInterval*10, kcperpFundingRatesCh,
@@ -284,7 +284,7 @@ func main() {
 
 	kcperpNewOrderErrorCh = make(chan PerpOrderNewError, len(kcspotSymbols)*2)
 	for _, perpSymbol := range kcperpSymbols {
-		kcperpOrderRequestChs[perpSymbol] = make(chan kcperp.NewOrderParam, 2)
+		kcperpOrderRequestChs[perpSymbol] = make(chan kucoin_usdtfuture.NewOrderParam, 2)
 		go watchPerpOrderRequest(
 			kcGlobalCtx,
 			kcperpAPI,
@@ -306,7 +306,7 @@ func main() {
 		}()
 	}
 
-	go kcperp.WatchSystemStatusHttp(
+	go kucoin_usdtfuture.WatchSystemStatusHttp(
 		kcGlobalCtx,
 		kcperpAPI,
 		*kcConfig.PullInterval/2,
@@ -389,9 +389,9 @@ func main() {
 			handlePerpWSBalance(msg)
 			break
 		case perpOrder := <-kcperpUserWebsocket.OrderCh:
-			if perpOrder.EventType == kcperp.OrderStatusCanceled ||
-				perpOrder.EventType == kcperp.OrderStatusMatch {
-				if perpOrder.EventType == kcperp.OrderStatusCanceled {
+			if perpOrder.EventType == kucoin_usdtfuture.OrderStatusCanceled ||
+				perpOrder.EventType == kucoin_usdtfuture.OrderStatusMatch {
+				if perpOrder.EventType == kucoin_usdtfuture.OrderStatusCanceled {
 					logger.Debugf("PERP WS ORDER CANCELED %v ", perpOrder)
 					kcperpOrderSilentTimes[perpOrder.Symbol] = time.Now().Add(time.Second)
 					kcperpPositionsUpdateTimes[perpOrder.Symbol] = time.Unix(0, 0)
@@ -402,14 +402,14 @@ func main() {
 					)
 					kcLoopTimer.Reset(time.Nanosecond)
 					kcperpHttpPositionUpdateSilentTimes[perpOrder.Symbol] = time.Now().Add(*kcConfig.HttpSilent)
-					if perpOrder.Side == kcperp.OrderSideSell {
+					if perpOrder.Side == kucoin_usdtfuture.OrderSideSell {
 						if spotSymbol, ok := kcpsSymbolsMap[perpOrder.Symbol]; ok {
 							if spotPrice, ok := kcspotLastFilledBuyPrices[spotSymbol]; ok && spotPrice > 0 {
 								kcRealisedSpread[spotSymbol] = (perpOrder.MatchPrice - spotPrice) / spotPrice
 								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, perpOrder.Symbol, kcRealisedSpread[spotSymbol])
 							}
 						}
-					} else if perpOrder.Side == kcperp.OrderSideBuy {
+					} else if perpOrder.Side == kucoin_usdtfuture.OrderSideBuy {
 						if spotSymbol, ok := kcpsSymbolsMap[perpOrder.Symbol]; ok {
 							if spotPrice, ok := kcspotLastFilledSellPrices[spotSymbol]; ok && spotPrice > 0 {
 								kcRealisedSpread[spotSymbol] = (perpOrder.MatchPrice - spotPrice) / spotPrice

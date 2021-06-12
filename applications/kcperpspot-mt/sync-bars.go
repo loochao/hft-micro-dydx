@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/kcspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
@@ -154,7 +154,7 @@ func spotBarsPullingLoop(
 
 func perpBarsPullingLoop(
 	ctx context.Context,
-	api *kcperp.API,
+	api *kucoin_usdtfuture.API,
 	takerSymbols []string,
 	barsLookback int,
 	pullInterval time.Duration,
@@ -171,8 +171,8 @@ func perpBarsPullingLoop(
 	for i, takerSymbol := range takerSymbols {
 		nextPullTimes[takerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
 	}
-	klineDuration := kcperp.GranularityDurations[kcperp.Granularity30Min]
-	klineGranularity := kcperp.Granularity30Min
+	klineDuration := kucoin_usdtfuture.GranularityDurations[kucoin_usdtfuture.Granularity30Min]
+	klineGranularity := kucoin_usdtfuture.Granularity30Min
 	globalNextPullTime := time.Now()
 	globalNextRetryTime := time.Now()
 	outputResults := true
@@ -216,7 +216,7 @@ func perpBarsPullingLoop(
 					symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
 				}
 				history, err := api.GetKlines(
-					ctx, kcperp.KlinesParam{
+					ctx, kucoin_usdtfuture.KlinesParam{
 						Symbol:      symbol,
 						From:        symbolStartTime.Unix() * 1000,
 						To:          symbolEndTime.Unix() * 1000,

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/rand"
@@ -221,12 +221,12 @@ func updateMakerNewOrders() {
 					size,
 				)
 
-				order := kcperp.NewOrderParam{
+				order := kucoin_usdtfuture.NewOrderParam{
 					Symbol:      makerSymbol,
-					Side:        kcperp.OrderSideSell,
-					Type:        kcperp.OrderTypeLimit,
+					Side:        kucoin_usdtfuture.OrderSideSell,
+					Type:        kucoin_usdtfuture.OrderTypeLimit,
 					Price:       common.Float64(price),
-					TimeInForce: kcperp.OrderTimeInForceGTC,
+					TimeInForce: kucoin_usdtfuture.OrderTimeInForceGTC,
 					Size:        int64(size),
 					PostOnly:    true,
 					ReduceOnly:  true,
@@ -269,12 +269,12 @@ func updateMakerNewOrders() {
 					spread.LongMedianLeave, quantile.LongTop,
 					size,
 				)
-				order := kcperp.NewOrderParam{
+				order := kucoin_usdtfuture.NewOrderParam{
 					Symbol:      makerSymbol,
-					Side:        kcperp.OrderSideBuy,
-					Type:        kcperp.OrderTypeLimit,
+					Side:        kucoin_usdtfuture.OrderSideBuy,
+					Type:        kucoin_usdtfuture.OrderTypeLimit,
 					Price:       common.Float64(price),
-					TimeInForce: kcperp.OrderTimeInForceGTC,
+					TimeInForce: kucoin_usdtfuture.OrderTimeInForceGTC,
 					Size:        int64(size),
 					PostOnly:    true,
 					ReduceOnly:  true,
@@ -367,12 +367,12 @@ func updateMakerNewOrders() {
 				size,
 			)
 			makerUSDTAvailable -= entryValue
-			order := kcperp.NewOrderParam{
+			order := kucoin_usdtfuture.NewOrderParam{
 				Symbol:      makerSymbol,
-				Side:        kcperp.OrderSideBuy,
-				Type:        kcperp.OrderTypeLimit,
+				Side:        kucoin_usdtfuture.OrderSideBuy,
+				Type:        kucoin_usdtfuture.OrderTypeLimit,
 				Price:       common.Float64(price),
-				TimeInForce: kcperp.OrderTimeInForceGTC,
+				TimeInForce: kucoin_usdtfuture.OrderTimeInForceGTC,
 				Size:        int64(size),
 				PostOnly:    true,
 				ReduceOnly:  false,
@@ -463,12 +463,12 @@ func updateMakerNewOrders() {
 				size,
 			)
 			makerUSDTAvailable -= entryValue
-			order := kcperp.NewOrderParam{
+			order := kucoin_usdtfuture.NewOrderParam{
 				Symbol:      makerSymbol,
-				Side:        kcperp.OrderSideSell,
-				Type:        kcperp.OrderTypeLimit,
+				Side:        kucoin_usdtfuture.OrderSideSell,
+				Type:        kucoin_usdtfuture.OrderTypeLimit,
 				Price:       common.Float64(price),
-				TimeInForce: kcperp.OrderTimeInForceGTC,
+				TimeInForce: kucoin_usdtfuture.OrderTimeInForceGTC,
 				Size:        int64(size),
 				PostOnly:    true,
 				ReduceOnly:  false,

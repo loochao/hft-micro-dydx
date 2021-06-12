@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/rand"
@@ -182,10 +182,10 @@ func updateTriggerOrders() {
 					makerOrderSize,
 				)
 				clientOID := fmt.Sprintf("CS%d%04d", time.Now().Unix(), rand.Intn(10000))
-				makerOrder := kcperp.NewOrderParam{
+				makerOrder := kucoin_usdtfuture.NewOrderParam{
 					Symbol:     makerSymbol,
-					Side:       kcperp.OrderSideSell,
-					Type:       kcperp.OrderTypeMarket,
+					Side:       kucoin_usdtfuture.OrderSideSell,
+					Type:       kucoin_usdtfuture.OrderTypeMarket,
 					Size:       int64(makerOrderSize),
 					ReduceOnly: true,
 					ClientOid:  clientOID,
@@ -237,10 +237,10 @@ func updateTriggerOrders() {
 					makerOrderSize,
 				)
 				clientOID := fmt.Sprintf("CS%d%04d", time.Now().Unix(), rand.Intn(10000))
-				makerOrder := kcperp.NewOrderParam{
+				makerOrder := kucoin_usdtfuture.NewOrderParam{
 					Symbol:     makerSymbol,
-					Side:       kcperp.OrderSideBuy,
-					Type:       kcperp.OrderTypeMarket,
+					Side:       kucoin_usdtfuture.OrderSideBuy,
+					Type:       kucoin_usdtfuture.OrderTypeMarket,
 					Size:       int64(makerOrderSize),
 					ReduceOnly: true,
 					ClientOid:  clientOID,
@@ -357,10 +357,10 @@ func updateTriggerOrders() {
 			makerUSDTAvailable -= entryValue
 			takerUSDTAvailable -= entryValue
 			clientOID := fmt.Sprintf("OS%d%04d", time.Now().Unix(), rand.Intn(10000))
-			makerOrder := kcperp.NewOrderParam{
+			makerOrder := kucoin_usdtfuture.NewOrderParam{
 				Symbol:     makerSymbol,
-				Side:       kcperp.OrderSideBuy,
-				Type:       kcperp.OrderTypeMarket,
+				Side:       kucoin_usdtfuture.OrderSideBuy,
+				Type:       kucoin_usdtfuture.OrderTypeMarket,
 				Size:       int64(makerOrderSize),
 				ReduceOnly: false,
 				ClientOid:  clientOID,
@@ -476,10 +476,10 @@ func updateTriggerOrders() {
 			makerUSDTAvailable -= entryValue
 			takerUSDTAvailable -= entryValue
 			clientOID := fmt.Sprintf("OL%d%04d", time.Now().Unix(), rand.Intn(10000))
-			makerOrder := kcperp.NewOrderParam{
+			makerOrder := kucoin_usdtfuture.NewOrderParam{
 				Symbol:     makerSymbol,
-				Side:       kcperp.OrderSideSell,
-				Type:       kcperp.OrderTypeMarket,
+				Side:       kucoin_usdtfuture.OrderSideSell,
+				Type:       kucoin_usdtfuture.OrderTypeMarket,
 				Size:       int64(makerOrderSize),
 				ReduceOnly: false,
 				ClientOid:  clientOID,

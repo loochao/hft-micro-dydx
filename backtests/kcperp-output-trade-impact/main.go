@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/tdigest"
 	"os"
@@ -57,7 +57,7 @@ func main() {
 		buyImpactTD, _ := tdigest.New()
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/kcperp-trade/%s-%s.kcperp.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/Users/chenjilin/MarketData/kucoin-usdtfuture-trade/%s-%s.kucoin-usdtfuture.trade.jl.gz", dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -69,10 +69,10 @@ func main() {
 				return
 			}
 			scanner := bufio.NewScanner(gr)
-			var takerFirstMatch *kcperp.Match
-			var takerLastMatch *kcperp.Match
+			var takerFirstMatch *kucoin_usdtfuture.Match
+			var takerLastMatch *kucoin_usdtfuture.Match
 			for scanner.Scan() {
-				match := kcperp.MatchWS{}
+				match := kucoin_usdtfuture.MatchWS{}
 				err := json.Unmarshal(scanner.Bytes(), &match)
 				if err != nil {
 					//logger.Debugf("json.Unmarshal %v %s", err, scanner.Bytes())

@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcperp"
+	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/kcspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
@@ -15,10 +15,10 @@ import (
 var kcInternalInfluxWriter *common.InfluxWriter
 var kcExternalInfluxWriter *common.InfluxWriter
 
-var kcperpAPI *kcperp.API
+var kcperpAPI *kucoin_usdtfuture.API
 var kcspotAPI *kcspot.API
 
-var kcperpUserWebsocket *kcperp.UserWebsocket
+var kcperpUserWebsocket *kucoin_usdtfuture.UserWebsocket
 var kcspotUserWebsocket *kcspot.UserWebsocket
 
 var kcperpOrderSilentTimes = make(map[string]time.Time)
@@ -30,7 +30,7 @@ var kcspotSilentTimes = make(map[string]time.Time)
 
 var kcspotBalancesUpdateTimes = make(map[string]time.Time)
 var kcperpNewOrderErrorCh = make(chan PerpOrderNewError, 10)
-var kcperpOrderRequestChs = make(map[string]chan kcperp.NewOrderParam)
+var kcperpOrderRequestChs = make(map[string]chan kucoin_usdtfuture.NewOrderParam)
 
 var kcspotHttpBalanceUpdateSilentTimes = make(map[string]time.Time)
 var kcperpHttpPositionUpdateSilentTimes = make(map[string]time.Time)
@@ -46,9 +46,9 @@ var kcpsSymbolsMap = make(map[string]string, 0)
 var kcOpenLogSilentTimes = make(map[string]time.Time)
 var kcUnHedgeLogSilentTime = time.Now()
 
-var kcperpAccountCh = make(chan kcperp.Account, 10)
+var kcperpAccountCh = make(chan kucoin_usdtfuture.Account, 10)
 
-var kcperpUSDTAccount *kcperp.Account
+var kcperpUSDTAccount *kucoin_usdtfuture.Account
 
 var kcperpTickSizes = make(map[string]float64)
 var kcperpMultipliers = make(map[string]float64)
@@ -60,8 +60,8 @@ var kcMergedStepSizes = make(map[string]float64)
 
 var kcGlobalCtx context.Context
 var kcGlobalCancel context.CancelFunc
-var kcperpPositionCh = make(chan []kcperp.Position, 10)
-var kcperpPositions = make(map[string]kcperp.Position)
+var kcperpPositionCh = make(chan []kucoin_usdtfuture.Position, 10)
+var kcperpPositions = make(map[string]kucoin_usdtfuture.Position)
 
 var kcspotBalances = make(map[string]kcspot.Account)
 var kcspotUSDTBalance *kcspot.Account
@@ -74,8 +74,8 @@ var kcspotNewOrderErrorCh chan SpotOrderNewError
 var kcspotOpenOrders = make(map[string]kcspot.NewOrderParam)
 var kcspotOrderCancelCounts = make(map[string]int)
 
-var kcperpFundingRates = make(map[string]kcperp.CurrentFundingRate)
-var kcperpFundingRatesCh = make(chan kcperp.CurrentFundingRate, 1000)
+var kcperpFundingRates = make(map[string]kucoin_usdtfuture.CurrentFundingRate)
+var kcperpFundingRatesCh = make(chan kucoin_usdtfuture.CurrentFundingRate, 1000)
 var kcRankSymbolMap map[int]string
 
 var kcperpBarsMapCh = make(chan common.KLinesMap)
