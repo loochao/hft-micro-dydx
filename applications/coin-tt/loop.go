@@ -9,7 +9,7 @@ import (
 
 func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 	yPosition, okYPosition := yPositions[ySymbol]
-	targetSize, okTargetSize := yTargetPositionSizes[ySymbol]
+	targetSize, okTargetSize := yTargetContractValues[ySymbol]
 	spread, okSpread := xySpreads[xSymbol]
 	if !okYPosition || !okSpread || !okTargetSize {
 		return 0
@@ -79,22 +79,19 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 }
 
 func updateYPositions() {
-	if xAccount == nil {
-		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			logger.Debugf("xACCOUNT not ready")
-		}
-		return
-	}
-	if yAccount == nil {
-		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			logger.Debugf("yACCOUNT not ready")
-		}
-		return
-	}
 	unHedgedValue := 0.0
 	for _, ySymbol := range ySymbols {
 		xSymbol := yxSymbolsMap[ySymbol]
-		if _, ok := xyConfig.NotTradePairs[xSymbol]; ok {
+		if _, ok := xBalances[xyConfig.XSymbolAssetMap[xSymbol]]; !ok {
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("xAccount not ready for %s", xSymbol)
+			}
+			continue
+		}
+		if _, ok := yBalances[xyConfig.YSymbolAssetMap[ySymbol]]; !ok {
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("yAccount not ready for %s", ySymbol)
+			}
 			continue
 		}
 		if time.Now().Sub(yPositionsUpdateTimes[ySymbol]) > xyConfig.BalancePositionMaxAge {
@@ -110,7 +107,7 @@ func updateYPositions() {
 
 func hedgeXSymbol(xSymbol string) {
 	xPosition, okXPosition := xPositions[xSymbol]
-	xTargetSize, okXTargetSize := xTargetPositionSizes[xSymbol]
+	xTargetSize, okXTargetSize := xTargetContractValues[xSymbol]
 	spread, okSpread := xySpreads[xSymbol]
 	if !okXPosition || !okSpread || !okXTargetSize {
 		return
@@ -178,20 +175,18 @@ func hedgeXSymbol(xSymbol string) {
 }
 
 func updateXPositions() {
-	if xAccount == nil {
-		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			logger.Debugf("xACCOUNT not ready")
-		}
-		return
-	}
-	if yAccount == nil {
-		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			logger.Debugf("yACCOUNT not ready")
-		}
-		return
-	}
 	for _, xSymbol := range xSymbols {
-		if _, ok := xyConfig.NotTradePairs[xSymbol]; ok {
+		ySymbol := xySymbolsMap[xSymbol]
+		if _, ok := xBalances[xyConfig.XSymbolAssetMap[xSymbol]]; !ok {
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("xAccount not ready for %s", xSymbol)
+			}
+			continue
+		}
+		if _, ok := yBalances[xyConfig.YSymbolAssetMap[ySymbol]]; !ok {
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("yAccount not ready for %s", ySymbol)
+			}
 			continue
 		}
 		if time.Now().Sub(xPositionsUpdateTimes[xSymbol]) > xyConfig.BalancePositionMaxAge {
@@ -206,22 +201,20 @@ func updateXPositions() {
 
 func updateTargetPositionSizes() {
 
-	if xAccount == nil {
-		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			logger.Debugf("xACCOUNT not ready")
-		}
-		return
-	}
-	if yAccount == nil {
-		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			logger.Debugf("yACCOUNT not ready")
-		}
-		return
-	}
-
 	//第一步，默认以X为准，对冲Y
 	for xSymbol, ySymbol := range xySymbolsMap {
-		if _, ok := xyConfig.NotTradePairs[xSymbol]; ok {
+		xBalance, ok := xBalances[xyConfig.XSymbolAssetMap[xSymbol]]
+		if !ok {
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("xBalance not ready for %s", xSymbol)
+			}
+			continue
+		}
+		yBalance, ok := yBalances[xyConfig.YSymbolAssetMap[ySymbol]]
+		if !ok {
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("yBalance not ready for %s", ySymbol)
+			}
 			continue
 		}
 		//在信号触发期间，以信号为准
@@ -229,24 +222,18 @@ func updateTargetPositionSizes() {
 			continue
 		}
 
-		xPosition, okXPosition := xPositions[xSymbol]
+		_, okXPosition := xPositions[xSymbol]
 		yPosition, okYPosition := yPositions[ySymbol]
-		xySpotStepSize := xySpotStepSizes[xSymbol]
-		xMultiplier := xMultipliers[xSymbol]
 		yMultiplier := yMultipliers[ySymbol]
+		spread, okSpread := xySpreads[xSymbol]
 
-		//其他时间以仓位小的为准
-		if okXPosition && okYPosition {
-			if math.Abs(xPosition.GetSize()*xMultiplier)-math.Abs(yPosition.GetSize()*yMultiplier) >= xySpotStepSize {
-				yTargetPositionSizes[ySymbol] = yPosition.GetSize() * yMultiplier
-				xTargetPositionSizes[xSymbol] = -yPosition.GetSize() * yMultiplier
-			} else if math.Abs(xPosition.GetSize()*xMultiplier)-math.Abs(yPosition.GetSize()*yMultiplier) <= -xySpotStepSize {
-				xTargetPositionSizes[xSymbol] = xPosition.GetSize() * xMultiplier
-				yTargetPositionSizes[ySymbol] = -xPosition.GetSize() * xMultiplier
-			} else {
-				xTargetPositionSizes[xSymbol] = xPosition.GetSize() * xMultiplier
-				yTargetPositionSizes[ySymbol] = yPosition.GetSize() * yMultiplier
-			}
+		//以y调整x
+		if okXPosition && okYPosition && okSpread {
+			spotValue := spread.XDepth.MidPrice*xBalance.GetBalance() + spread.YDepth.MidPrice*yBalance.GetBalance()
+			yValue := yPosition.GetSize() * yMultiplier
+			yTargetContractValues[ySymbol] = yValue
+			xTargetContractValues[xSymbol] = -spotValue - yValue
+			logger.Debugf("target x %f y %f", -spotValue-yValue, yValue)
 		}
 	}
 
@@ -264,20 +251,22 @@ func updateTargetPositionSizes() {
 		return
 	}
 
-	entryStep := (xAccount.GetFree() + yAccount.GetFree()) * xyConfig.EnterFreePct
-	if entryStep < xyConfig.EnterMinimalStep {
-		entryStep = xyConfig.EnterMinimalStep
-	}
-	entryTarget := entryStep * xyConfig.EnterTargetFactor
-
-	//得是两个市场的最小可用资金, 以防有一边用完了钱, 开不了仓
-	xyUSDTAvailable := math.Min(xAccount.GetFree()*xyConfig.XExchange.Leverage, yAccount.GetFree()*xyConfig.YExchange.Leverage)
-
 	//遍历合约 从最大的rank 开始，能保证FR强的先下单, 优先做空
 	for _, rank := range xyDualEnds {
 		xSymbol := xyRankSymbolMap[rank]
 		ySymbol := xySymbolsMap[xSymbol]
-		if _, ok := xyConfig.NotTradePairs[xSymbol]; ok {
+		xBalance, ok := xBalances[xyConfig.XSymbolAssetMap[xSymbol]]
+		if !ok {
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("xBalance not ready for %s", xSymbol)
+			}
+			continue
+		}
+		yBalance, ok := yBalances[xyConfig.YSymbolAssetMap[ySymbol]]
+		if !ok {
+			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+				logger.Debugf("yBalance not ready for %s", ySymbol)
+			}
 			continue
 		}
 
@@ -318,59 +307,54 @@ func updateTargetPositionSizes() {
 			//}
 			continue
 		}
+
 		xDepth := spread.XDepth
 		yDepth := spread.YDepth
+
+		coinUSDAvailable := math.Min(xBalance.GetFree()*xDepth.MidPrice*xyConfig.XExchange.Leverage, yBalance.GetFree()*yDepth.MidPrice*xyConfig.YExchange.Leverage)
+
 		xStepSize := xStepSizes[xSymbol]
 		xMinNotional := xMinNotionals[xSymbol]
 		yMinNotional := yMinNotionals[ySymbol]
 		xMultiplier := xMultipliers[xSymbol]
 		yMultiplier := yMultipliers[ySymbol]
 
-		xySpotStepSize := xySpotStepSizes[xSymbol]
+		xyUsdStepSize := xyUsdStepSizes[xSymbol]
 
-		xSize := xPosition.GetSize() * xMultiplier
-		ySize := yPosition.GetSize() * yMultiplier
-		xValue := math.Abs(xSize) * spread.XDepth.MidPrice
-		yValue := math.Abs(ySize) * spread.YDepth.MidPrice
-		offsetFactor := (xValue + yValue) * 0.5 / entryTarget
+		xSize := xPosition.GetSize()
+		ySize := yPosition.GetSize()
+		xValue := math.Abs(xSize*xMultiplier) * spread.XDepth.MidPrice
+		yValue := math.Abs(ySize*yMultiplier) * spread.YDepth.MidPrice
+		spotValue := xBalance.GetBalance()*xDepth.MidPrice + yBalance.GetBalance()*yDepth.MidPrice
+
+
+		maxYTargetValue := math.Round(spotValue * xyConfig.EnterTarget)
+
+		offsetFactor := yValue / spotValue / xyConfig.EnterTarget
+		offsetStep := math.Min(xyConfig.EnterStep/xyConfig.EnterTarget, offsetFactor)
+		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			logger.Debugf("%s offset factor %f step %f", xSymbol, offsetFactor, offsetStep)
+		}
+
 		shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
-		shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*offsetFactor
+		shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)
 		longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
-		longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*offsetFactor
+		longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)
 
 		midPrice := (xDepth.MidPrice + yDepth.MidPrice) * 0.5
-
+		entryStep := spotValue*xyConfig.EnterStep
 		if spread.ShortLastLeave < shortBot &&
 			spread.ShortMedianLeave < shortBot &&
 			fundingRate < xyConfig.MinimalKeepFundingRate &&
-			xSize >= xStepSize {
+			ySize < 0 {
 
-			entryValue := math.Min(4*entryStep, math.Min(xValue, yValue))
-			if fundingRate > xyConfig.MinimalKeepFundingRate*0.5 {
-				entryValue = math.Min(2*entryStep, math.Min(xValue, yValue))
+			entryValue := math.Min(2*entryStep, yValue)
+			entryValue = math.Round(entryValue/xyUsdStepSize)*xyUsdStepSize
+			if yValue - entryValue < xyUsdStepSize {
+				entryValue = yValue
 			}
-			size := entryValue / midPrice
-			size = math.Round(size/xySpotStepSize) * xySpotStepSize
-			entryValue = size * midPrice
-
-			if xValue-entryValue < xySpotStepSize || yValue-entryValue < xySpotStepSize {
-				//两种情况都把x全平，间接y全平
-				size = xSize
-			}
-			//谁小以谁为准
-			if xValue <= yValue {
-				xTargetPositionSizes[xSymbol] -= size
-				if xTargetPositionSizes[xSymbol] < 0 {
-					xTargetPositionSizes[xSymbol] = 0
-				}
-				yTargetPositionSizes[ySymbol] = -xTargetPositionSizes[xSymbol]
-			} else {
-				yTargetPositionSizes[ySymbol] += size
-				if yTargetPositionSizes[ySymbol] > 0 {
-					yTargetPositionSizes[ySymbol] = 0
-				}
-				xTargetPositionSizes[xSymbol] = -yTargetPositionSizes[ySymbol]
-			}
+			yTargetContractValues[ySymbol] += entryValue
+			xTargetContractValues[xSymbol] = -spotValue - yTargetContractValues[ySymbol]
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
 			xOrderSilentTimes[xSymbol] = time.Now()
 			yOrderSilentTimes[ySymbol] = time.Now()
@@ -379,47 +363,30 @@ func updateTargetPositionSizes() {
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
-				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, TARGET X %f TARGET Y %f",
+				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, VALUE %f, TARGET X %f TARGET Y %f",
 				xSymbol, ySymbol,
 				spread.ShortLastLeave, shortBot,
 				spread.ShortMedianLeave, shortBot,
-				size,
-				xTargetPositionSizes[xSymbol],
-				yTargetPositionSizes[ySymbol],
+				entryValue,
+				xTargetContractValues[xSymbol],
+				yTargetContractValues[ySymbol],
 			)
 			hedgeXSymbol(xSymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
 		} else if spread.LongLastLeave > longTop &&
 			spread.LongMedianLeave > longTop &&
 			fundingRate > -xyConfig.MinimalKeepFundingRate &&
-			xSize <= -xStepSize {
+			ySize > 0 {
 
-			entryValue := math.Min(4*entryStep, math.Min(xValue, yValue))
-			if fundingRate < -xyConfig.MinimalKeepFundingRate*0.5 {
-				entryValue = math.Min(2*entryStep, math.Min(xValue, yValue))
+			entryValue := math.Min(2*entryStep, yValue)
+			entryValue = math.Round(entryValue/xyUsdStepSize)*xyUsdStepSize
+			if yValue - entryValue < xyUsdStepSize {
+				entryValue = yValue
 			}
-			size := entryValue / midPrice
-			size = math.Round(size/xySpotStepSize) * xySpotStepSize
-			entryValue = size * midPrice
-			if xValue-entryValue < xySpotStepSize || yValue-entryValue < xySpotStepSize {
-				size = -xSize
-			}
-			//谁小以谁为准
-			if xValue <= yValue {
-				xTargetPositionSizes[xSymbol] += size
-				if xTargetPositionSizes[xSymbol] > 0 {
-					xTargetPositionSizes[xSymbol] = 0
-				}
-				yTargetPositionSizes[ySymbol] = -xTargetPositionSizes[xSymbol]
-			} else {
-				yTargetPositionSizes[ySymbol] -= size
-				if yTargetPositionSizes[ySymbol] < 0 {
-					yTargetPositionSizes[ySymbol] = 0
-				}
-				xTargetPositionSizes[xSymbol] = -yTargetPositionSizes[ySymbol]
-			}
+			yTargetContractValues[ySymbol] -= entryValue
+			xTargetContractValues[xSymbol] = -spotValue - yTargetContractValues[ySymbol]
+
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
-
 			xOrderSilentTimes[xSymbol] = time.Now()
 			yOrderSilentTimes[ySymbol] = time.Now()
 			delete(xLastFilledBuyPrices, xSymbol)
@@ -427,13 +394,13 @@ func updateTargetPositionSizes() {
 			delete(yLastFilledBuyPrices, ySymbol)
 			delete(yLastFilledSellPrices, ySymbol)
 			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f",
+				"%s %s LONG TOP REDUCE %f > %f, %f > %f, VALUE %f, TARGET X %f, TARGET Y %f",
 				xSymbol, ySymbol,
 				spread.LongLastLeave, longTop,
 				spread.LongMedianLeave, longTop,
-				size,
-				xTargetPositionSizes[xSymbol],
-				yTargetPositionSizes[ySymbol],
+				entryValue,
+				xTargetContractValues[xSymbol],
+				yTargetContractValues[ySymbol],
 			)
 			hedgeXSymbol(xSymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
@@ -449,17 +416,17 @@ func updateTargetPositionSizes() {
 			}
 			entryValue := targetValue - math.Max(xValue, yValue)
 			size := entryValue / midPrice
-			size = math.Round(size/xySpotStepSize) * xySpotStepSize
+			size = math.Round(size/xyUsdStepSize) * xyUsdStepSize
 			entryValue = size * midPrice
 
-			if entryValue > xyUSDTAvailable {
+			if entryValue > coinUSDAvailable {
 				if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
 					logger.Debugf(
-						"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN xyUSDTAvailable %f, %f > %f, %f > %f, SIZE %f",
+						"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN coinUSDAvailable %f, %f > %f, %f > %f, SIZE %f",
 						xSymbol,
 						ySymbol,
 						entryValue,
-						xyUSDTAvailable,
+						coinUSDAvailable,
 						spread.ShortLastEnter, shortTop,
 						spread.ShortMedianEnter, shortTop,
 						size,
@@ -483,14 +450,14 @@ func updateTargetPositionSizes() {
 			}
 			//谁大以谁为准
 			if xValue >= yValue {
-				xTargetPositionSizes[xSymbol] += size
-				yTargetPositionSizes[ySymbol] = -xTargetPositionSizes[xSymbol]
+				xTargetContractValues[xSymbol] += size
+				yTargetContractValues[ySymbol] = -xTargetContractValues[xSymbol]
 			} else {
-				yTargetPositionSizes[ySymbol] -= size
-				xTargetPositionSizes[xSymbol] = -yTargetPositionSizes[ySymbol]
+				yTargetContractValues[ySymbol] -= size
+				xTargetContractValues[xSymbol] = -yTargetContractValues[ySymbol]
 			}
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
-			xyUSDTAvailable -= entryValue
+			coinUSDAvailable -= entryValue
 			xOrderSilentTimes[xSymbol] = time.Now()
 			yOrderSilentTimes[ySymbol] = time.Now()
 			delete(xLastFilledBuyPrices, xSymbol)
@@ -503,8 +470,8 @@ func updateTargetPositionSizes() {
 				spread.ShortLastEnter, shortTop,
 				spread.ShortMedianEnter, shortTop,
 				size,
-				xTargetPositionSizes[xSymbol],
-				yTargetPositionSizes[ySymbol],
+				xTargetContractValues[xSymbol],
+				yTargetContractValues[ySymbol],
 			)
 			hedgeXSymbol(xSymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
@@ -520,16 +487,16 @@ func updateTargetPositionSizes() {
 			}
 			entryValue := targetValue - math.Max(xValue, yValue)
 			size := entryValue / midPrice
-			size = math.Round(size/xySpotStepSize) * xySpotStepSize
+			size = math.Round(size/xyUsdStepSize) * xyUsdStepSize
 			entryValue = size * midPrice
-			if entryValue > xyUSDTAvailable {
+			if entryValue > coinUSDAvailable {
 				if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
 					logger.Debugf(
-						"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN xyUSDTAvailable %f, %f < %f, %f < %f, SIZE %f",
+						"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN coinUSDAvailable %f, %f < %f, %f < %f, SIZE %f",
 						xSymbol,
 						ySymbol,
 						entryValue,
-						xyUSDTAvailable,
+						coinUSDAvailable,
 						spread.LongLastEnter, longBot,
 						spread.LongMedianEnter, longBot,
 						size,
@@ -553,14 +520,14 @@ func updateTargetPositionSizes() {
 			}
 			//谁大以谁为准
 			if xValue >= yValue {
-				xTargetPositionSizes[xSymbol] -= size
-				yTargetPositionSizes[ySymbol] = -xTargetPositionSizes[xSymbol]
+				xTargetContractValues[xSymbol] -= size
+				yTargetContractValues[ySymbol] = -xTargetContractValues[xSymbol]
 			} else {
-				yTargetPositionSizes[ySymbol] += size
-				xTargetPositionSizes[xSymbol] = -yTargetPositionSizes[ySymbol]
+				yTargetContractValues[ySymbol] += size
+				xTargetContractValues[xSymbol] = -yTargetContractValues[ySymbol]
 			}
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
-			xyUSDTAvailable -= entryValue
+			coinUSDAvailable -= entryValue
 			xOrderSilentTimes[xSymbol] = time.Now()
 			yOrderSilentTimes[ySymbol] = time.Now()
 			delete(xLastFilledBuyPrices, xSymbol)
@@ -573,8 +540,8 @@ func updateTargetPositionSizes() {
 				spread.LongLastEnter, longBot,
 				spread.LongMedianEnter, longBot,
 				size,
-				xTargetPositionSizes[xSymbol],
-				yTargetPositionSizes[ySymbol],
+				xTargetContractValues[xSymbol],
+				yTargetContractValues[ySymbol],
 			)
 			hedgeXSymbol(xSymbol)
 			hedgeYSymbol(ySymbol, xSymbol)

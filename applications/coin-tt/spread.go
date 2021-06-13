@@ -121,10 +121,10 @@ func watchXYSpread(
 			break
 		case <-xWalkDepthTimer.C:
 			if xDepth != nil {
-				err = common.WalkDepthWithMultiplier(xDepth, xMultiplier, impact, xWalkedDepth)
+				err = common.WalkCoinDepthWithMultiplier(xDepth, xMultiplier, impact, xWalkedDepth)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("maker common.WalkDepthWithMultiplier error %v %s", err, xSymbol)
+						logger.Debugf("maker common.WalkMakerTakerDepth error %v %s", err, xSymbol)
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 					break
@@ -134,10 +134,10 @@ func watchXYSpread(
 			break
 		case <-yWalkDepthTimer.C:
 			if yDepth != nil {
-				err = common.WalkDepthWithMultiplier(yDepth, yMultiplier, impact, yWalkedDepth)
+				err = common.WalkCoinDepthWithMultiplier(yDepth, yMultiplier, impact, yWalkedDepth)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("taker common.WalkDepthWithMultiplier error %v %s", err, ySymbol)
+						logger.Debugf("taker common.WalkMakerTakerDepth5 error %v %s", err, ySymbol)
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 					break

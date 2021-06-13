@@ -222,7 +222,7 @@ func (position *Position) GetSymbol() string {
 }
 
 func (position *Position) GetSize() float64 {
-	return position.CurrentQty * Multipliers[position.Symbol]
+	return position.CurrentQty
 }
 
 func (position *Position) GetPrice() float64 {
@@ -455,7 +455,7 @@ func (wsOrder *WSOrder) GetSymbol() string {
 }
 
 func (wsOrder *WSOrder) GetSize() float64 {
-	return wsOrder.Size * Multipliers[wsOrder.Symbol]
+	return wsOrder.Size
 }
 
 func (wsOrder *WSOrder) GetPrice() float64 {

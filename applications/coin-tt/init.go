@@ -4,9 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
+	bncf "github.com/geometrybase/hft-micro/binance-coinfuture"
 	"github.com/geometrybase/hft-micro/common"
-	kcuf "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
+	kccf "github.com/geometrybase/hft-micro/kucoin-coinfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -29,9 +29,9 @@ var xMultipliers = make(map[string]float64)
 var yStepSizes = make(map[string]float64)
 var yMinNotionals = make(map[string]float64)
 var yMultipliers = make(map[string]float64)
-var xySpotStepSizes = make(map[string]float64)
+var xyUsdStepSizes = make(map[string]float64)
 
-var xAccount common.Balance
+var xBalances = make(map[string]common.Balance)
 var xAccountCh = make(chan common.Balance, 200)
 var xPositionCh = make(chan common.Position, 200)
 var xOrderCh = make(chan common.Order, 200)
@@ -45,7 +45,7 @@ var yPositionCh = make(chan common.Position, 200)
 var yOrderCh = make(chan common.Order, 200)
 var yPositions = make(map[string]common.Position)
 var yPositionsUpdateTimes = make(map[string]time.Time)
-var yAccount common.Balance
+var yBalances = make(map[string]common.Balance)
 var yAccountCh = make(chan common.Balance, 200)
 var yNewOrderErrorCh = make(chan common.OrderError, 200)
 var yOrderRequestChMap = make(map[string]chan common.OrderRequest)
@@ -75,8 +75,8 @@ var ySystemStatus = common.SystemStatusNotReady
 var xSystemStatusCh = make(chan common.SystemStatus, 100)
 var ySystemStatusCh = make(chan common.SystemStatus, 100)
 
-var xTargetPositionSizes = make(map[string]float64)
-var yTargetPositionSizes = make(map[string]float64)
+var xTargetContractValues = make(map[string]float64)
+var yTargetContractValues = make(map[string]float64)
 var xyTargetPositionUpdateSilentTimes = make(map[string]time.Time)
 
 var xyConfig *Config
@@ -89,7 +89,7 @@ var yTimedPositionChange *common.TimedSum
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210613 16:48:02  ####")
+	logger.Debug("####  BUILD @ 20210613 12:07:03  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -117,43 +117,40 @@ func init() {
 	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
 	switch xyConfig.XExchange.Name {
-	//case "ftxperp":
-	//	xExchange = &ftxperp.Ftxperp{}
-	case "binanceUsdtFutureWithDepth5":
-		xExchange = &bnuf.BinanceUsdtFutureWidthDepth5{}
+	case "binanceCoinFutureWithDepth5":
+		xExchange = &bncf.ExchangeWidthDepth5{}
 		break
-	case "binanceUsdtFutureWithDepth20":
-		xExchange = &bnuf.BinanceUsdtFutureWidthDepth20{}
+	case "binanceCoinFutureWithDepth20":
+		xExchange = &bncf.ExchangeWidthDepth20{}
 		break
-	case "kucoinUsdtFutureWithDepth5":
-		xExchange = &kcuf.KucoinUsdtFutureWithDepth5{}
-		break
-	//case "bnspot":
-	//	xExchange = &bnspot.Bnspot{}
+	case "kucoinCoinFutureWithDepth5":
+		xExchange = &kccf.ExchangeWithDepth5{}
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
 
 	switch xyConfig.YExchange.Name {
-	//case "ftxperp":
-	//	yExchange = &ftxperp.Ftxperp{}
-	case "binanceUsdtFutureWithDepth5":
-		yExchange = &bnuf.BinanceUsdtFutureWidthDepth5{}
+	case "binanceCoinFutureWithDepth5":
+		yExchange = &bncf.ExchangeWidthDepth5{}
 		break
-	case "binanceUsdtFutureWithDepth20":
-		yExchange = &bnuf.BinanceUsdtFutureWidthDepth20{}
+	case "binanceCoinFutureWithDepth20":
+		yExchange = &bncf.ExchangeWidthDepth20{}
 		break
-	case "kucoinUsdtFutureWithDepth5":
-		yExchange = &kcuf.KucoinUsdtFutureWithDepth5{}
+	case "kucoinCoinFutureWithDepth5":
+		yExchange = &kccf.ExchangeWithDepth5{}
 		break
-	//case "bnspot":
-	//	yExchange = &bnspot.Bnspot{}
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
 	}
 	xTimedPositionChange = common.NewTimedSum(xyConfig.TurnoverLookback)
 	yTimedPositionChange = common.NewTimedSum(xyConfig.TurnoverLookback)
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
+		if _, ok := xyConfig.XSymbolAssetMap[xSymbol]; !ok {
+			logger.Fatalf("missing asset for x symbol %s", xSymbol)
+		}
+		if _, ok := xyConfig.YSymbolAssetMap[ySymbol]; !ok {
+			logger.Fatalf("missing asset for y symbol %s", ySymbol)
+		}
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)
 		yxSymbolsMap[ySymbol] = xSymbol

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"math"
 	"math/rand"
 	"sync"
 	"time"
@@ -20,12 +19,8 @@ type Exchange struct {
 	settings common.ExchangeSettings
 }
 
-func (bn *Exchange) GetContractSize(symbol string) (float64, error) {
-	if value, ok := ContractSizes[symbol]; ok {
-		return value, nil
-	} else {
-		return 0, fmt.Errorf(common.ContractSizeNotFoundError, symbol)
-	}
+func (bn *Exchange) IsSpot() bool {
+	return false
 }
 
 func (bn *Exchange) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
@@ -39,6 +34,14 @@ func (bn *Exchange) GenerateClientID() string {
 func (bn *Exchange) GetMinNotional(symbol string) (float64, error) {
 	return 0.0, nil
 
+}
+
+func (bn *Exchange) GetMultiplier(symbol string) (float64, error) {
+	if value, ok := ContractSizes[symbol]; ok {
+		return value, nil
+	} else {
+		return 0, fmt.Errorf(common.ContractSizeNotFoundError, symbol)
+	}
 }
 
 func (bn *Exchange) GetMinSize(symbol string) (float64, error) {
@@ -197,63 +200,63 @@ func (bn *Exchange) StreamBasic(ctx context.Context, statusCh chan common.System
 				}
 			}
 
-		//case account := <-internalAccountCh:
-		//	for _, asset := range account.Assets {
-		//		balanceCh, okCh := balanceChMap[asset.Asset]
-		//		balance, okB := balancesMap[asset.Asset]
-		//		if okCh && okB && balance.EventTime.Sub(asset.EventTime) < 0 {
-		//			balance.EventTime = asset.EventTime
-		//			balance.Balance = asset.MarginBalance
-		//			balance.AvailableBalance = asset.AvailableBalance
-		//			balance.CrossWalletBalance = asset.CrossWalletBalance
-		//			balance.MaxWithdrawAmount = asset.MaxWithdrawAmount
-		//			select {
-		//			case balanceCh <- &balance:
-		//			default:
-		//				if time.Now().Sub(logSilentTime) > 0 {
-		//					logger.Debugf("balanceCh <- &balance failed, ch len %d", len(balanceCh))
-		//					logSilentTime = time.Now().Add(time.Minute)
-		//				}
-		//			}
-		//		}
-		//	}
-		//	hasPositions := make(map[string]bool)
-		//	for _, nextPos := range account.Positions {
-		//		//logger.Debugf("%s %v", nextPos.Symbol, nextPos.EventTime)
-		//		if nextPos.PositionSide != "BOTH" {
-		//			continue
-		//		}
-		//		if outputCh, ok := positionChMap[nextPos.Symbol]; ok {
-		//			hasPositions[nextPos.Symbol] = true
-		//			nextPos := nextPos
-		//			select {
-		//			case outputCh <- &nextPos:
-		//			default:
-		//				if time.Now().Sub(logSilentTime) > 0 {
-		//					logger.Debugf("outputCh <- &nextPos failed, ch len %d", len(outputCh))
-		//					logSilentTime = time.Now().Add(time.Minute)
-		//				}
-		//			}
-		//		}
-		//	}
-		//	for symbol, ch := range positionChMap {
-		//		if _, ok := hasPositions[symbol]; !ok {
-		//			select {
-		//			case ch <- &HttpPosition{
-		//				Symbol:       symbol,
-		//				PositionSide: "BOTH",
-		//				EventTime:    account.EventTime,
-		//				ParseTime:    account.ParseTime,
-		//			}:
-		//			default:
-		//				if time.Now().Sub(logSilentTime) > 0 {
-		//					logger.Debugf("ch <- &Position failed, %s ch len %d", symbol, len(ch))
-		//					logSilentTime = time.Now().Add(time.Minute)
-		//				}
-		//			}
-		//		}
-		//	}
-		//	break
+			//case account := <-internalAccountCh:
+			//	for _, asset := range account.Assets {
+			//		balanceCh, okCh := balanceChMap[asset.Asset]
+			//		balance, okB := balancesMap[asset.Asset]
+			//		if okCh && okB && balance.EventTime.Sub(asset.EventTime) < 0 {
+			//			balance.EventTime = asset.EventTime
+			//			balance.Balance = asset.MarginBalance
+			//			balance.AvailableBalance = asset.AvailableBalance
+			//			balance.CrossWalletBalance = asset.CrossWalletBalance
+			//			balance.MaxWithdrawAmount = asset.MaxWithdrawAmount
+			//			select {
+			//			case balanceCh <- &balance:
+			//			default:
+			//				if time.Now().Sub(logSilentTime) > 0 {
+			//					logger.Debugf("balanceCh <- &balance failed, ch len %d", len(balanceCh))
+			//					logSilentTime = time.Now().Add(time.Minute)
+			//				}
+			//			}
+			//		}
+			//	}
+			//	hasPositions := make(map[string]bool)
+			//	for _, nextPos := range account.Positions {
+			//		//logger.Debugf("%s %v", nextPos.Symbol, nextPos.EventTime)
+			//		if nextPos.PositionSide != "BOTH" {
+			//			continue
+			//		}
+			//		if outputCh, ok := positionChMap[nextPos.Symbol]; ok {
+			//			hasPositions[nextPos.Symbol] = true
+			//			nextPos := nextPos
+			//			select {
+			//			case outputCh <- &nextPos:
+			//			default:
+			//				if time.Now().Sub(logSilentTime) > 0 {
+			//					logger.Debugf("outputCh <- &nextPos failed, ch len %d", len(outputCh))
+			//					logSilentTime = time.Now().Add(time.Minute)
+			//				}
+			//			}
+			//		}
+			//	}
+			//	for symbol, ch := range positionChMap {
+			//		if _, ok := hasPositions[symbol]; !ok {
+			//			select {
+			//			case ch <- &HttpPosition{
+			//				Symbol:       symbol,
+			//				PositionSide: "BOTH",
+			//				EventTime:    account.EventTime,
+			//				ParseTime:    account.ParseTime,
+			//			}:
+			//			default:
+			//				if time.Now().Sub(logSilentTime) > 0 {
+			//					logger.Debugf("ch <- &Position failed, %s ch len %d", symbol, len(ch))
+			//					logSilentTime = time.Now().Add(time.Minute)
+			//				}
+			//			}
+			//		}
+			//	}
+			//	break
 		}
 	}
 
@@ -283,7 +286,7 @@ func (bn *Exchange) StreamDepth(ctx context.Context, channels map[string]chan co
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
-			ws := NewDepth20WS(ctx, proxy, channels)
+			ws := NewDepth5WS(ctx, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
@@ -351,16 +354,6 @@ func (bn *Exchange) StreamFundingRate(ctx context.Context, channels map[string]c
 func (bn *Exchange) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	defer bn.Stop()
 	for symbol, reqCh := range requestChannels {
-		tickSize, ok := TickSizes[symbol]
-		if !ok {
-			logger.Debugf("miss price increment for %s, exit", symbol)
-			return
-		}
-		stepSize, ok := StepSizes[symbol]
-		if !ok {
-			logger.Debugf("miss size increment for %s, exit", symbol)
-			return
-		}
 		//logger.Debugf("%v", responseChannels)
 		respCh, ok := responseChannels[symbol]
 		if !ok {
@@ -372,7 +365,7 @@ func (bn *Exchange) WatchOrders(ctx context.Context, requestChannels map[string]
 			logger.Debugf("miss error ch for %s, exit", symbol)
 			return
 		}
-		go bn.watchOrder(ctx, symbol, tickSize, stepSize, reqCh, respCh, errCh)
+		go bn.watchOrder(ctx, symbol, reqCh, respCh, errCh)
 	}
 	for {
 		select {
@@ -565,7 +558,6 @@ func (bn *Exchange) watchAccount(
 func (bn *Exchange) watchOrder(
 	ctx context.Context,
 	market string,
-	tickSize, stepSize float64,
 	requestCh chan common.OrderRequest,
 	responseCh chan common.Order,
 	errorCh chan common.OrderError,
@@ -589,7 +581,7 @@ func (bn *Exchange) watchOrder(
 					}
 					continue
 				}
-				bn.submitOrder(ctx, *req.New, tickSize, stepSize, responseCh, errorCh)
+				bn.submitOrder(ctx, *req.New, responseCh, errorCh)
 			} else if req.Cancel != nil {
 				bn.cancelOrder(ctx, *req.Cancel, errorCh)
 			}
@@ -597,10 +589,10 @@ func (bn *Exchange) watchOrder(
 	}
 }
 
-func (bn *Exchange) submitOrder(ctx context.Context, param common.NewOrderParam, tickSize, stepSize float64, respCh chan common.Order, errCh chan common.OrderError) {
+func (bn *Exchange) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParams{}
 	newOrderParam.Symbol = param.Symbol
-	newOrderParam.Quantity = math.Round(param.Size/stepSize) * stepSize
+	newOrderParam.Quantity = param.Size
 	if param.Side == common.OrderSideBuy {
 		newOrderParam.Side = OrderSideBuy
 	} else {
@@ -624,7 +616,7 @@ func (bn *Exchange) submitOrder(ctx context.Context, param common.NewOrderParam,
 	}
 	newOrderParam.ReduceOnly = param.ReduceOnly
 	if param.Price != 0 {
-		newOrderParam.Price = math.Round(param.Price/tickSize) * tickSize
+		newOrderParam.Price = param.Price
 	}
 	newOrderParam.NewClientOrderId = param.ClientID
 	order, err := bn.api.SubmitOrder(ctx, newOrderParam)
@@ -677,6 +669,59 @@ func (bn *Exchange) cancelOrder(ctx context.Context, param common.CancelOrderPar
 			default:
 				logger.Debugf("errCh <- common.OrderError failed, ch len %d", len(errCh))
 			}
+		}
+	}
+}
+
+type ExchangeWidthDepth5 struct {
+	Exchange
+}
+
+type ExchangeWidthDepth20 struct {
+	Exchange
+}
+
+func (bn *ExchangeWidthDepth20) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
+	logger.Debugf("START StreamDepth")
+	defer logger.Debugf("STOP StreamDepth")
+	defer bn.Stop()
+
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+
+	bn.mu.Lock()
+	proxy := bn.settings.Proxy
+	bn.mu.Unlock()
+
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Depth)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
+			ws := NewDepth20WS(ctx, proxy, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-bn.done:
+			return
 		}
 	}
 }

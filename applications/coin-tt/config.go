@@ -8,13 +8,14 @@ import (
 type Config struct {
 	Name *string `yaml:"name"`
 
-	CpuProfile string `yaml:"CpuProfile"`
+	CpuProfile string `yaml:"cpuProfile"`
 	DryRun     bool   `yaml:"dryRun"`
 
 	InternalInflux common.InfluxSettings `yaml:"internalInflux"`
 	ExternalInflux common.InfluxSettings `yaml:"externalInflux"`
 
-	Exchange common.ExchangeSettings `yaml:"exchange"`
+	XExchange common.ExchangeSettings `yaml:"xExchange"`
+	YExchange common.ExchangeSettings `yaml:"yExchange"`
 
 	LoopInterval          time.Duration `yaml:"loopInterval"`
 	LogInterval           time.Duration `yaml:"logInterval"`
@@ -37,7 +38,6 @@ type Config struct {
 	DepthYBias          time.Duration `yaml:"depthYBias"`
 	DepthXBias          time.Duration `yaml:"depthXBias"`
 	BatchSize           int           `yaml:"depthBatchSize"`
-	DepthMakerImpact    float64       `yaml:"depthMakerImpact"`
 	DepthTakerImpact    float64       `yaml:"depthTakerImpact"`
 	DepthMaxAgeDiffBias time.Duration `yaml:"depthMaxAgeDiffBias"`
 	ReportCount         int           `yaml:"reportCount"`
@@ -47,6 +47,7 @@ type Config struct {
 	StartValue      float64            `yaml:"startValue"`
 	EnterStep       float64            `yaml:"enterStep"`
 	EnterTarget     float64            `yaml:"enterTarget"`
+	MaxUnHedgeValue float64            `yaml:"maxUnHedgeValue"`
 	StartValues     map[string]float64 `yaml:"startValues"`
 
 	OrderTimeout    time.Duration `yaml:"orderTimeout"`
@@ -57,8 +58,9 @@ type Config struct {
 	HttpSilent      time.Duration `yaml:"httpSilent"`
 	RestartInterval time.Duration `yaml:"restartInterval"`
 
-	XYPairs        map[string]string `yaml:"xyPairs"`
-	SymbolAssetMap map[string]string `yaml:"symbolAssetMap"`
+	XYPairs         map[string]string `yaml:"xyPairs"`
+	XSymbolAssetMap map[string]string `yaml:"xSymbolAssetMap"`
+	YSymbolAssetMap map[string]string `yaml:"ySymbolAssetMap"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -92,9 +94,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.BatchSize <= 0 {
 		config.BatchSize = 20
 	}
-	if config.DepthMakerImpact <= 0 {
-		config.DepthMakerImpact = 10
-	}
 	if config.DepthTakerImpact <= 0 {
 		config.DepthTakerImpact = 1000
 	}
@@ -115,9 +114,5 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.TurnoverLookback == 0 {
 		config.TurnoverLookback = time.Hour * 24
-	}
-
-	if config.EnterTarget == 0 {
-		config.EnterTarget = 1.0
 	}
 }

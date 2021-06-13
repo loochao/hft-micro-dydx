@@ -10,7 +10,7 @@ import (
 
 func TestNewDepth5WS(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute*5)
-	symbols := []string{"BNBUSD_PERP"}
+	symbols := []string{"DOTUSD_PERP"}
 	proxy := "socks5://127.0.0.1:1080"
 
 	channels := make(map[string]chan common.Depth)

@@ -53,7 +53,7 @@ func (k *KucoinCoinFuture) Setup(ctx context.Context, settings common.ExchangeSe
 		if _, err = k.GetTickSize(symbol); err != nil {
 			return err
 		}
-		if _, err = k.GetContractSize(symbol); err != nil {
+		if _, err = k.GetMultiplier(symbol); err != nil {
 			return err
 		}
 		if settings.ChangeLeverage {
@@ -73,7 +73,7 @@ func (k *KucoinCoinFuture) GetMinNotional(symbol string) (float64, error) {
 	return 0.0, nil
 }
 
-func (k *KucoinCoinFuture) GetContractSize(symbol string)(float64, error) {
+func (k *KucoinCoinFuture) GetMultiplier(symbol string)(float64, error) {
 	if v, ok := LotSizes[symbol]; ok {
 		return v, nil
 	} else {
@@ -432,16 +432,6 @@ func (k *KucoinCoinFuture) StreamFundingRate(ctx context.Context, channels map[s
 func (k *KucoinCoinFuture) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	defer k.Stop()
 	for symbol, reqCh := range requestChannels {
-		tickSize, ok := TickSizes[symbol]
-		if !ok {
-			logger.Debugf("miss tick size for %s, exit", symbol)
-			return
-		}
-		multiplier, ok := Multipliers[symbol]
-		if !ok {
-			logger.Debugf("miss multiplier for %s, exit", symbol)
-			return
-		}
 		respCh, ok := responseChannels[symbol]
 		if !ok {
 			logger.Debugf("miss response ch for %s, exit", symbol)
@@ -452,7 +442,7 @@ func (k *KucoinCoinFuture) WatchOrders(ctx context.Context, requestChannels map[
 			logger.Debugf("miss error ch for %s, exit", symbol)
 			return
 		}
-		go k.watchOrder(ctx, symbol, tickSize, multiplier, reqCh, respCh, errCh)
+		go k.watchOrder(ctx, symbol,  reqCh, respCh, errCh)
 	}
 	for {
 		select {
@@ -586,7 +576,6 @@ func (k *KucoinCoinFuture) positionsLoop(
 func (k *KucoinCoinFuture) watchOrder(
 	ctx context.Context,
 	symbol string,
-	tickSize, stepSize float64,
 	requestCh chan common.OrderRequest,
 	responseCh chan common.Order,
 	errorCh chan common.OrderError,
@@ -610,7 +599,7 @@ func (k *KucoinCoinFuture) watchOrder(
 					}
 					continue
 				}
-				k.submitOrder(ctx, *req.New, tickSize, stepSize, responseCh, errorCh)
+				k.submitOrder(ctx, *req.New, responseCh, errorCh)
 			} else if req.Cancel != nil {
 				k.cancelOrder(ctx, *req.Cancel, errorCh)
 			}
@@ -618,10 +607,10 @@ func (k *KucoinCoinFuture) watchOrder(
 	}
 }
 
-func (k *KucoinCoinFuture) submitOrder(ctx context.Context, param common.NewOrderParam, tickSize, multiplier float64, respCh chan common.Order, errCh chan common.OrderError) {
+func (k *KucoinCoinFuture) submitOrder(ctx context.Context, param common.NewOrderParam,  respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParam{}
 	newOrderParam.Symbol = param.Symbol
-	newOrderParam.Size = int64(math.Round(param.Size / multiplier))
+	newOrderParam.Size = int64(math.Round(param.Size))
 	if param.Side == common.OrderSideBuy {
 		newOrderParam.Side = OrderSideBuy
 	} else {
@@ -638,7 +627,7 @@ func (k *KucoinCoinFuture) submitOrder(ctx context.Context, param common.NewOrde
 	newOrderParam.PostOnly = param.PostOnly
 	newOrderParam.ReduceOnly = param.ReduceOnly
 	if param.Price != 0 {
-		newOrderParam.Price = common.Float64(math.Round(param.Price/tickSize) * tickSize)
+		newOrderParam.Price = common.Float64(param.Price)
 	}
 	newOrderParam.ClientOid = param.ClientID
 	k.mu.Lock()
@@ -678,6 +667,6 @@ func (k *KucoinCoinFuture) cancelOrder(ctx context.Context, param common.CancelO
 	}
 }
 
-type KucoinCoinFutureWithDepth5 struct {
+type ExchangeWithDepth5 struct {
 	KucoinCoinFuture
 }
