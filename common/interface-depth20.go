@@ -461,3 +461,28 @@ func WalkTakerDepth5(depth20 Depth5, takerImpact float64) (*WalkedTakerDepth, er
 	wd.BestAskPrice = depth20.GetAsks()[0][0]
 	return wd, nil
 }
+
+type WalkedDepth struct {
+
+	FarAskPrice float64
+	FarBidPrice float64
+
+	MeanAskPrice float64
+	MeanBidPrice float64
+
+	BestBidPrice float64
+	BestAskPrice float64
+
+	BestBidSize float64
+	BestAskSize float64
+
+	MidPrice   float64
+
+	BidSize float64
+	AskSize float64
+
+	Time   time.Time
+	Symbol string
+}
+
+

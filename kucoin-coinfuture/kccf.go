@@ -1,4 +1,4 @@
-package kucoin_usdtfuture
+package kucoin_coinfuture
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type KucoinUsdtFuture struct {
+type KucoinCoinFuture struct {
 	done     chan interface{}
 	stopped  bool
 	mu       sync.Mutex
@@ -20,25 +20,24 @@ type KucoinUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
-func (k *KucoinUsdtFuture) IsSpot() bool {
+func (k *KucoinCoinFuture) IsSpot() bool {
 	return false
 }
 
-func (k *KucoinUsdtFuture) Done() chan interface{} {
+func (k *KucoinCoinFuture) Done() chan interface{} {
 	return k.done
 }
 
-func (k *KucoinUsdtFuture) Stop() {
+func (k *KucoinCoinFuture) Stop() {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	if !k.stopped {
-		k.stopped = true
 		close(k.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (k *KucoinUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
+func (k *KucoinCoinFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
 	var err error
 	k.stopped = false
 	k.done = make(chan interface{})
@@ -54,6 +53,9 @@ func (k *KucoinUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSe
 		if _, err = k.GetTickSize(symbol); err != nil {
 			return err
 		}
+		if _, err = k.GetContractSize(symbol); err != nil {
+			return err
+		}
 		if settings.ChangeLeverage {
 			_, err = k.api.ChangeAutoDepositStatus(ctx, AutoDepositStatusParam{
 				Symbol: symbol,
@@ -67,19 +69,19 @@ func (k *KucoinUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSe
 	return nil
 }
 
-func (k KucoinUsdtFuture) GetMultiplier(symbol string) (float64, error) {
-	if v, ok := Multipliers[symbol]; ok {
-		return v, nil
-	} else {
-		return 0.0, fmt.Errorf(common.MultiplierNotFoundError, symbol)
-	}
-}
-
-func (k *KucoinUsdtFuture) GetMinNotional(symbol string) (float64, error) {
+func (k *KucoinCoinFuture) GetMinNotional(symbol string) (float64, error) {
 	return 0.0, nil
 }
 
-func (k *KucoinUsdtFuture) GetMinSize(symbol string) (float64, error) {
+func (k *KucoinCoinFuture) GetContractSize(symbol string)(float64, error) {
+	if v, ok := LotSizes[symbol]; ok {
+		return v, nil
+	} else {
+		return 0.0, fmt.Errorf(common.ContractSizeNotFoundError, symbol)
+	}
+}
+
+func (k *KucoinCoinFuture) GetMinSize(symbol string) (float64, error) {
 	if v, ok := LotSizes[symbol]; ok {
 		return v, nil
 	} else {
@@ -87,7 +89,7 @@ func (k *KucoinUsdtFuture) GetMinSize(symbol string) (float64, error) {
 	}
 }
 
-func (k *KucoinUsdtFuture) GetStepSize(symbol string) (float64, error) {
+func (k *KucoinCoinFuture) GetStepSize(symbol string) (float64, error) {
 	if v, ok := LotSizes[symbol]; ok {
 		return v, nil
 	} else {
@@ -95,7 +97,7 @@ func (k *KucoinUsdtFuture) GetStepSize(symbol string) (float64, error) {
 	}
 }
 
-func (k *KucoinUsdtFuture) GetTickSize(symbol string) (float64, error) {
+func (k *KucoinCoinFuture) GetTickSize(symbol string) (float64, error) {
 	if v, ok := TickSizes[symbol]; ok {
 		return v, nil
 	} else {
@@ -103,7 +105,7 @@ func (k *KucoinUsdtFuture) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountChMap map[string]chan common.Balance, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
+func (k *KucoinCoinFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountChMap map[string]chan common.Balance, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
 	defer k.Stop()
 	k.mu.Lock()
 	settings := k.settings
@@ -272,7 +274,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 	}
 }
 
-func (k *KucoinUsdtFuture) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
+func (k *KucoinCoinFuture) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	checkInterval := time.Second * 5
 	startTime := time.Now()
 	updateTimes := make(map[string]time.Time)
@@ -335,7 +337,7 @@ func (k *KucoinUsdtFuture) StreamSymbolStatus(ctx context.Context, channels map[
 	}
 }
 
-func (k *KucoinUsdtFuture) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
+func (k *KucoinCoinFuture) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")
 	defer k.Stop()
@@ -377,19 +379,19 @@ func (k *KucoinUsdtFuture) StreamDepth(ctx context.Context, channels map[string]
 	}
 }
 
-func (k *KucoinUsdtFuture) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
+func (k *KucoinCoinFuture) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
 	panic("implement me")
 }
 
-func (k *KucoinUsdtFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (k *KucoinCoinFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	panic("implement me")
 }
 
-func (k *KucoinUsdtFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
+func (k *KucoinCoinFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
 	panic("implement me")
 }
 
-func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
+func (k *KucoinCoinFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
 	k.mu.Lock()
 	interval := k.settings.PullInterval
 	k.mu.Unlock()
@@ -427,7 +429,7 @@ func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[s
 	}
 }
 
-func (k *KucoinUsdtFuture) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+func (k *KucoinCoinFuture) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	defer k.Stop()
 	for symbol, reqCh := range requestChannels {
 		tickSize, ok := TickSizes[symbol]
@@ -462,11 +464,11 @@ func (k *KucoinUsdtFuture) WatchOrders(ctx context.Context, requestChannels map[
 	}
 }
 
-func (k *KucoinUsdtFuture) GenerateClientID() string {
+func (k *KucoinCoinFuture) GenerateClientID() string {
 	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 }
 
-func (k *KucoinUsdtFuture) systemStatusLoop(
+func (k *KucoinCoinFuture) systemStatusLoop(
 	ctx context.Context, output chan common.SystemStatus,
 ) {
 	k.mu.Lock()
@@ -510,7 +512,7 @@ func (k *KucoinUsdtFuture) systemStatusLoop(
 	}
 }
 
-func (k *KucoinUsdtFuture) accountLoop(
+func (k *KucoinCoinFuture) accountLoop(
 	ctx context.Context, output chan Account,
 ) {
 	k.mu.Lock()
@@ -537,7 +539,7 @@ func (k *KucoinUsdtFuture) accountLoop(
 	}
 }
 
-func (k *KucoinUsdtFuture) positionsLoop(
+func (k *KucoinCoinFuture) positionsLoop(
 	ctx context.Context,
 	symbols []string,
 	outputCh chan map[string]Position,
@@ -581,7 +583,7 @@ func (k *KucoinUsdtFuture) positionsLoop(
 	}
 }
 
-func (k *KucoinUsdtFuture) watchOrder(
+func (k *KucoinCoinFuture) watchOrder(
 	ctx context.Context,
 	symbol string,
 	tickSize, stepSize float64,
@@ -616,7 +618,7 @@ func (k *KucoinUsdtFuture) watchOrder(
 	}
 }
 
-func (k *KucoinUsdtFuture) submitOrder(ctx context.Context, param common.NewOrderParam, tickSize, multiplier float64, respCh chan common.Order, errCh chan common.OrderError) {
+func (k *KucoinCoinFuture) submitOrder(ctx context.Context, param common.NewOrderParam, tickSize, multiplier float64, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParam{}
 	newOrderParam.Symbol = param.Symbol
 	newOrderParam.Size = int64(math.Round(param.Size / multiplier))
@@ -658,7 +660,7 @@ func (k *KucoinUsdtFuture) submitOrder(ctx context.Context, param common.NewOrde
 	}
 }
 
-func (k *KucoinUsdtFuture) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
+func (k *KucoinCoinFuture) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
 	if param.Symbol != "" {
 		_, err := k.api.CancelAllOrders(ctx, CancelAllOrdersParam{
 			Symbol: param.Symbol,
@@ -676,6 +678,6 @@ func (k *KucoinUsdtFuture) cancelOrder(ctx context.Context, param common.CancelO
 	}
 }
 
-type KucoinUsdtFutureWithDepth5 struct {
-	KucoinUsdtFuture
+type KucoinCoinFutureWithDepth5 struct {
+	KucoinCoinFuture
 }

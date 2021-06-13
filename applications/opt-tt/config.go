@@ -8,7 +8,7 @@ import (
 type Config struct {
 	Name *string `yaml:"name"`
 
-	CpuProfile string `yaml:"CpuProfile"`
+	CpuProfile string `yaml:"cpuProfile"`
 	DryRun     bool   `yaml:"dryRun"`
 
 	InternalInflux common.InfluxSettings `yaml:"internalInflux"`

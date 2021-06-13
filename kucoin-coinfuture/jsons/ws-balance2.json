@@ -1,0 +1,13 @@
+{
+  "data": {
+    "currency": "USDT",
+    "orderMargin": "0.5907469921",
+    "timestamp": "1618323715531"
+  },
+  "subject": "orderMargin.change",
+  "topic": "/contractAccount/wallet",
+  "channelType": "private",
+  "id": "6075a90346259d00062dde01",
+  "type": "message",
+  "userId": "6072bd6950d6480006756fa7"
+}

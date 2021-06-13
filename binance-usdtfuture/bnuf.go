@@ -63,6 +63,9 @@ func (bn *BinanceUsdtFuture) GetTickSize(symbol string) (float64, error) {
 		return 0, fmt.Errorf(common.TickSizeNotFoundError, symbol)
 	}
 }
+func (bn *BinanceUsdtFuture) GetMultiplier(symbol string) (float64, error) {
+	return 1.0, nil
+}
 
 func (bn *BinanceUsdtFuture) StreamBasic(
 	ctx context.Context,

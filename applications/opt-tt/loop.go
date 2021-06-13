@@ -28,17 +28,17 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 	if yExchange.IsSpot() {
 		if math.Abs(ySizeDiff) < yStepSize {
 			return 0
-		} else if ySizeDiff < 0 && -ySizeDiff*yDepth.BestBidPrice < yMinNotional {
+		} else if ySizeDiff < 0 && -ySizeDiff*yDepth.MidPrice < yMinNotional {
 			return 0
-		} else if ySizeDiff > 0 && ySizeDiff*yDepth.BestAskPrice < yMinNotional {
+		} else if ySizeDiff > 0 && ySizeDiff*yDepth.MidPrice < yMinNotional {
 			return 0
 		}
 	} else {
 		if math.Abs(ySizeDiff) < yStepSize {
 			return 0
-		} else if ySizeDiff < 0 && yPosition.GetSize() <= 0 && -ySizeDiff*yDepth.BestBidPrice < yMinNotional {
+		} else if ySizeDiff < 0 && yPosition.GetSize() <= 0 && -ySizeDiff*yDepth.MidPrice < yMinNotional {
 			return 0
-		} else if ySizeDiff > 0 && yPosition.GetSize() >= 0 && ySizeDiff*yDepth.BestAskPrice < yMinNotional {
+		} else if ySizeDiff > 0 && yPosition.GetSize() >= 0 && ySizeDiff*yDepth.MidPrice < yMinNotional {
 			return 0
 		}
 	}
@@ -129,17 +129,17 @@ func hedgeXSymbol(xSymbol, ySymbol string) {
 	if xExchange.IsSpot() {
 		if math.Abs(xSizeDiff) < xStepSize {
 			return
-		} else if xSizeDiff < 0 && -xSizeDiff*xDepth.BestBidPrice < xMinNotional {
+		} else if xSizeDiff < 0 && -xSizeDiff*xDepth.MidPrice < xMinNotional {
 			return
-		} else if xSizeDiff > 0 && xSizeDiff*xDepth.BestAskPrice < xMinNotional {
+		} else if xSizeDiff > 0 && xSizeDiff*xDepth.MidPrice < xMinNotional {
 			return
 		}
 	} else {
 		if math.Abs(xSizeDiff) < xStepSize {
 			return
-		} else if xSizeDiff < 0 && xPosition.GetSize() <= 0 && -xSizeDiff*xDepth.BestBidPrice < xMinNotional {
+		} else if xSizeDiff < 0 && xPosition.GetSize() <= 0 && -xSizeDiff*xDepth.MidPrice < xMinNotional {
 			return
-		} else if xSizeDiff > 0 && xPosition.GetSize() >= 0 && xSizeDiff*xDepth.BestAskPrice < xMinNotional {
+		} else if xSizeDiff > 0 && xPosition.GetSize() >= 0 && xSizeDiff*xDepth.MidPrice < xMinNotional {
 			return
 		}
 	}

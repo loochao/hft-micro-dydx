@@ -10,7 +10,7 @@ import (
 func watchXYSpread(
 	ctx context.Context,
 	xSymbol, ySymbol string,
-	makerImpact, takerImpact float64,
+	multiplier, impact float64,
 	xDecay float64,
 	xBias time.Duration,
 	yDecay float64,
@@ -19,13 +19,14 @@ func watchXYSpread(
 	maxAgeDiffBias time.Duration,
 	reportCount int,
 	spreadLookback time.Duration,
-	makerDepthCh, takerDepthCh chan common.Depth,
+	xDepthCh, yDepthCh chan common.Depth,
 	reportCh chan SpreadReport,
 	outputCh chan *XYSpread,
 ) {
+
 	var err error
 	var xDepth, yDepth common.Depth
-	var xWalkedDepth, yWalkedDepth *common.WalkedMakerTakerDepth
+	var xWalkedDepth, yWalkedDepth = &common.WalkedDepthBAM{}, &common.WalkedDepthBAM{}
 	var spreadTime time.Time
 	var adjustedAgeDiff time.Duration
 	var xBiasInMs = float64(xBias / time.Millisecond)
@@ -56,7 +57,7 @@ func watchXYSpread(
 		case <-ctx.Done():
 			return
 		case <-walkSpreadTimer.C:
-			if xWalkedDepth == nil || yWalkedDepth == nil {
+			if xWalkedDepth.Symbol == "" || yWalkedDepth.Symbol == "" {
 				break
 			}
 			//需要用ema time delta 对age diff进行修正
@@ -79,8 +80,8 @@ func watchXYSpread(
 				break
 			}
 			matchCount++
-			shortLastEnter = (yWalkedDepth.TakerBid - xWalkedDepth.TakerAsk) / xWalkedDepth.TakerAsk
-			longLastEnter = (yWalkedDepth.TakerAsk - xWalkedDepth.TakerBid) / xWalkedDepth.TakerBid
+			shortLastEnter = (yWalkedDepth.BidPrice - xWalkedDepth.AskPrice) / xWalkedDepth.AskPrice
+			longLastEnter = (yWalkedDepth.AskPrice - xWalkedDepth.BidPrice) / xWalkedDepth.BidPrice
 
 			shortEnterTimedMedian.Insert(spreadTime, shortLastEnter)
 			longEnterTimedMedian.Insert(spreadTime, longLastEnter)
@@ -120,7 +121,7 @@ func watchXYSpread(
 			break
 		case <-xWalkDepthTimer.C:
 			if xDepth != nil {
-				xWalkedDepth, err = common.WalkMakerTakerDepth(xDepth, makerImpact, takerImpact)
+				err = common.WalkDepthWithMultiplier(xDepth, multiplier, impact, xWalkedDepth)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("maker common.WalkMakerTakerDepth error %v %s", err, xSymbol)
@@ -133,7 +134,7 @@ func watchXYSpread(
 			break
 		case <-yWalkDepthTimer.C:
 			if yDepth != nil {
-				yWalkedDepth, err = common.WalkMakerTakerDepth(yDepth, makerImpact, takerImpact)
+				err = common.WalkDepthWithMultiplier(yDepth, multiplier, impact, yWalkedDepth)
 				if err != nil {
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("taker common.WalkMakerTakerDepth5 error %v %s", err, ySymbol)
@@ -145,7 +146,7 @@ func watchXYSpread(
 			}
 			break
 
-		case xDepth = <-makerDepthCh:
+		case xDepth = <-xDepthCh:
 			if xDepth.GetTime().Sub(xDepthTime) < 0 {
 				break
 			}
@@ -195,7 +196,7 @@ func watchXYSpread(
 				xExpireCount = 0
 			}
 			break
-		case yDepth = <-takerDepthCh:
+		case yDepth = <-yDepthCh:
 			if yDepth.GetTime().Sub(yDepthTime) < 0 {
 				break
 			}

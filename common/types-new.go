@@ -55,6 +55,7 @@ type Exchange interface {
 	GetMinSize(symbol string) (float64, error)
 	GetStepSize(symbol string) (float64, error)
 	GetTickSize(symbol string) (float64, error)
+	GetMultiplier(symbol string) (float64, error)
 
 	StreamBasic(ctx context.Context, statusCh chan SystemStatus, balanceChMap map[string]chan Balance, positionChMap map[string]chan Position, orderCh map[string]chan Order, )
 	StreamSymbolStatus(ctx context.Context, channels map[string]chan SymbolStatusMsg, batchSize int)
@@ -367,9 +368,10 @@ type InfluxSettings struct {
 }
 
 var (
-	TickSizeNotFoundError    = "tick size for %s not found"
-	StepSizeNotFoundError    = "step size for %s not found"
-	MinSizeNotFoundError     = "min size for %s not found"
-	MinNotionalNotFoundError = "min notional for %s not found"
+	TickSizeNotFoundError     = "tick size for %s not found"
+	StepSizeNotFoundError     = "step size for %s not found"
+	MinSizeNotFoundError      = "min size for %s not found"
+	MinNotionalNotFoundError  = "min notional for %s not found"
 	ContractSizeNotFoundError = "contract size for %s not found"
+	MultiplierNotFoundError   = "multipliers for %s not found"
 )

@@ -88,19 +88,14 @@ func handleSave() {
 			fields["spreadLongMedianEnter"] = spread.LongMedianEnter
 			fields["spreadLongMedianLeave"] = spread.LongMedianLeave
 
-			fields["yMakerBid"] = spread.YDepth.MakerBid
-			fields["yMakerAsk"] = spread.YDepth.MakerAsk
-			fields["yTakerBid"] = spread.YDepth.TakerBid
-			fields["yTakerAsk"] = spread.YDepth.TakerAsk
-			fields["yBestBidPrice"] = spread.YDepth.BestBidPrice
-			fields["yBestAskPrice"] = spread.YDepth.BestAskPrice
+			fields["yBidPrice"] = spread.YDepth.BidPrice
+			fields["yAskPrice"] = spread.YDepth.AskPrice
+			fields["yMidPrice"] = spread.YDepth.MidPrice
 
-			fields["xMakerBid"] = spread.XDepth.MakerBid
-			fields["xMakerAsk"] = spread.XDepth.MakerAsk
-			fields["xTakerBid"] = spread.XDepth.TakerBid
-			fields["xTakerAsk"] = spread.XDepth.TakerAsk
-			fields["xBestBidPrice"] = spread.XDepth.BestBidPrice
-			fields["xBestAskPrice"] = spread.XDepth.BestAskPrice
+			fields["xBidPrice"] = spread.XDepth.BidPrice
+			fields["xAskPrice"] = spread.XDepth.AskPrice
+			fields["xMidPrice"] = spread.XDepth.MidPrice
+
 			fields["age"] = spread.Age.Seconds()
 		} else {
 			if !(okYPosition && okXPosition && xPosition.GetSize() == 0 && yPosition.GetSize() == 0) {
