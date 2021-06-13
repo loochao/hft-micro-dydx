@@ -41,11 +41,11 @@ func handleSave() {
 		xMultiplier := xMultipliers[xSymbol]
 		fields := make(map[string]interface{})
 		if okXPosition && okYPosition && okSpread {
-			xSize := xPosition.GetSize()*xMultiplier
+			xSize := xPosition.GetSize() * xMultiplier
 			xValue := xSize * spread.XDepth.MidPrice
-			ySize := yPosition.GetSize()*yMultiplier
-			yValue := ySize* spread.YDepth.MidPrice
-			unHedgeValue := math.Abs(xSize + ySize)*(spread.XDepth.MidPrice+spread.YDepth.MidPrice)*0.5
+			ySize := yPosition.GetSize() * yMultiplier
+			yValue := ySize * spread.YDepth.MidPrice
+			unHedgeValue := math.Abs(xSize+ySize) * (spread.XDepth.MidPrice + spread.YDepth.MidPrice) * 0.5
 			totalUnHedgeValue += unHedgeValue
 			totalXSymbolValue += xValue
 			totalYSymbolValue += yValue
@@ -72,10 +72,10 @@ func handleSave() {
 			fields["longTop"] = longTop
 
 			if yPosition.GetPrice() != 0 {
-				yURPnl += yPosition.GetSize()*yMultiplier * (spread.YDepth.MidPrice - yPosition.GetPrice())
+				yURPnl += ySize * (spread.YDepth.MidPrice - yPosition.GetPrice())
 			}
 			if xPosition.GetPrice() != 0 {
-				xURPnl += xPosition.GetSize()*xMultiplier * (spread.XDepth.MidPrice - xPosition.GetPrice())
+				xURPnl += xSize * (spread.XDepth.MidPrice - xPosition.GetPrice())
 			}
 
 			fields["spreadTime"] = spread.Time.UnixNano()
@@ -166,9 +166,9 @@ func handleSave() {
 		fields["xAvailable"] = xAccount.GetFree()
 		fields["xURPnl"] = xURPnl
 		fields["yURPnl"] = yURPnl
-		fields["xyTurnover"] = (xTimedPositionChange.Sum()+yTimedPositionChange.Sum())/totalBalance
-		fields["xTurnover"] = xTimedPositionChange.Sum()/xBalance
-		fields["yTurnover"] = yTimedPositionChange.Sum()/yBalance
+		fields["xyTurnover"] = (xTimedPositionChange.Sum() + yTimedPositionChange.Sum()) / totalBalance
+		fields["xTurnover"] = xTimedPositionChange.Sum() / xBalance
+		fields["yTurnover"] = yTimedPositionChange.Sum() / yBalance
 		fields["xyURPnl"] = totalURPnl
 		fields["netWorth"] = netWorth
 		fields["startValue"] = xyConfig.StartValue

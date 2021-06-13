@@ -9,10 +9,9 @@ import (
 
 func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 	yPosition, okYPosition := yPositions[ySymbol]
-	_, okXPosition := xPositions[xSymbol]
 	targetSize, okTargetSize := yTargetPositionSizes[ySymbol]
 	spread, okSpread := xySpreads[xSymbol]
-	if !okYPosition || !okSpread || !okTargetSize || !okXPosition {
+	if !okYPosition || !okSpread || !okTargetSize {
 		return 0
 	}
 
@@ -35,6 +34,7 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 			return 0
 		}
 	} else {
+		//期货以close仓位，没有minNotional限制
 		if math.Abs(ySizeDiff) < yStepSize {
 			return 0
 		} else if ySizeDiff < 0 && yPosition.GetSize() <= 0 && -ySizeDiff*yMultiplier*yDepth.MidPrice < yMinNotional {
@@ -43,7 +43,6 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 			return 0
 		}
 	}
-
 
 	reduceOnly := false
 	if ySizeDiff*yPosition.GetSize() < 0 && math.Abs(ySizeDiff) <= math.Abs(yPosition.GetSize()) {
@@ -72,11 +71,11 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 		default:
 			logger.Debugf("yOrderRequestChMap[ySymbol] <- common.OrderRequest %s failed, ch len %d", ySymbol, len(yOrderRequestChMap[ySymbol]))
 		}
-	}else{
+	} else {
 		yOrderSilentTimes[ySymbol] = time.Now().Add(xyConfig.OrderSilent)
 		yPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
 	}
-	return math.Abs(ySizeDiff * yDepth.MidPrice)
+	return math.Abs(ySizeDiff * yMultiplier * yDepth.MidPrice)
 }
 
 func updateYPositions() {
@@ -109,12 +108,11 @@ func updateYPositions() {
 	xyUnHedgeValue = unHedgedValue
 }
 
-func hedgeXSymbol(xSymbol, ySymbol string) {
+func hedgeXSymbol(xSymbol string) {
 	xPosition, okXPosition := xPositions[xSymbol]
-	_, okYPosition := yPositions[ySymbol]
 	xTargetSize, okXTargetSize := xTargetPositionSizes[xSymbol]
 	spread, okSpread := xySpreads[xSymbol]
-	if !okXPosition || !okSpread || !okXTargetSize || !okYPosition {
+	if !okXPosition || !okSpread || !okXTargetSize {
 		return
 	}
 	xDepth := spread.XDepth
@@ -173,7 +171,7 @@ func hedgeXSymbol(xSymbol, ySymbol string) {
 		default:
 			logger.Debugf("xOrderRequestChMap[xSymbol] <- common.OrderRequest %s failed, ch len %d", xSymbol, len(xOrderRequestChMap[xSymbol]))
 		}
-	}else{
+	} else {
 		xOrderSilentTimes[xSymbol] = time.Now().Add(xyConfig.OrderSilent)
 		xPositionsUpdateTimes[xSymbol] = time.Unix(0, 0)
 	}
@@ -193,7 +191,6 @@ func updateXPositions() {
 		return
 	}
 	for _, xSymbol := range xSymbols {
-		ySymbol := xySymbolsMap[xSymbol]
 		if _, ok := xyConfig.NotTradePairs[xSymbol]; ok {
 			continue
 		}
@@ -203,7 +200,7 @@ func updateXPositions() {
 		if xOrderSilentTimes[xSymbol].Sub(time.Now()).Seconds() > 0 {
 			continue
 		}
-		hedgeXSymbol(xSymbol, ySymbol)
+		hedgeXSymbol(xSymbol)
 	}
 }
 
@@ -241,33 +238,16 @@ func updateTargetPositionSizes() {
 		//其他时间以仓位小的为准
 		if okXPosition && okYPosition {
 			if math.Abs(xPosition.GetSize()*xMultiplier)-math.Abs(yPosition.GetSize()*yMultiplier) >= xySpotStepSize {
-				yTargetPositionSizes[ySymbol] = yPosition.GetSize()*yMultiplier
-				xTargetPositionSizes[xSymbol] = -yPosition.GetSize()*yMultiplier
+				yTargetPositionSizes[ySymbol] = yPosition.GetSize() * yMultiplier
+				xTargetPositionSizes[xSymbol] = -yPosition.GetSize() * yMultiplier
 			} else if math.Abs(xPosition.GetSize()*xMultiplier)-math.Abs(yPosition.GetSize()*yMultiplier) <= -xySpotStepSize {
-				xTargetPositionSizes[xSymbol] = xPosition.GetSize()*xMultiplier
-				yTargetPositionSizes[ySymbol] = -xPosition.GetSize()*xMultiplier
+				xTargetPositionSizes[xSymbol] = xPosition.GetSize() * xMultiplier
+				yTargetPositionSizes[ySymbol] = -xPosition.GetSize() * xMultiplier
 			} else {
-				xTargetPositionSizes[xSymbol] = xPosition.GetSize()*xMultiplier
-				yTargetPositionSizes[ySymbol] = yPosition.GetSize()*yMultiplier
+				xTargetPositionSizes[xSymbol] = xPosition.GetSize() * xMultiplier
+				yTargetPositionSizes[ySymbol] = yPosition.GetSize() * yMultiplier
 			}
 		}
-		//if xyConfig.HedgeTargetExchange == "X" {
-		//	if xPosition, okXPosition := xPositions[xSymbol]; okXPosition {
-		//		if math.Abs(xTargetPositionSizes[xSymbol]-xPosition.GetSize()) >= xStepSizes[xSymbol] {
-		//			logger.Debugf("%s %s update target size x %f->%f y %f->%f", xSymbol, ySymbol, xTargetPositionSizes[xSymbol], xPosition.GetSize(), yTargetPositionSizes[ySymbol], -xPosition.GetSize())
-		//		}
-		//		xTargetPositionSizes[xSymbol] = xPosition.GetSize()
-		//		yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
-		//	}
-		//} else {
-		//	if yPosition, okYPosition := yPositions[ySymbol]; okYPosition {
-		//		if math.Abs(yTargetPositionSizes[ySymbol]-yPosition.GetSize()) >= yStepSizes[ySymbol] {
-		//			logger.Debugf("%s %s update target size x %f->%f y %f->%f", xSymbol, ySymbol, xTargetPositionSizes[xSymbol], -yPosition.GetSize(), yTargetPositionSizes[ySymbol], yPosition.GetSize())
-		//		}
-		//		yTargetPositionSizes[ySymbol] = yPosition.GetSize()
-		//		xTargetPositionSizes[xSymbol] = -yPosition.GetSize()
-		//	}
-		//}
 	}
 
 	if len(xyRankSymbolMap) == 0 {
@@ -301,7 +281,6 @@ func updateTargetPositionSizes() {
 			continue
 		}
 
-		spread, okSpread := xySpreads[xSymbol]
 		//需要保证两边都有仓位更新，才调整现货仓位
 		if time.Now().Sub(xPositionsUpdateTimes[xSymbol]) > xyConfig.BalancePositionMaxAge {
 			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
@@ -321,6 +300,8 @@ func updateTargetPositionSizes() {
 			//}
 			continue
 		}
+
+		spread, okSpread := xySpreads[xSymbol]
 		xPosition, okXPosition := xPositions[xSymbol]
 		yPosition, okYPosition := yPositions[ySymbol]
 		fundingRate, okFundingRate := xyFundingRates[xSymbol]
@@ -347,8 +328,8 @@ func updateTargetPositionSizes() {
 
 		xySpotStepSize := xySpotStepSizes[xSymbol]
 
-		xSize := xPosition.GetSize()*xMultiplier
-		ySize := yPosition.GetSize()*yMultiplier
+		xSize := xPosition.GetSize() * xMultiplier
+		ySize := yPosition.GetSize() * yMultiplier
 		xValue := math.Abs(xSize) * spread.XDepth.MidPrice
 		yValue := math.Abs(ySize) * spread.YDepth.MidPrice
 		offsetFactor := (xValue + yValue) * 0.5 / entryTarget
@@ -371,11 +352,10 @@ func updateTargetPositionSizes() {
 			size := entryValue / midPrice
 			size = math.Round(size/xySpotStepSize) * xySpotStepSize
 			entryValue = size * midPrice
-			if xValue-entryValue < entryStep {
-				size = xPosition.GetSize()
-			}
-			if yValue-entryValue < entryStep {
-				size = xPosition.GetSize()
+
+			if xValue-entryValue < entryStep || yValue-entryValue < entryStep {
+				//两种情况都把x全平，间接y全平
+				size = xSize
 			}
 			//谁小以谁为准
 			if xValue <= yValue {
@@ -407,7 +387,7 @@ func updateTargetPositionSizes() {
 				xTargetPositionSizes[xSymbol],
 				yTargetPositionSizes[ySymbol],
 			)
-			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeXSymbol(xSymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
 		} else if spread.LongLastLeave > longTop &&
 			spread.LongMedianLeave > longTop &&
@@ -421,11 +401,8 @@ func updateTargetPositionSizes() {
 			size := entryValue / midPrice
 			size = math.Round(size/xySpotStepSize) * xySpotStepSize
 			entryValue = size * midPrice
-			if xValue-entryValue < entryStep {
-				size = -xPosition.GetSize()
-			}
-			if yValue-entryValue < entryStep {
-				size = -xPosition.GetSize()
+			if xValue-entryValue < entryStep || yValue-entryValue < entryStep {
+				size = -xSize
 			}
 			//谁小以谁为准
 			if xValue <= yValue {
@@ -458,7 +435,7 @@ func updateTargetPositionSizes() {
 				xTargetPositionSizes[xSymbol],
 				yTargetPositionSizes[ySymbol],
 			)
-			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeXSymbol(xSymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
 		} else if !yExchange.IsSpot() &&
 			spread.ShortLastEnter > shortTop &&
@@ -529,7 +506,7 @@ func updateTargetPositionSizes() {
 				xTargetPositionSizes[xSymbol],
 				yTargetPositionSizes[ySymbol],
 			)
-			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeXSymbol(xSymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
 		} else if !xExchange.IsSpot() &&
 			spread.LongLastEnter < longBot &&
@@ -599,7 +576,7 @@ func updateTargetPositionSizes() {
 				xTargetPositionSizes[xSymbol],
 				yTargetPositionSizes[ySymbol],
 			)
-			hedgeXSymbol(xSymbol, ySymbol)
+			hedgeXSymbol(xSymbol)
 			hedgeYSymbol(ySymbol, xSymbol)
 
 		}
