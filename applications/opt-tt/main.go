@@ -78,14 +78,13 @@ func main() {
 	logger.Debugf("x multipliers %v", xMultipliers)
 
 	for xSymbol, xStepSize := range xStepSizes {
-		if yStepSize, ok := yStepSizes[xySymbolsMap[xSymbol]]; !ok {
-			logger.Debugf("y step size not exists for %s - %s", xSymbol, xySymbolsMap[xSymbol])
-			return
-		} else {
-			xyStepSizes[xSymbol] = common.MergedStepSize(xStepSize, yStepSize)
-		}
+		ySymbol := xySymbolsMap[xSymbol]
+		yStepSize := yStepSizes[ySymbol]
+		xMultiplier := xMultipliers[xSymbol]
+		yMultiplier := yMultipliers[ySymbol]
+		xySpotStepSizes[xSymbol] = common.MergedStepSize(xStepSize*xMultiplier, yStepSize*yMultiplier)
 	}
-	logger.Debugf("merged step sizes: %v", xyStepSizes)
+	logger.Debugf("merged step sizes: %v", xySpotStepSizes)
 
 	if xyConfig.InternalInflux.Address != "" {
 		xyInfluxWriter, err = common.NewInfluxWriter(
@@ -148,7 +147,7 @@ func main() {
 		xyGlobalCtx,
 		xSystemStatusCh,
 		map[string]chan common.Balance{
-			"USDT":xAccountCh,
+			"USDT": xAccountCh,
 		},
 		xPositionChMap,
 		xOrderChMap,
@@ -187,7 +186,7 @@ func main() {
 		xyGlobalCtx,
 		ySystemStatusCh,
 		map[string]chan common.Balance{
-			"USDT":yAccountCh,
+			"USDT": yAccountCh,
 		},
 		yPositionChMap,
 		yOrderChMap,
@@ -216,7 +215,6 @@ func main() {
 		xyConfig.InternalInflux,
 		spreadReportCh,
 	)
-
 
 	spreadCh := make(chan *XYSpread, len(xSymbols)*100)
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
@@ -289,6 +287,9 @@ mainLoop:
 			}
 			break
 		case nextPos := <-xPositionCh:
+			if _, ok := xySymbolsMap[nextPos.GetSymbol()]; !ok {
+				break
+			}
 			//logger.Debugf("x position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := xPositions[nextPos.GetSymbol()]; ok {
 				if prevPos == nextPos {
@@ -296,7 +297,7 @@ mainLoop:
 				}
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 					if spread, ok := xySpreads[nextPos.GetSymbol()]; ok {
-						xTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*spread.XDepth.MidPrice)
+						xTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*spread.XDepth.MidPrice*xMultipliers[nextPos.GetSymbol()])
 					}
 					xPositions[nextPos.GetSymbol()] = nextPos
 					if prevPos.GetSize() != nextPos.GetSize() {
@@ -320,6 +321,9 @@ mainLoop:
 			//logger.Debugf("x account %s %f %f %f", xAccount.GetCurrency(), xAccount.GetBalance(), xAccount.GetFree(), xAccount.GetUsed())
 			break
 		case nextPos := <-yPositionCh:
+			if _, ok := yxSymbolsMap[nextPos.GetSymbol()]; !ok {
+				break
+			}
 			//logger.Debugf("y position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := yPositions[nextPos.GetSymbol()]; ok {
 				if prevPos == nextPos {
@@ -329,7 +333,7 @@ mainLoop:
 					yPositions[nextPos.GetSymbol()] = nextPos
 					if prevPos.GetSize() != nextPos.GetSize() {
 						if spread, ok := xySpreads[yxSymbolsMap[nextPos.GetSymbol()]]; ok {
-							yTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*spread.YDepth.MidPrice)
+							yTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*spread.YDepth.MidPrice*yMultipliers[nextPos.GetSymbol()])
 						}
 						logger.Debugf("%s y position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 					}

@@ -29,7 +29,7 @@ var xMultipliers = make(map[string]float64)
 var yStepSizes = make(map[string]float64)
 var yMinNotionals = make(map[string]float64)
 var yMultipliers = make(map[string]float64)
-var xyStepSizes = make(map[string]float64)
+var xySpotStepSizes = make(map[string]float64)
 
 var xAccount common.Balance
 var xAccountCh = make(chan common.Balance, 200)
@@ -89,7 +89,7 @@ var yTimedPositionChange *common.TimedSum
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210613 10:28:57  ####")
+	logger.Debug("####  BUILD @ 20210613 11:38:51  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

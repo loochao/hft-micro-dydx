@@ -19,7 +19,8 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 	yDepth := spread.YDepth
 	yStepSize := yStepSizes[ySymbol]
 	yMinNotional := yMinNotionals[ySymbol]
-	ySizeDiff := targetSize - yPosition.GetSize()
+	yMultiplier := yMultipliers[ySymbol]
+	ySizeDiff := targetSize/yMultiplier - yPosition.GetSize()
 	if math.Abs(ySizeDiff) < yStepSize {
 		return 0
 	}
@@ -28,22 +29,21 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 	if yExchange.IsSpot() {
 		if math.Abs(ySizeDiff) < yStepSize {
 			return 0
-		} else if ySizeDiff < 0 && -ySizeDiff*yDepth.MidPrice < yMinNotional {
+		} else if ySizeDiff < 0 && -ySizeDiff*yMultiplier*yDepth.MidPrice < yMinNotional {
 			return 0
-		} else if ySizeDiff > 0 && ySizeDiff*yDepth.MidPrice < yMinNotional {
+		} else if ySizeDiff > 0 && ySizeDiff*yMultiplier*yDepth.MidPrice < yMinNotional {
 			return 0
 		}
 	} else {
 		if math.Abs(ySizeDiff) < yStepSize {
 			return 0
-		} else if ySizeDiff < 0 && yPosition.GetSize() <= 0 && -ySizeDiff*yDepth.MidPrice < yMinNotional {
+		} else if ySizeDiff < 0 && yPosition.GetSize() <= 0 && -ySizeDiff*yMultiplier*yDepth.MidPrice < yMinNotional {
 			return 0
-		} else if ySizeDiff > 0 && yPosition.GetSize() >= 0 && ySizeDiff*yDepth.MidPrice < yMinNotional {
+		} else if ySizeDiff > 0 && yPosition.GetSize() >= 0 && ySizeDiff*yMultiplier*yDepth.MidPrice < yMinNotional {
 			return 0
 		}
 	}
 
-	//logger.Debugf("updateYPositions %s size %f position %f -> %f", ySymbol, ySizeDiff, yPosition.GetSize(), targetSize)
 
 	reduceOnly := false
 	if ySizeDiff*yPosition.GetSize() < 0 && math.Abs(ySizeDiff) <= math.Abs(yPosition.GetSize()) {
@@ -118,10 +118,10 @@ func hedgeXSymbol(xSymbol, ySymbol string) {
 		return
 	}
 	xDepth := spread.XDepth
-
 	xStepSize := xStepSizes[xSymbol]
 	xMinNotional := xMinNotionals[xSymbol]
-	xSizeDiff := xTargetSize - xPosition.GetSize()
+	xMultiplier := xMultipliers[xSymbol]
+	xSizeDiff := xTargetSize/xMultiplier - xPosition.GetSize()
 	if math.Abs(xSizeDiff) < xStepSize {
 		return
 	}
@@ -129,17 +129,17 @@ func hedgeXSymbol(xSymbol, ySymbol string) {
 	if xExchange.IsSpot() {
 		if math.Abs(xSizeDiff) < xStepSize {
 			return
-		} else if xSizeDiff < 0 && -xSizeDiff*xDepth.MidPrice < xMinNotional {
+		} else if xSizeDiff < 0 && -xSizeDiff*xMultiplier*xDepth.MidPrice < xMinNotional {
 			return
-		} else if xSizeDiff > 0 && xSizeDiff*xDepth.MidPrice < xMinNotional {
+		} else if xSizeDiff > 0 && xSizeDiff*xMultiplier*xDepth.MidPrice < xMinNotional {
 			return
 		}
 	} else {
 		if math.Abs(xSizeDiff) < xStepSize {
 			return
-		} else if xSizeDiff < 0 && xPosition.GetSize() <= 0 && -xSizeDiff*xDepth.MidPrice < xMinNotional {
+		} else if xSizeDiff < 0 && xPosition.GetSize() <= 0 && -xSizeDiff*xMultiplier*xDepth.MidPrice < xMinNotional {
 			return
-		} else if xSizeDiff > 0 && xPosition.GetSize() >= 0 && xSizeDiff*xDepth.MidPrice < xMinNotional {
+		} else if xSizeDiff > 0 && xPosition.GetSize() >= 0 && xSizeDiff*xMultiplier*xDepth.MidPrice < xMinNotional {
 			return
 		}
 	}
@@ -234,19 +234,21 @@ func updateTargetPositionSizes() {
 
 		xPosition, okXPosition := xPositions[xSymbol]
 		yPosition, okYPosition := yPositions[ySymbol]
-		xyStepSize := xyStepSizes[xSymbol]
+		xySpotStepSize := xySpotStepSizes[xSymbol]
+		xMultiplier := xMultipliers[xSymbol]
+		yMultiplier := yMultipliers[ySymbol]
 
 		//其他时间以仓位小的为准
 		if okXPosition && okYPosition {
-			if math.Abs(xPosition.GetSize())-math.Abs(yPosition.GetSize()) >= xyStepSize {
-				yTargetPositionSizes[ySymbol] = yPosition.GetSize()
-				xTargetPositionSizes[xSymbol] = -yPosition.GetSize()
-			} else if math.Abs(xPosition.GetSize())-math.Abs(yPosition.GetSize()) <= -xyStepSize {
-				xTargetPositionSizes[xSymbol] = xPosition.GetSize()
-				yTargetPositionSizes[ySymbol] = -xPosition.GetSize()
+			if math.Abs(xPosition.GetSize()*xMultiplier)-math.Abs(yPosition.GetSize()*yMultiplier) >= xySpotStepSize {
+				yTargetPositionSizes[ySymbol] = yPosition.GetSize()*yMultiplier
+				xTargetPositionSizes[xSymbol] = -yPosition.GetSize()*yMultiplier
+			} else if math.Abs(xPosition.GetSize()*xMultiplier)-math.Abs(yPosition.GetSize()*yMultiplier) <= -xySpotStepSize {
+				xTargetPositionSizes[xSymbol] = xPosition.GetSize()*xMultiplier
+				yTargetPositionSizes[ySymbol] = -xPosition.GetSize()*xMultiplier
 			} else {
-				xTargetPositionSizes[xSymbol] = xPosition.GetSize()
-				yTargetPositionSizes[ySymbol] = yPosition.GetSize()
+				xTargetPositionSizes[xSymbol] = xPosition.GetSize()*xMultiplier
+				yTargetPositionSizes[ySymbol] = yPosition.GetSize()*yMultiplier
 			}
 		}
 		//if xyConfig.HedgeTargetExchange == "X" {
@@ -340,10 +342,13 @@ func updateTargetPositionSizes() {
 		xStepSize := xStepSizes[xSymbol]
 		xMinNotional := xMinNotionals[xSymbol]
 		yMinNotional := yMinNotionals[ySymbol]
+		xMultiplier := xMultipliers[xSymbol]
+		yMultiplier := yMultipliers[ySymbol]
 
-		xyStepSize := xyStepSizes[xSymbol]
-		xSize := xPosition.GetSize()
-		ySize := yPosition.GetSize()
+		xySpotStepSize := xySpotStepSizes[xSymbol]
+
+		xSize := xPosition.GetSize()*xMultiplier
+		ySize := yPosition.GetSize()*yMultiplier
 		xValue := math.Abs(xSize) * spread.XDepth.MidPrice
 		yValue := math.Abs(ySize) * spread.YDepth.MidPrice
 		offsetFactor := (xValue + yValue) * 0.5 / entryTarget
@@ -364,7 +369,7 @@ func updateTargetPositionSizes() {
 				entryValue = math.Min(2*entryStep, math.Min(xValue, yValue))
 			}
 			size := entryValue / midPrice
-			size = math.Round(size/xyStepSize) * xyStepSize
+			size = math.Round(size/xySpotStepSize) * xySpotStepSize
 			entryValue = size * midPrice
 			if xValue-entryValue < entryStep {
 				size = xPosition.GetSize()
@@ -414,7 +419,7 @@ func updateTargetPositionSizes() {
 				entryValue = math.Min(2*entryStep, math.Min(xValue, yValue))
 			}
 			size := entryValue / midPrice
-			size = math.Round(size/xyStepSize) * xyStepSize
+			size = math.Round(size/xySpotStepSize) * xySpotStepSize
 			entryValue = size * midPrice
 			if xValue-entryValue < entryStep {
 				size = -xPosition.GetSize()
@@ -467,7 +472,7 @@ func updateTargetPositionSizes() {
 			}
 			entryValue := targetValue - math.Max(xValue, yValue)
 			size := entryValue / midPrice
-			size = math.Round(size/xyStepSize) * xyStepSize
+			size = math.Round(size/xySpotStepSize) * xySpotStepSize
 			entryValue = size * midPrice
 
 			if entryValue > xyUSDTAvailable {
@@ -538,7 +543,7 @@ func updateTargetPositionSizes() {
 			}
 			entryValue := targetValue - math.Max(xValue, yValue)
 			size := entryValue / midPrice
-			size = math.Round(size/xyStepSize) * xyStepSize
+			size = math.Round(size/xySpotStepSize) * xySpotStepSize
 			entryValue = size * midPrice
 			if entryValue > xyUSDTAvailable {
 				if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {

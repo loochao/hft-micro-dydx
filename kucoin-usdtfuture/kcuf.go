@@ -54,6 +54,15 @@ func (k *KucoinUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSe
 		if _, err = k.GetTickSize(symbol); err != nil {
 			return err
 		}
+		if _, err = k.GetMultiplier(symbol); err != nil {
+			return err
+		}
+		if _, err = k.GetMinSize(symbol); err != nil {
+			return err
+		}
+		if _, err = k.GetMinNotional(symbol); err != nil {
+			return err
+		}
 		if settings.ChangeLeverage {
 			_, err = k.api.ChangeAutoDepositStatus(ctx, AutoDepositStatusParam{
 				Symbol: symbol,
@@ -67,7 +76,7 @@ func (k *KucoinUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSe
 	return nil
 }
 
-func (k KucoinUsdtFuture) GetMultiplier(symbol string) (float64, error) {
+func (k *KucoinUsdtFuture) GetMultiplier(symbol string) (float64, error) {
 	if v, ok := Multipliers[symbol]; ok {
 		return v, nil
 	} else {
@@ -430,17 +439,8 @@ func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[s
 func (k *KucoinUsdtFuture) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	defer k.Stop()
 	for symbol, reqCh := range requestChannels {
-		tickSize, ok := TickSizes[symbol]
-		if !ok {
-			logger.Debugf("miss tick size for %s, exit", symbol)
-			return
-		}
-		multiplier, ok := Multipliers[symbol]
-		if !ok {
-			logger.Debugf("miss multiplier for %s, exit", symbol)
-			return
-		}
 		respCh, ok := responseChannels[symbol]
+
 		if !ok {
 			logger.Debugf("miss response ch for %s, exit", symbol)
 			return
@@ -450,7 +450,7 @@ func (k *KucoinUsdtFuture) WatchOrders(ctx context.Context, requestChannels map[
 			logger.Debugf("miss error ch for %s, exit", symbol)
 			return
 		}
-		go k.watchOrder(ctx, symbol, tickSize, multiplier, reqCh, respCh, errCh)
+		go k.watchOrder(ctx, symbol,  reqCh, respCh, errCh)
 	}
 	for {
 		select {
@@ -584,7 +584,6 @@ func (k *KucoinUsdtFuture) positionsLoop(
 func (k *KucoinUsdtFuture) watchOrder(
 	ctx context.Context,
 	symbol string,
-	tickSize, stepSize float64,
 	requestCh chan common.OrderRequest,
 	responseCh chan common.Order,
 	errorCh chan common.OrderError,
@@ -608,7 +607,7 @@ func (k *KucoinUsdtFuture) watchOrder(
 					}
 					continue
 				}
-				k.submitOrder(ctx, *req.New, tickSize, stepSize, responseCh, errorCh)
+				k.submitOrder(ctx, *req.New,   responseCh, errorCh)
 			} else if req.Cancel != nil {
 				k.cancelOrder(ctx, *req.Cancel, errorCh)
 			}
@@ -616,10 +615,10 @@ func (k *KucoinUsdtFuture) watchOrder(
 	}
 }
 
-func (k *KucoinUsdtFuture) submitOrder(ctx context.Context, param common.NewOrderParam, tickSize, multiplier float64, respCh chan common.Order, errCh chan common.OrderError) {
+func (k *KucoinUsdtFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParam{}
 	newOrderParam.Symbol = param.Symbol
-	newOrderParam.Size = int64(math.Round(param.Size / multiplier))
+	newOrderParam.Size = int64(math.Round(param.Size))
 	if param.Side == common.OrderSideBuy {
 		newOrderParam.Side = OrderSideBuy
 	} else {
@@ -636,7 +635,7 @@ func (k *KucoinUsdtFuture) submitOrder(ctx context.Context, param common.NewOrde
 	newOrderParam.PostOnly = param.PostOnly
 	newOrderParam.ReduceOnly = param.ReduceOnly
 	if param.Price != 0 {
-		newOrderParam.Price = common.Float64(math.Round(param.Price/tickSize) * tickSize)
+		newOrderParam.Price = common.Float64(param.Price)
 	}
 	newOrderParam.ClientOid = param.ClientID
 	k.mu.Lock()
