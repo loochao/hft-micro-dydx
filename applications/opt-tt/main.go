@@ -51,9 +51,14 @@ func main() {
 		if err != nil {
 			logger.Debugf("yExchange.GetMinNotional(ySymbol) error %v", err)
 		}
+		yMultipliers[ySymbol], err = yExchange.GetMultiplier(ySymbol)
+		if err != nil {
+			logger.Debugf("yExchange.GetMultiplier(ySymbol) error %v", err)
+		}
 	}
 	logger.Debugf("y stepSizes %v", yStepSizes)
 	logger.Debugf("y minNotional %v", yMinNotionals)
+	logger.Debugf("y multipliers %v", yMultipliers)
 	for _, xSymbol := range xSymbols {
 		xStepSizes[xSymbol], err = xExchange.GetStepSize(xSymbol)
 		if err != nil {
@@ -63,9 +68,14 @@ func main() {
 		if err != nil {
 			logger.Debugf("xExchange.GetMinNotional(xSymbol) error %v", err)
 		}
+		xMultipliers[xSymbol], err = xExchange.GetMultiplier(xSymbol)
+		if err != nil {
+			logger.Debugf("xExchange.GetMultiplier(xSymbol) error %v", err)
+		}
 	}
 	logger.Debugf("x stepSizes %v", xStepSizes)
 	logger.Debugf("x minNotional %v", xMinNotionals)
+	logger.Debugf("x multipliers %v", xMultipliers)
 
 	for xSymbol, xStepSize := range xStepSizes {
 		if yStepSize, ok := yStepSizes[xySymbolsMap[xSymbol]]; !ok {
@@ -213,6 +223,7 @@ func main() {
 		go watchXYSpread(
 			xyGlobalCtx,
 			xSymbol, ySymbol,
+
 			xyConfig.DepthMakerImpact,
 			xyConfig.DepthTakerImpact,
 			xyConfig.DepthXDecay,

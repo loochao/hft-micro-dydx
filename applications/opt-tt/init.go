@@ -25,8 +25,10 @@ var xyExternalInfluxWriter *common.InfluxWriter
 
 var xStepSizes = make(map[string]float64)
 var xMinNotionals = make(map[string]float64)
+var xMultipliers = make(map[string]float64)
 var yStepSizes = make(map[string]float64)
 var yMinNotionals = make(map[string]float64)
+var yMultipliers = make(map[string]float64)
 var xyStepSizes = make(map[string]float64)
 
 var xAccount common.Balance
@@ -87,7 +89,7 @@ var yTimedPositionChange *common.TimedSum
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210613 10:18:51  ####")
+	logger.Debug("####  BUILD @ 20210613 10:28:12  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

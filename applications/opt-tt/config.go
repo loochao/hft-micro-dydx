@@ -38,7 +38,6 @@ type Config struct {
 	DepthYBias          time.Duration `yaml:"depthYBias"`
 	DepthXBias          time.Duration `yaml:"depthXBias"`
 	BatchSize           int           `yaml:"depthBatchSize"`
-	DepthMakerImpact    float64       `yaml:"depthMakerImpact"`
 	DepthTakerImpact    float64       `yaml:"depthTakerImpact"`
 	DepthMaxAgeDiffBias time.Duration `yaml:"depthMaxAgeDiffBias"`
 	ReportCount         int           `yaml:"reportCount"`
@@ -94,9 +93,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.BatchSize <= 0 {
 		config.BatchSize = 20
-	}
-	if config.DepthMakerImpact <= 0 {
-		config.DepthMakerImpact = 10
 	}
 	if config.DepthTakerImpact <= 0 {
 		config.DepthTakerImpact = 1000
