@@ -223,8 +223,8 @@ func main() {
 		go watchXYSpread(
 			xyGlobalCtx,
 			xSymbol, ySymbol,
-
-			xyConfig.DepthMakerImpact,
+			xMultipliers[xSymbol],
+			yMultipliers[ySymbol],
 			xyConfig.DepthTakerImpact,
 			xyConfig.DepthXDecay,
 			xyConfig.DepthXBias,
