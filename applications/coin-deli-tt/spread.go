@@ -157,12 +157,12 @@ func watchXYSpread(
 					//taker已经过期
 					yExpireCount++
 					yDepth = nil
-					logger.Debugf("%s %s x expire y, %v", xSymbol, ySymbol, xDepthTime.Sub(yDepthTime))
+					logger.Debugf("%s %s x expire y, %v %v", xSymbol, ySymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff)
 				} else if adjustedAgeDiff < -maxAgeDiffBias {
 					//maker已经过期
 					xExpireCount++
 					xDepth = nil
-					logger.Debugf("%s %s y expire x %v", xSymbol, ySymbol, xDepthTime.Sub(yDepthTime))
+					logger.Debugf("%s %s y expire x %v %v", xSymbol, ySymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff)
 				} else {
 					xWalkDepthTimer.Reset(expectedChanSendingTime)
 				}
@@ -207,12 +207,12 @@ func watchXYSpread(
 					//maker已经过期
 					xExpireCount++
 					xDepth = nil
-					logger.Debugf("%s %s y expire x %v", xSymbol, ySymbol, xDepthTime.Sub(yDepthTime))
+					logger.Debugf("%s %s y expire x %v %v", xSymbol, ySymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff)
 				} else if adjustedAgeDiff > maxAgeDiffBias {
 					//taker已经过期
 					yExpireCount++
 					yDepth = nil
-					logger.Debugf("%s %s x expire y %v", ySymbol, xDepthTime.Sub(yDepthTime))
+					logger.Debugf("%s %s x expire y %v %v", ySymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff)
 				} else {
 					yWalkDepthTimer.Reset(expectedChanSendingTime)
 				}
