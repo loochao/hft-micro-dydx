@@ -257,7 +257,7 @@ mainLoop:
 			}
 			break
 		case xyOrder := <-xyOrderCh:
-			if _, isX := xySymbolsMap[xyOrder.GetSymbol()]; isX {
+			if ySymbol, isX := xySymbolsMap[xyOrder.GetSymbol()]; isX {
 				if xyOrder.GetStatus() == common.OrderStatusExpired ||
 					xyOrder.GetStatus() == common.OrderStatusReject ||
 					xyOrder.GetStatus() == common.OrderStatusCancelled ||
@@ -270,34 +270,32 @@ mainLoop:
 						xyPositionsUpdateTimes[xSymbol] = time.Unix(0, 0)
 					} else {
 						logger.Debugf("x order filled %s %s %s size %f price %f", xyOrder.GetSymbol(), xyOrder.GetStatus(), xyOrder.GetSide(), xyOrder.GetFilledSize(), xyOrder.GetFilledPrice())
-						if ySymbol, ok := xySymbolsMap[xSymbol]; ok {
-							if xyOrder.GetSide() == common.OrderSideBuy {
-								xBuyPrice := xyOrder.GetFilledPrice()
-								xLastFilledBuyPrices[xSymbol] = xBuyPrice
-								if ySellPrice, ok := yLastFilledSellPrices[ySymbol]; ok {
-									xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / ySellPrice
-									logger.Debugf("%s - %s realised short spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
-									delete(xLastFilledBuyPrices, xSymbol)
-									delete(xLastFilledSellPrices, xSymbol)
-									delete(yLastFilledBuyPrices, ySymbol)
-									delete(yLastFilledSellPrices, ySymbol)
-								}
-							} else if xyOrder.GetSide() == common.OrderSideSell {
-								xSellPrice := xyOrder.GetFilledPrice()
-								xLastFilledSellPrices[xSymbol] = xSellPrice
-								if yBuyPrice, ok := yLastFilledBuyPrices[ySymbol]; ok {
-									xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
-									logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
-									delete(xLastFilledBuyPrices, xSymbol)
-									delete(xLastFilledSellPrices, xSymbol)
-									delete(yLastFilledBuyPrices, ySymbol)
-									delete(yLastFilledSellPrices, ySymbol)
-								}
+						if xyOrder.GetSide() == common.OrderSideBuy {
+							xBuyPrice := xyOrder.GetFilledPrice()
+							xLastFilledBuyPrices[xSymbol] = xBuyPrice
+							if ySellPrice, ok := yLastFilledSellPrices[ySymbol]; ok {
+								xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / ySellPrice
+								logger.Debugf("%s - %s realised short spread %f", xSymbol, ySymbol, xyRealisedSpread[xSymbol])
+								delete(xLastFilledBuyPrices, xSymbol)
+								delete(xLastFilledSellPrices, xSymbol)
+								delete(yLastFilledBuyPrices, ySymbol)
+								delete(yLastFilledSellPrices, ySymbol)
+							}
+						} else if xyOrder.GetSide() == common.OrderSideSell {
+							xSellPrice := xyOrder.GetFilledPrice()
+							xLastFilledSellPrices[xSymbol] = xSellPrice
+							if yBuyPrice, ok := yLastFilledBuyPrices[ySymbol]; ok {
+								xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
+								logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
+								delete(xLastFilledBuyPrices, xSymbol)
+								delete(xLastFilledSellPrices, xSymbol)
+								delete(yLastFilledBuyPrices, ySymbol)
+								delete(yLastFilledSellPrices, ySymbol)
 							}
 						}
 					}
 				}
-			} else if _, isY := xySymbolsMap[xyOrder.GetSymbol()]; isY {
+			} else if xSymbol, isY := yxSymbolsMap[xyOrder.GetSymbol()]; isY {
 				if xyOrder.GetStatus() == common.OrderStatusExpired ||
 					xyOrder.GetStatus() == common.OrderStatusReject ||
 					xyOrder.GetStatus() == common.OrderStatusCancelled ||
@@ -310,31 +308,29 @@ mainLoop:
 						xyPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
 					} else {
 						logger.Debugf("y order filled %s %s %s size %f price %f", xyOrder.GetSymbol(), xyOrder.GetStatus(), xyOrder.GetSide(), xyOrder.GetFilledSize(), xyOrder.GetFilledPrice())
-						if xSymbol, ok := yxSymbolsMap[ySymbol]; ok {
-							if xyOrder.GetSide() == common.OrderSideBuy {
-								yBuyPrice := xyOrder.GetFilledPrice()
-								yLastFilledBuyPrices[ySymbol] = yBuyPrice
-								//logger.Debugf("%s set y buy price %f dir x %s sell %f", ySymbol, yBuyPrice, xySymbol, xLastFilledSellPrices[xySymbol])
-								if xSellPrice, ok := xLastFilledSellPrices[xSymbol]; ok {
-									xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
-									logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
-									delete(xLastFilledBuyPrices, xSymbol)
-									delete(xLastFilledSellPrices, xSymbol)
-									delete(yLastFilledBuyPrices, ySymbol)
-									delete(yLastFilledSellPrices, ySymbol)
-								}
-							} else if xyOrder.GetSide() == common.OrderSideSell {
-								ySellPrice := xyOrder.GetFilledPrice()
-								yLastFilledSellPrices[ySymbol] = ySellPrice
-								//logger.Debugf("%s set y sell price %f dir x %s buy %f", ySymbol, ySellPrice, xySymbol, xLastFilledBuyPrices[xySymbol])
-								if xBuyPrice, ok := xLastFilledBuyPrices[xSymbol]; ok {
-									xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / ySellPrice
-									logger.Debugf("%s - %s realised short spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
-									delete(xLastFilledBuyPrices, xSymbol)
-									delete(xLastFilledSellPrices, xSymbol)
-									delete(yLastFilledBuyPrices, ySymbol)
-									delete(yLastFilledSellPrices, ySymbol)
-								}
+						if xyOrder.GetSide() == common.OrderSideBuy {
+							yBuyPrice := xyOrder.GetFilledPrice()
+							yLastFilledBuyPrices[ySymbol] = yBuyPrice
+							//logger.Debugf("%s set y buy price %f dir x %s sell %f", ySymbol, yBuyPrice, xySymbol, xLastFilledSellPrices[xySymbol])
+							if xSellPrice, ok := xLastFilledSellPrices[xSymbol]; ok {
+								xyRealisedSpread[xSymbol] = (yBuyPrice - xSellPrice) / yBuyPrice
+								logger.Debugf("%s - %s realised long spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
+								delete(xLastFilledBuyPrices, xSymbol)
+								delete(xLastFilledSellPrices, xSymbol)
+								delete(yLastFilledBuyPrices, ySymbol)
+								delete(yLastFilledSellPrices, ySymbol)
+							}
+						} else if xyOrder.GetSide() == common.OrderSideSell {
+							ySellPrice := xyOrder.GetFilledPrice()
+							yLastFilledSellPrices[ySymbol] = ySellPrice
+							//logger.Debugf("%s set y sell price %f dir x %s buy %f", ySymbol, ySellPrice, xySymbol, xLastFilledBuyPrices[xySymbol])
+							if xBuyPrice, ok := xLastFilledBuyPrices[xSymbol]; ok {
+								xyRealisedSpread[xSymbol] = (ySellPrice - xBuyPrice) / ySellPrice
+								logger.Debugf("%s - %s realised short spread %f", ySymbol, xSymbol, xyRealisedSpread[xSymbol])
+								delete(xLastFilledBuyPrices, xSymbol)
+								delete(xLastFilledSellPrices, xSymbol)
+								delete(yLastFilledBuyPrices, ySymbol)
+								delete(yLastFilledSellPrices, ySymbol)
 							}
 						}
 					}
