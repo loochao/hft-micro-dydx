@@ -225,7 +225,7 @@ func updateTargetPositionSizes() {
 		xPosition, okXPosition := xPositions[xSymbol]
 		yPosition, okYPosition := yPositions[ySymbol]
 		yMultiplier := yMultipliers[ySymbol]
-		xMultiplier := xMultipliers[ySymbol]
+		xMultiplier := xMultipliers[xSymbol]
 		spread, okSpread := xySpreads[xSymbol]
 
 		//以y调整x
@@ -233,6 +233,7 @@ func updateTargetPositionSizes() {
 			spotValue := spread.XDepth.MidPrice*xBalance.GetBalance() + spread.YDepth.MidPrice*yBalance.GetBalance()
 			yValue := yPosition.GetSize() * yMultiplier
 			xValue := xPosition.GetSize() * xMultiplier
+			//防止一边爆仓，另外一边直接hedge
 			if xBalance.GetBalance() >= yBalance.GetBalance() {
 				yTargetContractValues[ySymbol] = yValue
 				xTargetContractValues[xSymbol] = -spotValue - yValue
