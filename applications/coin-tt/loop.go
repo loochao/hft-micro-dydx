@@ -20,10 +20,13 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 	yMinNotional := yMinNotionals[ySymbol]
 	yMultiplier := yMultipliers[ySymbol]
 	ySizeDiff := targetContractValue/yMultiplier - yPosition.GetSize()
-	if math.Abs(ySizeDiff) < yStepSize {
+	if math.Abs(ySizeDiff) < yStepSize*0.8 {
 		return 0
 	}
 	ySizeDiff = math.Round(ySizeDiff/yStepSize) * yStepSize
+	if math.Abs(ySizeDiff) < yStepSize {
+		return 0
+	}
 
 	if yExchange.IsSpot() {
 		if math.Abs(ySizeDiff) < yStepSize {
@@ -117,10 +120,13 @@ func hedgeXSymbol(xSymbol string) {
 	xMinNotional := xMinNotionals[xSymbol]
 	xMultiplier := xMultipliers[xSymbol]
 	xSizeDiff := xTargetContractValue/xMultiplier - xPosition.GetSize()
-	if math.Abs(xSizeDiff) < xStepSize {
+	if math.Abs(xSizeDiff) < xStepSize*0.8 {
 		return
 	}
 	xSizeDiff = math.Round(xSizeDiff/xStepSize) * xStepSize
+	if math.Abs(xSizeDiff) < xStepSize {
+		return
+	}
 	if xExchange.IsSpot() {
 		if math.Abs(xSizeDiff) < xStepSize {
 			return

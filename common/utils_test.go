@@ -488,3 +488,16 @@ func TestParseDecimal2(t *testing.T) {
 	}
 }
 
+
+func TestRoundWidthOffset(t *testing.T) {
+	logger.Debugf("0.75 %f", RoundWidthOffset(0.75, 0.25))
+	logger.Debugf("0.74999 %f", RoundWidthOffset(0.7499, 0.2))
+	logger.Debugf("0.5 %f", RoundWidthOffset(0.5, 0.25))
+	logger.Debugf("0.4999 %f", RoundWidthOffset(0.499, 0.25))
+	logger.Debugf("-0.5 %f", RoundWidthOffset(-0.5, 0.25))
+	logger.Debugf("-0.4999 %f", RoundWidthOffset(-0.499, 0.25))
+	logger.Debugf("0.75 %f", RoundWidthOffset(0.75, 0.25))
+	logger.Debugf("0.74999 %f", RoundWidthOffset(0.7499, 0.25))
+	logger.Debugf("-0.75 %f", RoundWidthOffset(-0.75, 0.25))
+	logger.Debugf("-0.74999 %f", RoundWidthOffset(-0.7499, 0.25))
+}

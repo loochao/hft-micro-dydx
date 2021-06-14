@@ -15,7 +15,10 @@ func hedgeSymbol(symbol string) {
 	}
 	stepSize := xyStepSizes[symbol]
 	multiplier := xyMultipliers[symbol]
-	sizeDiff := math.Round(targetValue/multiplier - position.GetSize())
+	sizeDiff := targetValue/multiplier - position.GetSize()
+	if math.Abs(sizeDiff) < 0.8*stepSize {
+		return
+	}
 	sizeDiff = math.Round(sizeDiff/stepSize) * stepSize
 	if math.Abs(sizeDiff) < stepSize {
 		return

@@ -276,3 +276,12 @@ func UnsafeBytesToString(b []byte) (s string) {
 	return s
 }
 
+func RoundWidthOffset(value, offset float64) float64{
+	if math.Abs(value) < offset {
+		return 0
+	}else if value > 0 {
+		return math.Round(value - offset)
+	}else {
+		return math.Round(value + offset)
+	}
+}
