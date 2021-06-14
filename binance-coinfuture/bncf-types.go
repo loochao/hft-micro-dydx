@@ -317,7 +317,7 @@ func (a *AccountAsset) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	a.ParseTime = time.Now()
-	a.EventTime = time.Unix(0, aux.EventTime*1000000)
+	a.EventTime = time.Now() // time.Unix(0, aux.EventTime*1000000)
 	return nil
 }
 
