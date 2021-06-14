@@ -316,7 +316,7 @@ mainLoop:
 					logger.Debugf("bad xAccount == account pass same pointer")
 				}else if account.GetTime().Sub(xAccount.GetTime()) >= 0 {
 					xBalances[account.GetCurrency()] = account
-					logger.Debugf("xBalance %f", account.GetBalance())
+					//logger.Debugf("xBalance %f", account.GetBalance())
 				}
 			}else{
 				xBalances[account.GetCurrency()] = account
