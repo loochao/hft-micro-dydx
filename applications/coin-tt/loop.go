@@ -244,13 +244,13 @@ func updateTargetPositionSizes() {
 				yTargetContractValues[ySymbol] = yValue
 				xTargetContractValues[xSymbol] = -spotValue - yValue
 				if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-					logger.Debugf("y ref target x %f y %f", -spotValue-yValue, yValue)
+					logger.Debugf("%s y ref target x %f y %f", xSymbol, -spotValue-yValue, yValue)
 				}
-			}else {
+			} else {
 				xTargetContractValues[xSymbol] = xValue
 				yTargetContractValues[ySymbol] = -spotValue - xValue
 				if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-					logger.Debugf("x ref target x %f y %f", xValue, -spotValue - xValue)
+					logger.Debugf("%s x ref target x %f y %f", xSymbol, xValue, -spotValue-xValue)
 				}
 			}
 		}
@@ -337,7 +337,7 @@ func updateTargetPositionSizes() {
 		xyUsdStepSize := xyUsdStepSizes[xSymbol]
 
 		ySize := yPosition.GetSize()
-		yValue := math.Abs(ySize*yMultiplier)
+		yValue := math.Abs(ySize * yMultiplier)
 		spotValue := xBalance.GetBalance()*xDepth.MidPrice + yBalance.GetBalance()*yDepth.MidPrice
 
 		maxYTargetValue := math.Round(spotValue * xyConfig.EnterTarget)
