@@ -50,7 +50,7 @@ func handleSave() {
 			fields["xyUnHedgeValue"] = xValue + yValue + balanceInUSD
 
 			expireDate := xyConfig.ExpireDates[ySymbol]
-			expireRatio := float64(time.Now().Sub(expireDate)) / float64(xyConfig.DeliDuration)
+			expireRatio := float64(-time.Now().Sub(expireDate)) / float64(xyConfig.DeliDuration)
 			if expireRatio < 0 {
 				expireRatio = 0
 			}else if expireRatio > 1 {
