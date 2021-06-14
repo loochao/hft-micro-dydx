@@ -176,7 +176,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 							}
 							break
 						case 'e':
-							logger.Debugf("%v", resCap.Res)
+							logger.Debugf("%s", resCap.Res)
 							err = json.Unmarshal(resCap.Res, &resBalances)
 							if err != nil {
 								if time.Now().Sub(logSilentTime) > 0 {
