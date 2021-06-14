@@ -78,13 +78,13 @@ func (bn *Exchange) StreamBasic(ctx context.Context, statusCh chan common.System
 		logger.Debugf("NewUserWebsocket(ctx,  bn.api, proxy) error %v", err)
 		return
 	}
-	balancesMap := make(map[string]AccountAsset)
+	balancesMap := make(map[string]WSBalance)
 	positionSymbols := make([]string, 0)
 	for symbol := range positionChMap {
 		positionSymbols = append(positionSymbols, symbol)
 	}
-	internalAccountCh := make(chan Account, 10)
-	go bn.watchAccount(ctx, internalAccountCh)
+	//internalAccountCh := make(chan Account, 10)
+	//go bn.watchAccount(ctx, internalAccountCh)
 	go bn.watchSystemStatus(ctx, statusCh)
 
 	logSilentTime := time.Now()
@@ -106,23 +106,6 @@ func (bn *Exchange) StreamBasic(ctx context.Context, statusCh chan common.System
 			}
 			restartToReadyTimer = time.NewTimer(time.Hour * 9999)
 			break
-		case account := <-internalAccountCh:
-			for _, nextBalance := range account.Assets {
-				balanceCh, okCh := balanceChMap[nextBalance.Asset]
-				balance, okB := balancesMap[nextBalance.Asset]
-				if (okCh && okB && balance.EventTime.Sub(nextBalance.EventTime) <= 0) || (!okB && okCh) {
-					nextBalance := nextBalance
-					balancesMap[nextBalance.Asset] = nextBalance
-					select {
-					case balanceCh <- &nextBalance:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("balanceCh <- &nextBalance failed, ch len %d", len(balanceCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
-				}
-			}
 
 		case <-userWS.RestartCh:
 			select {
@@ -201,23 +184,17 @@ func (bn *Exchange) StreamBasic(ctx context.Context, statusCh chan common.System
 			}
 			break
 		case wsBalances := <-userWS.BalancesCh:
-			for _, wsBalance := range wsBalances {
-				balanceCh, okCh := balanceChMap[wsBalance.Asset]
-				balance, okB := balancesMap[wsBalance.Asset]
-				if okCh && okB && balance.EventTime.Sub(wsBalance.EventTime) < 0 {
-					nextBalance := wsBalance
-					balance.WalletBalance = nextBalance.Balance
-					balance.MaxWithdrawAmount = nextBalance.MaxWithdrawAmount
-					balance.CrossWalletBalance = nextBalance.CrossWalletBalance
-					balance.AvailableBalance = nextBalance.AvailableBalance
-					balance.ParseTime = nextBalance.ParseTime
-					balance.EventTime = nextBalance.EventTime
-					balancesMap[balance.Asset] = balance
+			for _, nextBalance := range wsBalances {
+				balanceCh, okCh := balanceChMap[nextBalance.Asset]
+				balance, okB := balancesMap[nextBalance.Asset]
+				if (okCh && okB && balance.EventTime.Sub(nextBalance.EventTime) < 0) || (okCh && !okB) {
+					nextBalance := nextBalance
+					balancesMap[nextBalance.Asset] = nextBalance
 					select {
-					case balanceCh <- &balance:
+					case balanceCh <- &nextBalance:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("balanceCh <- &balance failed, ch len %d", len(balanceCh))
+							logger.Debugf("balanceCh <- &nextBalance failed, ch len %d", len(balanceCh))
 							logSilentTime = time.Now().Add(time.Minute)
 						}
 					}

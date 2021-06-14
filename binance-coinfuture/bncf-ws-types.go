@@ -98,10 +98,17 @@ func (W WSPosition) GetParseTime() time.Time {
 	return W.ParseTime
 }
 
+//         "asset": "BTC",
+//            "balance": "0.00000000",
+//            "crossWalletBalance": "0.00000000",
+//            "crossUnPnl": "0.00000000",
+//            "availableBalance": "0.00000000",
+//            "maxWithdrawAmount": "0.00000000"
 type WSBalance struct {
 	Asset              string    `json:"asset"`
 	Balance            float64   `json:"balance,string"`
 	CrossWalletBalance float64   `json:"crossWalletBalance,string"`
+	CrossUnPnl         float64   `json:"crossUnPnl,string"`
 	AvailableBalance   float64   `json:"availableBalance,string"`
 	MaxWithdrawAmount  float64   `json:"maxWithdrawAmount,string"`
 	ParseTime          time.Time `json:"-"`
@@ -113,7 +120,7 @@ func (W WSBalance) GetCurrency() string {
 }
 
 func (W WSBalance) GetBalance() float64 {
-	return W.Balance
+	return W.CrossWalletBalance + W.CrossUnPnl
 }
 
 func (W WSBalance) GetFree() float64 {
@@ -121,7 +128,7 @@ func (W WSBalance) GetFree() float64 {
 }
 
 func (W WSBalance) GetUsed() float64 {
-	return W.Balance - W.AvailableBalance
+	return W.CrossWalletBalance + W.CrossUnPnl - W.AvailableBalance
 }
 
 func (W WSBalance) GetTime() time.Time {
@@ -136,7 +143,6 @@ type WSBalanceUpdate struct {
 	EventTime                           time.Time `json:"-"`
 	ParseTime                           time.Time `json:"-"`
 }
-
 
 type WSPositionUpdate struct {
 	Symbol              string    `json:"s"`
