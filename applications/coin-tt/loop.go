@@ -320,7 +320,7 @@ func updateTargetPositionSizes() {
 		xyUsdStepSize := xyUsdStepSizes[xSymbol]
 
 		ySize := yPosition.GetSize()
-		yValue := math.Abs(ySize*yMultiplier) * spread.YDepth.MidPrice
+		yValue := math.Abs(ySize*yMultiplier)
 		spotValue := xBalance.GetBalance()*xDepth.MidPrice + yBalance.GetBalance()*yDepth.MidPrice
 
 		maxYTargetValue := math.Round(spotValue * xyConfig.EnterTarget)
