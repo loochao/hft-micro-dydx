@@ -258,12 +258,12 @@ mainLoop:
 			break
 		case xyOrder := <-xyOrderCh:
 			if ySymbol, isX := xySymbolsMap[xyOrder.GetSymbol()]; isX {
+				xSymbol := xyOrder.GetSymbol()
 				if xyOrder.GetStatus() == common.OrderStatusExpired ||
 					xyOrder.GetStatus() == common.OrderStatusReject ||
 					xyOrder.GetStatus() == common.OrderStatusCancelled ||
 					xyOrder.GetStatus() == common.OrderStatusFilled {
 
-					xSymbol := xyOrder.GetSymbol()
 					if xyOrder.GetStatus() != common.OrderStatusFilled {
 						logger.Debugf("x order ended %s %s %s", xyOrder.GetSymbol(), xyOrder.GetStatus(), xyOrder.GetSide())
 						xyOrderSilentTimes[xSymbol] = time.Now().Add(time.Second)
@@ -296,12 +296,12 @@ mainLoop:
 					}
 				}
 			} else if xSymbol, isY := yxSymbolsMap[xyOrder.GetSymbol()]; isY {
+				ySymbol = xyOrder.GetSymbol()
 				if xyOrder.GetStatus() == common.OrderStatusExpired ||
 					xyOrder.GetStatus() == common.OrderStatusReject ||
 					xyOrder.GetStatus() == common.OrderStatusCancelled ||
 					xyOrder.GetStatus() == common.OrderStatusFilled {
 
-					ySymbol := xyOrder.GetSymbol()
 					if xyOrder.GetStatus() != common.OrderStatusFilled {
 						logger.Debugf("y order ended %s %s %s", xyOrder.GetSymbol(), xyOrder.GetStatus(), xyOrder.GetSide())
 						xyOrderSilentTimes[ySymbol] = time.Now().Add(time.Second)
