@@ -316,7 +316,7 @@ mainLoop:
 					logger.Debugf("bad xAccount == account pass same pointer")
 				}else if account.GetTime().Sub(xAccount.GetTime()) >= 0 {
 					logger.Debugf("xBalance %v", account)
-					xBalances[account.GetCurrency()] = account
+					logger.Debugf("xBalance %f", account.GetBalance())
 				}
 			}else{
 				xBalances[account.GetCurrency()] = account
@@ -351,7 +351,7 @@ mainLoop:
 					logger.Debugf("bad  yAccount == account pass same pointer")
 				}else if account.GetTime().Sub(yAccount.GetTime()) >= 0 {
 					yBalances[account.GetCurrency()] = account
-					logger.Debugf("yBalance %v", account)
+					logger.Debugf("yBalance %f", account.GetBalance())
 				}
 			}else{
 				yBalances[account.GetCurrency()] = account
