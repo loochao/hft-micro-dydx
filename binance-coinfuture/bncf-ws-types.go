@@ -98,12 +98,7 @@ func (W WSPosition) GetParseTime() time.Time {
 	return W.ParseTime
 }
 
-//         "asset": "BTC",
-//            "balance": "0.00000000",
-//            "crossWalletBalance": "0.00000000",
-//            "crossUnPnl": "0.00000000",
-//            "availableBalance": "0.00000000",
-//            "maxWithdrawAmount": "0.00000000"
+
 type WSBalance struct {
 	Asset              string    `json:"asset"`
 	Balance            float64   `json:"balance,string"`
