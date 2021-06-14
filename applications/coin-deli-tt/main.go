@@ -257,6 +257,7 @@ mainLoop:
 			}
 			break
 		case xyOrder := <-xyOrderCh:
+			logger.Debugf("%v", xyOrder)
 			if ySymbol, isX := xySymbolsMap[xyOrder.GetSymbol()]; isX {
 				xSymbol := xyOrder.GetSymbol()
 				if xyOrder.GetStatus() == common.OrderStatusExpired ||
