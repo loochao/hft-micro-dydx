@@ -66,7 +66,7 @@ var xyTimedPositionChange *common.TimedSum
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210614 12:59:08  ####")
+	logger.Debug("####  BUILD @ 20210614 13:13:34  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -107,6 +107,9 @@ func init() {
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		if _, ok := xyConfig.SymbolAssetMap[xSymbol]; !ok {
 			logger.Fatalf("missing asset for symbol %s", xSymbol)
+		}
+		if _, ok := xyConfig.ExpireDates[ySymbol]; !ok {
+			logger.Fatalf("missing expire date for symbol %s", ySymbol)
 		}
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)

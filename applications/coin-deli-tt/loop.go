@@ -195,16 +195,19 @@ func updateTargetPositionSizes() {
 		spotValue := xyBalance.GetBalance() * xDepth.MidPrice
 		maxYTargetValue := math.Round(spotValue * xyConfig.EnterTarget)
 
+		expireDate := xyConfig.ExpireDates[ySymbol]
+		expireRatio := float64(time.Now().Sub(expireDate))/float64(xyConfig.DeliDuration)
+
 		offsetFactor := yValue / spotValue / xyConfig.EnterTarget
 		offsetStep := math.Min(xyConfig.EnterStep/xyConfig.EnterTarget, offsetFactor)
-		//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-		//	logger.Debugf("%s offset factor %f step %f", xSymbol, offsetFactor, offsetStep)
-		//}
+		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			logger.Debugf("%s offset factor %f step %f expire ratio %s", xSymbol, offsetFactor, offsetStep, expireRatio)
+		}
 
-		shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
-		shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)
-		longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
-		longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)
+		shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor*expireRatio
+		shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)*expireRatio
+		longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor*expireRatio
+		longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)*expireRatio
 
 		if spread.ShortLastLeave < shortBot &&
 			spread.ShortMedianLeave < shortBot &&

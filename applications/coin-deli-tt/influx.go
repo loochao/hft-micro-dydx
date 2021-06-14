@@ -49,13 +49,17 @@ func handleSave() {
 			fields["xAdjValue"] = xValue + balanceInUSD
 			fields["xyUnHedgeValue"] = xValue + yValue + balanceInUSD
 
-			offsetFactor := math.Abs(yValue) / balanceInUSD / xyConfig.EnterTarget
-			offsetStep := xyConfig.EnterStep/xyConfig.EnterTarget
-			shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
-			shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)
-			longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
-			longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)
+			expireDate := xyConfig.ExpireDates[ySymbol]
+			expireRatio := float64(time.Now().Sub(expireDate)) / float64(xyConfig.DeliDuration)
 
+			offsetFactor := math.Abs(yValue) / balanceInUSD / xyConfig.EnterTarget
+			offsetStep := xyConfig.EnterStep / xyConfig.EnterTarget
+			shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor*expireRatio
+			shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)*expireRatio
+			longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor*expireRatio
+			longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)*expireRatio
+
+			fields["expireRatio"] = expireRatio
 			fields["shortTop"] = shortTop
 			fields["shortBot"] = shortBot
 			fields["longBot"] = longBot

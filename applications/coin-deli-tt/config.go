@@ -43,10 +43,10 @@ type Config struct {
 	SpreadTimeToLive    time.Duration `yaml:"spreadTimeToLive"`
 	SpreadLookback      time.Duration `yaml:"spreadLookback"`
 
-	StartValue      float64            `yaml:"startValue"`
-	EnterStep       float64            `yaml:"enterStep"`
-	EnterTarget     float64            `yaml:"enterTarget"`
-	StartValues     map[string]float64 `yaml:"startValues"`
+	StartValue  float64            `yaml:"startValue"`
+	EnterStep   float64            `yaml:"enterStep"`
+	EnterTarget float64            `yaml:"enterTarget"`
+	StartValues map[string]float64 `yaml:"startValues"`
 
 	OrderTimeout    time.Duration `yaml:"orderTimeout"`
 	OrderSilent     time.Duration `yaml:"orderSilent"`
@@ -55,9 +55,11 @@ type Config struct {
 	RestartSilent   time.Duration `yaml:"restartSilent"`
 	HttpSilent      time.Duration `yaml:"httpSilent"`
 	RestartInterval time.Duration `yaml:"restartInterval"`
+	DeliDuration    time.Duration `yaml:"deliDuration"`
 
-	XYPairs        map[string]string `yaml:"xyPairs"`
-	SymbolAssetMap map[string]string `yaml:"symbolAssetMap"`
+	XYPairs        map[string]string    `yaml:"xyPairs"`
+	SymbolAssetMap map[string]string    `yaml:"symbolAssetMap"`
+	ExpireDates    map[string]time.Time `yaml:"expireDates"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -115,5 +117,8 @@ func (config *Config) SetDefaultIfNotSet() {
 
 	if config.EnterTarget == 0 {
 		config.EnterTarget = 1.0
+	}
+	if config.DeliDuration == 0 {
+		config.DepthTimeDeltaMin = time.Hour*24*90
 	}
 }
