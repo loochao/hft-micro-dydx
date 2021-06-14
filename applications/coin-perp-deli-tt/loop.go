@@ -125,7 +125,7 @@ func updateTargetPositionSizes() {
 			yValue := yPosition.GetSize() * xyMultipliers[ySymbol]
 			xyTargetValues[ySymbol] = yValue
 			xyTargetValues[xSymbol] = -spotValue - yValue
-			logger.Debugf("target x %f y %f", -spotValue-yValue, yValue)
+			//logger.Debugf("target x %f y %f", -spotValue-yValue, yValue)
 		}
 	}
 

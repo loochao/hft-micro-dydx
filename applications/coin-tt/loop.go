@@ -222,19 +222,29 @@ func updateTargetPositionSizes() {
 			continue
 		}
 
-		_, okXPosition := xPositions[xSymbol]
+		xPosition, okXPosition := xPositions[xSymbol]
 		yPosition, okYPosition := yPositions[ySymbol]
 		yMultiplier := yMultipliers[ySymbol]
+		xMultiplier := xMultipliers[ySymbol]
 		spread, okSpread := xySpreads[xSymbol]
 
 		//以y调整x
 		if okXPosition && okYPosition && okSpread {
 			spotValue := spread.XDepth.MidPrice*xBalance.GetBalance() + spread.YDepth.MidPrice*yBalance.GetBalance()
 			yValue := yPosition.GetSize() * yMultiplier
-			yTargetContractValues[ySymbol] = yValue
-			xTargetContractValues[xSymbol] = -spotValue - yValue
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("target x %f y %f", -spotValue-yValue, yValue)
+			xValue := xPosition.GetSize() * xMultiplier
+			if xBalance.GetBalance() >= yBalance.GetBalance() {
+				yTargetContractValues[ySymbol] = yValue
+				xTargetContractValues[xSymbol] = -spotValue - yValue
+				if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+					logger.Debugf("y ref target x %f y %f", -spotValue-yValue, yValue)
+				}
+			}else {
+				xTargetContractValues[xSymbol] = xValue
+				yTargetContractValues[ySymbol] = -spotValue - xValue
+				if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+					logger.Debugf("x ref target x %f y %f", xValue, -spotValue - xValue)
+				}
 			}
 		}
 	}
