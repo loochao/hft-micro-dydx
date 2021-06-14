@@ -89,7 +89,7 @@ var yTimedPositionChange *common.TimedSum
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210614 12:58:51  ####")
+	logger.Debug("####  BUILD @ 20210614 13:24:07  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -110,11 +110,6 @@ func init() {
 	config.SetDefaultIfNotSet()
 	xyConfig = &config
 
-	configStr, err := yaml.Marshal(xyConfig)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
 	switch xyConfig.XExchange.Name {
 	case "binanceCoinFutureWithDepth5":
@@ -175,5 +170,13 @@ func init() {
 	if len(xSymbols)%2 == 1 {
 		xyDualEnds = append(xyDualEnds, len(xSymbols)/2)
 	}
+
+	xyConfig.XExchange.Symbols = xSymbols
+	xyConfig.YExchange.Symbols = ySymbols
+	configStr, err := yaml.Marshal(xyConfig)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 	logger.Debugf("dual end ranks %d", xyDualEnds)
 }
