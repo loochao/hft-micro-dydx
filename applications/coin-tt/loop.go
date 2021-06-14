@@ -83,15 +83,15 @@ func updateYPositions() {
 	for _, ySymbol := range ySymbols {
 		xSymbol := yxSymbolsMap[ySymbol]
 		if _, ok := xBalances[xyConfig.XSymbolAssetMap[xSymbol]]; !ok {
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("xAccount not ready for %s", xSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			//	logger.Debugf("Balance not ready for %s", xSymbol)
+			//}
 			continue
 		}
 		if _, ok := yBalances[xyConfig.YSymbolAssetMap[ySymbol]]; !ok {
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("yAccount not ready for %s", ySymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			//	logger.Debugf("yBalance not ready for %s", ySymbol)
+			//}
 			continue
 		}
 		if time.Now().Sub(yPositionsUpdateTimes[ySymbol]) > xyConfig.BalancePositionMaxAge {
@@ -178,15 +178,15 @@ func updateXPositions() {
 	for _, xSymbol := range xSymbols {
 		ySymbol := xySymbolsMap[xSymbol]
 		if _, ok := xBalances[xyConfig.XSymbolAssetMap[xSymbol]]; !ok {
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("xAccount not ready for %s", xSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			//	logger.Debugf("xBalance not ready for %s", xSymbol)
+			//}
 			continue
 		}
 		if _, ok := yBalances[xyConfig.YSymbolAssetMap[ySymbol]]; !ok {
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("yBalance not ready for %s", ySymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			//	logger.Debugf("yBalance not ready for %s", ySymbol)
+			//}
 			continue
 		}
 		if time.Now().Sub(xPositionsUpdateTimes[xSymbol]) > xyConfig.BalancePositionMaxAge {
@@ -205,16 +205,16 @@ func updateTargetPositionSizes() {
 	for xSymbol, ySymbol := range xySymbolsMap {
 		xBalance, ok := xBalances[xyConfig.XSymbolAssetMap[xSymbol]]
 		if !ok {
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("xBalance not ready for %s", xSymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			//	logger.Debugf("xBalance not ready for %s", xSymbol)
+			//}
 			continue
 		}
 		yBalance, ok := yBalances[xyConfig.YSymbolAssetMap[ySymbol]]
 		if !ok {
-			if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-				logger.Debugf("yBalance not ready for %s", ySymbol)
-			}
+			//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+			//	logger.Debugf("yBalance not ready for %s", ySymbol)
+			//}
 			continue
 		}
 		//在信号触发期间，以信号为准
