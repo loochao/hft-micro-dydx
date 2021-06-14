@@ -210,9 +210,9 @@ mainLoop:
 						logger.Debugf("bad prevPos == nextPos pass same pointer")
 					}
 					if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
-						xyTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*xyMultipliers[nextPos.GetSymbol()])
 						xyPositions[nextPos.GetSymbol()] = nextPos
 						if prevPos.GetSize() != nextPos.GetSize() {
+							xyTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*xyMultipliers[nextPos.GetSymbol()])
 							logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 						}
 					}
@@ -246,9 +246,9 @@ mainLoop:
 			//logger.Debugf("%v", balance)
 			if oldBalance, ok := xyBalanceMap[balance.GetCurrency()]; ok {
 				if balance.GetTime().Sub(oldBalance.GetTime()) >= 0 {
-					if balance.GetBalance() != oldBalance.GetBalance() {
-						logger.Debugf("%s BALANCE CHANGE %f -> %f", balance.GetCurrency(), oldBalance.GetBalance(), balance.GetBalance())
-					}
+					//if balance.GetBalance() != oldBalance.GetBalance() {
+					//	logger.Debugf("%s BALANCE CHANGE %f -> %f", balance.GetCurrency(), oldBalance.GetBalance(), balance.GetBalance())
+					//}
 					xyBalanceMap[balance.GetCurrency()] = balance
 				}
 			} else {
