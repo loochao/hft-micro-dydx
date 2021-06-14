@@ -119,6 +119,6 @@ func (config *Config) SetDefaultIfNotSet() {
 		config.EnterTarget = 1.0
 	}
 	if config.DeliDuration == 0 {
-		config.DepthTimeDeltaMin = time.Hour*24*90
+		config.DeliDuration = time.Hour*24*90
 	}
 }
