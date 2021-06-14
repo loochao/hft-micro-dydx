@@ -201,6 +201,7 @@ func watchXYSpread(
 				break
 			}
 			yDepthTime = yDepth.GetTime()
+			logger.Debugf("%s %v", yDepth.GetSymbol(), yDepthTime)
 			if !yDepthFilter.Filter(yDepth) && xDepth != nil {
 				adjustedAgeDiff = xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
 				if adjustedAgeDiff < -maxAgeDiffBias {
