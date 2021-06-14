@@ -197,9 +197,9 @@ func updateTargetPositionSizes() {
 
 		offsetFactor := yValue / spotValue / xyConfig.EnterTarget
 		offsetStep := math.Min(xyConfig.EnterStep/xyConfig.EnterTarget, offsetFactor)
-		if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
-			logger.Debugf("%s offset factor %f step %f", xSymbol, offsetFactor, offsetStep)
-		}
+		//if time.Now().Sub(time.Now().Truncate(xyConfig.LogInterval)) < xyConfig.LoopInterval {
+		//	logger.Debugf("%s offset factor %f step %f", xSymbol, offsetFactor, offsetStep)
+		//}
 
 		shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
 		shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)

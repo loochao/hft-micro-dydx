@@ -34,7 +34,6 @@ func handleSave() {
 			ySize := yPosition.GetSize()
 			yValue := ySize * yContractSize
 			balanceInUSD := balance.GetBalance() * xDepth.MidPrice
-			logger.Debugf("%s balanceInUSD %f", xSymbol, balanceInUSD)
 			totalValue += balanceInUSD
 
 			fields["balanceInCoin"] = balance.GetBalance()
