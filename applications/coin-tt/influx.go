@@ -71,6 +71,7 @@ func handleSave() {
 			fields["ySize"] = ySize
 			fields["yValue"] = yValue
 			fields["spotValue"] = spotValue
+			fields["xAdjValue"] = xValue + spotValue
 			fields["xyValue"] = xValue + yValue
 
 			fields["shortTop"] = shortTop
