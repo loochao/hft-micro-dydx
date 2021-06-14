@@ -66,7 +66,7 @@ var xyTimedPositionChange *common.TimedSum
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210614 13:15:31  ####")
+	logger.Debug("####  BUILD @ 20210614 13:24:51  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -87,22 +87,6 @@ func init() {
 	config.SetDefaultIfNotSet()
 	xyConfig = &config
 
-	configStr, err := yaml.Marshal(xyConfig)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
-
-	switch xyConfig.Exchange.Name {
-	case "binanceCoinFutureWithDepth5":
-		xyExchange = &bncf.ExchangeWidthDepth5{}
-		break
-	case "binanceCoinFutureWithDepth20":
-		xyExchange = &bncf.ExchangeWidthDepth20{}
-		break
-	default:
-		logger.Fatalf("unsupported exchange %s", xyConfig.Exchange.Name)
-	}
 	xyTimedPositionChange = common.NewTimedSum(xyConfig.TurnoverLookback)
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		if _, ok := xyConfig.SymbolAssetMap[xSymbol]; !ok {
@@ -124,4 +108,20 @@ func init() {
 		xyPositionsUpdateTimes[ySymbol] = time.Unix(0, 0)
 	}
 	xyConfig.Exchange.Symbols = xySymbols
+	configStr, err := yaml.Marshal(xyConfig)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	switch xyConfig.Exchange.Name {
+	case "binanceCoinFutureWithDepth5":
+		xyExchange = &bncf.ExchangeWidthDepth5{}
+		break
+	case "binanceCoinFutureWithDepth20":
+		xyExchange = &bncf.ExchangeWidthDepth20{}
+		break
+	default:
+		logger.Fatalf("unsupported exchange %s", xyConfig.Exchange.Name)
+	}
+	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 }
