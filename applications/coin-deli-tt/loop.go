@@ -197,6 +197,9 @@ func updateTargetPositionSizes() {
 
 		expireDate := xyConfig.ExpireDates[ySymbol]
 		expireRatio := float64(time.Now().Sub(expireDate))/float64(xyConfig.DeliDuration)
+		if expireRatio < 0 {
+			expireRatio = 0
+		}
 
 		offsetFactor := yValue / spotValue / xyConfig.EnterTarget
 		offsetStep := math.Min(xyConfig.EnterStep/xyConfig.EnterTarget, offsetFactor)
