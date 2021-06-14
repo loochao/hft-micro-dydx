@@ -287,18 +287,16 @@ mainLoop:
 			}
 			break
 		case nextPos := <-xPositionCh:
+			logger.Debugf("x position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if _, ok := xySymbolsMap[nextPos.GetSymbol()]; !ok {
 				break
 			}
-			//logger.Debugf("x position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := xPositions[nextPos.GetSymbol()]; ok {
 				if prevPos == nextPos {
 					logger.Debugf("bad prevPos == nextPos pass same pointer")
 				}
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
-					if spread, ok := xySpreads[nextPos.GetSymbol()]; ok {
-						xTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*spread.XDepth.MidPrice*xMultipliers[nextPos.GetSymbol()])
-					}
+					xTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*xMultipliers[nextPos.GetSymbol()])
 					xPositions[nextPos.GetSymbol()] = nextPos
 					if prevPos.GetSize() != nextPos.GetSize() {
 						logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
@@ -312,6 +310,7 @@ mainLoop:
 			}
 			break
 		case account := <-xAccountCh:
+			//logger.Debugf("x account %s %f %f %f", xAccount.GetCurrency(), xAccount.GetBalance(), xAccount.GetFree(), xAccount.GetUsed())
 			if xAccount, ok := xBalances[account.GetCurrency()]; ok {
 				if xAccount == account {
 					logger.Debugf("bad xAccount == account pass same pointer")
@@ -321,13 +320,12 @@ mainLoop:
 			}else{
 				xBalances[account.GetCurrency()] = account
 			}
-			//logger.Debugf("x account %s %f %f %f", xAccount.GetCurrency(), xAccount.GetBalance(), xAccount.GetFree(), xAccount.GetUsed())
 			break
 		case nextPos := <-yPositionCh:
+			logger.Debugf("y position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if _, ok := yxSymbolsMap[nextPos.GetSymbol()]; !ok {
 				break
 			}
-			//logger.Debugf("y position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if prevPos, ok := yPositions[nextPos.GetSymbol()]; ok {
 				if prevPos == nextPos {
 					logger.Debugf("bad prevPos == nextPos pass same pointer")
@@ -335,9 +333,7 @@ mainLoop:
 				if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 					yPositions[nextPos.GetSymbol()] = nextPos
 					if prevPos.GetSize() != nextPos.GetSize() {
-						if spread, ok := xySpreads[yxSymbolsMap[nextPos.GetSymbol()]]; ok {
-							yTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*spread.YDepth.MidPrice*yMultipliers[nextPos.GetSymbol()])
-						}
+						yTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*yMultipliers[nextPos.GetSymbol()])
 						logger.Debugf("%s y position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 					}
 				}

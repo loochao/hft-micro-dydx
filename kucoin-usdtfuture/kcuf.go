@@ -365,6 +365,7 @@ func (k *KucoinUsdtFuture) StreamDepth(ctx context.Context, channels map[string]
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
+			defer k.Stop()
 			ws := NewDepth5WS(ctx, k.api, proxy, channels)
 			for {
 				select {

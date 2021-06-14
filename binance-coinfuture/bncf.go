@@ -705,6 +705,7 @@ func (bn *ExchangeWidthDepth20) StreamDepth(ctx context.Context, channels map[st
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
+			defer bn.Stop()
 			ws := NewDepth20WS(ctx, proxy, channels)
 			for {
 				select {

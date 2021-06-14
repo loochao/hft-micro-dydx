@@ -115,4 +115,10 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.TurnoverLookback == 0 {
 		config.TurnoverLookback = time.Hour * 24
 	}
+	if config.EnterTarget == 0 {
+		config.EnterTarget = 1.0
+	}
+	if config.EnterStep == 0 {
+		config.EnterStep = 0.01
+	}
 }

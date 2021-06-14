@@ -250,6 +250,7 @@ func (bn *BinanceUsdtFuture) StreamDepth(ctx context.Context, channels map[strin
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
+			defer bn.Stop()
 			ws := NewDepth5WS(ctx, proxy, channels)
 			for {
 				select {

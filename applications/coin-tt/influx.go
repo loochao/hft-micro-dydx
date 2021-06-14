@@ -16,39 +16,48 @@ func handleSave() {
 		return
 	}
 
-	entryTarget := 0.0
-	if xAccount != nil && yAccount != nil {
-		entryStep := (xAccount.GetFree() + yAccount.GetFree()) * xyConfig.EnterFreePct
-		if entryStep < xyConfig.EnterMinimalStep {
-			entryStep = xyConfig.EnterMinimalStep
-		}
-		entryTarget = entryStep * xyConfig.EnterTargetFactor
-	}
-
 	totalUnHedgeValue := 0.0
-	totalXSymbolValue := 0.0
-	totalYSymbolValue := 0.0
+	totalXUSDValue := 0.0
+	totalYUSDValue := 0.0
 	yURPnl := 0.0
 	xURPnl := 0.0
 	totalURPnl := 0.0
 	hasAllSymbols := true
+	totalUSDValue := 0.0
 	for _, xSymbol := range xSymbols {
 		ySymbol := xySymbolsMap[xSymbol]
 		xPosition, okXPosition := xPositions[xSymbol]
 		yPosition, okYPosition := yPositions[ySymbol]
+		xBalance, okXBalance := xBalances[xyConfig.XSymbolAssetMap[xSymbol]]
+		yBalance, okYBalance := yBalances[xyConfig.YSymbolAssetMap[ySymbol]]
 		spread, okSpread := xySpreads[xSymbol]
 		yMultiplier := yMultipliers[ySymbol]
 		xMultiplier := xMultipliers[xSymbol]
 		fields := make(map[string]interface{})
-		if okXPosition && okYPosition && okSpread {
-			xSize := xPosition.GetSize() * xMultiplier
-			xValue := xSize * spread.XDepth.MidPrice
-			ySize := yPosition.GetSize() * yMultiplier
-			yValue := ySize * spread.YDepth.MidPrice
-			unHedgeValue := math.Abs(xSize+ySize) * (spread.XDepth.MidPrice + spread.YDepth.MidPrice) * 0.5
+		if okXPosition && okYPosition && okSpread && okXBalance && okYBalance {
+
+			xSize := xPosition.GetSize()
+			xValue := xSize * xMultiplier
+			ySize := yPosition.GetSize()
+			yValue := ySize * yMultiplier
+
+			fields["yBalance"] = yBalance.GetBalance() * spread.YDepth.MidPrice
+			fields["xBalance"] = xBalance.GetBalance() * spread.XDepth.MidPrice
+			spotValue := xBalance.GetBalance()*spread.XDepth.MidPrice + yBalance.GetBalance()*spread.YDepth.MidPrice
+			totalUSDValue += spotValue
+			totalXUSDValue += xBalance.GetBalance()*spread.XDepth.MidPrice
+			totalYUSDValue += yBalance.GetBalance()*spread.YDepth.MidPrice
+
+			offsetFactor := math.Abs(yValue) / spotValue / xyConfig.EnterTarget
+			offsetStep := math.Min(xyConfig.EnterStep/xyConfig.EnterTarget, offsetFactor)
+
+			shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
+			shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)
+			longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
+			longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)
+
+			unHedgeValue := math.Abs(xValue + yValue)
 			totalUnHedgeValue += unHedgeValue
-			totalXSymbolValue += xValue
-			totalYSymbolValue += yValue
 
 			fields["xPosEventTime"] = xPosition.GetEventTime().UnixNano()
 			fields["xPosParseTime"] = xPosition.GetParseTime().UnixNano()
@@ -60,23 +69,19 @@ func handleSave() {
 			fields["ySize"] = ySize
 			fields["yValue"] = yValue
 			fields["xyValue"] = xValue + yValue
-			totalURPnl += xValue + yValue
-			offsetFactor := (math.Abs(xValue) + math.Abs(yValue)) * 0.5 / entryTarget
-			shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
-			shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*offsetFactor
-			longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
-			longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*offsetFactor
+
 			fields["shortTop"] = shortTop
 			fields["shortBot"] = shortBot
 			fields["longBot"] = longBot
 			fields["longTop"] = longTop
 
 			if yPosition.GetPrice() != 0 {
-				yURPnl += ySize * (spread.YDepth.MidPrice - yPosition.GetPrice())
+				yURPnl += yValue * (1.0/yPosition.GetPrice() - 1.0/spread.YDepth.MidPrice) * spread.YDepth.MidPrice
 			}
 			if xPosition.GetPrice() != 0 {
-				xURPnl += xSize * (spread.XDepth.MidPrice - xPosition.GetPrice())
+				xURPnl += xValue * (1.0/xPosition.GetPrice() - 1.0/spread.XDepth.MidPrice) * spread.XDepth.MidPrice
 			}
+			totalURPnl += yURPnl + xURPnl
 
 			fields["spreadTime"] = spread.Time.UnixNano()
 			fields["spreadShortLastEnter"] = spread.ShortLastEnter
@@ -99,7 +104,7 @@ func handleSave() {
 
 			fields["age"] = spread.Age.Seconds()
 		} else {
-			logger.Debugf("%s %s save failed, okXPosition %v okYPosition %v okSpread %v", xSymbol, ySymbol, okXPosition, okYPosition, okSpread)
+			logger.Debugf("%s %s save failed, okXPosition %v okYPosition %v okSpread %v okXBalance %v okYBalance %v", xSymbol, ySymbol, okXPosition, okYPosition, okSpread, okXBalance, okYBalance)
 			hasAllSymbols = false
 		}
 		if fr, ok := xFundingRates[xSymbol]; ok {
@@ -144,31 +149,16 @@ func handleSave() {
 		}
 	}
 
-	if yAccount != nil &&
-		xAccount != nil &&
-		hasAllSymbols {
-		xBalance := xAccount.GetBalance()
-		yBalance := yAccount.GetBalance()
-		if xExchange.IsSpot() {
-			xBalance += totalXSymbolValue
-		}
-		if yExchange.IsSpot() {
-			yBalance += totalYSymbolValue
-		}
-		totalBalance := xBalance + yBalance
-		netWorth := totalBalance / xyConfig.StartValue
+	if hasAllSymbols {
+		netWorth := totalUSDValue / xyConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalUnHedgeValue"] = totalUnHedgeValue
-		fields["totalBalance"] = totalBalance
-		fields["yBalance"] = yBalance
-		fields["xBalance"] = xBalance
-		fields["yAvailable"] = yAccount.GetFree()
-		fields["xAvailable"] = xAccount.GetFree()
+		fields["totalUSDValue"] = totalUSDValue
 		fields["xURPnl"] = xURPnl
 		fields["yURPnl"] = yURPnl
-		fields["xyTurnover"] = (xTimedPositionChange.Sum() + yTimedPositionChange.Sum()) / totalBalance
-		fields["xTurnover"] = xTimedPositionChange.Sum() / xBalance
-		fields["yTurnover"] = yTimedPositionChange.Sum() / yBalance
+		fields["xyTurnover"] = (xTimedPositionChange.Sum() + yTimedPositionChange.Sum()) / totalUSDValue
+		fields["xTurnover"] = xTimedPositionChange.Sum() / totalXUSDValue
+		fields["yTurnover"] = yTimedPositionChange.Sum() / totalYUSDValue
 		fields["xyURPnl"] = totalURPnl
 		fields["netWorth"] = netWorth
 		fields["startValue"] = xyConfig.StartValue

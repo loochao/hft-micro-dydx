@@ -116,4 +116,5 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.SpreadLookback == 0 {
 		config.SpreadLookback = time.Second
 	}
+
 }

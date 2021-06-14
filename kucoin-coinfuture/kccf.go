@@ -33,6 +33,7 @@ func (k *KucoinCoinFuture) Stop() {
 	defer k.mu.Unlock()
 	if !k.stopped {
 		close(k.done)
+		k.stopped = true
 		logger.Debugf("stopped")
 	}
 }
@@ -126,11 +127,13 @@ func (k *KucoinCoinFuture) StreamBasic(ctx context.Context, statusCh chan common
 	httpPositionsCh := make(chan map[string]Position)
 	go k.positionsLoop(ctx, symbols, httpPositionsCh)
 	httpAccountCh := make(chan Account, 100)
-	go k.accountLoop(ctx, httpAccountCh)
+	for currency := range accountChMap {
+		go k.accountLoop(ctx, currency, httpAccountCh)
+	}
 	logSilentTime := time.Now()
 	restartResetTimer := time.NewTimer(time.Hour * 9999)
 	defer restartResetTimer.Stop()
-	var account *Account
+	balancesMap := make(map[string]Account)
 	positionsMap := make(map[string]Position)
 	for {
 		select {
@@ -163,13 +166,14 @@ func (k *KucoinCoinFuture) StreamBasic(ctx context.Context, statusCh chan common
 				}
 			}
 		case a := <-httpAccountCh:
-			account = &a
-			if accountCh, ok := accountChMap["USDT"]; ok {
+			balancesMap[a.Currency] = a
+			if accountCh, ok := accountChMap[a.Currency]; ok {
+				a := a
 				select {
-				case accountCh <- account:
+				case accountCh <- &a:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("accountCh <- account failed, ch len %d", len(accountCh))
+						logger.Debugf("accountCh <- &a failed, ch len %d", len(accountCh))
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
@@ -186,7 +190,8 @@ func (k *KucoinCoinFuture) StreamBasic(ctx context.Context, statusCh chan common
 				}
 			}
 		case balance := <-userWS.BalanceCh:
-			if account != nil {
+			logger.Debugf("%v", balance)
+			if account, ok := balancesMap[*balance.Currency]; ok {
 				if account.EventTime.Sub(balance.EventTime) > 0 {
 					continue
 				}
@@ -200,8 +205,8 @@ func (k *KucoinCoinFuture) StreamBasic(ctx context.Context, statusCh chan common
 				if balance.OrderMargin != nil {
 					account.OrderMargin = *balance.OrderMargin
 				}
-				outputAccount := *account
-				if accountCh, ok := accountChMap["USDT"]; ok {
+				outputAccount := account
+				if accountCh, ok := accountChMap[account.Currency]; ok {
 					select {
 					case accountCh <- &outputAccount:
 					default:
@@ -358,6 +363,7 @@ func (k *KucoinCoinFuture) StreamDepth(ctx context.Context, channels map[string]
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
+			defer k.Stop()
 			ws := NewDepth5WS(ctx, k.api, proxy, channels)
 			for {
 				select {
@@ -503,7 +509,7 @@ func (k *KucoinCoinFuture) systemStatusLoop(
 }
 
 func (k *KucoinCoinFuture) accountLoop(
-	ctx context.Context, output chan Account,
+	ctx context.Context, currency string, output chan Account,
 ) {
 	k.mu.Lock()
 	pullInterval := k.settings.PullInterval
@@ -517,7 +523,7 @@ func (k *KucoinCoinFuture) accountLoop(
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			account, err := k.api.GetAccountOverView(subCtx, AccountParam{
-				Currency: "USDT",
+				Currency: currency,
 			})
 			if err != nil {
 				logger.Debugf("k.api.GetAccountOverView error %v", err)
