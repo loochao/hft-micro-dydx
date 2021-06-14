@@ -41,8 +41,10 @@ func handleSave() {
 			ySize := yPosition.GetSize()
 			yValue := ySize * yMultiplier
 
-			fields["yBalance"] = yBalance.GetBalance() * spread.YDepth.MidPrice
-			fields["xBalance"] = xBalance.GetBalance() * spread.XDepth.MidPrice
+			fields["yBalanceInUSD"] = yBalance.GetBalance() * spread.YDepth.MidPrice
+			fields["xBalanceInUSD"] = xBalance.GetBalance() * spread.XDepth.MidPrice
+			fields["yBalanceInCoin"] = yBalance.GetBalance()
+			fields["xBalanceInCoin"] = xBalance.GetBalance()
 			spotValue := xBalance.GetBalance()*spread.XDepth.MidPrice + yBalance.GetBalance()*spread.YDepth.MidPrice
 			totalUSDValue += spotValue
 			totalXUSDValue += xBalance.GetBalance()*spread.XDepth.MidPrice
