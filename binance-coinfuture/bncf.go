@@ -110,8 +110,8 @@ func (bn *Exchange) StreamBasic(ctx context.Context, statusCh chan common.System
 			for _, nextBalance := range account.Assets {
 				balanceCh, okCh := balanceChMap[nextBalance.Asset]
 				balance, okB := balancesMap[nextBalance.Asset]
+				logger.Debugf("account %v", nextBalance)
 				if (okCh && okB && balance.EventTime.Sub(nextBalance.EventTime) <= 0) || (!okB && okCh) {
-					logger.Debugf("account %v", nextBalance)
 					nextBalance := nextBalance
 					balancesMap[nextBalance.Asset] = nextBalance
 					select {
@@ -201,29 +201,30 @@ func (bn *Exchange) StreamBasic(ctx context.Context, statusCh chan common.System
 				}
 			}
 			break
-		case wsBalances := <-userWS.BalancesCh:
-			for _, wsBalance := range wsBalances {
-				balanceCh, okCh := balanceChMap[wsBalance.Asset]
-				balance, okB := balancesMap[wsBalance.Asset]
-				if okCh && okB && balance.EventTime.Sub(wsBalance.EventTime) < 0 {
-					nextBalance := wsBalance
-					balance.WalletBalance = nextBalance.Balance
-					balance.MaxWithdrawAmount = nextBalance.MaxWithdrawAmount
-					balance.CrossWalletBalance = nextBalance.CrossWalletBalance
-					balance.AvailableBalance = nextBalance.AvailableBalance
-					balance.ParseTime = nextBalance.ParseTime
-					balance.EventTime = nextBalance.EventTime
-					balancesMap[balance.Asset] = balance
-					select {
-					case balanceCh <- &balance:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("balanceCh <- &balance failed, ch len %d", len(balanceCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
-				}
-			}
+		case _ = <-userWS.BalancesCh:
+			break
+			//for _, wsBalance := range wsBalances {
+			//	balanceCh, okCh := balanceChMap[wsBalance.Asset]
+			//	balance, okB := balancesMap[wsBalance.Asset]
+			//	if okCh && okB && balance.EventTime.Sub(wsBalance.EventTime) < 0 {
+			//		nextBalance := wsBalance
+			//		balance.WalletBalance = nextBalance.Balance
+			//		balance.MaxWithdrawAmount = nextBalance.MaxWithdrawAmount
+			//		balance.CrossWalletBalance = nextBalance.CrossWalletBalance
+			//		balance.AvailableBalance = nextBalance.AvailableBalance
+			//		balance.ParseTime = nextBalance.ParseTime
+			//		balance.EventTime = nextBalance.EventTime
+			//		balancesMap[balance.Asset] = balance
+			//		select {
+			//		case balanceCh <- &balance:
+			//		default:
+			//			if time.Now().Sub(logSilentTime) > 0 {
+			//				logger.Debugf("balanceCh <- &balance failed, ch len %d", len(balanceCh))
+			//				logSilentTime = time.Now().Add(time.Minute)
+			//			}
+			//		}
+			//	}
+			//}
 
 			//case account := <-internalAccountCh:
 			//	for _, asset := range account.Assets {
