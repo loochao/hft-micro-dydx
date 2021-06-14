@@ -287,7 +287,7 @@ mainLoop:
 			}
 			break
 		case nextPos := <-xPositionCh:
-			logger.Debugf("x position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
+			//logger.Debugf("x position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if _, ok := xySymbolsMap[nextPos.GetSymbol()]; !ok {
 				break
 			}
@@ -315,6 +315,7 @@ mainLoop:
 				if xAccount == account {
 					logger.Debugf("bad xAccount == account pass same pointer")
 				}else if account.GetTime().Sub(xAccount.GetTime()) >= 0 {
+					xBalances[account.GetCurrency()] = account
 					logger.Debugf("xBalance %f", account.GetBalance())
 				}
 			}else{
@@ -322,7 +323,7 @@ mainLoop:
 			}
 			break
 		case nextPos := <-yPositionCh:
-			logger.Debugf("y position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
+			//logger.Debugf("y position %s %v %v %f %f", nextPos.GetSymbol(), nextPos.GetEventTime(), nextPos.GetParseTime(), nextPos.GetPrice(), nextPos.GetSize())
 			if _, ok := yxSymbolsMap[nextPos.GetSymbol()]; !ok {
 				break
 			}
@@ -350,7 +351,7 @@ mainLoop:
 					logger.Debugf("bad  yAccount == account pass same pointer")
 				}else if account.GetTime().Sub(yAccount.GetTime()) >= 0 {
 					yBalances[account.GetCurrency()] = account
-					logger.Debugf("yBalance %f", account.GetBalance())
+					//logger.Debugf("yBalance %f", account.GetBalance())
 				}
 			}else{
 				yBalances[account.GetCurrency()] = account

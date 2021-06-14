@@ -190,7 +190,7 @@ func (k *KucoinCoinFuture) StreamBasic(ctx context.Context, statusCh chan common
 				}
 			}
 		case balance := <-userWS.BalanceCh:
-			logger.Debugf("%v", balance)
+			//logger.Debugf("%v", balance)
 			if account, ok := balancesMap[*balance.Currency]; ok {
 				if account.EventTime.Sub(balance.EventTime) > 0 {
 					continue

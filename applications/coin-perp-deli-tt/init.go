@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	binance_coinfuture "github.com/geometrybase/hft-micro/binance-coinfuture"
+	bncf "github.com/geometrybase/hft-micro/binance-coinfuture"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
@@ -23,7 +23,7 @@ var xyGlobalCancel context.CancelFunc
 var xyInfluxWriter *common.InfluxWriter
 var xyExternalInfluxWriter *common.InfluxWriter
 
-var xyContractSizes = make(map[string]float64)
+var xyMultipliers = make(map[string]float64)
 var xyStepSizes = make(map[string]float64)
 var xyMinNotionals = make(map[string]float64)
 
@@ -94,8 +94,12 @@ func init() {
 	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
 	switch xyConfig.Exchange.Name {
-	case "binance-coinfuture":
-		xyExchange = &binance_coinfuture.Exchange{}
+	case "binanceCoinFutureWithDepth5":
+		xyExchange = &bncf.ExchangeWidthDepth5{}
+		break
+	case "binanceCoinFutureWithDepth20":
+		xyExchange = &bncf.ExchangeWidthDepth20{}
+		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.Exchange.Name)
 	}

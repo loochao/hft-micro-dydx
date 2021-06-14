@@ -25,18 +25,20 @@ func handleSave() {
 		fields := make(map[string]interface{})
 		if okXPosition && okYPosition && okSpread && okBalance {
 
-			xContractSize := xyContractSizes[xSymbol]
-			yContractSize := xyContractSizes[ySymbol]
+			xContractSize := xyMultipliers[xSymbol]
+			yContractSize := xyMultipliers[ySymbol]
 			xDepth := spread.XDepth
 			//yDepth := spread.YDepth
 			xSize := xPosition.GetSize()
 			xValue := xSize * xContractSize
 			ySize := yPosition.GetSize()
 			yValue := ySize * yContractSize
-			spotValue := balance.GetBalance() * xDepth.MidPrice
-			logger.Debugf("%s spotValue %f", xSymbol, spotValue)
-			totalValue += spotValue
+			balanceInUSD := balance.GetBalance() * xDepth.MidPrice
+			logger.Debugf("%s balanceInUSD %f", xSymbol, balanceInUSD)
+			totalValue += balanceInUSD
 
+			fields["balanceInCoin"] = balance.GetBalance()
+			fields["balanceInUSD"] = balanceInUSD
 			fields["xPosEventTime"] = xPosition.GetEventTime().UnixNano()
 			fields["xPosParseTime"] = xPosition.GetParseTime().UnixNano()
 			fields["yPosEventTime"] = yPosition.GetEventTime().UnixNano()
@@ -45,10 +47,10 @@ func handleSave() {
 			fields["ySize"] = ySize
 			fields["xValue"] = xValue
 			fields["yValue"] = yValue
-			fields["xAdjValue"] = xValue + spotValue
-			fields["xyUnHedgeValue"] = xValue + yValue + spotValue
+			fields["xAdjValue"] = xValue + balanceInUSD
+			fields["xyUnHedgeValue"] = xValue + yValue + balanceInUSD
 
-			offsetFactor := math.Abs(yValue) / spotValue / xyConfig.EnterTarget
+			offsetFactor := math.Abs(yValue) / balanceInUSD / xyConfig.EnterTarget
 			offsetStep := xyConfig.EnterStep/xyConfig.EnterTarget
 			shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
 			shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)
@@ -71,19 +73,12 @@ func handleSave() {
 			fields["spreadLongMedianEnter"] = spread.LongMedianEnter
 			fields["spreadLongMedianLeave"] = spread.LongMedianLeave
 
-			fields["yMakerBid"] = spread.YDepth.MakerBid
-			fields["yMakerAsk"] = spread.YDepth.MakerAsk
-			fields["yTakerBid"] = spread.YDepth.TakerBid
-			fields["yTakerAsk"] = spread.YDepth.TakerAsk
-			fields["yBestBidPrice"] = spread.YDepth.BestBidPrice
-			fields["yBestAskPrice"] = spread.YDepth.BestAskPrice
-
-			fields["xMakerBid"] = spread.XDepth.MakerBid
-			fields["xMakerAsk"] = spread.XDepth.MakerAsk
-			fields["xTakerBid"] = spread.XDepth.TakerBid
-			fields["xTakerAsk"] = spread.XDepth.TakerAsk
-			fields["xBestBidPrice"] = spread.XDepth.BestBidPrice
-			fields["xBestAskPrice"] = spread.XDepth.BestAskPrice
+			fields["yBidPrice"] = spread.YDepth.BidPrice
+			fields["yAskPrice"] = spread.YDepth.AskPrice
+			fields["yMidPrice"] = spread.YDepth.MidPrice
+			fields["xBidPrice"] = spread.XDepth.BidPrice
+			fields["xAskPrice"] = spread.XDepth.AskPrice
+			fields["xMidPrice"] = spread.XDepth.MidPrice
 
 			fields["age"] = spread.Age.Seconds()
 			fields["ageDiff"] = spread.AgeDiff.Seconds()

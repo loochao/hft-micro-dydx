@@ -46,12 +46,12 @@ func main() {
 		if err != nil {
 			logger.Debugf("xyExchange.GetMinNotional(xySymbol) error %v", err)
 		}
-		xyContractSizes[xySymbol], err = xyExchange.GetContractSize(xySymbol)
+		xyMultipliers[xySymbol], err = xyExchange.GetMultiplier(xySymbol)
 		if err != nil {
-			logger.Debugf("xyExchange.GetContractSize error %v", err)
+			logger.Debugf("xyExchange.GetMultiplier error %v", err)
 		}
 	}
-	logger.Debugf("%v", xyContractSizes)
+	logger.Debugf("%v", xyMultipliers)
 
 	xyInfluxWriter, err = common.NewInfluxWriter(
 		xyGlobalCtx,
@@ -147,7 +147,7 @@ func main() {
 		go watchXYSpread(
 			xyGlobalCtx,
 			xSymbol, ySymbol,
-			xyConfig.DepthMakerImpact,
+			xyMultipliers[xSymbol], xyMultipliers[ySymbol],
 			xyConfig.DepthTakerImpact,
 			xyConfig.DepthXDecay,
 			xyConfig.DepthXBias,
@@ -210,7 +210,7 @@ mainLoop:
 						logger.Debugf("bad prevPos == nextPos pass same pointer")
 					}
 					if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
-						xyTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*xyContractSizes[nextPos.GetSymbol()])
+						xyTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*xyMultipliers[nextPos.GetSymbol()])
 						xyPositions[nextPos.GetSymbol()] = nextPos
 						if prevPos.GetSize() != nextPos.GetSize() {
 							logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
@@ -230,7 +230,7 @@ mainLoop:
 					if nextPos.GetEventTime().Sub(prevPos.GetEventTime()) >= 0 {
 						xyPositions[nextPos.GetSymbol()] = nextPos
 						if prevPos.GetSize() != nextPos.GetSize() {
-							xyTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*xyContractSizes[nextPos.GetSymbol()])
+							xyTimedPositionChange.Insert(time.Now(), math.Abs(prevPos.GetSize()-nextPos.GetSize())*xyMultipliers[nextPos.GetSymbol()])
 							logger.Debugf("%s y position change %f -> %f %v", nextPos.GetSymbol(), prevPos.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 						}
 					}

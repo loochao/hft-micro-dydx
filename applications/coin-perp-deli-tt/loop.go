@@ -14,13 +14,13 @@ func hedgeSymbol(symbol string) {
 		return
 	}
 	stepSize := xyStepSizes[symbol]
-	contractSize := xyContractSizes[symbol]
-	sizeDiff := math.Round(targetValue/contractSize - position.GetSize())
+	multiplier := xyMultipliers[symbol]
+	sizeDiff := math.Round(targetValue/multiplier - position.GetSize())
 	sizeDiff = math.Round(sizeDiff/stepSize) * stepSize
 	if math.Abs(sizeDiff) < stepSize {
 		return
 	}
-	logger.Debugf("updatePositions %s size %f position %f -> %f", symbol, sizeDiff, position.GetSize(), targetValue/contractSize)
+	logger.Debugf("updatePositions %s size %f position %f -> %f", symbol, sizeDiff, position.GetSize(), targetValue/multiplier)
 
 	reduceOnly := false
 	if sizeDiff*position.GetSize() < 0 && math.Abs(sizeDiff) <= math.Abs(position.GetSize()) {
@@ -122,7 +122,7 @@ func updateTargetPositionSizes() {
 		if okYPosition && okBalance {
 			//以y调整x
 			spotValue := spread.XDepth.MidPrice * xyBalance.GetBalance()
-			yValue := yPosition.GetSize() * xyContractSizes[ySymbol]
+			yValue := yPosition.GetSize() * xyMultipliers[ySymbol]
 			xyTargetValues[ySymbol] = yValue
 			xyTargetValues[xSymbol] = -spotValue - yValue
 			logger.Debugf("target x %f y %f", -spotValue-yValue, yValue)
@@ -179,8 +179,8 @@ func updateTargetPositionSizes() {
 
 		xStepSize := xyStepSizes[xSymbol]
 		yStepSize := xyStepSizes[ySymbol]
-		xContractSize := xyContractSizes[xSymbol]
-		yContractSize := xyContractSizes[ySymbol]
+		xMultiplier := xyMultipliers[xSymbol]
+		yMultiplier := xyMultipliers[ySymbol]
 		xyStepSize := common.MergedStepSize(xStepSize, yStepSize)
 
 		if xyBalance.GetFree()*xDepth.MidPrice < xyStepSize {
@@ -191,7 +191,7 @@ func updateTargetPositionSizes() {
 		}
 
 		ySize := yPosition.GetSize()
-		yValue := math.Abs(ySize) * yContractSize
+		yValue := math.Abs(ySize) * yMultiplier
 		spotValue := xyBalance.GetBalance() * xDepth.MidPrice
 		maxYTargetValue := math.Round(spotValue * xyConfig.EnterTarget)
 
@@ -259,7 +259,7 @@ func updateTargetPositionSizes() {
 		} else if spread.ShortLastEnter > shortTop &&
 			spread.ShortMedianEnter > shortTop &&
 			ySize <= 0 {
-			targetYValue := yValue + math.Max(math.Round(spotValue*xyConfig.EnterStep), common.MergedStepSize(xContractSize, yContractSize))
+			targetYValue := yValue + math.Max(math.Round(spotValue*xyConfig.EnterStep), common.MergedStepSize(xMultiplier, yMultiplier))
 			if targetYValue > maxYTargetValue {
 				targetYValue = maxYTargetValue
 			}
@@ -288,7 +288,7 @@ func updateTargetPositionSizes() {
 			spread.LongMedianEnter < longBot &&
 			ySize >= 0 {
 
-			targetYValue := yValue + math.Max(math.Round(spotValue*xyConfig.EnterStep), common.MergedStepSize(xContractSize, yContractSize))
+			targetYValue := yValue + math.Max(math.Round(spotValue*xyConfig.EnterStep), common.MergedStepSize(xMultiplier, yMultiplier))
 			if targetYValue > maxYTargetValue {
 				targetYValue = maxYTargetValue
 			}
