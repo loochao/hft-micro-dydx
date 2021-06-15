@@ -435,7 +435,6 @@ func (bn *BinanceUsdtSpot) Setup(ctx context.Context, settings common.ExchangeSe
 		if _, ok := MultiplierDowns[symbol]; !ok {
 			return fmt.Errorf("multiplier down not found for %s", symbol)
 		}
-		time.Sleep(time.Second)
 	}
 	return
 }
