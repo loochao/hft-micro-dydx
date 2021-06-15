@@ -294,25 +294,19 @@ func (w *Depth5WS) Done() chan interface{} {
 }
 
 func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Depth) {
-	//logger.Debugf("START dataHandleLoop %s", symbol)
-	//defer logger.Debugf("EXIT dataHandleLoop %s", symbol)
 	logSilentTime := time.Now()
 	depth5 := &Depth5{
 		Symbol: symbol,
 	}
 	var err error
 	var msg []byte
-	var parseDelay = time.Nanosecond*500
-	parseTimer := time.NewTimer(time.Hour * 999)
-	defer parseTimer.Stop()
-	var skipCounter = 0
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case <-parseTimer.C:
+		case msg = <-inputCh:
 			err = ParseDepth5(msg, depth5)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
@@ -323,20 +317,12 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 			}
 			select {
 			case outputCh <- depth5:
-				if skipCounter>1 {
-					logger.Debugf("%s parse depth5 skip %d", symbol, skipCounter)
-				}
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("ch <- depth5 failed ch len %d", len(outputCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
-			skipCounter = 0
-			break
-		case msg = <-inputCh:
-			skipCounter ++
-			parseTimer.Reset(parseDelay)
 			break
 		}
 	}
