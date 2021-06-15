@@ -446,7 +446,6 @@ func (bn *BinanceUsdtFuture) Setup(ctx context.Context, settings common.Exchange
 				logger.Debugf("UPDATE MARGIN TYPE FOR %s RESPONSE %v", symbol, res)
 			}
 		}
-		time.Sleep(time.Second)
 	}
 	return
 }
