@@ -53,7 +53,6 @@ type Config struct {
 
 	OrderTimeout    time.Duration `yaml:"orderTimeout"`
 	OrderSilent     time.Duration `yaml:"orderSilent"`
-	CancelSilent    time.Duration `yaml:"cancelSilent"`
 	EnterSilent     time.Duration `yaml:"enterSilent"`
 	RestartSilent   time.Duration `yaml:"restartSilent"`
 	HttpSilent      time.Duration `yaml:"httpSilent"`
@@ -78,9 +77,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.OrderSilent == 0 {
 		config.OrderSilent = time.Second * 5
-	}
-	if config.CancelSilent == 0 {
-		config.CancelSilent = time.Second * 5
 	}
 	if config.EnterSilent == 0 {
 		config.EnterSilent = time.Minute * 30
