@@ -56,6 +56,8 @@ func (w *Depth20WS) readLoop(conn *websocket.Conn, channels map[string]chan []by
 				symbol = common.UnsafeBytesToString(msg[11:20])
 			} else if msg[21] == '@' {
 				symbol = common.UnsafeBytesToString(msg[11:21])
+			} else if msg[17] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:17])
 			}else{
 				if time.Now().Sub(logSilentTime)> 0 {
 					logger.Debugf("other msg %s", msg)

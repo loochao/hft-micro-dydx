@@ -67,6 +67,8 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 			symbol = common.UnsafeBytesToString(msg[11:22])
 		} else if msg[65] == 'E' {
 			symbol = common.UnsafeBytesToString(msg[11:23])
+		} else if msg[59] == 'E' {
+			symbol = common.UnsafeBytesToString(msg[11:17])
 		} else if msg[66] == 'E' {
 			symbol = common.UnsafeBytesToString(msg[11:24])
 		} else if msg[67] == 'E' {
