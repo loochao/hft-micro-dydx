@@ -3,6 +3,7 @@ package binance_usdtfuture
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"testing"
 	"time"
 )
@@ -25,14 +26,14 @@ func TestNewDepth5WS(t *testing.T) {
 		case <-ws.Done():
 			return
 		case msg := <-channels[symbols[0]]:
-			_ = msg
-			//logger.Debugf("%v", msg)
+			//_ = msg
+			logger.Debugf("%v", msg)
 		case msg := <-channels[symbols[1]]:
-			_ = msg
-			//logger.Debugf("%v", msg)
+			//_ = msg
+			logger.Debugf("%v", msg)
 		case msg := <-channels[symbols[2]]:
-			_ = msg
-			//logger.Debugf("%v", msg)
+			//_ = msg
+			logger.Debugf("%v", msg)
 		}
 	}
 }

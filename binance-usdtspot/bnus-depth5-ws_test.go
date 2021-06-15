@@ -3,6 +3,7 @@ package binance_usdtspot
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"testing"
 	"time"
 )
@@ -23,8 +24,8 @@ func TestNewDepth5Ws(t *testing.T) {
 			return
 		case <-ws.Done():
 			return
-		case _ = <-ch:
-			//logger.Debugf("%v", depth5)
+		case depth5 := <-ch:
+			logger.Debugf("%v", depth5)
 		}
 	}
 }
