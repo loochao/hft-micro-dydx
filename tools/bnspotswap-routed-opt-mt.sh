@@ -3,10 +3,10 @@
 dt=$(date -u +%Y%m%d)
 version=" BUILD @ $(date -u '+%Y%m%d %H:%M:%S') "
 echo "$version"
-sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/bnspotswap-routed-opt-mt/init.go
+sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/bnspotswap-routed-usdt-mt/init.go
 
 
-env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-mirco-bnspotswap-routed-opt-mt.$dt" ./applications/bnspotswap-routed-opt-mt
+env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-mirco-bnspotswap-routed-opt-mt.$dt" ./applications/bnspotswap-routed-usdt-mt
 
 git add -A
 git commit -m "build hft-mirco-bnspotswap-routed-opt-mt.$dt"

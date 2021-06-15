@@ -4,9 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/geometrybase/hft-micro/bnswap"
+	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/ftxperp"
+	kcuf "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -30,8 +30,8 @@ var tStepSizes = make(map[string]float64)
 var tMinNotional = make(map[string]float64)
 var mtStepSizes = make(map[string]float64)
 
-var mAccount common.Account
-var mAccountCh = make(chan common.Account, 200)
+var mAccount common.Balance
+var mAccountCh = make(chan common.Balance, 200)
 var mPositionCh = make(chan common.Position, 200)
 var mOrderCh = make(chan common.Order, 200)
 var mPositions = make(map[string]common.Position)
@@ -114,19 +114,29 @@ func init() {
 	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
 	switch mtConfig.MakerExchange.Name {
-	case "ftxperp":
-		mExchange = &ftxperp.Ftxperp{}
-	case "bnswap":
-		mExchange = &bnswap.Bnswap{}
+	case "binanceUsdtFutureWithDepth5":
+		mExchange = &bnuf.BinanceUsdtFutureWidthDepth5{}
+		break
+	case "binanceUsdtFutureWithDepth20":
+		mExchange = &bnuf.BinanceUsdtFutureWidthDepth20{}
+		break
+	case "kucoinUsdtFutureWithDepth5":
+		mExchange = &kcuf.KucoinUsdtFutureWithDepth5{}
+		break
 	default:
 		logger.Fatal("unsupported exchange %s", mtConfig.MakerExchange.Name)
 	}
 
 	switch mtConfig.TakerExchange.Name {
-	case "ftxperp":
-		tExchange = &ftxperp.Ftxperp{}
-	case "bnswap":
-		tExchange = &bnswap.Bnswap{}
+	case "binanceUsdtFutureWithDepth5":
+		tExchange = &bnuf.BinanceUsdtFutureWidthDepth5{}
+		break
+	case "binanceUsdtFutureWithDepth20":
+		tExchange = &bnuf.BinanceUsdtFutureWidthDepth20{}
+		break
+	case "kucoinUsdtFutureWithDepth5":
+		tExchange = &kcuf.KucoinUsdtFutureWithDepth5{}
+		break
 	default:
 		logger.Fatal("unsupported exchange %s", mtConfig.TakerExchange.Name)
 	}
@@ -141,7 +151,7 @@ func init() {
 			//	continue
 			//}
 			mtDeltas[makerSymbol] = dt
-		}else{
+		} else {
 			logger.Fatalf("MISS DELTA FOR %s", makerSymbol)
 		}
 		if offset, ok := mtConfig.MakerOrderOffsets[makerSymbol]; ok {

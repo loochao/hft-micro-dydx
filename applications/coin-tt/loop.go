@@ -11,7 +11,8 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 	yPosition, okYPosition := yPositions[ySymbol]
 	targetContractValue, okTargetContractValue := yTargetContractValues[ySymbol]
 	spread, okSpread := xySpreads[xSymbol]
-	if !okYPosition || !okSpread || !okTargetContractValue {
+	enterStep, okEnterStep := xyEnterSteps[xSymbol]
+	if !okYPosition || !okSpread || !okTargetContractValue || !okEnterStep{
 		return 0
 	}
 
@@ -20,7 +21,7 @@ func hedgeYSymbol(ySymbol, xSymbol string) float64 {
 	yMinNotional := yMinNotionals[ySymbol]
 	yMultiplier := yMultipliers[ySymbol]
 	ySizeDiff := targetContractValue/yMultiplier - yPosition.GetSize()
-	if math.Abs(ySizeDiff) < yStepSize*0.8 {
+	if math.Abs(ySizeDiff) < enterStep*0.5 {
 		return 0
 	}
 	ySizeDiff = math.Round(ySizeDiff/yStepSize) * yStepSize
@@ -112,7 +113,9 @@ func hedgeXSymbol(xSymbol string) {
 	xPosition, okXPosition := xPositions[xSymbol]
 	xTargetContractValue, okXTargetContractValue := xTargetContractValues[xSymbol]
 	spread, okSpread := xySpreads[xSymbol]
-	if !okXPosition || !okSpread || !okXTargetContractValue {
+	enterStep, okEnterStep := xyEnterSteps[xSymbol]
+
+	if !okXPosition || !okSpread || !okXTargetContractValue || !okEnterStep{
 		return
 	}
 	xDepth := spread.XDepth
@@ -120,7 +123,7 @@ func hedgeXSymbol(xSymbol string) {
 	xMinNotional := xMinNotionals[xSymbol]
 	xMultiplier := xMultipliers[xSymbol]
 	xSizeDiff := xTargetContractValue/xMultiplier - xPosition.GetSize()
-	if math.Abs(xSizeDiff) < xStepSize*0.8 {
+	if math.Abs(xSizeDiff) < enterStep*0.5 {
 		return
 	}
 	xSizeDiff = math.Round(xSizeDiff/xStepSize) * xStepSize
@@ -354,6 +357,11 @@ func updateTargetPositionSizes() {
 		longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
 		longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)
 		entryStep := spotValue * xyConfig.EnterStep
+		xyEnterSteps[xSymbol] = entryStep
+		xyShortTops[xSymbol] = shortTop
+		xyShortBots[xSymbol] = shortBot
+		xyLongBots[xSymbol] = longBot
+		xyLongTops[xSymbol] = longTop
 
 		if spread.ShortLastLeave < shortBot &&
 			spread.ShortMedianLeave < shortBot &&

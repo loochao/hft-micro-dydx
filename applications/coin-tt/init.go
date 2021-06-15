@@ -87,6 +87,13 @@ var yExchange common.Exchange
 var xTimedPositionChange *common.TimedSum
 var yTimedPositionChange *common.TimedSum
 
+var xyShortTops = make(map[string]float64)
+var xyShortBots = make(map[string]float64)
+var xyLongBots = make(map[string]float64)
+var xyLongTops = make(map[string]float64)
+var xyEnterSteps = make(map[string]float64)
+
+
 func init() {
 
 	logger.Debug("####  BUILD @ 20210614 15:00:31  ####")

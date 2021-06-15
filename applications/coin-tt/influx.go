@@ -50,13 +50,18 @@ func handleSave() {
 			totalXUSDValue += xBalance.GetBalance()*spread.XDepth.MidPrice
 			totalYUSDValue += yBalance.GetBalance()*spread.YDepth.MidPrice
 
-			offsetFactor := math.Abs(yValue) / spotValue / xyConfig.EnterTarget
-			offsetStep := math.Min(xyConfig.EnterStep/xyConfig.EnterTarget, offsetFactor)
-
-			shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor
-			shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)
-			longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor
-			longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)
+			if shortTop, ok := xyShortTops[xSymbol]; ok {
+				fields["shortTop"] = shortTop
+			}
+			if shortBot, ok := xyShortBots[xSymbol]; ok {
+				fields["shortBot"] = shortBot
+			}
+			if longTop, ok := xyLongTops[xSymbol]; ok {
+				fields["longTop"] = longTop
+			}
+			if longBot, ok := xyLongBots[xSymbol]; ok {
+				fields["longBot"] = longBot
+			}
 
 			unHedgeValue := math.Abs(xValue + yValue)
 			totalUnHedgeValue += unHedgeValue
@@ -74,10 +79,7 @@ func handleSave() {
 			fields["xAdjValue"] = xValue + spotValue
 			fields["xyValue"] = xValue + yValue
 
-			fields["shortTop"] = shortTop
-			fields["shortBot"] = shortBot
-			fields["longBot"] = longBot
-			fields["longTop"] = longTop
+
 
 			if yPosition.GetPrice() != 0 {
 				yURPnl += yValue * (1.0/yPosition.GetPrice() - 1.0/spread.YDepth.MidPrice) * spread.YDepth.MidPrice
