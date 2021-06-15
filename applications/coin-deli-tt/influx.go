@@ -5,7 +5,6 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
-	"math"
 	"strings"
 	"time"
 )
@@ -49,26 +48,21 @@ func handleSave() {
 			fields["xAdjValue"] = xValue + balanceInUSD
 			fields["xyUnHedgeValue"] = xValue + yValue + balanceInUSD
 
-			expireDate := xyConfig.ExpireDates[ySymbol]
-			expireRatio := float64(-time.Now().Sub(expireDate)) / float64(xyConfig.DeliDuration)
-			if expireRatio < 0 {
-				expireRatio = 0
-			}else if expireRatio > 1 {
-				expireRatio = 1
+			if expireRatio, ok := xyExpireRatios[xSymbol]; ok {
+				fields["expireRatio"] = expireRatio
 			}
-
-			offsetFactor := math.Abs(yValue) / balanceInUSD / xyConfig.EnterTarget
-			offsetStep := xyConfig.EnterStep / xyConfig.EnterTarget
-			shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor*expireRatio
-			shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)*expireRatio
-			longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor*expireRatio
-			longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)*expireRatio
-
-			fields["expireRatio"] = expireRatio
-			fields["shortTop"] = shortTop
-			fields["shortBot"] = shortBot
-			fields["longBot"] = longBot
-			fields["longTop"] = longTop
+			if shortTop, ok := xyShortTops[xSymbol]; ok {
+				fields["shortTop"] = shortTop
+			}
+			if shortBot, ok := xyShortBots[xSymbol]; ok {
+				fields["shortBot"] = shortBot
+			}
+			if longTop, ok := xyLongTops[xSymbol]; ok {
+				fields["longTop"] = longTop
+			}
+			if longBot, ok := xyLongBots[xSymbol]; ok {
+				fields["longBot"] = longBot
+			}
 
 			fields["spreadTime"] = spread.Time.UnixNano()
 			fields["spreadShortLastEnter"] = spread.ShortLastEnter

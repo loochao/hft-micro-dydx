@@ -64,9 +64,16 @@ var xyExchange common.Exchange
 
 var xyTimedPositionChange *common.TimedSum
 
+var xyShortTops = make(map[string]float64)
+var xyShortBots = make(map[string]float64)
+var xyLongBots = make(map[string]float64)
+var xyLongTops = make(map[string]float64)
+var xyEnterSteps = make(map[string]float64)
+var xyExpireRatios = make(map[string]float64)
+
 func init() {
 
-	logger.Debug("####  BUILD @ 20210615 03:33:41  ####")
+	logger.Debug("####  BUILD @ 20210615 03:59:20  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func hedgeSymbol(symbol string) {
+func hedgeSymbol(symbol string, entryStep float64) {
 	position, okPosition := xyPositions[symbol]
 	targetValue, okTargetSize := xyTargetValues[symbol]
 	if !okPosition || !okTargetSize {
@@ -16,7 +16,7 @@ func hedgeSymbol(symbol string) {
 	stepSize := xyStepSizes[symbol]
 	multiplier := xyMultipliers[symbol]
 	sizeDiff := targetValue/multiplier - position.GetSize()
-	if math.Abs(sizeDiff) < 0.8*stepSize {
+	if math.Abs(sizeDiff) < 0.5*entryStep {
 		return
 	}
 	sizeDiff = math.Round(sizeDiff/stepSize) * stepSize
@@ -80,7 +80,9 @@ func updateYPositions() {
 		if xyOrderSilentTimes[ySymbol].Sub(time.Now()).Seconds() > 0 {
 			continue
 		}
-		hedgeSymbol(ySymbol)
+		if entryStep, ok := xyEnterSteps[xSymbol]; ok {
+			hedgeSymbol(ySymbol, entryStep)
+		}
 	}
 }
 
@@ -104,7 +106,9 @@ func updateXPositions() {
 		if xyOrderSilentTimes[xSymbol].Sub(time.Now()).Seconds() > 0 {
 			continue
 		}
-		hedgeSymbol(xSymbol)
+		if entryStep, ok := xyEnterSteps[xSymbol]; ok {
+			hedgeSymbol(xSymbol, entryStep)
+		}
 	}
 }
 
@@ -199,10 +203,10 @@ func updateTargetPositionSizes() {
 		maxYTargetValue := math.Round(spotValue * xyConfig.EnterTarget)
 
 		expireDate := xyConfig.ExpireDates[ySymbol]
-		expireRatio := float64(-time.Now().Sub(expireDate))/float64(xyConfig.DeliDuration)
+		expireRatio := float64(-time.Now().Sub(expireDate)) / float64(xyConfig.DeliDuration)
 		if expireRatio < 0 {
 			expireRatio = 0
-		}else if expireRatio > 1 {
+		} else if expireRatio > 1 {
 			expireRatio = 1
 		}
 
@@ -213,15 +217,23 @@ func updateTargetPositionSizes() {
 		}
 
 		shortTop := xyConfig.ShortEnterDelta + xyConfig.EnterOffsetDelta*offsetFactor*expireRatio
-		shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)*expireRatio
+		shortBot := xyConfig.ShortExitDelta + xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)*expireRatio
 		longBot := xyConfig.LongEnterDelta - xyConfig.EnterOffsetDelta*offsetFactor*expireRatio
-		longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor - offsetStep)*expireRatio
+		longTop := xyConfig.LongExitDelta - xyConfig.ExitOffsetDelta*(offsetFactor-offsetStep)*expireRatio
+
+		entryStep := spotValue * xyConfig.EnterStep
+		xyEnterSteps[xSymbol] = entryStep
+		xyShortTops[xSymbol] = shortTop
+		xyShortBots[xSymbol] = shortBot
+		xyLongBots[xSymbol] = longBot
+		xyLongTops[xSymbol] = longTop
+		xyExpireRatios[xSymbol]= expireRatio
 
 		if spread.ShortLastLeave < shortBot &&
 			spread.ShortMedianLeave < shortBot &&
 			ySize < 0 {
 			//如果y还有仓位，还可以平仓
-			entryValue := math.Round(math.Min(spotValue*xyConfig.EnterStep, yValue))
+			entryValue := math.Round(math.Min(entryStep, yValue))
 			xyTargetValues[ySymbol] += entryValue
 			xyTargetValues[xSymbol] = -spotValue - xyTargetValues[ySymbol]
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
@@ -240,13 +252,13 @@ func updateTargetPositionSizes() {
 				xyTargetValues[xSymbol],
 				xyTargetValues[ySymbol],
 			)
-			hedgeSymbol(xSymbol)
-			hedgeSymbol(ySymbol)
+			hedgeSymbol(xSymbol, entryValue)
+			hedgeSymbol(ySymbol, entryValue)
 		} else if spread.LongLastLeave > longTop &&
 			spread.LongMedianLeave > longTop &&
 			ySize > 0 {
 
-			entryValue := math.Round(math.Min(spotValue*xyConfig.EnterStep, yValue))
+			entryValue := math.Round(math.Min(entryStep, yValue))
 			xyTargetValues[ySymbol] -= entryValue
 			xyTargetValues[xSymbol] = -spotValue - xyTargetValues[ySymbol]
 			xyTargetPositionUpdateSilentTimes[xSymbol] = time.Now().Add(xyConfig.EnterSilent)
@@ -265,12 +277,12 @@ func updateTargetPositionSizes() {
 				xyTargetValues[xSymbol],
 				xyTargetValues[ySymbol],
 			)
-			hedgeSymbol(xSymbol)
-			hedgeSymbol(ySymbol)
+			hedgeSymbol(xSymbol, entryValue)
+			hedgeSymbol(ySymbol, entryValue)
 		} else if spread.ShortLastEnter > shortTop &&
 			spread.ShortMedianEnter > shortTop &&
 			ySize <= 0 {
-			targetYValue := yValue + math.Max(math.Round(spotValue*xyConfig.EnterStep), common.MergedStepSize(xMultiplier, yMultiplier))
+			targetYValue := yValue + math.Max(entryStep, common.MergedStepSize(xMultiplier, yMultiplier))
 			if targetYValue > maxYTargetValue {
 				targetYValue = maxYTargetValue
 			}
@@ -293,13 +305,13 @@ func updateTargetPositionSizes() {
 				xyTargetValues[xSymbol],
 				xyTargetValues[ySymbol],
 			)
-			hedgeSymbol(xSymbol)
-			hedgeSymbol(ySymbol)
+			hedgeSymbol(xSymbol, entryValue)
+			hedgeSymbol(ySymbol, entryValue)
 		} else if spread.LongLastEnter < longBot &&
 			spread.LongMedianEnter < longBot &&
 			ySize >= 0 {
 
-			targetYValue := yValue + math.Max(math.Round(spotValue*xyConfig.EnterStep), common.MergedStepSize(xMultiplier, yMultiplier))
+			targetYValue := yValue + math.Max(entryStep, common.MergedStepSize(xMultiplier, yMultiplier))
 			if targetYValue > maxYTargetValue {
 				targetYValue = maxYTargetValue
 			}
@@ -322,8 +334,8 @@ func updateTargetPositionSizes() {
 				xyTargetValues[xSymbol],
 				xyTargetValues[ySymbol],
 			)
-			hedgeSymbol(xSymbol)
-			hedgeSymbol(ySymbol)
+			hedgeSymbol(xSymbol, entryValue)
+			hedgeSymbol(ySymbol, entryValue)
 		}
 	}
 }
