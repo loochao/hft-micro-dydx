@@ -413,7 +413,7 @@ func (strat *XYStrategy) changeXPosition() {
 	if !strat.params.dryRun {
 		select {
 		case strat.xOrderRequestCh <- common.OrderRequest{
-			New: &strat.xNewOrderParam ,
+			New: &strat.xNewOrderParam,
 		}:
 			strat.xOrderSilentTime = time.Now().Add(strat.params.orderSilent)
 			strat.xPositionUpdateTime = time.Unix(0, 0)
@@ -663,7 +663,11 @@ func (strat *XYStrategy) updateTarget() {
 	strat.longTop = strat.params.longExitDelta - strat.params.exitOffsetDelta*strat.offsetFactor
 	if time.Now().Sub(strat.logSilentTime) > 0 {
 		strat.logSilentTime = time.Now().Add(strat.params.logInterval)
-		logger.Debugf("%s enterTarget %f enterStep %f offsetFactor %f", strat.xSymbol, strat.enterTarget, strat.enterStep, strat.offsetFactor)
+		logger.Debugf(
+			"%s enterTarget %f enterStep %f offsetFactor %f xTargetSpotSize %f yTargetSpotSize %f",
+			strat.xSymbol, strat.enterTarget, strat.enterStep, strat.offsetFactor,
+			*strat.xTargetSpotSize, *strat.yTargetSpotSize,
+		)
 	}
 
 	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
