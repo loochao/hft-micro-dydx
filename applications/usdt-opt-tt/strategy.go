@@ -172,7 +172,7 @@ func startXYStrategy(
 		xOrderError:                      common.OrderError{},
 		yOrderError:                      common.OrderError{},
 		xyTargetSpotSizeUpdateSilentTime: time.Time{},
-		entryStep:                        0,
+		enterStep:                        0,
 		enterTarget:                      0,
 		usdtAvailable:                    0,
 		logSilentTime:                    time.Time{},
@@ -457,11 +457,11 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 	if strat.xAccount == nil || strat.yAccount == nil {
 		return
 	}
-	strat.entryStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.params.enterFreePct
-	if strat.entryStep < strat.params.enterMinimalStep {
-		strat.entryStep = strat.params.enterMinimalStep
+	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.params.enterFreePct
+	if strat.enterStep < strat.params.enterMinimalStep {
+		strat.enterStep = strat.params.enterMinimalStep
 	}
-	strat.enterTarget = strat.entryStep * strat.params.enterTargetFactor
+	strat.enterTarget = strat.enterStep * strat.params.enterTargetFactor
 	strat.usdtAvailable = math.Min(strat.xAccount.GetFree()*strat.params.xLeverage, strat.yAccount.GetFree()*strat.params.yLeverage)
 }
 
@@ -661,7 +661,10 @@ func (strat *XYStrategy) updateTarget() {
 	strat.shortBot = strat.params.shortExitDelta + strat.params.exitOffsetDelta*strat.offsetFactor
 	strat.longBot = strat.params.longEnterDelta - strat.params.enterOffsetDelta*strat.offsetFactor
 	strat.longTop = strat.params.longExitDelta - strat.params.exitOffsetDelta*strat.offsetFactor
-	logger.Debugf("%s enterTarget %f enterStep %f offsetFactor %f", strat.xSymbol, strat.enterTarget, strat.offsetFactor)
+	if time.Now().Sub(strat.logSilentTime) > 0 {
+		strat.logSilentTime = time.Now().Add(strat.params.logInterval)
+		logger.Debugf("%s enterTarget %f enterStep %f offsetFactor %f", strat.xSymbol, strat.enterTarget, strat.enterStep, strat.offsetFactor)
+	}
 
 	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
 	if strat.spread.ShortLastLeave < strat.shortBot &&
@@ -669,9 +672,9 @@ func (strat *XYStrategy) updateTarget() {
 		*strat.xyFundingRate < strat.params.minimalKeepFundingRate &&
 		strat.xSize >= strat.params.xStepSize {
 
-		strat.enterValue = math.Min(4*strat.entryStep, math.Min(strat.xAbsValue, strat.yAbsValue))
+		strat.enterValue = math.Min(4*strat.enterStep, math.Min(strat.xAbsValue, strat.yAbsValue))
 		if *strat.xyFundingRate > strat.params.minimalKeepFundingRate*0.5 {
-			strat.enterValue = math.Min(2*strat.entryStep, math.Min(strat.xAbsValue, strat.yAbsValue))
+			strat.enterValue = math.Min(2*strat.enterStep, math.Min(strat.xAbsValue, strat.yAbsValue))
 		}
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Round(strat.size/strat.params.xyMergedSpotStepSize) * strat.params.xyMergedSpotStepSize
@@ -718,9 +721,9 @@ func (strat *XYStrategy) updateTarget() {
 		*strat.xyFundingRate > -strat.params.minimalKeepFundingRate &&
 		strat.xSize <= -strat.params.xStepSize {
 
-		strat.enterValue = math.Min(4*strat.entryStep, math.Min(strat.xAbsValue, strat.yAbsValue))
+		strat.enterValue = math.Min(4*strat.enterStep, math.Min(strat.xAbsValue, strat.yAbsValue))
 		if *strat.xyFundingRate < -strat.params.minimalKeepFundingRate*0.5 {
-			strat.enterValue = math.Min(2*strat.entryStep, math.Min(strat.xAbsValue, strat.yAbsValue))
+			strat.enterValue = math.Min(2*strat.enterStep, math.Min(strat.xAbsValue, strat.yAbsValue))
 		}
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Round(strat.size/strat.params.xyMergedSpotStepSize) * strat.params.xyMergedSpotStepSize
@@ -766,7 +769,7 @@ func (strat *XYStrategy) updateTarget() {
 		*strat.xyFundingRate > strat.params.minimalEnterFundingRate &&
 		strat.xSize >= 0 {
 
-		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.entryStep
+		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
 			strat.targetValue = strat.enterTarget
 		}
@@ -837,7 +840,7 @@ func (strat *XYStrategy) updateTarget() {
 		*strat.xyFundingRate < -strat.params.minimalEnterFundingRate &&
 		strat.xSize <= 0 {
 
-		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.entryStep
+		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
 			strat.targetValue = strat.enterTarget
 		}
