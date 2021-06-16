@@ -717,8 +717,8 @@ func (strat *XYStrategy) updateTarget() {
 			strat.spread.ShortLastLeave, strat.shortBot,
 			strat.spread.ShortMedianLeave, strat.shortBot,
 			strat.size,
-			strat.xTargetSpotSize,
-			strat.yTargetSpotSize,
+			*strat.xTargetSpotSize,
+			*strat.yTargetSpotSize,
 		)
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
@@ -764,8 +764,8 @@ func (strat *XYStrategy) updateTarget() {
 			strat.spread.LongLastLeave, strat.longTop,
 			strat.spread.LongMedianLeave, strat.longTop,
 			strat.size,
-			strat.xTargetSpotSize,
-			strat.yTargetSpotSize,
+			*strat.xTargetSpotSize,
+			*strat.yTargetSpotSize,
 		)
 	} else if !strat.params.isYSpot &&
 		strat.spread.ShortLastEnter > strat.shortTop &&

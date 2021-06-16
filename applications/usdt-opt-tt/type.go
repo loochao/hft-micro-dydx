@@ -89,6 +89,8 @@ type XYParams struct {
 	xLeverage float64
 	yLeverage float64
 }
+
+
 type XYStrategy struct {
 	xExchange common.Exchange
 	yExchange common.Exchange
