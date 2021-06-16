@@ -638,7 +638,7 @@ func (bn *BinanceUsdtFuture) submitOrder(ctx context.Context, param common.NewOr
 		newOrderParam.Price = math.Round(param.Price/tickSize) * tickSize
 	}
 	newOrderParam.NewClientOrderId = param.ClientID
-	fmt.Print("binance-usdtfuture-submit-order\n")
+	logger.Debugf("%s SubmitOrder", newOrderParam.Symbol)
 	order, err := bn.api.SubmitOrder(ctx, newOrderParam)
 	if err != nil {
 		select {
