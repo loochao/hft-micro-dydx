@@ -654,6 +654,17 @@ func (strat *XYStrategy) updateTarget() {
 	strat.ySize = strat.yPosition.GetSize() * strat.params.yMultiplier
 	strat.xValue = strat.xSize * strat.xWalkedDepth.MidPrice
 	strat.yValue = strat.ySize * strat.yWalkedDepth.MidPrice
+	if math.Abs(strat.xValue+strat.yValue) > strat.enterStep*0.8 {
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
+			logger.Debugf(
+				"%s %s unhedged value %f > 0.8*enterStep %f",
+				strat.xSymbol,strat.ySymbol, math.Abs(strat.xValue+strat.yValue), strat.enterStep*0.8,
+			)
+		}
+		strat.updateTargetByPosition()
+		return
+	}
 	strat.xAbsValue = math.Abs(strat.xValue)
 	strat.yAbsValue = math.Abs(strat.yValue)
 	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
