@@ -642,7 +642,7 @@ func (k *KucoinUsdtFuture) submitOrder(ctx context.Context, param common.NewOrde
 	k.mu.Lock()
 	newOrderParam.Leverage = int(k.settings.Leverage)
 	k.mu.Unlock()
-	fmt.Print("binance-usdtfuture-submit-order\n")
+	fmt.Print("kucoin-usdtfuture-submit-order\n")
 	_, err := k.api.SubmitOrder(ctx, newOrderParam)
 	if err != nil {
 		select {

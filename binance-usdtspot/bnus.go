@@ -581,6 +581,7 @@ func (bn *BinanceUsdtSpot) submitOrder(ctx context.Context, param common.NewOrde
 		newOrderParam.Price = math.Round(param.Price/tickSize) * tickSize
 	}
 	newOrderParam.NewClientOrderID = param.ClientID
+	fmt.Print("binance-usdtspot-submit-order\n")
 	order, _, err := bn.api.SubmitOrder(ctx, newOrderParam)
 	if err != nil {
 		select {
