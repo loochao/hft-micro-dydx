@@ -91,7 +91,6 @@ type XYParams struct {
 	yLeverage float64
 }
 
-
 type XYStrategy struct {
 	xExchange common.Exchange
 	yExchange common.Exchange
@@ -154,12 +153,13 @@ type XYStrategy struct {
 	enterTarget                      float64
 	usdtAvailable                    float64
 
-	logSilentTime   time.Time
-	xWalkDepthTimer *time.Timer
-	yWalkDepthTimer *time.Timer
-	saveTimer       *time.Timer
-	spreadTime      time.Time
-	spread          *XYSpread
+	logSilentTime       time.Time
+	xWalkDepthTimer     *time.Timer
+	yWalkDepthTimer     *time.Timer
+	saveTimer           *time.Timer
+	realisedSpreadTimer *time.Timer
+	spreadTime          time.Time
+	spread              *XYSpread
 
 	shortEnterTimedMedian *common.TimedMedian
 	longEnterTimedMedian  *common.TimedMedian
@@ -184,7 +184,7 @@ type XYStrategy struct {
 	ySizeDiff float64
 
 	offsetFactor   float64
-	offsetStep float64
+	offsetStep     float64
 	shortTop       float64
 	shortBot       float64
 	longBot        float64

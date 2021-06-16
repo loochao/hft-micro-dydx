@@ -32,34 +32,19 @@ func (strat *XYStrategy) handleXOrder() {
 			strat.xPositionUpdateTime = time.Unix(0, 0)
 		} else {
 			logger.Debugf("x order filled %s %s %s size %f price %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice())
+			strat.realisedSpreadTimer.Reset(time.Second*5)
 			if strat.xOrder.GetSide() == common.OrderSideBuy {
-				strat.xLastFilledBuyPrice = new(float64)
+				if strat.xLastFilledBuyPrice == nil {
+					strat.xLastFilledBuyPrice = new(float64)
+				}
 				*strat.xLastFilledBuyPrice = strat.xOrder.GetFilledPrice()
-				if strat.yLastFilledSellPrice != nil {
-					if strat.realisedSpread == nil {
-						strat.realisedSpread = new(float64)
-					}
-					*strat.realisedSpread = (*strat.yLastFilledSellPrice - *strat.xLastFilledBuyPrice) / *strat.yLastFilledSellPrice
-					strat.xLastFilledBuyPrice = nil
-					strat.yLastFilledBuyPrice = nil
-					strat.xLastFilledSellPrice = nil
-					strat.yLastFilledSellPrice = nil
-					logger.Debugf("%s - %s realised short spread %f", strat.xSymbol, strat.ySymbol, *strat.realisedSpread)
-				}
+				strat.realisedSpreadTimer.Reset(time.Second*5)
 			} else if strat.xOrder.GetSide() == common.OrderSideSell {
-				strat.xLastFilledSellPrice = new(float64)
-				*strat.xLastFilledSellPrice = strat.xOrder.GetFilledPrice()
-				if strat.yLastFilledBuyPrice != nil {
-					if strat.realisedSpread == nil {
-						strat.realisedSpread = new(float64)
-					}
-					*strat.realisedSpread = (*strat.yLastFilledBuyPrice - *strat.xLastFilledSellPrice) / *strat.yLastFilledBuyPrice
-					strat.xLastFilledBuyPrice = nil
-					strat.yLastFilledBuyPrice = nil
-					strat.xLastFilledSellPrice = nil
-					strat.yLastFilledSellPrice = nil
-					logger.Debugf("%s - %s realised long spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
+				if strat.xLastFilledSellPrice == nil {
+					strat.xLastFilledSellPrice = new(float64)
 				}
+				*strat.xLastFilledSellPrice = strat.xOrder.GetFilledPrice()
+				strat.realisedSpreadTimer.Reset(time.Second*5)
 			}
 		}
 	}
@@ -80,35 +65,43 @@ func (strat *XYStrategy) handleYOrder() {
 		} else {
 			logger.Debugf("y order filled %s %s %s size %f price %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice())
 			if strat.yOrder.GetSide() == common.OrderSideBuy {
-				strat.yLastFilledBuyPrice = new(float64)
+				if strat.yLastFilledBuyPrice == nil {
+					strat.yLastFilledBuyPrice = new(float64)
+				}
 				*strat.yLastFilledBuyPrice = strat.yOrder.GetFilledPrice()
-				if strat.xLastFilledSellPrice != nil {
-					if strat.realisedSpread == nil {
-						strat.realisedSpread = new(float64)
-					}
-					*strat.realisedSpread = (*strat.yLastFilledBuyPrice - *strat.xLastFilledSellPrice) / *strat.yLastFilledBuyPrice
-					logger.Debugf("%s - %s realised long spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
-					strat.xLastFilledBuyPrice = nil
-					strat.yLastFilledBuyPrice = nil
-					strat.xLastFilledSellPrice = nil
-					strat.yLastFilledSellPrice = nil
-				}
+				strat.realisedSpreadTimer.Reset(time.Second*5)
 			} else if strat.yOrder.GetSide() == common.OrderSideSell {
-				strat.yLastFilledSellPrice = new(float64)
-				*strat.yLastFilledSellPrice = strat.yOrder.GetFilledPrice()
-				if strat.xLastFilledSellPrice != nil {
-					if strat.realisedSpread == nil {
-						strat.realisedSpread = new(float64)
-					}
-					*strat.realisedSpread = (*strat.yLastFilledSellPrice - *strat.xLastFilledBuyPrice)/ *strat.yLastFilledSellPrice
-					logger.Debugf("%s - %s realised short spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
-					strat.xLastFilledBuyPrice = nil
-					strat.yLastFilledBuyPrice = nil
-					strat.xLastFilledSellPrice = nil
-					strat.yLastFilledSellPrice = nil
+				if strat.yLastFilledSellPrice == nil {
+					strat.yLastFilledSellPrice = new(float64)
 				}
+				*strat.yLastFilledSellPrice = strat.yOrder.GetFilledPrice()
+				strat.realisedSpreadTimer.Reset(time.Second*5)
 			}
 		}
+	}
+}
+
+func (strat *XYStrategy) handleRealisedSpread() {
+	if strat.xLastFilledBuyPrice != nil && strat.yLastFilledSellPrice != nil {
+		if strat.realisedSpread == nil {
+			strat.realisedSpread = new(float64)
+		}
+		*strat.realisedSpread = (*strat.yLastFilledSellPrice - *strat.xLastFilledBuyPrice) / *strat.yLastFilledSellPrice
+		strat.xLastFilledBuyPrice = nil
+		strat.yLastFilledBuyPrice = nil
+		strat.xLastFilledSellPrice = nil
+		strat.yLastFilledSellPrice = nil
+		logger.Debugf("%s - %s realised short spread %f", strat.xSymbol, strat.ySymbol, *strat.realisedSpread)
+	} else if strat.xLastFilledSellPrice != nil && strat.yLastFilledBuyPrice != nil {
+		if strat.realisedSpread == nil {
+			strat.realisedSpread = new(float64)
+		}
+		*strat.realisedSpread = (*strat.yLastFilledBuyPrice - *strat.xLastFilledSellPrice) / *strat.yLastFilledBuyPrice
+		strat.xLastFilledBuyPrice = nil
+		strat.yLastFilledBuyPrice = nil
+		strat.xLastFilledSellPrice = nil
+		strat.yLastFilledSellPrice = nil
+		logger.Debugf("%s - %s realised long spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
 	}
 }
 

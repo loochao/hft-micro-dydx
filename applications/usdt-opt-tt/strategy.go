@@ -179,6 +179,7 @@ func startXYStrategy(
 		logSilentTime:                    time.Time{},
 		xWalkDepthTimer:                  time.NewTimer(time.Hour * 9999),
 		yWalkDepthTimer:                  time.NewTimer(time.Hour * 9999),
+		realisedSpreadTimer:              time.NewTimer(time.Hour * 9999),
 		saveTimer:                        time.NewTimer(params.saveInterval),
 		spreadTime:                       time.Time{},
 		spread:                           nil,
@@ -659,7 +660,7 @@ func (strat *XYStrategy) updateTarget() {
 			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
 			logger.Debugf(
 				"%s %s unhedged value %f > 0.8*enterStep %f",
-				strat.xSymbol,strat.ySymbol, math.Abs(strat.xValue+strat.yValue), strat.enterStep*0.8,
+				strat.xSymbol, strat.ySymbol, math.Abs(strat.xValue+strat.yValue), strat.enterStep*0.8,
 			)
 		}
 		strat.updateTargetByPosition()
