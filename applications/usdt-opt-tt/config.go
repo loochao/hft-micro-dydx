@@ -41,6 +41,7 @@ type Config struct {
 	DepthReportCount    int           `yaml:"depthReportCount"`
 	SpreadTimeToLive    time.Duration `yaml:"spreadTimeToLive"`
 	SpreadLookback      time.Duration `yaml:"spreadLookback"`
+	SpreadMinDepthCount int           `yaml:"spreadMinDepthCount"`
 	BatchSize           int           `yaml:"batchSize"`
 
 	StartValue        float64            `yaml:"startValue"`

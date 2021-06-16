@@ -57,6 +57,7 @@ type XYParams struct {
 	depthReportCount    int
 	spreadLookback      time.Duration
 	spreadTimeToLive    time.Duration
+	spreadMinDepthCount int
 
 	enterTargetFactor       float64
 	enterMinimalStep        float64

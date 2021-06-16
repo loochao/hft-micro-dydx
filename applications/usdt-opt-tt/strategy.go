@@ -44,6 +44,7 @@ func startXYStrategy(
 		depthMaxAgeDiffBias:     config.DepthMaxAgeDiffBias,
 		depthReportCount:        config.DepthReportCount,
 		spreadLookback:          config.SpreadLookback,
+		spreadMinDepthCount:     config.SpreadMinDepthCount,
 		spreadTimeToLive:        config.SpreadTimeToLive,
 		enterTargetFactor:       config.EnterTargetFactor,
 		enterMinimalStep:        config.EnterMinimalStep,
@@ -493,7 +494,7 @@ func (strat *XYStrategy) walkSpread() {
 	strat.shortEnterTimedMedian.Insert(strat.spreadTime, strat.shortLastEnter)
 	strat.longEnterTimedMedian.Insert(strat.spreadTime, strat.longLastEnter)
 
-	if strat.shortEnterTimedMedian.Len() < 2 {
+	if strat.shortEnterTimedMedian.Len() < strat.params.spreadMinDepthCount {
 		return
 	}
 	if strat.shortEnterTimedMedian.Range() < strat.params.spreadLookback/2 {
@@ -659,9 +660,9 @@ func (strat *XYStrategy) updateTarget() {
 	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
 
 	strat.shortTop = strat.params.shortEnterDelta + strat.params.enterOffsetDelta*strat.offsetFactor
-	strat.shortBot = strat.params.shortExitDelta + strat.params.exitOffsetDelta*(strat.offsetFactor - strat.offsetStep)
+	strat.shortBot = strat.params.shortExitDelta + strat.params.exitOffsetDelta*(strat.offsetFactor-strat.offsetStep)
 	strat.longBot = strat.params.longEnterDelta - strat.params.enterOffsetDelta*strat.offsetFactor
-	strat.longTop = strat.params.longExitDelta - strat.params.exitOffsetDelta*(strat.offsetFactor - strat.offsetStep)
+	strat.longTop = strat.params.longExitDelta - strat.params.exitOffsetDelta*(strat.offsetFactor-strat.offsetStep)
 	//if time.Now().Sub(strat.logSilentTime) > 0 {
 	//	strat.logSilentTime = time.Now().Add(strat.params.logInterval)
 	//	logger.Debugf(
