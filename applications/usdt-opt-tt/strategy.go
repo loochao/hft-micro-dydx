@@ -224,6 +224,7 @@ func startXYStrategy(
 func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.xWalkDepthTimer.Stop()
 	defer strat.yWalkDepthTimer.Stop()
+	defer strat.realisedSpreadTimer.Stop()
 	defer strat.saveTimer.Stop()
 	var nextXPos, nextYPos common.Position
 	for {
@@ -283,6 +284,9 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			break
 		case strat.yDepth = <-strat.yDepthCh:
 			strat.handleYDepth()
+			break
+		case <-strat.realisedSpreadTimer.C:
+			strat.handleRealisedSpread()
 			break
 		}
 	}
