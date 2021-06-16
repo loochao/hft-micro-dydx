@@ -130,9 +130,9 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 		settings.Proxy,
 	)
 	go k.systemStatusLoop(ctx, statusCh)
-	httpPositionsCh := make(chan map[string]Position)
+	httpPositionsCh := make(chan map[string]Position, 128)
 	go k.positionsLoop(ctx, symbols, httpPositionsCh)
-	httpAccountCh := make(chan Account, 100)
+	httpAccountCh := make(chan Account, 128)
 	go k.accountLoop(ctx, httpAccountCh)
 	logSilentTime := time.Now()
 	restartResetTimer := time.NewTimer(time.Hour * 9999)
