@@ -656,11 +656,12 @@ func (strat *XYStrategy) updateTarget() {
 	strat.xAbsValue = math.Abs(strat.xValue)
 	strat.yAbsValue = math.Abs(strat.yValue)
 	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
+	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
 
 	strat.shortTop = strat.params.shortEnterDelta + strat.params.enterOffsetDelta*strat.offsetFactor
-	strat.shortBot = strat.params.shortExitDelta + strat.params.exitOffsetDelta*strat.offsetFactor
+	strat.shortBot = strat.params.shortExitDelta + strat.params.exitOffsetDelta*(strat.offsetFactor - strat.offsetStep)
 	strat.longBot = strat.params.longEnterDelta - strat.params.enterOffsetDelta*strat.offsetFactor
-	strat.longTop = strat.params.longExitDelta - strat.params.exitOffsetDelta*strat.offsetFactor
+	strat.longTop = strat.params.longExitDelta - strat.params.exitOffsetDelta*(strat.offsetFactor - strat.offsetStep)
 	//if time.Now().Sub(strat.logSilentTime) > 0 {
 	//	strat.logSilentTime = time.Now().Add(strat.params.logInterval)
 	//	logger.Debugf(

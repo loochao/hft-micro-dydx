@@ -183,6 +183,7 @@ type XYStrategy struct {
 	ySizeDiff float64
 
 	offsetFactor   float64
+	offsetStep float64
 	shortTop       float64
 	shortBot       float64
 	longBot        float64
