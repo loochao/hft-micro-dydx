@@ -896,8 +896,8 @@ func (strat *XYStrategy) updateTarget() {
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
 			strat.size,
-			strat.xTargetSpotSize,
-			strat.yTargetSpotSize,
+			*strat.xTargetSpotSize,
+			*strat.yTargetSpotSize,
 		)
 	}
 }
