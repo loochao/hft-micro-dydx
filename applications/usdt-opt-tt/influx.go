@@ -54,7 +54,7 @@ func handleSave(
 			fields["xValue"] = st.xValue
 			fields["ySize"] = st.ySize
 			fields["yAbsValue"] = st.xAbsValue
-			fields["yValue"] = st.xValue
+			fields["yValue"] = st.yValue
 			fields["xyValue"] = st.xValue + st.yValue
 			totalURPnl += st.xValue + st.yValue
 			fields["shortTop"] = st.shortTop

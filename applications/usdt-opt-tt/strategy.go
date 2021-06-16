@@ -813,7 +813,7 @@ func (strat *XYStrategy) updateTarget() {
 			return
 		}
 		//谁大以谁为准
-		if strat.xValue >= strat.yValue {
+		if strat.xAbsValue >= strat.yAbsValue {
 			*strat.xTargetSpotSize += strat.size
 			*strat.yTargetSpotSize = -*strat.xTargetSpotSize
 		} else {
@@ -883,7 +883,7 @@ func (strat *XYStrategy) updateTarget() {
 			return
 		}
 		//谁大以谁为准
-		if strat.xValue >= strat.yValue {
+		if strat.xAbsValue >= strat.yAbsValue {
 			*strat.xTargetSpotSize -= strat.size
 			*strat.yTargetSpotSize = -*strat.xTargetSpotSize
 		} else {
