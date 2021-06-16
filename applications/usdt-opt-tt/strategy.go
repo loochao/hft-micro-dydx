@@ -661,14 +661,14 @@ func (strat *XYStrategy) updateTarget() {
 	strat.shortBot = strat.params.shortExitDelta + strat.params.exitOffsetDelta*strat.offsetFactor
 	strat.longBot = strat.params.longEnterDelta - strat.params.enterOffsetDelta*strat.offsetFactor
 	strat.longTop = strat.params.longExitDelta - strat.params.exitOffsetDelta*strat.offsetFactor
-	if time.Now().Sub(strat.logSilentTime) > 0 {
-		strat.logSilentTime = time.Now().Add(strat.params.logInterval)
-		logger.Debugf(
-			"%s enterTarget %f enterStep %f offsetFactor %f xTargetSpotSize %f yTargetSpotSize %f",
-			strat.xSymbol, strat.enterTarget, strat.enterStep, strat.offsetFactor,
-			*strat.xTargetSpotSize, *strat.yTargetSpotSize,
-		)
-	}
+	//if time.Now().Sub(strat.logSilentTime) > 0 {
+	//	strat.logSilentTime = time.Now().Add(strat.params.logInterval)
+	//	logger.Debugf(
+	//		"%s enterTarget %f enterStep %f offsetFactor %f xTargetSpotSize %f yTargetSpotSize %f",
+	//		strat.xSymbol, strat.enterTarget, strat.enterStep, strat.offsetFactor,
+	//		*strat.xTargetSpotSize, *strat.yTargetSpotSize,
+	//	)
+	//}
 
 	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
 	if strat.spread.ShortLastLeave < strat.shortBot &&

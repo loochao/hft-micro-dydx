@@ -61,6 +61,12 @@ func handleSave(
 			fields["shortBot"] = st.shortBot
 			fields["longBot"] = st.longBot
 			fields["longTop"] = st.longTop
+			fields["xTargetSpotSize"] = *st.xTargetSpotSize
+			fields["yTargetSpotSize"] = *st.yTargetSpotSize
+			fields["enterTarget"] = st.enterTarget
+			fields["enterStep"] = st.enterStep
+			fields["enterValue"] = st.enterValue
+			fields["offsetFactor"] = st.offsetFactor
 
 			if st.xPosition.GetPrice() != 0 {
 				xURPnl += st.xValue * (st.xWalkedDepth.MidPrice - st.xPosition.GetPrice())
