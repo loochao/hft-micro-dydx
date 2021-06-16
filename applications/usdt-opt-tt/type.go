@@ -148,7 +148,7 @@ type XYStrategy struct {
 	yTargetSpotSize                  *float64
 	xyTargetSpotSizeUpdateSilentTime time.Time
 	entryStep                        float64
-	entryTarget                      float64
+	enterTarget                      float64
 	usdtAvailable                    float64
 
 	logSilentTime   time.Time

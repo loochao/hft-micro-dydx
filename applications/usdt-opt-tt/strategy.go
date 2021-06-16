@@ -48,7 +48,7 @@ func startXYStrategy(
 		enterTargetFactor:       config.EnterTargetFactor,
 		enterMinimalStep:        config.EnterMinimalStep,
 		enterFreePct:            config.EnterFreePct,
-		longEnterDelta:          config.LongExitDelta,
+		longEnterDelta:          config.LongEnterDelta,
 		longExitDelta:           config.LongExitDelta,
 		shortEnterDelta:         config.ShortEnterDelta,
 		shortExitDelta:          config.ShortExitDelta,
@@ -173,7 +173,7 @@ func startXYStrategy(
 		yOrderError:                      common.OrderError{},
 		xyTargetSpotSizeUpdateSilentTime: time.Time{},
 		entryStep:                        0,
-		entryTarget:                      0,
+		enterTarget:                      0,
 		usdtAvailable:                    0,
 		logSilentTime:                    time.Time{},
 		xWalkDepthTimer:                  time.NewTimer(time.Hour * 9999),
@@ -461,7 +461,7 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 	if strat.entryStep < strat.params.enterMinimalStep {
 		strat.entryStep = strat.params.enterMinimalStep
 	}
-	strat.entryTarget = strat.entryStep * strat.params.enterTargetFactor
+	strat.enterTarget = strat.entryStep * strat.params.enterTargetFactor
 	strat.usdtAvailable = math.Min(strat.xAccount.GetFree()*strat.params.xLeverage, strat.yAccount.GetFree()*strat.params.yLeverage)
 }
 
@@ -655,11 +655,13 @@ func (strat *XYStrategy) updateTarget() {
 	strat.yValue = strat.ySize * strat.yWalkedDepth.MidPrice
 	strat.xAbsValue = math.Abs(strat.xValue)
 	strat.yAbsValue = math.Abs(strat.yValue)
-	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.entryTarget
+	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
+
 	strat.shortTop = strat.params.shortEnterDelta + strat.params.enterOffsetDelta*strat.offsetFactor
 	strat.shortBot = strat.params.shortExitDelta + strat.params.exitOffsetDelta*strat.offsetFactor
 	strat.longBot = strat.params.longEnterDelta - strat.params.enterOffsetDelta*strat.offsetFactor
 	strat.longTop = strat.params.longExitDelta - strat.params.exitOffsetDelta*strat.offsetFactor
+	logger.Debugf("%s enterTarget %f enterStep %f offsetFactor %f", strat.xSymbol, strat.enterTarget, strat.offsetFactor)
 
 	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
 	if strat.spread.ShortLastLeave < strat.shortBot &&
@@ -765,8 +767,8 @@ func (strat *XYStrategy) updateTarget() {
 		strat.xSize >= 0 {
 
 		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.entryStep
-		if strat.targetValue > strat.entryTarget {
-			strat.targetValue = strat.entryTarget
+		if strat.targetValue > strat.enterTarget {
+			strat.targetValue = strat.enterTarget
 		}
 		strat.enterValue = strat.targetValue - math.Max(strat.xAbsValue, strat.yAbsValue)
 		strat.size = strat.enterValue / strat.midPrice
@@ -836,8 +838,8 @@ func (strat *XYStrategy) updateTarget() {
 		strat.xSize <= 0 {
 
 		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.entryStep
-		if strat.targetValue > strat.entryTarget {
-			strat.targetValue = strat.entryTarget
+		if strat.targetValue > strat.enterTarget {
+			strat.targetValue = strat.enterTarget
 		}
 		strat.enterValue = strat.targetValue - math.Max(strat.xAbsValue, strat.yAbsValue)
 		strat.size = strat.enterValue / strat.midPrice
