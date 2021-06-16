@@ -10,12 +10,13 @@ import (
 
 func TestNewDepth5WS(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute*5)
-	symbols := []string{"BTCUSDT", "LINKUSDT", "WAVESUSDT"}
+	symbols := []string{"SCUSDT","BTCUSDT", "LINKUSDT", "WAVESUSDT"}
 	proxy := "socks5://127.0.0.1:1080"
 
+	ch := make(chan common.Depth, 100)
 	channels := make(map[string]chan common.Depth)
-	for _, symbol := range symbols {
-		channels[symbol] = make(chan common.Depth, 100)
+	for _, symbol := range symbols[:] {
+		channels[symbol] = ch
 	}
 
 	ws := NewDepth5WS(ctx, proxy, channels)
@@ -25,14 +26,7 @@ func TestNewDepth5WS(t *testing.T) {
 			return
 		case <-ws.Done():
 			return
-		case msg := <-channels[symbols[0]]:
-			//_ = msg
-			logger.Debugf("%v", msg)
-		case msg := <-channels[symbols[1]]:
-			//_ = msg
-			logger.Debugf("%v", msg)
-		case msg := <-channels[symbols[2]]:
-			//_ = msg
+		case msg := <-ch:
 			logger.Debugf("%v", msg)
 		}
 	}

@@ -10,11 +10,11 @@ import (
 
 func TestNewDepth5Ws(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute*5)
-	symbols := []string{"BTCUSDT", "ETHUSDT", "FLMUSDT", "BLZUSDT", "TRXUSDT", "EOSUSDT"}
+	symbols := []string{"SCUSDT","BTCUSDT", "ETHUSDT", "FLMUSDT", "BLZUSDT", "TRXUSDT", "EOSUSDT"}
 	proxy := "socks5://127.0.0.1:1081"
 	channels := make(map[string]chan common.Depth)
 	ch := make(chan common.Depth)
-	for _, symbol := range symbols {
+	for _, symbol := range symbols[:1] {
 		channels[symbol] = ch
 	}
 	ws := NewDepth5WS(ctx, proxy, channels)
