@@ -272,7 +272,7 @@ func (w *Depth20WS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *Depth20WS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Depth) {
+func (w *Depth20WS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan<- common.Depth) {
 	logSilentTime := time.Now()
 	depth20 := &Depth20{Symbol: symbol}
 	var err error

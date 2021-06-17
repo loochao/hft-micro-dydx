@@ -36,13 +36,13 @@ type Exchange interface {
 
 	StreamBasic(ctx context.Context, statusCh chan SystemStatus, balanceChMap map[string]chan Balance, positionChMap map[string]chan Position, orderCh map[string]chan Order, )
 	StreamSymbolStatus(ctx context.Context, channels map[string]chan SymbolStatusMsg, batchSize int)
-	StreamDepth(ctx context.Context, channels map[string]chan<- Depth, batchSize int)
-	StreamTrade(ctx context.Context, channels map[string]chan<- Trade, batchSize int)
-	StreamTicker(ctx context.Context, channels map[string]chan<- Ticker, batchSize int)
-	StreamKLine(ctx context.Context, channels map[string]chan<- []KLine, batchSize int, interval, lookback time.Duration)
+	StreamDepth(ctx context.Context, channels map[string]chan Depth, batchSize int)
+	StreamTrade(ctx context.Context, channels map[string]chan Trade, batchSize int)
+	StreamTicker(ctx context.Context, channels map[string]chan Ticker, batchSize int)
+	StreamKLine(ctx context.Context, channels map[string]chan []KLine, batchSize int, interval, lookback time.Duration)
 	StreamFundingRate(ctx context.Context, channels map[string]chan FundingRate, batchSize int)
 
-	WatchOrders(ctx context.Context, requestChannels map[string]<-chan OrderRequest, responseChannels map[string]chan<- Order, errorChannels map[string]chan<- OrderError, )
+	WatchOrders(ctx context.Context, requestChannels map[string]chan OrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
 	GenerateClientID() string
 	IsSpot() bool
 }
