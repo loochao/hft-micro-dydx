@@ -356,8 +356,8 @@ func (strat *XYStrategy) changeYPosition() {
 			logger.Debugf("sent strat.yOrderRequestCh <- common.OrderRequest %s", strat.yNewOrderParam.Symbol)
 			strat.yOrderSilentTime = time.Now().Add(strat.params.orderSilent)
 			strat.yPositionUpdateTime = time.Unix(0, 0)
-		default:
-			logger.Debugf("strat.yOrderRequestCh <- common.OrderRequest %s failed, ch len %d", strat.ySymbol, len(strat.yOrderRequestCh))
+		//default:
+		//	logger.Debugf("strat.yOrderRequestCh <- common.OrderRequest %s failed, ch len %d", strat.ySymbol, len(strat.yOrderRequestCh))
 		}
 	} else {
 		strat.yOrderSilentTime = time.Now().Add(strat.params.orderSilent)
@@ -427,8 +427,8 @@ func (strat *XYStrategy) changeXPosition() {
 			logger.Debugf("sent strat.xOrderRequestCh <- common.OrderRequest %s", strat.xNewOrderParam.Symbol)
 			strat.xOrderSilentTime = time.Now().Add(strat.params.orderSilent)
 			strat.xPositionUpdateTime = time.Unix(0, 0)
-		default:
-			logger.Debugf("strat.xOrderRequestCh <- common.OrderRequest %s failed, ch len %d", strat.xSymbol, len(strat.xOrderRequestCh))
+		//default:
+		//	logger.Debugf("strat.xOrderRequestCh <- common.OrderRequest %s failed, ch len %d", strat.xSymbol, len(strat.xOrderRequestCh))
 		}
 	} else {
 		strat.xOrderSilentTime = time.Now().Add(strat.params.orderSilent)
