@@ -513,6 +513,7 @@ func (ftx *FtxUsdtFuture) accountLoop(ctx context.Context, accountCh chan *Accou
 func (ftx *FtxUsdtFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParam{}
 	newOrderParam.Market = param.Symbol
+	newOrderParam.Size = param.Size
 	if param.Side == common.OrderSideBuy {
 		newOrderParam.Side = OrderSideBuy
 	} else {
