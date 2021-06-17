@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/ftxperp"
+	"github.com/geometrybase/hft-micro/ftx-usdtfuture"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/tdigest"
@@ -36,7 +36,7 @@ func main() {
 
 	matchSymbols := make([]string, 0)
 	pairMaps := make(map[string]string)
-	for ftxMarket := range ftxperp.PriceIncrements {
+	for ftxMarket := range ftx_usdtfuture.PriceIncrements {
 		bnSymbol := strings.Replace(ftxMarket, "-PERP", "USDT", -1)
 		if _, ok := bnswap.TickSizes[bnSymbol]; ok && len(bnSymbol) >= 7 {
 			pairMaps[ftxMarket] = bnSymbol
@@ -64,7 +64,7 @@ func main() {
 	saveToInflux := true
 	for _, symbol := range symbols {
 		var lastBnTrade *bnswap.Trade
-		var lastFtxTrade *ftxperp.Trade
+		var lastFtxTrade *ftx_usdtfuture.Trade
 		longDeltaTD, _ := tdigest.New()
 		shortDeltaTD, _ := tdigest.New()
 		lookback := time.Second
@@ -74,7 +74,7 @@ func main() {
 		bnSellMean := common.NewTimedMean(lookback)
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			ftxFile, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/ftxperp-trade/%s-%s.ftxperp.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/Users/chenjilin/MarketData/ftx-usdtfuture-trade/%s-%s.ftx-usdtfuture.trade.jl.gz", dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -104,13 +104,13 @@ func main() {
 			bnScanner := bufio.NewScanner(bnGr)
 
 			for ftxScanner.Scan() {
-				tradeData := ftxperp.TradesData{}
+				tradeData := ftx_usdtfuture.TradesData{}
 				err = json.Unmarshal(ftxScanner.Bytes(), &tradeData)
 				if err != nil {
 					continue
 				}
 				for _, ftxTrade := range tradeData.Data {
-					if ftxTrade.Side == ftxperp.TradeSideBuy {
+					if ftxTrade.Side == ftx_usdtfuture.TradeSideBuy {
 						ftxBuyMean.Insert(ftxTrade.Time, ftxTrade.Price)
 					} else {
 						ftxSellMean.Insert(ftxTrade.Time, ftxTrade.Price)
@@ -179,7 +179,7 @@ func main() {
 							fields["bnBuyPrice"] = bnBuyMean.Mean()
 							fields["bnSellPrice"] = bnSellMean.Mean()
 							pt, err := client.NewPoint(
-								"ftxperp-bnswap-delta",
+								"ftx-usdtfuture-bnswap-delta",
 								map[string]string{
 									"symbol": symbol,
 								},

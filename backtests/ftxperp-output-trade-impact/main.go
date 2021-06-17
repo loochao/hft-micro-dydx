@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
-	"github.com/geometrybase/hft-micro/ftxperp"
+	"github.com/geometrybase/hft-micro/ftx-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/tdigest"
 	"os"
@@ -20,7 +20,7 @@ func main() {
 
 	matchSymbols := make([]string, 0)
 	pairMaps := make(map[string]string)
-	for ftxMarket := range ftxperp.PriceIncrements {
+	for ftxMarket := range ftx_usdtfuture.PriceIncrements {
 		bnSymbol := strings.Replace(ftxMarket, "-PERP", "USDT", -1)
 		if _, ok := bnswap.TickSizes[bnSymbol]; ok && len(bnSymbol) >= 7{
 			pairMaps[ftxMarket] = bnSymbol
@@ -47,14 +47,14 @@ func main() {
 	symbols = matchSymbols
 	dateStrs := "20210509,20210510,20210511,20210512,20210513"
 	for _, symbol := range symbols {
-		var lastBuyTrade *ftxperp.Trade
-		var lastSellTrade *ftxperp.Trade
-		var lastTrade *ftxperp.Trade
+		var lastBuyTrade *ftx_usdtfuture.Trade
+		var lastSellTrade *ftx_usdtfuture.Trade
+		var lastTrade *ftx_usdtfuture.Trade
 		sellImpactTD, _ := tdigest.New()
 		buyImpactTD, _ := tdigest.New()
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/ftxperp-trade/%s-%s.ftxperp.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/Users/chenjilin/MarketData/ftx-usdtfuture-trade/%s-%s.ftx-usdtfuture.trade.jl.gz", dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -67,7 +67,7 @@ func main() {
 			}
 			scanner := bufio.NewScanner(gr)
 			for scanner.Scan() {
-				tradeData := ftxperp.TradesData{}
+				tradeData := ftx_usdtfuture.TradesData{}
 				err = json.Unmarshal(scanner.Bytes(), &tradeData)
 				if err != nil {
 					continue
@@ -75,17 +75,17 @@ func main() {
 				for _, d := range tradeData.Data {
 					d := d
 					if lastTrade != nil {
-						if d.Side == ftxperp.TradeSideSell {
+						if d.Side == ftx_usdtfuture.TradeSideSell {
 							if lastSellTrade != nil &&
 								d.Time.Sub(lastSellTrade.Time) < time.Second &&
-								lastTrade.Side == ftxperp.TradeSideSell {
+								lastTrade.Side == ftx_usdtfuture.TradeSideSell {
 								_ = sellImpactTD.Add((d.Price - lastSellTrade.Price) / lastSellTrade.Price)
 							}
 							lastSellTrade = &d
 						} else {
 							if lastBuyTrade != nil &&
 								d.Time.Sub(lastBuyTrade.Time) < time.Second &&
-								lastTrade.Side == ftxperp.TradeSideBuy {
+								lastTrade.Side == ftx_usdtfuture.TradeSideBuy {
 								_ = buyImpactTD.Add((d.Price - lastBuyTrade.Price) / lastBuyTrade.Price)
 							}
 							lastBuyTrade = &d

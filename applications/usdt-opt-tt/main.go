@@ -7,6 +7,7 @@ import (
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
+	ftxuf "github.com/geometrybase/hft-micro/ftx-usdtfuture"
 	kcuf "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
@@ -84,6 +85,9 @@ func main() {
 	case "kucoinUsdtFutureWithDepth5":
 		xExchange = &kcuf.KucoinUsdtFutureWithDepth5{}
 		break
+	case "ftxUsdtFuture":
+		xExchange = &ftxuf.FtxUsdtFuture{}
+		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -103,6 +107,9 @@ func main() {
 		break
 	case "kucoinUsdtFutureWithDepth5":
 		yExchange = &kcuf.KucoinUsdtFutureWithDepth5{}
+		break
+	case "ftxUsdtFuture":
+		yExchange = &ftxuf.FtxUsdtFuture{}
 		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)

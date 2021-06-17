@@ -1,4 +1,4 @@
-package ftxperp
+package ftx_usdtfuture
 
 import (
 	"fmt"

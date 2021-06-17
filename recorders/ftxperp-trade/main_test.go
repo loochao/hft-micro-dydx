@@ -10,7 +10,7 @@ import (
 
 func TestGzipFile(t *testing.T) {
 
-	file, err := os.Open("/Users/chenjilin/Downloads/ftxperp-trade/20210509-ETH-PERP.ftxperp.trade.jl.gz")
+	file, err := os.Open("/Users/chenjilin/Downloads/ftx-usdtfuture-trade/20210509-ETH-PERP.ftx-usdtfuture.trade.jl.gz")
 	if err != nil {
 		t.Fatal(err)
 	}

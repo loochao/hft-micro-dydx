@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/geometrybase/hft-micro/ftxperp"
+	"github.com/geometrybase/hft-micro/ftx-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -320,7 +320,7 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, marke
 			for market, updateTime := range marketUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
 					select {
-					case w.writeCh <- ftxperp.SubscribeParam{
+					case w.writeCh <- ftx_usdtfuture.SubscribeParam{
 						Operation: "subscribe",
 						Channel:   "trades",
 						Market:    market,
@@ -328,7 +328,7 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, marke
 						marketUpdatedTimes[market] = time.Now().Add(marketCheckInterval * time.Duration(len(markets)*2))
 						break loop
 					default:
-						logger.Debugf("w.writeCh <- ftxperp.SubscribeParam failed, ch len %d", len(w.writeCh))
+						logger.Debugf("w.writeCh <- ftx-usdtfuture.SubscribeParam failed, ch len %d", len(w.writeCh))
 					}
 				}
 			}
@@ -414,7 +414,7 @@ func (w *TradeWS) saveLoop(ctx context.Context, savePath, symbol string, inputCh
 				}
 			}
 			dayTime = time.Now().Truncate(time.Hour * 24)
-			outPath = fmt.Sprintf("%s/%s-%s.ftxperp.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
+			outPath = fmt.Sprintf("%s/%s-%s.ftx-usdtfuture.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				w.Stop()
