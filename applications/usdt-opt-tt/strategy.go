@@ -695,6 +695,7 @@ func (strat *XYStrategy) updateTarget() {
 	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
 	if strat.spread.ShortLastLeave < strat.shortBot &&
 		strat.spread.ShortMedianLeave < strat.shortBot &&
+		strat.spread.ShortLastLeave < strat.spread.ShortMedianLeave &&
 		*strat.xyFundingRate < strat.params.minimalKeepFundingRate &&
 		strat.xSize >= strat.params.xStepSize {
 
@@ -746,6 +747,7 @@ func (strat *XYStrategy) updateTarget() {
 		strat.changeYPosition()
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
+		strat.spread.LongLastLeave > strat.spread.LongMedianLeave &&
 		*strat.xyFundingRate > -strat.params.minimalKeepFundingRate &&
 		strat.xSize <= -strat.params.xStepSize {
 
@@ -796,6 +798,7 @@ func (strat *XYStrategy) updateTarget() {
 	} else if !strat.params.isYSpot &&
 		strat.spread.ShortLastEnter > strat.shortTop &&
 		strat.spread.ShortMedianEnter > strat.shortTop &&
+		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
 		*strat.xyFundingRate > strat.params.minimalEnterFundingRate &&
 		strat.xSize >= 0 {
 
@@ -869,6 +872,7 @@ func (strat *XYStrategy) updateTarget() {
 	} else if !strat.params.isXSpot &&
 		strat.spread.LongLastEnter < strat.longBot &&
 		strat.spread.LongMedianEnter < strat.longBot &&
+		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
 		*strat.xyFundingRate < -strat.params.minimalEnterFundingRate &&
 		strat.xSize <= 0 {
 
