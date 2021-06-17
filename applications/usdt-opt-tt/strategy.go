@@ -348,10 +348,12 @@ func (strat *XYStrategy) changeYPosition() {
 		ClientID:   strat.yExchange.GenerateClientID(),
 	}
 	if !strat.params.dryRun {
+		logger.Debugf("sending strat.yOrderRequestCh <- common.OrderRequest %s", strat.yNewOrderParam.Symbol)
 		select {
 		case strat.yOrderRequestCh <- common.OrderRequest{
 			New: &strat.yNewOrderParam,
 		}:
+			logger.Debugf("sent strat.yOrderRequestCh <- common.OrderRequest %s", strat.yNewOrderParam.Symbol)
 			strat.yOrderSilentTime = time.Now().Add(strat.params.orderSilent)
 			strat.yPositionUpdateTime = time.Unix(0, 0)
 		default:
@@ -417,10 +419,12 @@ func (strat *XYStrategy) changeXPosition() {
 		ClientID:   strat.xExchange.GenerateClientID(),
 	}
 	if !strat.params.dryRun {
+		logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xNewOrderParam.Symbol)
 		select {
 		case strat.xOrderRequestCh <- common.OrderRequest{
 			New: &strat.xNewOrderParam,
 		}:
+			logger.Debugf("sent strat.xOrderRequestCh <- common.OrderRequest %s", strat.xNewOrderParam.Symbol)
 			strat.xOrderSilentTime = time.Now().Add(strat.params.orderSilent)
 			strat.xPositionUpdateTime = time.Unix(0, 0)
 		default:
@@ -727,8 +731,6 @@ func (strat *XYStrategy) updateTarget() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
-		strat.changeXPosition()
-		strat.changeYPosition()
 		logger.Debugf(
 			"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, TARGET X %f TARGET Y %f",
 			strat.xSymbol, strat.ySymbol,
@@ -738,6 +740,8 @@ func (strat *XYStrategy) updateTarget() {
 			*strat.xTargetSpotSize,
 			*strat.yTargetSpotSize,
 		)
+		strat.changeXPosition()
+		strat.changeYPosition()
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
 		*strat.xyFundingRate > -strat.params.minimalKeepFundingRate &&
@@ -774,8 +778,6 @@ func (strat *XYStrategy) updateTarget() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
-		strat.changeXPosition()
-		strat.changeYPosition()
 		logger.Debugf(
 			"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f",
 			strat.xSymbol, strat.ySymbol,
@@ -785,6 +787,8 @@ func (strat *XYStrategy) updateTarget() {
 			*strat.xTargetSpotSize,
 			*strat.yTargetSpotSize,
 		)
+		strat.changeXPosition()
+		strat.changeYPosition()
 	} else if !strat.params.isYSpot &&
 		strat.spread.ShortLastEnter > strat.shortTop &&
 		strat.spread.ShortMedianEnter > strat.shortTop &&
@@ -845,8 +849,6 @@ func (strat *XYStrategy) updateTarget() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
-		strat.changeXPosition()
-		strat.changeYPosition()
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f",
 			strat.xSymbol, strat.ySymbol,
@@ -856,6 +858,8 @@ func (strat *XYStrategy) updateTarget() {
 			*strat.xTargetSpotSize,
 			*strat.yTargetSpotSize,
 		)
+		strat.changeXPosition()
+		strat.changeYPosition()
 	} else if !strat.params.isXSpot &&
 		strat.spread.LongLastEnter < strat.longBot &&
 		strat.spread.LongMedianEnter < strat.longBot &&
@@ -915,8 +919,6 @@ func (strat *XYStrategy) updateTarget() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
-		strat.changeXPosition()
-		strat.changeYPosition()
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, TARGET X %f, TARGET Y %f",
 			strat.xSymbol, strat.ySymbol,
@@ -926,6 +928,8 @@ func (strat *XYStrategy) updateTarget() {
 			*strat.xTargetSpotSize,
 			*strat.yTargetSpotSize,
 		)
+		strat.changeXPosition()
+		strat.changeYPosition()
 	}
 }
 
