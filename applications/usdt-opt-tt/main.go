@@ -200,14 +200,14 @@ func main() {
 	xSystemStatusChMap := make(map[string]chan common.SystemStatus)
 	//此处的原则，chan越短，发送速度越快, 对于时效性高的，立即发出的要短
 	for _, xSymbol := range xSymbols {
-		xPositionChMap[xSymbol] = make(chan common.Position, 16)
-		xOrderChMap[xSymbol] = make(chan common.Order, 16)
-		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 16)
+		xPositionChMap[xSymbol] = make(chan common.Position, 1)
+		xOrderChMap[xSymbol] = make(chan common.Order, 1)
+		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 1)
 		xDepthChMap[xSymbol] = make(chan common.Depth,4)
 		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 1)
-		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 16)
-		xAccountChMap[xSymbol] = make(chan common.Balance, 16)
-		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 16)
+		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 1)
+		xAccountChMap[xSymbol] = make(chan common.Balance, 1)
+		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 1)
 	}
 
 	yPositionChMap := make(map[string]chan common.Position)
@@ -218,14 +218,14 @@ func main() {
 	yAccountChMap := make(map[string]chan common.Balance)
 	ySystemStatusChMap := make(map[string]chan common.SystemStatus)
 	for _, ySymbol := range ySymbols {
-		yPositionChMap[ySymbol] = make(chan common.Position, 16)
-		yOrderChMap[ySymbol] = make(chan common.Order, 16)
-		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 16)
+		yPositionChMap[ySymbol] = make(chan common.Position, 1)
+		yOrderChMap[ySymbol] = make(chan common.Order, 1)
+		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 1)
 		yDepthChMap[ySymbol] = make(chan common.Depth,4)
 		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 1)
-		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 16)
-		yAccountChMap[ySymbol] = make(chan common.Balance, 16)
-		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 16)
+		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 1)
+		yAccountChMap[ySymbol] = make(chan common.Balance, 1)
+		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 1)
 	}
 
 	saveCh := make(chan *XYStrategy, 2048)
