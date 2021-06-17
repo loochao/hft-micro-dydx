@@ -732,13 +732,15 @@ func (strat *XYStrategy) updateTarget() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		logger.Debugf(
-			"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, TARGET X %f TARGET Y %f",
+			"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, TARGET X %f TARGET Y %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastLeave, strat.shortBot,
 			strat.spread.ShortMedianLeave, strat.shortBot,
 			strat.size,
 			*strat.xTargetSpotSize,
 			*strat.yTargetSpotSize,
+			time.Now().Sub(strat.xDepthTime),
+			time.Now().Sub(strat.yDepthTime),
 		)
 		strat.changeXPosition()
 		strat.changeYPosition()
@@ -779,13 +781,15 @@ func (strat *XYStrategy) updateTarget() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		logger.Debugf(
-			"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f",
+			"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.LongLastLeave, strat.longTop,
 			strat.spread.LongMedianLeave, strat.longTop,
 			strat.size,
 			*strat.xTargetSpotSize,
 			*strat.yTargetSpotSize,
+			time.Now().Sub(strat.xDepthTime),
+			time.Now().Sub(strat.yDepthTime),
 		)
 		strat.changeXPosition()
 		strat.changeYPosition()
@@ -850,13 +854,15 @@ func (strat *XYStrategy) updateTarget() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		logger.Debugf(
-			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f",
+			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
 			strat.size,
 			*strat.xTargetSpotSize,
 			*strat.yTargetSpotSize,
+			time.Now().Sub(strat.xDepthTime),
+			time.Now().Sub(strat.yDepthTime),
 		)
 		strat.changeXPosition()
 		strat.changeYPosition()
@@ -920,13 +926,15 @@ func (strat *XYStrategy) updateTarget() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		logger.Debugf(
-			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, TARGET X %f, TARGET Y %f",
+			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, TARGET X %f, TARGET Y %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
 			strat.size,
 			*strat.xTargetSpotSize,
 			*strat.yTargetSpotSize,
+			time.Now().Sub(strat.xDepthTime),
+			time.Now().Sub(strat.yDepthTime),
 		)
 		strat.changeXPosition()
 		strat.changeYPosition()
