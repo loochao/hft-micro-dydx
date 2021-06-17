@@ -203,9 +203,9 @@ func main() {
 		xOrderChMap[xSymbol] = make(chan common.Order, 16)
 		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 16)
 		xDepthChMap[xSymbol] = make(chan common.Depth, 128)
-		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 128)
+		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 1)
 		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 16)
-		xAccountChMap[xSymbol] = make(chan common.Balance, 128)
+		xAccountChMap[xSymbol] = make(chan common.Balance, 16)
 		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 16)
 	}
 
@@ -221,9 +221,9 @@ func main() {
 		yOrderChMap[ySymbol] = make(chan common.Order, 16)
 		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 16)
 		yDepthChMap[ySymbol] = make(chan common.Depth, 128)
-		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 128)
+		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 1)
 		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 16)
-		yAccountChMap[ySymbol] = make(chan common.Balance, 128)
+		yAccountChMap[ySymbol] = make(chan common.Balance, 16)
 		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 16)
 	}
 

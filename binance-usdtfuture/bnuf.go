@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"math"
 	"math/rand"
 	"sync"
 	"time"
@@ -360,16 +359,6 @@ func (bn *BinanceUsdtFuture) StreamFundingRate(ctx context.Context, channels map
 func (bn *BinanceUsdtFuture) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	defer bn.Stop()
 	for symbol, reqCh := range requestChannels {
-		tickSize, ok := TickSizes[symbol]
-		if !ok {
-			logger.Debugf("miss price increment for %s, exit", symbol)
-			return
-		}
-		stepSize, ok := StepSizes[symbol]
-		if !ok {
-			logger.Debugf("miss size increment for %s, exit", symbol)
-			return
-		}
 		//logger.Debugf("%v", responseChannels)
 		respCh, ok := responseChannels[symbol]
 		if !ok {
@@ -381,7 +370,7 @@ func (bn *BinanceUsdtFuture) WatchOrders(ctx context.Context, requestChannels ma
 			logger.Debugf("miss error ch for %s, exit", symbol)
 			return
 		}
-		go bn.watchOrder(ctx, symbol, tickSize, stepSize, reqCh, respCh, errCh)
+		go bn.watchOrder(ctx, symbol,  reqCh, respCh, errCh)
 	}
 	for {
 		select {
@@ -576,7 +565,6 @@ func (bn *BinanceUsdtFuture) watchAccount(
 func (bn *BinanceUsdtFuture) watchOrder(
 	ctx context.Context,
 	market string,
-	tickSize, stepSize float64,
 	requestCh chan common.OrderRequest,
 	responseCh chan common.Order,
 	errorCh chan common.OrderError,
@@ -601,7 +589,7 @@ func (bn *BinanceUsdtFuture) watchOrder(
 					}
 					continue
 				}
-				bn.submitOrder(ctx, *req.New, tickSize, stepSize, responseCh, errorCh)
+				bn.submitOrder(ctx, *req.New, responseCh, errorCh)
 			} else if req.Cancel != nil {
 				bn.cancelOrder(ctx, *req.Cancel, errorCh)
 			}
@@ -609,10 +597,10 @@ func (bn *BinanceUsdtFuture) watchOrder(
 	}
 }
 
-func (bn *BinanceUsdtFuture) submitOrder(ctx context.Context, param common.NewOrderParam, tickSize, stepSize float64, respCh chan common.Order, errCh chan common.OrderError) {
+func (bn *BinanceUsdtFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParams{}
 	newOrderParam.Symbol = param.Symbol
-	newOrderParam.Quantity = math.Round(param.Size/stepSize) * stepSize
+	newOrderParam.Quantity = param.Size
 	if param.Side == common.OrderSideBuy {
 		newOrderParam.Side = OrderSideBuy
 	} else {
@@ -636,7 +624,7 @@ func (bn *BinanceUsdtFuture) submitOrder(ctx context.Context, param common.NewOr
 	}
 	newOrderParam.ReduceOnly = param.ReduceOnly
 	if param.Price != 0 {
-		newOrderParam.Price = math.Round(param.Price/tickSize) * tickSize
+		newOrderParam.Price = param.Price
 	}
 	newOrderParam.NewClientOrderId = param.ClientID
 	logger.Debugf("%s before bn.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
