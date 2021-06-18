@@ -234,10 +234,14 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case strat.xSystemStatus = <-strat.xSystemStatusCh:
-			strat.tryCancelXOpenOrder()
+			if strat.xSystemStatus != common.SystemStatusReady {
+				strat.tryCancelXOpenOrder("xSystemStatus not ready")
+			}
 			break
 		case strat.ySystemStatus = <-strat.ySystemStatusCh:
-			strat.tryCancelXOpenOrder()
+			if strat.ySystemStatus != common.SystemStatusReady {
+				strat.tryCancelXOpenOrder("ySystemStatus not ready")
+			}
 			break
 		case <-strat.saveTimer.C:
 			strat.handleSave()
@@ -563,7 +567,9 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xyFundingRate == nil ||
 		time.Now().Sub(strat.spread.Time) > strat.params.spreadTimeToLive ||
 		!strat.params.tradable {
-		strat.tryCancelXOpenOrder()
+		if time.Now().Sub(strat.spread.Time) > strat.params.spreadTimeToLive {
+			strat.tryCancelXOpenOrder("spread time out")
+		}
 		return
 	}
 
@@ -580,7 +586,7 @@ func (strat *XYStrategy) updateXOrder() {
 			)
 		}
 		strat.hedgeYPosition()
-		strat.tryCancelXOpenOrder()
+		strat.tryCancelXOpenOrder("unhedged value")
 		return
 	}
 
@@ -607,7 +613,7 @@ func (strat *XYStrategy) updateXOrder() {
 	//}
 	if strat.xOpenOrder != nil {
 		if !strat.isXOpenOrderOk() {
-			strat.tryCancelXOpenOrder()
+			strat.tryCancelXOpenOrder("open order not ok")
 		}
 		return
 	}
@@ -988,16 +994,16 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 	}
 }
 
-func (strat *XYStrategy) tryCancelXOpenOrder() {
+func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
 	if strat.xOpenOrder != nil {
 		strat.xOrderSilentTime = time.Now().Add(strat.params.cancelSilent)
 		if !strat.params.dryRun {
-			logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
+			logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
 			select {
 			case strat.xOrderRequestCh <- common.OrderRequest{
 				Cancel: &strat.xCancelOrderParam,
 			}:
-				logger.Debugf("sent cancel strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
+				logger.Debugf("sent cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
 			}
 		}
 		strat.xOpenOrder = nil
