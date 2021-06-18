@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"log"
-
 	"gorgonia.org/gorgonia"
+	"log"
 )
 
 func main() {
