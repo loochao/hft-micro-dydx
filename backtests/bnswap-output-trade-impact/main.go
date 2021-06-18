@@ -22,7 +22,11 @@ func main() {
 	//	`LINKUSDT,FILUSDT,ADAUSDT,XRPUSDT,AAVEUSDT,BNBUSDT`,
 	//	",",
 	//)
-	startTime, err := time.Parse("20060102", "20210503")
+	//symbols := strings.Split(
+	//	`1INCHUSDT`,
+	//	",",
+	//)
+	startTime, err := time.Parse("20060102", "20210528")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -48,7 +52,7 @@ func main() {
 		tradeSizeTD, _ := tdigest.New()
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bnswap-trade/%s-%s.bnswap.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/Volumes/MarketData/bnswap-trade/%s/%s-%s.bnswap.trade.jl.gz", dateStr, dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

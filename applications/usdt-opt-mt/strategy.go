@@ -316,7 +316,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		time.Now().Sub(strat.yOrderSilentTime) < 0 {
 		return
 	}
-	strat.ySizeDiff = strat.xPosition.GetSize()*strat.params.xMultiplier/strat.params.yMultiplier - strat.yPosition.GetSize()
+	strat.ySizeDiff = -strat.xPosition.GetSize()*strat.params.xMultiplier/strat.params.yMultiplier - strat.yPosition.GetSize()
 	if math.Abs(strat.ySizeDiff) < strat.params.yStepSize {
 		return
 	}
@@ -982,13 +982,15 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			if strat.xPosition.GetSize() != nextPos.GetSize() {
 				strat.xOrderSilentTime = time.Now().Add(strat.params.enterSilent)
 				strat.yOrderSilentTime = time.Now()
+				strat.xPosition = nextPos
 				strat.hedgeYPosition()
 				if strat.xWalkedDepth.Symbol != "" {
 					strat.xTimedPositionChange.Insert(time.Now(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize())*strat.xWalkedDepth.MidPrice*strat.params.xMultiplier)
 				}
 				logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
+			}else{
+				strat.xPosition = nextPos
 			}
-			strat.xPosition = nextPos
 		}
 		strat.xPositionUpdateTime = nextPos.GetParseTime()
 	} else {
