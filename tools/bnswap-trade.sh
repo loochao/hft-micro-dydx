@@ -14,6 +14,5 @@ chmod 755 "./dist/hft-recorder-bnswap-trade.$dt"
 
 
 echo "hk02"
-rsync -avx --progress "./dist/hft-recorder-bnswap-trade.$dt" ir:/mnt/d1/data-tmp/bin/
-ssh ir "rsync -avx --progress /mnt/d1/data-tmp/bin/hft-recorder-bnswap-trade.$dt hk02:/usr/local/bin/"
+rsync -avx --progress "./dist/hft-recorder-bnswap-trade.$dt" hk02:/usr/local/bin/
 
