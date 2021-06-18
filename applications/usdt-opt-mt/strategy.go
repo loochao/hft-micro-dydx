@@ -637,6 +637,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.size = strat.xSize
 		}
 
+		strat.size = math.Round(strat.size/strat.params.xMultiplier)
 		if strat.size > 0 {
 			strat.price = math.Ceil(strat.xWalkedDepth.AskPrice*(1.0+strat.orderOffset.Top)/strat.params.xTickSize) * strat.params.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
@@ -690,6 +691,7 @@ func (strat *XYStrategy) updateXOrder() {
 		if strat.xAbsValue-strat.enterValue < strat.params.xyMergedSpotStepSize || strat.yAbsValue-strat.enterValue < strat.params.xyMergedSpotStepSize {
 			strat.size = -strat.xSize
 		}
+		strat.size = math.Round(strat.size/strat.params.xMultiplier)
 		if strat.size > 0 {
 			strat.price = math.Floor(strat.xWalkedDepth.BidPrice*(1.0+strat.orderOffset.Bot)/strat.params.xTickSize) * strat.params.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
@@ -759,6 +761,7 @@ func (strat *XYStrategy) updateXOrder() {
 			}
 			return
 		}
+		strat.size = math.Round(strat.size/strat.params.xMultiplier)
 		if strat.size <= 0 || strat.enterValue < strat.params.yMinNotional || strat.enterValue < strat.params.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.params.logInterval)
@@ -839,6 +842,7 @@ func (strat *XYStrategy) updateXOrder() {
 			}
 			return
 		}
+		strat.size = math.Round(strat.size/strat.params.xMultiplier)
 		if strat.size <= 0 || strat.enterValue < strat.params.yMinNotional || strat.enterValue < strat.params.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.params.logInterval)
