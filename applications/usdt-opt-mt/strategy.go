@@ -644,6 +644,7 @@ func (strat *XYStrategy) updateXOrder() {
 				ReduceOnly:  true,
 				ClientID:    strat.xExchange.GenerateClientID(),
 			}
+			strat.xOpenOrder = &strat.xNewOrderParam
 			if !strat.params.dryRun {
 				logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 				select {
@@ -696,6 +697,7 @@ func (strat *XYStrategy) updateXOrder() {
 				ReduceOnly:  true,
 				ClientID:    strat.xExchange.GenerateClientID(),
 			}
+			strat.xOpenOrder = &strat.xNewOrderParam
 			if !strat.params.dryRun {
 				logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 				select {
@@ -777,6 +779,7 @@ func (strat *XYStrategy) updateXOrder() {
 			ReduceOnly:  true,
 			ClientID:    strat.xExchange.GenerateClientID(),
 		}
+		strat.xOpenOrder = &strat.xNewOrderParam
 		if !strat.params.dryRun {
 			logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 			select {
@@ -857,6 +860,7 @@ func (strat *XYStrategy) updateXOrder() {
 			ReduceOnly:  true,
 			ClientID:    strat.xExchange.GenerateClientID(),
 		}
+		strat.xOpenOrder = &strat.xNewOrderParam
 		if !strat.params.dryRun {
 			logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 			select {
