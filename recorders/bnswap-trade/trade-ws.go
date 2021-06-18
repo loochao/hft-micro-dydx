@@ -52,6 +52,7 @@ func (w *Depth20RoutedWebsocket) readLoop(conn *websocket.Conn, symbols []string
 		}
 		//{"stream":"btcusdt@trade","data":{"e":"trade","E":1620011599983,"s":"BTCUSDT","t":804764023,"p":"58095.95000000","q":"0.02123000","b":5757184069,"a":5757184083,"T":1620011599982,"m":true,"M":true}}
 		//{"stream":"scusdt@trade","data":{"e":"trade","E":1623166064549,"s":"SCUSDT","t":17318895,"p":"0.01451000","q":"1614.00000000","b":174967945,"a":174967958,"T":1623166064548,"m":true,"M":true}}
+		// {"stream":"btcusdt@aggTrade","data":{"e":"aggTrade","E":1616945754086,"a":405295371,"s":"BTCUSDT","p":"56183.31","q":"0.003","f":649066620,"l":649066620,"T":1616945753931,"m":false}}
 		if len(msg) < 128 {
 			continue
 		}
@@ -69,6 +70,24 @@ func (w *Depth20RoutedWebsocket) readLoop(conn *websocket.Conn, symbols []string
 			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
 		} else if msg[21] == '@' {
 			symbolBytes = msg[11:21]
+			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
+		} else if msg[22] == '@' {
+			symbolBytes = msg[11:22]
+			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
+		} else if msg[23] == '@' {
+			symbolBytes = msg[11:23]
+			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
+		} else if msg[24] == '@' {
+			symbolBytes = msg[11:24]
+			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
+		} else if msg[25] == '@' {
+			symbolBytes = msg[11:21]
+			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
+		} else if msg[21] == '@' {
+			symbolBytes = msg[11:25]
+			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
+		} else if msg[26] == '@' {
+			symbolBytes = msg[11:26]
 			symbol = strings.ToUpper(*(*string)(unsafe.Pointer(&symbolBytes)))
 		} else {
 			if time.Now().Sub(logSilentTime) > 0 {
@@ -154,7 +173,7 @@ func (w *Depth20RoutedWebsocket) reconnect(ctx context.Context, wsUrl string, pr
 }
 
 func (w *Depth20RoutedWebsocket) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
-	urlStr := "wss://fstream.binance.com:9443/stream?streams="
+	urlStr := "wss://fstream.binance.com/stream?streams="
 	symbols := make([]string, 0)
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
