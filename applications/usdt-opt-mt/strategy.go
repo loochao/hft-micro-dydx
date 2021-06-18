@@ -314,6 +314,10 @@ func (strat *XYStrategy) hedgeYPosition() {
 		strat.spread == nil ||
 		time.Now().Sub(strat.yPositionUpdateTime) > strat.params.balancePositionMaxAge ||
 		time.Now().Sub(strat.yOrderSilentTime) < 0 {
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
+			logger.Debugf("hedgeYPosition skipped order silent time %v positionUpdateTime %v", time.Now().Sub(strat.yOrderSilentTime), time.Now().Sub(strat.yPositionUpdateTime))
+		}
 		return
 	}
 	strat.ySizeDiff = -strat.xPosition.GetSize()*strat.params.xMultiplier/strat.params.yMultiplier - strat.yPosition.GetSize()
