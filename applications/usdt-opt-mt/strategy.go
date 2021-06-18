@@ -436,6 +436,7 @@ func (strat *XYStrategy) walkSpread() {
 		LongMedianLeave: strat.shortEnterTimedMedian.Median(),
 		Time:            strat.spreadTime,
 	}
+	strat.hedgeYPosition()
 	strat.updateXOrder()
 }
 
