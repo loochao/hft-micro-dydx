@@ -302,7 +302,7 @@ func (strat *XYStrategy) changeYPosition() {
 		strat.ySystemStatus != common.SystemStatusReady {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
-			logger.Debugf("not ready xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
+			logger.Debugf("changeYPosition failed xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
 		}
 		return
 	}
@@ -380,7 +380,7 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.ySystemStatus != common.SystemStatusReady {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
-			logger.Debugf("not ready xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
+			logger.Debugf("changeXPosition failed xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
 		}
 		return
 	}
@@ -492,7 +492,7 @@ func (strat *XYStrategy) updateTarget() {
 		strat.ySystemStatus != common.SystemStatusReady {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
-			logger.Debugf("not ready xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
+			logger.Debugf("updateTarget failed xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
 		}
 		return
 	}
