@@ -306,6 +306,10 @@ func (strat *XYStrategy) handleSave() {
 func (strat *XYStrategy) hedgeYPosition() {
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady {
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
+			logger.Debugf("hedgeYPosition xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
+		}
 		return
 	}
 	if !strat.params.tradable ||
@@ -559,6 +563,10 @@ func (strat *XYStrategy) handleYDepth() {
 func (strat *XYStrategy) updateXOrder() {
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady {
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
+			logger.Debugf("updateXOrder xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
+		}
 		return
 	}
 
