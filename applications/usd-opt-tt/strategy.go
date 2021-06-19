@@ -173,7 +173,7 @@ func startXYStrategy(
 		yOrder:                           nil,
 		xOrderError:                      common.OrderError{},
 		yOrderError:                      common.OrderError{},
-		xyTargetSpotSizeUpdateSilentTime: time.Time{},
+		xyTargetSpotSizeUpdateSilentTime: time.Now().Add(config.RestartSilent),
 		enterStep:                        0,
 		enterTarget:                      0,
 		usdtAvailable:                    0,
