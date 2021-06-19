@@ -10,7 +10,6 @@ import (
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdtfuture"
 	kcuf "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
-	okex_usdtspot "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -89,9 +88,9 @@ func main() {
 	case "ftxUsdtFuture":
 		xExchange = &ftxuf.FtxUsdtFuture{}
 		break
-	case "okexUsdtSpot":
-		xExchange = &okex_usdtspot.OkexUsdtSpot{}
-		break
+	//case "okexUsdtSpot":
+	//	xExchange = &okex_usdtspot.OkexUsdtSpot{}
+	//	break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -280,9 +279,7 @@ func main() {
 	go xExchange.StreamBasic(
 		xyGlobalCtx,
 		xSystemStatusCh,
-		map[string]chan common.Balance{
-			"USDT": xAccountCh,
-		},
+		xAccountCh,
 		xPositionChMap,
 		xOrderChMap,
 	)
@@ -306,9 +303,7 @@ func main() {
 	go yExchange.StreamBasic(
 		xyGlobalCtx,
 		ySystemStatusCh,
-		map[string]chan common.Balance{
-			"USDT": yAccountCh,
-		},
+		yAccountCh,
 		yPositionChMap,
 		yOrderChMap,
 	)
