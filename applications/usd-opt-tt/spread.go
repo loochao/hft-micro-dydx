@@ -75,6 +75,21 @@ func (strat *XYStrategy) walkYDepth() {
 			strat.logSilentTime = time.Now().Add(time.Minute)
 		}
 	} else {
+		if strat.markedYAskPrice != nil {
+			if strat.yWalkedDepth.AskPrice < *strat.markedYAskPrice {
+				*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
+			} else {
+				logger.Debugf("Y %s markedYAskPrice %f > askPrice %f, change y position", strat.ySymbol, *strat.markedYAskPrice, strat.yWalkedDepth.AskPrice)
+				strat.changeYPosition()
+			}
+		}else if strat.markedYBidPrice != nil {
+			if strat.yWalkedDepth.BidPrice > *strat.markedYBidPrice {
+				*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
+			} else {
+				logger.Debugf("Y %s markedYBidPrice %f < bidPrice %f, change y position", strat.ySymbol, *strat.markedYBidPrice, strat.yWalkedDepth.BidPrice)
+				strat.changeYPosition()
+			}
+		}
 		strat.walkSpread()
 	}
 }
@@ -170,4 +185,3 @@ func (strat *XYStrategy) handleYDepth() {
 		strat.xDepthExpireCount = 0
 	}
 }
-

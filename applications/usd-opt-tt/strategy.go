@@ -465,11 +465,7 @@ func (strat *XYStrategy) updateTargetByPosition() {
 		*strat.yTargetSpotSize = strat.yPosition.GetSize() * strat.params.yMultiplier
 	}
 	strat.changeXPosition()
-	if strat.params.hedgeYDelay <= 0 {
-		strat.changeYPosition()
-	}else{
-		strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
-	}
+	strat.changeYPosition()
 }
 
 func (strat *XYStrategy) updateEnterStepAndTarget() {
@@ -575,6 +571,10 @@ func (strat *XYStrategy) updateTarget() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
+		if strat.markedYAskPrice == nil {
+			strat.markedYAskPrice = new(float64)
+		}
+		*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
 		logger.Debugf(
 			"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, TARGET X %f TARGET Y %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -629,6 +629,10 @@ func (strat *XYStrategy) updateTarget() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
+		if strat.markedYBidPrice == nil {
+			strat.markedYBidPrice = new(float64)
+		}
+		*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 		logger.Debugf(
 			"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -707,6 +711,10 @@ func (strat *XYStrategy) updateTarget() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
+		if strat.markedYBidPrice == nil {
+			strat.markedYBidPrice = new(float64)
+		}
+		*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -784,6 +792,10 @@ func (strat *XYStrategy) updateTarget() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
+		if strat.markedYAskPrice == nil {
+			strat.markedYAskPrice = new(float64)
+		}
+		*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, TARGET X %f, TARGET Y %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
