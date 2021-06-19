@@ -491,6 +491,8 @@ func (strat *XYStrategy) updateTarget() {
 		strat.yAccount == nil ||
 		strat.xPosition == nil ||
 		strat.yPosition == nil ||
+		strat.xTargetSpotSize == nil ||
+		strat.yTargetSpotSize == nil ||
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
 		time.Now().Sub(strat.spread.Time) > strat.params.spreadTimeToLive ||
