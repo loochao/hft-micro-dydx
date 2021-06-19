@@ -183,7 +183,7 @@ func (w *Depth20RoutedWebsocket) mainLoop(ctx context.Context, proxy string, cha
 		)
 	}
 	urlStr = urlStr[:len(urlStr)-1]
-	logger.Debugf("START mainLoop %s", symbols)
+	logger.Debugf("START mainLoop %s", urlStr)
 
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
