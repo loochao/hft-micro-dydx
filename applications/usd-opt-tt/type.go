@@ -87,6 +87,7 @@ type XYParams struct {
 	orderSilent           time.Duration
 	saveInterval          time.Duration
 	hedgeYDelay           time.Duration
+	hedgeYTrailPct        float64
 
 	xLeverage float64
 	yLeverage float64

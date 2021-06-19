@@ -68,6 +68,7 @@ func startXYStrategy(
 		yLeverage:               config.YExchange.Leverage,
 		saveInterval:            config.InternalInflux.SaveInterval,
 		hedgeYDelay:             config.HedgeYDelay,
+		hedgeYTrailPct:          config.HedgeYTrailPct,
 	}
 
 	if params.saveInterval == 0 {

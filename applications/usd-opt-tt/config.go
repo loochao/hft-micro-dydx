@@ -14,9 +14,10 @@ type Config struct {
 	InternalInflux common.InfluxSettings `yaml:"internalInflux"`
 	ExternalInflux common.InfluxSettings `yaml:"externalInflux"`
 
-	XExchange   common.ExchangeSettings `yaml:"xExchange"`
-	YExchange   common.ExchangeSettings `yaml:"yExchange"`
-	HedgeYDelay time.Duration           `yaml:"hedgeYDelay"`
+	XExchange      common.ExchangeSettings `yaml:"xExchange"`
+	YExchange      common.ExchangeSettings `yaml:"yExchange"`
+	HedgeYDelay    time.Duration           `yaml:"hedgeYDelay"`
+	HedgeYTrailPct float64                 `yaml:"hedgeYTrailPct"`
 
 	LogInterval           time.Duration `yaml:"logInterval"`
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
