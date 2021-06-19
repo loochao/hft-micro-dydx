@@ -5,7 +5,7 @@ import (
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"math"
 	"time"
 )
@@ -26,7 +26,7 @@ func watchMakerTakerSpread(
 ) {
 	var err error
 	var makerRawDepth, takerRawDepth *common.DepthRawMessage
-	var makerDepth, newMakerDepth *okspot.Depth5
+	var makerDepth, newMakerDepth *okex_usdtspot.Depth5
 	var takerDepth, newTakerDepth *bnswap.Depth5
 	var makerWalkedDepth, takerWalkedDepth *common.WalkedTakerDepth
 	var spreadTime time.Time
@@ -175,10 +175,10 @@ func watchMakerTakerSpread(
 			if makerRawDepth == nil {
 				break
 			}
-			newMakerDepth, err = okspot.ParseDepth5(makerRawDepth.Depth, &makerRawDepth.Symbol, &makerRawDepth.Time)
+			newMakerDepth, err = okex_usdtspot.ParseDepth5(makerRawDepth.Depth, &makerRawDepth.Symbol, &makerRawDepth.Time)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("okspot.ParseDepth5 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
+					logger.Debugf("okex-usdtspot.ParseDepth5 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if makerDepth == nil || newMakerDepth.EventTime.Sub(makerDepth.EventTime) > 0 {

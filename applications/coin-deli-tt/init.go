@@ -60,7 +60,7 @@ var xyTargetPositionUpdateSilentTimes = make(map[string]time.Time)
 
 var xyConfig *Config
 
-var xyExchange common.Exchange
+var xyExchange common.UsdExchange
 
 var xyTimedPositionChange *common.TimedSum
 

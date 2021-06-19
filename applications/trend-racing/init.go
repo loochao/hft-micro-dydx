@@ -19,7 +19,7 @@ var trInternalInfluxWriter *common.InfluxWriter
 var trExternalInfluxWriter *common.InfluxWriter
 var trConfig *Config
 
-var trExchange common.Exchange
+var trExchange common.UsdExchange
 
 var trOrderCh = make(chan common.Order, 100)
 var trPositionCh = make(chan common.Position, 100)

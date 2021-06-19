@@ -11,7 +11,7 @@ import (
 
 func handleSave(
 	xAccount, yAccount common.Balance,
-	xExchange, yExchange common.Exchange,
+	xExchange, yExchange common.UsdExchange,
 	strategiesMap map[string]*XYStrategy,
 	xSystemStatus, ySystemStatus common.SystemStatus,
 	xyConfig *Config,

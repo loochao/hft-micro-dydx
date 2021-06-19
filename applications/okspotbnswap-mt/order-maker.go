@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"time"
 )
 
 func watchMakerOrderRequest(
 	ctx context.Context,
-	api *okspot.API,
+	api *okex_usdtspot.API,
 	timeout time.Duration,
 	dryRun bool,
 	orderRequestCh chan MakerOrderRequest,
@@ -75,7 +75,7 @@ func cancelAllMakerOpenOrders() {
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &okspot.CancelOrderParam{
+			Cancel: &okex_usdtspot.CancelOrderParam{
 				Symbol:    order.Symbol,
 				ClientOid: order.ClientOID,
 			},
@@ -100,7 +100,7 @@ func updateMakerOldOrders() {
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &okspot.CancelOrderParam{
+			Cancel: &okex_usdtspot.CancelOrderParam{
 				Symbol:    order.Symbol,
 				ClientOid: order.ClientOID,
 			},
@@ -108,7 +108,7 @@ func updateMakerOldOrders() {
 	}
 }
 
-func isOrderProfitable(order okspot.NewOrderParam) bool {
+func isOrderProfitable(order okex_usdtspot.NewOrderParam) bool {
 	spread, ok1 := mtSpreads[order.Symbol]
 	quantile, ok2 := mtQuantiles[order.Symbol]
 	if !ok1 || !ok2 || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
@@ -117,7 +117,7 @@ func isOrderProfitable(order okspot.NewOrderParam) bool {
 	}
 
 	//检查价格有没有挂太远，太远撤掉
-	if order.Side == okspot.OrderSideBuy &&
+	if order.Side == okex_usdtspot.OrderSideBuy &&
 		*order.Price < spread.MakerDepth.BestBidPrice {
 		logger.Debugf("%s BUY PRICE %f < BEST BID PRICE %f",
 			order.Symbol,
@@ -125,7 +125,7 @@ func isOrderProfitable(order okspot.NewOrderParam) bool {
 			spread.MakerDepth.BestBidPrice,
 		)
 		return false
-	} else if order.Side == okspot.OrderSideSell &&
+	} else if order.Side == okex_usdtspot.OrderSideSell &&
 		*order.Price > spread.MakerDepth.BestAskPrice {
 		logger.Debugf("%s SELL PRICE %f > BEST ASK PRICE %f",
 			order.Symbol,
@@ -135,16 +135,16 @@ func isOrderProfitable(order okspot.NewOrderParam) bool {
 		return false
 	}
 
-	if order.Side == okspot.OrderSideBuy &&
+	if order.Side == okex_usdtspot.OrderSideBuy &&
 		(spread.TakerDepth.TakerBid-*order.Price) / *order.Price > quantile.ShortTop-*mtConfig.MakerOrderOffset {
 		//买入开多, 是开空价差, 参考ShortTop
 		return true
-	} else if order.Side == okspot.OrderSideSell &&
+	} else if order.Side == okex_usdtspot.OrderSideSell &&
 		(spread.TakerDepth.TakerAsk-*order.Price) / *order.Price < quantile.ShortBot+*mtConfig.MakerOrderOffset {
 		//卖出平多, 是平空价, 参考ShortBot
 		return true
 	}
-	if order.Side == okspot.OrderSideBuy {
+	if order.Side == okex_usdtspot.OrderSideBuy {
 		logger.Debugf(
 			"NOT PROFITABLE %s BUY ORDER, CANCEL", order.Symbol,
 		)

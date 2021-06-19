@@ -22,7 +22,7 @@ type Position interface {
 	GetParseTime() time.Time
 }
 
-type Exchange interface {
+type CoinExchange interface {
 	Done() chan interface{}
 	Stop()
 
@@ -35,6 +35,31 @@ type Exchange interface {
 	GetMultiplier(symbol string) (float64, error)
 
 	StreamBasic(ctx context.Context, statusCh chan SystemStatus, balanceChMap map[string]chan Balance, positionChMap map[string]chan Position, orderCh map[string]chan Order, )
+	StreamSymbolStatus(ctx context.Context, channels map[string]chan SymbolStatusMsg, batchSize int)
+	StreamDepth(ctx context.Context, channels map[string]chan Depth, batchSize int)
+	StreamTrade(ctx context.Context, channels map[string]chan Trade, batchSize int)
+	StreamTicker(ctx context.Context, channels map[string]chan Ticker, batchSize int)
+	StreamKLine(ctx context.Context, channels map[string]chan []KLine, batchSize int, interval, lookback time.Duration)
+	StreamFundingRate(ctx context.Context, channels map[string]chan FundingRate, batchSize int)
+
+	WatchOrders(ctx context.Context, requestChannels map[string]chan OrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
+	GenerateClientID() string
+	IsSpot() bool
+}
+
+type UsdExchange interface {
+	Done() chan interface{}
+	Stop()
+
+	Setup(ctx context.Context, settings ExchangeSettings) error
+
+	GetMinNotional(symbol string) (float64, error)
+	GetMinSize(symbol string) (float64, error)
+	GetStepSize(symbol string) (float64, error)
+	GetTickSize(symbol string) (float64, error)
+	GetMultiplier(symbol string) (float64, error)
+
+	StreamBasic(ctx context.Context, statusCh chan SystemStatus, accountCh chan Balance, positionChMap map[string]chan Position, orderCh map[string]chan Order, )
 	StreamSymbolStatus(ctx context.Context, channels map[string]chan SymbolStatusMsg, batchSize int)
 	StreamDepth(ctx context.Context, channels map[string]chan Depth, batchSize int)
 	StreamTrade(ctx context.Context, channels map[string]chan Trade, batchSize int)
@@ -87,12 +112,12 @@ type ExchangeSettings struct {
 }
 
 type SpotExchange interface {
-	Exchange
+	UsdExchange
 	BalanceCh() chan Balance
 }
 
 type SwapExchange interface {
-	Exchange
+	UsdExchange
 	PositionCh() chan Position
 }
 

@@ -83,8 +83,8 @@ var xyTargetPositionUpdateSilentTimes = make(map[string]time.Time)
 
 var xyConfig *Config
 
-var xExchange common.Exchange
-var yExchange common.Exchange
+var xExchange common.UsdExchange
+var yExchange common.UsdExchange
 
 var xyEnterTradeOrders = make(map[string]EnterTradeOrder)
 var xyMergedDirs = make(map[string]float64)

@@ -69,7 +69,7 @@ func (bn *BinanceUsdtFuture) GetMultiplier(symbol string) (float64, error) {
 func (bn *BinanceUsdtFuture) StreamBasic(
 	ctx context.Context,
 	statusCh chan common.SystemStatus,
-	accountChMap map[string]chan common.Balance,
+	accountCh chan common.Balance,
 	positionChMap map[string]chan common.Position,
 	orderChMap map[string]chan common.Order,
 ) {
@@ -137,7 +137,7 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 				}
 			}
 			for _, balance := range bp.Account.Balances {
-				if accountCh, ok := accountChMap[balance.Asset]; ok {
+				if balance.Asset == "BUSD" {
 					if usdtAsset != nil && usdtAsset.EventTime.Sub(balance.EventTime) < 0 {
 						usdtAsset.WalletBalance = &balance.WalletBalance
 						usdtAsset.CrossWalletBalance = &balance.CrossWalletBalance
@@ -169,7 +169,7 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 			break
 		case account := <-internalAccountCh:
 			for _, asset := range account.Assets {
-				if accountCh, ok := accountChMap[asset.Asset]; ok {
+				if asset.Asset == "BUSD" {
 					asset := asset
 					usdtAsset = &asset
 					select {

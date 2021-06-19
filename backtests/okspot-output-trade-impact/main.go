@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"github.com/geometrybase/hft-micro/tdigest"
 	"os"
 	"strings"
@@ -22,13 +22,13 @@ func main() {
 
 	quantiles := make(map[string]string)
 	for _, symbol := range symbols {
-		var lastTrade *okspot.Trade
+		var lastTrade *okex_usdtspot.Trade
 		sellImpactTD, _ := tdigest.New()
 		buyImpactTD, _ := tdigest.New()
-		var wsTrade okspot.WSTrades
+		var wsTrade okex_usdtspot.WSTrades
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/okspot-trade/%s-%s.okspot.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/Users/chenjilin/MarketData/okex-usdtspot-trade/%s-%s.okex-usdtspot.trade.jl.gz", dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

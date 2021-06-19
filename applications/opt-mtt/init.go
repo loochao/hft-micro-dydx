@@ -81,8 +81,8 @@ var tHedgeMarkPrices = make(map[string]float64)
 
 var mtConfig *Config
 
-var mExchange common.Exchange
-var tExchange common.Exchange
+var mExchange common.UsdExchange
+var tExchange common.UsdExchange
 
 func init() {
 

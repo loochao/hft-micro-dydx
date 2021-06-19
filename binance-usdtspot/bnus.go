@@ -69,7 +69,7 @@ func (bn *BinanceUsdtSpot) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountChMap map[string]chan common.Balance, positionChMap map[string]chan common.Position, orderChMap map[string]chan common.Order) {
+func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, usdtAccountCh chan common.Balance, positionChMap map[string]chan common.Position, orderChMap map[string]chan common.Order) {
 	defer bn.Stop()
 	bn.mu.Lock()
 	proxy := bn.settings.Proxy
@@ -77,11 +77,6 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 	userWS, err := NewUserWebsocket(ctx, bn.api, proxy)
 	if err != nil {
 		logger.Debugf("NewUserWebsocket(ctx,  bn.api, proxy) error %v", err)
-		return
-	}
-	usdtAccountCh, ok := accountChMap["USDT"]
-	if !ok {
-		logger.Debug("miss usdt account ch in accountChMap")
 		return
 	}
 	balancesMap := make(map[string]*Balance, 0)
@@ -221,7 +216,7 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 				}
 			}
 			for symbol, ch := range positionChMap {
-				if _, ok = balancesMap[symbol]; !ok {
+				if _, ok := balancesMap[symbol]; !ok {
 					balance := &Balance{
 						Asset:     strings.Replace(symbol, "USDT", "", -1),
 						EventTime: account.EventTime,

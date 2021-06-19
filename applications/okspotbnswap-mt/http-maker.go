@@ -2,13 +2,13 @@ package main
 
 import (
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"strings"
 	"time"
 )
 
 
-func handleMakerHttpBalances(balances []okspot.Balance) {
+func handleMakerHttpBalances(balances []okex_usdtspot.Balance) {
 	for _, balance := range balances {
 		if balance.Currency == "USDT" {
 			balance := balance
@@ -27,7 +27,7 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 				continue
 			}
 			mBalancesUpdateTimes[makerSymbol] = time.Now()
-			var lastBalance *okspot.Balance
+			var lastBalance *okex_usdtspot.Balance
 			if b, ok := mBalances[makerSymbol]; ok {
 				b := b
 				lastBalance = &b
@@ -49,7 +49,7 @@ func handleMakerHttpBalances(balances []okspot.Balance) {
 	}
 	for _, makerSymbol := range mSymbols {
 		if _, ok := mBalances[makerSymbol]; !ok {
-			mBalances[makerSymbol] = okspot.Balance{
+			mBalances[makerSymbol] = okex_usdtspot.Balance{
 				Currency:  strings.Replace(makerSymbol, "-USDT", "",-1),
 				Available: 0.0,
 				Hold:      0.0,

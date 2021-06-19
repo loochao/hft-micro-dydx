@@ -5,14 +5,14 @@ import (
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"math"
 	"time"
 )
 
 func watchMakerBars(
 	ctx context.Context,
-	api *okspot.API,
+	api *okex_usdtspot.API,
 	makerSymbols []string,
 	barsLookback int,
 	pullInterval time.Duration,
@@ -75,7 +75,7 @@ func watchMakerBars(
 					symbolStartTime = symbolStartTime.Add(-candleDuration * 3)
 				}
 				history, err := api.GetRecentCandles(
-					ctx, okspot.MarketDataParams{
+					ctx, okex_usdtspot.MarketDataParams{
 						InstrumentId: symbol,
 						End:          &symbolEndTime,
 						Start:        &symbolStartTime,

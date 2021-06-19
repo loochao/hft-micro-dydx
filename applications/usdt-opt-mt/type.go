@@ -96,8 +96,8 @@ type XYParams struct {
 }
 
 type XYStrategy struct {
-	xExchange common.Exchange
-	yExchange common.Exchange
+	xExchange common.UsdExchange
+	yExchange common.UsdExchange
 
 	xSymbol string
 	ySymbol string

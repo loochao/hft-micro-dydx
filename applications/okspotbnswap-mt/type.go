@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"time"
 )
 
@@ -14,16 +14,16 @@ type TakerOrderNewError struct {
 
 type MakerOrderNewError struct {
 	Error  error
-	Params okspot.NewOrderParam
+	Params okex_usdtspot.NewOrderParam
 }
 
 type MakerOrderRequest struct {
-	New    *okspot.NewOrderParam
-	Cancel *okspot.CancelOrderParam
+	New    *okex_usdtspot.NewOrderParam
+	Cancel *okex_usdtspot.CancelOrderParam
 }
 
 type MakerOpenOrder struct {
-	*okspot.NewOrderParam
+	*okex_usdtspot.NewOrderParam
 	ResponseOrderID string
 	Symbol          string
 }

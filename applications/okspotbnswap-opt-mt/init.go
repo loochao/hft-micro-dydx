@@ -6,7 +6,7 @@ import (
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"time"
@@ -22,10 +22,10 @@ var mtGlobalCancel context.CancelFunc
 var mtInternalInfluxWriter *common.InfluxWriter
 var mtExternalInfluxWriter *common.InfluxWriter
 
-var mAPI *okspot.API
+var mAPI *okex_usdtspot.API
 var tAPI *bnswap.API
 
-var mUserWebsocket *okspot.UserWebsocket
+var mUserWebsocket *okex_usdtspot.UserWebsocket
 var tUserWebsocket *bnswap.UserWebsocket
 
 var mHttpPositionUpdateSilentTimes = make(map[string]time.Time)
@@ -38,9 +38,9 @@ var tStepSizes = make(map[string]float64)
 var tMinNotional = make(map[string]float64)
 var mtStepSizes = make(map[string]float64)
 
-var mAccount *okspot.Balance
-var mBalancesCh = make(chan []okspot.Balance, 100)
-var mBalances = make(map[string]okspot.Balance)
+var mAccount *okex_usdtspot.Balance
+var mBalancesCh = make(chan []okex_usdtspot.Balance, 100)
+var mBalances = make(map[string]okex_usdtspot.Balance)
 var mBalancesUpdateTimes = make(map[string]time.Time)
 var mOrderRequestChs = make(map[string]chan MakerOrderRequest)
 var mNewOrderErrorCh chan MakerOrderNewError

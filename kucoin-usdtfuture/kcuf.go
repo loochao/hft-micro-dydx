@@ -112,7 +112,7 @@ func (k *KucoinUsdtFuture) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountChMap map[string]chan common.Balance, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
+func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
 	defer k.Stop()
 	k.mu.Lock()
 	settings := k.settings
@@ -171,14 +171,12 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 			}
 		case a := <-httpAccountCh:
 			account = &a
-			if accountCh, ok := accountChMap["USDT"]; ok {
-				select {
-				case accountCh <- account:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("accountCh <- account failed, ch len %d", len(accountCh))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
+			select {
+			case accountCh <- account:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("accountCh <- account failed, ch len %d", len(accountCh))
+					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
 		case <-userWS.RestartCh:
@@ -208,14 +206,12 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 					account.OrderMargin = *balance.OrderMargin
 				}
 				outputAccount := *account
-				if accountCh, ok := accountChMap["USDT"]; ok {
-					select {
-					case accountCh <- &outputAccount:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("ch <- &order failed, ch len %d", len(accountCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
+				select {
+				case accountCh <- &outputAccount:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("ch <- &order failed, ch len %d", len(accountCh))
+						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
 			}
@@ -451,7 +447,7 @@ func (k *KucoinUsdtFuture) WatchOrders(ctx context.Context, requestChannels map[
 			logger.Debugf("miss error ch for %s, exit", symbol)
 			return
 		}
-		go k.watchOrder(ctx, symbol,  reqCh, respCh, errCh)
+		go k.watchOrder(ctx, symbol, reqCh, respCh, errCh)
 	}
 	for {
 		select {
@@ -609,7 +605,7 @@ func (k *KucoinUsdtFuture) watchOrder(
 					}
 					continue
 				}
-				k.submitOrder(ctx, *req.New,   responseCh, errorCh)
+				k.submitOrder(ctx, *req.New, responseCh, errorCh)
 			} else if req.Cancel != nil {
 				k.cancelOrder(ctx, *req.Cancel, errorCh)
 			}

@@ -6,7 +6,7 @@ import (
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"math"
 	"math/rand"
 	"time"
@@ -205,12 +205,12 @@ func updateMakerNewOrders() {
 					spread.MedianLeave, exitDelta,
 					size,
 				)
-				order := okspot.NewOrderParam{
+				order := okex_usdtspot.NewOrderParam{
 					Symbol:    makerSymbol,
 					ClientOID: fmt.Sprintf("M%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
-					Side:      okspot.OrderSideSell,
-					Type:      okspot.OrderLimit,
-					OrderType: okspot.OrderTypePostOnly,
+					Side:      okex_usdtspot.OrderSideSell,
+					Type:      okex_usdtspot.OrderLimit,
+					OrderType: okex_usdtspot.OrderTypePostOnly,
 					Price:     &price,
 					Size:      &size,
 				}
@@ -313,12 +313,12 @@ func updateMakerNewOrders() {
 				size, price,
 			)
 			makerUSDTAvailable -= entryValue
-			order := okspot.NewOrderParam{
+			order := okex_usdtspot.NewOrderParam{
 				Symbol:    makerSymbol,
 				ClientOID: fmt.Sprintf("M%d", time.Now().Unix()*10000+int64(rand.Intn(10000))),
-				Side:      okspot.OrderSideBuy,
-				Type:      okspot.OrderLimit,
-				OrderType: okspot.OrderTypePostOnly,
+				Side:      okex_usdtspot.OrderSideBuy,
+				Type:      okex_usdtspot.OrderLimit,
+				OrderType: okex_usdtspot.OrderTypePostOnly,
 				Price:     &price,
 				Size:      &size,
 			}

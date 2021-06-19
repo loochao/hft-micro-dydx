@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 )
 
 func makerRoutedDepthLoop(
@@ -19,7 +19,7 @@ func makerRoutedDepthLoop(
 	}
 	logger.Debugf("START makerRoutedDepthLoop %s", symbols)
 	defer logger.Debugf("EXIT makerRoutedDepthLoop %s", symbols)
-	ws := okspot.NewDepth5RoutedWebsocket(
+	ws := okex_usdtspot.NewDepth5RoutedWebsocket(
 		ctx,
 		proxyAddress,
 		channels,

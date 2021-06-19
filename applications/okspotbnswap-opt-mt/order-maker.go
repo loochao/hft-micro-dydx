@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"time"
 )
 
 func watchMakerOrderRequest(
 	ctx context.Context,
-	api *okspot.API,
+	api *okex_usdtspot.API,
 	timeout time.Duration,
 	dryRun bool,
 	orderRequestCh chan MakerOrderRequest,
@@ -71,7 +71,7 @@ func cancelAllMakerOpenOrders() {
 		mOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderSilent)
 		mCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &okspot.CancelOrderParam{
+			Cancel: &okex_usdtspot.CancelOrderParam{
 				Symbol:    order.Symbol,
 				ClientOid: order.ClientOID,
 			},
@@ -100,7 +100,7 @@ func updateMakerOldOrders() {
 		mOrderSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
 		mCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.CancelSilent)
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &okspot.CancelOrderParam{
+			Cancel: &okex_usdtspot.CancelOrderParam{
 				Symbol:    order.Symbol,
 				ClientOid: order.ClientOID,
 			},
@@ -108,7 +108,7 @@ func updateMakerOldOrders() {
 	}
 }
 
-func isOrderProfitable(order okspot.NewOrderParam, entryTarget float64) bool {
+func isOrderProfitable(order okex_usdtspot.NewOrderParam, entryTarget float64) bool {
 	spread, okSpread := mtSpreads[order.Symbol]
 	makerBalance, okMakerBalance := mBalances[order.Symbol]
 	if !okSpread || !okMakerBalance || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
@@ -122,7 +122,7 @@ func isOrderProfitable(order okspot.NewOrderParam, entryTarget float64) bool {
 	exitDelta := *mtConfig.ExitDelta + *mtConfig.OffsetDelta*(currentSpotValue/entryTarget)
 
 	//检查价格有没有挂太远，太远撤掉
-	if order.Side == okspot.OrderSideBuy &&
+	if order.Side == okex_usdtspot.OrderSideBuy &&
 		*order.Price < spread.MakerDepth.MidPrice*(1.0+makerOffset.FarBot) {
 		logger.Debugf("%s BUY PRICE %f < FAR BOT %f, CANCEL",
 			order.Symbol,
@@ -130,7 +130,7 @@ func isOrderProfitable(order okspot.NewOrderParam, entryTarget float64) bool {
 			spread.MakerDepth.MidPrice*(1.0+makerOffset.FarBot),
 		)
 		return false
-	} else if order.Side == okspot.OrderSideBuy &&
+	} else if order.Side == okex_usdtspot.OrderSideBuy &&
 		*order.Price > spread.MakerDepth.MidPrice*(1.0+makerOffset.NearBot) {
 		logger.Debugf("%s BUY PRICE %f > NEAR BOT %f, CANCEL",
 			order.Symbol,
@@ -138,7 +138,7 @@ func isOrderProfitable(order okspot.NewOrderParam, entryTarget float64) bool {
 			spread.MakerDepth.MidPrice*(1.0+makerOffset.NearBot),
 		)
 		return false
-	} else if order.Side == okspot.OrderSideSell &&
+	} else if order.Side == okex_usdtspot.OrderSideSell &&
 		*order.Price > spread.MakerDepth.MidPrice*(1.0 + makerOffset.FarTop) {
 		logger.Debugf("%s SELL PRICE %f > FAR TOP %f, CANCEL",
 			order.Symbol,
@@ -146,7 +146,7 @@ func isOrderProfitable(order okspot.NewOrderParam, entryTarget float64) bool {
 			spread.MakerDepth.MidPrice*(1.0 + makerOffset.FarTop) ,
 		)
 		return false
-	} else if order.Side == okspot.OrderSideSell &&
+	} else if order.Side == okex_usdtspot.OrderSideSell &&
 		*order.Price < spread.MakerDepth.MidPrice*(1.0 + makerOffset.NearTop) {
 		logger.Debugf("%s SELL PRICE %f < NEAR TOP %f, CANCEL",
 			order.Symbol,
@@ -156,16 +156,16 @@ func isOrderProfitable(order okspot.NewOrderParam, entryTarget float64) bool {
 		return false
 	}
 
-	if order.Side == okspot.OrderSideBuy &&
+	if order.Side == okex_usdtspot.OrderSideBuy &&
 		(spread.TakerDepth.TakerBid-*order.Price) / *order.Price > enterDelta {
 		//买入开多, 是开空价差, 参考ShortTop
 		return true
-	} else if order.Side == okspot.OrderSideSell &&
+	} else if order.Side == okex_usdtspot.OrderSideSell &&
 		(spread.TakerDepth.TakerAsk-*order.Price) / *order.Price < exitDelta {
 		//卖出平多, 是平空价, 参考ShortBot
 		return true
 	}
-	if order.Side == okspot.OrderSideBuy {
+	if order.Side == okex_usdtspot.OrderSideBuy {
 		logger.Debugf(
 			"NOT PROFITABLE %s BUY ORDER, CANCEL", order.Symbol,
 		)

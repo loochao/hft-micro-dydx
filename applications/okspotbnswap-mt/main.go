@@ -5,7 +5,7 @@ import (
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"os"
 	"os/signal"
 	"runtime/pprof"
@@ -30,8 +30,8 @@ func main() {
 	}
 
 	var err error
-	mAPI, err = okspot.NewAPI(
-		&okspot.Credentials{
+	mAPI, err = okex_usdtspot.NewAPI(
+		&okex_usdtspot.Credentials{
 			Key:        *mtConfig.OkApiKey,
 			Secret:     *mtConfig.OkApiSecret,
 			Passphrase: *mtConfig.OkApiPassphrase,
@@ -82,7 +82,7 @@ func main() {
 		}
 	}
 
-	mTickSizes, mStepSizes, mMinSizes, err = okspot.GetOkOrderLimits(mtGlobalCtx, mAPI, mSymbols)
+	mTickSizes, mStepSizes, mMinSizes, err = okex_usdtspot.GetOkOrderLimits(mtGlobalCtx, mAPI, mSymbols)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -141,7 +141,7 @@ func main() {
 	}
 	defer tUserWebsocket.Stop()
 
-	mUserWebsocket = okspot.NewUserWebsocket(
+	mUserWebsocket = okex_usdtspot.NewUserWebsocket(
 		mtGlobalCtx,
 		*mtConfig.OkApiKey,
 		*mtConfig.OkApiSecret,
@@ -170,7 +170,7 @@ func main() {
 	defer mtLoopTimer.Stop()
 	defer externalInfluxSaveTimer.Stop()
 
-	go okspot.WatchBalancesFromHttp(
+	go okex_usdtspot.WatchBalancesFromHttp(
 		mtGlobalCtx, mAPI,
 		*mtConfig.PullInterval,
 		mBalancesCh,
@@ -318,7 +318,7 @@ func main() {
 		)
 	}
 
-	go okspot.SystemStatusHttpLoop(
+	go okex_usdtspot.SystemStatusHttpLoop(
 		mtGlobalCtx,
 		mAPI,
 		*mtConfig.PullInterval/2,
@@ -392,13 +392,13 @@ func main() {
 			break
 		case makerOrders := <-mUserWebsocket.OrdersCh:
 			for _, makerOrder := range makerOrders {
-				if makerOrder.State == okspot.OrderStateCanceled ||
-					makerOrder.State == okspot.OrderStateFullyFilled ||
-					makerOrder.State == okspot.OrderStatePartiallyFilled {
+				if makerOrder.State == okex_usdtspot.OrderStateCanceled ||
+					makerOrder.State == okex_usdtspot.OrderStateFullyFilled ||
+					makerOrder.State == okex_usdtspot.OrderStatePartiallyFilled {
 					if openOrder, ok := mOpenOrders[makerOrder.Symbol]; ok && openOrder.ClientOID == makerOrder.ClientOID {
 						delete(mOpenOrders, makerOrder.Symbol)
 					}
-					if makerOrder.State == okspot.OrderStateCanceled {
+					if makerOrder.State == okex_usdtspot.OrderStateCanceled {
 						logger.Debugf("MAKER WS ORDER CANCELED %s %s %s %f %f", makerOrder.Symbol, makerOrder.ClientOID, makerOrder.Side, makerOrder.Size, makerOrder.Price)
 						mOrderSilentTimes[makerOrder.Symbol] = time.Now().Add(time.Second)
 						mBalancesUpdateTimes[makerOrder.Symbol] = time.Unix(0, 0)
@@ -411,9 +411,9 @@ func main() {
 						mtLoopTimer.Reset(time.Nanosecond)
 						mHttpPositionUpdateSilentTimes[makerOrder.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 						lastFilledPrice := makerOrder.FilledNotional / makerOrder.FilledSize
-						if makerOrder.Side == okspot.OrderSideSell {
+						if makerOrder.Side == okex_usdtspot.OrderSideSell {
 							mLastFilledSellPrices[makerOrder.Symbol] = lastFilledPrice
-						} else if makerOrder.Side == okspot.OrderSideBuy {
+						} else if makerOrder.Side == okex_usdtspot.OrderSideBuy {
 							mLastFilledBuyPrices[makerOrder.Symbol] = lastFilledPrice
 						}
 					}
@@ -527,7 +527,7 @@ func main() {
 					for makerSymbol, order := range mOpenOrders {
 						select {
 						case mOrderRequestChs[makerSymbol] <- MakerOrderRequest{
-							Cancel: &okspot.CancelOrderParam{
+							Cancel: &okex_usdtspot.CancelOrderParam{
 								Symbol:    makerSymbol,
 								ClientOid: order.ClientOID,
 							},

@@ -67,7 +67,7 @@ func (ftx *FtxUsdtFuture) GetTickSize(symbol string) (float64, error) {
 func (ftx *FtxUsdtFuture) StreamBasic(
 	ctx context.Context,
 	statusCh chan common.SystemStatus,
-	accountChMap map[string]chan common.Balance,
+	accountCh chan common.Balance,
 	positionsCh map[string]chan common.Position,
 	ordersCh map[string]chan common.Order,
 ) {
@@ -136,14 +136,12 @@ func (ftx *FtxUsdtFuture) StreamBasic(
 		case a := <-internalAccountCh:
 			if a != nil {
 				outputAccount := *a
-				if accountCh, ok := accountChMap["USDT"]; ok {
-					select {
-					case accountCh <- &outputAccount:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("accountCh <- &internalAccount failed, ch len %d", len(accountCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
+				select {
+				case accountCh <- &outputAccount:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("accountCh <- &internalAccount failed, ch len %d", len(accountCh))
+						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
 			}
@@ -353,7 +351,7 @@ func (ftx *FtxUsdtFuture) WatchOrders(
 			logger.Debugf("miss error ch for %s, exit", market)
 			return
 		}
-		go ftx.watchOrder(ctx, market,  reqCh, respCh, errCh)
+		go ftx.watchOrder(ctx, market, reqCh, respCh, errCh)
 	}
 	for {
 		select {

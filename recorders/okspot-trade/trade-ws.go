@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"github.com/gorilla/websocket"
 	"io"
 	"math/rand"
@@ -391,7 +391,7 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 						end = len(args)
 					}
 					select {
-					case w.writeCh <- okspot.Subscription{
+					case w.writeCh <- okex_usdtspot.Subscription{
 						Op:   "subscribe",
 						Args: args[start:end],
 					}:
@@ -482,7 +482,7 @@ func (w *TradeWS) saveLoop(ctx context.Context, savePath, symbol string, inputCh
 				}
 			}
 			dayTime = time.Now().Truncate(time.Hour * 24)
-			outPath = fmt.Sprintf("%s/%s-%s.okspot.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
+			outPath = fmt.Sprintf("%s/%s-%s.okex-usdtspot.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				w.Stop()

@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okspot"
+	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"time"
 )
 
-func handleMakerWSAccount(balances []okspot.Balance) {
+func handleMakerWSAccount(balances []okex_usdtspot.Balance) {
 	for _, balance := range balances {
 		if balance.Currency == "USDT" {
 			balance := balance
@@ -22,7 +22,7 @@ func handleMakerWSAccount(balances []okspot.Balance) {
 		}
 		makerSymbol := balance.Currency + "-USDT"
 		if takerSymbol, ok := mtSymbolsMap[makerSymbol]; ok {
-			var lastBalance *okspot.Balance
+			var lastBalance *okex_usdtspot.Balance
 			if b, ok := mBalances[makerSymbol]; ok {
 				b := b
 				lastBalance = &b

@@ -57,6 +57,8 @@ type Config struct {
 	RestartSilent   time.Duration `yaml:"restartSilent"`
 	RestartInterval time.Duration `yaml:"restartInterval"`
 
+	HedgeYDelay     time.Duration `yaml:"hedgeYDelay"`
+
 	XYPairs       map[string]string  `yaml:"xyPairs"`
 	NotTradePairs map[string]string  `yaml:"notTradePairs"`
 	OrderOffsets  map[string]string  `yaml:"orderOffsets,omitempty"`

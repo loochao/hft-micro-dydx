@@ -46,7 +46,7 @@ var mOrderOffsets = make(map[string]Offset)
 var mWalkedDepths = make(map[string]*common.WalkedMakerTakerDepth)
 
 var mConfig *Config
-var mExchange common.Exchange
+var mExchange common.UsdExchange
 var mTimedPositionChange *common.TimedSum
 
 var mFilterRatios = make(map[string]FilterRatio)
