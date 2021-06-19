@@ -67,7 +67,7 @@ func startXYStrategy(
 		xLeverage:               config.XExchange.Leverage,
 		yLeverage:               config.YExchange.Leverage,
 		saveInterval:            config.InternalInflux.SaveInterval,
-		hedgeYDelay: config.HedgeYDelay,
+		hedgeYDelay:             config.HedgeYDelay,
 	}
 
 	if params.saveInterval == 0 {
@@ -300,6 +300,10 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 func (strat *XYStrategy) changeYPosition() {
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady {
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
+			logger.Debugf("not ready xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
+		}
 		return
 	}
 	if !strat.params.tradable ||
@@ -374,6 +378,10 @@ func (strat *XYStrategy) changeYPosition() {
 func (strat *XYStrategy) changeXPosition() {
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady {
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
+			logger.Debugf("not ready xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
+		}
 		return
 	}
 	if !strat.params.tradable ||
@@ -482,6 +490,10 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 func (strat *XYStrategy) updateTarget() {
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady {
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
+			logger.Debugf("not ready xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
+		}
 		return
 	}
 	if time.Now().Sub(strat.xyTargetSpotSizeUpdateSilentTime) < 0 ||
@@ -591,7 +603,7 @@ func (strat *XYStrategy) updateTarget() {
 		strat.changeXPosition()
 		if strat.params.hedgeYDelay <= 0 {
 			strat.changeYPosition()
-		}else{
+		} else {
 			strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 		}
 	} else if strat.spread.LongLastLeave > strat.longTop &&
@@ -649,7 +661,7 @@ func (strat *XYStrategy) updateTarget() {
 		strat.changeXPosition()
 		if strat.params.hedgeYDelay <= 0 {
 			strat.changeYPosition()
-		}else{
+		} else {
 			strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 		}
 	} else if !strat.params.isYSpot &&
@@ -731,7 +743,7 @@ func (strat *XYStrategy) updateTarget() {
 		strat.changeXPosition()
 		if strat.params.hedgeYDelay <= 0 {
 			strat.changeYPosition()
-		}else{
+		} else {
 			strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 		}
 	} else if !strat.params.isXSpot &&
@@ -812,7 +824,7 @@ func (strat *XYStrategy) updateTarget() {
 		strat.changeXPosition()
 		if strat.params.hedgeYDelay <= 0 {
 			strat.changeYPosition()
-		}else{
+		} else {
 			strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 		}
 	}
