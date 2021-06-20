@@ -80,6 +80,7 @@ func (strat *XYStrategy) walkYDepth() {
 				*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
 			} else if strat.yWalkedDepth.AskPrice*(1.0-strat.params.hedgeYTrailPct)>*strat.markedYAskPrice{
 				logger.Debugf("Y %s markedYAskPrice %f < trailed askPrice %f*(1-%f), change y position", strat.ySymbol, *strat.markedYAskPrice, strat.yWalkedDepth.AskPrice, strat.params.hedgeYTrailPct)
+				strat.markedYAskPrice = nil
 				strat.changeYPosition()
 			}
 		}else if strat.markedYBidPrice != nil {
@@ -87,6 +88,7 @@ func (strat *XYStrategy) walkYDepth() {
 				*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 			} else if strat.yWalkedDepth.BidPrice*(1.0 + strat.params.hedgeYTrailPct) < *strat.markedYBidPrice{
 				logger.Debugf("Y %s markedYBidPrice %f > trailed bidPrice %f*(1+%f), change y position", strat.ySymbol, *strat.markedYBidPrice, strat.yWalkedDepth.BidPrice, strat.params.hedgeYTrailPct)
+				strat.markedYAskPrice = nil
 				strat.changeYPosition()
 			}
 		}

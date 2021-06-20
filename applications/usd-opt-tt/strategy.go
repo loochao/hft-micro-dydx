@@ -247,6 +247,8 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			strat.saveTimer.Reset(strat.params.saveInterval)
 			break
 		case <-strat.hedgeYTimer.C:
+			strat.markedYAskPrice = nil
+			strat.markedYBidPrice = nil
 			strat.changeYPosition()
 			break
 		case strat.xAccount = <-strat.xAccountCh:
