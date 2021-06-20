@@ -1,4 +1,4 @@
-package ftx_usdtfuture
+package ftx_usdfuture
 var TimeLayout = "2006-01-02T15:04:05-07:00"
 var TradeSideBuy = "buy"
 var TradeSideSell = "sell"

@@ -593,7 +593,7 @@ func (k *KucoinUsdtFuture) watchOrder(
 			return
 		case req := <-requestCh:
 			if req.New != nil {
-				logger.Debugf("req := <-requestCh New %s", req.New.Symbol)
+				//logger.Debugf("req := <-requestCh New %s", req.New.Symbol)
 				if req.New.Symbol != symbol {
 					select {
 					case errorCh <- common.OrderError{
@@ -639,9 +639,9 @@ func (k *KucoinUsdtFuture) submitOrder(ctx context.Context, param common.NewOrde
 	k.mu.Lock()
 	newOrderParam.Leverage = int(k.settings.Leverage)
 	k.mu.Unlock()
-	logger.Debugf("%s before k.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
+	//logger.Debugf("%s before k.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
 	_, err := k.api.SubmitOrder(ctx, newOrderParam)
-	logger.Debugf("%s after k.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
+	//logger.Debugf("%s after k.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{

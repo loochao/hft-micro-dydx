@@ -1,4 +1,4 @@
-package ftx_usdtfuture
+package ftx_usdfuture
 
 var SizeIncrements = map[string]float64{
 	"BAT-PERP":     1,

@@ -87,7 +87,8 @@ type XYParams struct {
 	orderSilent           time.Duration
 	saveInterval          time.Duration
 	hedgeYDelay           time.Duration
-	hedgeYTrailPct        float64
+	depthWalkDelay        time.Duration
+	spreadWalkDelay       time.Duration
 
 	xLeverage float64
 	yLeverage float64
@@ -138,26 +139,25 @@ type XYStrategy struct {
 	xAccount                         common.Balance
 	yAccount                         common.Balance
 	xPosition                        common.Position
-	yPosition                        common.Position
-	xOrderSilentTime                 time.Time
-	yOrderSilentTime                 time.Time
-	xFundingRate                     common.FundingRate
-	yFundingRate                     common.FundingRate
-	xyFundingRate                    *float64
-	xLastFilledBuyPrice              *float64
-	xLastFilledSellPrice             *float64
-	yLastFilledBuyPrice              *float64
-	yLastFilledSellPrice             *float64
-	xTargetSpotSize                  *float64
-	yTargetSpotSize                  *float64
-	xyTargetSpotSizeUpdateSilentTime time.Time
-	enterStep                        float64
-	enterTarget                      float64
-	usdtAvailable                    float64
+	yPosition            common.Position
+	xOrderSilentTime     time.Time
+	yOrderSilentTime     time.Time
+	xFundingRate         common.FundingRate
+	yFundingRate         common.FundingRate
+	xyFundingRate        *float64
+	xLastFilledBuyPrice  *float64
+	xLastFilledSellPrice *float64
+	yLastFilledBuyPrice  *float64
+	yLastFilledSellPrice *float64
+	xyEnterSilentTime    time.Time
+	enterStep            float64
+	enterTarget          float64
+	usdtAvailable        float64
 
 	logSilentTime       time.Time
 	xWalkDepthTimer     *time.Timer
 	yWalkDepthTimer     *time.Timer
+	spreadWalkTimer     *time.Timer
 	saveTimer           *time.Timer
 	realisedSpreadTimer *time.Timer
 	hedgeYTimer         *time.Timer

@@ -52,7 +52,7 @@ func (strat *XYStrategy) walkSpread() {
 		LongMedianLeave: strat.shortEnterTimedMedian.Median(),
 		Time:            strat.spreadTime,
 	}
-	strat.updateTarget()
+	strat.changeXPosition()
 }
 
 func (strat *XYStrategy) walkXDepth() {
@@ -63,7 +63,7 @@ func (strat *XYStrategy) walkXDepth() {
 			strat.logSilentTime = time.Now().Add(time.Minute)
 		}
 	} else {
-		strat.walkSpread()
+		strat.spreadWalkTimer.Reset(strat.params.spreadWalkDelay)
 	}
 }
 
@@ -76,23 +76,23 @@ func (strat *XYStrategy) walkYDepth() {
 		}
 	} else {
 		if strat.markedYAskPrice != nil {
-			if strat.yWalkedDepth.AskPrice <= *strat.markedYAskPrice {
+			if strat.yWalkedDepth.AskPrice < *strat.markedYAskPrice+strat.params.yTickSize {
 				*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
-			} else if strat.yWalkedDepth.AskPrice*(1.0-strat.params.hedgeYTrailPct)>*strat.markedYAskPrice{
-				logger.Debugf("Y %s markedYAskPrice %f < trailed askPrice %f*(1-%f), change y position", strat.ySymbol, *strat.markedYAskPrice, strat.yWalkedDepth.AskPrice, strat.params.hedgeYTrailPct)
+			} else {
+				logger.Debugf("Y %s markedYAskPrice %f < trailed askPrice %f + %f, change y position", strat.ySymbol, *strat.markedYAskPrice, *strat.markedYAskPrice, strat.params.yTickSize)
 				strat.markedYAskPrice = nil
 				strat.changeYPosition()
 			}
-		}else if strat.markedYBidPrice != nil {
-			if strat.yWalkedDepth.BidPrice >= *strat.markedYBidPrice {
+		} else if strat.markedYBidPrice != nil {
+			if strat.yWalkedDepth.BidPrice > *strat.markedYBidPrice-strat.params.yTickSize {
 				*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
-			} else if strat.yWalkedDepth.BidPrice*(1.0 + strat.params.hedgeYTrailPct) < *strat.markedYBidPrice{
-				logger.Debugf("Y %s markedYBidPrice %f > trailed bidPrice %f*(1+%f), change y position", strat.ySymbol, *strat.markedYBidPrice, strat.yWalkedDepth.BidPrice, strat.params.hedgeYTrailPct)
+			} else {
+				logger.Debugf("Y %s markedYBidPrice %f > trailed bidPrice %f - %f, change y position", strat.ySymbol, *strat.markedYBidPrice, *strat.markedYBidPrice, strat.params.yTickSize)
 				strat.markedYAskPrice = nil
 				strat.changeYPosition()
 			}
 		}
-		strat.walkSpread()
+		strat.spreadWalkTimer.Reset(strat.params.spreadWalkDelay)
 	}
 }
 
@@ -112,7 +112,7 @@ func (strat *XYStrategy) handleXDepth() {
 			strat.xDepthExpireCount++
 			//logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 		} else {
-			strat.xWalkDepthTimer.Reset(strat.expectedChanSendingTime)
+			strat.xWalkDepthTimer.Reset(strat.params.depthWalkDelay)
 		}
 	}
 	strat.depthCount++
@@ -158,7 +158,7 @@ func (strat *XYStrategy) handleYDepth() {
 			//taker已经过期
 			strat.yDepthExpireCount++
 		} else {
-			strat.yWalkDepthTimer.Reset(strat.expectedChanSendingTime)
+			strat.yWalkDepthTimer.Reset(strat.params.depthWalkDelay)
 		}
 	}
 	strat.depthCount++

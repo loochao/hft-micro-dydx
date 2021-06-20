@@ -85,9 +85,8 @@ type FundingRate interface {
 }
 
 type Ticker interface {
-	GetHigh() float64
-	GetLow() float64
-	GetClose() float64
+	GetSymbol() string
+	GetTime() time.Time
 	GetBidPrice() float64
 	GetAskPrice() float64
 	GetBidSize() float64

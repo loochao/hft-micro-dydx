@@ -187,3 +187,4 @@ func (strat *XYStrategy) handleYDepth() {
 		strat.xDepthExpireCount = 0
 	}
 }
+

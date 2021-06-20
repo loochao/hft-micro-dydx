@@ -1,4 +1,4 @@
-package ftx_usdtfuture
+package ftx_usdfuture
 
 import (
 	"encoding/json"
@@ -154,7 +154,7 @@ func (orderBook *OrderBook) FormatFloat(value float64) string {
 		return "5e-05"
 	} else if value == 0.00001 {
 		return "1e-05"
-	}else{
+	} else {
 		return strconv.FormatFloat(value, 'f', -1, 64)
 	}
 }
@@ -283,7 +283,7 @@ func (position *Position) GetPrice() float64 {
 	if position.NetSize == 0 {
 		return 0.0
 	} else {
-		return (position.Cost  - position.RealizedPnl)/ position.NetSize
+		return (position.Cost - position.RealizedPnl) / position.NetSize
 	}
 }
 func (position *Position) GetTime() time.Time {
@@ -642,7 +642,7 @@ func (fs *FutureStats) GetSymbol() string {
 }
 
 func (fs *FutureStats) GetFundingRate() float64 {
-	return fs.NextFundingRate*8.0
+	return fs.NextFundingRate * 8.0
 }
 
 func (fs *FutureStats) GetNextFundingTime() time.Time {
@@ -664,6 +664,40 @@ func (fs *FutureStats) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+//{"channel": "ticker", "market": "DOGE-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
+
+type TickerData struct {
+	Channel string `json:"channel"`
+	Market  string `json:"market"`
+	Type    string `json:"type"`
+	Data    Ticker `json:"data"`
+}
+
+type Ticker struct {
+	Bid     float64   `json:"bid"`
+	Ask     float64   `json:"ask"`
+	BidSize float64   `json:"bidSize"`
+	AskSize float64   `json:"askSize"`
+	Symbol  string    `json:"-"`
+	Time    time.Time `json:"-"`
+}
+
+func (t *Ticker) UnmarshalJSON(data []byte) error {
+	type Alias Ticker
+	aux := &struct {
+		Time float64 `json:"time"`
+		*Alias
+	}{
+		Alias: (*Alias)(t),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	} else {
+		t.Time = time.Unix(0, int64(aux.Time*1000000000))
 	}
 	return nil
 }

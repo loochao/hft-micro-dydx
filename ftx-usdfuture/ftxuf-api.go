@@ -1,4 +1,4 @@
-package ftx_usdtfuture
+package ftx_usdfuture
 
 import (
 	"bytes"

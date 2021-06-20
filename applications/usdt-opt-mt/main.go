@@ -7,7 +7,7 @@ import (
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
-	ftxuf "github.com/geometrybase/hft-micro/ftx-usdtfuture"
+	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
 	kcuf "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"

@@ -5,7 +5,7 @@ import (
 	"flag"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/ftx-usdtfuture"
+	"github.com/geometrybase/hft-micro/ftx-usdfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -79,8 +79,8 @@ func init() {
 	}
 	trGlobalContext, trGlobalCancel = context.WithCancel(context.Background())
 	switch trConfig.ExchangeSettings.Name {
-	case "ftx-usdtfuture":
-		trExchange = new(ftx_usdtfuture.FtxUsdtFuture)
+	case "ftx-usdfuture":
+		trExchange = new(ftx_usdfuture.FtxUsdtFuture)
 		err = trExchange.Setup(trGlobalContext, trConfig.ExchangeSettings)
 		if err != nil {
 			logger.Fatal(err)

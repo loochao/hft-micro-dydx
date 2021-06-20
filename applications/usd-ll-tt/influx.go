@@ -32,8 +32,6 @@ func handleSave(
 		if st.xPosition != nil &&
 			st.yPosition != nil &&
 			st.spread != nil &&
-			st.xTargetSpotSize != nil &&
-			st.yTargetSpotSize != nil &&
 			st.xWalkedDepth.Symbol != "" &&
 			st.yWalkedDepth.Symbol != "" {
 			unHedgeValue := math.Abs(st.xSize+st.ySize) * st.midPrice
@@ -57,8 +55,6 @@ func handleSave(
 			fields["shortBot"] = st.shortBot
 			fields["longBot"] = st.longBot
 			fields["longTop"] = st.longTop
-			fields["xTargetSpotSize"] = *st.xTargetSpotSize
-			fields["yTargetSpotSize"] = *st.yTargetSpotSize
 			fields["enterTarget"] = st.enterTarget
 			fields["enterStep"] = st.enterStep
 			fields["enterValue"] = st.enterValue

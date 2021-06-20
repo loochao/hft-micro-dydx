@@ -1,4 +1,4 @@
-package ftx_usdtfuture
+package ftx_usdfuture
 
 import (
 	"context"
@@ -21,7 +21,7 @@ func TestFtxperp(t *testing.T) {
 		t.Fatal(err)
 	}
 	statusCh := make(chan common.SystemStatus, 100)
-	accountCh := make(chan common.Account, 100)
+	accountCh := make(chan common.Balance, 100)
 	positionsCh := make(map[string]chan common.Position)
 	ordersCh := make(map[string]chan common.Order)
 

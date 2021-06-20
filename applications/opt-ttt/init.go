@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/ftx-usdtfuture"
+	"github.com/geometrybase/hft-micro/ftx-usdfuture"
 	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
@@ -121,8 +121,8 @@ func init() {
 	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
 	switch xyConfig.XExchange.Name {
-	case "ftx-usdtfuture":
-		xExchange = &ftx_usdtfuture.FtxUsdtFuture{}
+	case "ftx-usdfuture":
+		xExchange = &ftx_usdfuture.FtxUsdtFuture{}
 	case "bnswap":
 		xExchange = &bnswap.Bnswap{}
 	case "kucoin-usdtfuture":
@@ -132,8 +132,8 @@ func init() {
 	}
 
 	switch xyConfig.YExchange.Name {
-	case "ftx-usdtfuture":
-		yExchange = &ftx_usdtfuture.FtxUsdtFuture{}
+	case "ftx-usdfuture":
+		yExchange = &ftx_usdfuture.FtxUsdtFuture{}
 	case "bnswap":
 		yExchange = &bnswap.Bnswap{}
 	case "kucoin-usdtfuture":
