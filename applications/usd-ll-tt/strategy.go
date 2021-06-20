@@ -183,7 +183,7 @@ func startXYStrategy(
 		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
 		hedgeYTimer:             time.NewTimer(time.Hour * 9999),
 		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
-		saveTimer:               time.NewTimer(params.saveInterval),
+		saveTimer:               time.NewTimer(config.RestartSilent),
 		spreadTime:              time.Time{},
 		spread:                  nil,
 		shortEnterTimedMedian:   common.NewTimedMedian(params.spreadLookback),
