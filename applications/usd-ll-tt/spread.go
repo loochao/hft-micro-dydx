@@ -79,7 +79,7 @@ func (strat *XYStrategy) walkYDepth() {
 			if strat.yWalkedDepth.AskPrice < *strat.markedYAskPrice+strat.params.yTickSize {
 				*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
 			} else {
-				logger.Debugf("Y %s markedYAskPrice %f >= trailed askPrice %f + %f, change y position", strat.ySymbol, *strat.markedYAskPrice, *strat.markedYAskPrice, strat.params.yTickSize)
+				logger.Debugf("Y %s markedYAskPrice %f >= trailed askPrice %f + %f, change y position", strat.ySymbol, *strat.markedYAskPrice, strat.yWalkedDepth.AskPrice, strat.params.yTickSize)
 				strat.markedYAskPrice = nil
 				strat.changeYPosition()
 			}
@@ -87,7 +87,7 @@ func (strat *XYStrategy) walkYDepth() {
 			if strat.yWalkedDepth.BidPrice > *strat.markedYBidPrice-strat.params.yTickSize {
 				*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 			} else {
-				logger.Debugf("Y %s markedYBidPrice %f <= trailed bidPrice %f - %f, change y position", strat.ySymbol, *strat.markedYBidPrice, *strat.markedYBidPrice, strat.params.yTickSize)
+				logger.Debugf("Y %s markedYBidPrice %f <= trailed bidPrice %f - %f, change y position", strat.ySymbol, *strat.markedYBidPrice, strat.yWalkedDepth.BidPrice, strat.params.yTickSize)
 				strat.markedYBidPrice = nil
 				strat.changeYPosition()
 			}
