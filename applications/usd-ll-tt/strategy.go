@@ -848,6 +848,7 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 				logger.Debugf("%s y position change %f -> %f %v", nextPos.GetSymbol(), strat.yPosition.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 			}
 			strat.yPosition = nextPos
+			strat.changeYPosition()
 		}
 		strat.yPositionUpdateTime = nextPos.GetParseTime()
 	} else {
