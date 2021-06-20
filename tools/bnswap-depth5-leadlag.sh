@@ -13,5 +13,5 @@ git push origin master
 chmod 755 "./dist/bnswap-depth5-leadlag.$dt"
 
 echo "hk01"
-rsync -avx --progress "./dist/bnswap-depth5-leadlag.$dt" hk01:/usr/local/bin/
+rsync -avx --progress "./dist/bnswap-depth5-leadlag.$dt" hk02:/usr/local/bin/
 
