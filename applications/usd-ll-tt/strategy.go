@@ -316,8 +316,8 @@ func (strat *XYStrategy) changeYPosition() {
 	if !strat.params.tradable ||
 		strat.yPosition == nil ||
 		strat.xPosition == nil ||
-		strat.spread == nil ||
 		time.Now().Sub(strat.yPositionUpdateTime) > strat.params.balancePositionMaxAge ||
+		time.Now().Sub(strat.xPositionUpdateTime) > strat.params.balancePositionMaxAge ||
 		time.Now().Sub(strat.yOrderSilentTime) < 0 {
 		return
 	}
