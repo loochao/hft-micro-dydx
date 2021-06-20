@@ -1,6 +1,9 @@
 package common
 
-import "time"
+import (
+	"math"
+	"time"
+)
 
 type Float64Slice []float64
 type TimeSlice []time.Time
@@ -60,6 +63,7 @@ type TimedSum struct {
 	values   []float64
 	sum      float64
 }
+
 func (tm *TimedSum) Insert(timestamp time.Time, value float64) float64 {
 	tm.times = append(tm.times, timestamp)
 	tm.values = append(tm.values, value)
@@ -110,6 +114,7 @@ type TimedMean struct {
 	sum      float64
 	mean     float64
 }
+
 func (tm *TimedMean) Insert(timestamp time.Time, value float64) float64 {
 	tm.times = append(tm.times, timestamp)
 	tm.values = append(tm.values, value)
@@ -361,5 +366,63 @@ func NewTimedMedian(lookback time.Duration) *TimedMedian {
 		times:            make([]time.Time, 0),
 		values:           make([]float64, 0),
 		sortedFloatSlice: SortedFloatSlice{},
+	}
+}
+
+type TimedWalkingDistance struct {
+	lookback        time.Duration
+	times           []time.Time
+	offsets         []float64
+	walkingDistance float64
+	lastValue       *float64
+	lastOffset      float64
+}
+func (twd *TimedWalkingDistance) Insert(timestamp time.Time, value float64) float64 {
+	if twd.lastValue == nil {
+		twd.lastValue = new(float64)
+		*twd.lastValue = value
+		twd.walkingDistance = 0
+		return twd.walkingDistance
+	}
+	twd.lastOffset = math.Abs(value - *twd.lastValue)
+	twd.times = append(twd.times, timestamp)
+	twd.offsets = append(twd.offsets, twd.lastOffset)
+	twd.walkingDistance += twd.lastOffset
+	cutIndex := -1
+	for i, t := range twd.times {
+		if timestamp.Sub(t) > twd.lookback {
+			cutIndex = i
+			twd.walkingDistance -= twd.offsets[i]
+		} else {
+			break
+		}
+	}
+	//需要offset 1
+	cutIndex += 1
+	if cutIndex > 0 {
+		twd.offsets = twd.offsets[cutIndex:]
+		twd.times = twd.times[cutIndex:]
+	}
+	return twd.walkingDistance
+}
+func (twd *TimedWalkingDistance) Sum() float64 {
+	return twd.walkingDistance
+}
+func (twd *TimedWalkingDistance) Len() int {
+	return len(twd.offsets)
+}
+func (twd *TimedWalkingDistance) Range() time.Duration {
+	if len(twd.times) > 2 {
+		return twd.times[len(twd.times)-1].Sub(twd.times[0])
+	} else {
+		return time.Duration(0)
+	}
+}
+func NewTimedWalkingDistance(lookback time.Duration) *TimedWalkingDistance {
+	return &TimedWalkingDistance{
+		lookback:        lookback,
+		times:           make([]time.Time, 0),
+		offsets:         make([]float64, 0),
+		walkingDistance: 0,
 	}
 }
