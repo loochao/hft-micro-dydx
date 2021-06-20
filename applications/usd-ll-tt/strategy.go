@@ -304,6 +304,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 }
 
 func (strat *XYStrategy) changeYPosition() {
+	logger.Debugf("changeYPosition %s", strat.ySymbol)
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
