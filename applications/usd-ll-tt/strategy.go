@@ -320,7 +320,7 @@ func (strat *XYStrategy) changeYPosition() {
 		time.Now().Sub(strat.yOrderSilentTime) < 0 {
 		return
 	}
-	strat.ySizeDiff = strat.xPosition.GetSize()*strat.params.xMultiplier/strat.params.yMultiplier - strat.yPosition.GetSize()
+	strat.ySizeDiff = -strat.xPosition.GetSize()*strat.params.xMultiplier/strat.params.yMultiplier - strat.yPosition.GetSize()
 	if math.Abs(strat.ySizeDiff) < strat.params.yStepSize {
 		return
 	}
