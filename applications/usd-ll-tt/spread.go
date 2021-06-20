@@ -88,7 +88,7 @@ func (strat *XYStrategy) walkYDepth() {
 				*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 			} else {
 				logger.Debugf("Y %s markedYBidPrice %f > trailed bidPrice %f - %f, change y position", strat.ySymbol, *strat.markedYBidPrice, *strat.markedYBidPrice, strat.params.yTickSize)
-				strat.markedYAskPrice = nil
+				strat.markedYBidPrice = nil
 				strat.changeYPosition()
 			}
 		}
