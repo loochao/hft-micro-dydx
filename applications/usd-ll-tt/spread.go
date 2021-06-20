@@ -75,23 +75,23 @@ func (strat *XYStrategy) walkYDepth() {
 			strat.logSilentTime = time.Now().Add(time.Minute)
 		}
 	} else {
-		if strat.markedYAskPrice != nil {
-			if strat.yWalkedDepth.AskPrice < *strat.markedYAskPrice+strat.params.yTickSize {
-				*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
-			} else {
-				logger.Debugf("Y %s markedYAskPrice %f >= trailed askPrice %f + %f, change y position", strat.ySymbol, *strat.markedYAskPrice, strat.yWalkedDepth.AskPrice, strat.params.yTickSize)
-				strat.markedYAskPrice = nil
-				strat.changeYPosition()
-			}
-		} else if strat.markedYBidPrice != nil {
-			if strat.yWalkedDepth.BidPrice > *strat.markedYBidPrice-strat.params.yTickSize {
-				*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
-			} else {
-				logger.Debugf("Y %s markedYBidPrice %f <= trailed bidPrice %f - %f, change y position", strat.ySymbol, *strat.markedYBidPrice, strat.yWalkedDepth.BidPrice, strat.params.yTickSize)
-				strat.markedYBidPrice = nil
-				strat.changeYPosition()
-			}
-		}
+		//if strat.markedYAskPrice != nil {
+		//	if strat.yWalkedDepth.AskPrice < *strat.markedYAskPrice+strat.params.yTickSize {
+		//		*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
+		//	} else {
+		//		logger.Debugf("Y %s markedYAskPrice %f >= trailed askPrice %f + %f, change y position", strat.ySymbol, *strat.markedYAskPrice, strat.yWalkedDepth.AskPrice, strat.params.yTickSize)
+		//		strat.markedYAskPrice = nil
+		//		strat.changeYPosition()
+		//	}
+		//} else if strat.markedYBidPrice != nil {
+		//	if strat.yWalkedDepth.BidPrice > *strat.markedYBidPrice-strat.params.yTickSize {
+		//		*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
+		//	} else {
+		//		logger.Debugf("Y %s markedYBidPrice %f <= trailed bidPrice %f - %f, change y position", strat.ySymbol, *strat.markedYBidPrice, strat.yWalkedDepth.BidPrice, strat.params.yTickSize)
+		//		strat.markedYBidPrice = nil
+		//		strat.changeYPosition()
+		//	}
+		//}
 		strat.spreadWalkTimer.Reset(strat.params.spreadWalkDelay)
 	}
 }

@@ -247,8 +247,8 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			strat.saveTimer.Reset(strat.params.saveInterval)
 			break
 		case <-strat.hedgeYTimer.C:
-			strat.markedYAskPrice = nil
-			strat.markedYBidPrice = nil
+			//strat.markedYAskPrice = nil
+			//strat.markedYBidPrice = nil
 			strat.changeYPosition()
 			break
 		case <-strat.spreadWalkTimer.C:
@@ -501,10 +501,10 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
-		if strat.markedYAskPrice == nil {
-			strat.markedYAskPrice = new(float64)
-		}
-		*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
+		//if strat.markedYAskPrice == nil {
+		//	strat.markedYAskPrice = new(float64)
+		//}
+		//*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
 		logger.Debugf(
 			"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f,  XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -574,10 +574,10 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
-		if strat.markedYBidPrice == nil {
-			strat.markedYBidPrice = new(float64)
-		}
-		*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
+		//if strat.markedYBidPrice == nil {
+		//	strat.markedYBidPrice = new(float64)
+		//}
+		//*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 		strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 		logger.Debugf(
 			"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE -%f, XDepthDiff %v YDepthDiff %v",
@@ -678,10 +678,10 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
-		if strat.markedYBidPrice == nil {
-			strat.markedYBidPrice = new(float64)
-		}
-		*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
+		//if strat.markedYBidPrice == nil {
+		//	strat.markedYBidPrice = new(float64)
+		//}
+		//*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 		strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f, XDepthDiff %v YDepthDiff %v",
@@ -781,10 +781,10 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
-		if strat.markedYAskPrice == nil {
-			strat.markedYAskPrice = new(float64)
-		}
-		*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
+		//if strat.markedYAskPrice == nil {
+		//	strat.markedYAskPrice = new(float64)
+		//}
+		//*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
 		strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE -%f, XDepthDiff %v YDepthDiff %v",
@@ -816,6 +816,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 				logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 			}
 			strat.xPosition = nextPos
+			strat.changeYPosition()
 		}
 		strat.xPositionUpdateTime = nextPos.GetParseTime()
 	} else {
@@ -823,10 +824,10 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 		strat.xPositionUpdateTime = nextPos.GetParseTime()
 		logger.Debugf("%s x position change nil -> %f", nextPos.GetSymbol(), nextPos.GetSize())
 	}
-	if strat.markedYBidPrice == nil &&
-		strat.markedYAskPrice == nil {
-		strat.changeYPosition()
-	}
+	//if strat.markedYBidPrice == nil &&
+	//	strat.markedYAskPrice == nil {
+	//	strat.changeYPosition()
+	//}
 }
 
 func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
@@ -854,8 +855,8 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 		strat.yPositionUpdateTime = nextPos.GetParseTime()
 		logger.Debugf("%s y position change nil -> %f", nextPos.GetSymbol(), nextPos.GetSize())
 	}
-	if strat.markedYBidPrice == nil &&
-		strat.markedYAskPrice == nil {
-		strat.changeYPosition()
-	}
+	//if strat.markedYBidPrice == nil &&
+	//	strat.markedYAskPrice == nil {
+	//	strat.changeYPosition()
+	//}
 }

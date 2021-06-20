@@ -3,11 +3,11 @@
 dt=$(date -u +%Y%m%d)
 version=" BUILD @ $(date -u '+%Y%m%d %H:%M:%S') "
 echo "$version"
-sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/usdt-opt-mt/init.go
+sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/usd-ll-mt/init.go
 
 
-env GOOS=linux GOARCH=arm64 go build -o "./dist/usdt-opt-mt.arm64.$dt" ./applications/usdt-opt-mt
-env GOOS=linux GOARCH=amd64 go build -o "./dist/usdt-opt-mt.amd64.$dt" ./applications/usdt-opt-mt
+env GOOS=linux GOARCH=arm64 go build -o "./dist/usdt-opt-mt.arm64.$dt" ./applications/usd-ll-mt
+env GOOS=linux GOARCH=amd64 go build -o "./dist/usdt-opt-mt.amd64.$dt" ./applications/usd-ll-mt
 
 git add -A
 git commit -m "build usdt-opt-mt.$dt"

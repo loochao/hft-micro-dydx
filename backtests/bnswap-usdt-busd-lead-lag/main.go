@@ -6,9 +6,10 @@ import (
 	"context"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
-	"math"
 	"os"
+	"time"
 )
 
 
@@ -53,8 +54,10 @@ func main() {
 	}
 	depthScanner := bufio.NewScanner(depthGzReader)
 
-	//counter := 0
-	logCounter := 0
+	busdBidWalk := common.NewTimedWalkingDistance(time.Second)
+	usdtBidWalk := common.NewTimedWalkingDistance(time.Second)
+	busdAskWalk := common.NewTimedWalkingDistance(time.Second)
+	usdtAskWalk := common.NewTimedWalkingDistance(time.Second)
 	for depthScanner.Scan() {
 		err = bnuf.ParseDepth5(depthScanner.Bytes(), tempDepth)
 		if err != nil {
@@ -63,72 +66,35 @@ func main() {
 		}
 		if tempDepth.Symbol == usdtSymbol {
 			*usdtDepth = *tempDepth
-			//logger.Debugf("%v", busdDepth.EventTime.Sub(usdtDepth.EventTime))
+			usdtBidWalk.Insert(usdtDepth.EventTime, usdtDepth.Bids[0][0])
+			usdtAskWalk.Insert(usdtDepth.EventTime, usdtDepth.Asks[0][0])
+			continue
 		} else if tempDepth.Symbol == busdSymbol {
 			*busdDepth = *tempDepth
-			if math.Abs(busdDepth.Bids[0][0] - usdtDepth.Bids[0][0]) > 1.5 {
-				logCounter = 20
-			}
-			//}
+			busdBidWalk.Insert(busdDepth.EventTime, busdDepth.Bids[0][0])
+			busdAskWalk.Insert(busdDepth.EventTime, busdDepth.Asks[0][0])
 		}else{
 			continue
 		}
-		if logCounter > 0 {
-			logCounter--
-			logger.Debugf("%v\t%f %f %f %f", busdDepth.EventTime.Sub(usdtDepth.EventTime), busdDepth.Bids[0][0] - usdtDepth.Bids[0][0], busdDepth.Asks[0][0], busdDepth.Bids[0][0],usdtDepth.Bids[0][0])
-			if logCounter <= 0 {
-				logger.Debugf("")
-			}
+		fields := make(map[string]interface{})
+		fields["usdtBidWalk"] = usdtBidWalk.WalkDistance()
+		fields["usdtAskWalk"] = usdtAskWalk.WalkDistance()
+		fields["busdBidWalk"] = busdBidWalk.WalkDistance()
+		fields["busdAskWalk"] = busdAskWalk.WalkDistance()
+		fields["busdBidPrice"] = busdDepth.Bids[0][0]
+		fields["usdtBidPrice"] = usdtDepth.Bids[0][0]
+		pt, err := client.NewPoint(
+			"bnswap-usdt-busd-lead-lag",
+			map[string]string{
+				"bSymbol": busdSymbol,
+			},
+			fields,
+			busdDepth.EventTime,
+		)
+		if err != nil {
+			logger.Fatal(err)
 		}
-
-
-		//counter ++
-		//if counter > 10000 {
-		//	return
-		//}
-
-		//fields := make(map[string]interface{})
-		//if positionSize > 0 {
-		//	fields["netWorth"] = netWorth + positionSize*(bestBidPrice-positionCost)/positionCost
-		//} else if positionSize < 0 {
-		//	fields["netWorth"] = netWorth + positionSize*(bestAskPrice-positionCost)/positionCost
-		//} else {
-		//	fields["netWorth"] = netWorth
-		//}
-		//fields["positionSize"] = positionSize
-		//if positionCost != 0 {
-		//	fields["positionCost"] = positionCost
-		//}
-		//if lastFilledPrice != 0 {
-		//	fields["lastFilledPrice"] = lastFilledPrice
-		//}
-		//fields["bestBidPrice"] = bestBidPrice
-		//fields["bestAskPrice"] = bestAskPrice
-		//fields["depthSize"] = depthSize
-		//fields["depthTimedSizeDelta"] = depthTimedSizeDelta.Sum()
-		//fields["depthDeltaRatio"] = depthDeltaRatio
-		//fields["depthDeltaRatioQ9995"] = depthDeltaRatioTD.Quantile(0.9995)
-		//fields["depthDeltaRatioQ995"] = depthDeltaRatioTD.Quantile(0.995)
-		//fields["depthDeltaRatioQ99"] = depthDeltaRatioTD.Quantile(0.99)
-		//fields["depthDeltaRatioQ95"] = depthDeltaRatioTD.Quantile(0.95)
-		//fields["depthDeltaRatioQ80"] = depthDeltaRatioTD.Quantile(0.80)
-		//
-		//fields["depthDir"] = depthDir
-		//fields["depthDirQ9995"] = depthDirTD.Quantile(0.9995)
-		//fields["depthDirQ995"] = depthDirTD.Quantile(0.995)
-		//fields["depthDirQ80"] = depthDirTD.Quantile(0.80)
-		//fields["depthDirQ0005"] = depthDirTD.Quantile(0.0005)
-		//fields["depthDirQ005"] = depthDirTD.Quantile(0.005)
-		//fields["depthDirQ20"] = depthDirTD.Quantile(0.20)
-		//pt, err := client.NewPoint(
-		//	"bnswap-depth-racing",
-		//	map[string]string{
-		//		"symbol": symbol,
-		//	},
-		//	fields,
-		//	d.EventTime,
-		//)
-		//iw.PointCh <- pt
+		iw.PointCh <- pt
 	}
 	_ = depthGzReader.Close()
 	_ = depthFile.Close()

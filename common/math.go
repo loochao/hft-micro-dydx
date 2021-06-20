@@ -405,7 +405,7 @@ func (twd *TimedWalkingDistance) Insert(timestamp time.Time, value float64) floa
 	}
 	return twd.walkingDistance
 }
-func (twd *TimedWalkingDistance) Sum() float64 {
+func (twd *TimedWalkingDistance) WalkDistance() float64 {
 	return twd.walkingDistance
 }
 func (twd *TimedWalkingDistance) Len() int {

@@ -202,8 +202,8 @@ type XYStrategy struct {
 	enterValue      float64
 	targetValue     float64
 	realisedSpread  *float64
-	markedYAskPrice *float64
-	markedYBidPrice *float64
+	//markedYAskPrice *float64
+	//markedYBidPrice *float64
 
 	xOrder         common.Order
 	yOrder         common.Order
