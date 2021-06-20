@@ -18,7 +18,7 @@ type Config struct {
 	YExchange       common.ExchangeSettings `yaml:"yExchange"`
 	HedgeYDelay     time.Duration           `yaml:"hedgeYDelay"`
 	DepthWalkDelay  time.Duration           `yaml:"depthWalkDelay"`
-	SpreadWalkDelay time.Duration           `yaml:"depthWalkDelay"`
+	SpreadWalkDelay time.Duration           `yaml:"spreadWalkDelay"`
 
 	LogInterval           time.Duration `yaml:"logInterval"`
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
