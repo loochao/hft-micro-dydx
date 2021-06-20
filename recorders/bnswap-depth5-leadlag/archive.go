@@ -10,9 +10,10 @@ import (
 	"time"
 )
 
-func archiveFiles(ctx context.Context, savePath string) {
+func archiveFiles(ctx context.Context, symbols []string,savePath string) {
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
+	symbolsStr := strings.Join(symbols,",")
 	for {
 		select {
 		case <-ctx.Done():
@@ -23,6 +24,9 @@ func archiveFiles(ctx context.Context, savePath string) {
 			} else {
 				hourTime := time.Now().Truncate(time.Hour*24)
 				for _, file := range files {
+					if !strings.Contains(file.Name(), symbolsStr) {
+						continue
+					}
 					parts := strings.Split(file.Name(), "-")
 					if len(parts) > 0 && len(parts[0]) == 8 {
 						fileTime, err := time.Parse("20060102", parts[0])

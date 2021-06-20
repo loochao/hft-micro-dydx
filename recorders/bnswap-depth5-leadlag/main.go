@@ -27,7 +27,7 @@ func main() {
 			cancel()
 		}
 	}(ctx, cancel, *proxyAddress, *savePath, symbols, fileSavedCh)
-	go archiveFiles(context.Background(), *savePath)
+	go archiveFiles(context.Background(), symbols, *savePath)
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
