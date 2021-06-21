@@ -578,7 +578,7 @@ func (bn *BinanceUsdtSpot) submitOrder(ctx context.Context, param common.NewOrde
 		newOrderParam.Price = math.Round(param.Price/tickSize) * tickSize
 	}
 	newOrderParam.NewClientOrderID = param.ClientID
-	logger.Debugf("%s SubmitOrder", newOrderParam.Symbol)
+	//logger.Debugf("%s SubmitOrder", newOrderParam.Symbol)
 	order, _, err := bn.api.SubmitOrder(ctx, newOrderParam)
 	if err != nil {
 		select {

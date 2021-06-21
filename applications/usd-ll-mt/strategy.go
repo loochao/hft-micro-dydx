@@ -367,12 +367,12 @@ func (strat *XYStrategy) hedgeYPosition() {
 		ClientID:   strat.yExchange.GenerateClientID(),
 	}
 	if !strat.params.dryRun {
-		logger.Debugf("sending strat.yOrderRequestCh <- common.OrderRequest %s", strat.yNewOrderParam.Symbol)
+		//logger.Debugf("sending strat.yOrderRequestCh <- common.OrderRequest %s", strat.yNewOrderParam.Symbol)
 		select {
 		case strat.yOrderRequestCh <- common.OrderRequest{
 			New: &strat.yNewOrderParam,
 		}:
-			logger.Debugf("sent strat.yOrderRequestCh <- common.OrderRequest %s", strat.yNewOrderParam.Symbol)
+			//logger.Debugf("sent strat.yOrderRequestCh <- common.OrderRequest %s", strat.yNewOrderParam.Symbol)
 			strat.yOrderSilentTime = time.Now().Add(strat.params.orderSilent)
 			strat.yPositionUpdateTime = time.Unix(0, 0)
 		}
@@ -666,12 +666,12 @@ func (strat *XYStrategy) updateXOrder() {
 			}
 			strat.xOpenOrder = &strat.xNewOrderParam
 			if !strat.params.dryRun {
-				logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
+				//logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 				select {
 				case strat.xOrderRequestCh <- common.OrderRequest{
 					New: &strat.xNewOrderParam,
 				}:
-					logger.Debugf("sent strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
+					//logger.Debugf("sent strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 				}
 			}
 			strat.xLastFilledBuyPrice = nil
@@ -720,12 +720,12 @@ func (strat *XYStrategy) updateXOrder() {
 			}
 			strat.xOpenOrder = &strat.xNewOrderParam
 			if !strat.params.dryRun {
-				logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
+				//logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 				select {
 				case strat.xOrderRequestCh <- common.OrderRequest{
 					New: &strat.xNewOrderParam,
 				}:
-					logger.Debugf("sent strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
+					//logger.Debugf("sent strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 				}
 			}
 			strat.xLastFilledBuyPrice = nil
@@ -885,12 +885,12 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 		strat.xOpenOrder = &strat.xNewOrderParam
 		if !strat.params.dryRun {
-			logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
+			//logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 			select {
 			case strat.xOrderRequestCh <- common.OrderRequest{
 				New: &strat.xNewOrderParam,
 			}:
-				logger.Debugf("sent strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
+				//logger.Debugf("sent strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 			}
 		}
 		strat.xLastFilledBuyPrice = nil
@@ -1017,12 +1017,12 @@ func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
 	if strat.xOpenOrder != nil {
 		strat.xOrderSilentTime = time.Now().Add(strat.params.cancelSilent)
 		if !strat.params.dryRun {
-			logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
+			//logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
 			select {
 			case strat.xOrderRequestCh <- common.OrderRequest{
 				Cancel: &strat.xCancelOrderParam,
 			}:
-				logger.Debugf("sent cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
+				//logger.Debugf("sent cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
 			}
 		}
 		strat.xOpenOrder = nil
