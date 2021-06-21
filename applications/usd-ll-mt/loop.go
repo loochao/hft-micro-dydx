@@ -128,3 +128,6 @@ func (strat *XYStrategy) handleYOrderError() {
 		strat.yOrderSilentTime = time.Now().Add(strat.params.orderSilent)
 	}
 }
+
+
+
