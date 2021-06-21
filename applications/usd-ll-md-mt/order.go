@@ -239,7 +239,7 @@ func (strat *XYStrategy) updateXOrder() {
 			TimeInForce: common.OrderTimeInForceGTC,
 			Size:        strat.size,
 			PostOnly:    true,
-			ReduceOnly:  true,
+			ReduceOnly:  false,
 			ClientID:    strat.xExchange.GenerateClientID(),
 		}
 		strat.xOpenOrder = &strat.xNewOrderParam
@@ -321,7 +321,7 @@ func (strat *XYStrategy) updateXOrder() {
 			TimeInForce: common.OrderTimeInForceGTC,
 			Size:        strat.size,
 			PostOnly:    true,
-			ReduceOnly:  true,
+			ReduceOnly:  false,
 			ClientID:    strat.xExchange.GenerateClientID(),
 		}
 		strat.xOpenOrder = &strat.xNewOrderParam
