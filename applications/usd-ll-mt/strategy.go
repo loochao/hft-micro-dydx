@@ -624,6 +624,8 @@ func (strat *XYStrategy) updateXOrder() {
 	strat.longBot = strat.params.longEnterDelta - strat.params.enterOffsetDelta*strat.offsetFactor
 	strat.longTop = strat.params.longExitDelta - strat.params.exitOffsetDelta*(strat.offsetFactor-strat.offsetStep)
 
+	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
+
 	if math.Abs(strat.xValue+strat.yValue) > strat.enterStep*0.8 {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
@@ -641,14 +643,6 @@ func (strat *XYStrategy) updateXOrder() {
 		return
 	}
 
-	//if time.Now().Sub(strat.logSilentTime) > 0 {
-	//	strat.logSilentTime = time.Now().Add(strat.params.logInterval)
-	//	logger.Debugf(
-	//		"%s enterTarget %f enterStep %f offsetFactor %f xTargetSpotSize %f yTargetSpotSize %f",
-	//		strat.xSymbol, strat.enterTarget, strat.enterStep, strat.offsetFactor,
-	//		*strat.xTargetSpotSize, *strat.yTargetSpotSize,
-	//	)
-	//}
 	if strat.xOpenOrder != nil {
 		if !strat.isXOpenOrderOk() {
 			strat.tryCancelXOpenOrder("open order not ok")
@@ -656,7 +650,6 @@ func (strat *XYStrategy) updateXOrder() {
 		return
 	}
 
-	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
 	if strat.spread.ShortLastLeave < strat.shortBot &&
 		strat.spread.ShortMedianLeave < strat.shortBot &&
 		*strat.xyFundingRate < strat.params.minimalKeepFundingRate &&
