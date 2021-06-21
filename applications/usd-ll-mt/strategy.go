@@ -158,14 +158,6 @@ func startXYStrategy(
 		return
 	}
 
-	strat.xyMergedSpotStepSize = common.MergedStepSize(strat.xStepSize*strat.xMultiplier, strat.yStepSize*strat.yMultiplier)
-
-	if _, ok := config.NotTradePairs[xSymbol]; ok {
-		strat.tradable = false
-	} else {
-		strat.tradable = true
-	}
-
 	strat.xTickSize, err = xExchange.GetTickSize(xSymbol)
 	if err != nil {
 		return
@@ -182,6 +174,14 @@ func startXYStrategy(
 	if err != nil {
 		return
 	}
+	strat.xyMergedSpotStepSize = common.MergedStepSize(strat.xStepSize*strat.xMultiplier, strat.yStepSize*strat.yMultiplier)
+
+	if _, ok := config.NotTradePairs[xSymbol]; ok {
+		strat.tradable = false
+	} else {
+		strat.tradable = true
+	}
+
 	go strat.startLoop(ctx)
 	return
 }
