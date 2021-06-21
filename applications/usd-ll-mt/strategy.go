@@ -75,12 +75,6 @@ func startXYStrategy(
 		spreadWalkDelay:         config.SpreadWalkDelay,
 	}
 
-	var paramsStr []byte
-	paramsStr, err = json.Marshal(params)
-	if err != nil {
-		return err
-	}
-	logger.Debugf("%s", paramsStr)
 
 	if params.saveInterval == 0 {
 		params.saveInterval = time.Hour
@@ -127,6 +121,14 @@ func startXYStrategy(
 	}
 
 	params.xyMergedSpotStepSize = common.MergedStepSize(params.xStepSize*params.xMultiplier, params.yStepSize*params.yMultiplier)
+
+	var paramsStr []byte
+	paramsStr, err = json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	logger.Debugf("%s", paramsStr)
+	logger.Debugf("%v", params)
 
 	xBiasInMs := float64(params.depthXBias / time.Millisecond)
 	yBiasInMs := float64(params.depthYBias / time.Millisecond)
