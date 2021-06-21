@@ -303,6 +303,14 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	}
 }
 func (strat *XYStrategy) handleSave() {
+	if strat.xSystemStatus != common.SystemStatusReady ||
+		strat.ySystemStatus != common.SystemStatusReady ||
+		strat.xPosition == nil ||
+		strat.yPosition == nil ||
+		strat.xAccount == nil ||
+		strat.yAccount == nil {
+		return
+	}
 	select {
 	case strat.saveCh <- strat:
 	default:
@@ -598,6 +606,16 @@ func (strat *XYStrategy) updateXOrder() {
 	strat.ySize = strat.yPosition.GetSize() * strat.params.yMultiplier
 	strat.xValue = strat.xSize * strat.xWalkedDepth.MidPrice
 	strat.yValue = strat.ySize * strat.yWalkedDepth.MidPrice
+	strat.xAbsValue = math.Abs(strat.xValue)
+	strat.yAbsValue = math.Abs(strat.yValue)
+	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
+	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
+
+	strat.shortTop = strat.params.shortEnterDelta + strat.params.enterOffsetDelta*strat.offsetFactor
+	strat.shortBot = strat.params.shortExitDelta + strat.params.exitOffsetDelta*(strat.offsetFactor-strat.offsetStep)
+	strat.longBot = strat.params.longEnterDelta - strat.params.enterOffsetDelta*strat.offsetFactor
+	strat.longTop = strat.params.longExitDelta - strat.params.exitOffsetDelta*(strat.offsetFactor-strat.offsetStep)
+
 	if math.Abs(strat.xValue+strat.yValue) > strat.enterStep*0.8 {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
@@ -615,15 +633,6 @@ func (strat *XYStrategy) updateXOrder() {
 		return
 	}
 
-	strat.xAbsValue = math.Abs(strat.xValue)
-	strat.yAbsValue = math.Abs(strat.yValue)
-	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
-	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
-
-	strat.shortTop = strat.params.shortEnterDelta + strat.params.enterOffsetDelta*strat.offsetFactor
-	strat.shortBot = strat.params.shortExitDelta + strat.params.exitOffsetDelta*(strat.offsetFactor-strat.offsetStep)
-	strat.longBot = strat.params.longEnterDelta - strat.params.enterOffsetDelta*strat.offsetFactor
-	strat.longTop = strat.params.longExitDelta - strat.params.exitOffsetDelta*(strat.offsetFactor-strat.offsetStep)
 	//if time.Now().Sub(strat.logSilentTime) > 0 {
 	//	strat.logSilentTime = time.Now().Add(strat.params.logInterval)
 	//	logger.Debugf(

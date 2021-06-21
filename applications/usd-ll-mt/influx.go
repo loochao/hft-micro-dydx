@@ -31,6 +31,8 @@ func handleSave(
 		fields := make(map[string]interface{})
 		if st.xPosition != nil &&
 			st.yPosition != nil &&
+			st.xAccount == nil &&
+			st.yAccount == nil &&
 			st.spread != nil &&
 			st.xWalkedDepth.Symbol != "" &&
 			st.yWalkedDepth.Symbol != "" {
