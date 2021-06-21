@@ -32,6 +32,10 @@ const (
 	JsonKeyMRID
 	JsonKeyID
 	JsonKeyVersion
+	JsonKeyBidPrice
+	JsonKeyAskPrice
+	JsonKeyBidSize
+	JsonKeyAskSize
 )
 
 const (
