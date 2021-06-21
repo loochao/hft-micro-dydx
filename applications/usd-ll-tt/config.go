@@ -61,6 +61,7 @@ type Config struct {
 
 	XYPairs       map[string]string `yaml:"xyPairs"`
 	NotTradePairs map[string]string `yaml:"notTradePairs"`
+	EnterScales   map[string]float64 `yaml:"enterScales"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {

@@ -136,9 +136,9 @@ type XYStrategy struct {
 	xWalkedDepth common.WalkedDepthBAM
 	yWalkedDepth common.WalkedDepthBAM
 
-	xAccount                         common.Balance
-	yAccount                         common.Balance
-	xPosition                        common.Position
+	xAccount             common.Balance
+	yAccount             common.Balance
+	xPosition            common.Position
 	yPosition            common.Position
 	xOrderSilentTime     time.Time
 	yOrderSilentTime     time.Time
@@ -152,6 +152,7 @@ type XYStrategy struct {
 	xyEnterSilentTime    time.Time
 	enterStep            float64
 	enterTarget          float64
+	enterScale           float64
 	usdtAvailable        float64
 
 	logSilentTime       time.Time
@@ -186,22 +187,22 @@ type XYStrategy struct {
 	xSizeDiff float64
 	ySizeDiff float64
 
-	offsetFactor    float64
-	offsetStep      float64
-	shortTop        float64
-	shortBot        float64
-	longBot         float64
-	longTop         float64
-	xSize           float64
-	ySize           float64
-	xValue          float64
-	yValue          float64
-	xAbsValue       float64
-	yAbsValue       float64
-	midPrice        float64
-	enterValue      float64
-	targetValue     float64
-	realisedSpread  *float64
+	offsetFactor   float64
+	offsetStep     float64
+	shortTop       float64
+	shortBot       float64
+	longBot        float64
+	longTop        float64
+	xSize          float64
+	ySize          float64
+	xValue         float64
+	yValue         float64
+	xAbsValue      float64
+	yAbsValue      float64
+	midPrice       float64
+	enterValue     float64
+	targetValue    float64
+	realisedSpread *float64
 	//markedYAskPrice *float64
 	//markedYBidPrice *float64
 

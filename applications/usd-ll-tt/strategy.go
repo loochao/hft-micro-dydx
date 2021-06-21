@@ -176,6 +176,7 @@ func startXYStrategy(
 		xyEnterSilentTime:       time.Now().Add(config.RestartSilent),
 		enterStep:               0,
 		enterTarget:             0,
+		enterScale:              config.EnterScales[xSymbol],
 		usdtAvailable:           0,
 		logSilentTime:           time.Time{},
 		xWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
@@ -382,11 +383,11 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 	if strat.xAccount == nil || strat.yAccount == nil {
 		return
 	}
-	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.params.enterFreePct
+	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.params.enterFreePct * strat.enterScale
 	if strat.enterStep < strat.params.enterMinimalStep {
 		strat.enterStep = strat.params.enterMinimalStep
 	}
-	strat.enterTarget = strat.enterStep * strat.params.enterTargetFactor
+	strat.enterTarget = strat.enterStep * strat.params.enterTargetFactor * strat.enterScale
 	strat.usdtAvailable = math.Min(strat.xAccount.GetFree()*strat.params.xLeverage, strat.yAccount.GetFree()*strat.params.yLeverage)
 }
 

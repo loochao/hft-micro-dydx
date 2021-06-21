@@ -131,6 +131,9 @@ func main() {
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)
+		if _, ok := xyConfig.EnterScales[xSymbol]; !ok {
+			xyConfig.EnterScales[xSymbol] = 1.0
+		}
 	}
 	xyConfig.XExchange.Symbols = xSymbols
 	xyConfig.YExchange.Symbols = ySymbols
