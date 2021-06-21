@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
@@ -73,6 +74,13 @@ func startXYStrategy(
 		depthWalkDelay:          config.DepthWalkDelay,
 		spreadWalkDelay:         config.SpreadWalkDelay,
 	}
+
+	var paramsStr []byte
+	paramsStr, err = json.Marshal(params)
+	if err != nil {
+		return err
+	}
+	logger.Debugf("%s", paramsStr)
 
 	if params.saveInterval == 0 {
 		params.saveInterval = time.Hour
