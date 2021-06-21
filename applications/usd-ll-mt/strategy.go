@@ -967,11 +967,11 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			if strat.xPosition.GetSize() != nextPos.GetSize() {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 				strat.yOrderSilentTime = time.Now()
-				strat.xPosition = nextPos
-				strat.hedgeYPosition()
 				if strat.xWalkedDepth.Symbol != "" {
 					strat.xTimedPositionChange.Insert(time.Now(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize())*strat.xWalkedDepth.MidPrice*strat.xMultiplier)
 				}
+				strat.xPosition = nextPos
+				strat.hedgeYPosition()
 				logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 			} else {
 				strat.xPosition = nextPos
