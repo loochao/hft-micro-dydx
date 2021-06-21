@@ -39,64 +39,6 @@ type SpreadReport struct {
 	YExpireRatio      float64
 }
 
-type XYParams struct {
-	dryRun   bool
-	tradable bool
-
-	isXSpot bool
-	isYSpot bool
-
-	logInterval time.Duration
-
-	depthTakerImpact    float64
-	depthXDecay         float64
-	depthXBias          time.Duration
-	depthYDecay         float64
-	depthYBias          time.Duration
-	depthMinTimeDelta   time.Duration
-	depthMaxTimeDelta   time.Duration
-	depthMaxAgeDiffBias time.Duration
-	depthReportCount    int
-	spreadLookback      time.Duration
-	spreadTimeToLive    time.Duration
-	spreadMinDepthCount int
-
-	depthWalkDelay          time.Duration
-	spreadWalkDelay         time.Duration
-	enterTargetFactor       float64
-	enterMinimalStep        float64
-	enterFreePct            float64
-	enterScale              float64
-	longEnterDelta          float64
-	longExitDelta           float64
-	shortEnterDelta         float64
-	shortExitDelta          float64
-	enterOffsetDelta        float64
-	exitOffsetDelta         float64
-	minimalKeepFundingRate  float64
-	minimalEnterFundingRate float64
-
-	xTickSize            float64
-	yTickSize            float64
-	xStepSize            float64
-	yStepSize            float64
-	xMultiplier          float64
-	yMultiplier          float64
-	xMinNotional         float64
-	yMinNotional         float64
-	xyMergedSpotStepSize float64
-
-	turnoverLookback      time.Duration
-	balancePositionMaxAge time.Duration
-	enterSilent           time.Duration
-	orderSilent           time.Duration
-	cancelSilent          time.Duration
-	saveInterval          time.Duration
-
-	xLeverage float64
-	yLeverage float64
-}
-
 type XYStrategy struct {
 	xExchange common.UsdExchange
 	yExchange common.UsdExchange
@@ -104,7 +46,7 @@ type XYStrategy struct {
 	xSymbol string
 	ySymbol string
 
-	params      XYParams
+	config      Config
 	orderOffset Offset
 
 	xAccountCh      chan common.Balance
@@ -139,6 +81,9 @@ type XYStrategy struct {
 	yDepthFilter common.TimeFilter
 	xWalkedDepth common.WalkedDepthBAM
 	yWalkedDepth common.WalkedDepthBAM
+
+	xLeverage float64
+	yLeverage float64
 
 	xAccount             common.Balance
 	yAccount             common.Balance
@@ -184,7 +129,22 @@ type XYStrategy struct {
 	spreadReport            *SpreadReport
 	stateOutputCh           chan XYStrategy
 
+	xTickSize            float64
+	yTickSize            float64
+	xStepSize            float64
+	yStepSize            float64
+	xMultiplier          float64
+	yMultiplier          float64
+	xMinNotional         float64
+	yMinNotional         float64
+	xyMergedSpotStepSize float64
+
 	error error
+
+	tradable bool
+
+	isXSpot bool
+	isYSpot bool
 
 	xSizeDiff float64
 	ySizeDiff float64
@@ -203,6 +163,7 @@ type XYStrategy struct {
 	yAbsValue      float64
 	midPrice       float64
 	enterValue     float64
+	enterScale     float64
 	targetValue    float64
 	realisedSpread *float64
 

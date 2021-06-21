@@ -112,20 +112,20 @@ func (strat *XYStrategy) handleRealisedSpread() {
 func (strat *XYStrategy) handleXOrderError() {
 	if strat.xOrderError.Cancel != nil {
 		logger.Debugf("cancel %v error %v", *strat.xOrderError.Cancel, strat.xOrderError.Error)
-		strat.xOrderSilentTime = time.Now().Add(strat.params.orderSilent)
+		strat.xOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
 	} else if strat.xOrderError.New != nil {
 		logger.Debugf("new %v error %v", *strat.xOrderError.New, strat.xOrderError.Error)
-		strat.xOrderSilentTime = time.Now().Add(strat.params.orderSilent)
+		strat.xOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
 	}
 }
 
 func (strat *XYStrategy) handleYOrderError() {
 	if strat.yOrderError.Cancel != nil {
 		logger.Debugf("cancel %v error %v", *strat.yOrderError.Cancel, strat.yOrderError.Error)
-		strat.yOrderSilentTime = time.Now().Add(strat.params.orderSilent)
+		strat.yOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
 	} else if strat.yOrderError.New != nil {
 		logger.Debugf("new %v error %v", *strat.yOrderError.New, strat.yOrderError.Error)
-		strat.yOrderSilentTime = time.Now().Add(strat.params.orderSilent)
+		strat.yOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
 	}
 }
 
