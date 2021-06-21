@@ -803,12 +803,12 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 		strat.xOpenOrder = &strat.xNewOrderParam
 		if !strat.params.dryRun {
-			logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
+			//logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 			select {
 			case strat.xOrderRequestCh <- common.OrderRequest{
 				New: &strat.xNewOrderParam,
 			}:
-				logger.Debugf("sent strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
+				//logger.Debugf("sent strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 			}
 		}
 		strat.xLastFilledBuyPrice = nil
@@ -817,7 +817,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.params.orderSilent)
 		logger.Debugf(
-			"%s %s SHORT TOP OPEN %f < %f, %f < %f, SIZE %f, XDepthDiff %v YDepthDiff %v",
+			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,

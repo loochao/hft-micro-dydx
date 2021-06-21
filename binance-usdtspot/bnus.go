@@ -564,13 +564,15 @@ func (bn *BinanceUsdtSpot) submitOrder(ctx context.Context, param common.NewOrde
 			newOrderParam.Type = OrderTypeLimit
 		}
 	}
-	switch param.TimeInForce {
-	case common.OrderTimeInForceIOC:
-		newOrderParam.TimeInForce = OrderTimeInForceIOC
-	case common.OrderTimeInForceGTC:
-		newOrderParam.TimeInForce = OrderTimeInForceGTC
-	case common.OrderTimeInForceFOK:
-		newOrderParam.TimeInForce = OrderTimeInForceFOK
+	if !param.PostOnly {
+		switch param.TimeInForce {
+		case common.OrderTimeInForceIOC:
+			newOrderParam.TimeInForce = OrderTimeInForceIOC
+		case common.OrderTimeInForceGTC:
+			newOrderParam.TimeInForce = OrderTimeInForceGTC
+		case common.OrderTimeInForceFOK:
+			newOrderParam.TimeInForce = OrderTimeInForceFOK
+		}
 	}
 	if param.Price != 0 {
 		newOrderParam.Price = math.Round(param.Price/tickSize) * tickSize
