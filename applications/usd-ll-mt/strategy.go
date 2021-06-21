@@ -171,8 +171,8 @@ func startXYStrategy(
 		yAccount:                nil,
 		xPosition:               nil,
 		yPosition:               nil,
-		xOrderSilentTime:        time.Now().Add(params.enterSilent),
-		yOrderSilentTime:        time.Now().Add(params.enterSilent),
+		xOrderSilentTime:        time.Time{},
+		yOrderSilentTime:        time.Time{},
 		xFundingRate:            nil,
 		yFundingRate:            nil,
 		xyFundingRate:           nil,
@@ -241,7 +241,9 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.realisedSpreadTimer.Stop()
 	defer strat.saveTimer.Stop()
 	var nextXPos, nextYPos common.Position
+	strat.xOrderSilentTime = time.Now().Add(-time.Millisecond)
 	strat.tryCancelXOpenOrder("start")
+	strat.xOrderSilentTime = time.Now().Add(strat.params.enterSilent)
 	for {
 		select {
 		case <-ctx.Done():
@@ -626,6 +628,10 @@ func (strat *XYStrategy) updateXOrder() {
 
 	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
 
+	if time.Now().Sub(strat.xOrderSilentTime) < 0 {
+		return
+	}
+
 	if math.Abs(strat.xValue+strat.yValue) > strat.enterStep*0.8 {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.params.logInterval)
@@ -639,9 +645,6 @@ func (strat *XYStrategy) updateXOrder() {
 		return
 	}
 
-	if time.Now().Sub(strat.xOrderSilentTime) < 0 {
-		return
-	}
 
 	if strat.xOpenOrder != nil {
 		if !strat.isXOpenOrderOk() {
@@ -1032,6 +1035,9 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 }
 
 func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
+	if time.Now().Sub(strat.xOrderSilentTime) < 0 {
+		return
+	}
 	strat.xOrderSilentTime = time.Now().Add(strat.params.cancelSilent)
 	if !strat.params.dryRun {
 		//logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
