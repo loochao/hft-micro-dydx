@@ -684,7 +684,7 @@ func (strat *XYStrategy) changeXPosition() {
 		//*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 		strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 		logger.Debugf(
-			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, TARGET X %f, TARGET Y %f, XDepthDiff %v YDepthDiff %v",
+			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
