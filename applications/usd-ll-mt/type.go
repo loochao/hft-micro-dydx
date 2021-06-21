@@ -61,6 +61,8 @@ type XYParams struct {
 	spreadTimeToLive    time.Duration
 	spreadMinDepthCount int
 
+	depthWalkDelay          time.Duration
+	spreadWalkDelay         time.Duration
 	enterTargetFactor       float64
 	enterMinimalStep        float64
 	enterFreePct            float64
@@ -138,27 +140,28 @@ type XYStrategy struct {
 	xWalkedDepth common.WalkedDepthBAM
 	yWalkedDepth common.WalkedDepthBAM
 
-	xAccount                         common.Balance
-	yAccount                         common.Balance
-	xPosition                        common.Position
-	yPosition                        common.Position
-	xOrderSilentTime                 time.Time
-	yOrderSilentTime                 time.Time
-	xFundingRate                     common.FundingRate
-	yFundingRate                     common.FundingRate
-	xyFundingRate                    *float64
-	xLastFilledBuyPrice              *float64
-	xLastFilledSellPrice             *float64
-	yLastFilledBuyPrice              *float64
-	yLastFilledSellPrice             *float64
+	xAccount             common.Balance
+	yAccount             common.Balance
+	xPosition            common.Position
+	yPosition            common.Position
+	xOrderSilentTime     time.Time
+	yOrderSilentTime     time.Time
+	xFundingRate         common.FundingRate
+	yFundingRate         common.FundingRate
+	xyFundingRate        *float64
+	xLastFilledBuyPrice  *float64
+	xLastFilledSellPrice *float64
+	yLastFilledBuyPrice  *float64
+	yLastFilledSellPrice *float64
 	//xyTargetSpotSizeUpdateSilentTime time.Time
-	enterStep                        float64
-	enterTarget                      float64
-	usdtAvailable                    float64
+	enterStep     float64
+	enterTarget   float64
+	usdtAvailable float64
 
 	logSilentTime       time.Time
 	xWalkDepthTimer     *time.Timer
 	yWalkDepthTimer     *time.Timer
+	spreadWalkTimer     *time.Timer
 	saveTimer           *time.Timer
 	realisedSpreadTimer *time.Timer
 	spreadTime          time.Time
@@ -211,7 +214,7 @@ type XYStrategy struct {
 	yOrderError    common.OrderError
 
 	size       float64
-	price       float64
+	price      float64
 	reduceOnly bool
 	orderSide  common.OrderSide
 
@@ -243,10 +246,10 @@ func NewOffset(msg string) (Offset, error) {
 	}
 	return Offset{
 		FarTop:  offsets[9],
-		Top:     offsets[6],
+		Top:     offsets[7],
 		NearTop: offsets[5],
 		NearBot: offsets[4],
-		Bot:     offsets[3],
+		Bot:     offsets[2],
 		FarBot:  offsets[0],
 	}, nil
 }

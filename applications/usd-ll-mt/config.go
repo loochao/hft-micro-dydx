@@ -17,6 +17,8 @@ type Config struct {
 	XExchange common.ExchangeSettings `yaml:"xExchange"`
 	YExchange common.ExchangeSettings `yaml:"yExchange"`
 
+	DepthWalkDelay  time.Duration           `yaml:"depthWalkDelay"`
+	SpreadWalkDelay time.Duration           `yaml:"spreadWalkDelay"`
 	LogInterval           time.Duration `yaml:"logInterval"`
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`

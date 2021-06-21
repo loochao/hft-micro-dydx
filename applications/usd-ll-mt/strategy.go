@@ -70,6 +70,8 @@ func startXYStrategy(
 		xLeverage:               config.XExchange.Leverage,
 		yLeverage:               config.YExchange.Leverage,
 		saveInterval:            config.InternalInflux.SaveInterval,
+		depthWalkDelay:          config.DepthWalkDelay,
+		spreadWalkDelay:         config.SpreadWalkDelay,
 	}
 
 	if params.saveInterval == 0 {
@@ -161,8 +163,8 @@ func startXYStrategy(
 		yAccount:                nil,
 		xPosition:               nil,
 		yPosition:               nil,
-		xOrderSilentTime:        time.Time{},
-		yOrderSilentTime:        time.Time{},
+		xOrderSilentTime:        time.Now().Add(params.enterSilent),
+		yOrderSilentTime:        time.Now().Add(params.enterSilent),
 		xFundingRate:            nil,
 		yFundingRate:            nil,
 		xyFundingRate:           nil,
@@ -180,8 +182,9 @@ func startXYStrategy(
 		logSilentTime:           time.Time{},
 		xWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
 		yWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
+		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
 		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
-		saveTimer:               time.NewTimer(params.saveInterval),
+		saveTimer:               time.NewTimer(params.enterSilent),
 		spreadTime:              time.Time{},
 		spread:                  nil,
 		shortEnterTimedMedian:   common.NewTimedMedian(params.spreadLookback),
@@ -226,6 +229,7 @@ func startXYStrategy(
 func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.xWalkDepthTimer.Stop()
 	defer strat.yWalkDepthTimer.Stop()
+	defer strat.spreadWalkTimer.Stop()
 	defer strat.realisedSpreadTimer.Stop()
 	defer strat.saveTimer.Stop()
 	var nextXPos, nextYPos common.Position
@@ -282,6 +286,9 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			break
 		case <-strat.yWalkDepthTimer.C:
 			strat.walkYDepth()
+			break
+		case <-strat.spreadWalkTimer.C:
+			strat.walkSpread()
 			break
 		case strat.xDepth = <-strat.xDepthCh:
 			strat.handleXDepth()
@@ -453,7 +460,7 @@ func (strat *XYStrategy) walkXDepth() {
 			strat.logSilentTime = time.Now().Add(time.Minute)
 		}
 	} else {
-		strat.walkSpread()
+		strat.spreadWalkTimer.Reset(strat.params.spreadWalkDelay)
 	}
 }
 
@@ -465,7 +472,7 @@ func (strat *XYStrategy) walkYDepth() {
 			strat.logSilentTime = time.Now().Add(time.Minute)
 		}
 	} else {
-		strat.walkSpread()
+		strat.spreadWalkTimer.Reset(strat.params.spreadWalkDelay)
 	}
 }
 
@@ -485,7 +492,7 @@ func (strat *XYStrategy) handleXDepth() {
 			strat.xDepthExpireCount++
 			//logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 		} else {
-			strat.xWalkDepthTimer.Reset(strat.expectedChanSendingTime)
+			strat.xWalkDepthTimer.Reset(strat.params.depthWalkDelay)
 		}
 	}
 	strat.depthCount++
@@ -531,7 +538,7 @@ func (strat *XYStrategy) handleYDepth() {
 			//taker已经过期
 			strat.yDepthExpireCount++
 		} else {
-			strat.yWalkDepthTimer.Reset(strat.expectedChanSendingTime)
+			strat.yWalkDepthTimer.Reset(strat.params.depthWalkDelay)
 		}
 	}
 	strat.depthCount++
