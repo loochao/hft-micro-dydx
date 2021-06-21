@@ -229,6 +229,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.realisedSpreadTimer.Stop()
 	defer strat.saveTimer.Stop()
 	var nextXPos, nextYPos common.Position
+	strat.tryCancelXOpenOrder("start")
 	for {
 		select {
 		case <-ctx.Done():
@@ -650,7 +651,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.size = strat.xSize
 		}
 
-		strat.size = math.Round(strat.size/strat.params.xMultiplier)
+		strat.size = math.Round(strat.size / strat.params.xMultiplier)
 		if strat.size > 0 {
 			strat.price = math.Ceil(strat.xWalkedDepth.AskPrice*(1.0+strat.orderOffset.Top)/strat.params.xTickSize) * strat.params.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
@@ -704,7 +705,7 @@ func (strat *XYStrategy) updateXOrder() {
 		if strat.xAbsValue-strat.enterValue < strat.params.xyMergedSpotStepSize || strat.yAbsValue-strat.enterValue < strat.params.xyMergedSpotStepSize {
 			strat.size = -strat.xSize
 		}
-		strat.size = math.Round(strat.size/strat.params.xMultiplier)
+		strat.size = math.Round(strat.size / strat.params.xMultiplier)
 		if strat.size > 0 {
 			strat.price = math.Floor(strat.xWalkedDepth.BidPrice*(1.0+strat.orderOffset.Bot)/strat.params.xTickSize) * strat.params.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
@@ -774,7 +775,7 @@ func (strat *XYStrategy) updateXOrder() {
 			}
 			return
 		}
-		strat.size = math.Round(strat.size/strat.params.xMultiplier)
+		strat.size = math.Round(strat.size / strat.params.xMultiplier)
 		if strat.size <= 0 || strat.enterValue < strat.params.yMinNotional || strat.enterValue < strat.params.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.params.logInterval)
@@ -855,7 +856,7 @@ func (strat *XYStrategy) updateXOrder() {
 			}
 			return
 		}
-		strat.size = math.Round(strat.size/strat.params.xMultiplier)
+		strat.size = math.Round(strat.size / strat.params.xMultiplier)
 		if strat.size <= 0 || strat.enterValue < strat.params.yMinNotional || strat.enterValue < strat.params.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.params.logInterval)
@@ -1001,7 +1002,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 					strat.xTimedPositionChange.Insert(time.Now(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize())*strat.xWalkedDepth.MidPrice*strat.params.xMultiplier)
 				}
 				logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
-			}else{
+			} else {
 				strat.xPosition = nextPos
 			}
 		}
@@ -1014,19 +1015,17 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 }
 
 func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
-	if strat.xOpenOrder != nil {
-		strat.xOrderSilentTime = time.Now().Add(strat.params.cancelSilent)
-		if !strat.params.dryRun {
-			//logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
-			select {
-			case strat.xOrderRequestCh <- common.OrderRequest{
-				Cancel: &strat.xCancelOrderParam,
-			}:
-				//logger.Debugf("sent cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
-			}
+	strat.xOrderSilentTime = time.Now().Add(strat.params.cancelSilent)
+	if !strat.params.dryRun {
+		//logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
+		select {
+		case strat.xOrderRequestCh <- common.OrderRequest{
+			Cancel: &strat.xCancelOrderParam,
+		}:
+			//logger.Debugf("sent cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
 		}
-		strat.xOpenOrder = nil
 	}
+	strat.xOpenOrder = nil
 }
 
 func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
