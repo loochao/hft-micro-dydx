@@ -1,7 +1,6 @@
 package common
 
 import (
-	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/bits"
 	"strconv"
@@ -131,8 +130,6 @@ func ParseDecimal(s []byte) (float64, error) {
 		dp = nd
 	}
 	exp = nd - dp
-	logger.Debugf("%d %f %f", mantissa, float64pow10[exp], float64(mantissa) / float64pow10[exp])
-	logger.Debugf("%s", strconv.FormatFloat(float64(mantissa) / float64pow10[exp], 'f', -1, 64))
 	if negative {
 		return -float64(mantissa) / float64pow10[exp], nil
 	} else {
