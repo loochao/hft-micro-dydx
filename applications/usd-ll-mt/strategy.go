@@ -725,7 +725,6 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
-
 		if strat.enterValue > strat.usdtAvailable {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)

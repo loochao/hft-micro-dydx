@@ -217,7 +217,7 @@ func (strat *XYStrategy) updateXOrder() {
 			}
 			return
 		}
-		strat.size = math.Round(strat.size / strat.xMultiplier)
+		strat.size = math.Floor(strat.size / strat.xMultiplier /strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < strat.yMinNotional || strat.enterValue < strat.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
@@ -298,7 +298,7 @@ func (strat *XYStrategy) updateXOrder() {
 			}
 			return
 		}
-		strat.size = math.Round(strat.size / strat.xMultiplier)
+		strat.size = math.Floor(strat.size / strat.xMultiplier /strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < strat.yMinNotional || strat.enterValue < strat.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
