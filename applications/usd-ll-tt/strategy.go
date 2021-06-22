@@ -507,13 +507,14 @@ func (strat *XYStrategy) changeXPosition() {
 		//}
 		//*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
 		logger.Debugf(
-			"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f,  XDepthDiff %v YDepthDiff %v",
+			"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f,  XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastLeave, strat.shortBot,
 			strat.spread.ShortMedianLeave, strat.shortBot,
 			strat.size,
 			time.Now().Sub(strat.xDepthTime),
 			time.Now().Sub(strat.yDepthTime),
+			time.Now().Sub(strat.spread.Time),
 		)
 		strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 	} else if strat.spread.LongLastLeave > strat.longTop &&
@@ -581,13 +582,14 @@ func (strat *XYStrategy) changeXPosition() {
 		//*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 		strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 		logger.Debugf(
-			"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE -%f, XDepthDiff %v YDepthDiff %v",
+			"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE -%f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.LongLastLeave, strat.longTop,
 			strat.spread.LongMedianLeave, strat.longTop,
 			strat.size,
 			time.Now().Sub(strat.xDepthTime),
 			time.Now().Sub(strat.yDepthTime),
+			time.Now().Sub(strat.spread.Time),
 		)
 	} else if !strat.params.isYSpot &&
 		strat.spread.ShortLastEnter > strat.shortTop &&
@@ -685,13 +687,14 @@ func (strat *XYStrategy) changeXPosition() {
 		//*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 		strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 		logger.Debugf(
-			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, XDepthDiff %v YDepthDiff %v",
+			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
 			strat.size,
 			time.Now().Sub(strat.xDepthTime),
 			time.Now().Sub(strat.yDepthTime),
+			time.Now().Sub(strat.spread.Time),
 		)
 	} else if !strat.params.isXSpot &&
 		strat.spread.LongLastEnter < strat.longBot &&
@@ -788,13 +791,14 @@ func (strat *XYStrategy) changeXPosition() {
 		//*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
 		strat.hedgeYTimer.Reset(strat.params.hedgeYDelay)
 		logger.Debugf(
-			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE -%f, XDepthDiff %v YDepthDiff %v",
+			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE -%f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
 			strat.size,
 			time.Now().Sub(strat.xDepthTime),
 			time.Now().Sub(strat.yDepthTime),
+			time.Now().Sub(strat.spread.Time),
 		)
 	}
 }

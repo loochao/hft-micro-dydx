@@ -61,18 +61,22 @@ func main() {
 			var msg []byte
 			var depth5 = binance_usdtfuture.Depth5{}
 			var lastDepth5 = binance_usdtfuture.Depth5{}
+			counter := 0
 			for scanner.Scan() {
 				msg = scanner.Bytes()
 				if msg[0] != 'F' {
 					continue
 				}
-				err = binance_usdtfuture.ParseDepth5(msg[1:], &depth5)
-				if err != nil {
-					//logger.Debugf("bnspot.ParseDepth20 error %v", err)
+				counter ++
+				if counter % 2 != 0 {
 					continue
 				}
-				if lastDepth5.Symbol != "" &&
-					depth5.EventTime.Sub(lastDepth5.EventTime) < time.Millisecond*200{
+				err = binance_usdtfuture.ParseDepth5(msg[1:], &depth5)
+				if err != nil {
+					//logger.Debugf("binance_usdtfuture.ParseDepth5 error %v", err)
+					continue
+				}
+				if lastDepth5.Symbol != "" {
 					if lastDepth5.Bids[0][0] >= depth5.Bids[0][0] {
 						_ = impactTD.Add((depth5.Bids[0][0] - lastDepth5.Bids[0][0])/lastDepth5.Bids[0][0]*10000)
 					}
