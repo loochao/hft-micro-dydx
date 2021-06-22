@@ -617,7 +617,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.size = strat.xSize
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size > 0 || strat.enterValue > 1.2*strat.xMinNotional {
+		if strat.size > 0 && strat.enterValue > 1.2*strat.xMinNotional {
 			strat.price = math.Ceil(strat.xWalkedDepth.AskPrice*(1.0+strat.orderOffset.Top)/strat.xTickSize) * strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
@@ -655,6 +655,7 @@ func (strat *XYStrategy) updateXOrder() {
 				time.Now().Sub(strat.yDepthTime),
 			)
 		}
+		return
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
 		*strat.xyFundingRate > -strat.config.MinimalKeepFundingRate &&
@@ -673,7 +674,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.size = -strat.xSize
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size > 0 || strat.enterValue > 1.2*strat.xMinNotional {
+		if strat.size > 0 && strat.enterValue > 1.2*strat.xMinNotional {
 			strat.price = math.Floor(strat.xWalkedDepth.BidPrice*(1.0+strat.orderOffset.Bot)/strat.xTickSize) * strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
@@ -711,6 +712,7 @@ func (strat *XYStrategy) updateXOrder() {
 				time.Now().Sub(strat.yDepthTime),
 			)
 		}
+		return
 	} else if !strat.isYSpot &&
 		strat.spread.ShortLastEnter > strat.shortTop &&
 		strat.spread.ShortMedianEnter > strat.shortTop &&
