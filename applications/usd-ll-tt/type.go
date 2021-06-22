@@ -37,39 +37,20 @@ type SpreadReport struct {
 	YExpireRatio      float64
 }
 
-type XYParams struct {
-	dryRun   bool
+type XYStrategy struct {
+	xExchange common.UsdExchange
+	yExchange common.UsdExchange
+
+	xSymbol  string
+	ySymbol  string
 	tradable bool
+	isXSpot  bool
+	isYSpot  bool
 
-	isXSpot bool
-	isYSpot bool
+	params Config
 
-	logInterval time.Duration
-
-	depthTakerImpact    float64
-	depthXDecay         float64
-	depthXBias          time.Duration
-	depthYDecay         float64
-	depthYBias          time.Duration
-	depthMinTimeDelta   time.Duration
-	depthMaxTimeDelta   time.Duration
-	depthMaxAgeDiffBias time.Duration
-	depthReportCount    int
-	spreadLookback      time.Duration
-	spreadTimeToLive    time.Duration
-	spreadMinDepthCount int
-
-	enterTargetFactor       float64
-	enterMinimalStep        float64
-	enterFreePct            float64
-	longEnterDelta          float64
-	longExitDelta           float64
-	shortEnterDelta         float64
-	shortExitDelta          float64
-	enterOffsetDelta        float64
-	exitOffsetDelta         float64
-	minimalKeepFundingRate  float64
-	minimalEnterFundingRate float64
+	xLeverage float64
+	yLeverage float64
 
 	xTickSize            float64
 	yTickSize            float64
@@ -80,28 +61,6 @@ type XYParams struct {
 	xMinNotional         float64
 	yMinNotional         float64
 	xyMergedSpotStepSize float64
-
-	turnoverLookback      time.Duration
-	balancePositionMaxAge time.Duration
-	enterSilent           time.Duration
-	orderSilent           time.Duration
-	saveInterval          time.Duration
-	hedgeYDelay           time.Duration
-	depthWalkDelay        time.Duration
-	spreadWalkDelay       time.Duration
-
-	xLeverage float64
-	yLeverage float64
-}
-
-type XYStrategy struct {
-	xExchange common.UsdExchange
-	yExchange common.UsdExchange
-
-	xSymbol string
-	ySymbol string
-
-	params XYParams
 
 	xAccountCh      chan common.Balance
 	yAccountCh      chan common.Balance
@@ -203,8 +162,6 @@ type XYStrategy struct {
 	enterValue     float64
 	targetValue    float64
 	realisedSpread *float64
-	//markedYAskPrice *float64
-	//markedYBidPrice *float64
 
 	xOrder         common.Order
 	yOrder         common.Order
