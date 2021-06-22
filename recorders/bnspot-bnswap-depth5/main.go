@@ -32,7 +32,7 @@ func main() {
 			end = len(symbols)
 		}
 		messageChMap := make(map[string]chan Message)
-		for _, symbol := range symbols {
+		for _, symbol := range symbols[start:end] {
 			messageChMap[strings.ToLower(symbol)] = make(chan Message, 10000)
 			go saveLoop(ctx, cancel, *savePath, symbol, messageChMap[strings.ToLower(symbol)], fileSavedCh)
 		}

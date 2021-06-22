@@ -28,6 +28,7 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 			gw = nil
 		}
 		if file != nil {
+			logger.Debugf("close file writer for %s", symbol)
 			file.Close()
 			file = nil
 		}
