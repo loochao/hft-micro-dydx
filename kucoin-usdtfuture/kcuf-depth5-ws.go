@@ -386,6 +386,12 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	//defer logger.Debugf("EXIT dataHandleLoop %s", symbol)
 	logSilentTime := time.Now()
 	var err error
+	index := 0
+	pool := [1024]*Depth5{}
+	for i := 0; i < 1024; i++ {
+		pool[i] = &Depth5{}
+	}
+	var depth5 *Depth5
 	for {
 		select {
 		case <-ctx.Done():
@@ -393,7 +399,9 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 		case <-w.done:
 			return
 		case msg := <-inputCh:
-			depth5 := &Depth5{}
+			index++
+			index %= 1024
+			depth5 = pool[index]
 			err = ParseDepth5(msg, depth5)
 			if err != nil {
 				logger.Debugf("ParseDepth5(msg) error %v %s", err, msg)
