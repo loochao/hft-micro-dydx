@@ -274,9 +274,6 @@ func (w *Depth5Websocket) Done() chan interface{} {
 
 func (w *Depth5Websocket) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Depth) {
 	logSilentTime := time.Now()
-	depth5 := &Depth5{
-		Symbol: symbol,
-	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -284,6 +281,7 @@ func (w *Depth5Websocket) dataHandleLoop(ctx context.Context, symbol string, inp
 		case <-w.done:
 			return
 		case msg := <-inputCh:
+			depth5 := &Depth5{}
 			err := ParseDepth5(msg, depth5)
 			if err != nil {
 				logger.Debugf("%s ParseDepth5 error %v %s", symbol, err, msg)
