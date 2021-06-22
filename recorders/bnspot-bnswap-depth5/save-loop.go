@@ -29,16 +29,25 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 			if err != nil {
 				logger.Debugf("close gzip writer %s error %v, stop ws", outPath, err)
 			}
+			gw = nil
 		}
 		if file != nil {
+			err = file.Sync()
+			if err != nil {
+				logger.Debugf("file.Sync() %s error %v, stop ws", outPath, err)
+				cancel()
+				return
+			}
 			logger.Debugf("close file %s", symbol)
 			err = file.Close()
 			if err != nil {
 				logger.Debugf("close file %s error %v, stop ws", outPath, err)
 			}
+			file = nil
 		}
 		fileSavedCh <- symbol
 		logger.Debugf("EXIT saveLoop %s", symbol)
+		cancel()
 	}()
 	for {
 		select {
@@ -47,6 +56,7 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 		case <-hourUpdateTimer.C:
 			if gw != nil {
 				err = gw.Close()
+				gw = nil
 				if err != nil {
 					logger.Debugf("close gzip writer %s error %v, stop ws", outPath, err)
 					cancel()
@@ -54,7 +64,14 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 				}
 			}
 			if file != nil {
+				err = file.Sync()
+				if err != nil {
+					logger.Debugf("file.Sync() %s error %v, stop ws", outPath, err)
+					cancel()
+					return
+				}
 				err = file.Close()
+				file = nil
 				if err != nil {
 					logger.Debugf("close file %s error %v, stop ws", outPath, err)
 					cancel()
@@ -62,7 +79,7 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 				}
 			}
 			dayTime = time.Now().Truncate(time.Hour * 24)
-			outPath = fmt.Sprintf("%s/%s-%s.depth5.jl.gz", savePath, dayTime.Format("20060102"), symbol)
+			outPath = fmt.Sprintf("%s/%s%s.depth5.jl.gz", savePath, dayTime.Format("20060102"), symbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				cancel()
@@ -75,9 +92,17 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 				logger.Debugf("gzip.NewWriterLevel error %v, stop ws", err)
 				return
 			}
-			gw.Name = fmt.Sprintf("%s-%s.depth5.jl.gz", dayTime.Format("20060102"), symbol)
-			gw.ModTime = time.Now()
-			gw.Comment = fmt.Sprintf("depth5 raw json line for %s@%s", symbol, dayTime.Format("20060102"))
+			gw.Write([]byte(`123123123123123`))
+			gw.Write(swapPrefix)
+			//gw.Write(nextLine)
+			//gw.Close()
+			//file.Close()
+			//gw = nil
+			//file = nil
+			return
+			//gw.Name = fmt.Sprintf("%s-%s.depth5.jl.gz", dayTime.Format("20060102"), symbol)
+			//gw.ModTime = time.Now()
+			//gw.Comment = fmt.Sprintf("depth5 raw json line for %s@%s", symbol, dayTime.Format("20060102"))
 			hourUpdateTimer.Reset(
 				time.Now().Truncate(
 					time.Hour * 24,
@@ -130,6 +155,7 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 					logger.Debugf("gw.Write error %v, stop ws", err)
 					return
 				}
+				return
 			}
 		}
 	}

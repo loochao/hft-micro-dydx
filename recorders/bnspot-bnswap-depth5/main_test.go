@@ -19,7 +19,7 @@ func TestGzipFile(t *testing.T) {
 	for key := range binance_usdtfuture.TickSizes {
 		symbols = append(symbols, key)
 	}
-	logger.Debugf("%s", strings.Join(symbols,","))
+	logger.Debugf("%s", strings.Join(symbols, ","))
 	file, err := os.Open("/Users/chenjilin/Downloads/20210621-BTCUSDT.depth5.jl.gz")
 	if err != nil {
 		t.Fatal(err)
@@ -33,4 +33,25 @@ func TestGzipFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	logger.Debugf("%s", contents)
+}
+
+func TestCreateGzipFile(t *testing.T) {
+	file, err := os.OpenFile(
+		"/Users/chenjilin/Downloads/TEST.depth5.jl.gz",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0755,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gw, err := gzip.NewWriterLevel(file, gzip.BestCompression)
+	if err != nil {
+		logger.Debugf("gzip.NewWriterLevel error %v, stop ws", err)
+		return
+	}
+	gw.Write([]byte(`123123`))
+	gw.Write([]byte(`\n`))
+	gw.Write([]byte(`123`))
+	gw.Close()
+	file.Close()
 }

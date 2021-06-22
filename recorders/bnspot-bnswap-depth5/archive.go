@@ -11,7 +11,7 @@ import (
 )
 
 func archiveFiles(ctx context.Context,  savePath string) {
-	timer := time.NewTimer(time.Second)
+	timer := time.NewTimer(time.Hour)
 	defer timer.Stop()
 	for {
 		select {
@@ -57,7 +57,7 @@ func archiveFiles(ctx context.Context,  savePath string) {
 				}
 
 			}
-			timer.Reset(time.Minute * 5)
+			timer.Reset(time.Hour)
 		}
 	}
 }
