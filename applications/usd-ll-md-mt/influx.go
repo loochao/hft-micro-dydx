@@ -48,10 +48,6 @@ func handleSave(
 			xTradeVolume += st.xTimedPositionChange.Sum()
 			yTradeVolume += st.yTimedPositionChange.Sum()
 
-			//fields["xPosEventTime"] = st.xPosition.GetEventTime().UnixNano()
-			//fields["xPosParseTime"] = st.xPosition.GetParseTime().UnixNano()
-			//fields["yPosEventTime"] = st.yPosition.GetEventTime().UnixNano()
-			//fields["yPosParseTime"] = st.yPosition.GetParseTime().UnixNano()
 			fields["unHedgeValue"] = unHedgeValue
 			fields["xSize"] = st.xSize
 			fields["xAbsValue"] = st.xAbsValue
@@ -77,7 +73,7 @@ func handleSave(
 				yURPnl += st.yValue * (st.yWalkedDepth.MidPrice - st.yPosition.GetPrice())
 			}
 
-			fields["spreadTime"] = st.spreadTime.UnixNano()
+			fields["spreadTimeDelta"] = st.spread.ParseTime.Sub(st.spread.EventTime).Seconds()
 			fields["spreadShortLastEnter"] = st.spread.ShortLastEnter
 			fields["spreadShortLastLeave"] = st.spread.ShortLastLeave
 			fields["spreadShortMedianEnter"] = st.spread.ShortMedianEnter
