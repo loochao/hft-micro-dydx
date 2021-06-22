@@ -297,9 +297,6 @@ func (w *Depth5WS) Done() chan interface{} {
 
 func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Depth) {
 	logSilentTime := time.Now()
-	depth5 := &Depth5{
-		Symbol: symbol,
-	}
 	var err error
 	var msg []byte
 	for {
@@ -309,6 +306,7 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 		case <-w.done:
 			return
 		case msg = <-inputCh:
+			depth5 := &Depth5{}
 			err = ParseDepth5(msg, depth5)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
