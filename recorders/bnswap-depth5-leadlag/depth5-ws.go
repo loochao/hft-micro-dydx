@@ -272,18 +272,11 @@ func (w *Depth20RoutedWebsocket) saveLoop(ctx context.Context, savePath, symbols
 	var nextLine = []byte("\n")
 	defer func() {
 		if gw != nil {
-			logger.Debugf("close gzip writer for %s", symbols)
-			err = gw.Close()
-			if err != nil {
-				logger.Debugf("close gzip writer %s error %v, stop ws", outPath, err)
-			}
+			_ = gw.Flush()
+			_ = gw.Close()
 		}
 		if file != nil {
-			logger.Debugf("close file %s", symbols)
-			err = file.Close()
-			if err != nil {
-				logger.Debugf("close file %s error %v, stop ws", outPath, err)
-			}
+			_ = file.Close()
 		}
 		fileSavedCh <- symbols
 		logger.Debugf("EXIT saveLoop %s", symbols)
@@ -295,21 +288,12 @@ func (w *Depth20RoutedWebsocket) saveLoop(ctx context.Context, savePath, symbols
 		case <-w.done:
 			return
 		case <-hourUpdateTimer.C:
-			if file != nil {
-				err = file.Close()
-				if err != nil {
-					logger.Debugf("close file %s error %v, stop ws", outPath, err)
-					w.Stop()
-					return
-				}
-			}
 			if gw != nil {
-				err = gw.Close()
-				if err != nil {
-					logger.Debugf("close gzip writer %s error %v, stop ws", outPath, err)
-					w.Stop()
-					return
-				}
+				_ = gw.Flush()
+				_ = gw.Close()
+			}
+			if file != nil {
+				_ = file.Close()
 			}
 			dayTime = time.Now().Truncate(time.Hour * 24)
 			outPath = fmt.Sprintf("%s/%s-%s.depth5.jl.gz", savePath, dayTime.Format("20060102"), symbols)
@@ -325,9 +309,6 @@ func (w *Depth20RoutedWebsocket) saveLoop(ctx context.Context, savePath, symbols
 				logger.Debugf("gzip.NewWriterLevel error %v, stop ws", err)
 				return
 			}
-			gw.Name = fmt.Sprintf("%s-%s.depth5.jl", dayTime.Format("20060102"), symbols)
-			gw.ModTime = time.Now()
-			gw.Comment = fmt.Sprintf("depth5 raw json line for %s@%s", symbols, dayTime.Format("20060102"))
 			hourUpdateTimer.Reset(
 				time.Now().Truncate(
 					time.Hour * 24,

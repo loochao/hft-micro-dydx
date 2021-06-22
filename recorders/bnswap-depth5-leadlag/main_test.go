@@ -2,7 +2,6 @@ package main
 
 import (
 	"compress/gzip"
-	"context"
 	"github.com/geometrybase/hft-micro/logger"
 	"io/ioutil"
 	"os"
@@ -10,9 +9,9 @@ import (
 )
 
 
-func TestArchive(t *testing.T) {
-	archiveFiles(context.Background(), "/Users/chenjilin/Desktop/leadlag-btcusdt-btcbusd/")
-}
+//func TestArchive(t *testing.T) {
+//	archiveFiles(context.Background(), "/Users/chenjilin/Desktop/leadlag-btcusdt-btcbusd/")
+//}
 
 func TestGzipFile(t *testing.T) {
 
