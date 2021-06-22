@@ -372,7 +372,7 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.yPosition == nil ||
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
-		time.Now().Sub(strat.spread.Time) > strat.params.SpreadTimeToLive ||
+		time.Now().Sub(strat.spread.EventTime) > strat.params.SpreadTimeToLive ||
 		!strat.tradable {
 		return
 	}
@@ -478,7 +478,7 @@ func (strat *XYStrategy) changeXPosition() {
 			strat.size,
 			time.Now().Sub(strat.xDepthTime),
 			time.Now().Sub(strat.yDepthTime),
-			time.Now().Sub(strat.spread.Time),
+			time.Now().Sub(strat.spread.EventTime),
 		)
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
@@ -553,7 +553,7 @@ func (strat *XYStrategy) changeXPosition() {
 			strat.size,
 			time.Now().Sub(strat.xDepthTime),
 			time.Now().Sub(strat.yDepthTime),
-			time.Now().Sub(strat.spread.Time),
+			time.Now().Sub(strat.spread.EventTime),
 		)
 	} else if !strat.isYSpot &&
 		strat.spread.ShortLastEnter > strat.shortTop &&
@@ -659,7 +659,7 @@ func (strat *XYStrategy) changeXPosition() {
 			strat.size,
 			time.Now().Sub(strat.xDepthTime),
 			time.Now().Sub(strat.yDepthTime),
-			time.Now().Sub(strat.spread.Time),
+			time.Now().Sub(strat.spread.EventTime),
 		)
 	} else if !strat.isXSpot &&
 		strat.spread.LongLastEnter < strat.longBot &&
@@ -764,7 +764,7 @@ func (strat *XYStrategy) changeXPosition() {
 			strat.size,
 			time.Now().Sub(strat.xDepthTime),
 			time.Now().Sub(strat.yDepthTime),
-			time.Now().Sub(strat.spread.Time),
+			time.Now().Sub(strat.spread.EventTime),
 		)
 	}
 }

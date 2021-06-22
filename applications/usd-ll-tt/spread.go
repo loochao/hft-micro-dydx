@@ -42,7 +42,7 @@ func (strat *XYStrategy) walkSpread() {
 	if strat.shortEnterTimedMedian.Range() < strat.params.SpreadLookback/2 {
 		return
 	}
-	strat.spread = &XYSpread{
+	strat.spread = &common.XYSpread{
 		ShortLastEnter:   strat.shortLastEnter,
 		ShortLastLeave:   strat.longLastEnter,
 		ShortMedianEnter: strat.shortEnterTimedMedian.Median(),
@@ -52,8 +52,8 @@ func (strat *XYStrategy) walkSpread() {
 		LongLastLeave:   strat.shortLastEnter,
 		LongMedianEnter: strat.longEnterTimedMedian.Median(),
 		LongMedianLeave: strat.shortEnterTimedMedian.Median(),
-		Time:            strat.spreadTime,
-		Age:             time.Now().Sub(strat.spreadTime),
+		EventTime:       strat.spreadTime,
+		ParseTime:       time.Now(),
 	}
 	strat.changeXPosition()
 }
@@ -122,7 +122,7 @@ func (strat *XYStrategy) handleXDepth() {
 	if strat.depthCount > strat.params.DepthReportCount {
 		strat.xDepthFilter.GenerateReport()
 		strat.yDepthFilter.GenerateReport()
-		strat.spreadReport = &SpreadReport{
+		strat.spreadReport = &common.XYSpreadReport{
 			MatchRatio:        float64(strat.depthMatchCount) / float64(strat.depthCount),
 			XSymbol:           strat.xSymbol,
 			YSymbol:           strat.ySymbol,
@@ -134,9 +134,6 @@ func (strat *XYStrategy) handleXDepth() {
 			YDepthFilterRatio: strat.yDepthFilter.Report.FilterRatio,
 			XExpireRatio:      float64(strat.xDepthExpireCount) / float64(strat.depthCount),
 			YExpireRatio:      float64(strat.yDepthExpireCount) / float64(strat.depthCount),
-		}
-		if strat.xDepth != nil && strat.yDepth != nil {
-			strat.spreadReport.AgeDiff = strat.xDepthTime.Sub(strat.yDepthTime) + time.Duration(strat.xDepthFilter.TimeDeltaEma-strat.yDepthFilter.TimeDeltaEma)*time.Millisecond
 		}
 		strat.depthMatchCount = 0
 		strat.depthCount = 0
@@ -168,7 +165,7 @@ func (strat *XYStrategy) handleYDepth() {
 	if strat.depthCount > strat.params.DepthReportCount {
 		strat.xDepthFilter.GenerateReport()
 		strat.yDepthFilter.GenerateReport()
-		strat.spreadReport = &SpreadReport{
+		strat.spreadReport = &common.XYSpreadReport{
 			MatchRatio:        float64(strat.depthMatchCount) / float64(strat.depthCount),
 			XSymbol:           strat.xSymbol,
 			YSymbol:           strat.ySymbol,
@@ -180,9 +177,6 @@ func (strat *XYStrategy) handleYDepth() {
 			YDepthFilterRatio: strat.yDepthFilter.Report.FilterRatio,
 			XExpireRatio:      float64(strat.xDepthExpireCount) / float64(strat.depthCount),
 			YExpireRatio:      float64(strat.yDepthExpireCount) / float64(strat.depthCount),
-		}
-		if strat.xDepth != nil && strat.yDepth != nil {
-			strat.spreadReport.AgeDiff = strat.xDepthTime.Sub(strat.yDepthTime) + time.Duration(strat.xDepthFilter.TimeDeltaEma-strat.yDepthFilter.TimeDeltaEma)*time.Millisecond
 		}
 		strat.depthMatchCount = 0
 		strat.depthCount = 0
