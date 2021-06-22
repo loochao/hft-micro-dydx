@@ -53,6 +53,7 @@ func (strat *XYStrategy) walkSpread() {
 		LongMedianEnter: strat.longEnterTimedMedian.Median(),
 		LongMedianLeave: strat.shortEnterTimedMedian.Median(),
 		Time:            strat.spreadTime,
+		Age:             time.Now().Sub(strat.spreadTime),
 	}
 	strat.changeXPosition()
 }
