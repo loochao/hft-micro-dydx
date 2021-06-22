@@ -45,18 +45,18 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 		case <-ctx.Done():
 			return
 		case <-hourUpdateTimer.C:
-			if file != nil {
-				err = file.Close()
-				if err != nil {
-					logger.Debugf("close file %s error %v, stop ws", outPath, err)
-					cancel()
-					return
-				}
-			}
 			if gw != nil {
 				err = gw.Close()
 				if err != nil {
 					logger.Debugf("close gzip writer %s error %v, stop ws", outPath, err)
+					cancel()
+					return
+				}
+			}
+			if file != nil {
+				err = file.Close()
+				if err != nil {
+					logger.Debugf("close file %s error %v, stop ws", outPath, err)
 					cancel()
 					return
 				}
