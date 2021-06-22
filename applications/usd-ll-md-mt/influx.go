@@ -96,11 +96,8 @@ func handleSave(
 			fields["yAskPrice"] = st.yWalkedDepth.AskPrice
 			fields["yMidPrice"] = st.yWalkedDepth.MidPrice
 
-			fields["age"] = st.spread.Age.Seconds()
-
 			if st.spreadReport != nil {
 				fields["matchRatio"] = st.spreadReport.MatchRatio
-				fields["adjustedAgeDiff"] = float64(st.spreadReport.AdjustedAgeDiff / time.Millisecond)
 				fields["xTimeDeltaEma"] = st.spreadReport.XTimeDeltaEma
 				fields["yTimeDeltaEma"] = st.spreadReport.YTimeDeltaEma
 				fields["xTimeDelta"] = st.spreadReport.XTimeDelta
@@ -109,7 +106,6 @@ func handleSave(
 				fields["yDepthFilterRatio"] = st.spreadReport.XDepthFilterRatio
 				fields["xExpireRatio"] = st.spreadReport.XExpireRatio
 				fields["yExpireRatio"] = st.spreadReport.YExpireRatio
-				fields["ageDiff"] = st.spreadReport.AgeDiff.Seconds()
 			}
 
 		} else {

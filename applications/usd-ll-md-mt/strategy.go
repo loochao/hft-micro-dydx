@@ -12,7 +12,6 @@ func startXYStrategy(
 	ctx context.Context,
 	xSymbol, ySymbol string,
 	config Config,
-	orderOffset Offset,
 	xExchange common.UsdExchange,
 	yExchange common.UsdExchange,
 	xAccountCh chan common.Balance,
