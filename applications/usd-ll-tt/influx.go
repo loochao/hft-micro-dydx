@@ -67,7 +67,7 @@ func handleSave(
 				yURPnl += st.yValue * (st.yWalkedDepth.MidPrice - st.yPosition.GetPrice())
 			}
 
-			fields["spreadTime"] = st.spreadTime.UnixNano()
+			fields["spreadAge"] = st.spread.Age.Seconds()
 			fields["spreadShortLastEnter"] = st.spread.ShortLastEnter
 			fields["spreadShortLastLeave"] = st.spread.ShortLastLeave
 			fields["spreadShortMedianEnter"] = st.spread.ShortMedianEnter
@@ -118,7 +118,7 @@ func handleSave(
 		if st.xyFundingRate != nil {
 			fields["xyFundingRate"] = *st.xyFundingRate
 		}
-		if st.realisedSpread != nil{
+		if st.realisedSpread != nil {
 			fields["realisedSpread"] = *st.realisedSpread
 		}
 		if xSystemStatus == common.SystemStatusReady {
@@ -230,4 +230,3 @@ func handleSave(
 
 	}
 }
-
