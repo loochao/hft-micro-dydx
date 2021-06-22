@@ -406,7 +406,7 @@ func (strat *XYStrategy) walkSpread() {
 	if strat.shortEnterTimedMedian.Range() < strat.config.SpreadLookback/2 {
 		return
 	}
-	strat.spread = &XYSpread{
+	strat.spread = &common.XYSpread{
 		ShortLastEnter:   strat.shortLastEnter,
 		ShortLastLeave:   strat.longLastEnter,
 		ShortMedianEnter: strat.shortEnterTimedMedian.Median(),
@@ -416,7 +416,8 @@ func (strat *XYStrategy) walkSpread() {
 		LongLastLeave:   strat.shortLastEnter,
 		LongMedianEnter: strat.longEnterTimedMedian.Median(),
 		LongMedianLeave: strat.shortEnterTimedMedian.Median(),
-		Time:            strat.spreadTime,
+		EventTime:       strat.spreadTime,
+		ParseTime:       time.Now(),
 	}
 	strat.hedgeYPosition()
 	strat.updateXOrder()
@@ -469,7 +470,7 @@ func (strat *XYStrategy) handleXDepth() {
 	if strat.depthCount > strat.config.DepthReportCount {
 		strat.xDepthFilter.GenerateReport()
 		strat.yDepthFilter.GenerateReport()
-		strat.spreadReport = &SpreadReport{
+		strat.spreadReport = &common.XYSpreadReport{
 			MatchRatio:        float64(strat.depthMatchCount) / float64(strat.depthCount),
 			XSymbol:           strat.xSymbol,
 			YSymbol:           strat.ySymbol,
@@ -481,9 +482,6 @@ func (strat *XYStrategy) handleXDepth() {
 			YDepthFilterRatio: strat.yDepthFilter.Report.FilterRatio,
 			XExpireRatio:      float64(strat.xDepthExpireCount) / float64(strat.depthCount),
 			YExpireRatio:      float64(strat.yDepthExpireCount) / float64(strat.depthCount),
-		}
-		if strat.xDepth != nil && strat.yDepth != nil {
-			strat.spreadReport.AgeDiff = strat.xDepthTime.Sub(strat.yDepthTime) + time.Duration(strat.xDepthFilter.TimeDeltaEma-strat.yDepthFilter.TimeDeltaEma)*time.Millisecond
 		}
 		strat.depthMatchCount = 0
 		strat.depthCount = 0
@@ -515,7 +513,7 @@ func (strat *XYStrategy) handleYDepth() {
 	if strat.depthCount > strat.config.DepthReportCount {
 		strat.xDepthFilter.GenerateReport()
 		strat.yDepthFilter.GenerateReport()
-		strat.spreadReport = &SpreadReport{
+		strat.spreadReport = &common.XYSpreadReport{
 			MatchRatio:        float64(strat.depthMatchCount) / float64(strat.depthCount),
 			XSymbol:           strat.xSymbol,
 			YSymbol:           strat.ySymbol,
@@ -527,9 +525,6 @@ func (strat *XYStrategy) handleYDepth() {
 			YDepthFilterRatio: strat.yDepthFilter.Report.FilterRatio,
 			XExpireRatio:      float64(strat.xDepthExpireCount) / float64(strat.depthCount),
 			YExpireRatio:      float64(strat.yDepthExpireCount) / float64(strat.depthCount),
-		}
-		if strat.xDepth != nil && strat.yDepth != nil {
-			strat.spreadReport.AgeDiff = strat.xDepthTime.Sub(strat.yDepthTime) + time.Duration(strat.xDepthFilter.TimeDeltaEma-strat.yDepthFilter.TimeDeltaEma)*time.Millisecond
 		}
 		strat.depthMatchCount = 0
 		strat.depthCount = 0
@@ -556,9 +551,9 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yPosition == nil ||
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
-		time.Now().Sub(strat.spread.Time) > strat.config.SpreadTimeToLive ||
+		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive ||
 		!strat.tradable {
-		if time.Now().Sub(strat.spread.Time) > strat.config.SpreadTimeToLive {
+		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
 			strat.tryCancelXOpenOrder("spread time out")
 		}
 		return
@@ -607,8 +602,7 @@ func (strat *XYStrategy) updateXOrder() {
 	if strat.spread.ShortLastLeave < strat.shortBot &&
 		strat.spread.ShortMedianLeave < strat.shortBot &&
 		*strat.xyFundingRate < strat.config.MinimalKeepFundingRate &&
-		strat.xSize >= strat.xStepSize {
-
+		strat.xSize >= strat.xStepSize*strat.xMultiplier {
 		strat.enterValue = math.Min(4*strat.enterStep, math.Min(strat.xAbsValue, strat.yAbsValue))
 		if *strat.xyFundingRate > strat.config.MinimalKeepFundingRate*0.5 {
 			strat.enterValue = math.Min(2*strat.enterStep, math.Min(strat.xAbsValue, strat.yAbsValue))
@@ -616,13 +610,13 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
-
-		if strat.xAbsValue-strat.enterValue < strat.xyMergedSpotStepSize || strat.yAbsValue-strat.enterValue < strat.xyMergedSpotStepSize {
+		if strat.xAbsValue-strat.enterValue < strat.xyMergedSpotStepSize ||
+			strat.yAbsValue-strat.enterValue < strat.xyMergedSpotStepSize ||
+			strat.size > strat.xSize {
 			//两种情况都把x全平，间接y全平
 			strat.size = strat.xSize
 		}
-
-		strat.size = math.Round(strat.size / strat.xMultiplier)
+		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 {
 			strat.price = math.Ceil(strat.xWalkedDepth.AskPrice*(1.0+strat.orderOffset.Top)/strat.xTickSize) * strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
@@ -664,7 +658,7 @@ func (strat *XYStrategy) updateXOrder() {
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
 		*strat.xyFundingRate > -strat.config.MinimalKeepFundingRate &&
-		strat.xSize <= -strat.xStepSize {
+		strat.xSize <= -strat.xStepSize*strat.xMultiplier {
 
 		strat.enterValue = math.Min(4*strat.enterStep, math.Min(strat.xAbsValue, strat.yAbsValue))
 		if *strat.xyFundingRate < -strat.config.MinimalKeepFundingRate*0.5 {
@@ -673,10 +667,12 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
-		if strat.xAbsValue-strat.enterValue < strat.xyMergedSpotStepSize || strat.yAbsValue-strat.enterValue < strat.xyMergedSpotStepSize {
+		if strat.xAbsValue-strat.enterValue < strat.xyMergedSpotStepSize ||
+			strat.yAbsValue-strat.enterValue < strat.xyMergedSpotStepSize ||
+			strat.size > -strat.xSize {
 			strat.size = -strat.xSize
 		}
-		strat.size = math.Round(strat.size / strat.xMultiplier)
+		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 {
 			strat.price = math.Floor(strat.xWalkedDepth.BidPrice*(1.0+strat.orderOffset.Bot)/strat.xTickSize) * strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
