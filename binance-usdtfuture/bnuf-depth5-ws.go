@@ -299,7 +299,7 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	logSilentTime := time.Now()
 	var err error
 	var msg []byte
-	index := 0
+	index := -1
 	pool := [1024]*Depth5{}
 	for i := 0; i < 1024; i++ {
 		pool[i] = &Depth5{}
@@ -313,7 +313,9 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 			return
 		case msg = <-inputCh:
 			index ++
-			index = index%1024
+			if index == 1024 {
+				index = 0
+			}
 			depth5 = pool[index]
 			err = ParseDepth5(msg, depth5)
 			if err != nil {

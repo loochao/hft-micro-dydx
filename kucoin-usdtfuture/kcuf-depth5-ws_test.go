@@ -69,13 +69,15 @@ func TestNewDepth5WS(t *testing.T) {
 	for _, symbol := range symbols {
 		channels[symbol] = outputCh
 	}
-	_ = NewDepth5WS(
+	ws := NewDepth5WS(
 		ctx, api,
 		"socks5://127.0.0.1:1081",
 		channels,
 	)
 	for {
 		select {
+		case <- ws.Done():
+			return
 		case d := <-outputCh:
 			logger.Debugf("%s %v", d.GetSymbol(), d.GetTime())
 		}
