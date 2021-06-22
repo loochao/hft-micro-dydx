@@ -86,7 +86,6 @@ func main() {
 	for symbol := range symbolsMap {
 		symbols = append(symbols, symbol)
 	}
-	symbols = symbols[:1]
 	ctx, cancel := context.WithCancel(context.Background())
 	fileSavedCh := make(chan string, len(symbols))
 	for start := 0; start < len(symbols); start += *batchSize {
