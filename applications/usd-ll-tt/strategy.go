@@ -209,6 +209,10 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			//strat.markedYAskPrice = nil
 			//strat.markedYBidPrice = nil
 			strat.changeYPosition()
+			strat.hedgeCounter --
+			if strat.hedgeCounter > 0 {
+				strat.hedgeYTimer.Reset(strat.params.HedgeYDelay)
+			}
 			break
 		case <-strat.spreadWalkTimer.C:
 			strat.walkSpread()
@@ -460,6 +464,8 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
+		strat.hedgeYTimer.Reset(strat.params.HedgeYDelay)
+		strat.hedgeCounter = time.Minute/strat.params.HedgeYDelay
 		//if strat.markedYAskPrice == nil {
 		//	strat.markedYAskPrice = new(float64)
 		//}
@@ -474,7 +480,6 @@ func (strat *XYStrategy) changeXPosition() {
 			time.Now().Sub(strat.yDepthTime),
 			time.Now().Sub(strat.spread.Time),
 		)
-		strat.hedgeYTimer.Reset(strat.params.HedgeYDelay)
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
 		strat.spread.LongLastLeave > strat.spread.LongMedianLeave &&
@@ -539,6 +544,7 @@ func (strat *XYStrategy) changeXPosition() {
 		//}
 		//*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 		strat.hedgeYTimer.Reset(strat.params.HedgeYDelay)
+		strat.hedgeCounter = time.Minute/strat.params.HedgeYDelay
 		logger.Debugf(
 			"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE -%f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -644,6 +650,7 @@ func (strat *XYStrategy) changeXPosition() {
 		//}
 		//*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 		strat.hedgeYTimer.Reset(strat.params.HedgeYDelay)
+		strat.hedgeCounter = time.Minute/strat.params.HedgeYDelay
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -748,6 +755,7 @@ func (strat *XYStrategy) changeXPosition() {
 		//}
 		//*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
 		strat.hedgeYTimer.Reset(strat.params.HedgeYDelay)
+		strat.hedgeCounter = time.Minute/strat.params.HedgeYDelay
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE -%f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,

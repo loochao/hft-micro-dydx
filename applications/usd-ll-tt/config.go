@@ -107,4 +107,7 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.TurnoverLookback == 0 {
 		config.TurnoverLookback = time.Hour * 24
 	}
+	if config.HedgeYDelay <= 0 {
+		config.HedgeYDelay = time.Nanosecond
+	}
 }
