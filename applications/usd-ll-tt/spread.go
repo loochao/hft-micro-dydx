@@ -15,11 +15,11 @@ func (strat *XYStrategy) walkSpread() {
 	//取新一点的时间为spread time
 	if strat.xWalkedDepth.Time.Sub(strat.yWalkedDepth.Time) < 0 {
 		//需要对时间进行补偿
-		strat.spreadTime = strat.yWalkedDepth.Time.Add(time.Millisecond * time.Duration(strat.yDepthFilter.TimeDeltaEma))
 		//strat.spreadTime = strat.xWalkedDepth.Time
+		strat.spreadTime = strat.xWalkedDepth.Time.Add(time.Millisecond * time.Duration(strat.xDepthFilter.TimeDeltaEma))
 	} else {
 		//需要对时间进行补偿
-		strat.spreadTime = strat.xWalkedDepth.Time.Add(time.Millisecond * time.Duration(strat.xDepthFilter.TimeDeltaEma))
+		strat.spreadTime = strat.yWalkedDepth.Time.Add(time.Millisecond * time.Duration(strat.yDepthFilter.TimeDeltaEma))
 		//strat.spreadTime = strat.yWalkedDepth.Time
 	}
 	if strat.adjustedAgeDiff > strat.params.DepthMaxAgeDiffBias {
