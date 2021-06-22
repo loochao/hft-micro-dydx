@@ -291,9 +291,11 @@ func (w *Depth20RoutedWebsocket) saveLoop(ctx context.Context, savePath, symbols
 			if gw != nil {
 				_ = gw.Flush()
 				_ = gw.Close()
+				gw = nil
 			}
 			if file != nil {
 				_ = file.Close()
+				file = nil
 			}
 			dayTime = time.Now().Truncate(time.Hour * 24)
 			outPath = fmt.Sprintf("%s/%s-%s.depth5.jl.gz", savePath, dayTime.Format("20060102"), symbols)
