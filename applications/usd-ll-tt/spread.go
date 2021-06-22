@@ -30,8 +30,8 @@ func (strat *XYStrategy) walkSpread() {
 		strat.xDepthExpireCount++
 	}
 	strat.depthMatchCount++
-	strat.shortLastEnter = (strat.yWalkedDepth.BidPrice - strat.xWalkedDepth.AskPrice) / strat.yWalkedDepth.AskPrice
-	strat.longLastEnter = (strat.yWalkedDepth.AskPrice - strat.xWalkedDepth.BidPrice) / strat.yWalkedDepth.BidPrice
+	strat.shortLastEnter = (strat.yWalkedDepth.BidPrice - strat.xWalkedDepth.AskPrice) / strat.xWalkedDepth.AskPrice
+	strat.longLastEnter = (strat.yWalkedDepth.AskPrice - strat.xWalkedDepth.BidPrice) / strat.xWalkedDepth.BidPrice
 
 	strat.shortEnterTimedMedian.Insert(strat.spreadTime, strat.shortLastEnter)
 	strat.longEnterTimedMedian.Insert(strat.spreadTime, strat.longLastEnter)
