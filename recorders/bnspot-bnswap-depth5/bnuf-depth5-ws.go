@@ -21,13 +21,16 @@ type FutureDepth5WS struct {
 	mu          sync.Mutex
 }
 
-func (w *FutureDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *FutureDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan Message) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
-	var ch chan []byte
+	var ch chan Message
 	var ok bool
 	var symbol string
+	var outMsg = Message{
+		Source: []byte("F"),
+	}
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -82,8 +85,9 @@ func (w *FutureDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan
 		}
 		//logger.Debugf("%s %v", symbol, channels)
 		if ch, ok = channels[symbol]; ok {
+			outMsg.Data = msg
 			select {
-			case ch <- msg:
+			case ch <- outMsg:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
@@ -157,7 +161,7 @@ func (w *FutureDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy stri
 	return conn, nil
 }
 
-func (w *FutureDepth5WS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
+func (w *FutureDepth5WS) mainLoop(ctx context.Context, proxy string, channels map[string]chan Message) {
 	urlStr := "wss://fstream.binance.com/stream?streams="
 	symbols := make([]string, 0)
 	for symbol := range channels {
@@ -299,7 +303,7 @@ func (w *FutureDepth5WS) Done() chan interface{} {
 func NewFutureDepth5WS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan []byte,
+	channels map[string]chan Message,
 ) *FutureDepth5WS {
 	ws := FutureDepth5WS{
 		done:        make(chan interface{}),

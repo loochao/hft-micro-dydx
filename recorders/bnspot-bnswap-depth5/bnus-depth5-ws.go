@@ -21,13 +21,16 @@ type SpotDepth5WS struct {
 	mu          sync.Mutex
 }
 
-func (w *SpotDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *SpotDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan Message) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
 	var symbol string
-	var ch chan []byte
+	var ch chan Message
 	var ok bool
+	var msgOut = Message{
+		Source: []byte("S"),
+	}
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -67,8 +70,9 @@ func (w *SpotDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan [
 			}
 			//logger.Debugf("%s %v", symbol, channels)
 			if ch, ok = channels[symbol]; ok {
+				msgOut.Data = msg
 				select {
-				case ch <- msg:
+				case ch <- msgOut:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
@@ -143,7 +147,7 @@ func (w *SpotDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string
 	return conn, nil
 }
 
-func (w *SpotDepth5WS) mainLoop(ctx context.Context, channels map[string]chan []byte, proxy string) {
+func (w *SpotDepth5WS) mainLoop(ctx context.Context, channels map[string]chan Message, proxy string) {
 	urlStr := "wss://stream.binance.com:9443/stream?streams="
 	for symbol := range channels {
 		urlStr += fmt.Sprintf(
@@ -276,7 +280,7 @@ func (w *SpotDepth5WS) Done() chan interface{} {
 func NewSpotDepth5WS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan []byte,
+	channels map[string]chan Message,
 ) *SpotDepth5WS {
 	ws := SpotDepth5WS{
 		done:        make(chan interface{}),

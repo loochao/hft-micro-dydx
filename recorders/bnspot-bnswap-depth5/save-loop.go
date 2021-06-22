@@ -10,39 +10,25 @@ import (
 	"time"
 )
 
-func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol string, futureInputCh, spotInputCh chan []byte, fileSavedCh chan string) {
+func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol string, messageInputCh chan Message, fileSavedCh chan string) {
 	logger.Debugf("START saveLoop %s", symbol)
 	hourUpdateTimer := time.NewTimer(time.Second)
 	var dayTime time.Time
 	var outPath string
 	var file *os.File
 	var gw *gzip.Writer
-	var msg []byte
+	var msg Message
 	var err error
-	var nextLine = []byte("\n")
-	var swapPrefix = []byte("F")
-	var spotPrefix = []byte("S")
+	var nextLine = []byte{'\n'}
 	defer func() {
 		if gw != nil {
+			gw.Flush()
+			gw.Close()
 			logger.Debugf("close gzip writer for %s", symbol)
-			err = gw.Close()
-			if err != nil {
-				logger.Debugf("close gzip writer %s error %v, stop ws", outPath, err)
-			}
 			gw = nil
 		}
 		if file != nil {
-			err = file.Sync()
-			if err != nil {
-				logger.Debugf("file.Sync() %s error %v, stop ws", outPath, err)
-				cancel()
-				return
-			}
-			logger.Debugf("close file %s", symbol)
-			err = file.Close()
-			if err != nil {
-				logger.Debugf("close file %s error %v, stop ws", outPath, err)
-			}
+			file.Close()
 			file = nil
 		}
 		fileSavedCh <- symbol
@@ -55,31 +41,17 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 			return
 		case <-hourUpdateTimer.C:
 			if gw != nil {
-				err = gw.Close()
+				gw.Flush()
+				gw.Close()
 				gw = nil
-				if err != nil {
-					logger.Debugf("close gzip writer %s error %v, stop ws", outPath, err)
-					cancel()
-					return
-				}
 			}
 			if file != nil {
-				err = file.Sync()
-				if err != nil {
-					logger.Debugf("file.Sync() %s error %v, stop ws", outPath, err)
-					cancel()
-					return
-				}
-				err = file.Close()
+				file.Close()
 				file = nil
-				if err != nil {
-					logger.Debugf("close file %s error %v, stop ws", outPath, err)
-					cancel()
-					return
-				}
 			}
+			time.Sleep(time.Second * 5)
 			dayTime = time.Now().Truncate(time.Hour * 24)
-			outPath = fmt.Sprintf("%s/%s%s.depth5.jl.gz", savePath, dayTime.Format("20060102"), symbol)
+			outPath = fmt.Sprintf("%s/%s-%s.depth5.jl.gz", savePath, dayTime.Format("20060102"), symbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				cancel()
@@ -92,17 +64,6 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 				logger.Debugf("gzip.NewWriterLevel error %v, stop ws", err)
 				return
 			}
-			gw.Write([]byte(`123123123123123`))
-			gw.Write(swapPrefix)
-			//gw.Write(nextLine)
-			//gw.Close()
-			//file.Close()
-			//gw = nil
-			//file = nil
-			return
-			//gw.Name = fmt.Sprintf("%s-%s.depth5.jl.gz", dayTime.Format("20060102"), symbol)
-			//gw.ModTime = time.Now()
-			//gw.Comment = fmt.Sprintf("depth5 raw json line for %s@%s", symbol, dayTime.Format("20060102"))
 			hourUpdateTimer.Reset(
 				time.Now().Truncate(
 					time.Hour * 24,
@@ -112,16 +73,16 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 					time.Duration(rand.Intn(60)) * time.Second,
 				).Sub(time.Now()),
 			)
-		case msg = <-futureInputCh:
+		case msg = <-messageInputCh:
 			//logger.Debugf("%s", msg)
 			if gw != nil {
-				_, err = gw.Write(swapPrefix)
+				_, err = gw.Write(msg.Source)
 				if err != nil {
 					cancel()
 					logger.Debugf("gw.Write error %v, stop ws", err)
 					return
 				}
-				_, err = gw.Write(msg)
+				_, err = gw.Write(msg.Data)
 				if err != nil {
 					cancel()
 					logger.Debugf("gw.Write error %v, stop ws", err)
@@ -134,29 +95,7 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, symbol s
 					return
 				}
 			}
-		case msg = <-spotInputCh:
-			//logger.Debugf("%s", msg)
-			if gw != nil {
-				_, err = gw.Write(spotPrefix)
-				if err != nil {
-					cancel()
-					logger.Debugf("gw.Write error %v, stop ws", err)
-					return
-				}
-				_, err = gw.Write(msg)
-				if err != nil {
-					cancel()
-					logger.Debugf("gw.Write error %v, stop ws", err)
-					return
-				}
-				_, err = gw.Write(nextLine)
-				if err != nil {
-					cancel()
-					logger.Debugf("gw.Write error %v, stop ws", err)
-					return
-				}
-				return
-			}
+
 		}
 	}
 }

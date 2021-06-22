@@ -15,13 +15,13 @@ func main() {
 
 	batchSize := flag.Int("batch", 40, "symbols group batch size")
 
-	//proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	//symbolsStr := flag.String("symbols", "TRXUSDT,LRCUSDT,ATOMUSDT,ADAUSDT,TRBUSDT,STMXUSDT,BTSUSDT,SKLUSDT,LUNAUSDT,AKROUSDT,XTZUSDT,XRPUSDT,EGLDUSDT,DENTUSDT,STORJUSDT,REEFUSDT,BTTUSDT,XLMUSDT,CRVUSDT,AXSUSDT,RUNEUSDT,IOSTUSDT,BNBUSDT,COTIUSDT,MATICUSDT,ZRXUSDT,TOMOUSDT,BALUSDT,CHZUSDT,ALGOUSDT,SANDUSDT,SUSHIUSDT,KNCUSDT,QTUMUSDT,ETCUSDT,DASHUSDT,BZRXUSDT,MTLUSDT,ALICEUSDT,OMGUSDT,BTCUSDT,BATUSDT,RENUSDT,BANDUSDT,SNXUSDT,LINAUSDT,HBARUSDT,ZECUSDT,BCHUSDT,CVCUSDT,WAVESUSDT,XMRUSDT,IOTAUSDT,XEMUSDT,1INCHUSDT,LINKUSDT,RVNUSDT,AAVEUSDT,ZILUSDT,ICPUSDT,SFPUSDT,KSMUSDT,ONEUSDT,FLMUSDT,KAVAUSDT,ENJUSDT,UNFIUSDT,ZENUSDT,BELUSDT,YFIUSDT,DGBUSDT,CHRUSDT,THETAUSDT,ICXUSDT,1000SHIBUSDT,GTCUSDT,VETUSDT,YFIIUSDT,SXPUSDT,MKRUSDT,RLCUSDT,LTCUSDT,BLZUSDT,NEOUSDT,LITUSDT,UNIUSDT,HNTUSDT,CTKUSDT,EOSUSDT,DOGEUSDT,MANAUSDT,GRTUSDT,FILUSDT,ETHUSDT,OCEANUSDT,HOTUSDT,NKNUSDT,DOTUSDT,RSRUSDT,ALPHAUSDT,NEARUSDT,AVAXUSDT,SRMUSDT,OGNUSDT,SCUSDT,ONTUSDT,DODOUSDT,SOLUSDT,CELRUSDT,FTMUSDT,DEFIUSDT,BAKEUSDT,ANKRUSDT,COMPUSDT", "symbols, separate by comma")
-	//savePath := flag.String("path", "/root/bnspot-bnswap-depth5", "data save folder")
+	proxyAddress := flag.String("proxy", "", "symbols group batch size")
+	symbolsStr := flag.String("symbols", "TRXUSDT,LRCUSDT,ATOMUSDT,ADAUSDT,TRBUSDT,STMXUSDT,BTSUSDT,SKLUSDT,LUNAUSDT,AKROUSDT,XTZUSDT,XRPUSDT,EGLDUSDT,DENTUSDT,STORJUSDT,REEFUSDT,BTTUSDT,XLMUSDT,CRVUSDT,AXSUSDT,RUNEUSDT,IOSTUSDT,BNBUSDT,COTIUSDT,MATICUSDT,ZRXUSDT,TOMOUSDT,BALUSDT,CHZUSDT,ALGOUSDT,SANDUSDT,SUSHIUSDT,KNCUSDT,QTUMUSDT,ETCUSDT,DASHUSDT,BZRXUSDT,MTLUSDT,ALICEUSDT,OMGUSDT,BTCUSDT,BATUSDT,RENUSDT,BANDUSDT,SNXUSDT,LINAUSDT,HBARUSDT,ZECUSDT,BCHUSDT,CVCUSDT,WAVESUSDT,XMRUSDT,IOTAUSDT,XEMUSDT,1INCHUSDT,LINKUSDT,RVNUSDT,AAVEUSDT,ZILUSDT,ICPUSDT,SFPUSDT,KSMUSDT,ONEUSDT,FLMUSDT,KAVAUSDT,ENJUSDT,UNFIUSDT,ZENUSDT,BELUSDT,YFIUSDT,DGBUSDT,CHRUSDT,THETAUSDT,ICXUSDT,1000SHIBUSDT,GTCUSDT,VETUSDT,YFIIUSDT,SXPUSDT,MKRUSDT,RLCUSDT,LTCUSDT,BLZUSDT,NEOUSDT,LITUSDT,UNIUSDT,HNTUSDT,CTKUSDT,EOSUSDT,DOGEUSDT,MANAUSDT,GRTUSDT,FILUSDT,ETHUSDT,OCEANUSDT,HOTUSDT,NKNUSDT,DOTUSDT,RSRUSDT,ALPHAUSDT,NEARUSDT,AVAXUSDT,SRMUSDT,OGNUSDT,SCUSDT,ONTUSDT,DODOUSDT,SOLUSDT,CELRUSDT,FTMUSDT,DEFIUSDT,BAKEUSDT,ANKRUSDT,COMPUSDT", "symbols, separate by comma")
+	savePath := flag.String("path", "/root/bnspot-bnswap-depth5", "data save folder")
 
-	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	symbolsStr := flag.String("symbols", "BTCUSDT", "symbols, separate by comma")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
+	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//symbolsStr := flag.String("symbols", "BTCUSDT", "symbols, separate by comma")
+	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
 	flag.Parse()
 	symbols := strings.Split(*symbolsStr, ",")
 	ctx, cancel := context.WithCancel(context.Background())
@@ -31,31 +31,29 @@ func main() {
 		if end > len(symbols) {
 			end = len(symbols)
 		}
-		futureChMap := make(map[string]chan []byte)
-		spotChMap := make(map[string]chan []byte)
+		messageChMap := make(map[string]chan Message)
 		for _, symbol := range symbols {
-			futureChMap[strings.ToLower(symbol)] = make(chan []byte, 1024)
-			spotChMap[strings.ToLower(symbol)] = make(chan []byte, 1024)
-			go saveLoop(ctx, cancel, *savePath, symbol, futureChMap[strings.ToLower(symbol)], spotChMap[strings.ToLower(symbol)], fileSavedCh)
+			messageChMap[strings.ToLower(symbol)] = make(chan Message, 10000)
+			go saveLoop(ctx, cancel, *savePath, symbol, messageChMap[strings.ToLower(symbol)], fileSavedCh)
 		}
-		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan []byte) {
+		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan Message) {
 			ws := NewFutureDepth5WS(ctx, proxy, outputChMap)
 			select {
 			case <-ctx.Done():
 			case <-ws.Done():
 				cancel()
 			}
-		}(ctx, cancel, *proxyAddress, futureChMap)
-		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan []byte) {
+		}(ctx, cancel, *proxyAddress, messageChMap)
+		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan Message) {
 			ws := NewSpotDepth5WS(ctx, proxy, outputChMap)
 			select {
 			case <-ctx.Done():
 			case <-ws.Done():
 				cancel()
 			}
-		}(ctx, cancel, *proxyAddress, spotChMap)
+		}(ctx, cancel, *proxyAddress, messageChMap)
 	}
-	//go archiveFiles(context.Background(), *savePath)
+	go archiveFiles(context.Background(), *savePath)
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
