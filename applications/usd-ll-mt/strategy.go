@@ -87,27 +87,27 @@ func startXYStrategy(
 		xFundingRate:            nil,
 		yFundingRate:            nil,
 		xyFundingRate:           nil,
-		xLastFilledBuyPrice:     nil,
-		xLastFilledSellPrice:    nil,
-		yLastFilledBuyPrice:     nil,
-		yLastFilledSellPrice:    nil,
-		xOrder:                  nil,
-		yOrder:                  nil,
-		xOrderError:             common.OrderError{},
-		yOrderError:             common.OrderError{},
-		enterStep:               0,
-		enterTarget:             0,
-		usdtAvailable:           0,
-		logSilentTime:           time.Time{},
-		xWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
-		yWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
-		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
-		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
-		saveTimer:               time.NewTimer(config.EnterSilent),
-		spreadTime:              time.Time{},
-		spread:                  nil,
-		shortEnterTimedMedian:   common.NewTimedMedian(config.SpreadLookback),
-		longEnterTimedMedian:    common.NewTimedMedian(config.SpreadLookback),
+		xLastFilledBuyPrice:   nil,
+		xLastFilledSellPrice:  nil,
+		yLastFilledBuyPrice:   nil,
+		yLastFilledSellPrice:  nil,
+		xOrder:                nil,
+		yOrder:                nil,
+		xOrderError:           common.OrderError{},
+		yOrderError:           common.OrderError{},
+		enterStep:             0,
+		enterTarget:           0,
+		usdAvailable:          0,
+		logSilentTime:         time.Time{},
+		xWalkDepthTimer:       time.NewTimer(time.Hour * 9999),
+		yWalkDepthTimer:       time.NewTimer(time.Hour * 9999),
+		spreadWalkTimer:       time.NewTimer(time.Hour * 9999),
+		realisedSpreadTimer:   time.NewTimer(time.Hour * 9999),
+		saveTimer:             time.NewTimer(config.EnterSilent),
+		spreadTime:            time.Time{},
+		spread:                nil,
+		shortEnterTimedMedian: common.NewTimedMedian(config.SpreadLookback),
+		longEnterTimedMedian:  common.NewTimedMedian(config.SpreadLookback),
 		xTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
 		yTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
 		expectedChanSendingTime: time.Nanosecond * 300,
@@ -369,7 +369,7 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 		strat.enterStep = strat.config.EnterMinimalStep
 	}
 	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.enterScale
-	strat.usdtAvailable = math.Min(strat.xAccount.GetFree()*strat.xLeverage, strat.yAccount.GetFree()*strat.yLeverage)
+	strat.usdAvailable = math.Min(strat.xAccount.GetFree()*strat.xLeverage, strat.yAccount.GetFree()*strat.yLeverage)
 }
 
 func (strat *XYStrategy) walkSpread() {
@@ -727,15 +727,15 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
-		if strat.enterValue > strat.usdtAvailable {
+		if strat.enterValue > strat.usdAvailable {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdtAvailable %f, %f > %f, %f > %f, SIZE %f",
+					"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
 					strat.xSymbol,
 					strat.ySymbol,
 					strat.enterValue,
-					strat.usdtAvailable,
+					strat.usdAvailable,
 					strat.spread.ShortLastEnter, strat.shortTop,
 					strat.spread.ShortMedianEnter, strat.shortTop,
 					strat.size,
@@ -808,15 +808,15 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
-		if strat.enterValue > strat.usdtAvailable {
+		if strat.enterValue > strat.usdAvailable {
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdtAvailable %f, %f < %f, %f < %f, SIZE %f",
+					"%s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
 					strat.xSymbol,
 					strat.ySymbol,
 					strat.enterValue,
-					strat.usdtAvailable,
+					strat.usdAvailable,
 					strat.spread.LongLastEnter, strat.longBot,
 					strat.spread.LongMedianEnter, strat.longBot,
 					strat.size,
