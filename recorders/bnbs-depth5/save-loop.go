@@ -75,7 +75,6 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, bSymbol 
 				).Sub(time.Now()),
 			)
 		case msg = <-messageInputCh:
-			logger.Debugf("%s", msg)
 			if gw != nil {
 				//_, err = gw.Write(msg.Source)
 				//if err != nil {
