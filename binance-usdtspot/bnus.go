@@ -80,7 +80,7 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 		return
 	}
 	balancesMap := make(map[string]*Balance, 0)
-	internalAccountCh := make(chan Account, 10)
+	internalAccountCh := make(chan Account, 4)
 	go bn.watchAccount(ctx, internalAccountCh)
 	go bn.watchSystemStatus(ctx, statusCh)
 	logSilentTime := time.Now()
