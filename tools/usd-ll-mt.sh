@@ -26,7 +26,7 @@ rm -rf "./dist/usd-ll-tt.$dt.zip"
 curl -H "Authorization: token $GITHUB_TOKEN" \
      -H "Accept: application/vnd.github.manifold-preview" \
      -H "Content-Type: application/zip" \
-     --data-binary "@dist/dist/usd-ll-tt.$dt.zip" \
+     --data-binary "@dist/usd-ll-tt.$dt.zip" \
      "https://uploads.github.com/repos/geometrybase/hft-mirco/releases/usd-ll-mt.$dt/assets?name=usd-ll-mt.$dt.zip"
 
 echo "arm1"
