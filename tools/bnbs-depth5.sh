@@ -16,6 +16,6 @@ git tag "bnbs-depth5.$dt"
 git push origin "bnbs-depth5.$dt" --force
 
 
-echo "hk04"
-rsync -avx --progress "./dist/bnbs-depth5.$dt" hk04:/usr/local/bin/
+echo "hk02"
+rsync -avx --progress "./dist/bnbs-depth5.$dt" hk02:/usr/local/bin/
 
