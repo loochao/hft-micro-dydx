@@ -82,7 +82,7 @@ func startXYStrategy(
 		yAccount:                nil,
 		xPosition:               nil,
 		yPosition:               nil,
-		xOrderSilentTime:        time.Time{},
+		xOrderSilentTime:        time.Now().Add(config.EnterSilent),
 		xCancelSilentTime:       time.Time{},
 		yOrderSilentTime:        time.Time{},
 		xFundingRate:            nil,
