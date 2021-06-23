@@ -83,31 +83,32 @@ func startXYStrategy(
 		xPosition:               nil,
 		yPosition:               nil,
 		xOrderSilentTime:        time.Time{},
+		xCancelSilentTime:       time.Time{},
 		yOrderSilentTime:        time.Time{},
 		xFundingRate:            nil,
 		yFundingRate:            nil,
 		xyFundingRate:           nil,
-		xLastFilledBuyPrice:   nil,
-		xLastFilledSellPrice:  nil,
-		yLastFilledBuyPrice:   nil,
-		yLastFilledSellPrice:  nil,
-		xOrder:                nil,
-		yOrder:                nil,
-		xOrderError:           common.OrderError{},
-		yOrderError:           common.OrderError{},
-		enterStep:             0,
-		enterTarget:           0,
-		usdAvailable:          0,
-		logSilentTime:         time.Time{},
-		xWalkDepthTimer:       time.NewTimer(time.Hour * 9999),
-		yWalkDepthTimer:       time.NewTimer(time.Hour * 9999),
-		spreadWalkTimer:       time.NewTimer(time.Hour * 9999),
-		realisedSpreadTimer:   time.NewTimer(time.Hour * 9999),
-		saveTimer:             time.NewTimer(config.EnterSilent),
-		spreadTime:            time.Time{},
-		spread:                nil,
-		shortEnterTimedMedian: common.NewTimedMedian(config.SpreadLookback),
-		longEnterTimedMedian:  common.NewTimedMedian(config.SpreadLookback),
+		xLastFilledBuyPrice:     nil,
+		xLastFilledSellPrice:    nil,
+		yLastFilledBuyPrice:     nil,
+		yLastFilledSellPrice:    nil,
+		xOrder:                  nil,
+		yOrder:                  nil,
+		xOrderError:             common.OrderError{},
+		yOrderError:             common.OrderError{},
+		enterStep:               0,
+		enterTarget:             0,
+		usdAvailable:            0,
+		logSilentTime:           time.Time{},
+		xWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
+		yWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
+		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
+		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
+		saveTimer:               time.NewTimer(config.EnterSilent),
+		spreadTime:              time.Time{},
+		spread:                  nil,
+		shortEnterTimedMedian:   common.NewTimedMedian(config.SpreadLookback),
+		longEnterTimedMedian:    common.NewTimedMedian(config.SpreadLookback),
 		xTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
 		yTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
 		expectedChanSendingTime: time.Nanosecond * 300,
@@ -193,7 +194,6 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.realisedSpreadTimer.Stop()
 	defer strat.saveTimer.Stop()
 	var nextXPos, nextYPos common.Position
-	strat.xOrderSilentTime = time.Now().Add(-time.Millisecond)
 	strat.tryCancelXOpenOrder("start")
 	strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 	for {
@@ -553,6 +553,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xyFundingRate == nil ||
 		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive ||
 		!strat.tradable {
+
 		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
 			strat.tryCancelXOpenOrder("spread time out")
 		}
@@ -576,6 +577,10 @@ func (strat *XYStrategy) updateXOrder() {
 	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
 
 	if time.Now().Sub(strat.xOrderSilentTime) < 0 {
+		return
+	}
+
+	if time.Now().Sub(strat.xCancelSilentTime) < 0 {
 		return
 	}
 
@@ -617,7 +622,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.size = strat.xSize
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional){
+		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
 			strat.price = math.Ceil(strat.xWalkedDepth.AskPrice*(1.0+strat.orderOffset.Top)/strat.xTickSize) * strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
@@ -674,7 +679,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.size = -strat.xSize
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional){
+		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
 			strat.price = math.Floor(strat.xWalkedDepth.BidPrice*(1.0+strat.orderOffset.Bot)/strat.xTickSize) * strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
@@ -982,10 +987,10 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 }
 
 func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
-	if time.Now().Sub(strat.xOrderSilentTime) < 0 {
+	if time.Now().Sub(strat.xCancelSilentTime) < 0 {
 		return
 	}
-	strat.xOrderSilentTime = time.Now().Add(strat.config.XCancelSilent)
+	strat.xCancelSilentTime = time.Now().Add(strat.config.XCancelSilent)
 	if !strat.config.DryRun {
 		//logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
 		select {

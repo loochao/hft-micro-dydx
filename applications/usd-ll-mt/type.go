@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 type XYStrategy struct {
 	xExchange common.UsdExchange
 	yExchange common.UsdExchange
@@ -59,6 +58,7 @@ type XYStrategy struct {
 	xPosition            common.Position
 	yPosition            common.Position
 	xOrderSilentTime     time.Time
+	xCancelSilentTime    time.Time
 	yOrderSilentTime     time.Time
 	xFundingRate         common.FundingRate
 	yFundingRate         common.FundingRate
