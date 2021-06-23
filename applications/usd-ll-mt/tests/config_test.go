@@ -2,8 +2,8 @@ package tests
 
 import (
 	"fmt"
-	"github.com/geometrybase/hft-micro/bnspot"
-	"github.com/geometrybase/hft-micro/bnswap"
+	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
+	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"sort"
 	"strings"
@@ -13,7 +13,7 @@ import (
 func TestConfig_SetDefaultIfNotSet(t *testing.T) {
 	for xSymbol := range kucoin_usdtfuture.TickSizes {
 		ySymbol := strings.Replace(xSymbol, "USDTM", "USDT", -1)
-		if _, ok := bnswap.TickSizes[ySymbol]; ok {
+		if _, ok := binance_usdtfuture.TickSizes[ySymbol]; ok {
 			fmt.Printf("  %s: %s\n", xSymbol, ySymbol)
 		}
 	}
@@ -21,8 +21,8 @@ func TestConfig_SetDefaultIfNotSet(t *testing.T) {
 
 func TestBnspotBnswapSymbols(t *testing.T) {
 	symbols := make([]string, 0)
-	for symbol := range bnswap.TickSizes {
-		if _, ok := bnspot.TickSizes[symbol]; ok {
+	for symbol := range binance_usdtfuture.TickSizes {
+		if _, ok := binance_usdtspot.TickSizes[symbol]; ok {
 			symbols = append(symbols, symbol)
 		}
 	}
@@ -33,4 +33,3 @@ func TestBnspotBnswapSymbols(t *testing.T) {
 	fmt.Printf("\n")
 	fmt.Printf("%s", strings.Join(symbols, ","))
 }
-

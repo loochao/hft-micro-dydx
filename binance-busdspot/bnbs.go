@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type BinanceUsdtSpot struct {
+type BinanceBusdSpot struct {
 	api      *API
 	done     chan interface{}
 	stopped  bool
@@ -21,23 +21,23 @@ type BinanceUsdtSpot struct {
 	settings common.ExchangeSettings
 }
 
-func (bn *BinanceUsdtSpot) IsSpot() bool {
+func (bn *BinanceBusdSpot) IsSpot() bool {
 	return true
 }
 
-func (bn *BinanceUsdtSpot) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
+func (bn *BinanceBusdSpot) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	panic("implement me")
 }
 
-func (bn *BinanceUsdtSpot) GenerateClientID() string {
+func (bn *BinanceBusdSpot) GenerateClientID() string {
 	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 }
 
-func (bn *BinanceUsdtSpot) GetMultiplier(symbol string) (float64, error) {
+func (bn *BinanceBusdSpot) GetMultiplier(symbol string) (float64, error) {
 	return 1.0, nil
 }
 
-func (bn *BinanceUsdtSpot) GetMinNotional(symbol string) (float64, error) {
+func (bn *BinanceBusdSpot) GetMinNotional(symbol string) (float64, error) {
 	if value, ok := MinNotionals[symbol]; ok {
 		return value, nil
 	} else {
@@ -45,7 +45,7 @@ func (bn *BinanceUsdtSpot) GetMinNotional(symbol string) (float64, error) {
 	}
 }
 
-func (bn *BinanceUsdtSpot) GetMinSize(symbol string) (float64, error) {
+func (bn *BinanceBusdSpot) GetMinSize(symbol string) (float64, error) {
 	if value, ok := MinSizes[symbol]; ok {
 		return value, nil
 	} else {
@@ -53,7 +53,7 @@ func (bn *BinanceUsdtSpot) GetMinSize(symbol string) (float64, error) {
 	}
 }
 
-func (bn *BinanceUsdtSpot) GetStepSize(symbol string) (float64, error) {
+func (bn *BinanceBusdSpot) GetStepSize(symbol string) (float64, error) {
 	if value, ok := StepSizes[symbol]; ok {
 		return value, nil
 	} else {
@@ -61,7 +61,7 @@ func (bn *BinanceUsdtSpot) GetStepSize(symbol string) (float64, error) {
 	}
 }
 
-func (bn *BinanceUsdtSpot) GetTickSize(symbol string) (float64, error) {
+func (bn *BinanceBusdSpot) GetTickSize(symbol string) (float64, error) {
 	if value, ok := TickSizes[symbol]; ok {
 		return value, nil
 	} else {
@@ -69,7 +69,7 @@ func (bn *BinanceUsdtSpot) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, usdtAccountCh chan common.Balance, positionChMap map[string]chan common.Position, orderChMap map[string]chan common.Order) {
+func (bn *BinanceBusdSpot) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, usdtAccountCh chan common.Balance, positionChMap map[string]chan common.Position, orderChMap map[string]chan common.Order) {
 	defer bn.Stop()
 	bn.mu.Lock()
 	proxy := bn.settings.Proxy
@@ -239,7 +239,7 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 
 }
 
-func (bn *BinanceUsdtSpot) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
+func (bn *BinanceBusdSpot) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")
 	defer bn.Stop()
@@ -285,7 +285,7 @@ func (bn *BinanceUsdtSpot) StreamDepth(ctx context.Context, channels map[string]
 	}
 }
 
-func (bn *BinanceUsdtSpot) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
+func (bn *BinanceBusdSpot) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
 	logger.Debugf("START StreamTrade")
 	defer logger.Debugf("STOP StreamTrade")
 	defer bn.Stop()
@@ -331,15 +331,15 @@ func (bn *BinanceUsdtSpot) StreamTrade(ctx context.Context, channels map[string]
 	}
 }
 
-func (bn *BinanceUsdtSpot) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (bn *BinanceBusdSpot) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	panic("implement me")
 }
 
-func (bn *BinanceUsdtSpot) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
+func (bn *BinanceBusdSpot) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
 	panic("implement me")
 }
 
-func (bn *BinanceUsdtSpot) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
+func (bn *BinanceBusdSpot) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
 	bn.mu.Lock()
 	pullInterval := bn.settings.PullInterval
 	bn.mu.Unlock()
@@ -364,7 +364,7 @@ func (bn *BinanceUsdtSpot) StreamFundingRate(ctx context.Context, channels map[s
 	}
 }
 
-func (bn *BinanceUsdtSpot) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+func (bn *BinanceBusdSpot) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	defer bn.Stop()
 	for symbol, reqCh := range requestChannels {
 		tickSize, ok := TickSizes[symbol]
@@ -399,7 +399,7 @@ func (bn *BinanceUsdtSpot) WatchOrders(ctx context.Context, requestChannels map[
 	}
 }
 
-func (bn *BinanceUsdtSpot) Setup(ctx context.Context, settings common.ExchangeSettings) (err error) {
+func (bn *BinanceBusdSpot) Setup(ctx context.Context, settings common.ExchangeSettings) (err error) {
 	bn.done = make(chan interface{})
 	bn.mu = sync.Mutex{}
 	bn.stopped = false
@@ -434,7 +434,7 @@ func (bn *BinanceUsdtSpot) Setup(ctx context.Context, settings common.ExchangeSe
 	return
 }
 
-func (bn *BinanceUsdtSpot) Stop() {
+func (bn *BinanceBusdSpot) Stop() {
 	bn.mu.Lock()
 	defer bn.mu.Unlock()
 	if !bn.stopped {
@@ -444,11 +444,11 @@ func (bn *BinanceUsdtSpot) Stop() {
 	}
 }
 
-func (bn *BinanceUsdtSpot) Done() chan interface{} {
+func (bn *BinanceBusdSpot) Done() chan interface{} {
 	return bn.done
 }
 
-func (bn *BinanceUsdtSpot) watchSystemStatus(
+func (bn *BinanceBusdSpot) watchSystemStatus(
 	ctx context.Context,
 	output chan common.SystemStatus,
 ) {
@@ -485,7 +485,7 @@ func (bn *BinanceUsdtSpot) watchSystemStatus(
 	}
 }
 
-func (bn *BinanceUsdtSpot) watchAccount(
+func (bn *BinanceBusdSpot) watchAccount(
 	ctx context.Context,
 	output chan Account,
 ) {
@@ -511,7 +511,7 @@ func (bn *BinanceUsdtSpot) watchAccount(
 	}
 }
 
-func (bn *BinanceUsdtSpot) watchOrder(
+func (bn *BinanceBusdSpot) watchOrder(
 	ctx context.Context,
 	market string,
 	tickSize, stepSize float64,
@@ -546,7 +546,7 @@ func (bn *BinanceUsdtSpot) watchOrder(
 	}
 }
 
-func (bn *BinanceUsdtSpot) submitOrder(ctx context.Context, param common.NewOrderParam, tickSize, stepSize float64, respCh chan common.Order, errCh chan common.OrderError) {
+func (bn *BinanceBusdSpot) submitOrder(ctx context.Context, param common.NewOrderParam, tickSize, stepSize float64, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParams{}
 	newOrderParam.Symbol = param.Symbol
 	newOrderParam.Quantity = math.Round(param.Size/stepSize) * stepSize
@@ -598,7 +598,7 @@ func (bn *BinanceUsdtSpot) submitOrder(ctx context.Context, param common.NewOrde
 	}
 }
 
-func (bn *BinanceUsdtSpot) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
+func (bn *BinanceBusdSpot) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
 	if param.Symbol != "" {
 		_, _, err := bn.api.CancelAllOrder(ctx, CancelAllOrderParams{
 			Symbol: param.Symbol,
@@ -616,16 +616,16 @@ func (bn *BinanceUsdtSpot) cancelOrder(ctx context.Context, param common.CancelO
 	}
 }
 
-type BinanceUsdtSpotWithDepth5 struct {
-	BinanceUsdtSpot
+type BinanceBusdSpotWithDepth5 struct {
+	BinanceBusdSpot
 }
 
-type BinanceUsdtSpotWithDepth20 struct {
-	BinanceUsdtSpot
+type BinanceBusdSpotWithDepth20 struct {
+	BinanceBusdSpot
 }
 
 
-func (bn *BinanceUsdtSpotWithDepth20) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
+func (bn *BinanceBusdSpotWithDepth20) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")
 	defer bn.Stop()

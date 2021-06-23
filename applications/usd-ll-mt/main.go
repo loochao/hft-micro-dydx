@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
@@ -69,12 +70,32 @@ func main() {
 	}
 	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
+	if xyConfig.CpuProfile != "" {
+		f, err := os.Create(xyConfig.CpuProfile)
+		if err != nil {
+			logger.Debugf("os.Create error %v", err)
+			return
+		}
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			logger.Debugf("pprof.StartCPUProfile error %v", err)
+			return
+		}
+		defer pprof.StopCPUProfile()
+	}
+
 	switch xyConfig.XExchange.Name {
 	case "binanceUsdtSpotWithDepth5":
 		xExchange = &bnus.BinanceUsdtSpotWithDepth5{}
 		break
 	case "binanceUsdtSpotWithDepth20":
 		xExchange = &bnus.BinanceUsdtSpotWithDepth20{}
+		break
+	case "binanceBusdSpotWithDepth5":
+		xExchange = &bnbs.BinanceBusdSpotWithDepth5{}
+		break
+	case "binanceBusdSpotWithDepth20":
+		xExchange = &bnbs.BinanceBusdSpotWithDepth20{}
 		break
 	case "binanceUsdtFutureWithDepth5":
 		xExchange = &bnuf.BinanceUsdtFutureWidthDepth5{}
@@ -101,6 +122,12 @@ func main() {
 		break
 	case "binanceUsdtSpotWithDepth20":
 		yExchange = &bnus.BinanceUsdtSpotWithDepth20{}
+		break
+	case "binanceBusdSpotWithDepth5":
+		yExchange = &bnbs.BinanceBusdSpotWithDepth5{}
+		break
+	case "binanceBusdSpotWithDepth20":
+		yExchange = &bnbs.BinanceBusdSpotWithDepth20{}
 		break
 	case "binanceUsdtFutureWithDepth5":
 		yExchange = &bnuf.BinanceUsdtFutureWidthDepth5{}
@@ -134,20 +161,6 @@ func main() {
 	}
 	xyConfig.XExchange.Symbols = xSymbols
 	xyConfig.YExchange.Symbols = ySymbols
-
-	if xyConfig.CpuProfile != "" {
-		f, err := os.Create(xyConfig.CpuProfile)
-		if err != nil {
-			logger.Debugf("os.Create error %v", err)
-			return
-		}
-		err = pprof.StartCPUProfile(f)
-		if err != nil {
-			logger.Debugf("pprof.StartCPUProfile error %v", err)
-			return
-		}
-		defer pprof.StopCPUProfile()
-	}
 
 	xyGlobalCtx, xyGlobalCancel = context.WithCancel(context.Background())
 	defer xyGlobalCancel()
@@ -216,7 +229,7 @@ func main() {
 		xPositionChMap[xSymbol] = make(chan common.Position, 4)
 		xOrderChMap[xSymbol] = make(chan common.Order, 32)
 		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 1)
-		xDepthChMap[xSymbol] = make(chan common.Depth,16)
+		xDepthChMap[xSymbol] = make(chan common.Depth, 16)
 		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 1)
 		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 1)
 		xAccountChMap[xSymbol] = make(chan common.Balance, 4)
@@ -234,7 +247,7 @@ func main() {
 		yPositionChMap[ySymbol] = make(chan common.Position, 4)
 		yOrderChMap[ySymbol] = make(chan common.Order, 32)
 		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 1)
-		yDepthChMap[ySymbol] = make(chan common.Depth,16)
+		yDepthChMap[ySymbol] = make(chan common.Depth, 16)
 		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 1)
 		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 1)
 		yAccountChMap[ySymbol] = make(chan common.Balance, 4)
