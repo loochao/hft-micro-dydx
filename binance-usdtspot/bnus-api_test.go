@@ -29,7 +29,7 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	minNotional := make(map[string]float64)
 	for _, symbol := range exchangeInfo.Symbols {
 		//logger.Debugf(symbol.Status)
-		if symbol.Status !=  "TRADING" {
+		if symbol.Status !=  "TRADING" || symbol.QuoteAsset != "USDT"{
 			continue
 		}
 		for _, filter := range symbol.Filters {
