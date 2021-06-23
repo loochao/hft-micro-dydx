@@ -32,7 +32,6 @@ func (strat *XYStrategy) handleXOrder() {
 
 		if strat.xOrder.GetStatus() != common.OrderStatusFilled {
 			//logger.Debugf("x order ended %s %s %s", strat.xOrder.GetSymbol(), strat.xOrder.GetStatus(), strat.xOrder.GetSide())
-			//strat.xOrderSilentTime = time.Now().Add(time.Second)
 			strat.xPositionUpdateTime = time.Unix(0, 0)
 		} else {
 			logger.Debugf("x order filled %s %s %s size %f price %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice())
@@ -112,7 +111,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 func (strat *XYStrategy) handleXOrderError() {
 	if strat.xOrderError.Cancel != nil {
 		logger.Debugf("cancel %v error %v", *strat.xOrderError.Cancel, strat.xOrderError.Error)
-		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+		//strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 	} else if strat.xOrderError.New != nil {
 		logger.Debugf("new %v error %v", *strat.xOrderError.New, strat.xOrderError.Error)
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
