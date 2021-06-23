@@ -10,15 +10,14 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
 type Depth5WS struct {
 	done        chan interface{}
 	reconnectCh chan interface{}
-	stopped     bool
-	mu          sync.Mutex
+	stopped     int32
 }
 
 func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
@@ -254,12 +253,10 @@ func (w *Depth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 }
 
 func (w *Depth5WS) Stop() {
-	w.mu.Lock()
-	if !w.stopped {
-		w.stopped = true
+	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
+		logger.Debugf("stopped")
 	}
-	w.mu.Unlock()
 }
 
 func (w *Depth5WS) restart() {
@@ -287,8 +284,8 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	defer logger.Debugf("EXIT dataHandleLoop %s", symbol)
 	logSilentTime := time.Now()
 	index := -1
-	pool := [1024]*Depth5{}
-	for i := 0; i < 1024; i++ {
+	pool := [16]*Depth5{}
+	for i := 0; i < 16; i++ {
 		pool[i] = &Depth5{}
 	}
 	var depth5 *Depth5
@@ -301,7 +298,7 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 			return
 		case msg := <-inputCh:
 			index ++
-			if index == 1024 {
+			if index == 16 {
 				index = 0
 			}
 			depth5 = pool[index]
@@ -333,9 +330,8 @@ func NewDepth5WS(
 ) *Depth5WS {
 	ws := Depth5WS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}),
-		stopped:     false,
-		mu:          sync.Mutex{},
+		reconnectCh: make(chan interface{}, 4),
+		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {

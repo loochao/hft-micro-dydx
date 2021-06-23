@@ -450,13 +450,13 @@ func NewUserWebsocket(
 	ws := UserWebsocket{
 		done:                            make(chan interface{}),
 		reconnectCh:                     make(chan interface{}),
-		RestartCh:                       make(chan interface{}, 100),
-		OrderUpdateEventCh:              make(chan *OrderUpdateEvent, 100),
-		BalanceAndPositionUpdateEventCh: make(chan *BalanceAndPositionUpdateEvent, 100),
-		PositionsCh:                     make(chan []WSPosition, 100),
-		BalancesCh:                      make(chan []WSBalance, 100),
-		messageCh:                       make(chan []byte, 10000),
-		writeCh:                         make(chan interface{}, 10000),
+		RestartCh:                       make(chan interface{}, 4),
+		OrderUpdateEventCh:              make(chan *OrderUpdateEvent, 16),
+		BalanceAndPositionUpdateEventCh: make(chan *BalanceAndPositionUpdateEvent, 16),
+		PositionsCh:                     make(chan []WSPosition, 16),
+		BalancesCh:                      make(chan []WSBalance, 16),
+		messageCh:                       make(chan []byte, 128),
+		writeCh:                         make(chan interface{}, 128),
 		stopped:                         0,
 	}
 	go func(ctx context.Context, ws *UserWebsocket, listenKey ListenKey) {

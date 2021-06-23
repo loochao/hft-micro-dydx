@@ -30,10 +30,10 @@ func main() {
 	var xyExternalInfluxWriter *common.InfluxWriter
 
 	var xAccount common.Balance
-	var xAccountCh = make(chan common.Balance, 200)
+	var xAccountCh = make(chan common.Balance, 4)
 	var xOrderRequestChMap = make(map[string]chan common.OrderRequest)
 	var yAccount common.Balance
-	var yAccountCh = make(chan common.Balance, 200)
+	var yAccountCh = make(chan common.Balance, 4)
 	var yOrderRequestChMap = make(map[string]chan common.OrderRequest)
 
 	var xyConfig *Config
@@ -42,8 +42,8 @@ func main() {
 
 	var xSystemStatus = common.SystemStatusNotReady
 	var ySystemStatus = common.SystemStatusNotReady
-	var xSystemStatusCh = make(chan common.SystemStatus, 100)
-	var ySystemStatusCh = make(chan common.SystemStatus, 100)
+	var xSystemStatusCh = make(chan common.SystemStatus, 4)
+	var ySystemStatusCh = make(chan common.SystemStatus, 4)
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -229,7 +229,7 @@ func main() {
 		xPositionChMap[xSymbol] = make(chan common.Position, 4)
 		xOrderChMap[xSymbol] = make(chan common.Order, 32)
 		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 1)
-		xDepthChMap[xSymbol] = make(chan common.Depth, 16)
+		xDepthChMap[xSymbol] = make(chan common.Depth, 4)
 		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 1)
 		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 1)
 		xAccountChMap[xSymbol] = make(chan common.Balance, 4)
@@ -247,7 +247,7 @@ func main() {
 		yPositionChMap[ySymbol] = make(chan common.Position, 4)
 		yOrderChMap[ySymbol] = make(chan common.Order, 32)
 		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 1)
-		yDepthChMap[ySymbol] = make(chan common.Depth, 16)
+		yDepthChMap[ySymbol] = make(chan common.Depth, 4)
 		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 1)
 		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 1)
 		yAccountChMap[ySymbol] = make(chan common.Balance, 4)

@@ -175,22 +175,25 @@ func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy strin
 
 func (w *UserWebsocket) mainLoop(ctx context.Context, urlStr string, proxy string) {
 	logger.Debugf("START mainLoop")
-	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
-
 	defer func() {
 		logger.Debugf("EXIT mainLoop")
-		w.Stop()
 		if internalCancel != nil {
 			internalCancel()
 		}
-		cancel()
+		w.Stop()
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 	for {
 		select {
+		case <- w.done:
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
+			return
 		case <-ctx.Done():
 			if internalCancel != nil {
 				internalCancel()
@@ -218,6 +221,7 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, urlStr string, proxy strin
 			}
 			go w.readLoop(conn)
 			go w.heartbeatLoop(internalCtx, conn)
+			reconnectTimer.Reset(time.Hour*9999)
 		}
 	}
 }
@@ -319,10 +323,10 @@ func NewUserWebsocket(
 	ws := UserWebsocket{
 		done:                            make(chan interface{}),
 		reconnectCh:                     make(chan interface{}),
-		RestartCh:                       make(chan interface{}, 100),
-		OrderUpdateEventCh:              make(chan *OrderUpdateEvent, 10),
-		BalanceAndPositionUpdateEventCh: make(chan *BalanceAndPositionUpdateEvent, 10),
-		messageCh:                       make(chan []byte, 10000),
+		RestartCh:                       make(chan interface{}, 4),
+		OrderUpdateEventCh:              make(chan *OrderUpdateEvent, 16),
+		BalanceAndPositionUpdateEventCh: make(chan *BalanceAndPositionUpdateEvent, 16),
+		messageCh:                       make(chan []byte, 128),
 		stopped:                         0,
 	}
 	go func(ctx context.Context, ws *UserWebsocket, listenKey ListenKey) {
