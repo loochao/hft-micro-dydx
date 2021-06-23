@@ -34,9 +34,6 @@ func main() {
 
 	quantiles := make(map[string]string)
 	for _, symbol := range symbols {
-		//var lastBuyTrade *bnspot.Trade
-		//var lastSellTrade *bnspot.Trade
-		//var lastTrade *bnspot.Trade
 		impactTD, _ := tdigest.New()
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
@@ -64,16 +61,13 @@ func main() {
 			var counter = 0
 			for scanner.Scan() {
 				counter ++
-				//if counter % 2 == 0 {
-				//	continue
-				//}
 				msg = scanner.Bytes()
 				if msg[0] != 'S' {
 					continue
 				}
 				err = binance_usdtspot.ParseDepth5(msg[1:], &depth5)
 				if err != nil {
-					logger.Debugf("bnspot.ParseDepth20 error %v", err)
+					logger.Debugf("binance_usdtspot.ParseDepth5 error %v", err)
 					continue
 				}
 				if lastDepth5.Symbol != "" {
@@ -90,18 +84,15 @@ func main() {
 			_ = file.Close()
 		}
 		quantiles[symbol] = fmt.Sprintf(
-			"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+			"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
 			impactTD.Quantile(0.00005),
 			impactTD.Quantile(0.0005),
 			impactTD.Quantile(0.005),
-			impactTD.Quantile(0.05),
-			impactTD.Quantile(0.5),
-			impactTD.Quantile(0.95),
 			impactTD.Quantile(0.995),
 			impactTD.Quantile(0.9995),
 			impactTD.Quantile(0.99995),
 		)
-		logger.Debugf("%s %s", symbol, quantiles[symbol])
+		fmt.Printf("%s %s\n", symbol, quantiles[symbol])
 	}
 
 	fmt.Printf("\n\n\n")

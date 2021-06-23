@@ -163,10 +163,10 @@ type Offset struct {
 
 func NewOffset(msg string) (Offset, error) {
 	splits := strings.Split(msg, ",")
-	if len(splits) != 10 {
+	if len(splits) != 6 {
 		return Offset{}, fmt.Errorf("bad offsets %s", msg)
 	}
-	offsets := [10]float64{}
+	offsets := [6]float64{}
 	var err error
 	for i, s := range splits {
 		offsets[i], err = common.ParseFloat([]byte(s))
@@ -175,11 +175,11 @@ func NewOffset(msg string) (Offset, error) {
 		}
 	}
 	return Offset{
-		FarTop:  offsets[9],
-		Top:     offsets[6],
-		NearTop: offsets[5],
-		NearBot: offsets[4],
-		Bot:     offsets[3],
+		FarTop:  offsets[5],
+		Top:     offsets[4],
+		NearTop: offsets[3],
+		NearBot: offsets[2],
+		Bot:     offsets[1],
 		FarBot:  offsets[0],
 	}, nil
 }
