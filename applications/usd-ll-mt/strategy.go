@@ -351,11 +351,11 @@ func (strat *XYStrategy) hedgeYPosition() {
 			New: &strat.yNewOrderParam,
 		}:
 			//logger.Debugf("sent strat.yOrderRequestCh <- common.OrderRequest %s", strat.yNewOrderParam.Symbol)
-			strat.yOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 			strat.yPositionUpdateTime = time.Unix(0, 0)
 		}
 	} else {
-		strat.yOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+		strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 		strat.yPositionUpdateTime = time.Unix(0, 0)
 	}
 }

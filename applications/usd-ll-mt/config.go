@@ -76,9 +76,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.OrderTimeout == 0 {
 		config.OrderTimeout = time.Second * 5
 	}
-	if config.XOrderSilent == 0 {
-		config.XOrderSilent = time.Second * 5
-	}
 	if config.EnterSilent == 0 {
 		config.EnterSilent = time.Minute * 30
 	}
@@ -109,7 +106,13 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.TurnoverLookback == 0 {
 		config.TurnoverLookback = time.Hour * 24
 	}
+	if config.XOrderSilent == 0 {
+		config.XOrderSilent = time.Second
+	}
 	if config.XCancelSilent == 0 {
 		config.XCancelSilent = config.XOrderSilent
+	}
+	if config.YOrderSilent == 0 {
+		config.YOrderSilent = time.Second*5
 	}
 }

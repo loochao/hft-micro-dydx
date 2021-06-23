@@ -64,7 +64,7 @@ func (strat *XYStrategy) handleYOrder() {
 		strat.yOrder.GetStatus() == common.OrderStatusFilled {
 		if strat.yOrder.GetStatus() != common.OrderStatusFilled {
 			logger.Debugf("y order ended %s %s %s", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide())
-			strat.yOrderSilentTime = time.Now().Add(time.Second)
+			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 			strat.yPositionUpdateTime = time.Time{}
 		} else {
 			logger.Debugf("y order filled %s %s %s size %f price %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice())
@@ -122,10 +122,10 @@ func (strat *XYStrategy) handleXOrderError() {
 func (strat *XYStrategy) handleYOrderError() {
 	if strat.yOrderError.Cancel != nil {
 		logger.Debugf("cancel %v error %v", *strat.yOrderError.Cancel, strat.yOrderError.Error)
-		strat.yOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+		strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 	} else if strat.yOrderError.New != nil {
 		logger.Debugf("new %v error %v", *strat.yOrderError.New, strat.yOrderError.Error)
-		strat.yOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+		strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 	}
 }
 
