@@ -306,7 +306,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 	if math.Abs(strat.ySizeDiff) < strat.yStepSize {
 		return
 	}
-	strat.ySizeDiff = math.Round(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
+	strat.ySizeDiff = math.Floor(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
 
 	if strat.isYSpot {
 		if math.Abs(strat.ySizeDiff) < strat.yStepSize {
@@ -328,7 +328,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 	}
 
 	strat.reduceOnly = false
-	if strat.ySizeDiff*strat.yPosition.GetSize() < 0 && math.Abs(strat.ySizeDiff) <= math.Abs(strat.yPosition.GetSize()) {
+	if strat.ySizeDiff*strat.yPosition.GetSize() < 0 && math.Abs(strat.ySizeDiff)*0.995 <= math.Abs(strat.yPosition.GetSize()) {
 		strat.reduceOnly = true
 	}
 	strat.orderSide = common.OrderSideBuy
