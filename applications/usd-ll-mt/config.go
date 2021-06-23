@@ -53,8 +53,9 @@ type Config struct {
 	StartValues       map[string]float64 `yaml:"startValues"`
 
 	OrderTimeout    time.Duration `yaml:"orderTimeout"`
-	OrderSilent     time.Duration `yaml:"orderSilent"`
-	CancelSilent    time.Duration `yaml:"cancelSilent"`
+	XOrderSilent    time.Duration `yaml:"xOrderSilent"`
+	YOrderSilent    time.Duration `yaml:"yOrderSilent"`
+	XCancelSilent   time.Duration `yaml:"xCancelSilent"`
 	EnterSilent     time.Duration `yaml:"enterSilent"`
 	RestartSilent   time.Duration `yaml:"restartSilent"`
 	RestartInterval time.Duration `yaml:"restartInterval"`
@@ -75,8 +76,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.OrderTimeout == 0 {
 		config.OrderTimeout = time.Second * 5
 	}
-	if config.OrderSilent == 0 {
-		config.OrderSilent = time.Second * 5
+	if config.XOrderSilent == 0 {
+		config.XOrderSilent = time.Second * 5
 	}
 	if config.EnterSilent == 0 {
 		config.EnterSilent = time.Minute * 30
@@ -108,7 +109,7 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.TurnoverLookback == 0 {
 		config.TurnoverLookback = time.Hour * 24
 	}
-	if config.CancelSilent == 0 {
-		config.CancelSilent = config.OrderSilent
+	if config.XCancelSilent == 0 {
+		config.XCancelSilent = config.XOrderSilent
 	}
 }

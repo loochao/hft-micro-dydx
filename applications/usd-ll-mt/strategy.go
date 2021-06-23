@@ -351,11 +351,11 @@ func (strat *XYStrategy) hedgeYPosition() {
 			New: &strat.yNewOrderParam,
 		}:
 			//logger.Debugf("sent strat.yOrderRequestCh <- common.OrderRequest %s", strat.yNewOrderParam.Symbol)
-			strat.yOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
+			strat.yOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.yPositionUpdateTime = time.Unix(0, 0)
 		}
 	} else {
-		strat.yOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
+		strat.yOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.yPositionUpdateTime = time.Unix(0, 0)
 	}
 }
@@ -644,7 +644,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.xLastFilledSellPrice = nil
 			strat.yLastFilledBuyPrice = nil
 			strat.yLastFilledSellPrice = nil
-			strat.xOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			logger.Debugf(
 				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f, XDepthDiff %v YDepthDiff %v",
 				strat.xSymbol, strat.ySymbol,
@@ -701,7 +701,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.xLastFilledSellPrice = nil
 			strat.yLastFilledBuyPrice = nil
 			strat.yLastFilledSellPrice = nil
-			strat.xOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			logger.Debugf(
 				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f, XDepthDiff %v YDepthDiff %v",
 				strat.xSymbol, strat.ySymbol,
@@ -784,7 +784,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
-		strat.xOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
+		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -865,7 +865,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
-		strat.xOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
+		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f, XDepthDiff %v YDepthDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -985,7 +985,7 @@ func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
 	if time.Now().Sub(strat.xOrderSilentTime) < 0 {
 		return
 	}
-	strat.xOrderSilentTime = time.Now().Add(strat.config.CancelSilent)
+	strat.xOrderSilentTime = time.Now().Add(strat.config.XCancelSilent)
 	if !strat.config.DryRun {
 		//logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
 		select {
