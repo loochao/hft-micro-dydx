@@ -440,4 +440,5 @@ mainLoop:
 	}
 	logger.Debugf("stop waiting 15s")
 	<-time.After(time.Second * 15)
+	logger.Debugf("main stopped")
 }

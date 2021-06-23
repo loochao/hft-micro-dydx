@@ -169,13 +169,15 @@ func (w *Depth5WS) mainLoop(ctx context.Context, proxy string, channels map[stri
 	urlStr = urlStr[:len(urlStr)-1]
 	logger.Debugf("START mainLoop %s", urlStr)
 
-	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 
 	defer func() {
+		if internalCancel != nil {
+			internalCancel()
+			internalCancel = nil
+		}
 		w.Stop()
-		cancel()
 		logger.Debugf("EXIT mainLoop %s", symbols)
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)

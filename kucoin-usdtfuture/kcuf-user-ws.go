@@ -274,7 +274,6 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, api *API, symbols []string
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 
-	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 
@@ -284,7 +283,6 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, api *API, symbols []string
 	}
 
 	defer func() {
-		cancel()
 		w.Stop()
 		if internalCancel != nil {
 			internalCancel()
@@ -304,7 +302,7 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, api *API, symbols []string
 				internalCancel()
 				internalCancel = nil
 			}
-			reconnectTimer.Reset(time.Second * 15)
+			reconnectTimer.Reset(time.Second * 5)
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
 				internalCancel()
@@ -324,9 +322,7 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, api *API, symbols []string
 				return
 			}
 			urlStr := connectToken.InstanceServers[0].Endpoint + "?token=" + connectToken.Token
-
 			logger.Debugf("%s", urlStr)
-
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
 				logger.Debugf("w.reconnect error %v", err)
@@ -337,6 +333,7 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, api *API, symbols []string
 			go w.readLoop(conn, time.Duration(connectToken.InstanceServers[0].PingInterval)*time.Millisecond)
 			go w.writeLoop(internalCtx, conn)
 			go w.heartbeatLoop(internalCtx, conn, topics, time.Duration(connectToken.InstanceServers[0].PingInterval)*time.Millisecond)
+			reconnectTimer.Reset(time.Hour*9999)
 		}
 	}
 }
@@ -419,8 +416,7 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 }
 
 func (w *UserWebsocket) Stop() {
-	if atomic.LoadInt32(&w.stopped) == 0 {
-		atomic.StoreInt32(&w.stopped, 1)
+	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Infof("stopped")
 	}
@@ -455,13 +451,13 @@ func NewUserWebsocket(
 	ws := UserWebsocket{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		OrderCh:     make(chan *WSOrder, 10000),
-		BalanceCh:   make(chan *WsBalanceEvent, 10000),
-		PositionCh:  make(chan *WSPosition, 100),
-		RestartCh:   make(chan interface{}, 100),
-		messageCh:   make(chan []byte, 10000),
-		writeCh:     make(chan interface{}, 100),
-		topicCh:     make(chan string, 100),
+		OrderCh:     make(chan *WSOrder, 16),
+		BalanceCh:   make(chan *WsBalanceEvent, 16),
+		PositionCh:  make(chan *WSPosition, 16),
+		RestartCh:   make(chan interface{}, 16),
+		messageCh:   make(chan []byte, 128),
+		writeCh:     make(chan interface{}, 4),
+		topicCh:     make(chan string, 128),
 		stopped:     0,
 	}
 	go ws.mainLoop(ctx, api, symbols, proxy)
