@@ -21,6 +21,12 @@ git tag "usd-ll-mt.$dt"
 git push origin "usd-ll-mt.$dt" --force
 
 curl -H "Authorization: token $GITHUB_TOKEN" \
+  -X POST \
+  -H "Accept: application/vnd.github.v3+json" \
+  "https://api.github.com/repos/geometrybase/hft-mirco/releases" \
+  -d "{\"tag_name\":\"usd-ll-mt.$dt\"}"
+
+curl -H "Authorization: token $GITHUB_TOKEN" \
      -H "Accept: application/vnd.github.manifold-preview" \
      -H "Content-Type: application/zip" \
      --data-binary "@dist/usd-ll-mt.arm64.$dt" \
