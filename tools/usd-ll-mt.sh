@@ -9,6 +9,9 @@ sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/usd-ll-mt/init.g
 env GOOS=linux GOARCH=arm64 go build -o "./dist/usd-ll-mt.arm64.$dt" ./applications/usd-ll-mt
 env GOOS=linux GOARCH=amd64 go build -o "./dist/usd-ll-mt.amd64.$dt" ./applications/usd-ll-mt
 
+chmod 755 "./dist/usd-ll-mt.amd64.$dt"
+chmod 755 "./dist/usd-ll-mt.arm64.$dt"
+
 git add -A
 git commit -m "build usd-ll-mt.$dt"
 git push origin master
@@ -17,7 +20,14 @@ git tag -d "usd-ll-mt.$dt"
 git tag "usd-ll-mt.$dt"
 git push origin "usd-ll-mt.$dt" --force
 
-chmod 755 "./dist/usd-ll-mt.amd64.$dt"
+rm -rf "./dist/usd-ll-tt.$dt.zip"
+/usr/bin/zip -9 "./dist/usd-ll-tt.$dt.zip" "./dist/usd-ll-mt.arm64.$dt" "./dist/usd-ll-mt.amd64.$dt"
+
+curl -H "Authorization: token $GITHUB_TOKEN" \
+     -H "Accept: application/vnd.github.manifold-preview" \
+     -H "Content-Type: application/zip" \
+     --data-binary @build/mac/package.zip \
+     "https://uploads.github.com/repos/geometrybase/hft-mirco/releases/usd-ll-mt.$dt/assets?name=usd-ll-mt.$dt.zip"
 
 echo "arm1"
 rsync -avx --progress "./dist/usd-ll-mt.arm64.$dt" arm1:/usr/local/bin/
