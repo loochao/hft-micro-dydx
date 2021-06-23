@@ -76,9 +76,9 @@ func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
-	logger.Debugf("START dataHandleLoop %d", id)
-	defer logger.Debugf("EXIT dataHandleLoop %d", id)
+func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
+	logger.Debugf("START dataHandleLoop")
+	defer logger.Debugf("EXIT dataHandleLoop")
 	logSilentTime := time.Now()
 	for {
 		select {
@@ -189,13 +189,23 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, urlStr string, proxy strin
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 	defer func() {
+		if internalCancel != nil {
+			internalCancel()
+			internalCancel = nil
+		}
 		w.Stop()
 		logger.Debugf("EXIT mainLoop")
 	}()
-	reconnectTimer := time.NewTimer(time.Hour * 999)
+	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 	for {
 		select {
+		case <- w.done:
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
+			return
 		case <-ctx.Done():
 			if internalCancel != nil {
 				internalCancel()
@@ -222,6 +232,7 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, urlStr string, proxy strin
 			}
 			go w.readLoop(conn)
 			go w.heartbeatLoop(internalCtx, conn)
+			reconnectTimer.Reset(time.Hour*9999)
 		}
 	}
 }
@@ -270,8 +281,7 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn)
 }
 
 func (w *UserWebsocket) Stop() {
-	if atomic.LoadInt32(&w.stopped) == 0 {
-		atomic.StoreInt32(&w.stopped, 1)
+	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
@@ -315,10 +325,10 @@ func NewUserWebsocket(
 	ws := UserWebsocket{
 		done:                 make(chan interface{}),
 		reconnectCh:          make(chan interface{}),
-		RestartCh:            make(chan interface{}, 100),
-		OrderUpdateEventCh:   make(chan *OrderUpdateEvent, 100),
-		AccountUpdateEventCh: make(chan *AccountUpdateEvent, 100),
-		messageCh:            make(chan []byte, 10000),
+		RestartCh:            make(chan interface{}, 4),
+		OrderUpdateEventCh:   make(chan *OrderUpdateEvent, 16),
+		AccountUpdateEventCh: make(chan *AccountUpdateEvent, 16),
+		messageCh:            make(chan []byte, 128),
 		stopped:              0,
 	}
 	go func(ctx context.Context, ws *UserWebsocket, listenKey ListenKey) {
@@ -356,7 +366,7 @@ func NewUserWebsocket(
 		}
 	}(ctx, &ws, listenKey)
 	go ws.mainLoop(ctx, wsUrl, proxy)
-	go ws.dataHandleLoop(ctx, 1)
+	go ws.dataHandleLoop(ctx)
 	ws.reconnectCh <- nil
 	return &ws, nil
 }
