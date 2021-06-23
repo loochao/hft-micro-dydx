@@ -13,6 +13,10 @@ git add -A
 git commit -m "build usd-ll-mt.$dt"
 git push origin master
 
+git tag -d "usd-ll-mt.$dt"
+git tag "usd-ll-mt.$dt"
+git push origin "usd-ll-mt.$dt" --force
+
 chmod 755 "./dist/usd-ll-mt.amd64.$dt"
 
 echo "arm1"
