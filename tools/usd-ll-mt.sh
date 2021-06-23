@@ -20,15 +20,19 @@ git tag -d "usd-ll-mt.$dt"
 git tag "usd-ll-mt.$dt"
 git push origin "usd-ll-mt.$dt" --force
 
-rm -rf "./dist/usd-ll-tt.$dt.zip"
-/usr/bin/zip -9 "./dist/usd-ll-tt.$dt.zip" "./dist/usd-ll-mt.arm64.$dt" "./dist/usd-ll-mt.amd64.$dt"
+curl -H "Authorization: token $GITHUB_TOKEN" \
+     -H "Accept: application/vnd.github.manifold-preview" \
+     -H "Content-Type: application/zip" \
+     --data-binary "@dist/usd-ll-mt.arm64.$dt" \
+     "https://uploads.github.com/repos/geometrybase/hft-mirco/releases/usd-ll-mt.$dt/assets?name=usd-ll-mt.arm64.$dt"
 
 curl -H "Authorization: token $GITHUB_TOKEN" \
      -H "Accept: application/vnd.github.manifold-preview" \
      -H "Content-Type: application/zip" \
-     --data-binary "@dist/usd-ll-tt.$dt.zip" \
-     "https://uploads.github.com/repos/geometrybase/hft-mirco/releases/usd-ll-mt.$dt/assets?name=usd-ll-mt.$dt.zip"
+     --data-binary "@dist/usd-ll-mt.amd64.$dt" \
+     "https://uploads.github.com/repos/geometrybase/hft-mirco/releases/usd-ll-mt.$dt/assets?name=usd-ll-mt.amd64.$dt"
 
+echo ""
 echo "arm1"
 rsync -avx --progress "./dist/usd-ll-mt.arm64.$dt" arm1:/usr/local/bin/
 
