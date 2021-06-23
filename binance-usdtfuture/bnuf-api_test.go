@@ -45,7 +45,7 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	multiplierDowns := make(map[string]float64)
 	minNotional := make(map[string]float64)
 	for _, symbol := range exchangeInfo.Symbols {
-		logger.Debugf("%s", symbol.ContractType)
+		//logger.Debugf("%s", symbol.ContractType)
 		if symbol.ContractType != "PERPETUAL" || symbol.Status != "TRADING" || symbol.QuoteAsset != "USDT"{
 			continue
 		}
