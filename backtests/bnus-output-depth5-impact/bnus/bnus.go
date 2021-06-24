@@ -67,7 +67,7 @@ func main() {
 					continue
 				}
 				if counter%step != 0 {
-					counter++
+					continue
 				}
 				err = binance_usdtspot.ParseDepth5(msg[1:], &depth5)
 				if err != nil {
