@@ -213,7 +213,7 @@ func (w *Depth5WS) mainLoop(ctx context.Context, proxy string, channels map[stri
 			}
 			go w.readLoop(conn, channels)
 			go w.heartbeatLoop(internalCtx, conn, symbols)
-			reconnectTimer.Reset(time.Hour*9999)
+			reconnectTimer.Reset(time.Hour * 9999)
 		}
 	}
 }
@@ -298,12 +298,12 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	logSilentTime := time.Now()
 	var err error
 	var msg []byte
+	var depth5 *Depth5
 	index := -1
-	pool := [16]*Depth5{}
-	for i := 0; i < 16; i++ {
+	pool := [4]*Depth5{}
+	for i := 0; i < 4; i++ {
 		pool[i] = &Depth5{}
 	}
-	var depth5 *Depth5
 	for {
 		select {
 		case <-ctx.Done():
@@ -311,8 +311,8 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 		case <-w.done:
 			return
 		case msg = <-inputCh:
-			index ++
-			if index == 16 {
+			index++
+			if index == 4 {
 				index = 0
 			}
 			depth5 = pool[index]

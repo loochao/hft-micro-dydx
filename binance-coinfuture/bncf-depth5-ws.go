@@ -284,8 +284,8 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	defer logger.Debugf("EXIT dataHandleLoop %s", symbol)
 	logSilentTime := time.Now()
 	index := -1
-	pool := [16]*Depth5{}
-	for i := 0; i < 16; i++ {
+	pool := [4]*Depth5{}
+	for i := 0; i < 4; i++ {
 		pool[i] = &Depth5{}
 	}
 	var depth5 *Depth5
@@ -298,7 +298,7 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 			return
 		case msg := <-inputCh:
 			index ++
-			if index == 16 {
+			if index == 4 {
 				index = 0
 			}
 			depth5 = pool[index]

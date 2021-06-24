@@ -252,10 +252,10 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 		case <-strat.spreadWalkTimer.C:
 			strat.walkSpread()
 			break
-		case strat.xDepth = <-strat.xDepthCh:
+		case strat.xNextDepth = <-strat.xDepthCh:
 			strat.handleXDepth()
 			break
-		case strat.yDepth = <-strat.yDepthCh:
+		case strat.yNextDepth = <-strat.yDepthCh:
 			strat.handleYDepth()
 			break
 		case <-strat.realisedSpreadTimer.C:

@@ -82,9 +82,13 @@ func (strat *XYStrategy) walkYDepth() {
 }
 
 func (strat *XYStrategy) handleXDepth() {
+	if strat.xDepth == strat.xNextDepth {
+		return
+	}
 	if strat.xDepth.GetTime().Sub(strat.xDepthTime) < 0 {
 		return
 	}
+	strat.xDepth = strat.xNextDepth
 	strat.xDepthTime = strat.xDepth.GetTime()
 	if !strat.xDepthFilter.Filter(strat.xDepth) && strat.yDepth != nil {
 		strat.adjustedAgeDiff = strat.xDepthTime.Sub(strat.yDepthTime) + time.Duration(strat.xDepthFilter.TimeDeltaEma-strat.yDepthFilter.TimeDeltaEma)*time.Millisecond
@@ -125,9 +129,13 @@ func (strat *XYStrategy) handleXDepth() {
 }
 
 func (strat *XYStrategy) handleYDepth() {
+	if strat.xDepth == strat.xNextDepth {
+		return
+	}
 	if strat.yDepth.GetTime().Sub(strat.yDepthTime) < 0 {
 		return
 	}
+	strat.yDepth = strat.yNextDepth
 	strat.yDepthTime = strat.yDepth.GetTime()
 	if !strat.yDepthFilter.Filter(strat.yDepth) && strat.xDepth != nil {
 		strat.adjustedAgeDiff = strat.xDepthTime.Sub(strat.yDepthTime) + time.Duration(strat.xDepthFilter.TimeDeltaEma-strat.yDepthFilter.TimeDeltaEma)*time.Millisecond

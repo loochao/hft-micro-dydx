@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-
-
 type XYStrategy struct {
 	xExchange common.UsdExchange
 	yExchange common.UsdExchange
@@ -58,6 +56,8 @@ type XYStrategy struct {
 
 	xDepth       common.Depth
 	yDepth       common.Depth
+	xNextDepth   common.Depth
+	yNextDepth   common.Depth
 	xDepthTime   time.Time
 	yDepthTime   time.Time
 	xDepthFilter common.TimeFilter

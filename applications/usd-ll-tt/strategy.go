@@ -65,6 +65,8 @@ func startXYStrategy(
 		yPositionUpdateTime:     time.Time{},
 		xDepth:                  nil,
 		yDepth:                  nil,
+		xNextDepth:              nil,
+		yNextDepth:              nil,
 		xDepthTime:              time.Time{},
 		yDepthTime:              time.Time{},
 		xDepthFilter:            common.NewDepthFilter(config.DepthXDecay, xBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs),
@@ -209,7 +211,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			//strat.markedYAskPrice = nil
 			//strat.markedYBidPrice = nil
 			strat.changeYPosition()
-			strat.hedgeCounter --
+			strat.hedgeCounter--
 			if strat.hedgeCounter > 0 {
 				strat.hedgeYTimer.Reset(strat.params.HedgeYDelay)
 			}
@@ -253,10 +255,10 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 		case <-strat.yWalkDepthTimer.C:
 			strat.walkYDepth()
 			break
-		case strat.xDepth = <-strat.xDepthCh:
+		case strat.xNextDepth = <-strat.xDepthCh:
 			strat.handleXDepth()
 			break
-		case strat.yDepth = <-strat.yDepthCh:
+		case strat.yNextDepth = <-strat.yDepthCh:
 			strat.handleYDepth()
 			break
 		case <-strat.realisedSpreadTimer.C:
@@ -465,7 +467,7 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		strat.hedgeYTimer.Reset(strat.params.HedgeYDelay)
-		strat.hedgeCounter = time.Minute/strat.params.HedgeYDelay
+		strat.hedgeCounter = time.Minute / strat.params.HedgeYDelay
 		//if strat.markedYAskPrice == nil {
 		//	strat.markedYAskPrice = new(float64)
 		//}
@@ -544,7 +546,7 @@ func (strat *XYStrategy) changeXPosition() {
 		//}
 		//*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 		strat.hedgeYTimer.Reset(strat.params.HedgeYDelay)
-		strat.hedgeCounter = time.Minute/strat.params.HedgeYDelay
+		strat.hedgeCounter = time.Minute / strat.params.HedgeYDelay
 		logger.Debugf(
 			"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE -%f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -650,7 +652,7 @@ func (strat *XYStrategy) changeXPosition() {
 		//}
 		//*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
 		strat.hedgeYTimer.Reset(strat.params.HedgeYDelay)
-		strat.hedgeCounter = time.Minute/strat.params.HedgeYDelay
+		strat.hedgeCounter = time.Minute / strat.params.HedgeYDelay
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -755,7 +757,7 @@ func (strat *XYStrategy) changeXPosition() {
 		//}
 		//*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
 		strat.hedgeYTimer.Reset(strat.params.HedgeYDelay)
-		strat.hedgeCounter = time.Minute/strat.params.HedgeYDelay
+		strat.hedgeCounter = time.Minute / strat.params.HedgeYDelay
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE -%f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,

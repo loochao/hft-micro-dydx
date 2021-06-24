@@ -59,11 +59,15 @@ func main() {
 			var depth5 = binance_usdtspot.Depth5{}
 			var lastDepth5 = binance_usdtspot.Depth5{}
 			var counter = 0
+			var step = 2
 			for scanner.Scan() {
-				counter ++
+				counter++
 				msg = scanner.Bytes()
 				if msg[0] != 'S' {
 					continue
+				}
+				if counter%step != 0 {
+					counter++
 				}
 				err = binance_usdtspot.ParseDepth5(msg[1:], &depth5)
 				if err != nil {
@@ -85,12 +89,12 @@ func main() {
 		}
 		quantiles[symbol] = fmt.Sprintf(
 			"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-			impactTD.Quantile(0.00005),
 			impactTD.Quantile(0.0005),
 			impactTD.Quantile(0.005),
+			impactTD.Quantile(0.05),
+			impactTD.Quantile(0.95),
 			impactTD.Quantile(0.995),
 			impactTD.Quantile(0.9995),
-			impactTD.Quantile(0.99995),
 		)
 		fmt.Printf("%s %s\n", symbol, quantiles[symbol])
 	}

@@ -10,7 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -20,8 +20,7 @@ type Depth5WS struct {
 	done        chan interface{}
 	reconnectCh chan interface{}
 	symbolCh    chan string
-	stopped     bool
-	mu          sync.Mutex
+	stopped     int32
 }
 
 func (w *Depth5WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
@@ -203,17 +202,14 @@ func (w *Depth5WS) mainLoop(
 ) {
 
 	logger.Debugf("START mainLoop")
-
 	symbols := make([]string, 0)
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 	}
-	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 
 	defer func() {
-		cancel()
 		if internalCancel != nil {
 			internalCancel()
 		}
@@ -271,6 +267,7 @@ func (w *Depth5WS) mainLoop(
 			go w.readLoop(conn, channels)
 			go w.writeLoop(internalCtx, conn)
 			go w.heartbeatLoop(internalCtx, conn, symbols, time.Millisecond*time.Duration(connectToken.InstanceServers[0].PingInterval))
+			reconnectTimer.Reset(time.Hour*9999)
 		}
 	}
 }
@@ -356,10 +353,7 @@ func (w *Depth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 }
 
 func (w *Depth5WS) Stop() {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	if !w.stopped {
-		w.stopped = true
+	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
@@ -387,8 +381,8 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	logSilentTime := time.Now()
 	var err error
 	index := -1
-	pool := [1024]*Depth5{}
-	for i := 0; i < 1024; i++ {
+	pool := [4]*Depth5{}
+	for i := 0; i < 4; i++ {
 		pool[i] = &Depth5{}
 	}
 	var depth5 *Depth5
@@ -400,7 +394,7 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 			return
 		case msg := <-inputCh:
 			index++
-			if index == 1024 {
+			if index == 4 {
 				index = 0
 			}
 			depth5 = pool[index]
@@ -442,10 +436,10 @@ func NewDepth5WS(
 	ws := Depth5WS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		RestartCh:   make(chan interface{}, 100),
-		writeCh:     make(chan interface{}, 100*len(channels)),
-		symbolCh:    make(chan string, 100*len(channels)),
-		stopped:     false,
+		RestartCh:   make(chan interface{}, 4),
+		writeCh:     make(chan interface{}, 4*len(channels)),
+		symbolCh:    make(chan string, 4*len(channels)),
+		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
