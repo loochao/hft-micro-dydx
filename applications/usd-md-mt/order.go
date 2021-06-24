@@ -370,7 +370,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 	}
 	//检查价格有没有在OFFSET范围内，不在撤掉
 	if strat.xOpenOrder.Side == common.OrderSideBuy &&
-		strat.xOpenOrder.Price < strat.xWalkedDepth.BidPrice {
+		strat.xOpenOrder.Price < strat.xWalkedDepth.BestBidPrice {
 		logger.Debugf("%s BUY PRICE %f < BID PRICE %f, CANCEL",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
@@ -378,7 +378,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
-		strat.xOpenOrder.Price > strat.xWalkedDepth.AskPrice{
+		strat.xOpenOrder.Price > strat.xWalkedDepth.BestAskPrice {
 		logger.Debugf("%s SELL PRICE %f > ASK PRICE %f, CANCEL ",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
