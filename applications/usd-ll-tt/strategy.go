@@ -557,7 +557,8 @@ func (strat *XYStrategy) changeXPosition() {
 			time.Now().Sub(strat.yDepthTime),
 			time.Now().Sub(strat.spread.EventTime),
 		)
-	} else if !strat.isYSpot &&
+	} else if !strat.params.ReduceOnly &&
+		!strat.isYSpot &&
 		strat.spread.ShortLastEnter > strat.shortTop &&
 		strat.spread.ShortMedianEnter > strat.shortTop &&
 		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
@@ -663,7 +664,8 @@ func (strat *XYStrategy) changeXPosition() {
 			time.Now().Sub(strat.yDepthTime),
 			time.Now().Sub(strat.spread.EventTime),
 		)
-	} else if !strat.isXSpot &&
+	} else if !strat.params.ReduceOnly &&
+		!strat.isXSpot &&
 		strat.spread.LongLastEnter < strat.longBot &&
 		strat.spread.LongMedianEnter < strat.longBot &&
 		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&

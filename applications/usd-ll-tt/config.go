@@ -10,6 +10,7 @@ type Config struct {
 
 	CpuProfile string `yaml:"cpuProfile"`
 	DryRun     bool   `yaml:"dryRun"`
+	ReduceOnly bool   `yaml:"reduceOnly"`
 
 	InternalInflux common.InfluxSettings `yaml:"internalInflux"`
 	ExternalInflux common.InfluxSettings `yaml:"externalInflux"`
@@ -59,8 +60,8 @@ type Config struct {
 	RestartSilent   time.Duration `yaml:"restartSilent"`
 	RestartInterval time.Duration `yaml:"restartInterval"`
 
-	XYPairs       map[string]string `yaml:"xyPairs"`
-	NotTradePairs map[string]string `yaml:"notTradePairs"`
+	XYPairs       map[string]string  `yaml:"xyPairs"`
+	NotTradePairs map[string]string  `yaml:"notTradePairs"`
 	EnterScales   map[string]float64 `yaml:"enterScales"`
 }
 

@@ -20,6 +20,10 @@ type FtxUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (ftx *FtxUsdtFuture) StartSideLoop() {
+	panic("implement me")
+}
+
 func (ftx *FtxUsdtFuture) GetMultiplier(symbol string) (float64, error) {
 	return 1.0, nil
 }

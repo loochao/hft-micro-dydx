@@ -675,3 +675,8 @@ func (k *KucoinUsdtFuture) cancelOrder(ctx context.Context, param common.CancelO
 type KucoinUsdtFutureWithDepth5 struct {
 	KucoinUsdtFuture
 }
+
+func (k KucoinUsdtFutureWithDepth5) StartSideLoop() {
+	panic("implement me")
+}
+

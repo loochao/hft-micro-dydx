@@ -695,3 +695,8 @@ func (bn *BinanceBusdFutureWidthDepth20) StreamDepth(ctx context.Context, channe
 type BinanceBusdFutureWidthDepth5 struct {
 	BinanceBusdFuture
 }
+
+func (b BinanceBusdFutureWidthDepth5) StartSideLoop() {
+	panic("implement me")
+}
+

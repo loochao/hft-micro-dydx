@@ -688,6 +688,10 @@ type BinanceUsdtFutureWidthDepth20 struct {
 	BinanceUsdtFuture
 }
 
+func (bn *BinanceUsdtFutureWidthDepth20) StartSideLoop() {
+	panic("implement me")
+}
+
 func (bn *BinanceUsdtFutureWidthDepth20) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")
@@ -736,3 +740,8 @@ func (bn *BinanceUsdtFutureWidthDepth20) StreamDepth(ctx context.Context, channe
 type BinanceUsdtFutureWidthDepth5 struct {
 	BinanceUsdtFuture
 }
+
+func (b BinanceUsdtFutureWidthDepth5) StartSideLoop() {
+	panic("implement me")
+}
+

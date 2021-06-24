@@ -65,7 +65,6 @@ type Config struct {
 
 	XYPairs       map[string]string  `yaml:"xyPairs"`
 	NotTradePairs map[string]string  `yaml:"notTradePairs"`
-	OrderOffsets  map[string]string  `yaml:"orderOffsets,omitempty"`
 	EnterScales   map[string]float64 `yaml:"enterScales,omitempty"`
 }
 

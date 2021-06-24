@@ -620,10 +620,17 @@ type BinanceUsdtSpotWithDepth5 struct {
 	BinanceUsdtSpot
 }
 
+func (b BinanceUsdtSpotWithDepth5) StartSideLoop() {
+	panic("implement me")
+}
+
 type BinanceUsdtSpotWithDepth20 struct {
 	BinanceUsdtSpot
 }
 
+func (bn *BinanceUsdtSpotWithDepth20) StartSideLoop() {
+	panic("implement me")
+}
 
 func (bn *BinanceUsdtSpotWithDepth20) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
