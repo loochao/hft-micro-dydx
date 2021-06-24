@@ -41,7 +41,7 @@ func (strat *XYStrategy) walkSpread() {
 		return
 	}
 	if time.Now().Sub(time.Now().Truncate(time.Second*15)) < time.Millisecond*100 {
-		logger.Debugf("%s %v %v", strat.xSymbol, strat.longEnterTimedMedian.Median(), strat.shortEnterTimedMedian.Median())
+		logger.Debugf("%s %v < %f, %v > %f", strat.xSymbol, strat.longEnterTimedMedian.Median(), strat.longBot, strat.shortEnterTimedMedian.Median(), strat.shortTop)
 	}
 	strat.spread = &common.XYSpread{
 		ShortLastEnter:   strat.shortLastEnter,
