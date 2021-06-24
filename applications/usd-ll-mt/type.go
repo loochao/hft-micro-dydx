@@ -74,14 +74,15 @@ type XYStrategy struct {
 	enterTarget  float64
 	usdAvailable float64
 
-	logSilentTime       time.Time
-	xWalkDepthTimer     *time.Timer
-	yWalkDepthTimer     *time.Timer
-	spreadWalkTimer     *time.Timer
-	saveTimer           *time.Timer
-	realisedSpreadTimer *time.Timer
-	spreadTime          time.Time
-	spread              *common.XYSpread
+	logSilentTime        time.Time
+	xWalkDepthTimer      *time.Timer
+	yWalkDepthTimer      *time.Timer
+	spreadWalkTimer      *time.Timer
+	xOpenOrderCheckTimer *time.Timer //在订单提交之后定期check订单状态
+	saveTimer            *time.Timer
+	realisedSpreadTimer  *time.Timer
+	spreadTime           time.Time
+	spread               *common.XYSpread
 
 	shortEnterTimedMedian *common.TimedMedian
 	longEnterTimedMedian  *common.TimedMedian

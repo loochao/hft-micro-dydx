@@ -104,6 +104,7 @@ func startXYStrategy(
 		yWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
 		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
 		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
+		xOpenOrderCheckTimer:    time.NewTimer(time.Hour * 9999),
 		saveTimer:               time.NewTimer(config.EnterSilent),
 		spreadTime:              time.Time{},
 		spread:                  nil,
@@ -212,6 +213,16 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			break
 		case <-strat.saveTimer.C:
 			strat.handleSave()
+			break
+		case <-strat.xOpenOrderCheckTimer.C:
+			if strat.xOpenOrder != nil {
+				if !strat.isXOpenOrderOk() {
+					strat.tryCancelXOpenOrder("open order not ok")
+				}
+				strat.xOpenOrderCheckTimer.Reset(time.Millisecond * 100)
+			} else {
+				strat.xOpenOrderCheckTimer.Reset(time.Hour * 9999)
+			}
 			break
 		case strat.xAccount = <-strat.xAccountCh:
 			strat.updateEnterStepAndTarget()

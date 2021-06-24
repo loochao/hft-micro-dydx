@@ -27,7 +27,6 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xyFundingRate == nil ||
 		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive ||
 		!strat.tradable {
-
 		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
 			strat.tryCancelXOpenOrder("spread time out")
 		}
@@ -359,7 +358,10 @@ func (strat *XYStrategy) updateXOrder() {
 }
 
 func (strat *XYStrategy) isXOpenOrderOk() bool {
-
+	if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
+		logger.Debugf("%s SPREAD IS OUT OF DATE, CANCEL", strat.xSymbol)
+		return false
+	}
 	//检查价格有没有在OFFSET范围内，不在撤掉
 	if strat.xOpenOrder.Side == common.OrderSideBuy &&
 		strat.xOpenOrder.Price < strat.xWalkedDepth.BidPrice*(1.0+strat.orderOffset.FarBot) {
@@ -427,4 +429,3 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 	}
 	return false
 }
-
