@@ -688,6 +688,10 @@ type BinanceUsdtFutureWidthDepth20 struct {
 	BinanceUsdtFuture
 }
 
+func (bn *BinanceUsdtFutureWidthDepth20) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
+}
+
 func (bn *BinanceUsdtFutureWidthDepth20) StartSideLoop() {
 	panic("implement me")
 }
@@ -739,6 +743,10 @@ func (bn *BinanceUsdtFutureWidthDepth20) StreamDepth(ctx context.Context, channe
 
 type BinanceUsdtFutureWidthDepth5 struct {
 	BinanceUsdtFuture
+}
+
+func (b BinanceUsdtFutureWidthDepth5) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
 }
 
 func (b BinanceUsdtFutureWidthDepth5) StartSideLoop() {

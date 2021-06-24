@@ -20,6 +20,10 @@ type FtxUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (ftx *FtxUsdtFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
+}
+
 func (ftx *FtxUsdtFuture) StartSideLoop() {
 	panic("implement me")
 }

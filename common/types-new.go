@@ -43,6 +43,7 @@ type CoinExchange interface {
 	StreamFundingRate(ctx context.Context, channels map[string]chan FundingRate, batchSize int)
 
 	WatchOrders(ctx context.Context, requestChannels map[string]chan OrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
+	WatchBatchOrders(ctx context.Context, requestChannels map[string]chan BatchOrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
 	GenerateClientID() string
 	IsSpot() bool
 }
@@ -68,6 +69,7 @@ type UsdExchange interface {
 	StreamFundingRate(ctx context.Context, channels map[string]chan FundingRate, batchSize int)
 
 	WatchOrders(ctx context.Context, requestChannels map[string]chan OrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
+	WatchBatchOrders(ctx context.Context, requestChannels map[string]chan BatchOrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
 	GenerateClientID() string
 	IsSpot() bool
 	StartSideLoop()
@@ -145,6 +147,11 @@ type CancelOrderParam struct {
 
 type OrderRequest struct {
 	New    *NewOrderParam
+	Cancel *CancelOrderParam
+}
+
+type BatchOrderRequest struct {
+	New    []NewOrderParam
 	Cancel *CancelOrderParam
 }
 

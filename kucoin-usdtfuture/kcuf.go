@@ -676,6 +676,10 @@ type KucoinUsdtFutureWithDepth5 struct {
 	KucoinUsdtFuture
 }
 
+func (k KucoinUsdtFutureWithDepth5) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
+}
+
 func (k KucoinUsdtFutureWithDepth5) StartSideLoop() {
 	panic("implement me")
 }

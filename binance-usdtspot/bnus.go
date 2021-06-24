@@ -620,12 +620,20 @@ type BinanceUsdtSpotWithDepth5 struct {
 	BinanceUsdtSpot
 }
 
+func (b BinanceUsdtSpotWithDepth5) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
+}
+
 func (b BinanceUsdtSpotWithDepth5) StartSideLoop() {
 	panic("implement me")
 }
 
 type BinanceUsdtSpotWithDepth20 struct {
 	BinanceUsdtSpot
+}
+
+func (bn *BinanceUsdtSpotWithDepth20) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
 }
 
 func (bn *BinanceUsdtSpotWithDepth20) StartSideLoop() {
