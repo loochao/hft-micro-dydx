@@ -109,6 +109,7 @@ func (strat *XYStrategy) updateXOrder() {
 				ClientID:    strat.xExchange.GenerateClientID(),
 			}
 			strat.xOpenOrder = &strat.xNewOrderParam
+			strat.xOpenOrderCheckTimer.Reset(strat.config.XOrderCheckInterval)
 			if !strat.config.DryRun {
 				//logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 				select {
@@ -166,6 +167,7 @@ func (strat *XYStrategy) updateXOrder() {
 				ClientID:    strat.xExchange.GenerateClientID(),
 			}
 			strat.xOpenOrder = &strat.xNewOrderParam
+			strat.xOpenOrderCheckTimer.Reset(strat.config.XOrderCheckInterval)
 			if !strat.config.DryRun {
 				//logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 				select {
@@ -249,6 +251,7 @@ func (strat *XYStrategy) updateXOrder() {
 			ClientID:    strat.xExchange.GenerateClientID(),
 		}
 		strat.xOpenOrder = &strat.xNewOrderParam
+		strat.xOpenOrderCheckTimer.Reset(strat.config.XOrderCheckInterval)
 		if !strat.config.DryRun {
 			//logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 			select {
@@ -330,6 +333,7 @@ func (strat *XYStrategy) updateXOrder() {
 			ClientID:    strat.xExchange.GenerateClientID(),
 		}
 		strat.xOpenOrder = &strat.xNewOrderParam
+		strat.xOpenOrderCheckTimer.Reset(strat.config.XOrderCheckInterval)
 		if !strat.config.DryRun {
 			//logger.Debugf("sending strat.xOrderRequestCh <- common.OrderRequest %s", strat.xSymbol)
 			select {

@@ -52,13 +52,14 @@ type Config struct {
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
 	StartValues       map[string]float64 `yaml:"startValues"`
 
-	OrderTimeout    time.Duration `yaml:"orderTimeout"`
-	XOrderSilent    time.Duration `yaml:"xOrderSilent"`
-	YOrderSilent    time.Duration `yaml:"yOrderSilent"`
-	XCancelSilent   time.Duration `yaml:"xCancelSilent"`
-	EnterSilent     time.Duration `yaml:"enterSilent"`
-	RestartSilent   time.Duration `yaml:"restartSilent"`
-	RestartInterval time.Duration `yaml:"restartInterval"`
+	OrderTimeout        time.Duration `yaml:"orderTimeout"`
+	XOrderSilent        time.Duration `yaml:"xOrderSilent"`
+	YOrderSilent        time.Duration `yaml:"yOrderSilent"`
+	XCancelSilent       time.Duration `yaml:"xCancelSilent"`
+	XOrderCheckInterval time.Duration `yaml:"xOrderCheckInterval"`
+	EnterSilent         time.Duration `yaml:"enterSilent"`
+	RestartSilent       time.Duration `yaml:"restartSilent"`
+	RestartInterval     time.Duration `yaml:"restartInterval"`
 
 	XYPairs       map[string]string  `yaml:"xyPairs"`
 	NotTradePairs map[string]string  `yaml:"notTradePairs"`
@@ -113,6 +114,9 @@ func (config *Config) SetDefaultIfNotSet() {
 		config.XCancelSilent = config.XOrderSilent
 	}
 	if config.YOrderSilent == 0 {
-		config.YOrderSilent = time.Second*5
+		config.YOrderSilent = time.Second * 5
+	}
+	if config.XOrderCheckInterval == 0 {
+		config.XOrderCheckInterval = time.Millisecond*100
 	}
 }

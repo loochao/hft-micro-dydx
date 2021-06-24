@@ -219,7 +219,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 				if !strat.isXOpenOrderOk() {
 					strat.tryCancelXOpenOrder("open order not ok")
 				}
-				strat.xOpenOrderCheckTimer.Reset(time.Millisecond * 100)
+				strat.xOpenOrderCheckTimer.Reset(strat.config.XOrderCheckInterval)
 			} else {
 				strat.xOpenOrderCheckTimer.Reset(time.Hour * 9999)
 			}
