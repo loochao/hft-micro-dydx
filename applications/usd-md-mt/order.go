@@ -374,7 +374,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		logger.Debugf("%s BUY PRICE %f < BID PRICE %f, CANCEL",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
-			strat.xWalkedDepth.BidPrice-5*strat.xTickSize,
+			strat.xWalkedDepth.BidPrice,
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
