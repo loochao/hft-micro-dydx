@@ -103,7 +103,7 @@ func (strat *XYStrategy) handleXDepth() {
 	if strat.xDepth == strat.xNextDepth {
 		return
 	}
-	if strat.xDepth.GetTime().Sub(strat.xDepthTime) < 0 {
+	if strat.xNextDepth.GetTime().Sub(strat.xDepthTime) < 0 {
 		return
 	}
 	strat.xDepth = strat.xNextDepth
@@ -150,7 +150,7 @@ func (strat *XYStrategy) handleYDepth() {
 	if strat.yDepth == strat.yNextDepth {
 		return
 	}
-	if strat.yDepth.GetTime().Sub(strat.yDepthTime) < 0 {
+	if strat.yNextDepth.GetTime().Sub(strat.yDepthTime) < 0 {
 		return
 	}
 	strat.yDepth = strat.yNextDepth
