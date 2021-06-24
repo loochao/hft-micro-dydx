@@ -536,7 +536,6 @@ func (bn *BinanceBusdFuture) watchOrder(
 			return
 		case req := <-requestCh:
 			if req.New != nil {
-				logger.Debugf("req := <-requestCh new %v", market)
 				if req.New.Symbol != market {
 					select {
 					case errorCh <- common.OrderError{
@@ -586,9 +585,7 @@ func (bn *BinanceBusdFuture) submitOrder(ctx context.Context, param common.NewOr
 		newOrderParam.Price = param.Price
 	}
 	newOrderParam.NewClientOrderId = param.ClientID
-	logger.Debugf("%s before bn.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
 	order, err := bn.api.SubmitOrder(ctx, newOrderParam)
-	logger.Debugf("%s after bn.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{
