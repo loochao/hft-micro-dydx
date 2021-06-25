@@ -427,6 +427,7 @@ mainLoop:
 					xExchange, yExchange,
 					strategiesMap,
 					xSymbols,
+					xyConfig.NotTradePairs,
 					xSystemStatus, ySystemStatus,
 					xyConfig,
 					xyInternalInfluxWriter, xyExternalInfluxWriter,
