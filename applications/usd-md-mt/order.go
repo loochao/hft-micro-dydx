@@ -198,7 +198,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.spread.ShortLastEnter > strat.shortTop &&
 		strat.spread.ShortMedianEnter > strat.shortTop &&
 		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
-		strat.xSize >= 0 {
+		strat.xSize >= -strat.xStepSize*strat.xMultiplier {
 
 		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
@@ -281,7 +281,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.spread.LongLastEnter < strat.longBot &&
 		strat.spread.LongMedianEnter < strat.longBot &&
 		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
-		strat.xSize <= 0 {
+		strat.xSize <= strat.xStepSize*strat.xMultiplier {
 
 		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
@@ -379,7 +379,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
 		strat.xOpenOrder.Price > strat.xWalkedDepth.AskPrice*1.0001{
-		logger.Debugf("%s SELL PRICE %f > ASK PRICE*1.0005 %f, CANCEL ",
+		logger.Debugf("%s SELL PRICE %f > ASK PRICE*1.0001 %f, CANCEL ",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
 			strat.xWalkedDepth.AskPrice*1.0001,
