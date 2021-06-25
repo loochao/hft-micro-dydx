@@ -27,6 +27,9 @@ func handleSave(
 	xTradeVolume := 0.0
 	yTradeVolume := 0.0
 	for xSymbol, st := range strategiesMap {
+		if !st.tradable {
+			continue
+		}
 		ySymbol := st.ySymbol
 		fields := make(map[string]interface{})
 		if st.xPosition != nil &&
