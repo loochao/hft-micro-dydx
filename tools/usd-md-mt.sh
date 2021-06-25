@@ -30,5 +30,5 @@ rsync -avx --progress "./dist/usd-md-mt.arm64.$dt" arm2:/usr/local/bin/
 
 echo ""
 echo "vcarm01"
-rsync -avx --progress "./dist/usd-md-mt.arm64.$dt" arm2:/usr/local/bin/
+rsync -avx --progress "./dist/usd-md-mt.arm64.$dt" vcarm01:/usr/local/bin/
 
