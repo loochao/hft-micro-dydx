@@ -138,6 +138,8 @@ func startXYStrategy(
 		targetValue:                      0,
 		size:                             0,
 		orderSide:                        common.OrderSideUnknown,
+		isXSpot:                          xExchange.IsSpot(),
+		isYSpot:                          yExchange.IsSpot(),
 	}
 
 	strat.xTickSize, err = xExchange.GetTickSize(xSymbol)
@@ -214,8 +216,8 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			strat.hedgeCounter--
 			if strat.hedgeCounter > 0 {
 				strat.hedgeTimer.Reset(strat.params.HedgeCheckInterval)
-			}else{
-				strat.hedgeTimer.Reset(time.Hour*9999)
+			} else {
+				strat.hedgeTimer.Reset(time.Hour * 9999)
 			}
 			break
 		case <-strat.spreadWalkTimer.C:
@@ -711,7 +713,7 @@ func (strat *XYStrategy) updateTargetPositionSize() {
 			if time.Now().Sub(strat.logSilentTime) > strat.params.LogInterval {
 				strat.logSilentTime = time.Now().Add(strat.params.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdtAvailable %f, %f < %f, %f < %f, SIZE %f",
+					"%s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdtAvailable %f, %f < %f, %f < %f, SIZE %f",
 					strat.xSymbol,
 					strat.ySymbol,
 					strat.enterValue,
@@ -727,7 +729,7 @@ func (strat *XYStrategy) updateTargetPositionSize() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.params.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
+					"%s %s FAILED LONG BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
 					strat.xSymbol, strat.ySymbol,
 					strat.enterValue,
 					strat.spread.LongLastEnter, strat.longBot,
