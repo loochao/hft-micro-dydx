@@ -29,6 +29,9 @@ func handleSave(
 	yTradeVolume := 0.0
 	for _, xSymbol := range xSymbols {
 		st, ok := strategiesMap[xSymbol]
+		if !st.tradable {
+			continue
+		}
 		if !ok {
 			hasAllSymbols = false
 			continue
