@@ -19,6 +19,7 @@ type WalkedDepthBBMAA struct {
 	MidPrice     float64
 	BestAskPrice float64
 	AskPrice     float64
+	MircoPrice   float64
 	Symbol       string
 	Time         time.Time
 }
@@ -31,7 +32,7 @@ func WalkDepthBBMAA(depth Depth, multiplier float64, impact float64, output *Wal
 	output.BidPrice = 0.0
 	output.MidPrice = 0.0
 
-	totalSize := 0.0
+	totalBidSize := 0.0
 	var value float64
 	var price float64
 	var size float64
@@ -42,20 +43,20 @@ func WalkDepthBBMAA(depth Depth, multiplier float64, impact float64, output *Wal
 		size = bids[i][1] * multiplier
 		value = price * size
 		if output.BidPrice+value >= impact {
-			totalSize += (impact - output.BidPrice) / price
+			totalBidSize += (impact - output.BidPrice) / price
 			output.BidPrice = impact
 			break
 		} else {
-			totalSize += size
+			totalBidSize += size
 			output.BidPrice += value
 		}
 	}
-	if totalSize == 0 {
+	if totalBidSize == 0 {
 		return fmt.Errorf("bad depth bids %v", depth.GetBids())
 	}
-	output.BidPrice /= totalSize
+	output.BidPrice /= totalBidSize
 
-	totalSize = 0.0
+	totalAskSize := 0.0
 	asks := depth.GetAsks()
 	output.BestAskPrice = asks[0][0]
 	for i := 0; i < len(asks); i++ {
@@ -63,19 +64,20 @@ func WalkDepthBBMAA(depth Depth, multiplier float64, impact float64, output *Wal
 		size = asks[i][1] * multiplier
 		value = price * size
 		if output.AskPrice+value >= impact {
-			totalSize += (impact - output.AskPrice) / price
+			totalAskSize += (impact - output.AskPrice) / price
 			output.AskPrice = impact
 			break
 		} else {
-			totalSize += size
+			totalAskSize += size
 			output.AskPrice += value
 		}
 	}
-	if totalSize == 0 {
+	if totalAskSize == 0 {
 		return fmt.Errorf("bad depth asks %v", depth.GetAsks())
 	}
-	output.AskPrice /= totalSize
+	output.AskPrice /= totalAskSize
 	output.MidPrice = (depth.GetBids()[0][0] + depth.GetAsks()[0][0]) * 0.5
+	output.MircoPrice = (output.BidPrice*totalBidSize+output.AskPrice*totalAskSize)/(totalBidSize+totalAskSize)
 	return nil
 }
 
