@@ -644,6 +644,14 @@ type BinanceBusdFutureWidthDepth20 struct {
 	BinanceBusdFuture
 }
 
+func (bn *BinanceBusdFutureWidthDepth20) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
+}
+
+func (bn *BinanceBusdFutureWidthDepth20) StartSideLoop() {
+	panic("implement me")
+}
+
 func (bn *BinanceBusdFutureWidthDepth20) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")

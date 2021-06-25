@@ -15,11 +15,11 @@ type Config struct {
 	InternalInflux common.InfluxSettings `yaml:"internalInflux"`
 	ExternalInflux common.InfluxSettings `yaml:"externalInflux"`
 
-	XExchange       common.ExchangeSettings `yaml:"xExchange"`
-	YExchange       common.ExchangeSettings `yaml:"yExchange"`
-	HedgeYDelay     time.Duration           `yaml:"hedgeYDelay"`
-	DepthWalkDelay  time.Duration           `yaml:"depthWalkDelay"`
-	SpreadWalkDelay time.Duration           `yaml:"spreadWalkDelay"`
+	XExchange          common.ExchangeSettings `yaml:"xExchange"`
+	YExchange          common.ExchangeSettings `yaml:"yExchange"`
+	HedgeCheckInterval time.Duration           `yaml:"hedgeCheckInterval"`
+	DepthWalkDelay     time.Duration           `yaml:"depthWalkDelay"`
+	SpreadWalkDelay    time.Duration           `yaml:"spreadWalkDelay"`
 
 	LogInterval           time.Duration `yaml:"logInterval"`
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
@@ -62,7 +62,7 @@ type Config struct {
 
 	XYPairs        map[string]string  `yaml:"xyPairs"`
 	NotTradePairs  map[string]string  `yaml:"notTradePairs"`
-	EnterScales    map[string]float64 `yaml:"enterScales"`
+	TargetWeights  map[string]float64 `yaml:"targetWeights"`
 	MaxOrderValues map[string]float64 `yaml:"maxOrderValues"`
 }
 
@@ -109,7 +109,7 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.TurnoverLookback == 0 {
 		config.TurnoverLookback = time.Hour * 24
 	}
-	if config.HedgeYDelay <= 0 {
-		config.HedgeYDelay = time.Nanosecond
+	if config.HedgeCheckInterval <= 0 {
+		config.HedgeCheckInterval = time.Nanosecond
 	}
 }
