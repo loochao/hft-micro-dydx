@@ -35,6 +35,7 @@ func handleSave(
 		st, ok := strategiesMap[xSymbol]
 		if !ok {
 			hasAllSymbols = false
+			continue
 		}
 		ySymbol := st.ySymbol
 		fields := make(map[string]interface{})
