@@ -132,7 +132,10 @@ func main() {
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)
 		if _, ok := xyConfig.TargetWeights[xSymbol]; !ok {
-			xyConfig.TargetWeights[xSymbol] = 1.0
+			logger.Debugf("miss target weight for %s %s", xSymbol, ySymbol)
+		}
+		if _, ok := xyConfig.MaxOrderValues[xSymbol]; !ok {
+			logger.Debugf("miss max order value for %s %s", xSymbol, ySymbol)
 		}
 	}
 	xyConfig.XExchange.Symbols = xSymbols
