@@ -774,6 +774,9 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 		logger.Debugf("bad next position, symbol %s %s not match %v", nextPos.GetSymbol(), strat.xSymbol, nextPos)
 		return
 	}
+	if !strat.tradable {
+		return
+	}
 	if strat.xPosition != nil {
 		if strat.xPosition == nextPos {
 			logger.Debugf("bad strat.xPosition == nextPos pass same pointer")
@@ -804,6 +807,9 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 	if nextPos.GetSymbol() != strat.ySymbol {
 		logger.Debugf("bad next position, symbol %s %s not match %v", nextPos.GetSymbol(), strat.ySymbol, nextPos)
+		return
+	}
+	if !strat.tradable {
 		return
 	}
 	if strat.yPosition != nil {

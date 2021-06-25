@@ -101,6 +101,7 @@ func (strat *XYStrategy) walkYDepth() {
 
 func (strat *XYStrategy) handleXDepth() {
 	if strat.xDepth == strat.xNextDepth {
+		logger.Debugf("%s strat.xDepth == strat.xNextDepth same pointer")
 		return
 	}
 	if strat.xNextDepth.GetTime().Sub(strat.xDepthTime) < 0 {
@@ -148,6 +149,7 @@ func (strat *XYStrategy) handleXDepth() {
 
 func (strat *XYStrategy) handleYDepth() {
 	if strat.yDepth == strat.yNextDepth {
+		logger.Debugf("%s strat.yDepth == strat.yNextDepth same pointer")
 		return
 	}
 	if strat.yNextDepth.GetTime().Sub(strat.yDepthTime) < 0 {

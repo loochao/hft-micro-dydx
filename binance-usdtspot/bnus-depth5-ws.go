@@ -200,7 +200,7 @@ func (w *Depth5WS) mainLoop(ctx context.Context, channels map[string]chan []byte
 			}
 			go w.readLoop(conn, channels)
 			go w.heartbeatLoop(internalCtx, conn)
-			reconnectTimer.Reset(time.Hour*9999)
+			reconnectTimer.Reset(time.Hour * 9999)
 		}
 	}
 }
