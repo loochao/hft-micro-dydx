@@ -77,7 +77,7 @@ func WalkDepthBBMAA(depth Depth, multiplier float64, impact float64, output *Wal
 	}
 	output.AskPrice /= totalAskSize
 	output.MidPrice = (depth.GetBids()[0][0] + depth.GetAsks()[0][0]) * 0.5
-	output.MircoPrice = (output.BidPrice*totalBidSize+output.AskPrice*totalAskSize)/(totalBidSize+totalAskSize)
+	output.MircoPrice = (output.BidPrice + output.AskPrice)*0.5
 	return nil
 }
 
