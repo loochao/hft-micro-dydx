@@ -78,6 +78,7 @@ func (strat *XYStrategy) updateXOrder() {
 
 	if strat.spread.ShortLastLeave < strat.shortBot &&
 		strat.spread.ShortMedianLeave < strat.shortBot &&
+		strat.spread.ShortLastLeave < strat.spread.ShortMedianLeave &&
 		*strat.xyFundingRate < strat.config.MinimalKeepFundingRate &&
 		strat.xSize >= strat.xStepSize*strat.xMultiplier {
 		strat.enterValue = math.Min(4*strat.enterStep, math.Min(strat.xAbsValue, strat.yAbsValue))
@@ -139,6 +140,7 @@ func (strat *XYStrategy) updateXOrder() {
 		return
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
+		strat.spread.LongLastLeave > strat.spread.LongMedianLeave &&
 		*strat.xyFundingRate > -strat.config.MinimalKeepFundingRate &&
 		strat.xSize <= -strat.xStepSize*strat.xMultiplier {
 
@@ -202,6 +204,7 @@ func (strat *XYStrategy) updateXOrder() {
 		!strat.isYSpot &&
 		strat.spread.ShortLastEnter > strat.shortTop &&
 		strat.spread.ShortMedianEnter > strat.shortTop &&
+		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
 		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
 		strat.xSize >= 0 {
 
@@ -288,6 +291,7 @@ func (strat *XYStrategy) updateXOrder() {
 		!strat.isXSpot &&
 		strat.spread.LongLastEnter < strat.longBot &&
 		strat.spread.LongMedianEnter < strat.longBot &&
+		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
 		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
 		strat.xSize <= 0 {
 
