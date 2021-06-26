@@ -113,8 +113,6 @@ type XYStrategy struct {
 
 	error error
 
-	tradable bool
-
 	isXSpot bool
 	isYSpot bool
 

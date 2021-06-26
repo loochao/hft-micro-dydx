@@ -25,8 +25,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yPosition == nil ||
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
-		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive ||
-		!strat.tradable {
+		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
 		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
 			strat.tryCancelXOpenOrder("spread time out")
 		}

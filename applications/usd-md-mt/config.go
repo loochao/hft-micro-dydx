@@ -64,7 +64,6 @@ type Config struct {
 	RestartInterval     time.Duration `yaml:"restartInterval"`
 
 	XYPairs       map[string]string  `yaml:"xyPairs"`
-	NotTradePairs map[string]string  `yaml:"notTradePairs"`
 	EnterScales   map[string]float64 `yaml:"enterScales,omitempty"`
 }
 

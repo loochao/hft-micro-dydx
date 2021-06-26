@@ -178,12 +178,6 @@ func startXYStrategy(
 	}
 	strat.xyMergedSpotStepSize = common.MergedStepSize(strat.xStepSize*strat.xMultiplier, strat.yStepSize*strat.yMultiplier)
 
-	if _, ok := config.NotTradePairs[xSymbol]; ok {
-		strat.tradable = false
-	} else {
-		strat.tradable = true
-	}
-
 	go strat.startLoop(ctx)
 	return
 }
@@ -301,8 +295,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		}
 		return
 	}
-	if !strat.tradable ||
-		strat.yPosition == nil ||
+	if strat.yPosition == nil ||
 		strat.xPosition == nil ||
 		strat.spread == nil ||
 		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
