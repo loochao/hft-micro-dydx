@@ -133,7 +133,7 @@ type XYStrategy struct {
 	yAbsValue      float64
 	midPrice       float64
 	enterValue     float64
-	enterScale     float64
+	targetWeight   float64
 	targetValue    float64
 	realisedSpread *float64
 

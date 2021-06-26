@@ -40,25 +40,25 @@ func startXYStrategy(
 	maxTimeDeltaInMs := float64(config.DepthMaxTimeDelta / time.Millisecond)
 
 	strat := XYStrategy{
-		xExchange:               xExchange,
-		yExchange:               yExchange,
-		isXSpot:                 xExchange.IsSpot(),
-		isYSpot:                 yExchange.IsSpot(),
-		xLeverage:               config.XExchange.Leverage,
-		yLeverage:               config.YExchange.Leverage,
-		xSymbol:                 xSymbol,
-		ySymbol:                 ySymbol,
-		enterScale:              config.EnterScales[xSymbol],
-		config:                  config,
-		orderOffset:             orderOffset,
-		xAccountCh:              xAccountCh,
-		yAccountCh:              yAccountCh,
-		xPositionCh:             xPositionCh,
-		yPositionCh:             yPositionCh,
-		xFundingRateCh:          xFundingRateCh,
-		yFundingRateCh:          yFundingRateCh,
-		xOrderCh:                xOrderCh,
-		yOrderCh:                yOrderCh,
+		xExchange:      xExchange,
+		yExchange:      yExchange,
+		isXSpot:        xExchange.IsSpot(),
+		isYSpot:        yExchange.IsSpot(),
+		xLeverage:      config.XExchange.Leverage,
+		yLeverage:      config.YExchange.Leverage,
+		xSymbol:        xSymbol,
+		ySymbol:        ySymbol,
+		targetWeight:   config.TargetWeights[xSymbol],
+		config:         config,
+		orderOffset:    orderOffset,
+		xAccountCh:     xAccountCh,
+		yAccountCh:     yAccountCh,
+		xPositionCh:    xPositionCh,
+		yPositionCh:    yPositionCh,
+		xFundingRateCh: xFundingRateCh,
+		yFundingRateCh: yFundingRateCh,
+		xOrderCh:       xOrderCh,
+		yOrderCh:       yOrderCh,
 		xOrderErrorCh:           xOrderErrorCh,
 		yOrderErrorCh:           yOrderErrorCh,
 		xOrderRequestCh:         xOrderRequestCh,
@@ -368,11 +368,11 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 	if strat.xAccount == nil || strat.yAccount == nil {
 		return
 	}
-	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.config.EnterFreePct * strat.enterScale
+	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.config.EnterFreePct * strat.targetWeight
 	if strat.enterStep < strat.config.EnterMinimalStep {
 		strat.enterStep = strat.config.EnterMinimalStep
 	}
-	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.enterScale
+	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.targetWeight
 	strat.usdAvailable = math.Min(strat.xAccount.GetFree()*strat.xLeverage, strat.yAccount.GetFree()*strat.yLeverage)
 }
 

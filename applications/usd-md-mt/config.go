@@ -64,7 +64,7 @@ type Config struct {
 	RestartInterval     time.Duration `yaml:"restartInterval"`
 
 	XYPairs       map[string]string  `yaml:"xyPairs"`
-	EnterScales   map[string]float64 `yaml:"enterScales,omitempty"`
+	TargetWeights map[string]float64 `yaml:"targetWeights,omitempty"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {

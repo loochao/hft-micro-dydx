@@ -22,7 +22,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	endTime, err := time.Parse("20060102", "20210622")
+	endTime, err := time.Parse("20060102", "20210625")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -33,7 +33,7 @@ func main() {
 	dateStrs = dateStrs[:len(dateStrs)-1]
 
 	quantiles := make(map[string]string)
-	maxOrderSizes := make(map[string]string)
+	maxOrderValues := make(map[string]string)
 	for _, symbol := range symbols {
 		//var lastBuyTrade *bnspot.Trade
 		//var lastSellTrade *bnspot.Trade
@@ -63,16 +63,16 @@ func main() {
 			var msg []byte
 			var depth5 = binance_usdtfuture.Depth5{}
 			var lastDepth5 = binance_usdtfuture.Depth5{}
-			counter := 0
+			//counter := 0
 			for scanner.Scan() {
 				msg = scanner.Bytes()
 				if msg[0] != 'F' {
 					continue
 				}
-				counter ++
-				if counter % 2 != 0 {
-					continue
-				}
+				//counter++
+				//if counter%2 != 0 {
+				//	continue
+				//}
 				err = binance_usdtfuture.ParseDepth5(msg[1:], &depth5)
 				if err != nil {
 					//logger.Debugf("binance_usdtfuture.ParseDepth5 error %v", err)
@@ -80,15 +80,15 @@ func main() {
 				}
 				if lastDepth5.Symbol != "" {
 					if lastDepth5.Bids[0][0] >= depth5.Bids[0][0] {
-						_ = impactTD.Add((depth5.Bids[0][0] - lastDepth5.Bids[0][0])/lastDepth5.Bids[0][0]*10000)
+						_ = impactTD.Add((depth5.Bids[0][0] - lastDepth5.Bids[0][0]) / lastDepth5.Bids[0][0] )
 					}
 					if lastDepth5.Asks[0][0] <= depth5.Asks[0][0] {
-						_ = impactTD.Add((depth5.Asks[0][0] - lastDepth5.Asks[0][0])/lastDepth5.Asks[0][0]*10000)
+						_ = impactTD.Add((depth5.Asks[0][0] - lastDepth5.Asks[0][0]) / lastDepth5.Asks[0][0] )
 					}
 					bookSize := 0.0
 					for i := 0; i < 5; i++ {
-						bookSize += depth5.Bids[i][0]*depth5.Bids[i][1]
-						bookSize += depth5.Asks[i][0]*depth5.Asks[i][1]
+						bookSize += depth5.Bids[i][0] * depth5.Bids[i][1]
+						bookSize += depth5.Asks[i][0] * depth5.Asks[i][1]
 					}
 					_ = bookTD.Add(bookSize)
 				}
@@ -98,23 +98,20 @@ func main() {
 			_ = file.Close()
 		}
 		quantiles[symbol] = fmt.Sprintf(
-			"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-			impactTD.Quantile(0.00005),
+			"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
 			impactTD.Quantile(0.0005),
 			impactTD.Quantile(0.005),
 			impactTD.Quantile(0.05),
-			impactTD.Quantile(0.5),
 			impactTD.Quantile(0.95),
 			impactTD.Quantile(0.995),
 			impactTD.Quantile(0.9995),
-			impactTD.Quantile(0.99995),
 		)
-		maxOrderSizes[symbol] = fmt.Sprintf(
+		maxOrderValues[symbol] = fmt.Sprintf(
 			"%.2f",
 			bookTD.Quantile(0.8)*0.1,
 		)
-		//fmt.Printf("%s %s\n", symbol, quantiles[symbol])
-		fmt.Printf("%s %s\n", symbol, maxOrderSizes[symbol])
+		fmt.Printf("%s %s\n", symbol, quantiles[symbol])
+		fmt.Printf("%s %s\n", symbol, maxOrderValues[symbol])
 	}
 
 	fmt.Printf("\n\n\n")
@@ -127,13 +124,23 @@ func main() {
 	}
 	fmt.Printf("\n\n\n")
 
-	fmt.Printf("\n\n\nmaxOrderSizes:")
+	fmt.Printf("\n\n\nmaxOrderValues:")
 	for _, symbol := range symbols {
 		fmt.Printf(
 			"%s:\t%s\n",
 			symbol,
-			maxOrderSizes[symbol],
+			maxOrderValues[symbol],
 		)
 	}
 	fmt.Printf("\n\n\n")
+
+	fmt.Printf("\n\n\nvar maxOrderValues = map[string]float64{")
+	for _, symbol := range symbols {
+		fmt.Printf(
+			"\"%s\":\t%s,\n",
+			symbol,
+			maxOrderValues[symbol],
+		)
+	}
+	fmt.Printf("}\n\n\n")
 }

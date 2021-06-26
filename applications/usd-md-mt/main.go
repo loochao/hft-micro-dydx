@@ -156,7 +156,7 @@ func main() {
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)
-		if _, ok := xyConfig.EnterScales[xSymbol]; !ok {
+		if _, ok := xyConfig.TargetWeights[xSymbol]; !ok {
 			logger.Debugf("miss enter scale for %s", xSymbol)
 			return
 		}
