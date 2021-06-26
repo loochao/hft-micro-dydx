@@ -16,7 +16,7 @@ func handleSave(
 	xSymbols []string,
 	xSystemStatus, ySystemStatus common.SystemStatus,
 	xyConfig *Config,
-	yCommissionAssetValue, xCommissionAssetValue *float64,
+	xCommissionAssetValue, yCommissionAssetValue *float64,
 	xyInternalInfluxWriter, xyExternalInfluxWriter *common.InfluxWriter,
 ) {
 	if yCommissionAssetValue == nil || xCommissionAssetValue == nil {
