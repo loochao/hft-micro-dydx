@@ -70,6 +70,7 @@ func (bn *BinanceBusdFuture) StreamBasic(
 	ctx context.Context,
 	statusCh chan common.SystemStatus,
 	accountCh chan common.Balance,
+	commissionAssetValueCh chan float64,
 	positionChMap map[string]chan common.Position,
 	orderChMap map[string]chan common.Order,
 ) {
@@ -95,6 +96,8 @@ func (bn *BinanceBusdFuture) StreamBasic(
 
 	restartToReadyTimer := time.NewTimer(time.Hour * 9999)
 	defer restartToReadyTimer.Stop()
+	commissionAssetOutputTimer := time.NewTimer(time.Second)
+	defer commissionAssetOutputTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -103,6 +106,13 @@ func (bn *BinanceBusdFuture) StreamBasic(
 			return
 		case <-userWS.done:
 			return
+		case <-commissionAssetOutputTimer.C:
+			select {
+			case commissionAssetValueCh <- 0.0:
+			default:
+				logger.Debugf("commissionAssetValueCh <- 0.0 failed ch len %d", len(commissionAssetValueCh))
+			}
+			commissionAssetOutputTimer.Reset(time.Minute)
 		case <-restartToReadyTimer.C:
 			select {
 			case statusCh <- common.SystemStatusReady:
@@ -329,7 +339,7 @@ func (bn *BinanceBusdFuture) WatchOrders(ctx context.Context, requestChannels ma
 			logger.Debugf("miss error ch for %s, exit", symbol)
 			return
 		}
-		go bn.watchOrder(ctx, symbol,  reqCh, respCh, errCh)
+		go bn.watchOrder(ctx, symbol, reqCh, respCh, errCh)
 	}
 	for {
 		select {
@@ -639,7 +649,6 @@ func (bn *BinanceBusdFuture) cancelOrder(ctx context.Context, param common.Cance
 	}
 }
 
-
 type BinanceBusdFutureWidthDepth20 struct {
 	BinanceBusdFuture
 }
@@ -708,4 +717,3 @@ func (b BinanceBusdFutureWidthDepth5) WatchBatchOrders(ctx context.Context, requ
 func (b BinanceBusdFutureWidthDepth5) StartSideLoop() {
 	panic("implement me")
 }
-

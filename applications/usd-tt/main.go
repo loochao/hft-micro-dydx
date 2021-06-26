@@ -222,7 +222,7 @@ func main() {
 		xPositionChMap[xSymbol] = make(chan common.Position, 4)
 		xOrderChMap[xSymbol] = make(chan common.Order, 32)
 		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 1)
-		xDepthChMap[xSymbol] = make(chan common.Depth,4)
+		xDepthChMap[xSymbol] = make(chan common.Depth, 4)
 		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 1)
 		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 1)
 		xAccountChMap[xSymbol] = make(chan common.Balance, 4)
@@ -240,7 +240,7 @@ func main() {
 		yPositionChMap[ySymbol] = make(chan common.Position, 4)
 		yOrderChMap[ySymbol] = make(chan common.Order, 32)
 		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 1)
-		yDepthChMap[ySymbol] = make(chan common.Depth,4)
+		yDepthChMap[ySymbol] = make(chan common.Depth, 4)
 		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 1)
 		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 1)
 		yAccountChMap[ySymbol] = make(chan common.Balance, 4)
@@ -281,10 +281,15 @@ func main() {
 		}
 	}
 
+	var yCommissionAssetValue, xCommissionAssetValue *float64
+	var yCommissionAssetValueCh = make(chan float64, 4)
+	var xCommissionAssetValueCh = make(chan float64, 4)
+
 	go xExchange.StreamBasic(
 		xyGlobalCtx,
 		xSystemStatusCh,
 		xAccountCh,
+		xCommissionAssetValueCh,
 		xPositionChMap,
 		xOrderChMap,
 	)
@@ -309,6 +314,7 @@ func main() {
 		xyGlobalCtx,
 		ySystemStatusCh,
 		yAccountCh,
+		yCommissionAssetValueCh,
 		yPositionChMap,
 		yOrderChMap,
 	)
@@ -386,6 +392,12 @@ mainLoop:
 				}
 			}
 			break
+		case xcv := <-xCommissionAssetValueCh:
+			logger.Debugf("xCommissionAssetValue %f", xcv)
+			xCommissionAssetValue = &xcv
+		case ycv := <-yCommissionAssetValueCh:
+			logger.Debugf("yCommissionAssetValue %f", ycv)
+			yCommissionAssetValue = &ycv
 		case account := <-xAccountCh:
 			if xAccount == account {
 				logger.Debugf("bad xAccount == account pass same pointer")
@@ -430,6 +442,8 @@ mainLoop:
 					xyConfig.NotTradePairs,
 					xSystemStatus, ySystemStatus,
 					xyConfig,
+					xCommissionAssetValue,
+					yCommissionAssetValue,
 					xyInternalInfluxWriter, xyExternalInfluxWriter,
 				)
 				influxSaveTimer.Reset(

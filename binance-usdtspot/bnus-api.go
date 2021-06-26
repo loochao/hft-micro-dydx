@@ -336,6 +336,16 @@ func (api *API) PingServer(ctx context.Context) (*Ping, error) {
 	)
 }
 
+func (api *API) GetTicker(ctx context.Context, params TickerParam) (*Ticker, error) {
+	var ticker Ticker
+	return &ticker, api.SendHTTPRequest(
+		ctx,
+		"/api/v3/ticker/price",
+		&params,
+		&ticker,
+	)
+}
+
 func NewAPI(credentials *common.Credentials, proxy string) (*API, error) {
 	var client http.Client
 	if proxy != "" {

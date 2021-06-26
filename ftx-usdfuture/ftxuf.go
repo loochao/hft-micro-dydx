@@ -76,6 +76,7 @@ func (ftx *FtxUsdtFuture) StreamBasic(
 	ctx context.Context,
 	statusCh chan common.SystemStatus,
 	accountCh chan common.Balance,
+	commissionAssetValueCh chan float64,
 	positionsCh map[string]chan common.Position,
 	ordersCh map[string]chan common.Order,
 ) {

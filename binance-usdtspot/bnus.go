@@ -69,7 +69,7 @@ func (bn *BinanceUsdtSpot) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, usdtAccountCh chan common.Balance, positionChMap map[string]chan common.Position, orderChMap map[string]chan common.Order) {
+func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, usdtAccountCh chan common.Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan common.Position, orderChMap map[string]chan common.Order) {
 	defer bn.Stop()
 	bn.mu.Lock()
 	proxy := bn.settings.Proxy

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
+	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
 )
@@ -79,4 +81,21 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	}
 	str += "}\n\n"
 	fmt.Printf("%s", str)
+}
+
+
+func TestAPI_GetTicker(t *testing.T) {
+	proxy := "socks5://127.0.0.1:1080"
+
+	api, err := NewAPI(&common.Credentials{}, proxy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	ticker, err := api.GetTicker(ctx, TickerParam{Symbol: "BNBUSDT"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, "BNBUSDT", ticker.Symbol)
+	logger.Debugf("%f", ticker.Price)
 }

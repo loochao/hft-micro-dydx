@@ -112,7 +112,7 @@ func (k *KucoinUsdtFuture) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
+func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
 	defer k.Stop()
 	k.mu.Lock()
 	settings := k.settings

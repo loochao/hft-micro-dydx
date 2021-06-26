@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math/rand"
@@ -70,6 +71,7 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 	ctx context.Context,
 	statusCh chan common.SystemStatus,
 	accountCh chan common.Balance,
+	commissionAssetValueCh chan float64,
 	positionChMap map[string]chan common.Position,
 	orderChMap map[string]chan common.Order,
 ) {
@@ -86,13 +88,16 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 	for symbol := range positionChMap {
 		positionSymbols = append(positionSymbols, symbol)
 	}
-	internalAccountCh := make(chan Account, 10)
+	internalAccountCh := make(chan Account, 4)
 	go bn.watchAccount(ctx, internalAccountCh)
 	go bn.watchSystemStatus(ctx, statusCh)
 	logSilentTime := time.Now()
 
-	var usdtAsset *Asset
+	bnbPriceCh := make(chan float64, 4)
+	go bn.watchBnbPrice(ctx, bnbPriceCh)
 
+	var usdtAsset *Asset
+	var bnbAsset *Asset
 	restartToReadyTimer := time.NewTimer(time.Hour * 9999)
 	defer restartToReadyTimer.Stop()
 	for {
@@ -119,6 +124,14 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 				logger.Debugf("statusCh <- common.SystemStatusRestart failed ch len %d", len(statusCh))
 			}
 			break
+		case price := <-bnbPriceCh:
+			if bnbAsset != nil && bnbAsset.MarginBalance != nil{
+				select {
+				case commissionAssetValueCh <- *bnbAsset.MarginBalance*price:
+				default:
+					logger.Debugf("commissionAssetValueCh <- *bnbAsset.MarginBalance*price failed ch len %d", len(commissionAssetValueCh))
+				}
+			}
 		case bp := <-userWS.BalanceAndPositionUpdateEventCh:
 			for _, nextPos := range bp.Account.Positions {
 				if nextPos.PositionSide != "BOTH" {
@@ -152,6 +165,11 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 						}
 						break
 					}
+				} else if balance.Asset == "BNB" {
+					if bnbAsset != nil && bnbAsset.EventTime.Sub(balance.EventTime) < 0 {
+						bnbAsset.WalletBalance = &balance.WalletBalance
+						bnbAsset.CrossWalletBalance = &balance.CrossWalletBalance
+					}
 				}
 			}
 			break
@@ -181,6 +199,9 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 						}
 					}
 					break
+				} else if asset.Asset == "BNB" {
+					asset := asset
+					bnbAsset = &asset
 				}
 			}
 			hasPositions := make(map[string]bool)
@@ -370,7 +391,7 @@ func (bn *BinanceUsdtFuture) WatchOrders(ctx context.Context, requestChannels ma
 			logger.Debugf("miss error ch for %s, exit", symbol)
 			return
 		}
-		go bn.watchOrder(ctx, symbol,  reqCh, respCh, errCh)
+		go bn.watchOrder(ctx, symbol, reqCh, respCh, errCh)
 	}
 	for {
 		select {
@@ -561,6 +582,38 @@ func (bn *BinanceUsdtFuture) watchAccount(
 		}
 	}
 }
+func (b *BinanceUsdtFuture) watchBnbPrice(
+	ctx context.Context,
+	priceCh chan float64,
+) {
+	spotApi, err := binance_usdtspot.NewAPI(&common.Credentials{}, b.settings.Proxy)
+	if err != nil {
+		b.Stop()
+		return
+	}
+	pullTimer := time.NewTimer(time.Second * 30)
+	defer pullTimer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-pullTimer.C:
+			ticker, err := spotApi.GetTicker(ctx, binance_usdtspot.TickerParam{Symbol: "BNBUSDT"})
+			if err != nil {
+				logger.Debugf("spotApi.GetTicker BNBUSDT error %v", err)
+				pullTimer.Reset(time.Minute)
+			} else {
+				select {
+				case priceCh <- ticker.Price:
+				default:
+					logger.Debugf("priceCh <- ticker.Price failed ch len %d", len(priceCh))
+				}
+				pullTimer.Reset(time.Minute * 5)
+			}
+		}
+	}
+
+}
 
 func (bn *BinanceUsdtFuture) watchOrder(
 	ctx context.Context,
@@ -683,7 +736,6 @@ func (bn *BinanceUsdtFuture) cancelOrder(ctx context.Context, param common.Cance
 	}
 }
 
-
 type BinanceUsdtFutureWidthDepth20 struct {
 	BinanceUsdtFuture
 }
@@ -752,4 +804,3 @@ func (b BinanceUsdtFutureWidthDepth5) WatchBatchOrders(ctx context.Context, requ
 func (b BinanceUsdtFutureWidthDepth5) StartSideLoop() {
 	panic("implement me")
 }
-
