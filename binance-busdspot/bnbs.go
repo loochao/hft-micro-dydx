@@ -167,6 +167,8 @@ func (bn *BinanceBusdSpot) StreamBasic(ctx context.Context, statusCh chan common
 						}
 					}
 					continue
+				}else if wsBalance.Asset == "BNB" {
+					bnbBalance = &wsBalance.FreeAmount
 				}
 				symbol := wsBalance.Asset + "BUSD"
 				if ch, ok := positionChMap[symbol]; ok {
@@ -228,6 +230,8 @@ func (bn *BinanceBusdSpot) StreamBasic(ctx context.Context, statusCh chan common
 						}
 					}
 					continue
+				}else if balance.Asset == "BNB" {
+					bnbBalance = &balance.Free
 				}
 				symbol := balance.Asset + "BUSD"
 				lastBalance, ok := balancesMap[balance.Asset]
