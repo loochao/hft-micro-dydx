@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"strconv"
 	"testing"
 )
@@ -29,7 +30,7 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	minNotional := make(map[string]float64)
 	for _, symbol := range exchangeInfo.Symbols {
 		//logger.Debugf("%s %s %s",symbol.Symbol, symbol.BaseAsset,symbol.QuoteAsset)
-		if symbol.Status !=  "TRADING" || symbol.QuoteAsset != "BUSD"{
+		if symbol.Status != "TRADING" || symbol.QuoteAsset != "BUSD" {
 			continue
 		}
 		for _, filter := range symbol.Filters {
@@ -79,4 +80,18 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	}
 	str += "}\n\n"
 	fmt.Printf("%s", str)
+}
+
+func TestSlice(t *testing.T) {
+	tickers := [2]Ticker{
+		{Price: 100, Symbol: "BTCBUSD"},
+		{Price: 1000, Symbol: "ETHBUSD"},
+	}
+	var price *float64
+	for _, ticker := range tickers {
+		if ticker.Symbol == "BTCBUSD" {
+			price = &ticker.Price
+		}
+	}
+	logger.Debugf("%f", *price)
 }

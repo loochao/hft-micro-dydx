@@ -394,7 +394,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			return
 		}
 		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= 0 {
-			if strat.xPosition.GetSize() != nextPos.GetSize() {
+			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 				strat.yOrderSilentTime = time.Now()
 				if strat.xWalkedDepth.Symbol != "" {
@@ -443,7 +443,7 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 			return
 		}
 		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= 0 {
-			if strat.yPosition.GetSize() != nextPos.GetSize() {
+			if math.Abs(strat.yPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				if strat.yWalkedDepth.Symbol != "" {
 					strat.yTimedPositionChange.Insert(time.Now(), math.Abs(strat.yPosition.GetSize()-nextPos.GetSize())*strat.yWalkedDepth.MidPrice*strat.yMultiplier)
 				}
