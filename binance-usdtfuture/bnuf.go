@@ -143,7 +143,7 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 						//deltaValue := bn.settings.MinimalCommissionDiscountAssetValue - *bnbAsset.MarginBalance*price
 						deltaValue := 20.0
 						if deltaValue > binance_usdtspot.MinNotionals["BNBUSDT"] {
-							bn.tryReBalanceBnb(ctx, *usdtAsset.MarginBalance, price, deltaValue)
+							go bn.tryReBalanceBnb(ctx, *usdtAsset.MarginBalance, price, deltaValue)
 							rebalancedBnbSilentTime = time.Now().Add(time.Hour)
 						}
 					}
@@ -657,7 +657,7 @@ func (bn *BinanceUsdtFuture) tryReBalanceBnb(
 			logger.Debugf("NewFutureAccountTransfer usdt to spot error %v", err)
 			return
 		} else {
-			logger.Debugf("NewFutureAccountTransfer usdt to spot %%f %v, wait 3 minutes", transferSize, resp.TranId)
+			logger.Debugf("NewFutureAccountTransfer usdt to spot %f %v, wait 3 minutes", transferSize, resp.TranId)
 			select {
 			case <-ctx.Done():
 				return
@@ -691,67 +691,63 @@ func (bn *BinanceUsdtFuture) tryReBalanceBnb(
 	if deltaSize*0.8 > spotBnbBalance {
 		//bnb不够，需要买BNB
 		size := math.Round((deltaSize-spotBnbBalance)/binance_usdtspot.StepSizes["BNBUSDT"]) * binance_usdtspot.StepSizes["BNBUSDT"]
-		if size*price < binance_usdtspot.MinNotionals["BNBUSDT"]*1.2 {
-			//不够最小开仓单位
-			return
-		}
-		childCtx, _ := context.WithTimeout(ctx, time.Minute)
-		_, _, err := bn.usApi.SubmitOrder(childCtx, binance_usdtspot.NewOrderParams{
-			Symbol:           "BNBUSDT",
-			Side:             binance_usdtspot.OrderSideBuy,
-			Type:             binance_usdtspot.OrderTypeMarket,
-			Quantity:         size,
-			NewClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
-		})
-		if err != nil {
-			logger.Debugf("bn.usApi.SubmitOrder buy %f bnb error %v", size, err)
-			return
-		} else {
-			logger.Debugf("bn.usApi.SubmitOrder buy %f bnb success, wait 3 minutes", size)
-			select {
-			case <-ctx.Done():
+		if size*price > binance_usdtspot.MinNotionals["BNBUSDT"]*1.2 {
+			childCtx, _ := context.WithTimeout(ctx, time.Minute)
+			_, _, err := bn.usApi.SubmitOrder(childCtx, binance_usdtspot.NewOrderParams{
+				Symbol:           "BNBUSDT",
+				Side:             binance_usdtspot.OrderSideBuy,
+				Type:             binance_usdtspot.OrderTypeMarket,
+				Quantity:         size,
+				NewClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+			})
+			if err != nil {
+				logger.Debugf("bn.usApi.SubmitOrder buy %f bnb error %v", size, err)
 				return
-			case <-bn.done:
-				return
-			case <-time.After(time.Minute * 3):
+			} else {
+				logger.Debugf("bn.usApi.SubmitOrder buy %f bnb success, wait 3 minutes", size)
+				select {
+				case <-ctx.Done():
+					return
+				case <-bn.done:
+					return
+				case <-time.After(time.Minute * 3):
+				}
 			}
-		}
 
-		//买完BNB 需要再查一遍仓位
-		account, _, err = bn.usApi.GetAccount(ctx)
-		if err != nil {
-			logger.Debugf("bn.usApi.GetAccount(ctx) err %v", err)
-			return
-		}
-		for _, balance := range account.Balances {
-			if balance.Asset == "USDT" {
-				spotUSDTBalance = balance.Free
-			} else if balance.Asset == "BNB" {
-				spotBnbBalance = balance.Free
+			//买完BNB 需要再查一遍仓位
+			account, _, err = bn.usApi.GetAccount(ctx)
+			if err != nil {
+				logger.Debugf("bn.usApi.GetAccount(ctx) err %v", err)
+				return
 			}
-		}
-		logger.Debugf("2 spot balance usdt %f bnb %f", spotUSDTBalance, spotBnbBalance)
-		if spotUSDTBalance < 0.8*deltaValue {
-			//现货还是钱不够
-			logger.Debugf("spot usdt value %f less than %f after transfer usdt to spot, give up", spotUSDTBalance, 0.8*deltaValue)
-			return
+			for _, balance := range account.Balances {
+				if balance.Asset == "USDT" {
+					spotUSDTBalance = balance.Free
+				} else if balance.Asset == "BNB" {
+					spotBnbBalance = balance.Free
+				}
+			}
+			logger.Debugf("2 spot balance usdt %f bnb %f", spotUSDTBalance, spotBnbBalance)
+			if spotUSDTBalance < 0.8*deltaValue {
+				//现货还是钱不够
+				logger.Debugf("spot usdt value %f less than %f after transfer usdt to spot, give up", spotUSDTBalance, 0.8*deltaValue)
+				return
+			}
 		}
 	}
 
-	if deltaSize*0.8 < spotBnbBalance {
-		transferSize := math.Min(deltaSize, spotBnbBalance)
-		logger.Debugf("transfer %f bnb to usdt future", transferSize)
-		childCtx, _ := context.WithTimeout(ctx, time.Minute)
-		resp, _, err := bn.usApi.NewFutureAccountTransfer(childCtx, binance_usdtspot.FutureAccountTransferParams{
-			Asset:  "BNB",
-			Type:   binance_usdtspot.TransferSpotToUSDTFuture,
-			Amount: transferSize,
-		})
-		if err != nil {
-			logger.Debugf("NewFutureAccountTransfer error %v", err)
-		} else {
-			logger.Debugf("NewFutureAccountTransfer spot to usdt future %f %v", transferSize, resp.TranId)
-		}
+	transferSize := math.Min(deltaSize, spotBnbBalance)
+	logger.Debugf("transfer %f bnb to usdt future", transferSize)
+	childCtx, _ := context.WithTimeout(ctx, time.Minute)
+	resp, _, err := bn.usApi.NewFutureAccountTransfer(childCtx, binance_usdtspot.FutureAccountTransferParams{
+		Asset:  "BNB",
+		Type:   binance_usdtspot.TransferSpotToUSDTFuture,
+		Amount: transferSize,
+	})
+	if err != nil {
+		logger.Debugf("NewFutureAccountTransfer error %v", err)
+	} else {
+		logger.Debugf("NewFutureAccountTransfer spot to usdt future %f %v", transferSize, resp.TranId)
 	}
 }
 
