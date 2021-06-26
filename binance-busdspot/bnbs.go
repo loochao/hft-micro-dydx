@@ -560,7 +560,7 @@ func (bn *BinanceBusdSpot) buyBnb(
 		logger.Debugf("bn.api.SubmitOrder buy %f bnb error %v", size, err)
 		return
 	} else {
-		logger.Debugf("BNB bn.usApi.SubmitOrder buy %f bnb success, wait 3 minutes", size)
+		logger.Debugf("BNB bn.usApi.SubmitOrder buy %f bnb success", size)
 	}
 }
 
