@@ -126,6 +126,7 @@ func (bn *BinanceBusdSpot) StreamBasic(ctx context.Context, statusCh chan common
 		case price := <-bnbPriceCh:
 			if bn.settings.AutoAddCommissionDiscountAsset {
 				if bnbBalance != nil {
+					logger.Debugf("%f %f", *bnbBalance, price)
 					select {
 					case commissionAssetValueCh <- *bnbBalance * price:
 					default:
@@ -169,6 +170,7 @@ func (bn *BinanceBusdSpot) StreamBasic(ctx context.Context, statusCh chan common
 					continue
 				}else if wsBalance.Asset == "BNB" {
 					bnbBalance = &wsBalance.FreeAmount
+					logger.Debugf("BNB BALANCE %f", *bnbBalance)
 				}
 				symbol := wsBalance.Asset + "BUSD"
 				if ch, ok := positionChMap[symbol]; ok {
@@ -232,6 +234,7 @@ func (bn *BinanceBusdSpot) StreamBasic(ctx context.Context, statusCh chan common
 					continue
 				}else if balance.Asset == "BNB" {
 					bnbBalance = &balance.Free
+					logger.Debugf("BNB BALANCE %f", *bnbBalance)
 				}
 				symbol := balance.Asset + "BUSD"
 				lastBalance, ok := balancesMap[balance.Asset]

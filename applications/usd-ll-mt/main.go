@@ -261,9 +261,9 @@ func main() {
 	saveCh := make(chan *XYStrategy, 2048)
 	strategiesMap := make(map[string]*XYStrategy)
 
-	var yCommissionAssetValue, xCommissionAssetValue *float64
-	var yCommissionAssetValueCh = make(chan float64, 4)
+	var xCommissionAssetValue, yCommissionAssetValue *float64
 	var xCommissionAssetValueCh = make(chan float64, 4)
+	var yCommissionAssetValueCh = make(chan float64, 4)
 
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		err = startXYStrategy(
