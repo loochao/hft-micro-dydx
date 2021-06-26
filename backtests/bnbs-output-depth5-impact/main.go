@@ -23,7 +23,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	endTime, err := time.Parse("20060102", "20210623")
+	endTime, err := time.Parse("20060102", "20210625")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -62,7 +62,7 @@ func main() {
 			var depth5 = binance_busdspot.Depth5{}
 			var lastDepth5 = binance_busdspot.Depth5{}
 			var counter = 0
-			var step = 2
+			var step = 1
 			for scanner.Scan() {
 				counter++
 				msg = scanner.Bytes()
@@ -103,7 +103,7 @@ func main() {
 			impactTD.Quantile(0.9995),
 		)
 		maxOrderSizes[symbol] = fmt.Sprintf(
-			"%.2f",
+			"%.0f",
 			bookTD.Quantile(0.8)*0.1,
 		)
 		//fmt.Printf("%s %s\n", symbol, quantiles[symbol])
@@ -129,4 +129,14 @@ func main() {
 		)
 	}
 	fmt.Printf("\n\n\n")
+
+	fmt.Printf("\n\n\n var maxOrderSizes = map[string]float{\n")
+	for _, symbol := range symbols {
+		fmt.Printf(
+			"\"%s\":\t%s,\n",
+			symbol,
+			maxOrderSizes[symbol],
+		)
+	}
+	fmt.Printf("}\n\n\n")
 }

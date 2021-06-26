@@ -83,27 +83,27 @@ func startXYStrategy(
 		yFundingRate:            nil,
 		xyFundingRate:           nil,
 		xLastFilledBuyPrice:     nil,
-		xLastFilledSellPrice:    nil,
-		yLastFilledBuyPrice:     nil,
-		yLastFilledSellPrice:    nil,
-		xOrder:                  nil,
-		yOrder:                  nil,
-		xOrderError:             common.OrderError{},
-		yOrderError:             common.OrderError{},
-		xyEnterSilentTime:       time.Now().Add(config.RestartSilent),
-		enterStep:               0,
-		enterTarget:             0,
-		enterScale:              config.EnterScales[xSymbol],
-		usdtAvailable:           0,
-		logSilentTime:           time.Time{},
-		xWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
-		yWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
-		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
-		hedgeYTimer:             time.NewTimer(time.Hour * 9999),
-		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
-		saveTimer:               time.NewTimer(config.RestartSilent),
-		spreadTime:              time.Time{},
-		spread:                  nil,
+		xLastFilledSellPrice: nil,
+		yLastFilledBuyPrice:  nil,
+		yLastFilledSellPrice: nil,
+		xOrder:               nil,
+		yOrder:               nil,
+		xOrderError:          common.OrderError{},
+		yOrderError:          common.OrderError{},
+		xyEnterSilentTime:    time.Now().Add(config.RestartSilent),
+		enterStep:            0,
+		enterTarget:          0,
+		targetWeight:         config.TargetWeights[xSymbol],
+		usdtAvailable:        0,
+		logSilentTime:        time.Time{},
+		xWalkDepthTimer:      time.NewTimer(time.Hour * 9999),
+		yWalkDepthTimer:      time.NewTimer(time.Hour * 9999),
+		realisedSpreadTimer:  time.NewTimer(time.Hour * 9999),
+		hedgeYTimer:          time.NewTimer(time.Hour * 9999),
+		spreadWalkTimer:      time.NewTimer(time.Hour * 9999),
+		saveTimer:            time.NewTimer(config.RestartSilent),
+		spreadTime:           time.Time{},
+		spread:               nil,
 		shortEnterTimedMedian:   common.NewTimedMedian(config.SpreadLookback),
 		longEnterTimedMedian:    common.NewTimedMedian(config.SpreadLookback),
 		xTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
@@ -174,12 +174,6 @@ func startXYStrategy(
 	}
 
 	strat.xyMergedSpotStepSize = common.MergedStepSize(strat.xStepSize*strat.xMultiplier, strat.yStepSize*strat.yMultiplier)
-
-	if _, ok := config.NotTradePairs[xSymbol]; ok {
-		strat.tradable = false
-	} else {
-		strat.tradable = true
-	}
 
 	go strat.startLoop(ctx)
 	return
@@ -347,11 +341,11 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 	if strat.xAccount == nil || strat.yAccount == nil {
 		return
 	}
-	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.params.EnterFreePct * strat.enterScale
+	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.params.EnterFreePct * strat.targetWeight
 	if strat.enterStep < strat.params.EnterMinimalStep {
 		strat.enterStep = strat.params.EnterMinimalStep
 	}
-	strat.enterTarget = strat.enterStep * strat.params.EnterTargetFactor * strat.enterScale
+	strat.enterTarget = strat.enterStep * strat.params.EnterTargetFactor * strat.targetWeight
 	strat.usdtAvailable = math.Min(strat.xAccount.GetFree()*strat.params.XExchange.Leverage, strat.yAccount.GetFree()*strat.params.YExchange.Leverage)
 }
 

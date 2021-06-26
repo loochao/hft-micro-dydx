@@ -63,10 +63,10 @@ type Config struct {
 	RestartSilent       time.Duration `yaml:"restartSilent"`
 	RestartInterval     time.Duration `yaml:"restartInterval"`
 
-	XYPairs       map[string]string  `yaml:"xyPairs"`
-	NotTradePairs map[string]string  `yaml:"notTradePairs"`
-	OrderOffsets  map[string]string  `yaml:"orderOffsets,omitempty"`
-	EnterScales   map[string]float64 `yaml:"enterScales,omitempty"`
+	XYPairs        map[string]string  `yaml:"xyPairs"`
+	OrderOffsets   map[string]string  `yaml:"orderOffsets,omitempty"`
+	TargetWeights  map[string]float64 `yaml:"targetWeights,omitempty"`
+	MaxOrderValues map[string]float64 `yaml:"maxOrderValues,omitempty"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -121,4 +121,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.XOrderCheckInterval == 0 {
 		config.XOrderCheckInterval = time.Millisecond * 100
 	}
+	config.XExchange.DryRun = config.DryRun
+	config.YExchange.DryRun = config.DryRun
 }

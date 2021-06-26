@@ -131,8 +131,8 @@ func main() {
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)
-		if _, ok := xyConfig.EnterScales[xSymbol]; !ok {
-			xyConfig.EnterScales[xSymbol] = 1.0
+		if _, ok := xyConfig.TargetWeights[xSymbol]; !ok {
+			xyConfig.TargetWeights[xSymbol] = 1.0
 		}
 	}
 	xyConfig.XExchange.Symbols = xSymbols
@@ -277,11 +277,15 @@ func main() {
 			return
 		}
 	}
+	var yCommissionAssetValue, xCommissionAssetValue *float64
+	var yCommissionAssetValueCh = make(chan float64, 4)
+	var xCommissionAssetValueCh = make(chan float64, 4)
 
 	go xExchange.StreamBasic(
 		xyGlobalCtx,
 		xSystemStatusCh,
 		xAccountCh,
+		xCommissionAssetValueCh,
 		xPositionChMap,
 		xOrderChMap,
 	)
@@ -306,6 +310,7 @@ func main() {
 		xyGlobalCtx,
 		ySystemStatusCh,
 		yAccountCh,
+		yCommissionAssetValueCh,
 		yPositionChMap,
 		yOrderChMap,
 	)
@@ -383,6 +388,10 @@ mainLoop:
 				}
 			}
 			break
+		case xcv := <-xCommissionAssetValueCh:
+			xCommissionAssetValue = &xcv
+		case ycv := <-yCommissionAssetValueCh:
+			yCommissionAssetValue = &ycv
 		case account := <-xAccountCh:
 			if xAccount == account {
 				logger.Debugf("bad xAccount == account pass same pointer")
@@ -425,6 +434,7 @@ mainLoop:
 					strategiesMap,
 					xSystemStatus, ySystemStatus,
 					xyConfig,
+					xCommissionAssetValue, yCommissionAssetValue,
 					xyInternalInfluxWriter, xyExternalInfluxWriter,
 				)
 				influxSaveTimer.Reset(

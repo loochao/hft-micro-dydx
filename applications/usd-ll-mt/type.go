@@ -113,8 +113,6 @@ type XYStrategy struct {
 
 	error error
 
-	tradable bool
-
 	isXSpot bool
 	isYSpot bool
 
@@ -135,7 +133,8 @@ type XYStrategy struct {
 	yAbsValue      float64
 	midPrice       float64
 	enterValue     float64
-	enterScale     float64
+	targetWeight   float64
+	maxOrderValue  float64
 	targetValue    float64
 	realisedSpread *float64
 

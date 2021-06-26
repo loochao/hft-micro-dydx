@@ -19,6 +19,7 @@ type BinanceBusdSpot struct {
 	stopped  bool
 	mu       sync.Mutex
 	settings common.ExchangeSettings
+	dryRun   bool
 }
 
 func (bn *BinanceBusdSpot) IsSpot() bool {
@@ -130,7 +131,8 @@ func (bn *BinanceBusdSpot) StreamBasic(ctx context.Context, statusCh chan common
 					default:
 						logger.Debugf("commissionAssetValueCh <- *bnbBalance * price failed ch len %d", len(commissionAssetValueCh))
 					}
-					if bn.settings.MinimalCommissionDiscountAssetValue*0.5 > *bnbBalance*price &&
+					if !bn.settings.DryRun &&
+						bn.settings.MinimalCommissionDiscountAssetValue*0.5 > *bnbBalance*price &&
 						time.Now().Sub(rebalancedBnbSilentTime) > 0 {
 						deltaValue := bn.settings.MinimalCommissionDiscountAssetValue - *bnbBalance*price
 						if deltaValue > MinNotionals["BNBBUSD"] {
@@ -533,7 +535,6 @@ func (bn *BinanceBusdSpot) watchSystemStatus(
 	}
 }
 
-
 func (bn *BinanceBusdSpot) buyBnb(
 	ctx context.Context,
 	deltaValue float64,
@@ -558,7 +559,6 @@ func (bn *BinanceBusdSpot) buyBnb(
 		logger.Debugf("BNB bn.usApi.SubmitOrder buy %f bnb success, wait 3 minutes", size)
 	}
 }
-
 
 func (bn *BinanceBusdSpot) watchBnbPrice(
 	ctx context.Context,
@@ -586,7 +586,6 @@ func (bn *BinanceBusdSpot) watchBnbPrice(
 		}
 	}
 }
-
 
 func (bn *BinanceBusdSpot) watchAccount(
 	ctx context.Context,
@@ -788,4 +787,3 @@ func (bn *BinanceBusdSpotWithDepth20) StreamDepth(ctx context.Context, channels 
 		}
 	}
 }
-

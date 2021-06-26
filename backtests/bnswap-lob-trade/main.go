@@ -88,22 +88,24 @@ func main() {
 				continue
 			}
 
-			for tradeScanner.Scan() {
-				trade, err := bnswap.ParseTrade(tradeScanner.Bytes())
-				if err != nil {
-					logger.Debugf(" bnswap.ParseTrade error %v", err)
-					continue
-				}
-				if lastTrade != nil {
-					if lastTrade.IsTheBuyerTheMarketMaker {
-						sellTimedVolume.Insert(lastTrade.EventTime, lastTrade.Quantity)
-					} else {
-						buyTimedVolume.Insert(lastTrade.EventTime, lastTrade.Quantity)
+			if lastTrade == nil || d.EventTime.Sub(lastTrade.EventTime) >= 0 {
+				for tradeScanner.Scan() {
+					trade, err := bnswap.ParseTrade(tradeScanner.Bytes())
+					if err != nil {
+						logger.Debugf(" bnswap.ParseTrade error %v", err)
+						continue
 					}
-				}
-				lastTrade = trade
-				if trade.EventTime.Sub(d.EventTime) > 0 {
-					break
+					if lastTrade != nil {
+						if lastTrade.IsTheBuyerTheMarketMaker {
+							sellTimedVolume.Insert(lastTrade.EventTime, lastTrade.Quantity)
+						} else {
+							buyTimedVolume.Insert(lastTrade.EventTime, lastTrade.Quantity)
+						}
+					}
+					lastTrade = trade
+					if trade.EventTime.Sub(d.EventTime) > 0 {
+						break
+					}
 				}
 			}
 

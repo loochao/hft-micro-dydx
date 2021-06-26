@@ -61,8 +61,7 @@ type Config struct {
 	RestartInterval time.Duration `yaml:"restartInterval"`
 
 	XYPairs        map[string]string  `yaml:"xyPairs"`
-	NotTradePairs  map[string]string  `yaml:"notTradePairs"`
-	EnterScales    map[string]float64 `yaml:"enterScales"`
+	TargetWeights  map[string]float64 `yaml:"targetWeights"`
 	MaxOrderValues map[string]float64 `yaml:"maxOrderValues"`
 }
 
@@ -112,4 +111,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.HedgeYDelay <= 0 {
 		config.HedgeYDelay = time.Nanosecond
 	}
+	config.XExchange.DryRun = config.DryRun
+	config.YExchange.DryRun = config.DryRun
 }

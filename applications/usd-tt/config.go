@@ -111,4 +111,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.HedgeCheckInterval <= 0 {
 		config.HedgeCheckInterval = time.Nanosecond
 	}
+	config.XExchange.DryRun = config.DryRun
+	config.YExchange.DryRun = config.DryRun
 }

@@ -97,9 +97,10 @@ type Ticker interface {
 }
 
 type ExchangeSettings struct {
-	Name                           string        `yaml:"name" json:"name"`
-	Proxy                          string        `yaml:"proxy" json:"proxy"`
-	ApiKey                         string        `yaml:"apiKey" json:"apiKey"`
+	Name                                string        `yaml:"name" json:"name"`
+	DryRun                              bool          `yaml:"-" json:"-"`
+	Proxy                               string        `yaml:"proxy" json:"proxy"`
+	ApiKey                              string        `yaml:"apiKey" json:"apiKey"`
 	ApiSecret                           string        `yaml:"apiSecret" json:"apiSecret"`
 	ApiPassphrase                       string        `yaml:"apiPassphrase" json:"apiPassphrase"`
 	Symbols                             []string      `yaml:"symbols" json:"symbols"`

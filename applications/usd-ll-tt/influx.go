@@ -15,8 +15,12 @@ func handleSave(
 	strategiesMap map[string]*XYStrategy,
 	xSystemStatus, ySystemStatus common.SystemStatus,
 	xyConfig *Config,
+	yCommissionAssetValue, xCommissionAssetValue *float64,
 	xyInternalInfluxWriter, xyExternalInfluxWriter *common.InfluxWriter,
 ) {
+	if xCommissionAssetValue == nil || yCommissionAssetValue == nil {
+		return
+	}
 	totalUnHedgeValue := 0.0
 	totalXSymbolValue := 0.0
 	totalYSymbolValue := 0.0
@@ -158,11 +162,13 @@ func handleSave(
 		if yExchange.IsSpot() {
 			yBalance += totalYSymbolValue
 		}
-		totalBalance := xBalance + yBalance
+		totalBalance := xBalance + yBalance + *xCommissionAssetValue + *yCommissionAssetValue
 		netWorth := totalBalance / xyConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalUnHedgeValue"] = totalUnHedgeValue
 		fields["totalBalance"] = totalBalance
+		fields["xCommissionAssetValue"] = *xCommissionAssetValue
+		fields["xCommissionAssetValue"] = *yCommissionAssetValue
 		fields["yBalance"] = yBalance
 		fields["xBalance"] = xBalance
 		fields["yAvailable"] = yAccount.GetFree()

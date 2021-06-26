@@ -81,7 +81,7 @@ type XYStrategy struct {
 	xyEnterSilentTime    time.Time
 	enterStep            float64
 	enterTarget          float64
-	enterScale           float64
+	targetWeight         float64
 	usdtAvailable        float64
 
 	logSilentTime       time.Time

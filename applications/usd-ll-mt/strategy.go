@@ -48,7 +48,8 @@ func startXYStrategy(
 		yLeverage:               config.YExchange.Leverage,
 		xSymbol:                 xSymbol,
 		ySymbol:                 ySymbol,
-		enterScale:              config.EnterScales[xSymbol],
+		targetWeight:            config.TargetWeights[xSymbol],
+		maxOrderValue:           config.MaxOrderValues[xSymbol],
 		config:                  config,
 		orderOffset:             orderOffset,
 		xAccountCh:              xAccountCh,
@@ -178,12 +179,6 @@ func startXYStrategy(
 	}
 	strat.xyMergedSpotStepSize = common.MergedStepSize(strat.xStepSize*strat.xMultiplier, strat.yStepSize*strat.yMultiplier)
 
-	if _, ok := config.NotTradePairs[xSymbol]; ok {
-		strat.tradable = false
-	} else {
-		strat.tradable = true
-	}
-
 	go strat.startLoop(ctx)
 	return
 }
@@ -301,8 +296,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		}
 		return
 	}
-	if !strat.tradable ||
-		strat.yPosition == nil ||
+	if strat.yPosition == nil ||
 		strat.xPosition == nil ||
 		strat.spread == nil ||
 		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
@@ -316,6 +310,12 @@ func (strat *XYStrategy) hedgeYPosition() {
 	strat.ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
 	if math.Abs(strat.ySizeDiff) < strat.yStepSize {
 		return
+	}
+	//如y下单也加上控制，以限下单太大，造成市场冲击
+	if strat.ySizeDiff*strat.yMultiplier < -strat.maxOrderValue/strat.yWalkedDepth.MidPrice {
+		strat.ySizeDiff = -strat.maxOrderValue / strat.yWalkedDepth.MidPrice / strat.yMultiplier
+	} else if strat.ySizeDiff*strat.yMultiplier > strat.maxOrderValue/strat.yWalkedDepth.MidPrice {
+		strat.ySizeDiff = strat.maxOrderValue / strat.yWalkedDepth.MidPrice / strat.yMultiplier
 	}
 	strat.ySizeDiff = math.Floor(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
 
@@ -375,11 +375,11 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 	if strat.xAccount == nil || strat.yAccount == nil {
 		return
 	}
-	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.config.EnterFreePct * strat.enterScale
+	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.config.EnterFreePct * strat.targetWeight
 	if strat.enterStep < strat.config.EnterMinimalStep {
 		strat.enterStep = strat.config.EnterMinimalStep
 	}
-	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.enterScale
+	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.targetWeight
 	strat.usdAvailable = math.Min(strat.xAccount.GetFree()*strat.xLeverage, strat.yAccount.GetFree()*strat.yLeverage)
 }
 

@@ -119,4 +119,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.XOrderCheckInterval == 0 {
 		config.XOrderCheckInterval = time.Millisecond * 100
 	}
+	config.XExchange.DryRun = config.DryRun
+	config.YExchange.DryRun = config.DryRun
 }

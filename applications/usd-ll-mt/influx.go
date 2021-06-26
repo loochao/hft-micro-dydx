@@ -16,8 +16,12 @@ func handleSave(
 	xSymbols []string,
 	xSystemStatus, ySystemStatus common.SystemStatus,
 	xyConfig *Config,
+	yCommissionAssetValue, xCommissionAssetValue *float64,
 	xyInternalInfluxWriter, xyExternalInfluxWriter *common.InfluxWriter,
 ) {
+	if yCommissionAssetValue == nil || xCommissionAssetValue == nil {
+		return
+	}
 	totalUnHedgeValue := 0.0
 	totalXSymbolValue := 0.0
 	totalYSymbolValue := 0.0
@@ -29,9 +33,6 @@ func handleSave(
 	yTradeVolume := 0.0
 	for _, xSymbol := range xSymbols {
 		st, ok := strategiesMap[xSymbol]
-		if !st.tradable {
-			continue
-		}
 		if !ok {
 			hasAllSymbols = false
 			continue
@@ -171,11 +172,13 @@ func handleSave(
 		if yExchange.IsSpot() {
 			yBalance += totalYSymbolValue
 		}
-		totalBalance := xBalance + yBalance
+		totalBalance := xBalance + yBalance + *xCommissionAssetValue + *yCommissionAssetValue
 		netWorth := totalBalance / xyConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalUnHedgeValue"] = totalUnHedgeValue
 		fields["totalBalance"] = totalBalance
+		fields["xCommissionAssetValue"] = *xCommissionAssetValue
+		fields["yCommissionAssetValue"] = *yCommissionAssetValue
 		fields["yBalance"] = yBalance
 		fields["xBalance"] = xBalance
 		fields["yAvailable"] = yAccount.GetFree()
