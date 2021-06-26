@@ -725,10 +725,10 @@ func (bn *BinanceUsdtFuture) tryReBalanceBnb(
 					spotBnbBalance = balance.Free
 				}
 			}
-			logger.Debugf("BNB 2 spot balance usdt %f bnb %f", spotUSDTBalance, spotBnbBalance)
-			if spotUSDTBalance < 0.8*deltaValue {
+			logger.Debugf("BNB 3 spot balance usdt %f bnb %f", spotUSDTBalance, spotBnbBalance)
+			if deltaSize*0.8 > spotBnbBalance {
 				//现货还是钱不够
-				logger.Debugf("BNB spot usdt value %f less than %f after transfer usdt to spot, give up", spotUSDTBalance, 0.8*deltaValue)
+				logger.Debugf("BNB spot bnb value %f less than %f after transfer usdt to spot, give up", spotBnbBalance, 0.8*deltaValue)
 				return
 			}
 		}
