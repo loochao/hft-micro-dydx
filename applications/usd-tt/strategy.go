@@ -178,12 +178,6 @@ func startXYStrategy(
 
 	strat.xyMergedSpotStepSize = common.MergedStepSize(strat.xStepSize*strat.xMultiplier, strat.yStepSize*strat.yMultiplier)
 
-	if _, ok := config.NotTradePairs[xSymbol]; ok {
-		strat.tradable = false
-	} else {
-		strat.tradable = true
-	}
-
 	go strat.startLoop(ctx)
 	return
 }
@@ -282,8 +276,7 @@ func (strat *XYStrategy) hedgeXPosition() {
 		}
 		return
 	}
-	if !strat.tradable ||
-		strat.yPosition == nil ||
+	if strat.yPosition == nil ||
 		strat.xPosition == nil ||
 		strat.xTargetPositionSize == nil ||
 		time.Now().Sub(strat.yPositionUpdateTime) > strat.params.BalancePositionMaxAge ||
@@ -359,8 +352,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		}
 		return
 	}
-	if !strat.tradable ||
-		strat.yPosition == nil ||
+	if strat.yPosition == nil ||
 		strat.xPosition == nil ||
 		strat.xTargetPositionSize == nil ||
 		time.Now().Sub(strat.yPositionUpdateTime) > strat.params.BalancePositionMaxAge ||
@@ -457,8 +449,7 @@ func (strat *XYStrategy) updateTargetPositionSize() {
 		strat.yPosition == nil ||
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
-		time.Now().Sub(strat.spread.EventTime) > strat.params.SpreadTimeToLive ||
-		!strat.tradable {
+		time.Now().Sub(strat.spread.EventTime) > strat.params.SpreadTimeToLive {
 		return
 	}
 	strat.xSize = strat.xPosition.GetSize() * strat.xMultiplier
@@ -774,9 +765,6 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 		logger.Debugf("bad next position, symbol %s %s not match %v", nextPos.GetSymbol(), strat.xSymbol, nextPos)
 		return
 	}
-	if !strat.tradable {
-		return
-	}
 	if strat.xPosition != nil {
 		if strat.xPosition == nextPos {
 			logger.Debugf("bad strat.xPosition == nextPos pass same pointer")
@@ -807,9 +795,6 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 	if nextPos.GetSymbol() != strat.ySymbol {
 		logger.Debugf("bad next position, symbol %s %s not match %v", nextPos.GetSymbol(), strat.ySymbol, nextPos)
-		return
-	}
-	if !strat.tradable {
 		return
 	}
 	if strat.yPosition != nil {

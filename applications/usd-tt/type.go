@@ -11,7 +11,6 @@ type XYStrategy struct {
 
 	xSymbol  string
 	ySymbol  string
-	tradable bool
 	isXSpot  bool
 	isYSpot  bool
 

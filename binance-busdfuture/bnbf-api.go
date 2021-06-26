@@ -325,6 +325,9 @@ func (api *API) GetExchangeInfo(ctx context.Context) (*ExchangeInfo, error) {
 	return &resp, nil
 }
 
+
+
+
 func (api *API) GetPremiumIndex(ctx context.Context) ([]PremiumIndex, error) {
 	resp := make([]PremiumIndex, 0)
 	return resp, api.SendHTTPRequest(

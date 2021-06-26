@@ -91,8 +91,13 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 		EventTime: time.Time{},
 		ParseTime: time.Time{},
 	}
+	bnbPriceCh := make(chan float64, 4)
+	go bn.watchBnbPrice(ctx, bnbPriceCh)
+	var bnbBalance *float64
+
 	restartToReadyTimer := time.NewTimer(time.Hour * 9999)
 	defer restartToReadyTimer.Stop()
+	var rebalancedBnbSilentTime = time.Now()
 	for {
 		select {
 		case <-ctx.Done():
@@ -117,6 +122,30 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 				logger.Debugf("statusCh <- common.SystemStatusRestart failed ch len %d", len(statusCh))
 			}
 			break
+		case price := <-bnbPriceCh:
+			if bn.settings.AutoAddCommissionDiscountAsset {
+				if bnbBalance != nil {
+					select {
+					case commissionAssetValueCh <- *bnbBalance * price:
+					default:
+						logger.Debugf("commissionAssetValueCh <- *bnbBalance * price failed ch len %d", len(commissionAssetValueCh))
+					}
+					if bn.settings.MinimalCommissionDiscountAssetValue*0.5 > *bnbBalance*price &&
+						time.Now().Sub(rebalancedBnbSilentTime) > 0 {
+						deltaValue := bn.settings.MinimalCommissionDiscountAssetValue - *bnbBalance*price
+						if deltaValue > MinNotionals["BNBUSDT"] {
+							go bn.buyBnb(ctx, deltaValue, price)
+							rebalancedBnbSilentTime = time.Now().Add(time.Hour)
+						}
+					}
+				}
+			} else {
+				select {
+				case commissionAssetValueCh <- 0.0:
+				default:
+					logger.Debugf("commissionAssetValueCh <- *bnbAsset.MarginBalance*price failed ch len %d", len(commissionAssetValueCh))
+				}
+			}
 		case account := <-userWS.AccountUpdateEventCh:
 			for _, wsBalance := range account.Balances {
 				if wsBalance.Asset == "USDT" {
@@ -197,6 +226,9 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 						}
 					}
 					continue
+				} else if balance.Asset == "BNB" {
+					bnbBalance = &balance.Free
+					continue
 				}
 				symbol := balance.Asset + "USDT"
 				lastBalance, ok := balancesMap[balance.Asset]
@@ -237,6 +269,31 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 		}
 	}
 
+}
+
+func (bn *BinanceUsdtSpot) buyBnb(
+	ctx context.Context,
+	deltaValue float64,
+	price float64,
+) {
+	size := math.Round(deltaValue/price/StepSizes["BNBUSDT"]) * StepSizes["BNBUSDT"]
+	if size*price < MinNotionals["BNBUSDT"] {
+		return
+	}
+	childCtx, _ := context.WithTimeout(ctx, time.Minute)
+	_, _, err := bn.api.SubmitOrder(childCtx, NewOrderParams{
+		Symbol:           "BNBUSDT",
+		Side:             OrderSideBuy,
+		Type:             OrderTypeMarket,
+		Quantity:         size,
+		NewClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+	})
+	if err != nil {
+		logger.Debugf("bn.api.SubmitOrder buy %f bnb error %v", size, err)
+		return
+	} else {
+		logger.Debugf("BNB bn.usApi.SubmitOrder buy %f bnb success, wait 3 minutes", size)
+	}
 }
 
 func (bn *BinanceUsdtSpot) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
@@ -431,6 +488,25 @@ func (bn *BinanceUsdtSpot) Setup(ctx context.Context, settings common.ExchangeSe
 			return fmt.Errorf("multiplier down not found for %s", symbol)
 		}
 	}
+	symbol := "BNBUSDT"
+	if _, ok := TickSizes[symbol]; !ok {
+		return fmt.Errorf("tick size not found for %s", symbol)
+	}
+	if _, ok := StepSizes[symbol]; !ok {
+		return fmt.Errorf("step size not found for %s", symbol)
+	}
+	if _, ok := MinSizes[symbol]; !ok {
+		return fmt.Errorf("min size not found for %s", symbol)
+	}
+	if _, ok := MinNotionals[symbol]; !ok {
+		return fmt.Errorf("min notional not found for %s", symbol)
+	}
+	if _, ok := MultiplierUps[symbol]; !ok {
+		return fmt.Errorf("multiplier up not found for %s", symbol)
+	}
+	if _, ok := MultiplierDowns[symbol]; !ok {
+		return fmt.Errorf("multiplier down not found for %s", symbol)
+	}
 	return
 }
 
@@ -481,6 +557,33 @@ func (bn *BinanceUsdtSpot) watchSystemStatus(
 				}
 			}
 			timer.Reset(time.Now().Truncate(updateInterval).Add(updateInterval).Sub(time.Now()))
+		}
+	}
+}
+
+func (bn *BinanceUsdtSpot) watchBnbPrice(
+	ctx context.Context,
+	priceCh chan float64,
+) {
+	pullTimer := time.NewTimer(time.Second * 30)
+	defer pullTimer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-pullTimer.C:
+			ticker, err := bn.api.GetTicker(ctx, TickerParam{Symbol: "BNBUSDT"})
+			if err != nil {
+				logger.Debugf("spotApi.GetTicker BNBUSDT error %v", err)
+				pullTimer.Reset(time.Minute)
+			} else {
+				select {
+				case priceCh <- ticker.Price:
+				default:
+					logger.Debugf("priceCh <- ticker.Price failed ch len %d", len(priceCh))
+				}
+				pullTimer.Reset(time.Minute * 5)
+			}
 		}
 	}
 }

@@ -61,7 +61,6 @@ type Config struct {
 	RestartInterval time.Duration `yaml:"restartInterval"`
 
 	XYPairs        map[string]string  `yaml:"xyPairs"`
-	NotTradePairs  map[string]string  `yaml:"notTradePairs"`
 	TargetWeights  map[string]float64 `yaml:"targetWeights"`
 	MaxOrderValues map[string]float64 `yaml:"maxOrderValues"`
 }

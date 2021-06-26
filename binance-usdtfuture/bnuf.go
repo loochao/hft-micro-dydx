@@ -148,12 +148,10 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 					}
 				}
 			} else {
-				if bnbAsset != nil && bnbAsset.MarginBalance != nil {
-					select {
-					case commissionAssetValueCh <- 0.0:
-					default:
-						logger.Debugf("commissionAssetValueCh <- *bnbAsset.MarginBalance*price failed ch len %d", len(commissionAssetValueCh))
-					}
+				select {
+				case commissionAssetValueCh <- 0.0:
+				default:
+					logger.Debugf("commissionAssetValueCh <- *bnbAsset.MarginBalance*price failed ch len %d", len(commissionAssetValueCh))
 				}
 			}
 		case bp := <-userWS.BalanceAndPositionUpdateEventCh:

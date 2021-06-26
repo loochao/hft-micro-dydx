@@ -14,7 +14,6 @@ func handleSave(
 	xExchange, yExchange common.UsdExchange,
 	strategiesMap map[string]*XYStrategy,
 	xSymbols []string,
-	notTradePairs map[string]string,
 	xSystemStatus, ySystemStatus common.SystemStatus,
 	xyConfig *Config,
 	xCommissionAssetValue,
@@ -34,9 +33,6 @@ func handleSave(
 	xTradeVolume := 0.0
 	yTradeVolume := 0.0
 	for _, xSymbol := range xSymbols {
-		if _, ok := notTradePairs[xSymbol]; ok {
-			continue
-		}
 		st, ok := strategiesMap[xSymbol]
 		if !ok {
 			hasAllSymbols = false
@@ -177,6 +173,8 @@ func handleSave(
 		netWorth := totalBalance / xyConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalUnHedgeValue"] = totalUnHedgeValue
+		fields["xCommissionAssetValue"] = *xCommissionAssetValue
+		fields["yCommissionAssetValue"] = *yCommissionAssetValue
 		fields["totalBalance"] = totalBalance
 		fields["yBalance"] = yBalance
 		fields["xBalance"] = xBalance

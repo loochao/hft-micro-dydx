@@ -623,3 +623,19 @@ type WSTrade struct {
 	Stream string `json:"stream"`
 	Data   Trade  `json:"data"`
 }
+
+
+type TickerParam struct {
+	Symbol string `json:"symbol"`
+}
+
+func (lk *TickerParam) ToUrlValues() url.Values {
+	values := url.Values{}
+	values.Set("symbol", lk.Symbol)
+	return values
+}
+
+type Ticker struct {
+	Symbol string  `json:"symbol"`
+	Price  float64 `json:"price,string"`
+}

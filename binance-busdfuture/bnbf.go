@@ -405,6 +405,7 @@ func (bn *BinanceBusdFuture) Setup(ctx context.Context, settings common.Exchange
 			}
 		}
 	}
+
 	return
 }
 
