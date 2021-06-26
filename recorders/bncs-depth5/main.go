@@ -15,13 +15,13 @@ func main() {
 
 	batchSize := flag.Int("batch", 40, "symbols group batch size")
 
-	//proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	//symbolsStr := flag.String("symbols", "EOSUSDC,LINKUSDC,NEOUSDC,WINUSDC,BNBUSDC,ETHUSDC,XRPUSDC,BTTUSDC,ATOMUSDC,TRXUSDC,BCHUSDC,BTCUSDC,LTCUSDC,ZECUSDC,ADAUSDC", "symbols, separate by comma")
-	//savePath := flag.String("path", "/root/bncs-depth5", "data save folder")
+	proxyAddress := flag.String("proxy", "", "symbols group batch size")
+	symbolsStr := flag.String("symbols", "EOSUSDC,LINKUSDC,NEOUSDC,WINUSDC,BNBUSDC,ETHUSDC,XRPUSDC,BTTUSDC,ATOMUSDC,TRXUSDC,BCHUSDC,BTCUSDC,LTCUSDC,ZECUSDC,ADAUSDC", "symbols, separate by comma")
+	savePath := flag.String("path", "/root/bncs-depth5", "data save folder")
 
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
-	symbolsStr := flag.String("symbols", "BTCUSDC,ETHUSDC", "symbols, separate by comma")
-	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
+	//symbolsStr := flag.String("symbols", "BTCUSDC,ETHUSDC", "symbols, separate by comma")
+	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
 	flag.Parse()
 	symbols := strings.Split(*symbolsStr, ",")
 	ctx, cancel := context.WithCancel(context.Background())
