@@ -110,7 +110,7 @@ type ExchangeSettings struct {
 	Leverage                            float64       `yaml:"leverage" json:"leverage"`
 	ChangeLeverage                      bool          `yaml:"changeLeverage" json:"changeLeverage"`
 	AutoAddCommissionDiscountAsset      bool          `yaml:"autoAddCommissionDiscountAsset" json:"autoAddCommissionDiscountAsset"`
-	MinimalCommissionDiscountAssetValue float64       `yaml:"minimalCommissionDiscountAsset" json:"minimalCommissionDiscountAsset"`
+	MinimalCommissionDiscountAssetValue float64       `yaml:"minimalCommissionDiscountAssetValue" json:"minimalCommissionDiscountAsset"`
 }
 
 type SpotExchange interface {

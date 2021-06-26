@@ -138,8 +138,8 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 					default:
 						logger.Debugf("commissionAssetValueCh <- *bnbAsset.MarginBalance*price failed ch len %d", len(commissionAssetValueCh))
 					}
-					if bn.settings.MinimalCommissionDiscountAssetValue*0.5 > *bnbAsset.MarginBalance*price &&
-						time.Now().Sub(rebalancedBnbSilentTime) > 0 {
+					//if bn.settings.MinimalCommissionDiscountAssetValue*0.5 > *bnbAsset.MarginBalance*price &&
+					if time.Now().Sub(rebalancedBnbSilentTime) > 0 {
 						//deltaValue := bn.settings.MinimalCommissionDiscountAssetValue - *bnbAsset.MarginBalance*price
 						deltaValue := 20.0
 						if deltaValue > binance_usdtspot.MinNotionals["BNBUSDT"] {
