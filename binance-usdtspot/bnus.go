@@ -166,7 +166,6 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 					}
 					continue
 				}else if wsBalance.Asset == "BNB"{
-					bnbBalance = &wsBalance.FreeAmount
 					continue
 				}
 				symbol := wsBalance.Asset + "USDT"
@@ -230,7 +229,10 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 					}
 					continue
 				} else if balance.Asset == "BNB" {
-					bnbBalance = &balance.Free
+					if bnbBalance == nil {
+						bnbBalance = new(float64)
+					}
+					*bnbBalance = balance.Free
 					continue
 				}
 				symbol := balance.Asset + "USDT"

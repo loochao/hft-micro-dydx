@@ -189,11 +189,6 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 						}
 						break
 					}
-				} else if balance.Asset == "BNB" {
-					if bnbAsset != nil && bnbAsset.EventTime.Sub(balance.EventTime) < 0 {
-						bnbAsset.WalletBalance = &balance.WalletBalance
-						bnbAsset.CrossWalletBalance = &balance.CrossWalletBalance
-					}
 				}
 			}
 			break
@@ -222,10 +217,11 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 							logSilentTime = time.Now().Add(time.Minute)
 						}
 					}
-					break
+					continue
 				} else if asset.Asset == "BNB" {
 					asset := asset
 					bnbAsset = &asset
+					continue
 				}
 			}
 			hasPositions := make(map[string]bool)
