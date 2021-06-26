@@ -138,6 +138,7 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 					default:
 						logger.Debugf("commissionAssetValueCh <- *bnbAsset.MarginBalance*price failed ch len %d", len(commissionAssetValueCh))
 					}
+					logger.Debugf("%f %f", price, *bnbAsset.MarginBalance)
 					if !bn.settings.DryRun &&
 						bn.settings.MinimalCommissionDiscountAssetValue*0.5 > *bnbAsset.MarginBalance*price &&
 						time.Now().Sub(rebalancedBnbSilentTime) > 0 {
