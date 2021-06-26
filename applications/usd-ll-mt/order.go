@@ -393,11 +393,11 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideBuy &&
-		strat.xOpenOrder.Price > strat.xWalkedDepth.BidPrice*(1.0+strat.orderOffset.NearBot) + strat.xTickSize {
+		strat.xOpenOrder.Price > strat.xWalkedDepth.BestBidPrice*(1.0+strat.orderOffset.NearBot) + strat.xTickSize {
 		logger.Debugf("%s BUY PRICE %f > NEAR BOT %f, CANCEL",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
-			strat.xWalkedDepth.BidPrice*(1.0+strat.orderOffset.NearBot),
+			strat.xWalkedDepth.BestBidPrice*(1.0+strat.orderOffset.NearBot),
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
@@ -409,11 +409,11 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
-		strat.xOpenOrder.Price < strat.xWalkedDepth.AskPrice*(1.0+strat.orderOffset.NearTop) - strat.xTickSize{
+		strat.xOpenOrder.Price < strat.xWalkedDepth.BestAskPrice*(1.0+strat.orderOffset.NearTop) - strat.xTickSize{
 		logger.Debugf("%s SELL PRICE %f < NEAR TOP %f, CANCEL ",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
-			strat.xWalkedDepth.AskPrice*(1.0+strat.orderOffset.NearTop),
+			strat.xWalkedDepth.BestAskPrice*(1.0+strat.orderOffset.NearTop),
 		)
 		return false
 	}
