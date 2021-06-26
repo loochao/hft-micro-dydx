@@ -7,13 +7,15 @@ import (
 	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"math/rand"
 	"sync"
 	"time"
 )
 
 type BinanceUsdtFuture struct {
-	api      *API
+	ufApi    *API
+	usApi    *binance_usdtspot.API
 	done     chan interface{}
 	stopped  bool
 	mu       sync.Mutex
@@ -79,7 +81,7 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 	bn.mu.Lock()
 	proxy := bn.settings.Proxy
 	bn.mu.Unlock()
-	userWS, err := NewUserWebsocket(ctx, bn.api, proxy)
+	userWS, err := NewUserWebsocket(ctx, bn.ufApi, proxy)
 	if err != nil {
 		logger.Debugf("NewUserWebsocket(ctx,  bn.api, proxy) error %v", err)
 		return
@@ -100,6 +102,7 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 	var bnbAsset *Asset
 	restartToReadyTimer := time.NewTimer(time.Hour * 9999)
 	defer restartToReadyTimer.Stop()
+	var rebalancedBnbSilentTime = time.Now()
 	for {
 		select {
 		case <-ctx.Done():
@@ -125,11 +128,33 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 			}
 			break
 		case price := <-bnbPriceCh:
-			if bnbAsset != nil && bnbAsset.MarginBalance != nil{
-				select {
-				case commissionAssetValueCh <- *bnbAsset.MarginBalance*price:
-				default:
-					logger.Debugf("commissionAssetValueCh <- *bnbAsset.MarginBalance*price failed ch len %d", len(commissionAssetValueCh))
+			if bn.settings.AutoAddCommissionDiscountAsset {
+				if bnbAsset != nil &&
+					bnbAsset.MarginBalance != nil &&
+					usdtAsset != nil &&
+					usdtAsset.MarginBalance != nil {
+					select {
+					case commissionAssetValueCh <- *bnbAsset.MarginBalance * price:
+					default:
+						logger.Debugf("commissionAssetValueCh <- *bnbAsset.MarginBalance*price failed ch len %d", len(commissionAssetValueCh))
+					}
+					if bn.settings.MinimalCommissionDiscountAssetValue*0.5 > *bnbAsset.MarginBalance*price &&
+						time.Now().Sub(rebalancedBnbSilentTime) > 0 {
+						//deltaValue := bn.settings.MinimalCommissionDiscountAssetValue - *bnbAsset.MarginBalance*price
+						deltaValue := 20.0
+						if deltaValue > binance_usdtspot.MinNotionals["BNBUSDT"] {
+							bn.tryReBalanceBnb(ctx, *usdtAsset.MarginBalance, price, deltaValue)
+							rebalancedBnbSilentTime = time.Now().Add(time.Hour)
+						}
+					}
+				}
+			} else {
+				if bnbAsset != nil && bnbAsset.MarginBalance != nil {
+					select {
+					case commissionAssetValueCh <- 0.0:
+					default:
+						logger.Debugf("commissionAssetValueCh <- *bnbAsset.MarginBalance*price failed ch len %d", len(commissionAssetValueCh))
+					}
 				}
 			}
 		case bp := <-userWS.BalanceAndPositionUpdateEventCh:
@@ -357,7 +382,7 @@ func (bn *BinanceUsdtFuture) StreamFundingRate(ctx context.Context, channels map
 			return
 		case <-timer.C:
 			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
-			indexes, err := bn.api.GetPremiumIndex(subCtx)
+			indexes, err := bn.ufApi.GetPremiumIndex(subCtx)
 			if err != nil {
 				logger.Debugf("WatchPositionsFromHttp GetPositions error %v", err)
 			} else {
@@ -408,13 +433,17 @@ func (bn *BinanceUsdtFuture) Setup(ctx context.Context, settings common.Exchange
 	bn.mu = sync.Mutex{}
 	bn.stopped = false
 	bn.settings = settings
-	bn.api, err = NewAPI(&common.Credentials{
+	bn.ufApi, err = NewAPI(&common.Credentials{
 		Key:    settings.ApiKey,
 		Secret: settings.ApiSecret,
 	}, settings.Proxy)
 	if err != nil {
 		return
 	}
+	bn.usApi, err = binance_usdtspot.NewAPI(&common.Credentials{
+		Key:    settings.ApiKey,
+		Secret: settings.ApiSecret,
+	}, settings.Proxy)
 	for _, symbol := range settings.Symbols {
 		if _, ok := TickSizes[symbol]; !ok {
 			return fmt.Errorf("tick size not found for %s", symbol)
@@ -435,7 +464,7 @@ func (bn *BinanceUsdtFuture) Setup(ctx context.Context, settings common.Exchange
 			return fmt.Errorf("multiplier down not found for %s", symbol)
 		}
 		if settings.ChangeLeverage {
-			res, err := bn.api.UpdateLeverage(ctx, UpdateLeverageParams{
+			res, err := bn.ufApi.UpdateLeverage(ctx, UpdateLeverageParams{
 				Symbol:   symbol,
 				Leverage: int64(settings.Leverage),
 			})
@@ -446,7 +475,7 @@ func (bn *BinanceUsdtFuture) Setup(ctx context.Context, settings common.Exchange
 			}
 		}
 		if settings.ChangeMarginType {
-			res, err := bn.api.UpdateMarginType(ctx, UpdateMarginTypeParams{
+			res, err := bn.ufApi.UpdateMarginType(ctx, UpdateMarginTypeParams{
 				Symbol:     symbol,
 				MarginType: settings.MarginType,
 			})
@@ -491,7 +520,7 @@ func (bn *BinanceUsdtFuture) watchSystemStatus(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			_, err := bn.api.PingServer(subCtx)
+			_, err := bn.ufApi.PingServer(subCtx)
 			if err != nil {
 				logger.Debugf("api.PingServer error %v", err)
 				select {
@@ -525,7 +554,7 @@ func (bn *BinanceUsdtFuture) watchPositions(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			positions, err := bn.api.GetPositions(subCtx)
+			positions, err := bn.ufApi.GetPositions(subCtx)
 			if err != nil {
 				logger.Debugf("bn.api.GetPositions(subCtx) error %v", err)
 			} else {
@@ -568,7 +597,7 @@ func (bn *BinanceUsdtFuture) watchAccount(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			account, err := bn.api.GetAccount(subCtx)
+			account, err := bn.ufApi.GetAccount(subCtx)
 			if err != nil {
 				logger.Debugf("bn.api.GetAccount(subCtx) error %v", err)
 			} else {
@@ -582,15 +611,154 @@ func (bn *BinanceUsdtFuture) watchAccount(
 		}
 	}
 }
-func (b *BinanceUsdtFuture) watchBnbPrice(
+
+func (bn *BinanceUsdtFuture) tryReBalanceBnb(
+	ctx context.Context,
+	currentUsdtValue float64,
+	price float64,
+	deltaValue float64,
+) {
+	if deltaValue < 0 {
+		return
+	}
+	//先现货查一遍仓位
+	account, _, err := bn.usApi.GetAccount(ctx)
+	if err != nil {
+		logger.Debugf("bn.usApi.GetAccount(ctx) err %v", err)
+		return
+	}
+	var spotUSDTBalance, spotBnbBalance float64
+	for _, balance := range account.Balances {
+		if balance.Asset == "USDT" {
+			spotUSDTBalance = balance.Free
+		} else if balance.Asset == "BNB" {
+			spotBnbBalance = balance.Free
+		}
+	}
+	logger.Debugf("1 spot balance usdt %f bnb %f", spotUSDTBalance, spotBnbBalance)
+	deltaSize := deltaValue / price
+	if spotUSDTBalance < 0.8*deltaValue &&
+		spotBnbBalance < 0.8*deltaSize {
+		//需要现货买BN，但是没有USD，需要从期货转USDT
+		if currentUsdtValue < (deltaValue-spotUSDTBalance)*1.2 {
+			logger.Debugf("future and spot usdt both not available for buy %s usdt bnb", deltaValue)
+			//期货钱也不够了，放弃
+			return
+		}
+		transferSize := (deltaValue - spotUSDTBalance) * 1.2
+		logger.Debugf("transfer %f usdt to usdt spot", transferSize)
+		childCtx, _ := context.WithTimeout(ctx, time.Minute)
+		resp, _, err := bn.usApi.NewFutureAccountTransfer(childCtx, binance_usdtspot.FutureAccountTransferParams{
+			Asset:  "USDT",
+			Type:   binance_usdtspot.TransferUSDTFutureToSpot,
+			Amount: transferSize,
+		})
+		if err != nil {
+			logger.Debugf("NewFutureAccountTransfer usdt to spot error %v", err)
+			return
+		} else {
+			logger.Debugf("NewFutureAccountTransfer usdt to spot %%f %v, wait 3 minutes", transferSize, resp.TranId)
+			select {
+			case <-ctx.Done():
+				return
+			case <-bn.done:
+				return
+			case <-time.After(time.Minute * 3):
+			}
+		}
+
+		//如果有期货向现货转USD，再查一遍仓位
+		account, _, err = bn.usApi.GetAccount(ctx)
+		if err != nil {
+			logger.Debugf("bn.usApi.GetAccount(ctx) err %v", err)
+			return
+		}
+		for _, balance := range account.Balances {
+			if balance.Asset == "USDT" {
+				spotUSDTBalance = balance.Free
+			} else if balance.Asset == "BNB" {
+				spotBnbBalance = balance.Free
+			}
+		}
+		logger.Debugf("2 spot balance usdt %f bnb %f", spotUSDTBalance, spotBnbBalance)
+		if spotUSDTBalance < (deltaValue - spotBnbBalance*price) {
+			//现货还是钱不够
+			logger.Debugf("spot usdt value %f less than %f after transfer usdt to spot, give up", spotUSDTBalance, 0.8*deltaValue)
+			return
+		}
+	}
+
+	if deltaSize*0.8 > spotBnbBalance {
+		//bnb不够，需要买BNB
+		size := math.Round((deltaSize-spotBnbBalance)/binance_usdtspot.StepSizes["BNBUSDT"]) * binance_usdtspot.StepSizes["BNBUSDT"]
+		if size*price < binance_usdtspot.MinNotionals["BNBUSDT"]*1.2 {
+			//不够最小开仓单位
+			return
+		}
+		childCtx, _ := context.WithTimeout(ctx, time.Minute)
+		_, _, err := bn.usApi.SubmitOrder(childCtx, binance_usdtspot.NewOrderParams{
+			Symbol:           "BNBUSDT",
+			Side:             binance_usdtspot.OrderSideBuy,
+			Type:             binance_usdtspot.OrderTypeMarket,
+			Quantity:         size,
+			NewClientOrderID: fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+		})
+		if err != nil {
+			logger.Debugf("bn.usApi.SubmitOrder buy %f bnb error %v", size, err)
+			return
+		} else {
+			logger.Debugf("bn.usApi.SubmitOrder buy %f bnb success, wait 3 minutes", size)
+			select {
+			case <-ctx.Done():
+				return
+			case <-bn.done:
+				return
+			case <-time.After(time.Minute * 3):
+			}
+		}
+
+		//买完BNB 需要再查一遍仓位
+		account, _, err = bn.usApi.GetAccount(ctx)
+		if err != nil {
+			logger.Debugf("bn.usApi.GetAccount(ctx) err %v", err)
+			return
+		}
+		for _, balance := range account.Balances {
+			if balance.Asset == "USDT" {
+				spotUSDTBalance = balance.Free
+			} else if balance.Asset == "BNB" {
+				spotBnbBalance = balance.Free
+			}
+		}
+		logger.Debugf("2 spot balance usdt %f bnb %f", spotUSDTBalance, spotBnbBalance)
+		if spotUSDTBalance < 0.8*deltaValue {
+			//现货还是钱不够
+			logger.Debugf("spot usdt value %f less than %f after transfer usdt to spot, give up", spotUSDTBalance, 0.8*deltaValue)
+			return
+		}
+	}
+
+	if deltaSize*0.8 < spotBnbBalance {
+		transferSize := math.Min(deltaSize, spotBnbBalance)
+		logger.Debugf("transfer %f bnb to usdt future", transferSize)
+		childCtx, _ := context.WithTimeout(ctx, time.Minute)
+		resp, _, err := bn.usApi.NewFutureAccountTransfer(childCtx, binance_usdtspot.FutureAccountTransferParams{
+			Asset:  "BNB",
+			Type:   binance_usdtspot.TransferSpotToUSDTFuture,
+			Amount: transferSize,
+		})
+		if err != nil {
+			logger.Debugf("NewFutureAccountTransfer error %v", err)
+		} else {
+			logger.Debugf("NewFutureAccountTransfer spot to usdt future %f %v", transferSize, resp.TranId)
+		}
+	}
+}
+
+func (bn *BinanceUsdtFuture) watchBnbPrice(
 	ctx context.Context,
 	priceCh chan float64,
 ) {
-	spotApi, err := binance_usdtspot.NewAPI(&common.Credentials{}, b.settings.Proxy)
-	if err != nil {
-		b.Stop()
-		return
-	}
 	pullTimer := time.NewTimer(time.Second * 30)
 	defer pullTimer.Stop()
 	for {
@@ -598,7 +766,7 @@ func (b *BinanceUsdtFuture) watchBnbPrice(
 		case <-ctx.Done():
 			return
 		case <-pullTimer.C:
-			ticker, err := spotApi.GetTicker(ctx, binance_usdtspot.TickerParam{Symbol: "BNBUSDT"})
+			ticker, err := bn.usApi.GetTicker(ctx, binance_usdtspot.TickerParam{Symbol: "BNBUSDT"})
 			if err != nil {
 				logger.Debugf("spotApi.GetTicker BNBUSDT error %v", err)
 				pullTimer.Reset(time.Minute)
@@ -612,7 +780,6 @@ func (b *BinanceUsdtFuture) watchBnbPrice(
 			}
 		}
 	}
-
 }
 
 func (bn *BinanceUsdtFuture) watchOrder(
@@ -681,7 +848,7 @@ func (bn *BinanceUsdtFuture) submitOrder(ctx context.Context, param common.NewOr
 	}
 	newOrderParam.NewClientOrderId = param.ClientID
 	//logger.Debugf("%s before bn.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
-	order, err := bn.api.SubmitOrder(ctx, newOrderParam)
+	order, err := bn.ufApi.SubmitOrder(ctx, newOrderParam)
 	//logger.Debugf("%s after bn.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
 	if err != nil {
 		select {
@@ -708,7 +875,7 @@ func (bn *BinanceUsdtFuture) cancelOrder(ctx context.Context, param common.Cance
 			Symbol:            param.Symbol,
 			OrigClientOrderId: param.ClientID,
 		}
-		_, err := bn.api.CancelOrder(ctx, cancelOrderParam)
+		_, err := bn.ufApi.CancelOrder(ctx, cancelOrderParam)
 		if err != nil {
 			select {
 			case errCh <- common.OrderError{
@@ -720,7 +887,7 @@ func (bn *BinanceUsdtFuture) cancelOrder(ctx context.Context, param common.Cance
 			}
 		}
 	} else if param.Symbol != "" {
-		_, err := bn.api.CancelAllOpenOrders(ctx, CancelAllOrderParams{
+		_, err := bn.ufApi.CancelAllOpenOrders(ctx, CancelAllOrderParams{
 			Symbol: param.Symbol,
 		})
 		if err != nil {

@@ -100,17 +100,17 @@ type ExchangeSettings struct {
 	Name                           string        `yaml:"name" json:"name"`
 	Proxy                          string        `yaml:"proxy" json:"proxy"`
 	ApiKey                         string        `yaml:"apiKey" json:"apiKey"`
-	ApiSecret                      string        `yaml:"apiSecret" json:"apiSecret"`
-	ApiPassphrase                  string        `yaml:"apiPassphrase" json:"apiPassphrase"`
-	Symbols                        []string      `yaml:"symbols" json:"symbols"`
-	PullInterval                   time.Duration `yaml:"pullInterval" json:"httpPullInterval"`
-	HttpRequestInterval            time.Duration `yaml:"httpRequestInterval" json:"httpRequestInterval"`
-	MarginType                     string        `yaml:"marginType" json:"marginType"`
-	ChangeMarginType               bool          `yaml:"changeMarginType" json:"changeMarginType"`
-	Leverage                       float64       `yaml:"leverage" json:"leverage"`
-	ChangeLeverage                 bool          `yaml:"changeLeverage" json:"changeLeverage"`
-	AutoAddCommissionDiscountAsset bool          `yaml:"autoAddCommissionDiscountAsset" json:"autoAddCommissionDiscountAsset"`
-	MinimalCommissionDiscountAsset float64       `yaml:"minimalCommissionDiscountAsset" json:"minimalCommissionDiscountAsset"`
+	ApiSecret                           string        `yaml:"apiSecret" json:"apiSecret"`
+	ApiPassphrase                       string        `yaml:"apiPassphrase" json:"apiPassphrase"`
+	Symbols                             []string      `yaml:"symbols" json:"symbols"`
+	PullInterval                        time.Duration `yaml:"pullInterval" json:"httpPullInterval"`
+	HttpRequestInterval                 time.Duration `yaml:"httpRequestInterval" json:"httpRequestInterval"`
+	MarginType                          string        `yaml:"marginType" json:"marginType"`
+	ChangeMarginType                    bool          `yaml:"changeMarginType" json:"changeMarginType"`
+	Leverage                            float64       `yaml:"leverage" json:"leverage"`
+	ChangeLeverage                      bool          `yaml:"changeLeverage" json:"changeLeverage"`
+	AutoAddCommissionDiscountAsset      bool          `yaml:"autoAddCommissionDiscountAsset" json:"autoAddCommissionDiscountAsset"`
+	MinimalCommissionDiscountAssetValue float64       `yaml:"minimalCommissionDiscountAsset" json:"minimalCommissionDiscountAsset"`
 }
 
 type SpotExchange interface {
