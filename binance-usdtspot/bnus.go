@@ -165,6 +165,9 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 						}
 					}
 					continue
+				}else if wsBalance.Asset == "BNB"{
+					bnbBalance = &wsBalance.FreeAmount
+					continue
 				}
 				symbol := wsBalance.Asset + "USDT"
 				if ch, ok := positionChMap[symbol]; ok {
