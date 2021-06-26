@@ -176,6 +176,8 @@ func handleSave(
 		netWorth := totalBalance / xyConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalUnHedgeValue"] = totalUnHedgeValue
+		fields["xCommissionAssetValue"] = *xCommissionAssetValue
+		fields["yCommissionAssetValue"] = *yCommissionAssetValue
 		fields["totalBalance"] = totalBalance
 		fields["yBalance"] = yBalance
 		fields["xBalance"] = xBalance
