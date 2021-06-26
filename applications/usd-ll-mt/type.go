@@ -178,10 +178,10 @@ func NewOffset(msg string) (Offset, error) {
 	}
 	return Offset{
 		FarTop:  offsets[5],
-		Top:     offsets[3],
+		Top:     offsets[4],
 		NearTop: offsets[3],
 		NearBot: offsets[2],
-		Bot:     offsets[2],
+		Bot:     offsets[1],
 		FarBot:  offsets[0],
 	}, nil
 }
