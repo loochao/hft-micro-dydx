@@ -99,12 +99,12 @@ func main() {
 		}
 		quantiles[symbol] = fmt.Sprintf(
 			"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+			impactTD.Quantile(0.00005),
 			impactTD.Quantile(0.0005),
 			impactTD.Quantile(0.005),
-			impactTD.Quantile(0.05),
-			impactTD.Quantile(0.95),
 			impactTD.Quantile(0.995),
 			impactTD.Quantile(0.9995),
+			impactTD.Quantile(0.99995),
 		)
 		maxOrderValues[symbol] = fmt.Sprintf(
 			"%.0f",
