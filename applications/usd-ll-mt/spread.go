@@ -28,8 +28,11 @@ func (strat *XYStrategy) walkSpread() {
 		strat.xDepthExpireCount++
 	}
 	strat.depthMatchCount++
-	strat.shortLastEnter = (strat.yWalkedDepth.BidPrice - strat.xWalkedDepth.MidPrice) / strat.xWalkedDepth.MidPrice
-	strat.longLastEnter = (strat.yWalkedDepth.AskPrice - strat.xWalkedDepth.MidPrice) / strat.xWalkedDepth.MidPrice
+
+	//假定挂单基于MiroPrice, 考虑挂单的下界偏移进Spread
+	//如果想挂得远，成交少，吃大Spread, 可以orderOffsets参数，推NearBot NearTop, 反之亦然
+	strat.shortLastEnter = (strat.yWalkedDepth.BidPrice - strat.xWalkedDepth.MircoPrice) / strat.xWalkedDepth.MircoPrice + strat.orderOffset.NearTop
+	strat.longLastEnter = (strat.yWalkedDepth.AskPrice - strat.xWalkedDepth.MircoPrice) / strat.xWalkedDepth.MircoPrice + strat.orderOffset.NearBot
 
 	strat.shortEnterTimedMedian.Insert(strat.spreadTime, strat.shortLastEnter)
 	strat.longEnterTimedMedian.Insert(strat.spreadTime, strat.longLastEnter)
