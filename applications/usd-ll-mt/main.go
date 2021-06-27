@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
+	bncs "github.com/geometrybase/hft-micro/binance-usdcspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
@@ -97,6 +98,12 @@ func main() {
 	case "binanceBusdSpotWithDepth20":
 		xExchange = &bnbs.BinanceBusdSpotWithDepth20{}
 		break
+	case "binanceUsdcSpotWithDepth5":
+		xExchange = &bncs.BinanceUsdcSpotWithDepth5{}
+		break
+	case "binanceUsdcSpotWithDepth20":
+		xExchange = &bncs.BinanceUsdcSpotWithDepth20{}
+		break
 	case "binanceUsdtFutureWithDepth5":
 		xExchange = &bnuf.BinanceUsdtFutureWidthDepth5{}
 		break
@@ -128,6 +135,12 @@ func main() {
 		break
 	case "binanceBusdSpotWithDepth20":
 		yExchange = &bnbs.BinanceBusdSpotWithDepth20{}
+		break
+	case "binanceUsdcSpotWithDepth5":
+		yExchange = &bncs.BinanceUsdcSpotWithDepth5{}
+		break
+	case "binanceUsdcSpotWithDepth20":
+		yExchange = &bncs.BinanceUsdcSpotWithDepth20{}
 		break
 	case "binanceUsdtFutureWithDepth5":
 		yExchange = &bnuf.BinanceUsdtFutureWidthDepth5{}
