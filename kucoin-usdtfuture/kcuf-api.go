@@ -102,15 +102,15 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	}
 	var dataCap DataCap
 	if err := json.Unmarshal(contents, &dataCap); err != nil {
-		logger.Debugf("%s", contents)
+		logger.Debugf("%s %s %v", path, contents, params)
 		return err
 	} else if dataCap.Code != 200000 {
-		logger.Debugf("%s", contents)
+		logger.Debugf("%s %s %v", path, contents, params)
 		return errors.New(dataCap.Msg)
 	}
 	err = json.Unmarshal(dataCap.Data, result)
 	if err != nil {
-		logger.Debugf("%s", contents)
+		logger.Debugf("%s %s %v", path,contents, params)
 		return err
 	}
 	return nil
