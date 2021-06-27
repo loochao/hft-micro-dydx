@@ -152,6 +152,8 @@ type XYStrategy struct {
 
 	xOpenOrder        *common.NewOrderParam
 	xCancelOrderParam common.CancelOrderParam
+
+	stopped int32
 }
 
 type Offset struct {

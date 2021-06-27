@@ -5,6 +5,7 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
+	"sync/atomic"
 	"time"
 )
 
@@ -143,6 +144,7 @@ func startXYStrategy(
 		size:                    0,
 		orderSide:               common.OrderSideUnknown,
 		xCancelOrderParam:       common.CancelOrderParam{Symbol: xSymbol},
+		stopped:                 0,
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
@@ -182,6 +184,12 @@ func startXYStrategy(
 	go strat.startLoop(ctx)
 	return
 }
+func (strat *XYStrategy) stop() {
+	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
+		logger.Debugf("stopped")
+		strat.tryCancelXOpenOrder("end")
+	}
+}
 
 func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.xWalkDepthTimer.Stop()
@@ -189,6 +197,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.spreadWalkTimer.Stop()
 	defer strat.realisedSpreadTimer.Stop()
 	defer strat.saveTimer.Stop()
+	defer strat.stop()
 	var nextXPos, nextYPos common.Position
 	strat.tryCancelXOpenOrder("start")
 	strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)

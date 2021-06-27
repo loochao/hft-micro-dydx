@@ -360,15 +360,13 @@ func main() {
 		yNewOrderErrorChMap,
 	)
 
-	if xyConfig.CpuProfile != "" {
-		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-		go func() {
-			sig := <-sigs
-			logger.Debugf("catch exit signal %v", sig)
-			xyGlobalCancel()
-		}()
-	}
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-sigs
+		logger.Debugf("catch exit signal %v", sig)
+		xyGlobalCancel()
+	}()
 
 	logger.Debugf("start main loop")
 	restartTimer := time.NewTimer(xyConfig.RestartInterval)
