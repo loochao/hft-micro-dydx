@@ -11,19 +11,19 @@ func hedgeSymbol(symbol string, entryStep float64) {
 	position, okPosition := xyPositions[symbol]
 	targetValue, okTargetSize := xyTargetValues[symbol]
 	if !okPosition || !okTargetSize {
-		logger.Debugf("!okPosition %v || !okTargetSize %v",  !okPosition, !okTargetSize)
+		//logger.Debugf("!okPosition %v || !okTargetSize %v",  !okPosition, !okTargetSize)
 		return
 	}
 	stepSize := xyStepSizes[symbol]
 	multiplier := xyMultipliers[symbol]
 	sizeDiff := targetValue/multiplier - position.GetSize()
 	if math.Abs(sizeDiff) < 0.5*entryStep {
-		logger.Debugf("math.Abs(sizeDiff) < 0.5*entryStep %f", math.Abs(sizeDiff), 0.5*entryStep)
+		//logger.Debugf("math.Abs(sizeDiff) < 0.5*entryStep %f", math.Abs(sizeDiff), 0.5*entryStep)
 		return
 	}
 	sizeDiff = math.Round(sizeDiff/stepSize) * stepSize
 	if math.Abs(sizeDiff) < stepSize {
-		logger.Debugf("math.Abs(sizeDiff) %f < stepSize %f", sizeDiff, stepSize)
+		//logger.Debugf("math.Abs(sizeDiff) %f < stepSize %f", sizeDiff, stepSize)
 		return
 	}
 	logger.Debugf("updatePositions %s size %f position %f -> %f", symbol, sizeDiff, position.GetSize(), targetValue/multiplier)
