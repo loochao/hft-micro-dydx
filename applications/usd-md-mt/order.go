@@ -95,7 +95,7 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
-			strat.price = math.Ceil(math.Max(strat.xWalkedDepth.MircoPrice, strat.xWalkedDepth.BestBidPrice+strat.xTickSize)/strat.xTickSize) * strat.xTickSize
+			strat.price = math.Ceil(math.Max(strat.xWalkedDepth.MidPrice, strat.xWalkedDepth.BestBidPrice+strat.xTickSize)/strat.xTickSize) * strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
 				Side:        common.OrderSideSell,
@@ -153,7 +153,7 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
-			strat.price = math.Floor(math.Min(strat.xWalkedDepth.MircoPrice, strat.xWalkedDepth.BestAskPrice-strat.xTickSize)/strat.xTickSize) * strat.xTickSize
+			strat.price = math.Floor(math.Min(strat.xWalkedDepth.MidPrice, strat.xWalkedDepth.BestAskPrice-strat.xTickSize)/strat.xTickSize) * strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
 				Side:        common.OrderSideBuy,
@@ -238,7 +238,7 @@ func (strat *XYStrategy) updateXOrder() {
 			}
 			return
 		}
-		strat.price = math.Floor(math.Min(strat.xWalkedDepth.MircoPrice, strat.xWalkedDepth.BestAskPrice-strat.xTickSize)/strat.xTickSize) * strat.xTickSize
+		strat.price = math.Floor(math.Min(strat.xWalkedDepth.MidPrice, strat.xWalkedDepth.BestAskPrice-strat.xTickSize)/strat.xTickSize) * strat.xTickSize
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideBuy,
@@ -321,7 +321,7 @@ func (strat *XYStrategy) updateXOrder() {
 			}
 			return
 		}
-		strat.price = math.Ceil(math.Max(strat.xWalkedDepth.MircoPrice, strat.xWalkedDepth.BestBidPrice+strat.xTickSize)/strat.xTickSize) * strat.xTickSize
+		strat.price = math.Ceil(math.Max(strat.xWalkedDepth.MidPrice, strat.xWalkedDepth.BestBidPrice+strat.xTickSize)/strat.xTickSize) * strat.xTickSize
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideSell,
