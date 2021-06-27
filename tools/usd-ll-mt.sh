@@ -20,6 +20,12 @@ git tag -d "usd-ll-mt.$dt"
 git tag "usd-ll-mt.$dt"
 git push origin "usd-ll-mt.$dt" --force
 
+
+echo ""
+echo "vcarm02"
+rsync -avx --progress "./dist/usd-ll-mt.arm64.$dt" vcarm02:/usr/local/bin/
+
+
 echo ""
 echo "vcarm03"
 rsync -avx --progress "./dist/usd-ll-mt.arm64.$dt" vcarm03:/usr/local/bin/
