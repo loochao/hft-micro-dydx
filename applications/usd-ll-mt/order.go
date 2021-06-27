@@ -100,6 +100,9 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
 			strat.price = math.Ceil(strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.Top)/strat.xTickSize) * strat.xTickSize
+			if strat.price < strat.xWalkedDepth.BestBidPrice + strat.xTickSize {
+				strat.price = strat.xWalkedDepth.BestBidPrice + strat.xTickSize
+			}
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
 				Side:        common.OrderSideSell,
@@ -162,6 +165,9 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
 			strat.price = math.Floor(strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.Bot)/strat.xTickSize) * strat.xTickSize
+			if strat.price > strat.xWalkedDepth.BestAskPrice - strat.xTickSize {
+				strat.price = strat.xWalkedDepth.BestAskPrice - strat.xTickSize
+			}
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
 				Side:        common.OrderSideBuy,
@@ -251,6 +257,9 @@ func (strat *XYStrategy) updateXOrder() {
 			return
 		}
 		strat.price = math.Floor(strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.Bot)/strat.xTickSize) * strat.xTickSize
+		if strat.price > strat.xWalkedDepth.BestAskPrice - strat.xTickSize {
+			strat.price = strat.xWalkedDepth.BestAskPrice - strat.xTickSize
+		}
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideBuy,
@@ -338,6 +347,9 @@ func (strat *XYStrategy) updateXOrder() {
 			return
 		}
 		strat.price = math.Ceil(strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.Top)/strat.xTickSize) * strat.xTickSize
+		if strat.price < strat.xWalkedDepth.BestBidPrice + strat.xTickSize {
+			strat.price = strat.xWalkedDepth.BestBidPrice + strat.xTickSize
+		}
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideSell,
