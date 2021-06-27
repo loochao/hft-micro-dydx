@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"io"
 	"io/ioutil"
 	"net"
@@ -101,11 +102,18 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	}
 	var dataCap DataCap
 	if err := json.Unmarshal(contents, &dataCap); err != nil {
+		logger.Debugf("%s", contents)
 		return err
 	} else if dataCap.Code != 200000 {
+		logger.Debugf("%s", contents)
 		return errors.New(dataCap.Msg)
 	}
-	return json.Unmarshal(dataCap.Data, result)
+	err = json.Unmarshal(dataCap.Data, result)
+	if err != nil {
+		logger.Debugf("%s", contents)
+		return err
+	}
+	return nil
 }
 
 func (api *API) GetContracts(ctx context.Context) ([]Contract, error) {
