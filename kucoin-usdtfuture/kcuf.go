@@ -139,12 +139,20 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 	defer restartResetTimer.Stop()
 	var account *Account
 	positionsMap := make(map[string]Position)
+	var commissionAssetTimer = time.NewTimer(time.Second)
 	for {
 		select {
 		case <-userWS.Done():
 			return
 		case <-k.done:
 			return
+		case <-commissionAssetTimer.C:
+			select {
+			case commissionAssetValueCh <- 0.0:
+			default:
+				logger.Debugf("commissionAssetValueCh <- 0.0 failed, ch len %d", len(commissionAssetValueCh))
+			}
+			commissionAssetTimer.Reset(time.Minute)
 		case positionsMap = <-httpPositionsCh:
 			for symbol, pos := range positionsMap {
 				if ch, ok := positionChMap[symbol]; ok {
@@ -683,4 +691,3 @@ func (k KucoinUsdtFutureWithDepth5) WatchBatchOrders(ctx context.Context, reques
 func (k KucoinUsdtFutureWithDepth5) StartSideLoop() {
 	panic("implement me")
 }
-
