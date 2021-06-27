@@ -419,7 +419,7 @@ mainLoop:
 			break
 		case xcv := <-xCommissionAssetValueCh:
 			xCommissionAssetValue = &xcv
-			logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
+			//logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
 		case ycv := <-yCommissionAssetValueCh:
 			yCommissionAssetValue = &ycv
 		case account := <-xAccountCh:

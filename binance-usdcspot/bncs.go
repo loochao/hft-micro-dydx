@@ -126,7 +126,7 @@ func (bn *BinanceUsdcSpot) StreamBasic(ctx context.Context, statusCh chan common
 		case price := <-bnbPriceCh:
 			if bn.settings.AutoAddCommissionDiscountAsset {
 				if bnbBalance != nil {
-					logger.Debugf("%f %f", *bnbBalance, price)
+					//logger.Debugf("%f %f", *bnbBalance, price)
 					select {
 					case commissionAssetValueCh <- *bnbBalance * price:
 					default:
