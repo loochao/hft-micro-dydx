@@ -130,7 +130,8 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 					default:
 						logger.Debugf("commissionAssetValueCh <- *bnbBalance * price failed ch len %d", len(commissionAssetValueCh))
 					}
-					if bn.settings.MinimalCommissionDiscountAssetValue*0.5 > *bnbBalance*price &&
+					if !bn.settings.DryRun &&
+						bn.settings.MinimalCommissionDiscountAssetValue*0.5 > *bnbBalance*price &&
 						time.Now().Sub(rebalancedBnbSilentTime) > 0 {
 						deltaValue := bn.settings.MinimalCommissionDiscountAssetValue - *bnbBalance*price
 						if deltaValue > MinNotionals["BNBUSDT"] {
@@ -165,7 +166,7 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 						}
 					}
 					continue
-				}else if wsBalance.Asset == "BNB"{
+				} else if wsBalance.Asset == "BNB" {
 					continue
 				}
 				symbol := wsBalance.Asset + "USDT"
@@ -297,7 +298,7 @@ func (bn *BinanceUsdtSpot) buyBnb(
 		logger.Debugf("bn.api.SubmitOrder buy %f bnb error %v", size, err)
 		return
 	} else {
-		logger.Debugf("BNB bn.usApi.SubmitOrder buy %f bnb success, wait 3 minutes", size)
+		logger.Debugf("BNB bn.usApi.SubmitOrder buy %f bnb success", size)
 	}
 }
 
