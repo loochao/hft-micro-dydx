@@ -73,7 +73,7 @@ var xyExpireRatios = make(map[string]float64)
 
 func init() {
 
-	logger.Debug("####  BUILD @ 20210627 15:40:45  ####")
+	logger.Debug("####  BUILD @ 20210627 15:42:36  ####")
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
