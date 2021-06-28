@@ -71,17 +71,19 @@ func main() {
 	}
 	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
-	f, err := os.Create(xyConfig.CpuProfile)
-	if err != nil {
-		logger.Debugf("os.Create error %v", err)
-		return
+	if xyConfig.CpuProfile != "" {
+		f, err := os.Create(xyConfig.CpuProfile)
+		if err != nil {
+			logger.Debugf("os.Create error %v", err)
+			return
+		}
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			logger.Debugf("pprof.StartCPUProfile error %v", err)
+			return
+		}
+		defer pprof.StopCPUProfile()
 	}
-	err = pprof.StartCPUProfile(f)
-	if err != nil {
-		logger.Debugf("pprof.StartCPUProfile error %v", err)
-		return
-	}
-	defer pprof.StopCPUProfile()
 
 	switch xyConfig.XExchange.Name {
 	case "binanceUsdtSpotWithDepth5":
@@ -352,15 +354,13 @@ func main() {
 		yNewOrderErrorChMap,
 	)
 
-	if xyConfig.CpuProfile != "" {
-		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-		go func() {
-			sig := <-sigs
-			logger.Debugf("catch exit signal %v", sig)
-			xyGlobalCancel()
-		}()
-	}
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-sigs
+		logger.Debugf("catch exit signal %v", sig)
+		xyGlobalCancel()
+	}()
 
 	logger.Debugf("start main loop")
 	restartTimer := time.NewTimer(xyConfig.RestartInterval)
