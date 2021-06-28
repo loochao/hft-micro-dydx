@@ -30,6 +30,7 @@ type Config struct {
 	ShortEnterDelta         float64 `yaml:"shortEnterDelta"`
 	LongExitDelta           float64 `yaml:"longExitDelta"`
 	ShortExitDelta          float64 `yaml:"shortExitDelta"`
+	FrOffsetFactor          float64 `yaml:"frOffsetFactor"`
 	CancelOffsetFactor      float64 `yaml:"cancelOffsetFactor"`
 	MinimalEnterFundingRate float64 `yaml:"minimalEnterFundingRate"`
 	MinimalKeepFundingRate  float64 `yaml:"minimalKeepFundingRate"`
