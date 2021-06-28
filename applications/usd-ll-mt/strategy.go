@@ -222,10 +222,8 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 				logger.Debugf("fundingRate Silent true %v", time.Now().Truncate(time.Hour*4).Add(time.Hour*4).Sub(time.Now()))
 				strat.fundingRateSettleSilent = true
 				strat.fundingRateSettleTimer.Reset(time.Minute * 6)
-			} else if time.Now().Sub(time.Now().Truncate(time.Hour*4)) > time.Minute*3 {
-				strat.fundingRateSettleSilent = false
-				strat.fundingRateSettleTimer.Reset(time.Minute)
 			} else {
+				strat.fundingRateSettleSilent = false
 				strat.fundingRateSettleTimer.Reset(time.Minute)
 			}
 		case <-strat.saveTimer.C:
