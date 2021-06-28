@@ -108,6 +108,7 @@ func startXYStrategy(
 		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
 		xOpenOrderCheckTimer:    time.NewTimer(time.Hour * 9999),
 		saveTimer:               time.NewTimer(config.EnterSilent),
+		fundingRateSettleTimer:  time.NewTimer(time.Now().Truncate(time.Hour * 4).Add(4*time.Hour - time.Minute*3).Sub(time.Now())),
 		spreadTime:              time.Time{},
 		spread:                  nil,
 		shortEnterTimedMedian:   common.NewTimedMedian(config.SpreadLookback),
@@ -145,6 +146,7 @@ func startXYStrategy(
 		orderSide:               common.OrderSideUnknown,
 		xCancelOrderParam:       common.CancelOrderParam{Symbol: xSymbol},
 		stopped:                 0,
+		fundingRateSettleSilent: false,
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
@@ -215,6 +217,17 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 				strat.tryCancelXOpenOrder("ySystemStatus not ready")
 			}
 			break
+		case <-strat.fundingRateSettleTimer.C:
+			if time.Now().Truncate(time.Hour*4).Add(time.Hour*4).Sub(time.Now()) <= time.Minute*3 {
+				logger.Debugf("fundingRate Silent true %v", time.Now().Truncate(time.Hour*4).Add(time.Hour*4).Sub(time.Now()))
+				strat.fundingRateSettleSilent = true
+				strat.fundingRateSettleTimer.Reset(time.Minute * 6)
+			} else if time.Now().Sub(time.Now().Truncate(time.Hour*4)) > time.Minute*3 {
+				strat.fundingRateSettleSilent = false
+				strat.fundingRateSettleTimer.Reset(time.Minute)
+			} else {
+				strat.fundingRateSettleTimer.Reset(time.Minute)
+			}
 		case <-strat.saveTimer.C:
 			strat.handleSave()
 			break

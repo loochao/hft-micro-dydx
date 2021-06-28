@@ -154,6 +154,8 @@ type XYStrategy struct {
 	xCancelOrderParam common.CancelOrderParam
 
 	stopped int32
+	fundingRateSettleSilent bool
+	fundingRateSettleTimer *time.Timer
 }
 
 type Offset struct {
