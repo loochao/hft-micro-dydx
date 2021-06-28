@@ -18,8 +18,8 @@ type XYSpread struct {
 	LongLastLeave    float64
 	LongMedianEnter  float64
 	LongMedianLeave  float64
-	XDepth           common.WalkedDepthBAM
-	YDepth           common.WalkedDepthBAM
+	XDepth           common.WalkedDepthBMA
+	YDepth           common.WalkedDepthBMA
 	Time             time.Time
 }
 

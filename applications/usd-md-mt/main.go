@@ -157,7 +157,16 @@ func main() {
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)
 		if _, ok := xyConfig.TargetWeights[xSymbol]; !ok {
-			logger.Debugf("miss enter scale for %s", xSymbol)
+			logger.Debugf("miss target weight for %s", xSymbol)
+			return
+		}
+		if _, ok := xyConfig.MaxOrderValues[xSymbol]; !ok {
+			logger.Debugf("miss max order value for %s", xSymbol)
+			return
+		}
+		orderOffsets[xSymbol], err = NewOffset(xyConfig.OrderOffsets[xSymbol])
+		if err != nil {
+			logger.Debugf("NewOffset error %s %v", xSymbol, err)
 			return
 		}
 	}

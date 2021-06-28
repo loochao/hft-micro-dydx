@@ -26,7 +26,7 @@ func watchXYSpread(
 
 	var err error
 	var xDepth, yDepth common.Depth
-	var xWalkedDepth, yWalkedDepth = &common.WalkedDepthBAM{}, &common.WalkedDepthBAM{}
+	var xWalkedDepth, yWalkedDepth = &common.WalkedDepthBMA{}, &common.WalkedDepthBMA{}
 	var spreadTime time.Time
 	var adjustedAgeDiff time.Duration
 	var xBiasInMs = float64(xBias / time.Millisecond)

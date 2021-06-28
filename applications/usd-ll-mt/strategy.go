@@ -186,7 +186,8 @@ func startXYStrategy(
 	go strat.startLoop(ctx)
 	return
 }
-func (strat *XYStrategy) stop() {
+
+func (strat *XYStrategy) Stop() {
 	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
 		logger.Debugf("stopped")
 		strat.tryCancelXOpenOrder("end")
@@ -199,7 +200,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.spreadWalkTimer.Stop()
 	defer strat.realisedSpreadTimer.Stop()
 	defer strat.saveTimer.Stop()
-	defer strat.stop()
+	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
 	strat.xOpenOrder = &common.NewOrderParam{}
 	strat.tryCancelXOpenOrder("start")

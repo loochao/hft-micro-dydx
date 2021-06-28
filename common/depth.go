@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type WalkedDepthBAM struct {
+type WalkedDepthBMA struct {
 	BidPrice float64
 	AskPrice float64
 	MidPrice float64
@@ -81,7 +81,7 @@ func WalkDepthBBMAA(depth Depth, multiplier float64, impact float64, output *Wal
 	return nil
 }
 
-func WalkDepthWithMultiplier(depth Depth, multiplier float64, impact float64, output *WalkedDepthBAM) error {
+func WalkDepthBMA(depth Depth, multiplier float64, impact float64, output *WalkedDepthBMA) error {
 
 	output.Time = depth.GetTime()
 	output.Symbol = depth.GetSymbol()
@@ -135,7 +135,7 @@ func WalkDepthWithMultiplier(depth Depth, multiplier float64, impact float64, ou
 	return nil
 }
 
-func WalkCoinDepthWithMultiplier(depth Depth, multiplier float64, impact float64, output *WalkedDepthBAM) error {
+func WalkCoinDepthWithMultiplier(depth Depth, multiplier float64, impact float64, output *WalkedDepthBMA) error {
 
 	output.Time = depth.GetTime()
 	output.Symbol = depth.GetSymbol()

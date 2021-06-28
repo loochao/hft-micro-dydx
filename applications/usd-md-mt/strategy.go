@@ -5,6 +5,7 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
+	"sync/atomic"
 	"time"
 )
 
@@ -40,25 +41,26 @@ func startXYStrategy(
 	maxTimeDeltaInMs := float64(config.DepthMaxTimeDelta / time.Millisecond)
 
 	strat := XYStrategy{
-		xExchange:      xExchange,
-		yExchange:      yExchange,
-		isXSpot:        xExchange.IsSpot(),
-		isYSpot:        yExchange.IsSpot(),
-		xLeverage:      config.XExchange.Leverage,
-		yLeverage:      config.YExchange.Leverage,
-		xSymbol:        xSymbol,
-		ySymbol:        ySymbol,
-		targetWeight:   config.TargetWeights[xSymbol],
-		config:         config,
-		orderOffset:    orderOffset,
-		xAccountCh:     xAccountCh,
-		yAccountCh:     yAccountCh,
-		xPositionCh:    xPositionCh,
-		yPositionCh:    yPositionCh,
-		xFundingRateCh: xFundingRateCh,
-		yFundingRateCh: yFundingRateCh,
-		xOrderCh:       xOrderCh,
-		yOrderCh:       yOrderCh,
+		xExchange:               xExchange,
+		yExchange:               yExchange,
+		isXSpot:                 xExchange.IsSpot(),
+		isYSpot:                 yExchange.IsSpot(),
+		xLeverage:               config.XExchange.Leverage,
+		yLeverage:               config.YExchange.Leverage,
+		xSymbol:                 xSymbol,
+		ySymbol:                 ySymbol,
+		targetWeight:            config.TargetWeights[xSymbol],
+		config:                  config,
+		orderOffset:             orderOffset,
+		maxOrderValue:           config.MaxOrderValues[xSymbol],
+		xAccountCh:              xAccountCh,
+		yAccountCh:              yAccountCh,
+		xPositionCh:             xPositionCh,
+		yPositionCh:             yPositionCh,
+		xFundingRateCh:          xFundingRateCh,
+		yFundingRateCh:          yFundingRateCh,
+		xOrderCh:                xOrderCh,
+		yOrderCh:                yOrderCh,
 		xOrderErrorCh:           xOrderErrorCh,
 		yOrderErrorCh:           yOrderErrorCh,
 		xOrderRequestCh:         xOrderRequestCh,
@@ -105,6 +107,7 @@ func startXYStrategy(
 		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
 		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
 		xOpenOrderCheckTimer:    time.NewTimer(time.Hour * 9999),
+		fundingRateSettleTimer:  time.NewTimer(time.Now().Truncate(time.Hour * 4).Add(4*time.Hour - config.FundingRateSilentTime).Sub(time.Now())),
 		saveTimer:               time.NewTimer(config.EnterSilent),
 		spreadTime:              time.Time{},
 		spread:                  nil,
@@ -140,6 +143,7 @@ func startXYStrategy(
 		enterValue:              0,
 		targetValue:             0,
 		size:                    0,
+		stopped:                 0,
 		orderSide:               common.OrderSideUnknown,
 		xCancelOrderParam:       common.CancelOrderParam{Symbol: xSymbol},
 	}
@@ -182,6 +186,13 @@ func startXYStrategy(
 	return
 }
 
+func (strat *XYStrategy) Stop() {
+	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
+		logger.Debugf("stopped")
+		strat.tryCancelXOpenOrder("end")
+	}
+}
+
 func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.xWalkDepthTimer.Stop()
 	defer strat.yWalkDepthTimer.Stop()
@@ -205,6 +216,15 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 				strat.tryCancelXOpenOrder("ySystemStatus not ready")
 			}
 			break
+		case <-strat.fundingRateSettleTimer.C:
+			if time.Now().Truncate(time.Hour*4).Add(time.Hour*4).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
+				logger.Debugf("fundingRate Silent true %v", time.Now().Truncate(time.Hour*4).Add(time.Hour*4).Sub(time.Now()))
+				strat.fundingRateSettleSilent = true
+				strat.fundingRateSettleTimer.Reset(strat.config.FundingRateSilentTime * 2)
+			} else {
+				strat.fundingRateSettleSilent = false
+				strat.fundingRateSettleTimer.Reset(time.Minute)
+			}
 		case <-strat.saveTimer.C:
 			strat.handleSave()
 			break
@@ -409,7 +429,8 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 }
 
 func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
-	if time.Now().Sub(strat.xCancelSilentTime) < 0 {
+	if time.Now().Sub(strat.xCancelSilentTime) < 0 ||
+		strat.xOpenOrder == nil {
 		return
 	}
 	strat.xCancelSilentTime = time.Now().Add(strat.config.XCancelSilent)

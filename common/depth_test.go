@@ -52,40 +52,40 @@ var depth01 = &depthForTest{
 var minFloatDelta = 0.00000001
 
 func TestWalkDepthWithMultiplier(t *testing.T) {
-	wd := &WalkedDepthBAM{}
-	err := WalkDepthWithMultiplier(depth01, 1, 1.0, wd)
+	wd := &WalkedDepthBMA{}
+	err := WalkDepthBMA(depth01, 1, 1.0, wd)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.InDelta(t, depth01.Asks[0][0], wd.AskPrice, minFloatDelta)
 	assert.InDelta(t, depth01.Bids[0][0], wd.BidPrice, minFloatDelta)
-	err = WalkDepthWithMultiplier(depth01, 0.1, 0.1, wd)
+	err = WalkDepthBMA(depth01, 0.1, 0.1, wd)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.InDelta(t, depth01.Asks[0][0], wd.AskPrice, minFloatDelta)
 	assert.InDelta(t, depth01.Bids[0][0], wd.BidPrice, minFloatDelta)
-	err = WalkDepthWithMultiplier(depth01, 1, 11, wd)
+	err = WalkDepthBMA(depth01, 1, 11, wd)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.InDelta(t, 11.0, wd.AskPrice, minFloatDelta)
 	assert.InDelta(t, (10.0*1.0+1.0)/(1.0+1.0/9.0), wd.BidPrice, minFloatDelta)
 
-	err = WalkDepthWithMultiplier(depth01, 0.01, 0.11, wd)
+	err = WalkDepthBMA(depth01, 0.01, 0.11, wd)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.InDelta(t, 11, wd.AskPrice, minFloatDelta)
 	assert.InDelta(t, (10.0*1.0+1.0)/(1.0+1.0/9.0), wd.BidPrice, minFloatDelta)
 
-	err = WalkDepthWithMultiplier(depth01, 1, 12, wd)
+	err = WalkDepthBMA(depth01, 1, 12, wd)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.InDelta(t, (11.0+1)/(1.0+1.0/13.0), wd.AskPrice, minFloatDelta)
 	assert.InDelta(t, (10.0*1.0+2.0)/(1.0+2.0/9.0), wd.BidPrice, minFloatDelta)
-	err = WalkDepthWithMultiplier(depth01, 1, 25, wd)
+	err = WalkDepthBMA(depth01, 1, 25, wd)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,11 +94,11 @@ func TestWalkDepthWithMultiplier(t *testing.T) {
 }
 
 func BenchmarkWalkDepthWithMultiplier(b *testing.B) {
-	wd := &WalkedDepthBAM{}
+	wd := &WalkedDepthBMA{}
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = WalkDepthWithMultiplier(depth01, 0.001, 1000000.0, wd)
+		_ = WalkDepthBMA(depth01, 0.001, 1000000.0, wd)
 	}
 }
 
@@ -123,7 +123,7 @@ var coinPerpDepth = &depthForTest{
 }
 
 func TestWalkDepthWithContractSize(t *testing.T) {
-	wd := &WalkedDepthBAM{}
+	wd := &WalkedDepthBMA{}
 	err := WalkCoinDepthWithMultiplier(coinPerpDepth, 1, 1.0, wd)
 	if err != nil {
 		t.Fatal(err)

@@ -25,8 +25,12 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yPosition == nil ||
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
-		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
+		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive ||
+		strat.fundingRateSettleSilent {
 		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
+			strat.tryCancelXOpenOrder("spread time out")
+		}
+		if strat.fundingRateSettleSilent {
 			strat.tryCancelXOpenOrder("spread time out")
 		}
 		return
@@ -41,10 +45,10 @@ func (strat *XYStrategy) updateXOrder() {
 	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
 	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
 
-	strat.shortTop = strat.config.ShortEnterDelta + strat.config.EnterOffsetDelta*strat.offsetFactor
-	strat.shortBot = strat.config.ShortExitDelta + strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep)
-	strat.longBot = strat.config.LongEnterDelta - strat.config.EnterOffsetDelta*strat.offsetFactor
-	strat.longTop = strat.config.LongExitDelta - strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep)
+	strat.shortTop = strat.config.ShortEnterDelta + strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
+	strat.shortBot = strat.config.ShortExitDelta + strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
+	strat.longBot = strat.config.LongEnterDelta - strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
+	strat.longTop = strat.config.LongExitDelta - strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
 
 	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
 
@@ -358,7 +362,6 @@ func (strat *XYStrategy) updateXOrder() {
 			time.Now().Sub(strat.xDepthTime),
 			time.Now().Sub(strat.yDepthTime),
 		)
-
 	}
 }
 
@@ -369,19 +372,19 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 	}
 	//检查价格有没有在OFFSET范围内，不在撤掉
 	if strat.xOpenOrder.Side == common.OrderSideBuy &&
-		strat.xOpenOrder.Price < strat.xWalkedDepth.BidPrice*0.9999 {
-		logger.Debugf("%s BUY PRICE %f < BID PRICE*0.9999 %f, CANCEL",
+		strat.xOpenOrder.Price < strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.FarBot)-strat.xTickSize {
+		logger.Debugf("%s BUY PRICE %f < FAR BID %f, CANCEL",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
-			strat.xWalkedDepth.BidPrice*0.9999,
+			strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.FarBot)-strat.xTickSize,
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
-		strat.xOpenOrder.Price > strat.xWalkedDepth.AskPrice*1.0001 {
-		logger.Debugf("%s SELL PRICE %f > ASK PRICE*1.0001 %f, CANCEL ",
+		strat.xOpenOrder.Price > strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.FarTop)+strat.xTickSize {
+		logger.Debugf("%s SELL PRICE %f > FAR ASK %f, CANCEL ",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
-			strat.xWalkedDepth.AskPrice*1.0001,
+			strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.FarTop)+strat.xTickSize,
 		)
 		return false
 	}

@@ -24,15 +24,17 @@ type Config struct {
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
 
-	EnterOffsetDelta        float64 `yaml:"enterOffsetDelta"`
-	ExitOffsetDelta         float64 `yaml:"exitOffsetDelta"`
-	LongEnterDelta          float64 `yaml:"longEnterDelta"`
-	ShortEnterDelta         float64 `yaml:"shortEnterDelta"`
-	LongExitDelta           float64 `yaml:"longExitDelta"`
-	ShortExitDelta          float64 `yaml:"shortExitDelta"`
-	CancelOffsetFactor      float64 `yaml:"cancelOffsetFactor"`
-	MinimalEnterFundingRate float64 `yaml:"minimalEnterFundingRate"`
-	MinimalKeepFundingRate  float64 `yaml:"minimalKeepFundingRate"`
+	EnterOffsetDelta        float64       `yaml:"enterOffsetDelta"`
+	ExitOffsetDelta         float64       `yaml:"exitOffsetDelta"`
+	LongEnterDelta          float64       `yaml:"longEnterDelta"`
+	ShortEnterDelta         float64       `yaml:"shortEnterDelta"`
+	LongExitDelta           float64       `yaml:"longExitDelta"`
+	ShortExitDelta          float64       `yaml:"shortExitDelta"`
+	CancelOffsetFactor      float64       `yaml:"cancelOffsetFactor"`
+	MinimalEnterFundingRate float64       `yaml:"minimalEnterFundingRate"`
+	MinimalKeepFundingRate  float64       `yaml:"minimalKeepFundingRate"`
+	FrOffsetFactor          float64       `yaml:"frOffsetFactor"`
+	FundingRateSilentTime   time.Duration `yaml:"fundingRateSilentTime"`
 
 	DepthMaxTimeDelta   time.Duration `yaml:"depthTimeDeltaMax"`
 	DepthMinTimeDelta   time.Duration `yaml:"depthTimeDeltaMin"`
@@ -63,8 +65,10 @@ type Config struct {
 	RestartSilent       time.Duration `yaml:"restartSilent"`
 	RestartInterval     time.Duration `yaml:"restartInterval"`
 
-	XYPairs       map[string]string  `yaml:"xyPairs"`
-	TargetWeights map[string]float64 `yaml:"targetWeights,omitempty"`
+	XYPairs        map[string]string  `yaml:"xyPairs"`
+	TargetWeights  map[string]float64 `yaml:"targetWeights,omitempty"`
+	OrderOffsets   map[string]string  `yaml:"orderOffsets,omitempty"`
+	MaxOrderValues map[string]float64 `yaml:"maxOrderValues,omitempty"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -118,6 +122,9 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.XOrderCheckInterval == 0 {
 		config.XOrderCheckInterval = time.Millisecond * 100
+	}
+	if config.FundingRateSilentTime == 0 {
+		config.FundingRateSilentTime = time.Minute
 	}
 	config.XExchange.DryRun = config.DryRun
 	config.YExchange.DryRun = config.DryRun

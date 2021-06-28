@@ -132,8 +132,8 @@ type XYStrategy struct {
 	yDepthTime   time.Time
 	xDepthFilter common.TimeFilter
 	yDepthFilter common.TimeFilter
-	xWalkedDepth common.WalkedDepthBAM
-	yWalkedDepth common.WalkedDepthBAM
+	xWalkedDepth common.WalkedDepthBMA
+	yWalkedDepth common.WalkedDepthBMA
 
 	xAccount                         common.Balance
 	yAccount                         common.Balance

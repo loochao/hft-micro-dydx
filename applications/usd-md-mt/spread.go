@@ -64,7 +64,7 @@ func (strat *XYStrategy) walkXDepth() {
 	strat.error = common.WalkDepthBBMAA(strat.xDepth, strat.xMultiplier, strat.config.DepthTakerImpact, &strat.xWalkedDepth)
 	if strat.error != nil {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
-			logger.Debugf("x common.WalkDepthWithMultiplier error %v %s", strat.error, strat.xSymbol)
+			logger.Debugf("x common.WalkDepthBMA error %v %s", strat.error, strat.xSymbol)
 			strat.logSilentTime = time.Now().Add(time.Minute)
 		}
 	} else {
@@ -76,7 +76,7 @@ func (strat *XYStrategy) walkYDepth() {
 	strat.error = common.WalkDepthBBMAA(strat.yDepth, strat.yMultiplier, strat.config.DepthTakerImpact, &strat.yWalkedDepth)
 	if strat.error != nil {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
-			logger.Debugf("y common.WalkDepthWithMultiplier error %v %s", strat.error, strat.ySymbol)
+			logger.Debugf("y common.WalkDepthBMA error %v %s", strat.error, strat.ySymbol)
 			strat.logSilentTime = time.Now().Add(time.Minute)
 		}
 	} else {
