@@ -88,6 +88,9 @@ func (strat *XYStrategy) updateXOrder() {
 		if *strat.xyFundingRate > strat.config.MinimalKeepFundingRate*0.5 {
 			strat.enterValue = math.Min(2*strat.enterStep, math.Min(strat.xAbsValue, strat.yAbsValue))
 		}
+		if strat.enterValue > strat.maxOrderValue {
+			strat.enterValue = strat.maxOrderValue
+		}
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
@@ -147,6 +150,9 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.enterValue = math.Min(4*strat.enterStep, math.Min(strat.xAbsValue, strat.yAbsValue))
 		if *strat.xyFundingRate < -strat.config.MinimalKeepFundingRate*0.5 {
 			strat.enterValue = math.Min(2*strat.enterStep, math.Min(strat.xAbsValue, strat.yAbsValue))
+		}
+		if strat.enterValue > strat.maxOrderValue {
+			strat.enterValue = strat.maxOrderValue
 		}
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
@@ -210,6 +216,9 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.targetValue = strat.enterTarget
 		}
 		strat.enterValue = strat.targetValue - math.Max(strat.xAbsValue, strat.yAbsValue)
+		if strat.enterValue > strat.maxOrderValue {
+			strat.enterValue = strat.maxOrderValue
+		}
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
@@ -294,6 +303,9 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.targetValue = strat.enterTarget
 		}
 		strat.enterValue = strat.targetValue - math.Max(strat.xAbsValue, strat.yAbsValue)
+		if strat.enterValue > strat.maxOrderValue {
+			strat.enterValue = strat.maxOrderValue
+		}
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
