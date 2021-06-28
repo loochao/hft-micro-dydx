@@ -1,0 +1,6 @@
+- [x] limit max order size
+- [ ] add funding rate silent period
+- [x] add target weights
+- [x] add order offsets
+- [ ] stop cancel open order 
+- [ ] add funding rate offset factor for spread
