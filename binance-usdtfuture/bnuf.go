@@ -366,9 +366,7 @@ func (bn *BinanceUsdtFuture) StreamKLine(ctx context.Context, channels map[strin
 }
 
 func (bn *BinanceUsdtFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
-	bn.mu.Lock()
-	pullInterval := bn.settings.PullInterval
-	bn.mu.Unlock()
+	pullInterval := time.Minute
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {

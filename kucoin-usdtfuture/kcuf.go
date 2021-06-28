@@ -405,7 +405,7 @@ func (k *KucoinUsdtFuture) StreamKLine(ctx context.Context, channels map[string]
 
 func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
 	k.mu.Lock()
-	interval := k.settings.PullInterval
+	interval := time.Minute
 	k.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
