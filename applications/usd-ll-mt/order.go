@@ -25,9 +25,12 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yPosition == nil ||
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
-		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
+		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive ||
+		strat.fundingRateSettleSilent {
 		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
 			strat.tryCancelXOpenOrder("spread time out")
+		}else if strat.fundingRateSettleSilent {
+			strat.tryCancelXOpenOrder("funding rate silent")
 		}
 		return
 	}
