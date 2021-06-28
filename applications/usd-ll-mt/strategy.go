@@ -201,6 +201,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.saveTimer.Stop()
 	defer strat.stop()
 	var nextXPos, nextYPos common.Position
+	strat.xOpenOrder = &common.NewOrderParam{}
 	strat.tryCancelXOpenOrder("start")
 	strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 	for {
@@ -437,6 +438,9 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 
 func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
 	if time.Now().Sub(strat.xCancelSilentTime) < 0 {
+		return
+	}
+	if strat.xOpenOrder == nil {
 		return
 	}
 	strat.xCancelSilentTime = time.Now().Add(strat.config.XCancelSilent)
