@@ -41,12 +41,16 @@ func (strat *XYStrategy) updateXOrder() {
 	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
 	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
 
-	strat.shortTop = strat.config.ShortEnterDelta + strat.config.EnterOffsetDelta*strat.offsetFactor
-	strat.shortBot = strat.config.ShortExitDelta + strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep)
-	strat.longBot = strat.config.LongEnterDelta - strat.config.EnterOffsetDelta*strat.offsetFactor
-	strat.longTop = strat.config.LongExitDelta - strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep)
+	strat.shortTop = strat.config.ShortEnterDelta + strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate
+	strat.shortBot = strat.config.ShortExitDelta + strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate
+	strat.longBot = strat.config.LongEnterDelta - strat.config.EnterOffsetDelta*strat.offsetFactor + *strat.xyFundingRate
+	strat.longTop = strat.config.LongExitDelta - strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep) + *strat.xyFundingRate
 
 	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
+	if math.IsNaN(strat.longBot) && time.Now().Sub(strat.logSilentTime) > 0 {
+		strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+		logger.Debugf("%s enterTarget %f targetWeight %f EnterTargetFactor %f", strat.xSymbol, strat.enterTarget, strat.targetWeight, strat.config.EnterTargetFactor)
+	}
 
 	if time.Now().Sub(strat.xOrderSilentTime) < 0 {
 		return
@@ -100,7 +104,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
 			strat.price = math.Ceil(strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.Top)/strat.xTickSize) * strat.xTickSize
-			if strat.price < strat.xWalkedDepth.BestBidPrice + strat.xTickSize {
+			if strat.price < strat.xWalkedDepth.BestBidPrice+strat.xTickSize {
 				strat.price = strat.xWalkedDepth.BestBidPrice + strat.xTickSize
 			}
 			strat.xNewOrderParam = common.NewOrderParam{
@@ -165,7 +169,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
 			strat.price = math.Floor(strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.Bot)/strat.xTickSize) * strat.xTickSize
-			if strat.price > strat.xWalkedDepth.BestAskPrice - strat.xTickSize {
+			if strat.price > strat.xWalkedDepth.BestAskPrice-strat.xTickSize {
 				strat.price = strat.xWalkedDepth.BestAskPrice - strat.xTickSize
 			}
 			strat.xNewOrderParam = common.NewOrderParam{
@@ -257,7 +261,7 @@ func (strat *XYStrategy) updateXOrder() {
 			return
 		}
 		strat.price = math.Floor(strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.Bot)/strat.xTickSize) * strat.xTickSize
-		if strat.price > strat.xWalkedDepth.BestAskPrice - strat.xTickSize {
+		if strat.price > strat.xWalkedDepth.BestAskPrice-strat.xTickSize {
 			strat.price = strat.xWalkedDepth.BestAskPrice - strat.xTickSize
 		}
 		strat.xNewOrderParam = common.NewOrderParam{
@@ -347,7 +351,7 @@ func (strat *XYStrategy) updateXOrder() {
 			return
 		}
 		strat.price = math.Ceil(strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.Top)/strat.xTickSize) * strat.xTickSize
-		if strat.price < strat.xWalkedDepth.BestBidPrice + strat.xTickSize {
+		if strat.price < strat.xWalkedDepth.BestBidPrice+strat.xTickSize {
 			strat.price = strat.xWalkedDepth.BestBidPrice + strat.xTickSize
 		}
 		strat.xNewOrderParam = common.NewOrderParam{
@@ -397,7 +401,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 	}
 	//检查价格有没有在OFFSET范围内，不在撤掉
 	if strat.xOpenOrder.Side == common.OrderSideBuy &&
-		strat.xOpenOrder.Price < strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.FarBot) - strat.xTickSize{
+		strat.xOpenOrder.Price < strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.FarBot)-strat.xTickSize {
 		logger.Debugf("%s BUY PRICE %f < FAR BOT %f, CANCEL",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
@@ -405,7 +409,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideBuy &&
-		strat.xOpenOrder.Price > strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.NearBot) + strat.xTickSize {
+		strat.xOpenOrder.Price > strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.NearBot)+strat.xTickSize {
 		logger.Debugf("%s BUY PRICE %f > NEAR BOT %f, CANCEL",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
@@ -413,7 +417,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
-		strat.xOpenOrder.Price > strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.FarTop) + strat.xTickSize{
+		strat.xOpenOrder.Price > strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.FarTop)+strat.xTickSize {
 		logger.Debugf("%s SELL PRICE %f > FAR TOP %f, CANCEL ",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
@@ -421,7 +425,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
-		strat.xOpenOrder.Price < strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.NearTop) - strat.xTickSize{
+		strat.xOpenOrder.Price < strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.NearTop)-strat.xTickSize {
 		logger.Debugf("%s SELL PRICE %f < NEAR TOP %f, CANCEL ",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
