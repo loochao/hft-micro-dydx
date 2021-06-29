@@ -105,17 +105,17 @@ func (strat *XYStrategy) handleXDepth() {
 		strat.xDepthFilter.GenerateReport()
 		strat.yDepthFilter.GenerateReport()
 		strat.spreadReport = &common.XYSpreadReport{
-			MatchRatio:        float64(strat.depthMatchCount) / float64(strat.depthCount),
-			XSymbol:           strat.xSymbol,
-			YSymbol:           strat.ySymbol,
-			XTimeDeltaEma:     strat.xDepthFilter.TimeDeltaEma,
-			YTimeDeltaEma:     strat.yDepthFilter.TimeDeltaEma,
-			XTimeDelta:        strat.xDepthFilter.TimeDelta,
-			YTimeDelta:        strat.yDepthFilter.TimeDelta,
-			XDepthFilterRatio: strat.xDepthFilter.Report.FilterRatio,
-			YDepthFilterRatio: strat.yDepthFilter.Report.FilterRatio,
-			XExpireRatio:      float64(strat.xDepthExpireCount) / float64(strat.depthCount),
-			YExpireRatio:      float64(strat.yDepthExpireCount) / float64(strat.depthCount),
+			MatchRatio:         float64(strat.depthMatchCount) / float64(strat.depthCount),
+			XSymbol:            strat.xSymbol,
+			YSymbol:            strat.ySymbol,
+			XTimeDeltaEma:      strat.xDepthFilter.TimeDeltaEma,
+			YTimeDeltaEma:      strat.yDepthFilter.TimeDeltaEma,
+			XTimeDelta:         strat.xDepthFilter.TimeDelta,
+			YTimeDelta:         strat.yDepthFilter.TimeDelta,
+			XTickerFilterRatio: strat.xDepthFilter.Report.FilterRatio,
+			YTickerFilterRatio: strat.yDepthFilter.Report.FilterRatio,
+			XExpireRatio:       float64(strat.xDepthExpireCount) / float64(strat.depthCount),
+			YExpireRatio:       float64(strat.yDepthExpireCount) / float64(strat.depthCount),
 		}
 		strat.depthMatchCount = 0
 		strat.depthCount = 0
@@ -148,17 +148,17 @@ func (strat *XYStrategy) handleYDepth() {
 		strat.xDepthFilter.GenerateReport()
 		strat.yDepthFilter.GenerateReport()
 		strat.spreadReport = &common.XYSpreadReport{
-			MatchRatio:        float64(strat.depthMatchCount) / float64(strat.depthCount),
-			XSymbol:           strat.xSymbol,
-			YSymbol:           strat.ySymbol,
-			XTimeDeltaEma:     strat.xDepthFilter.TimeDeltaEma,
-			YTimeDeltaEma:     strat.yDepthFilter.TimeDeltaEma,
-			XTimeDelta:        strat.xDepthFilter.TimeDelta,
-			YTimeDelta:        strat.yDepthFilter.TimeDelta,
-			XDepthFilterRatio: strat.xDepthFilter.Report.FilterRatio,
-			YDepthFilterRatio: strat.yDepthFilter.Report.FilterRatio,
-			XExpireRatio:      float64(strat.xDepthExpireCount) / float64(strat.depthCount),
-			YExpireRatio:      float64(strat.yDepthExpireCount) / float64(strat.depthCount),
+			MatchRatio:         float64(strat.depthMatchCount) / float64(strat.depthCount),
+			XSymbol:            strat.xSymbol,
+			YSymbol:            strat.ySymbol,
+			XTimeDeltaEma:      strat.xDepthFilter.TimeDeltaEma,
+			YTimeDeltaEma:      strat.yDepthFilter.TimeDeltaEma,
+			XTimeDelta:         strat.xDepthFilter.TimeDelta,
+			YTimeDelta:         strat.yDepthFilter.TimeDelta,
+			XTickerFilterRatio: strat.xDepthFilter.Report.FilterRatio,
+			YTickerFilterRatio: strat.yDepthFilter.Report.FilterRatio,
+			XExpireRatio:       float64(strat.xDepthExpireCount) / float64(strat.depthCount),
+			YExpireRatio:       float64(strat.yDepthExpireCount) / float64(strat.depthCount),
 		}
 		strat.depthMatchCount = 0
 		strat.depthCount = 0

@@ -52,26 +52,26 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 		//{"stream":"btcusdt@depth5@100ms","data":{"e":"depthUpdate","E":1623494540877,"T":1623494540870,"s":"BTCUSDT","U":510743908847,"u":510743911822,"pu":510743908726,"b":[["35701.24","2.079"],["35701.23","0.276"],["35701.22","0.001"],["35700.35","0.400"],["35699.59","0.147"]],"a":[["35701.25","0.134"],["35704.02","0.248"],["35704.03","0.272"],["35704.55","0.001"],["35704.56","0.003"]]}}
 		//{"stream":"linkusdt@depth5@100ms","data":{"e":"depthUpdate","E":1623494540955,"T":1623494540947,"s":"LINKUSDT","U":510743911258,"u":510743914224,"pu":510743910356,"b":[["21.030","12.37"],["21.029","448.68"],["21.027","2.12"],["21.024","240.12"],["21.022","47.62"]],"a":[["21.031","4.66"],["21.034","20.68"],["21.036","7.17"],["21.038","20.53"],["21.039","251.82"]]}}
 		//{"stream":"wavesusdt@depth5@100ms","data":{"e":"depthUpdate","E":1623494540937,"T":1623494540873,"s":"WAVESUSDT","U":510743910668,"u":510743911915,"pu":510743903045,"b":[["14.2300","0.4"],["14.2270","59.0"],["14.2260","112.0"],["14.2250","78.5"],["14.2240","195.9"]],"a":[["14.2310","11.0"],["14.2340","38.4"],["14.2350","105.0"],["14.2360","3.5"],["14.2370","193.0"]]}}
-		if msg[60] == 'E' {
+		if msg[18] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:18])
-		} else if msg[61] == 'E' {
+		}else if msg[19] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:19])
-		} else if msg[62] == 'E' {
+		} else if msg[20] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:20])
-		} else if msg[59] == 'E' {
-			symbol = common.UnsafeBytesToString(msg[11:17])
-		} else if msg[63] == 'E' {
+		} else if msg[21] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:21])
-		} else if msg[64] == 'E' {
+		} else if msg[22] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:22])
-		} else if msg[65] == 'E' {
-			symbol = common.UnsafeBytesToString(msg[11:23])
-		} else if msg[59] == 'E' {
+		} else if msg[17] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:17])
-		} else if msg[66] == 'E' {
+		} else if msg[23] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:23])
+		} else if msg[24] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:24])
-		} else if msg[67] == 'E' {
+		} else if msg[25] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:25])
+		} else if msg[26] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:26])
 		} else {
 			if time.Now().Sub(logSilentTime) > 0 {
 				logger.Debugf("bad msg, can't find symbol: %s", msg)

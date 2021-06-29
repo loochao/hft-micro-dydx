@@ -25,7 +25,7 @@ func walkMakerDepth(
 	var makerBiasInMs = float64(makerBias / time.Millisecond)
 	var minTimeDeltaInMs = float64(minTimeDelta / time.Millisecond)
 	var maxTimeDeltaInMs = float64(maxTimeDelta / time.Millisecond)
-	var makerDepthFilter = common.NewDepthFilter(makerDecay, makerBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
+	var makerDepthFilter = common.NewTimeFilter(makerDecay, makerBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
 	logSilentTime := time.Now()
 	makerWalkDepthTimer := time.NewTimer(time.Hour * 999)
 	expectedChanSendingTime := time.Nanosecond * 300

@@ -964,8 +964,76 @@ func (cpmp *MultiAssetsMarginParam) ToUrlValues() url.Values {
 	return values
 }
 
-
 type MultiAssetsMargin struct {
 	MultiAssetsMargin bool `json:"multiAssetsMargin"`
 }
 
+//{
+//  "e":"bookTicker",         // event type
+//  "u":400900217,            // order book updateId
+//  "E": 1568014460893,       // event time
+//  "T": 1568014460891,       // transaction time
+//  "s":"BNBUSDT",            // symbol
+//  "b":"25.35190000",        // best bid price
+//  "B":"31.21000000",        // best bid qty
+//  "a":"25.36520000",        // best ask price
+//  "A":"40.66000000"         // best ask qty
+//}
+
+type BookTicker struct {
+	EventType string `json:"e"`
+	//OrderBookUpdateId int64     `json:"u"`
+	EventTime time.Time `json:"-"`
+	//TransactionTime   time.Time `json:"-"`
+	Symbol       string  `json:"s"`
+	BestBidPrice float64 `json:"b,string"`
+	BestBidQty   float64 `json:"B,string"`
+	BestAskPrice float64 `json:"a,string"`
+	BestAskQty   float64 `json:"A,string"`
+}
+
+func (bt *BookTicker) GetSymbol() string {
+	return bt.Symbol
+}
+
+func (bt *BookTicker) GetTime() time.Time {
+	return bt.EventTime
+}
+
+func (bt *BookTicker) GetBidPrice() float64 {
+	return bt.BestBidPrice
+}
+
+func (bt *BookTicker) GetAskPrice() float64 {
+	return bt.BestAskPrice
+}
+
+func (bt *BookTicker) GetBidSize() float64 {
+	return bt.BestBidQty
+}
+
+func (bt *BookTicker) GetAskSize() float64 {
+	return bt.BestAskQty
+}
+
+func (bt *BookTicker) UnmarshalJSON(data []byte) error {
+	type Alias BookTicker
+	aux := &struct {
+		EventTime int64 `json:"E"`
+		//TransactionTime int64 `json:"T"`
+		*Alias
+	}{
+		Alias: (*Alias)(bt),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	bt.EventTime = time.Unix(0, aux.EventTime*1000000)
+	//bt.TransactionTime = time.Unix(0, aux.TransactionTime*1000000)
+	return nil
+}
+
+type WSCap struct {
+	Stream string          `json:"string"`
+	Data   json.RawMessage `json:"data"`
+}

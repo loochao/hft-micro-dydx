@@ -427,6 +427,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context, id int) {
 				}
 				continue
 			}
+			//logger.Debugf("%s", msg)
 			if dataCap.Type == "error" {
 				if dataCap.Msg == "Already logged in" {
 					select {

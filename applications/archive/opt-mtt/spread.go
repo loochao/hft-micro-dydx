@@ -36,8 +36,8 @@ func watchMakerTakerSpread(
 	var minTimeDeltaInMs = float64(minTimeDelta / time.Millisecond)
 	var maxTimeDeltaInMs = float64(maxTimeDelta / time.Millisecond)
 	//var maxAgeDiff = makerTakerBias
-	var makerDepthFilter = common.NewDepthFilter(makerDecay, makerBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
-	var takerDepthFilter = common.NewDepthFilter(takerDecay, takerBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
+	var makerDepthFilter = common.NewTimeFilter(makerDecay, makerBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
+	var takerDepthFilter = common.NewTimeFilter(takerDecay, takerBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
 
 	logSilentTime := time.Now()
 	walkSpreadTimer := time.NewTimer(time.Hour * 999)

@@ -351,7 +351,7 @@ func (m *TimeFilter) GenerateReport() TimeReport {
 	return m.Report
 }
 
-func NewDepthFilter(
+func NewTimeFilter(
 	decay, bias, min, max float64,
 ) TimeFilter {
 	//logger.Debugf("min %f max %f", min, max)

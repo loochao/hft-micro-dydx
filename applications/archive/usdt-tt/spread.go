@@ -33,8 +33,8 @@ func watchXYSpread(
 	var yBiasInMs = float64(yBias / time.Millisecond)
 	var minTimeDeltaInMs = float64(minTimeDelta / time.Millisecond)
 	var maxTimeDeltaInMs = float64(maxTimeDelta / time.Millisecond)
-	var xDepthFilter = common.NewDepthFilter(xDecay, xBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
-	var yDepthFilter = common.NewDepthFilter(yDecay, yBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
+	var xDepthFilter = common.NewTimeFilter(xDecay, xBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
+	var yDepthFilter = common.NewTimeFilter(yDecay, yBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs)
 	var xDepthTime = time.Unix(0, 0)
 	var yDepthTime = time.Unix(0, 0)
 

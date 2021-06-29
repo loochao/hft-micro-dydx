@@ -90,6 +90,7 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 			return
 		}
 		msgLen := len(msg)
+		//{"channel": "ticker", "market": "DOGE-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
 		if msgLen > 128 && msg[31] == ' ' && msg[32] == '"'{
 			if msg[40] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:40])
@@ -347,118 +348,45 @@ func (w *TickerWS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Depth) {
+func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Ticker) {
 	logger.Debugf("START dataHandleLoop %s", market)
 	defer logger.Debugf("EXIT dataHandleLoop %s", market)
 	logSilentTime := time.Now()
-	orderbookData := OrderBookData{}
-	var err error
-	var orderBook = OrderBook{
-		Bids:   common.Bids{},
-		Asks:   common.Asks{},
-		Market: market,
+	index := -1
+	pool := [4]*Ticker{}
+	for i := 0; i < 4; i++ {
+		pool[i] = &Ticker{}
 	}
-	checkSumTimer := time.NewTimer(time.Minute)
-	defer checkSumTimer.Stop()
-	outputInterval := time.Millisecond * 100
-	outputTimer := time.NewTimer(outputInterval)
-	defer outputTimer.Stop()
+	var ticker *Ticker
+	var err error
 
-	var hasPartial = false
-	var orderBookUpdate = false
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case <-outputTimer.C:
-			if hasPartial {
-				//如果不复制，Downstream会被修改
-				orderBook := orderBook
-				select {
-				case outputCh <- &orderBook:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
-				}
-			}
-			outputTimer.Reset(time.Now().Truncate(outputInterval).Add(outputInterval).Sub(time.Now()))
-			break
-		case <-checkSumTimer.C:
-			if hasPartial && orderBookUpdate {
-				if orderBook.CompareCheckSum() {
-					select {
-					case w.marketCh <- market:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
-				} else {
-					logger.Debugf("check sum failed %s", market)
-					hasPartial = false
-					select {
-					case w.marketResetCh <- market:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("w.marketResetCh <- market failed, ch len %d", len(w.marketResetCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
-				}
-			} else if time.Now().Sub(orderBook.Time) > time.Minute {
-				logger.Debugf("orderbook out of date, %s", market)
-				select {
-				case w.marketResetCh <- market:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("w.marketResetCh <- market failed, ch len %d", len(w.marketResetCh))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
-				}
-			}
-			checkSumTimer.Reset(time.Second * 5)
-			break
 		case msg := <-inputCh:
-			orderbookData = OrderBookData{}
-			err = json.Unmarshal(msg, &orderbookData)
-			if err != nil {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("json.Unmarshal error %v", err)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-				continue
+			index ++
+			if index == 4 {
+				index = 0
 			}
-			switch orderbookData.Data.Action {
-			case "partial":
-				orderBook.Bids = orderbookData.Data.Bids
-				orderBook.Asks = orderbookData.Data.Asks
-				orderBook.Checksum = orderbookData.Data.Checksum
-				orderBook.Time = orderbookData.Data.Time
-				hasPartial = true
-				orderBookUpdate = true
-				if !orderBook.CompareCheckSum() {
-					logger.Debugf("check sum failed at partial event %s", msg)
+			ticker = pool[index]
+			err = ParseTicker(msg, ticker)
+			if err != nil && time.Now().Sub(logSilentTime) > 0 {
+				logger.Debugf("ParseTicker(msg, ticker) error %s %v", msg, err)
+				logSilentTime = time.Now().Add(time.Minute)
+			} else {
+				select {
+				case outputCh <- ticker:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("outputCh <- ticker failed ch len %d", len(outputCh))
+						logSilentTime = time.Now().Add(time.Minute)
+						continue
+					}
 				}
-				break
-			case "update":
-				if hasPartial {
-					orderBook.Asks = orderBook.Asks.UpdateBatch(orderbookData.Data.Asks)
-					orderBook.Bids = orderBook.Bids.UpdateBatch(orderbookData.Data.Bids)
-					orderBook.Checksum = orderbookData.Data.Checksum
-					orderBook.Time = orderbookData.Data.Time
-					orderBookUpdate = true
-				}
-				break
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("other action %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
+
 			}
 			break
 		}
@@ -468,14 +396,14 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 func NewTickerWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan common.Depth,
+	channels map[string]chan common.Ticker,
 ) *TickerWS {
 	ws := TickerWS{
 		done:          make(chan interface{}),
-		reconnectCh:   make(chan interface{}, 100),
-		writeCh:       make(chan interface{}, 100*len(channels)),
-		marketCh:      make(chan string, 100*len(channels)),
-		marketResetCh: make(chan string, 100*len(channels)),
+		reconnectCh:   make(chan interface{}, 4),
+		writeCh:       make(chan interface{}, 2*len(channels)),
+		marketCh:      make(chan string, len(channels)),
+		marketResetCh: make(chan string, len(channels)),
 		stopped:       0,
 	}
 	messagesCh := make(map[string]chan []byte)

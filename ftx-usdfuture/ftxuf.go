@@ -118,6 +118,9 @@ func (ftx *FtxUsdtFuture) StreamBasic(
 	restartToReadyTimer := time.NewTimer(time.Hour * 9999)
 	defer restartToReadyTimer.Stop()
 
+	commissionAssetValueTimer := time.NewTimer(time.Second)
+	defer commissionAssetValueTimer.Stop()
+
 	for {
 		select {
 		case <-ftx.done:
@@ -131,6 +134,14 @@ func (ftx *FtxUsdtFuture) StreamBasic(
 				logger.Debugf("statusCh <- common.SystemStatusRestart failed ch len %d", len(statusCh))
 			}
 			restartToReadyTimer = time.NewTimer(time.Hour * 9999)
+			break
+		case <-commissionAssetValueTimer.C:
+			select {
+			case commissionAssetValueCh <- 0.0:
+			default:
+				logger.Debugf("commissionAssetValueCh <- 0.0 failed ch len %d", len(commissionAssetValueCh))
+			}
+			commissionAssetValueTimer.Reset(time.Minute)
 			break
 		case <-userWS.RestartCh:
 			select {
@@ -291,7 +302,48 @@ func (ftx *FtxUsdtFuture) StreamTrade(ctx context.Context, channels map[string]c
 }
 
 func (ftx *FtxUsdtFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
-	panic("implement me")
+	logger.Debugf("START StreamTicker")
+	defer logger.Debugf("STOP StreamTicker")
+	defer ftx.Stop()
+
+	markets := make([]string, 0)
+	for market := range channels {
+		markets = append(markets, market)
+	}
+
+	ftx.mu.Lock()
+	proxy := ftx.settings.Proxy
+	ftx.mu.Unlock()
+
+	for start := 0; start < len(markets); start += batchSize {
+		end := start + batchSize
+		if end > len(markets) {
+			end = len(markets)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, market := range markets[start:end] {
+			subChannels[market] = channels[market]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			ws := NewTickerWS(ctx, proxy, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ftx.done:
+			return
+		}
+	}
 }
 
 func (ftx *FtxUsdtFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
@@ -380,6 +432,7 @@ func (ftx *FtxUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSet
 	ftx.settings = settings
 	ftx.done = make(chan interface{})
 	ftx.stopped = false
+	logger.Debugf("%s")
 	ftx.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.Proxy)
 	if err != nil {
 		return err

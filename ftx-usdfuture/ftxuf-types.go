@@ -686,6 +686,30 @@ type Ticker struct {
 	Time    time.Time `json:"-"`
 }
 
+func (t *Ticker) GetSymbol() string {
+	panic("implement me")
+}
+
+func (t *Ticker) GetTime() time.Time {
+	return t.Time
+}
+
+func (t *Ticker) GetBidPrice() float64 {
+	return t.Bid
+}
+
+func (t *Ticker) GetAskPrice() float64 {
+	return t.Ask
+}
+
+func (t *Ticker) GetBidSize() float64 {
+	return t.BidSize
+}
+
+func (t *Ticker) GetAskSize() float64 {
+	return t.AskSize
+}
+
 func (t *Ticker) UnmarshalJSON(data []byte) error {
 	type Alias Ticker
 	aux := &struct {

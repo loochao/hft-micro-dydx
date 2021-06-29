@@ -11,9 +11,9 @@ import (
 func TestNewTickerWS(t *testing.T) {
 	var ctx = context.Background()
 	symbols := []string{ "DOGE-PERP"}
-	channels := make(map[string]chan common.Depth)
+	channels := make(map[string]chan common.Ticker)
 	for _, symbol := range symbols {
-		channels[symbol] = make(chan common.Depth, 100)
+		channels[symbol] = make(chan common.Ticker, 100)
 	}
 	_ = NewTickerWS(ctx, os.Getenv("FTX_TEST_PROXY"), channels)
 	for {

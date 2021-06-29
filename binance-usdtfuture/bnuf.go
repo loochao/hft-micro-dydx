@@ -22,6 +22,14 @@ type BinanceUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (bn *BinanceUsdtFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
+}
+
+func (bn *BinanceUsdtFuture) StartSideLoop() {
+	panic("implement me")
+}
+
 func (bn *BinanceUsdtFuture) IsSpot() bool {
 	return false
 }
@@ -358,7 +366,48 @@ func (bn *BinanceUsdtFuture) StreamTrade(ctx context.Context, channels map[strin
 }
 
 func (bn *BinanceUsdtFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
-	panic("implement me")
+	logger.Debugf("START StreamDepth")
+	defer logger.Debugf("STOP StreamDepth")
+	defer bn.Stop()
+
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+
+	bn.mu.Lock()
+	proxy := bn.settings.Proxy
+	bn.mu.Unlock()
+
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			ws := NewBookTickerWS(ctx, proxy, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-bn.done:
+			return
+		}
+	}
 }
 
 func (bn *BinanceUsdtFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
@@ -634,7 +683,7 @@ func (bn *BinanceUsdtFuture) tryReBalanceBnb(
 		spotBnbBalance < 0.8*deltaSize {
 		//需要现货买BN，但是没有USD，需要从期货转USDT
 		if currentUsdtValue < (deltaValue-spotUSDTBalance)*1.2 {
-			logger.Debugf("BNB future and spot usdt both not available for buy %s usdt bnb", deltaValue)
+			logger.Debugf("BNB future and spot usdt both not available for buy %f usdt bnb", deltaValue)
 			//期货钱也不够了，放弃
 			return
 		}

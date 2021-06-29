@@ -192,7 +192,7 @@ func ParseDepth20(bytes []byte, depth20 *Depth20) error {
 		}
 		offset += 1
 	}
-	return  nil
+	return nil
 }
 
 func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
@@ -507,9 +507,94 @@ func WatchPremiumIndexesFromHttp(
 	}
 }
 
+//{"stream":"scusdt@bookTicker","data":{"e":"bookTicker","u":552297398961,"s":"SCUSDT","b":"0.012805","B":"46556","a":"0.012816","A":"90351","T":1624971386657,"E":1624971386662}}
+
+func ParseBookTicker(msg []byte, bookTicker *BookTicker) (err error) {
+	msgLen := len(msg)
+	if msgLen < 15 {
+		return fmt.Errorf("bad msg %s", msg)
+	}
+	var t int64
+	t, err = common.ParseInt(msg[msgLen-15 : msgLen-2])
+	if err != nil {
+		return
+	}
+	bookTicker.EventTime = time.Unix(0, t*1000000)
+	collectEnd := 59
+	collectStart := collectEnd
+	currentKey := common.JsonKeyUnknown
+	for collectEnd < msgLen {
+		switch currentKey {
+		case common.JsonKeySymbol:
+			if msg[collectEnd] == '"' {
+				bookTicker.Symbol = common.UnsafeBytesToString(msg[collectStart:collectEnd])
+				currentKey = common.JsonKeyBidPrice
+				collectEnd += 7
+				collectStart = collectEnd
+				continue
+			}
+			break
+		case common.JsonKeyBidPrice:
+			if msg[collectEnd] == '"' {
+				bookTicker.BestBidPrice, err = common.ParseDecimal(msg[collectStart:collectEnd])
+				if err != nil {
+					return fmt.Errorf("JsonKeyBidPrice error %v start %d end %d %s", err, collectStart, collectEnd, msg[collectStart:collectEnd])
+				}
+				currentKey = common.JsonKeyBidSize
+				collectEnd += 7
+				collectStart = collectEnd
+				continue
+			}
+			break
+		case common.JsonKeyBidSize:
+			if msg[collectEnd] == '"' {
+				bookTicker.BestBidQty, err = common.ParseDecimal(msg[collectStart:collectEnd])
+				if err != nil {
+					return fmt.Errorf("JsonKeyBidSize error %v start %d end %d %s", err, collectStart, collectEnd, msg[collectStart:collectEnd])
+				}
+				currentKey = common.JsonKeyAskPrice
+				collectEnd += 7
+				collectStart = collectEnd
+				continue
+			}
+			break
+		case common.JsonKeyAskPrice:
+			if msg[collectEnd] == '"' {
+				bookTicker.BestAskPrice, err = common.ParseDecimal(msg[collectStart:collectEnd])
+				if err != nil {
+					return fmt.Errorf("JsonKeyAskSize error %v start %d end %d %s", err, collectStart, collectEnd, msg[collectStart:collectEnd])
+				}
+				currentKey = common.JsonKeyAskSize
+				collectEnd += 7
+				collectStart = collectEnd
+				continue
+			}
+			break
+		case common.JsonKeyAskSize:
+			if msg[collectEnd] == '"' {
+				bookTicker.BestAskQty, err = common.ParseDecimal(msg[collectStart:collectEnd])
+				if err != nil {
+					return fmt.Errorf("JsonKeyAskSize error %v start %d end %d %s", err, collectStart, collectEnd, msg[collectStart:collectEnd])
+				}
+				return
+			}
+		case common.JsonKeyUnknown:
+			if msg[collectEnd] == 's' {
+				currentKey = common.JsonKeySymbol
+				collectEnd += 4
+				collectStart = collectEnd
+				collectEnd += 6
+				continue
+			}
+		}
+		collectEnd += 1
+	}
+	return
+}
+
 func ParseDepth5(bytes []byte, depth5 *Depth5) error {
 	var err error
-	offset := 60
+	offset := 59
 	collectStart := offset
 	bytesLen := len(bytes)
 	currentKey := common.JsonKeyUnknown
@@ -613,38 +698,4 @@ func ParseDepth5(bytes []byte, depth5 *Depth5) error {
 		offset += 1
 	}
 	return nil
-}
-
-func SystemStatusLoop(
-	ctx context.Context, api *API, interval time.Duration,
-	output chan bool,
-) {
-	logger.Debugf("START SystemStatusLoop")
-	defer logger.Debugf("EXIT SystemStatusLoop")
-	timer := time.NewTimer(time.Second)
-	defer timer.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			_, err := api.PingServer(subCtx)
-			if err != nil {
-				logger.Debugf("api.PingServer error %v", err)
-				select {
-				case output <- false:
-				default:
-					logger.Debugf("output <- false failed")
-				}
-			} else {
-				select {
-				case output <- true:
-				default:
-					logger.Debugf("output <- true failed")
-				}
-			}
-			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
-		}
-	}
 }

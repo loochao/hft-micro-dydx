@@ -24,7 +24,7 @@ func bnspotDepthWalkingLoop(
 	var takerRawDepth *common.DepthRawMessage
 	var takerDepth, newTakerDepth *bnspot.Depth20
 	var takerWalkedDepth *WalkedDepth20
-	var takerDepthFilter = common.NewDepthFilter(timeDecay, timeBias)
+	var takerDepthFilter = common.NewTimeFilter(timeDecay, timeBias)
 
 	logSilentTime := time.Now()
 	takerWalkDepthTimer := time.NewTimer(time.Hour * 999)

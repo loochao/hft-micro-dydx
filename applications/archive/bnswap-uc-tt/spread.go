@@ -34,8 +34,8 @@ func watchMakerTakerSpread(
 	var spreadTime time.Time
 	var ageDiff time.Duration
 	var maxAgeDiff = time.Duration(takerBias + makerBias)
-	var makerDepthFilter = common.NewDepthFilter(makerDecay, makerBias, -5000, 5000)
-	var takerDepthFilter = common.NewDepthFilter(takerDecay, takerBias, -5000, 5000)
+	var makerDepthFilter = common.NewTimeFilter(makerDecay, makerBias, -5000, 5000)
+	var takerDepthFilter = common.NewTimeFilter(takerDecay, takerBias, -5000, 5000)
 	shortEnterWindow := make([]float64, 0)
 	shortLeaveWindow := make([]float64, 0)
 	shortEnterSortedSlice := common.SortedFloatSlice{}

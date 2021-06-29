@@ -1,6 +1,7 @@
 package ftx_usdfuture
 
 import (
+	"encoding/json"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +26,7 @@ func TestParseTicker(t *testing.T) {
 	assert.Equal(t, 0.2784135, ticker.Ask)
 	assert.Equal(t, 107.0, ticker.BidSize)
 	assert.Equal(t, 5600.0, ticker.AskSize)
-	assert.Equal(t, int64(1624183024.08771*1000000000), ticker.Time.UnixNano())
+	assert.Equal(t, int64(1624183024087), ticker.Time.UnixNano()/1000000)
 	logger.Debugf("%v %d", ticker.Time, int64(1624183024.08771*1000000000))
 	logger.Debugf("%f", 1624183024.08771)
 	f, err := common.ParseDecimal([]byte("1624183024.08771"))
@@ -40,4 +41,27 @@ func TestParseTicker(t *testing.T) {
 	v = 162418302408771
 	logger.Debugf("%s", strconv.FormatFloat(float64(v)/100000.0, 'f', -1, 64))
 	logger.Debugf("%s", strconv.FormatFloat(float64(v)/float64pow10[5], 'f', -1, 64))
+}
+
+
+var GlobalTicker *Ticker
+func BenchmarkParseTicker(b *testing.B) {
+	str := []byte(`{"channel": "ticker", "market": "DOGE-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}}`)
+	ticker := Ticker{}
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		 _ = ParseTicker(str, &ticker)
+	}
+	GlobalTicker = &ticker
+}
+
+var GlobalTickerData *TickerData
+func BenchmarkParseTickerByStdJson(b *testing.B) {
+	str := []byte(`{"channel": "ticker", "market": "DOGE-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}}`)
+	ticker := TickerData{}
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_ = json.Unmarshal(str, &ticker)
+	}
+	GlobalTickerData = &ticker
 }

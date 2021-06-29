@@ -31,10 +31,12 @@ func TestFtxperp(t *testing.T) {
 	orderCh := make(chan common.Order, 100)
 	ordersCh["BTC-PERP"] = orderCh
 	ordersCh["ETH-PERP"] = orderCh
+	commissionCh := make(chan float64, 100)
 	go exchange.StreamBasic(
 		ctx,
 		statusCh,
 		accountCh,
+		commissionCh,
 		positionsCh,
 		ordersCh,
 	)

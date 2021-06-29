@@ -22,7 +22,7 @@ func StreamWalkedDepth(
 	var takerRawDepth *common.DepthRawMessage
 	var takerDepth, newTakerDepth *bnswap.Depth5
 	var takerWalkedDepth *common.WalkedTakerDepth
-	var takerDepthFilter = common.NewDepthFilter(timeDecay, timeBias)
+	var takerDepthFilter = common.NewTimeFilter(timeDecay, timeBias)
 
 	logSilentTime := time.Now()
 	takerWalkDepthTimer := time.NewTimer(time.Hour * 999)
