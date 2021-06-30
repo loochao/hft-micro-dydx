@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
 	bncs "github.com/geometrybase/hft-micro/binance-usdcspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
@@ -178,7 +177,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
+	logger.Debugf("CONFIG:\n\n%s\n\n", configStr)
 
 	xyGlobalCtx, xyGlobalCancel = context.WithCancel(context.Background())
 	defer xyGlobalCancel()
