@@ -476,7 +476,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 				return true
 			} else {
 				logger.Debugf(
-					"%s CANCEL, SHORT BOT CLOSE %f < %f", strat.xSymbol,
+					"%s CANCEL, SHORT BOT CLOSE %f > %f", strat.xSymbol,
 					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.shortBot+(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
 				)
 				return false
@@ -487,7 +487,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 				return true
 			} else {
 				logger.Debugf(
-					"%s CANCEL, LONG BOT OPEN %f < %f", strat.xSymbol,
+					"%s CANCEL, LONG BOT OPEN %f > %f", strat.xSymbol,
 					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.longBot+(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
 				)
 				return false
