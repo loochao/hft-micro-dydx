@@ -128,6 +128,14 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+			select {
+			case w.marketCh <- symbol:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("w.marketCh <- symbol failed, ch len %d", len(w.marketCh))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
 		}
 	}
 }
