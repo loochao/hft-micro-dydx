@@ -18,7 +18,6 @@ type Config struct {
 	XExchange common.ExchangeSettings `yaml:"xExchange"`
 	YExchange common.ExchangeSettings `yaml:"yExchange"`
 
-	TickerWalkDelay       time.Duration `yaml:"tickerWalkDelay"`
 	SpreadWalkDelay       time.Duration `yaml:"spreadWalkDelay"`
 	LogInterval           time.Duration `yaml:"logInterval"`
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
