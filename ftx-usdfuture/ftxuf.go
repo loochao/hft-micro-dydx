@@ -236,8 +236,10 @@ func (ftx *FtxUsdtFuture) StreamBasic(
 				if pos.NetSize*size < 0 {
 					if math.Abs(size) > math.Abs(pos.NetSize) {
 						pos.Cost = (pos.NetSize + size) * price
+						pos.NetSize = pos.NetSize + size
 					} else {
 						pos.Cost = pos.Cost - size*price
+						pos.NetSize = pos.NetSize + size
 					}
 				} else {
 					pos.Cost += size * price
