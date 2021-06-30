@@ -130,7 +130,7 @@ func main() {
 	}
 	fmt.Printf("\n\n\n")
 
-	fmt.Printf("\n\n\n var maxOrderSizes = map[string]float{\n")
+	fmt.Printf("\n\n\n var maxOrderValues = map[string]float64{\n")
 	for _, symbol := range symbols {
 		fmt.Printf(
 			"\"%s\":\t%s,\n",
