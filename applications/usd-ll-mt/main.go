@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/pprof"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -177,7 +178,11 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	logger.Debugf("CONFIG:\n\n%s\n\n", configStr)
+	logger.Debug("\n\nCONFIG:")
+	for _, l := range strings.Split(string(configStr), "\n") {
+		logger.Debugf("%s", l)
+	}
+	logger.Debug("\n\n")
 
 	xyGlobalCtx, xyGlobalCancel = context.WithCancel(context.Background())
 	defer xyGlobalCancel()
