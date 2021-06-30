@@ -457,12 +457,12 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		return true
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
 		!strat.xOpenOrder.ReduceOnly &&
-		(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.longBot-(strat.config.LongExitDelta - strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor {
+		(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.longBot+(strat.config.LongExitDelta - strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor {
 		//卖出开空, 是开多价差, 参考LongBot
 		return true
 	} else if strat.xOpenOrder.Side == common.OrderSideBuy &&
 		strat.xOpenOrder.ReduceOnly &&
-		(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.longTop+(strat.config.LongExitDelta - strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor {
+		(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.longTop-(strat.config.LongExitDelta - strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor {
 		//买入平空, 是平多价差, 参考LongTop
 		return true
 	}
