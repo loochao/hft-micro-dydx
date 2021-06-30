@@ -202,6 +202,7 @@ func (ftx *FtxUsdtFuture) StreamBasic(
 			}
 			break
 		case fill := <-userWS.FillCh:
+			logger.Debugf("FILL %v INTERNAL ORDER %v INTERNAL POSITION %v", fill, internalOrders[fill.OrderId], internalPositions[fill.Market])
 			if order, ok := internalOrders[fill.OrderId]; ok {
 				fill.PostOnly = order.PostOnly
 				fill.ReduceOnly = order.ReduceOnly
