@@ -230,6 +230,8 @@ func (ftx *FtxUsdtFuture) StreamBasic(
 					pos.Cost += size * price
 					pos.NetSize += size
 				}
+				pos.ParseTime = fill.Time
+				logger.Debugf("UPDATE POSITION BY FILL %v", pos)
 				internalPositions[fill.Market] = pos
 				if positionCh, ok := positionsCh[fill.Market]; ok {
 					select {
