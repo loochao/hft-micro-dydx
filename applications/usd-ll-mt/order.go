@@ -453,7 +453,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 			} else {
 				logger.Debugf(
 					"%s CANCEL, LONG TOP BUY %f < %f", strat.xSymbol,
-					(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.longTop-(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
+					(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.longTop-(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
 				)
 				return false
 			}
@@ -464,7 +464,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 			} else {
 				logger.Debugf(
 					"%s CANCEL, SHORT TOP BUY %f < %f", strat.xSymbol,
-					(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.shortTop-(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
+					(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.shortTop-(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
 				)
 				return false
 			}
@@ -477,7 +477,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 			} else {
 				logger.Debugf(
 					"%s CANCEL, SHORT BOT SELL %f < %f", strat.xSymbol,
-					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.shortBot+(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
+					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.shortBot+(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
 				)
 				return false
 			}
@@ -488,7 +488,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 			} else {
 				logger.Debugf(
 					"%s CANCEL, LONG BOT SELL %f < %f", strat.xSymbol,
-					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.longBot+(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
+					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.longBot+(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
 				)
 				return false
 			}
