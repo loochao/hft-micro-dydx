@@ -138,8 +138,8 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			logger.Debugf(
-				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f PRICE %f, X %v Y %v",
-				strat.xSymbol, strat.ySymbol,
+				"%s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f PRICE %f, X %v Y %v",
+				strat.xSymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
 				strat.size,
@@ -204,8 +204,8 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f PRICE %f, X %v Y %v",
-				strat.xSymbol, strat.ySymbol,
+				"%s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f PRICE %f, X %v Y %v",
+				strat.xSymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
 				strat.size,
@@ -239,9 +239,8 @@ func (strat *XYStrategy) updateXOrder() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
+					"%s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
 					strat.xSymbol,
-					strat.ySymbol,
 					strat.enterValue,
 					strat.usdAvailable,
 					strat.spread.ShortLastEnter, strat.shortTop,
@@ -257,8 +256,8 @@ func (strat *XYStrategy) updateXOrder() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
-					strat.xSymbol, strat.ySymbol,
+					"%s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
+					strat.xSymbol,
 					strat.enterValue,
 					strat.spread.ShortLastEnter, strat.shortTop,
 					strat.spread.ShortMedianEnter, strat.shortTop,
@@ -299,8 +298,8 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f PRICE %f, X %v Y %v",
-			strat.xSymbol, strat.ySymbol,
+			"%s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f PRICE %f, X %v Y %v",
+			strat.xSymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
 			strat.size,
@@ -332,9 +331,8 @@ func (strat *XYStrategy) updateXOrder() {
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
+					"%s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
 					strat.xSymbol,
-					strat.ySymbol,
 					strat.enterValue,
 					strat.usdAvailable,
 					strat.spread.LongLastEnter, strat.longBot,
@@ -350,8 +348,8 @@ func (strat *XYStrategy) updateXOrder() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED LONG BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
-					strat.xSymbol, strat.ySymbol,
+					"%s FAILED LONG BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
+					strat.xSymbol,
 					strat.enterValue,
 					strat.spread.LongLastEnter, strat.longBot,
 					strat.spread.LongMedianEnter, strat.longBot,
@@ -392,8 +390,8 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f PRICE %f, X %v Y %v",
-			strat.xSymbol, strat.ySymbol,
+			"%s LONG BOT OPEN %f < %f, %f < %f, SIZE %f PRICE %f, X %v Y %v",
+			strat.xSymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
 			strat.size,
