@@ -455,6 +455,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 					"%s CANCEL, LONG TOP BUY %f < %f", strat.xSymbol,
 					(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.longTop-(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
 				)
+				return false
 			}
 		} else {
 			if (strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price >= strat.shortTop-(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor {
@@ -465,6 +466,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 					"%s CANCEL, SHORT TOP BUY %f < %f", strat.xSymbol,
 					(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.shortTop-(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
 				)
+				return false
 			}
 		}
 	} else {
@@ -477,6 +479,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 					"%s CANCEL, SHORT BOT SELL %f < %f", strat.xSymbol,
 					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.shortBot+(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
 				)
+				return false
 			}
 		} else {
 			if (strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price <= strat.longBot+(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor {
@@ -487,8 +490,8 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 					"%s CANCEL, LONG BOT SELL %f < %f", strat.xSymbol,
 					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.longBot+(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
 				)
+				return false
 			}
 		}
 	}
-	return false
 }
