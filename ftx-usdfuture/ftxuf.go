@@ -432,7 +432,6 @@ func (ftx *FtxUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSet
 	ftx.settings = settings
 	ftx.done = make(chan interface{})
 	ftx.stopped = false
-	logger.Debugf("%s")
 	ftx.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.Proxy)
 	if err != nil {
 		return err
