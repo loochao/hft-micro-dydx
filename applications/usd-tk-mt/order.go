@@ -463,13 +463,33 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		return true
 	}
 	if strat.xOpenOrder.Side == common.OrderSideBuy {
-		logger.Debugf(
-			"NOT PROFITABLE %s BUY ORDER, CANCEL", strat.xSymbol,
-		)
+		if strat.xOpenOrder.ReduceOnly {
+			logger.Debugf(
+				"NOT PROFITABLE %s BUY ORDER, CANCEL, LONG TOP REDUCE SPREAD %f < %f", strat.xSymbol,
+				(strat.yTicker.GetBidPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price,
+				strat.longTop-(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
+			)
+		} else {
+			logger.Debugf(
+				"NOT PROFITABLE %s BUY ORDER, CANCEL, SHORT TOP OPEN SPREAD %f > %f", strat.xSymbol,
+				(strat.yTicker.GetBidPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price,
+				strat.shortTop-(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
+			)
+		}
 	} else {
-		logger.Debugf(
-			"NOT PROFITABLE %s SELL ORDER, CANCEL", strat.xSymbol,
-		)
+		if strat.xOpenOrder.ReduceOnly {
+			logger.Debugf(
+				"NOT PROFITABLE %s BUY ORDER, CANCEL, SHORT BOT REDUCE SPREAD %f > %f", strat.xSymbol,
+				(strat.yTicker.GetAskPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price,
+				strat.shortBot+(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
+			)
+		} else {
+			logger.Debugf(
+				"NOT PROFITABLE %s BUY ORDER, CANCEL, LONG BOT OPEN SPREAD %f > %f", strat.xSymbol,
+				(strat.yTicker.GetAskPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price,
+				strat.longBot+(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
+			)
+		}
 	}
 	return false
 }
