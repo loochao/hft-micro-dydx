@@ -187,6 +187,7 @@ func (ftx *FtxUsdtFuture) StreamBasic(
 				}
 			}
 		case order := <-userWS.OrderCh:
+			logger.Debugf("SAVE INTERNAL ORDER %d %v",  order.ID, order)
 			internalOrders[order.ID] = order
 			if orderCh, ok := ordersCh[order.Market]; ok {
 				select {
@@ -202,7 +203,7 @@ func (ftx *FtxUsdtFuture) StreamBasic(
 			}
 			break
 		case fill := <-userWS.FillCh:
-			logger.Debugf("FILL %v INTERNAL ORDER %v INTERNAL POSITION %v", fill, internalOrders[fill.OrderId], internalPositions[fill.Market])
+			logger.Debugf("FILL %d %v INTERNAL ORDER %v INTERNAL POSITION %v", fill.OrderId,fill, internalOrders[fill.OrderId], internalPositions[fill.Market])
 			if order, ok := internalOrders[fill.OrderId]; ok {
 				fill.PostOnly = order.PostOnly
 				fill.ReduceOnly = order.ReduceOnly
