@@ -204,7 +204,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
+				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 				strat.xSymbol, strat.ySymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
@@ -212,6 +212,10 @@ func (strat *XYStrategy) updateXOrder() {
 				strat.size,
 				time.Now().Sub(strat.xTickerTime),
 				time.Now().Sub(strat.yTickerTime),
+				strat.xTicker.GetBidPrice(),
+				strat.xTicker.GetAskPrice(),
+				strat.yTicker.GetBidPrice(),
+				strat.yTicker.GetAskPrice(),
 			)
 		}
 		return
@@ -297,7 +301,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
+			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
@@ -305,6 +309,10 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.size,
 			time.Now().Sub(strat.xTickerTime),
 			time.Now().Sub(strat.yTickerTime),
+			strat.xTicker.GetBidPrice(),
+			strat.xTicker.GetAskPrice(),
+			strat.yTicker.GetBidPrice(),
+			strat.yTicker.GetAskPrice(),
 		)
 	} else if !strat.config.ReduceOnly &&
 		!strat.isXSpot &&
@@ -388,7 +396,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
+			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
@@ -396,6 +404,10 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.size,
 			time.Now().Sub(strat.xTickerTime),
 			time.Now().Sub(strat.yTickerTime),
+			strat.xTicker.GetBidPrice(),
+			strat.xTicker.GetAskPrice(),
+			strat.yTicker.GetBidPrice(),
+			strat.yTicker.GetAskPrice(),
 		)
 
 	}
@@ -465,29 +477,45 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 	if strat.xOpenOrder.Side == common.OrderSideBuy {
 		if strat.xOpenOrder.ReduceOnly {
 			logger.Debugf(
-				"NOT PROFITABLE %s BUY ORDER, CANCEL, LONG TOP REDUCE SPREAD %f < %f", strat.xSymbol,
+				"NOT PROFITABLE %s BUY ORDER, CANCEL, LONG TOP REDUCE SPREAD %f < %f  X %f %f Y %f %f", strat.xSymbol,
 				(strat.yTicker.GetBidPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price,
 				strat.longTop-(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
+				strat.xTicker.GetBidPrice(),
+				strat.xTicker.GetAskPrice(),
+				strat.yTicker.GetBidPrice(),
+				strat.yTicker.GetAskPrice(),
 			)
 		} else {
 			logger.Debugf(
-				"NOT PROFITABLE %s BUY ORDER, CANCEL, SHORT TOP OPEN SPREAD %f > %f", strat.xSymbol,
+				"NOT PROFITABLE %s BUY ORDER, CANCEL, SHORT TOP OPEN SPREAD %f > %f  X %f %f Y %f %f", strat.xSymbol,
 				(strat.yTicker.GetBidPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price,
 				strat.shortTop-(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
+				strat.xTicker.GetBidPrice(),
+				strat.xTicker.GetAskPrice(),
+				strat.yTicker.GetBidPrice(),
+				strat.yTicker.GetAskPrice(),
 			)
 		}
 	} else {
 		if strat.xOpenOrder.ReduceOnly {
 			logger.Debugf(
-				"NOT PROFITABLE %s BUY ORDER, CANCEL, SHORT BOT REDUCE SPREAD %f > %f", strat.xSymbol,
+				"NOT PROFITABLE %s BUY ORDER, CANCEL, SHORT BOT REDUCE SPREAD %f > %f  X %f %f Y %f %f", strat.xSymbol,
 				(strat.yTicker.GetAskPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price,
 				strat.shortBot+(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
+				strat.xTicker.GetBidPrice(),
+				strat.xTicker.GetAskPrice(),
+				strat.yTicker.GetBidPrice(),
+				strat.yTicker.GetAskPrice(),
 			)
 		} else {
 			logger.Debugf(
-				"NOT PROFITABLE %s BUY ORDER, CANCEL, LONG BOT OPEN SPREAD %f > %f", strat.xSymbol,
+				"NOT PROFITABLE %s BUY ORDER, CANCEL, LONG BOT OPEN SPREAD %f > %f  X %f %f Y %f %f", strat.xSymbol,
 				(strat.yTicker.GetAskPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price,
 				strat.longBot+(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
+				strat.xTicker.GetBidPrice(),
+				strat.xTicker.GetAskPrice(),
+				strat.yTicker.GetBidPrice(),
+				strat.yTicker.GetAskPrice(),
 			)
 		}
 	}
