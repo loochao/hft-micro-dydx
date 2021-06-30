@@ -39,11 +39,52 @@ type ErrorCap struct {
 //}
 
 type Balance struct {
-	Id        string  `json:"id"`
-	Currency  string  `json:"currency"`
-	Balance   float64 `json:"balance,string"`
-	Available float64 `json:"available,string"`
-	Hold      float64 `json:"hold,string"`
+	Id        string    `json:"id"`
+	Currency  string    `json:"currency"`
+	Balance   float64   `json:"balance,string"`
+	Available float64   `json:"available,string"`
+	Hold      float64   `json:"hold,string"`
+	EventTime time.Time `json:"-"`
+}
+
+func (b *Balance) GetSymbol() string {
+	return b.Currency+"-USDT"
+}
+
+func (b *Balance) GetSize() float64 {
+	return b.Balance
+}
+
+func (b *Balance) GetPrice() float64 {
+	return 0.0
+}
+
+func (b *Balance) GetEventTime() time.Time {
+	panic("implement me")
+}
+
+func (b *Balance) GetParseTime() time.Time {
+	panic("implement me")
+}
+
+func (b *Balance) GetCurrency() string {
+	return b.Currency
+}
+
+func (b *Balance) GetBalance() float64 {
+	return b.Balance
+}
+
+func (b *Balance) GetFree() float64 {
+	return b.Available
+}
+
+func (b *Balance) GetUsed() float64 {
+	return b.Hold
+}
+
+func (b *Balance) GetTime() time.Time {
+	return b.EventTime
 }
 
 func (b *Balance) ToString() string {
@@ -125,10 +166,10 @@ type Depth5 struct {
 	EventTime time.Time     `json:"-"`
 }
 
-func (depth *Depth5) GetBids() [5][2]float64 { return depth.Bids }
-func (depth *Depth5) GetAsks() [5][2]float64 { return depth.Asks }
-func (depth *Depth5) GetSymbol() string      { return depth.Symbol }
-func (depth *Depth5) GetTime() time.Time     { return depth.EventTime }
+func (depth *Depth5) GetBids() common.Bids { return depth.Bids[:] }
+func (depth *Depth5) GetAsks() common.Asks { return depth.Asks[:] }
+func (depth *Depth5) GetSymbol() string    { return depth.Symbol }
+func (depth *Depth5) GetTime() time.Time   { return depth.EventTime }
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	type Alias Depth5
 	aux := struct {
@@ -264,5 +305,4 @@ func (trade *Trade) GetSymbol() string  { return trade.Symbol }
 func (trade *Trade) GetSize() float64   { return trade.Size }
 func (trade *Trade) GetPrice() float64  { return trade.Price }
 func (trade *Trade) GetTime() time.Time { return trade.EventTime }
-func (trade *Trade) IsUpTick() bool { return trade.Side == TradeSideBuy }
-
+func (trade *Trade) IsUpTick() bool     { return trade.Side == TradeSideBuy }

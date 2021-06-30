@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-type UserWebsocket struct {
+type UserWS struct {
 	messageCh   chan []byte
 	OrdersCh    chan []WSOrder
 	BalancesCh  chan []Balance
@@ -36,7 +36,7 @@ type UserWebsocket struct {
 	stopped     int32
 }
 
-func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *UserWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -76,7 +76,7 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 		}
 	}
 }
-func (w *UserWebsocket) parseBinaryResponse(resp []byte) ([]byte, error) {
+func (w *UserWS) parseBinaryResponse(resp []byte) ([]byte, error) {
 	var standardMessage []byte
 	var err error
 	// Detect GZIP
@@ -109,7 +109,7 @@ func (w *UserWebsocket) parseBinaryResponse(resp []byte) ([]byte, error) {
 	return standardMessage, nil
 }
 
-func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
+func (w *UserWS) readLoop(conn *websocket.Conn) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	totalCount := 0
@@ -163,7 +163,7 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 	}
 }
 
-func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
+func (w *UserWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -181,7 +181,7 @@ func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
+func (w *UserWS) dataHandleLoop(ctx context.Context) {
 	logger.Debugf("START dataHandleLoop")
 	defer logger.Debugf("EXIT dataHandleLoop")
 	logSilentTime := time.Now()
@@ -345,7 +345,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 	}
 }
 
-func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *UserWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -390,7 +390,7 @@ func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy strin
 	return conn, nil
 }
 
-func (w *UserWebsocket) mainLoop(ctx context.Context, symbols []string, proxy string) {
+func (w *UserWS) mainLoop(ctx context.Context, symbols []string, proxy string) {
 	logger.Debugf("START mainLoop")
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -439,7 +439,7 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, symbols []string, proxy st
 	}
 }
 
-func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *UserWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("EXIT heartbeatLoop")
@@ -568,15 +568,14 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 
 }
 
-func (w *UserWebsocket) Stop() {
-	if atomic.LoadInt32(&w.stopped) == 0 {
-		atomic.StoreInt32(&w.stopped, 1)
+func (w *UserWS) Stop() {
+	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (w *UserWebsocket) restart() {
+func (w *UserWS) restart() {
 	select {
 	case w.RestartCh <- nil:
 	default:
@@ -590,11 +589,11 @@ func (w *UserWebsocket) restart() {
 	}
 }
 
-func (w *UserWebsocket) Done() chan interface{} {
+func (w *UserWS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *UserWebsocket) getChannelWithoutOrderType(table string) string {
+func (w *UserWS) getChannelWithoutOrderType(table string) string {
 	index := strings.Index(table, ":")
 	// Some events do not contain a currency
 	if index == -1 {
@@ -608,27 +607,24 @@ func NewUserWebsocket(
 	key, secret, passphrase string,
 	symbols []string,
 	proxy string,
-) *UserWebsocket {
-	ws := UserWebsocket{
+) *UserWS {
+	ws := UserWS{
 		Key:         key,
 		Secret:      secret,
 		Passphrase:  passphrase,
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 100),
-		OrdersCh:    make(chan []WSOrder, 100*len(symbols)),
-		BalancesCh:  make(chan []Balance, 100*len(symbols)),
-		RestartCh:   make(chan interface{}, 100),
-		messageCh:   make(chan []byte, 100*len(symbols)),
-		writeCh:     make(chan interface{}, 100*len(symbols)),
-		topicCh:     make(chan string, 100*len(symbols)),
-		pongCh:      make(chan []byte, 100),
-		loginCh:     make(chan bool, 100),
+		reconnectCh: make(chan interface{}, 4),
+		OrdersCh:    make(chan []WSOrder, len(symbols)),
+		BalancesCh:  make(chan []Balance, 4),
+		RestartCh:   make(chan interface{}, 4),
+		messageCh:   make(chan []byte, 4*len(symbols)),
+		writeCh:     make(chan interface{}, len(symbols)),
+		topicCh:     make(chan string, 4*len(symbols)),
+		pongCh:      make(chan []byte, 4),
+		loginCh:     make(chan bool, 4),
 		stopped:     0,
 	}
 	go ws.mainLoop(ctx, symbols, proxy)
-	go ws.dataHandleLoop(ctx)
-	go ws.dataHandleLoop(ctx)
-	go ws.dataHandleLoop(ctx)
 	go ws.dataHandleLoop(ctx)
 	ws.reconnectCh <- nil
 	return &ws

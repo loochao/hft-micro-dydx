@@ -2,6 +2,7 @@ package okex_usdtspot
 
 import (
 	"encoding/json"
+	"github.com/geometrybase/hft-micro/common"
 	"strconv"
 	"time"
 )
@@ -100,8 +101,6 @@ type WSTrade struct {
 	Timestamp    time.Time `json:"timestamp,string,omitempty"`
 }
 
-
-
 //order_id	String	Order ID
 //client_oid	String	Client supplied order ID
 //price	String	Price
@@ -158,7 +157,7 @@ type WSOrder struct {
 	Price           float64   `json:"-"`
 	Size            float64   `json:"-"`
 	Notional        float64   `json:"-"`
-	Symbol    string    `json:"instrument_id,omitempty"`
+	Symbol          string    `json:"instrument_id,omitempty"`
 	Side            string    `json:"side,omitempty"`
 	Type            string    `json:"type,omitempty"`
 	Timestamp       time.Time `json:"timestamp,string,omitempty"`
@@ -180,6 +179,89 @@ type WSOrder struct {
 	LastAmendResult string    `json:"last_amend_result,omitempty"`
 	EventCode       string    `json:"event_code,omitempty"`
 	EventMessage    string    `json:"event_message,omitempty"`
+}
+
+func (order *WSOrder) GetSymbol() string {
+	return order.Symbol
+}
+
+func (order *WSOrder) GetSize() float64 {
+	return order.Size
+}
+
+func (order *WSOrder) GetPrice() float64 {
+	return order.Price
+}
+
+func (order *WSOrder) GetFilledSize() float64 {
+	return order.FilledSize
+}
+
+func (order *WSOrder) GetFilledPrice() float64 {
+	if order.FilledSize != 0 {
+		return order.FilledNotional / order.FilledSize
+	} else {
+		return 0.0
+	}
+}
+
+func (order *WSOrder) GetSide() common.OrderSide {
+	switch order.Side {
+	case OrderSideBuy:
+		return common.OrderSideBuy
+	case OrderSideSell:
+		return common.OrderSideSell
+	default:
+		return common.OrderSideUnknown
+	}
+}
+
+func (order *WSOrder) GetClientID() string {
+	return order.ClientOID
+}
+
+func (order *WSOrder) GetID() string {
+	return order.OrderId
+}
+
+func (order *WSOrder) GetStatus() common.OrderStatus {
+	switch order.State {
+	case OrderStateCanceled:
+		return common.OrderStatusCancelled
+	case OrderStateCancelling:
+		return common.OrderStatusPendingCancel
+	case OrderStateFailed:
+		return common.OrderStatusExpired
+	case OrderStatePartiallyFilled:
+		return common.OrderStatusPartiallyFilled
+	case OrderStateFullyFilled:
+		return common.OrderStatusFilled
+	case OrderStateOpen:
+		return common.OrderStatusOpen
+	case OrderStateSubmitting:
+		return common.OrderStatusNew
+	default:
+		return common.OrderStatusUnknown
+	}
+}
+
+func (order *WSOrder) GetType() common.OrderType {
+	switch order.Type {
+	case OrderLimit:
+		return common.OrderTypeLimit
+	case OrderMarket:
+		return common.OrderTypeMarket
+	default:
+		return common.OrderTypeUnknown
+	}
+}
+
+func (order *WSOrder) GetPostOnly() bool {
+	panic("implement me")
+}
+
+func (order *WSOrder) GetReduceOnly() bool {
+	panic("implement me")
 }
 
 func (order *WSOrder) UnmarshalJSON(data []byte) error {
@@ -230,4 +312,3 @@ func (order *WSOrder) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
-

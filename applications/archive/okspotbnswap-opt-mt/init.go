@@ -25,7 +25,7 @@ var mtExternalInfluxWriter *common.InfluxWriter
 var mAPI *okex_usdtspot.API
 var tAPI *bnswap.API
 
-var mUserWebsocket *okex_usdtspot.UserWebsocket
+var mUserWebsocket *okex_usdtspot.UserWS
 var tUserWebsocket *bnswap.UserWebsocket
 
 var mHttpPositionUpdateSilentTimes = make(map[string]time.Time)

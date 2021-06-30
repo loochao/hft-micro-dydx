@@ -7,7 +7,6 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"strings"
 	"time"
-	"unsafe"
 )
 
 func WatchBalancesFromHttp(
@@ -41,54 +40,32 @@ func WatchBalancesFromHttp(
 	}
 }
 
-func ParseDepth5(msg []byte, symbol *string, eventTime *time.Time) (*Depth5, error) {
-	var err error
-	depth5 := Depth5{
-		Bids:      [5][2]float64{},
-		Asks:      [5][2]float64{},
-		ParseTime: time.Now(),
-	}
+func ParseDepth5(msg []byte, depth5 *Depth5) (err error) {
 	bytesLen := len(msg)
 	if bytesLen < 128 {
-		return nil, fmt.Errorf("bad msg %s", msg)
+		return fmt.Errorf("bad msg %s", msg)
 	}
-
-	var subBytes []byte
-	if eventTime == nil {
-		subBytes = msg[bytesLen-28 : bytesLen-4]
-		depth5.EventTime, err = time.Parse(okspotTimeLayout, *(*string)(unsafe.Pointer(&subBytes)))
-		if err != nil {
-			return nil, fmt.Errorf("time.Parse %s error %v", subBytes, err)
-		}
-	} else {
-		depth5.EventTime = *eventTime
+	depth5.EventTime, err = time.Parse(okspotTimeLayout, common.UnsafeBytesToString(msg[bytesLen-28:bytesLen-4]))
+	if err != nil {
+		return fmt.Errorf("time.Parse %s error %v", msg[bytesLen-28:bytesLen-4], err)
 	}
-
-	if symbol == nil {
-		if msg[bytesLen-53] == ':' {
-			subBytes = msg[bytesLen-51 : bytesLen-43]
-			depth5.Symbol = *(*string)(unsafe.Pointer(&subBytes))
-		} else if msg[bytesLen-54] == ':' {
-			subBytes = msg[bytesLen-52 : bytesLen-43]
-			depth5.Symbol = *(*string)(unsafe.Pointer(&subBytes))
-		} else if msg[bytesLen-55] == ':' {
-			subBytes = msg[bytesLen-53 : bytesLen-43]
-			depth5.Symbol = *(*string)(unsafe.Pointer(&subBytes))
-		} else if msg[bytesLen-56] == ':' {
-			subBytes = msg[bytesLen-54 : bytesLen-43]
-			depth5.Symbol = *(*string)(unsafe.Pointer(&subBytes))
-		} else {
-			return nil, fmt.Errorf("bad msg, can't find symbol %s", msg)
-		}
+	if msg[bytesLen-53] == ':' {
+		depth5.Symbol = common.UnsafeBytesToString(msg[bytesLen-51 : bytesLen-43])
+	} else if msg[bytesLen-54] == ':' {
+		depth5.Symbol = common.UnsafeBytesToString(msg[bytesLen-52 : bytesLen-43])
+	} else if msg[bytesLen-55] == ':' {
+		depth5.Symbol = common.UnsafeBytesToString(msg[bytesLen-53 : bytesLen-43])
+	} else if msg[bytesLen-56] == ':' {
+		depth5.Symbol = common.UnsafeBytesToString(msg[bytesLen-54 : bytesLen-43])
 	} else {
-		depth5.Symbol = *symbol
+		return fmt.Errorf("bad msg, can't find symbol %s", msg)
 	}
 	currentKey := common.JsonKeyAsks
 	counter := 0
 	offset := 42
 	collectStart := offset
 	if msg[offset-7] != 'k' && msg[offset-6] != 's' && msg[offset-5] != '"' {
-		return nil, fmt.Errorf("bad msg %s", msg)
+		return fmt.Errorf("bad msg %s", msg)
 	}
 	for offset < bytesLen-54 {
 		switch currentKey {
@@ -97,7 +74,7 @@ func ParseDepth5(msg []byte, symbol *string, eventTime *time.Time) (*Depth5, err
 				if counter%3 < 2 {
 					depth5.Bids[counter/3][counter%3], err = common.ParseFloat(msg[collectStart:offset])
 					if err != nil {
-						return nil, fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
+						return fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
 					}
 				}
 				counter += 1
@@ -120,7 +97,7 @@ func ParseDepth5(msg []byte, symbol *string, eventTime *time.Time) (*Depth5, err
 				if counter%3 < 2 {
 					depth5.Asks[counter/3][counter%3], err = common.ParseFloat(msg[collectStart:offset])
 					if err != nil {
-						return nil, fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
+						return fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
 					}
 				}
 				counter += 1
@@ -142,7 +119,7 @@ func ParseDepth5(msg []byte, symbol *string, eventTime *time.Time) (*Depth5, err
 		}
 		offset += 1
 	}
-	return &depth5, nil
+	return nil
 }
 
 func SystemStatusHttpLoop(

@@ -195,4 +195,19 @@ func (f StringFloat) MarshalJSON() ([]byte, error) {
 
 
 
+type ZeroFundingRate struct {
+	Symbol string
+}
+
+func (f *ZeroFundingRate) GetSymbol() string {
+	return f.Symbol
+}
+
+func (f *ZeroFundingRate) GetFundingRate() float64 {
+	return 0
+}
+
+func (f *ZeroFundingRate) GetNextFundingTime() time.Time {
+	return time.Time{}
+}
 

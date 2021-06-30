@@ -16,10 +16,9 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
-	"unsafe"
 )
 
-type Depth5RoutedWebsocket struct {
+type Depth5WS struct {
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
@@ -28,7 +27,7 @@ type Depth5RoutedWebsocket struct {
 	stopped     int32
 }
 
-func (w *Depth5RoutedWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth5WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -68,7 +67,7 @@ func (w *Depth5RoutedWebsocket) writeLoop(ctx context.Context, conn *websocket.C
 		}
 	}
 }
-func (w *Depth5RoutedWebsocket) parseBinaryResponse(resp []byte) ([]byte, error) {
+func (w *Depth5WS) parseBinaryResponse(resp []byte) ([]byte, error) {
 	var standardMessage []byte
 	var err error
 	// Detect GZIP
@@ -101,17 +100,12 @@ func (w *Depth5RoutedWebsocket) parseBinaryResponse(resp []byte) ([]byte, error)
 	return standardMessage, nil
 }
 
-func (w *Depth5RoutedWebsocket) readLoop(conn *websocket.Conn, channels map[string]chan *common.DepthRawMessage) {
+func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
-	totalCount := 0
-	totalLen := 0
 	logSilentTime := time.Now()
-	var symbolBytes []byte
 	var symbol string
-	var timeBytes []byte
-	var eventTime time.Time
-	var ch chan *common.DepthRawMessage
+	var ch chan []byte
 	var ok bool
 	var msg []byte
 	var msgLen int
@@ -149,13 +143,6 @@ func (w *Depth5RoutedWebsocket) readLoop(conn *websocket.Conn, channels map[stri
 			}
 		}
 		msgLen = len(msg)
-		totalCount += 1
-		totalLen += msgLen
-		if totalCount > 1000000 {
-			logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
-			totalLen = 0
-			totalCount = 0
-		}
 		if msg[2] == 'e' {
 			err = json.Unmarshal(msg, &subscribeEvent)
 			if err != nil {
@@ -178,24 +165,14 @@ func (w *Depth5RoutedWebsocket) readLoop(conn *websocket.Conn, channels map[stri
 			continue
 		} else if msg[2] == 't' && len(msg) > 128 {
 			//{"table":"spot/depth5","data":[{"asks":[["31.605","4.32464","1"],["31.607","85","1"],["31.61","2","1"],["31.612","0.1","1"],["31.614","1.405511","1"]],"bids":[["31.583","302.09312","3"],["31.582","0.9","1"],["31.58","111.30127","1"],["31.579","76","1"],["31.576","31.83446","1"]],"instrument_id":"LINK-USDT","timestamp":"2021-04-25T08:24:33.352Z"}]}
-			timeBytes = msg[msgLen-28 : msgLen-4]
-			eventTime, err = time.Parse(okspotTimeLayout, *(*string)(unsafe.Pointer(&timeBytes)))
-			if err != nil {
-				logger.Debugf("time.Parse %s error %v", timeBytes, err)
-				continue
-			}
 			if msg[msgLen-53] == ':' {
-				symbolBytes = msg[msgLen-51 : msgLen-43]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				symbol = common.UnsafeBytesToString(msg[msgLen-51 : msgLen-43])
 			} else if msg[msgLen-54] == ':' {
-				symbolBytes = msg[msgLen-52 : msgLen-43]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				symbol = common.UnsafeBytesToString(msg[msgLen-52 : msgLen-43])
 			} else if msg[msgLen-55] == ':' {
-				symbolBytes = msg[msgLen-53 : msgLen-43]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				symbol =common.UnsafeBytesToString(msg[msgLen-53 : msgLen-43])
 			} else if msg[msgLen-56] == ':' {
-				symbolBytes = msg[msgLen-54 : msgLen-43]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				symbol = common.UnsafeBytesToString(msg[msgLen-54 : msgLen-43])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
@@ -220,17 +197,12 @@ func (w *Depth5RoutedWebsocket) readLoop(conn *websocket.Conn, channels map[stri
 			}
 			continue
 		}
-		//logger.Debugf("%s %v ",symbol, eventTime)
 		if ch, ok = channels[symbol]; ok {
 			select {
-			case ch <- &common.DepthRawMessage{
-				Depth:  msg,
-				Symbol: symbol,
-				Time:   eventTime,
-			}:
+			case ch <- msg:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("ch <- &common.DepthRawMessage failed %s ch len %d", symbol, len(ch))
+					logger.Debugf("ch <- msg failed %s ch len %d", symbol, len(ch))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -246,7 +218,7 @@ func (w *Depth5RoutedWebsocket) readLoop(conn *websocket.Conn, channels map[stri
 	}
 }
 
-func (w *Depth5RoutedWebsocket) readAll(r io.Reader) ([]byte, error) {
+func (w *Depth5WS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -264,7 +236,7 @@ func (w *Depth5RoutedWebsocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *Depth5RoutedWebsocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *Depth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -309,7 +281,7 @@ func (w *Depth5RoutedWebsocket) reconnect(ctx context.Context, wsUrl string, pro
 	return conn, nil
 }
 
-func (w *Depth5RoutedWebsocket) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.DepthRawMessage) {
+func (w *Depth5WS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -362,7 +334,7 @@ func (w *Depth5RoutedWebsocket) mainLoop(ctx context.Context, proxy string, chan
 	}
 }
 
-func (w *Depth5RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *Depth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -379,7 +351,7 @@ func (w *Depth5RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websock
 	for _, symbol := range symbols {
 		symbolUpdatedTimes[symbol] = time.Unix(0, 0)
 	}
-	trafficTimeout := time.NewTimer(time.Minute*5)
+	trafficTimeout := time.NewTimer(time.Minute * 5)
 	pingTimer := time.NewTimer(time.Second * 15)
 	defer trafficTimeout.Stop()
 	defer pingTimer.Stop()
@@ -445,15 +417,14 @@ func (w *Depth5RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websock
 
 }
 
-func (w *Depth5RoutedWebsocket) Stop() {
-	if atomic.LoadInt32(&w.stopped) == 0 {
-		atomic.StoreInt32(&w.stopped, 1)
+func (w *Depth5WS) Stop() {
+	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (w *Depth5RoutedWebsocket) restart() {
+func (w *Depth5WS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -461,24 +432,67 @@ func (w *Depth5RoutedWebsocket) restart() {
 	}
 }
 
-func (w *Depth5RoutedWebsocket) Done() chan interface{} {
+func (w *Depth5WS) Done() chan interface{} {
 	return w.done
 }
 
-func NewDepth5RoutedWebsocket(
+func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Depth) {
+	logSilentTime := time.Now()
+	var err error
+	var depth5 *Depth5
+	index := -1
+	pool := [4]*Depth5{}
+	for i := 0; i < 4; i++ {
+		pool[i] = &Depth5{}
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-w.done:
+			return
+		case msg := <-inputCh:
+			index++
+			if index == 4 {
+				index = 0
+			}
+			depth5 = pool[index]
+			err = ParseDepth5(msg, depth5)
+			if err != nil {
+				logger.Debugf("%s ParseDepth5 error %v %s", symbol, err, msg)
+				continue
+			}
+			select {
+			case outputCh <- depth5:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("outputCh <- depth5 failed, %s ch len %d", symbol, len(outputCh))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
+		}
+	}
+}
+
+func NewDepth5WS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan *common.DepthRawMessage,
-) *Depth5RoutedWebsocket {
-	ws := Depth5RoutedWebsocket{
+	channels map[string]chan common.Depth,
+) *Depth5WS {
+	ws := Depth5WS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 100),
-		writeCh:     make(chan interface{}, 100*len(channels)),
-		symbolCh:    make(chan string, 100*len(channels)),
-		pingCh:      make(chan []byte, 100),
+		reconnectCh: make(chan interface{}, 4),
+		writeCh:     make(chan interface{}, len(channels)),
+		symbolCh:    make(chan string, len(channels)),
+		pingCh:      make(chan []byte, 4),
 		stopped:     0,
 	}
-	go ws.mainLoop(ctx, proxy, channels)
+	messageChs := make(map[string]chan []byte)
+	for symbol, ch := range channels {
+		messageChs[symbol] = make(chan []byte, 4)
+		go ws.dataHandleLoop(ctx, symbol, messageChs[symbol], ch)
+	}
+	go ws.mainLoop(ctx, proxy, messageChs)
 	ws.reconnectCh <- nil
 	return &ws
 }

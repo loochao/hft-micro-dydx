@@ -19,7 +19,7 @@ func makerRoutedDepthLoop(
 	}
 	logger.Debugf("START makerRoutedDepthLoop %s", symbols)
 	defer logger.Debugf("EXIT makerRoutedDepthLoop %s", symbols)
-	ws := okex_usdtspot.NewDepth5RoutedWebsocket(
+	ws := okex_usdtspot.NewDepth5WS(
 		ctx,
 		proxyAddress,
 		channels,

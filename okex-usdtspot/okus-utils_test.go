@@ -13,7 +13,8 @@ func TestDepth5(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	d6, err := ParseDepth5(str, nil, nil)
+	d6 := &Depth5{}
+	err = ParseDepth5(str, d6)
 	if err != nil {
 		t.Fatal(err)
 	}

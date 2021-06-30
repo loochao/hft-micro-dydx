@@ -35,6 +35,7 @@ type Config struct {
 	MinimalKeepFundingRate  float64       `yaml:"minimalKeepFundingRate"`
 	FrOffsetFactor          float64       `yaml:"frOffsetFactor"`
 	FundingRateSilentTime   time.Duration `yaml:"fundingRateSilentTime"`
+	FundingInterval         time.Duration `yaml:"fundingInterval"`
 
 	DepthMaxTimeDelta   time.Duration `yaml:"depthTimeDeltaMax"`
 	DepthMinTimeDelta   time.Duration `yaml:"depthTimeDeltaMin"`
@@ -58,6 +59,7 @@ type Config struct {
 
 	OrderTimeout        time.Duration `yaml:"orderTimeout"`
 	XOrderSilent        time.Duration `yaml:"xOrderSilent"`
+	XErrorSilent        time.Duration `yaml:"xErrorSilent"`
 	YOrderSilent        time.Duration `yaml:"yOrderSilent"`
 	XCancelSilent       time.Duration `yaml:"xCancelSilent"`
 	XOrderCheckInterval time.Duration `yaml:"xOrderCheckInterval"`
@@ -125,6 +127,12 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.FundingRateSilentTime == 0 {
 		config.FundingRateSilentTime = time.Minute
+	}
+	if config.FundingInterval == 0 {
+		config.FundingInterval = time.Hour*4
+	}
+	if config.XErrorSilent == 0 {
+		config.XErrorSilent = config.EnterSilent
 	}
 	config.XExchange.DryRun = config.DryRun
 	config.YExchange.DryRun = config.DryRun

@@ -239,8 +239,8 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
-				strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
 					"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
@@ -257,8 +257,8 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
-				strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
 					"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
@@ -336,8 +336,8 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
-				strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
 					"%s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
@@ -354,8 +354,8 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
-				strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
 					"%s %s FAILED LONG BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
