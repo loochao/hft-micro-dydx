@@ -57,6 +57,7 @@ type Config struct {
 
 	OrderTimeout        time.Duration `yaml:"orderTimeout"`
 	XOrderSilent        time.Duration `yaml:"xOrderSilent"`
+	XErrorSilent        time.Duration `yaml:"xErrorSilent"`
 	YOrderSilent        time.Duration `yaml:"yOrderSilent"`
 	XCancelSilent       time.Duration `yaml:"xCancelSilent"`
 	XOrderCheckInterval time.Duration `yaml:"xOrderCheckInterval"`
@@ -123,7 +124,10 @@ func (config *Config) SetDefaultIfNotSet() {
 		config.FundingRateSilentTime = time.Minute
 	}
 	if config.FundingInterval == 0 {
-		config.FundingInterval = time.Hour*4
+		config.FundingInterval = time.Hour * 4
+	}
+	if config.XErrorSilent == 0 {
+		config.XErrorSilent = config.EnterSilent
 	}
 	config.XExchange.DryRun = config.DryRun
 	config.YExchange.DryRun = config.DryRun
