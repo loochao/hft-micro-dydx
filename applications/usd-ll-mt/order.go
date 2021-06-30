@@ -138,7 +138,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			logger.Debugf(
-				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f PRICE %f, XDepthDiff %v YDepthDiff %v",
+				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f PRICE %f, X %v Y %v",
 				strat.xSymbol, strat.ySymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
@@ -204,7 +204,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f PRICE %f, XDepthDiff %v YDepthDiff %v",
+				"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f PRICE %f, X %v Y %v",
 				strat.xSymbol, strat.ySymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
@@ -299,7 +299,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f PRICE %f, XDepthDiff %v YDepthDiff %v",
+			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f PRICE %f, X %v Y %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
@@ -392,7 +392,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f PRICE %f, XDepthDiff %v YDepthDiff %v",
+			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE %f PRICE %f, X %v Y %v",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
