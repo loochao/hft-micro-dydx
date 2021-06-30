@@ -65,11 +65,6 @@ func main() {
 	config.SetDefaultIfNotSet()
 	xyConfig = &config
 
-	configStr, err := yaml.Marshal(xyConfig)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
 	if xyConfig.CpuProfile != "" {
 		f, err := os.Create(xyConfig.CpuProfile)
@@ -178,6 +173,12 @@ func main() {
 	}
 	xyConfig.XExchange.Symbols = xSymbols
 	xyConfig.YExchange.Symbols = ySymbols
+
+	configStr, err := yaml.Marshal(xyConfig)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
 	xyGlobalCtx, xyGlobalCancel = context.WithCancel(context.Background())
 	defer xyGlobalCancel()
