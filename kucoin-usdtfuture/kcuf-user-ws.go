@@ -456,7 +456,7 @@ func NewUserWebsocket(
 		PositionCh:  make(chan *WSPosition, 16),
 		RestartCh:   make(chan interface{}, 16),
 		messageCh:   make(chan []byte, 128),
-		writeCh:     make(chan interface{}, 4),
+		writeCh:     make(chan interface{}, 128),
 		topicCh:     make(chan string, 128),
 		stopped:     0,
 	}
