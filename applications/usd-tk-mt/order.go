@@ -439,22 +439,22 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 
 	if strat.xOpenOrder.Side == common.OrderSideBuy &&
 		!strat.xOpenOrder.ReduceOnly &&
-		(strat.yTicker.GetBidPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.shortTop-strat.config.ShortEnterDelta*strat.config.CancelOffsetFactor {
+		(strat.yTicker.GetBidPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.shortTop-(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor {
 		//买入开多, 是开空价差, 参考ShortTop
 		return true
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
 		strat.xOpenOrder.ReduceOnly &&
-		(strat.yTicker.GetAskPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.shortBot-strat.config.ShortExitDelta*strat.config.CancelOffsetFactor {
+		(strat.yTicker.GetAskPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.shortBot+(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor {
 		//卖出平多, 是平空价, 参考ShortBot
 		return true
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
 		!strat.xOpenOrder.ReduceOnly &&
-		(strat.yTicker.GetAskPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.longBot-strat.config.LongEnterDelta*strat.config.CancelOffsetFactor {
+		(strat.yTicker.GetAskPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.longBot+(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor {
 		//卖出开空, 是开多价差, 参考LongBot
 		return true
 	} else if strat.xOpenOrder.Side == common.OrderSideBuy &&
 		strat.xOpenOrder.ReduceOnly &&
-		(strat.yTicker.GetBidPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.longTop-strat.config.LongExitDelta*strat.config.CancelOffsetFactor {
+		(strat.yTicker.GetBidPrice()-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.longTop-(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor {
 		//买入平空, 是平多价差, 参考LongTop
 		return true
 	}
