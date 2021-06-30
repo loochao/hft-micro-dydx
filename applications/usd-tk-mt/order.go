@@ -241,6 +241,7 @@ func (strat *XYStrategy) updateXOrder() {
 		if strat.enterValue > strat.usdAvailable {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+				strat.xOrderSilentTime = time.Now().Add(time.Hour)
 				logger.Debugf(
 					"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
 					strat.xSymbol,
@@ -258,6 +259,7 @@ func (strat *XYStrategy) updateXOrder() {
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+				strat.xOrderSilentTime = time.Now().Add(time.Hour)
 				logger.Debugf(
 					"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
 					strat.xSymbol, strat.ySymbol,
@@ -335,6 +337,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
+				strat.xOrderSilentTime = time.Now().Add(time.Hour)
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
 					"%s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
@@ -353,6 +356,7 @@ func (strat *XYStrategy) updateXOrder() {
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+				strat.xOrderSilentTime = time.Now().Add(time.Hour)
 				logger.Debugf(
 					"%s %s FAILED LONG BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
 					strat.xSymbol, strat.ySymbol,
