@@ -390,10 +390,10 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 			select {
 			case w.marketCh <- market:
 			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
-					logSilentTime = time.Now().Add(time.Minute)
-				}
+				//if time.Now().Sub(logSilentTime) > 0 {
+				//	logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
+				//	logSilentTime = time.Now().Add(time.Minute)
+				//}
 			}
 			break
 		}
