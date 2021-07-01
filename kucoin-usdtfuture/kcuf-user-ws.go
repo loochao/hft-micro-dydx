@@ -292,11 +292,18 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, api *API, symbols []string
 	defer reconnectTimer.Stop()
 	for {
 		select {
+		case <- w.done:
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
+			return
 		case <-ctx.Done():
 			if internalCancel != nil {
 				internalCancel()
 				internalCancel = nil
 			}
+			return
 		case <-w.reconnectCh:
 			if internalCancel != nil {
 				internalCancel()
