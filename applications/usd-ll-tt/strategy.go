@@ -385,7 +385,8 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.fundingRateSettleSilent ||
 		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive ||
 		strat.config.EnterDepthMatchRatio > strat.xyDepthMatchRatio {
-		if strat.config.EnterDepthMatchRatio > strat.xyDepthMatchRatio {
+		if strat.config.EnterDepthMatchRatio > strat.xyDepthMatchRatio &&
+			time.Now().Sub(strat.xOrderSilentTime) > 0 {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 			logger.Debugf("%s match ratio %f < %f, silent %v", strat.xSymbol, strat.xyDepthMatchRatio, strat.config.EnterDepthMatchRatio, strat.config.EnterSilent)
 		}
