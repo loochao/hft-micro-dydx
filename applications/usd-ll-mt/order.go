@@ -25,9 +25,9 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yPosition == nil ||
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
-		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive ||
+		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter ||
 		strat.fundingRateSettleSilent {
-		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
+		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
 			strat.tryCancelXOpenOrder("spread time out")
 		} else if strat.fundingRateSettleSilent {
 			strat.tryCancelXOpenOrder("funding rate silent")
@@ -60,6 +60,13 @@ func (strat *XYStrategy) updateXOrder() {
 	}
 
 	if time.Now().Sub(strat.xCancelSilentTime) < 0 {
+		return
+	}
+
+	if strat.config.EnterDepthMatchRatio > strat.xyDepthMatchRatio {
+		strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
+		strat.tryCancelXOpenOrder("small match ratio")
+		logger.Debugf("%s match ratio %f < %f, silent %v", strat.xyDepthMatchRatio, strat.config.EnterDepthMatchRatio, strat.config.EnterSilent)
 		return
 	}
 
@@ -404,7 +411,7 @@ func (strat *XYStrategy) updateXOrder() {
 }
 
 func (strat *XYStrategy) isXOpenOrderOk() bool {
-	if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
+	if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
 		logger.Debugf("%s CANCEL, SPREAD IS OUT OF DATE", strat.xSymbol)
 		return false
 	}

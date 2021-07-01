@@ -37,19 +37,21 @@ type Config struct {
 	FundingRateSilentTime   time.Duration `yaml:"fundingRateSilentTime"`
 	FundingInterval         time.Duration `yaml:"fundingInterval"`
 
-	DepthMaxTimeDelta   time.Duration `yaml:"depthTimeDeltaMax"`
-	DepthMinTimeDelta   time.Duration `yaml:"depthTimeDeltaMin"`
-	DepthYDecay         float64       `yaml:"depthYDecay"`
-	DepthXDecay         float64       `yaml:"depthXDecay"`
-	DepthYBias          time.Duration `yaml:"depthYBias"`
-	DepthXBias          time.Duration `yaml:"depthXBias"`
-	DepthTakerImpact    float64       `yaml:"depthTakerImpact"`
-	DepthMaxAgeDiffBias time.Duration `yaml:"depthMaxAgeDiffBias"`
-	DepthReportCount    int           `yaml:"depthReportCount"`
-	SpreadTimeToLive    time.Duration `yaml:"spreadTimeToLive"`
-	SpreadLookback      time.Duration `yaml:"spreadLookback"`
-	SpreadMinDepthCount int           `yaml:"spreadMinDepthCount"`
-	BatchSize           int           `yaml:"batchSize"`
+	DepthMaxTimeDelta    time.Duration `yaml:"depthTimeDeltaMax"`
+	DepthMinTimeDelta    time.Duration `yaml:"depthTimeDeltaMin"`
+	DepthYDecay          float64       `yaml:"depthYDecay"`
+	DepthXDecay          float64       `yaml:"depthXDecay"`
+	DepthYBias           time.Duration `yaml:"depthYBias"`
+	DepthXBias           time.Duration `yaml:"depthXBias"`
+	DepthTakerImpact     float64       `yaml:"depthTakerImpact"`
+	DepthMaxAgeDiffBias  time.Duration `yaml:"depthMaxAgeDiffBias"`
+	DepthReportCount     int           `yaml:"depthReportCount"`
+	SpreadTimeToCancel   time.Duration `yaml:"spreadTimeToCancel"`
+	SpreadTimeToEnter    time.Duration `yaml:"spreadTimeToEnter"`
+	SpreadLookback       time.Duration `yaml:"spreadLookback"`
+	SpreadMinDepthCount  int           `yaml:"spreadMinDepthCount"`
+	EnterDepthMatchRatio float64       `yaml:"enterDepthMatchRatio"`
+	BatchSize            int           `yaml:"batchSize"`
 
 	StartValue        float64            `yaml:"startValue"`
 	EnterFreePct      float64            `yaml:"enterFreePct"`
@@ -101,8 +103,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.DepthReportCount == 0 {
 		config.RestartSilent = 1000
 	}
-	if config.SpreadTimeToLive == 0 {
-		config.SpreadTimeToLive = time.Second * 3
+	if config.SpreadTimeToCancel == 0 {
+		config.SpreadTimeToCancel = time.Second * 3
 	}
 	if config.SpreadLookback == 0 {
 		config.SpreadLookback = time.Second
@@ -129,7 +131,7 @@ func (config *Config) SetDefaultIfNotSet() {
 		config.FundingRateSilentTime = time.Minute
 	}
 	if config.FundingInterval == 0 {
-		config.FundingInterval = time.Hour*4
+		config.FundingInterval = time.Hour * 4
 	}
 	if config.XErrorSilent == 0 {
 		config.XErrorSilent = config.EnterSilent

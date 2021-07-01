@@ -98,6 +98,7 @@ func (tm *TimedSum) Range() time.Duration {
 		return time.Duration(0)
 	}
 }
+
 func NewTimedSum(lookback time.Duration) *TimedSum {
 	return &TimedSum{
 		lookback: lookback,
@@ -377,6 +378,7 @@ type TimedWalkingDistance struct {
 	lastValue       *float64
 	lastOffset      float64
 }
+
 func (twd *TimedWalkingDistance) Insert(timestamp time.Time, value float64) float64 {
 	if twd.lastValue == nil {
 		twd.lastValue = new(float64)
@@ -424,5 +426,37 @@ func NewTimedWalkingDistance(lookback time.Duration) *TimedWalkingDistance {
 		times:           make([]time.Time, 0),
 		offsets:         make([]float64, 0),
 		walkingDistance: 0,
+	}
+}
+
+type RollingSum struct {
+	values []float64
+	window int
+	index  int
+	sum    float64
+}
+
+func (tm *RollingSum) Insert(value float64) float64 {
+	tm.sum += value
+	tm.index++
+	if tm.index == tm.window {
+		tm.index = 0
+	}
+	tm.sum -= tm.values[tm.index]
+	tm.values[tm.index] = value
+	return tm.sum
+}
+func (tm *RollingSum) Sum() float64 {
+	return tm.sum
+}
+func (tm *RollingSum) Values() []float64 {
+	return tm.values
+}
+func NewRollingSum(window int) *RollingSum {
+	return &RollingSum{
+		values: make([]float64, window),
+		index:  -1,
+		window: window,
+		sum:    0,
 	}
 }

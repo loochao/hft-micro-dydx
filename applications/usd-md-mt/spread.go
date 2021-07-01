@@ -23,10 +23,13 @@ func (strat *XYStrategy) walkSpread() {
 	if strat.adjustedAgeDiff > strat.config.DepthMaxAgeDiffBias {
 		strat.yDepthExpireCount++
 		//logger.Debugf("%s x expire y %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
+		return
 	} else if strat.adjustedAgeDiff < -strat.config.DepthMaxAgeDiffBias {
 		//logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 		strat.xDepthExpireCount++
+		return
 	}
+
 	strat.depthMatchCount++
 	strat.shortLastEnter = (strat.yWalkedDepth.BidPrice - strat.xWalkedDepth.MidPrice) / strat.xWalkedDepth.MidPrice
 	strat.longLastEnter = (strat.yWalkedDepth.AskPrice - strat.xWalkedDepth.MidPrice) / strat.xWalkedDepth.MidPrice

@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-
 type XYStrategy struct {
 	xExchange common.UsdExchange
 	yExchange common.UsdExchange

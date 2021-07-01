@@ -22,17 +22,25 @@ func (strat *XYStrategy) walkSpread() {
 	}
 	if strat.adjustedAgeDiff > strat.config.DepthMaxAgeDiffBias {
 		strat.yDepthExpireCount++
+		strat.xyDepthMatchSum.Insert(0.0)
+		strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 		//logger.Debugf("%s x expire y %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
+		return
 	} else if strat.adjustedAgeDiff < -strat.config.DepthMaxAgeDiffBias {
 		//logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 		strat.xDepthExpireCount++
+		strat.xyDepthMatchSum.Insert(0.0)
+		strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
+		return
 	}
+	strat.xyDepthMatchSum.Insert(1.0)
+	strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 	strat.depthMatchCount++
 
 	//假定挂单基于MiroPrice, 考虑挂单的下界偏移进Spread
 	//如果想挂得远，成交少，吃大Spread, 可以orderOffsets参数，推NearBot NearTop, 反之亦然
-	strat.shortLastEnter = (strat.yWalkedDepth.BidPrice - strat.xWalkedDepth.MircoPrice) / strat.xWalkedDepth.MircoPrice + strat.orderOffset.NearTop
-	strat.longLastEnter = (strat.yWalkedDepth.AskPrice - strat.xWalkedDepth.MircoPrice) / strat.xWalkedDepth.MircoPrice + strat.orderOffset.NearBot
+	strat.shortLastEnter = (strat.yWalkedDepth.BidPrice-strat.xWalkedDepth.MircoPrice)/strat.xWalkedDepth.MircoPrice + strat.orderOffset.NearTop
+	strat.longLastEnter = (strat.yWalkedDepth.AskPrice-strat.xWalkedDepth.MircoPrice)/strat.xWalkedDepth.MircoPrice + strat.orderOffset.NearBot
 
 	strat.shortEnterTimedMedian.Insert(strat.spreadTime, strat.shortLastEnter)
 	strat.longEnterTimedMedian.Insert(strat.spreadTime, strat.longLastEnter)

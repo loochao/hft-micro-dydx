@@ -41,6 +41,10 @@ type XYStrategy struct {
 	xPositionUpdateTime time.Time
 	yPositionUpdateTime time.Time
 
+	xyDepthMatchRatio  float64
+	xyDepthMatchWindow float64
+	xyDepthMatchSum    *common.RollingSum
+
 	xDepth       common.Depth
 	yDepth       common.Depth
 	xNextDepth   common.Depth
@@ -153,9 +157,9 @@ type XYStrategy struct {
 	xOpenOrder        *common.NewOrderParam
 	xCancelOrderParam common.CancelOrderParam
 
-	stopped int32
+	stopped                 int32
 	fundingRateSettleSilent bool
-	fundingRateSettleTimer *time.Timer
+	fundingRateSettleTimer  *time.Timer
 }
 
 type Offset struct {
