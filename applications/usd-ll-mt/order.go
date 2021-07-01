@@ -66,7 +66,7 @@ func (strat *XYStrategy) updateXOrder() {
 	if strat.config.EnterDepthMatchRatio > strat.xyDepthMatchRatio {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 		strat.tryCancelXOpenOrder("small match ratio")
-		logger.Debugf("%s match ratio %f < %f, silent %v", strat.xyDepthMatchRatio, strat.config.EnterDepthMatchRatio, strat.config.EnterSilent)
+		logger.Debugf("%s match ratio %f < %f, silent %v", strat.xSymbol, strat.xyDepthMatchRatio, strat.config.EnterDepthMatchRatio, strat.config.EnterSilent)
 		return
 	}
 

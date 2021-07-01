@@ -43,14 +43,14 @@ rsync -avx --progress "./dist/usd-ll-mt.arm64.$dt" arm2:/usr/local/bin/
 echo "arm3"
 rsync -avx --progress "./dist/usd-ll-mt.arm64.$dt" arm3:/usr/local/bin/
 
+echo "arm4"
+rsync -avx --progress "./dist/usd-ll-mt.arm64.$dt" arm4:/usr/local/bin/
+
 echo "vc001"
 rsync -avx --progress "./dist/usd-ll-mt.amd64.$dt" vc001:/usr/local/bin/
 
 echo "xf"
 rsync -avx --progress "./dist/usd-ll-mt.amd64.$dt" xf:/usr/local/bin/
-
-echo "ff04"
-rsync -avx --progress "./dist/usd-ll-mt.amd64.$dt" ff04:/usr/local/bin/
 
 echo "luchao"
 rsync -avx --progress "./dist/usd-ll-mt.amd64.$dt" luchao:/usr/local/bin/
