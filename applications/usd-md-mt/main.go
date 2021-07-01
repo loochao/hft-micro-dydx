@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	bnbf "github.com/geometrybase/hft-micro/binance-busdfuture"
 	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
@@ -17,6 +16,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/pprof"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -64,12 +64,6 @@ func main() {
 	}
 	config.SetDefaultIfNotSet()
 	xyConfig = &config
-
-	configStr, err := yaml.Marshal(xyConfig)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
 	if xyConfig.CpuProfile != "" {
 		f, err := os.Create(xyConfig.CpuProfile)
@@ -172,6 +166,16 @@ func main() {
 	}
 	xyConfig.XExchange.Symbols = xSymbols
 	xyConfig.YExchange.Symbols = ySymbols
+
+	configStr, err := yaml.Marshal(xyConfig)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	logger.Debug("\n\nCONFIG:")
+	for _, l := range strings.Split(string(configStr), "\n") {
+		logger.Debugf("%s", l)
+	}
+	logger.Debug("\n\n")
 
 	xyGlobalCtx, xyGlobalCancel = context.WithCancel(context.Background())
 	defer xyGlobalCancel()
