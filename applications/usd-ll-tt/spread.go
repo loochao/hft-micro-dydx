@@ -63,6 +63,7 @@ func (strat *XYStrategy) walkSpread() {
 		EventTime:       strat.spreadTime,
 		ParseTime:       time.Now(),
 	}
+	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
 	strat.changeXPosition()
 }
 
