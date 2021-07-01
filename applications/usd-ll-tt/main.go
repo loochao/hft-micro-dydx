@@ -430,6 +430,7 @@ mainLoop:
 					xAccount, yAccount,
 					xExchange, yExchange,
 					strategiesMap,
+					xSymbols,
 					xSystemStatus, ySystemStatus,
 					xyConfig,
 					xCommissionAssetValue, yCommissionAssetValue,
