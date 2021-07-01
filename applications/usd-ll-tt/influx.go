@@ -42,8 +42,8 @@ func handleSave(
 		if st.xPosition != nil &&
 			st.yPosition != nil &&
 			st.spread != nil &&
-			st.xWalkedDepth.Symbol != "" &&
-			st.yWalkedDepth.Symbol != "" {
+			st.midPrice != 0 {
+
 			unHedgeValue := math.Abs(st.xSize+st.ySize) * st.midPrice
 			totalUnHedgeValue += unHedgeValue
 			totalXSymbolValue += st.xAbsValue
