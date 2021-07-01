@@ -13,6 +13,7 @@ func handleSave(
 	xAccount, yAccount common.Balance,
 	xExchange, yExchange common.UsdExchange,
 	strategiesMap map[string]*XYStrategy,
+	xSymbols []string,
 	xSystemStatus, ySystemStatus common.SystemStatus,
 	xyConfig *Config,
 	yCommissionAssetValue, xCommissionAssetValue *float64,
@@ -30,7 +31,12 @@ func handleSave(
 	hasAllSymbols := true
 	xTradeVolume := 0.0
 	yTradeVolume := 0.0
-	for xSymbol, st := range strategiesMap {
+	for _, xSymbol := range xSymbols {
+		st, ok := strategiesMap[xSymbol]
+		if !ok {
+			hasAllSymbols = false
+			continue
+		}
 		ySymbol := st.ySymbol
 		fields := make(map[string]interface{})
 		if st.xPosition != nil &&
