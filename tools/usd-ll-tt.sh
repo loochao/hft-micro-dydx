@@ -18,14 +18,5 @@ git push origin "usd-ll-tt.$dt" --force
 
 chmod 755 "./dist/usd-ll-tt.amd64.$dt"
 
-echo "arm1"
-rsync -avx --progress "./dist/usd-ll-tt.arm64.$dt" arm1:/usr/local/bin/
-
-echo "vc001"
-rsync -avx --progress "./dist/usd-ll-tt.amd64.$dt" vc001:/usr/local/bin/
-
-echo "xf"
-rsync -avx --progress "./dist/usd-ll-tt.amd64.$dt" xf:/usr/local/bin/
-
-echo "ff04"
-rsync -avx --progress "./dist/usd-ll-tt.amd64.$dt" ff04:/usr/local/bin/
+echo "vcarm03"
+rsync -avx --progress "./dist/usd-ll-tt.amd64.$dt" vcarm03:/usr/local/bin/

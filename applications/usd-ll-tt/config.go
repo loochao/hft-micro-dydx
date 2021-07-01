@@ -34,6 +34,11 @@ type Config struct {
 	MinimalEnterFundingRate float64 `yaml:"minimalEnterFundingRate"`
 	MinimalKeepFundingRate  float64 `yaml:"minimalKeepFundingRate"`
 
+	FrOffsetFactor        float64       `yaml:"frOffsetFactor"`
+	FundingRateSilentTime time.Duration `yaml:"fundingRateSilentTime"`
+	FundingInterval       time.Duration `yaml:"fundingInterval"`
+	EnterDepthMatchRatio  float64       `yaml:"enterDepthMatchRatio"`
+
 	DepthMaxTimeDelta   time.Duration `yaml:"depthTimeDeltaMax"`
 	DepthMinTimeDelta   time.Duration `yaml:"depthTimeDeltaMin"`
 	DepthYDecay         float64       `yaml:"depthYDecay"`

@@ -1,4 +1,4 @@
-- [ ] fok order open x, market order hedge y 
+- [x] fok order open x, market order hedge y 
 - [x] limit max order size
 - [ ] add funding rate silent period
 - [x] add target weights

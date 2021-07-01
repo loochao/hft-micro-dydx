@@ -22,13 +22,21 @@ func (strat *XYStrategy) walkSpread() {
 		strat.spreadTime = strat.yWalkedDepth.Time.Add(time.Millisecond * time.Duration(strat.yDepthFilter.TimeDeltaEma))
 		//strat.spreadTime = strat.yWalkedDepth.Time
 	}
-	if strat.adjustedAgeDiff > strat.params.DepthMaxAgeDiffBias {
+	if strat.adjustedAgeDiff > strat.config.DepthMaxAgeDiffBias {
 		strat.yDepthExpireCount++
+		strat.xyDepthMatchSum.Insert(0.0)
+		strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 		//logger.Debugf("%s x expire y %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
-	} else if strat.adjustedAgeDiff < -strat.params.DepthMaxAgeDiffBias {
-		//logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
+		return
+	} else if strat.adjustedAgeDiff < -strat.config.DepthMaxAgeDiffBias {
+		strat.xyDepthMatchSum.Insert(0.0)
+		strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 		strat.xDepthExpireCount++
+		//logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
+		return
 	}
+	strat.xyDepthMatchSum.Insert(1.0)
+	strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 	strat.depthMatchCount++
 	strat.shortLastEnter = (strat.yWalkedDepth.BidPrice - strat.xWalkedDepth.AskPrice) / strat.xWalkedDepth.AskPrice
 	strat.longLastEnter = (strat.yWalkedDepth.AskPrice - strat.xWalkedDepth.BidPrice) / strat.xWalkedDepth.BidPrice
@@ -36,10 +44,10 @@ func (strat *XYStrategy) walkSpread() {
 	strat.shortEnterTimedMedian.Insert(strat.spreadTime, strat.shortLastEnter)
 	strat.longEnterTimedMedian.Insert(strat.spreadTime, strat.longLastEnter)
 
-	if strat.shortEnterTimedMedian.Len() < strat.params.SpreadMinDepthCount {
+	if strat.shortEnterTimedMedian.Len() < strat.config.SpreadMinDepthCount {
 		return
 	}
-	if strat.shortEnterTimedMedian.Range() < strat.params.SpreadLookback/2 {
+	if strat.shortEnterTimedMedian.Range() < strat.config.SpreadLookback/2 {
 		return
 	}
 	strat.spread = &common.XYSpread{
@@ -59,43 +67,26 @@ func (strat *XYStrategy) walkSpread() {
 }
 
 func (strat *XYStrategy) walkXDepth() {
-	strat.error = common.WalkDepthBMA(strat.xDepth, strat.xMultiplier, strat.params.DepthTakerImpact, &strat.xWalkedDepth)
+	strat.error = common.WalkDepthBMA(strat.xDepth, strat.xMultiplier, strat.config.DepthTakerImpact, &strat.xWalkedDepth)
 	if strat.error != nil {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			logger.Debugf("x common.WalkDepthBMA error %v %s", strat.error, strat.xSymbol)
 			strat.logSilentTime = time.Now().Add(time.Minute)
 		}
 	} else {
-		strat.spreadWalkTimer.Reset(strat.params.SpreadWalkDelay)
+		strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 	}
 }
 
 func (strat *XYStrategy) walkYDepth() {
-	strat.error = common.WalkDepthBMA(strat.yDepth, strat.yMultiplier, strat.params.DepthTakerImpact, &strat.yWalkedDepth)
+	strat.error = common.WalkDepthBMA(strat.yDepth, strat.yMultiplier, strat.config.DepthTakerImpact, &strat.yWalkedDepth)
 	if strat.error != nil {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			logger.Debugf("y common.WalkDepthBMA error %v %s", strat.error, strat.ySymbol)
 			strat.logSilentTime = time.Now().Add(time.Minute)
 		}
 	} else {
-		//if strat.markedYAskPrice != nil {
-		//	if strat.yWalkedDepth.AskPrice < *strat.markedYAskPrice+strat.params.yTickSize {
-		//		*strat.markedYAskPrice = strat.yWalkedDepth.AskPrice
-		//	} else {
-		//		logger.Debugf("Y %s markedYAskPrice %f >= trailed askPrice %f + %f, change y position", strat.ySymbol, *strat.markedYAskPrice, strat.yWalkedDepth.AskPrice, strat.params.yTickSize)
-		//		strat.markedYAskPrice = nil
-		//		strat.changeYPosition()
-		//	}
-		//} else if strat.markedYBidPrice != nil {
-		//	if strat.yWalkedDepth.BidPrice > *strat.markedYBidPrice-strat.params.yTickSize {
-		//		*strat.markedYBidPrice = strat.yWalkedDepth.BidPrice
-		//	} else {
-		//		logger.Debugf("Y %s markedYBidPrice %f <= trailed bidPrice %f - %f, change y position", strat.ySymbol, *strat.markedYBidPrice, strat.yWalkedDepth.BidPrice, strat.params.yTickSize)
-		//		strat.markedYBidPrice = nil
-		//		strat.changeYPosition()
-		//	}
-		//}
-		strat.spreadWalkTimer.Reset(strat.params.SpreadWalkDelay)
+		strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 	}
 }
 
@@ -110,20 +101,25 @@ func (strat *XYStrategy) handleXDepth() {
 	strat.xDepthTime = strat.xDepth.GetTime()
 	if !strat.xDepthFilter.Filter(strat.xDepth) && strat.yDepth != nil {
 		strat.adjustedAgeDiff = strat.xDepthTime.Sub(strat.yDepthTime) + time.Duration(strat.xDepthFilter.TimeDeltaEma-strat.yDepthFilter.TimeDeltaEma)*time.Millisecond
-		if strat.adjustedAgeDiff > strat.params.DepthMaxAgeDiffBias {
-			//taker已经过期
+		if strat.adjustedAgeDiff > strat.config.DepthMaxAgeDiffBias {
+			strat.xyDepthMatchSum.Insert(0.0)
 			strat.yDepthExpireCount++
+			//taker已经过期
 			//logger.Debugf("%s x expire y %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
-		} else if strat.adjustedAgeDiff < -strat.params.DepthMaxAgeDiffBias {
-			//maker已经过期
+		} else if strat.adjustedAgeDiff < -strat.config.DepthMaxAgeDiffBias {
+			strat.xyDepthMatchSum.Insert(0.0)
 			strat.xDepthExpireCount++
+			//maker已经过期
 			//logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 		} else {
-			strat.xWalkDepthTimer.Reset(strat.params.DepthWalkDelay)
+			strat.xWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
 		}
+	} else {
+		strat.xyDepthMatchSum.Insert(0.0)
 	}
+	strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 	strat.depthCount++
-	if strat.depthCount > strat.params.DepthReportCount {
+	if strat.depthCount > strat.config.DepthReportCount {
 		strat.xDepthFilter.GenerateReport()
 		strat.yDepthFilter.GenerateReport()
 		strat.spreadReport = &common.XYSpreadReport{
@@ -157,20 +153,25 @@ func (strat *XYStrategy) handleYDepth() {
 	strat.yDepthTime = strat.yDepth.GetTime()
 	if !strat.yDepthFilter.Filter(strat.yDepth) && strat.xDepth != nil {
 		strat.adjustedAgeDiff = strat.xDepthTime.Sub(strat.yDepthTime) + time.Duration(strat.xDepthFilter.TimeDeltaEma-strat.yDepthFilter.TimeDeltaEma)*time.Millisecond
-		if strat.adjustedAgeDiff < -strat.params.DepthMaxAgeDiffBias {
+		if strat.adjustedAgeDiff < -strat.config.DepthMaxAgeDiffBias {
 			//maker已经过期
 			//logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 			strat.xDepthExpireCount++
-		} else if strat.adjustedAgeDiff > strat.params.DepthMaxAgeDiffBias {
+			strat.xyDepthMatchSum.Insert(0.0)
+		} else if strat.adjustedAgeDiff > strat.config.DepthMaxAgeDiffBias {
 			//logger.Debugf("%s x expire y %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 			//taker已经过期
 			strat.yDepthExpireCount++
+			strat.xyDepthMatchSum.Insert(0.0)
 		} else {
-			strat.yWalkDepthTimer.Reset(strat.params.DepthWalkDelay)
+			strat.yWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
 		}
+	} else {
+		strat.xyDepthMatchSum.Insert(0.0)
 	}
+	strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 	strat.depthCount++
-	if strat.depthCount > strat.params.DepthReportCount {
+	if strat.depthCount > strat.config.DepthReportCount {
 		strat.xDepthFilter.GenerateReport()
 		strat.yDepthFilter.GenerateReport()
 		strat.spreadReport = &common.XYSpreadReport{

@@ -9,13 +9,12 @@ type XYStrategy struct {
 	xExchange common.UsdExchange
 	yExchange common.UsdExchange
 
-	xSymbol  string
-	ySymbol  string
-	tradable bool
-	isXSpot  bool
-	isYSpot  bool
+	xSymbol string
+	ySymbol string
+	isXSpot bool
+	isYSpot bool
 
-	params Config
+	config Config
 
 	xLeverage float64
 	yLeverage float64
@@ -65,14 +64,15 @@ type XYStrategy struct {
 	xWalkedDepth common.WalkedDepthBMA
 	yWalkedDepth common.WalkedDepthBMA
 
-	xAccount             common.Balance
-	yAccount             common.Balance
-	xPosition            common.Position
-	yPosition            common.Position
-	xOrderSilentTime     time.Time
-	yOrderSilentTime     time.Time
-	xFundingRate         common.FundingRate
-	yFundingRate         common.FundingRate
+	xAccount         common.Balance
+	yAccount         common.Balance
+	xPosition        common.Position
+	yPosition        common.Position
+	xOrderSilentTime time.Time
+	yOrderSilentTime time.Time
+	xFundingRate     common.FundingRate
+	yFundingRate     common.FundingRate
+
 	xyFundingRate        *float64
 	xLastFilledBuyPrice  *float64
 	xLastFilledSellPrice *float64
@@ -100,6 +100,10 @@ type XYStrategy struct {
 
 	xTimedPositionChange *common.TimedSum
 	yTimedPositionChange *common.TimedSum
+
+	xyDepthMatchRatio  float64
+	xyDepthMatchWindow float64
+	xyDepthMatchSum    *common.RollingSum
 
 	expectedChanSendingTime time.Duration
 	depthMatchCount         int
@@ -134,6 +138,9 @@ type XYStrategy struct {
 	targetValue    float64
 	realisedSpread *float64
 
+	fundingRateSettleSilent bool
+	fundingRateSettleTimer  *time.Timer
+
 	xOrder         common.Order
 	yOrder         common.Order
 	xNewOrderParam common.NewOrderParam
@@ -144,4 +151,5 @@ type XYStrategy struct {
 	size       float64
 	reduceOnly bool
 	orderSide  common.OrderSide
+	price      float64
 }
