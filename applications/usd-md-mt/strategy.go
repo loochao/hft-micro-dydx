@@ -107,7 +107,7 @@ func startXYStrategy(
 		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
 		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
 		xOpenOrderCheckTimer:    time.NewTimer(time.Hour * 9999),
-		fundingRateSettleTimer:  time.NewTimer(time.Now().Truncate(time.Hour * 4).Add(4*time.Hour - config.FundingRateSilentTime).Sub(time.Now())),
+		fundingRateSettleTimer:  time.NewTimer(time.Now().Truncate(config.FundingInterval).Add(config.FundingInterval - config.FundingRateSilentTime).Sub(time.Now())),
 		saveTimer:               time.NewTimer(config.EnterSilent),
 		spreadTime:              time.Time{},
 		spread:                  nil,
@@ -217,8 +217,8 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			}
 			break
 		case <-strat.fundingRateSettleTimer.C:
-			if time.Now().Truncate(time.Hour*4).Add(time.Hour*4).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
-				logger.Debugf("%s fundingRate Silent true %v", strat.xSymbol,time.Now().Truncate(time.Hour*4).Add(time.Hour*4).Sub(time.Now()))
+			if time.Now().Truncate(strat.config.FundingInterval).Add(strat.config.FundingInterval).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
+				logger.Debugf("%s fundingRate Silent true %v", strat.xSymbol,time.Now().Truncate(strat.config.FundingInterval).Add(strat.config.FundingInterval).Sub(time.Now()))
 				strat.fundingRateSettleSilent = true
 				strat.fundingRateSettleTimer.Reset(strat.config.FundingRateSilentTime * 2)
 			} else {

@@ -223,6 +223,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -240,6 +241,7 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -310,6 +312,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -327,6 +330,7 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -383,13 +387,13 @@ func (strat *XYStrategy) updateXOrder() {
 
 func (strat *XYStrategy) isXOpenOrderOk() bool {
 	if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
-		logger.Debugf("%s SPREAD IS OUT OF DATE, CANCEL", strat.xSymbol)
+		logger.Debugf("%s CANCEL, SPREAD IS OUT OF DATE", strat.xSymbol)
 		return false
 	}
 	//检查价格有没有在OFFSET范围内，不在撤掉
 	if strat.xOpenOrder.Side == common.OrderSideBuy &&
 		strat.xOpenOrder.Price < strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.FarBot)-strat.xTickSize {
-		logger.Debugf("%s BUY PRICE %f < FAR BID %f, CANCEL",
+		logger.Debugf("%s CANCEL, BUY PRICE %f < FAR BID %f",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
 			strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.FarBot)-strat.xTickSize,
@@ -397,7 +401,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
 		strat.xOpenOrder.Price > strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.FarTop)+strat.xTickSize {
-		logger.Debugf("%s SELL PRICE %f > FAR ASK %f, CANCEL ",
+		logger.Debugf("%s CANCEL, SELL PRICE %f > FAR ASK %f",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
 			strat.xWalkedDepth.MircoPrice*(1.0+strat.orderOffset.FarTop)+strat.xTickSize,
@@ -405,35 +409,53 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		return false
 	}
 
-	if strat.xOpenOrder.Side == common.OrderSideBuy &&
-		!strat.xOpenOrder.ReduceOnly &&
-		(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.shortTop-strat.config.ShortEnterDelta*strat.config.CancelOffsetFactor {
-		//买入开多, 是开空价差, 参考ShortTop
-		return true
-	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
-		strat.xOpenOrder.ReduceOnly &&
-		(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.shortBot-strat.config.ShortExitDelta*strat.config.CancelOffsetFactor {
-		//卖出平多, 是平空价, 参考ShortBot
-		return true
-	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
-		!strat.xOpenOrder.ReduceOnly &&
-		(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price < strat.longBot-strat.config.LongEnterDelta*strat.config.CancelOffsetFactor {
-		//卖出开空, 是开多价差, 参考LongBot
-		return true
-	} else if strat.xOpenOrder.Side == common.OrderSideBuy &&
-		strat.xOpenOrder.ReduceOnly &&
-		(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price > strat.longTop-strat.config.LongExitDelta*strat.config.CancelOffsetFactor {
-		//买入平空, 是平多价差, 参考LongTop
-		return true
-	}
 	if strat.xOpenOrder.Side == common.OrderSideBuy {
-		logger.Debugf(
-			"NOT PROFITABLE %s BUY ORDER, CANCEL", strat.xSymbol,
-		)
+		if strat.xOpenOrder.ReduceOnly {
+			if (strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price >= strat.longTop-(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor {
+				//买入平空, 是平多价差, 参考LongTop
+				return true
+			} else {
+				logger.Debugf(
+					"%s CANCEL, LONG TOP CLOSE %f < %f", strat.xSymbol,
+					(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.longTop-(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
+				)
+				return false
+			}
+		} else {
+			if (strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price >= strat.shortTop-(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor {
+				//买入开多, 是开空价差, 参考ShortTop
+				return true
+			} else {
+				logger.Debugf(
+					"%s CANCEL, SHORT TOP OPEN %f < %f", strat.xSymbol,
+					(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.shortTop-(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
+				)
+				return false
+			}
+		}
 	} else {
-		logger.Debugf(
-			"NOT PROFITABLE %s SELL ORDER, CANCEL", strat.xSymbol,
-		)
+		if strat.xOpenOrder.ReduceOnly {
+			if (strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price <= strat.shortBot+(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor {
+				//卖出平多, 是平空价, 参考ShortBot
+				return true
+			} else {
+				logger.Debugf(
+					"%s CANCEL, SHORT BOT CLOSE %f > %f", strat.xSymbol,
+					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.shortBot+(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
+				)
+				return false
+			}
+		} else {
+			if (strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price <= strat.longBot+(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor {
+				//卖出开空, 是开多价差, 参考LongBot
+				return true
+			} else {
+				logger.Debugf(
+					"%s CANCEL, LONG BOT OPEN %f > %f", strat.xSymbol,
+					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.longBot+(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
+				)
+				return false
+			}
+		}
 	}
-	return false
 }

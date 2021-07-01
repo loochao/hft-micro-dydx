@@ -2,5 +2,8 @@
 - [x] add funding rate silent period
 - [x] add target weights 
 - [x] add order offsets
-- [x] stop cancel open order 
+- [x] before the stop, cancel open order 
 - [x] add funding rate offset factor for spread
+- [ ] funding interval
+- [ ] x order error silent
+- [ ] cancel order offset base on band height
