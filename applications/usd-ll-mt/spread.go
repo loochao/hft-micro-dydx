@@ -20,19 +20,7 @@ func (strat *XYStrategy) walkSpread() {
 		//需要对时间进行补偿
 		strat.spreadTime = strat.xWalkedDepth.Time.Add(time.Millisecond * time.Duration(strat.xDepthFilter.TimeDeltaEma))
 	}
-	if strat.adjustedAgeDiff > strat.config.DepthMaxAgeDiffBias {
-		strat.yDepthExpireCount++
-		strat.xyDepthMatchSum.Insert(0.0)
-		strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
-		//logger.Debugf("%s x expire y %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
-		return
-	} else if strat.adjustedAgeDiff < -strat.config.DepthMaxAgeDiffBias {
-		//logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
-		strat.xDepthExpireCount++
-		strat.xyDepthMatchSum.Insert(0.0)
-		strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
-		return
-	}
+
 	strat.xyDepthMatchSum.Insert(1.0)
 	strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 	strat.depthMatchCount++
@@ -106,15 +94,20 @@ func (strat *XYStrategy) handleXDepth() {
 		if strat.adjustedAgeDiff > strat.config.DepthMaxAgeDiffBias {
 			//taker已经过期
 			strat.yDepthExpireCount++
+			strat.xyDepthMatchSum.Insert(0.0)
 			//logger.Debugf("%s x expire y %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 		} else if strat.adjustedAgeDiff < -strat.config.DepthMaxAgeDiffBias {
 			//maker已经过期
 			strat.xDepthExpireCount++
+			strat.xyDepthMatchSum.Insert(0.0)
 			//logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 		} else {
 			strat.xWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
 		}
+	} else {
+		strat.xyDepthMatchSum.Insert(0.0)
 	}
+	strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 	strat.depthCount++
 	if strat.depthCount > strat.config.DepthReportCount {
 		strat.xDepthFilter.GenerateReport()
@@ -153,15 +146,20 @@ func (strat *XYStrategy) handleYDepth() {
 		if strat.adjustedAgeDiff < -strat.config.DepthMaxAgeDiffBias {
 			//maker已经过期
 			//logger.Debugf("%s y expire x %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
+			strat.xyDepthMatchSum.Insert(0.0)
 			strat.xDepthExpireCount++
 		} else if strat.adjustedAgeDiff > strat.config.DepthMaxAgeDiffBias {
 			//logger.Debugf("%s x expire y %v %v %v", xSymbol, xDepthTime.Sub(yDepthTime), adjustedAgeDiff, -time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond)
 			//taker已经过期
+			strat.xyDepthMatchSum.Insert(0.0)
 			strat.yDepthExpireCount++
 		} else {
 			strat.yWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
 		}
+	} else {
+		strat.xyDepthMatchSum.Insert(0.0)
 	}
+	strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 	strat.depthCount++
 	if strat.depthCount > strat.config.DepthReportCount {
 		strat.xDepthFilter.GenerateReport()
