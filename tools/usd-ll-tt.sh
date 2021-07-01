@@ -17,6 +17,7 @@ git tag "usd-ll-tt.$dt"
 git push origin "usd-ll-tt.$dt" --force
 
 chmod 755 "./dist/usd-ll-tt.amd64.$dt"
+chmod 755 "./dist/usd-ll-tt.arm64.$dt"
 
 echo "vcarm03"
-rsync -avx --progress "./dist/usd-ll-tt.amd64.$dt" vcarm03:/usr/local/bin/
+rsync -avx --progress "./dist/usd-ll-tt.arm64.$dt" vcarm03:/usr/local/bin/
