@@ -144,6 +144,8 @@ func startXYStrategy(
 		targetValue:             0,
 		size:                    0,
 		orderSide:               common.OrderSideUnknown,
+		isXSpot:                 xExchange.IsSpot(),
+		isYSpot:                 yExchange.IsSpot(),
 	}
 
 	strat.xTickSize, err = xExchange.GetTickSize(xSymbol)
