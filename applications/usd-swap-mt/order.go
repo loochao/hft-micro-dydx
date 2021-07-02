@@ -331,7 +331,7 @@ func (strat *XYStrategy) isYOpenOrderOk() bool {
 		return true
 	} else {
 		logger.Debugf(
-			"%s CANCEL, XY OPEN %f < %f", strat.ySymbol,
+			"%s CANCEL, XY OPEN %f > %f", strat.ySymbol,
 			(strat.yOpenOrder.Price-strat.xWalkedDepth.BidPrice)/strat.xWalkedDepth.BidPrice , -strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor),
 		)
 		return false
