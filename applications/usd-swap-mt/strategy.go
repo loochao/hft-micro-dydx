@@ -135,6 +135,7 @@ func startXYStrategy(
 		xCancelOrderParam:       common.CancelOrderParam{Symbol: xSymbol},
 		yCancelOrderParam:       common.CancelOrderParam{Symbol: ySymbol},
 		stopped:                 0,
+		tradeDir:                1,
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
