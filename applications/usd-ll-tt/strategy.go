@@ -214,7 +214,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			strat.changeYPosition()
 			strat.hedgeCounter--
 			if strat.hedgeCounter > 0 {
-				strat.hedgeYTimer.Reset(strat.config.HedgeYDelay)
+				strat.hedgeYTimer.Reset(strat.config.HedgeCheckInterval)
 			}
 			break
 		case <-strat.fundingRateSettleTimer.C:
@@ -558,7 +558,7 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		strat.hedgeYTimer.Reset(strat.config.HedgeYDelay)
-		strat.hedgeCounter = time.Minute / strat.config.HedgeYDelay
+		strat.hedgeCounter = strat.config.HedgeCheckCount
 		logger.Debugf(
 			"%s %s LONG TOP REDUCE %f > %f, %f > %f, SIZE -%f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -662,7 +662,7 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		strat.hedgeYTimer.Reset(strat.config.HedgeYDelay)
-		strat.hedgeCounter = time.Minute / strat.config.HedgeYDelay
+		strat.hedgeCounter = strat.config.HedgeCheckCount
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,
@@ -766,7 +766,7 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		strat.hedgeYTimer.Reset(strat.config.HedgeYDelay)
-		strat.hedgeCounter = time.Minute / strat.config.HedgeYDelay
+		strat.hedgeCounter = strat.config.HedgeCheckCount
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, SIZE -%f, XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,

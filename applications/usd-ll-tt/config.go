@@ -15,11 +15,13 @@ type Config struct {
 	InternalInflux common.InfluxSettings `yaml:"internalInflux"`
 	ExternalInflux common.InfluxSettings `yaml:"externalInflux"`
 
-	XExchange       common.ExchangeSettings `yaml:"xExchange"`
-	YExchange       common.ExchangeSettings `yaml:"yExchange"`
-	HedgeYDelay     time.Duration           `yaml:"hedgeYDelay"`
-	DepthWalkDelay  time.Duration           `yaml:"depthWalkDelay"`
-	SpreadWalkDelay time.Duration           `yaml:"spreadWalkDelay"`
+	XExchange          common.ExchangeSettings `yaml:"xExchange"`
+	YExchange          common.ExchangeSettings `yaml:"yExchange"`
+	HedgeYDelay        time.Duration           `yaml:"hedgeYDelay"`
+	HedgeCheckInterval time.Duration           `yaml:"hedgeCheckInterval"`
+	HedgeCheckCount    time.Duration           `yaml:"hedgeCheckCount"`
+	DepthWalkDelay     time.Duration           `yaml:"depthWalkDelay"`
+	SpreadWalkDelay    time.Duration           `yaml:"spreadWalkDelay"`
 
 	LogInterval           time.Duration `yaml:"logInterval"`
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
