@@ -20,9 +20,11 @@ func (strat *XYStrategy) walkSpread() {
 	if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
 		strat.yTickerExpireCount++
 		//logger.Debugf("%s x expire y %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
+		return
 	} else if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
 		//logger.Debugf("%s y expire x %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
 		strat.xTickerExpireCount++
+		return
 	}
 	strat.tickerMatchCount++
 
