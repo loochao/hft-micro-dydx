@@ -160,6 +160,7 @@ func (strat *XYStrategy) updateXYOrder() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
+		strat.yOrderSilentTime = time.Now()
 		logger.Debugf(
 			"%s XY OPEN %f > %f, %f > %f, SIZE %f PRICE %f, X %v Y %v M %f",
 			strat.xSymbol,
@@ -221,7 +222,7 @@ func (strat *XYStrategy) updateXYOrder() {
 		}
 		strat.yNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.ySymbol,
-			Side:        common.OrderSideSell,
+			Side:        common.OrderSideBuy,
 			Type:        common.OrderTypeLimit,
 			Price:       strat.price,
 			TimeInForce: common.OrderTimeInForceGTC,
