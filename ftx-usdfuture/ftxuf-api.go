@@ -155,7 +155,7 @@ func (api *API) GetFundingRates(ctx context.Context, param FundingRateParam) ([]
 
 func (api *API) GetFutureStats(ctx context.Context, futureName string) (*FutureStats, error) {
 	fs := &FutureStats{}
-	err := api.SendHTTPRequest(ctx, http.MethodGet, fmt.Sprintf("/futures/%s/stats", futureName), nil, &fs)
+	err := api.SendHTTPRequest(ctx, http.MethodGet, fmt.Sprintf("/futures/%s/stream-stats", futureName), nil, &fs)
 	if err != nil {
 		return nil, err
 	}

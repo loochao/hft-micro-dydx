@@ -314,7 +314,6 @@ type TimedMedian struct {
 	median           float64
 	sortedFloatSlice SortedFloatSlice
 }
-
 func (tm *TimedMedian) Insert(timestamp time.Time, value float64) float64 {
 	tm.times = append(tm.times, timestamp)
 	tm.values = append(tm.values, value)
@@ -336,19 +335,15 @@ func (tm *TimedMedian) Insert(timestamp time.Time, value float64) float64 {
 	tm.median = tm.sortedFloatSlice.Median()
 	return tm.median
 }
-
 func (tm *TimedMedian) Values() []float64 {
 	return tm.values
 }
-
 func (tm *TimedMedian) Times() []time.Time {
 	return tm.times
 }
-
 func (tm *TimedMedian) Len() int {
 	return len(tm.values)
 }
-
 func (tm *TimedMedian) Range() time.Duration {
 	if len(tm.times) > 2 {
 		return tm.times[len(tm.times)-1].Sub(tm.times[0])
@@ -356,11 +351,9 @@ func (tm *TimedMedian) Range() time.Duration {
 		return time.Duration(0)
 	}
 }
-
 func (tm *TimedMedian) Median() float64 {
 	return tm.median
 }
-
 func NewTimedMedian(lookback time.Duration) *TimedMedian {
 	return &TimedMedian{
 		lookback:         lookback,
@@ -435,7 +428,6 @@ type RollingSum struct {
 	index  int
 	sum    float64
 }
-
 func (tm *RollingSum) Insert(value float64) float64 {
 	tm.sum += value
 	tm.index++
@@ -460,3 +452,4 @@ func NewRollingSum(window int) *RollingSum {
 		sum:    0,
 	}
 }
+

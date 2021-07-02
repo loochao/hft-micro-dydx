@@ -104,7 +104,7 @@ func TestFromBytesIgnoresCompression(t *testing.T) {
 
 func TestJavaSmallBytesCompat(t *testing.T) {
 	// Base64 string generated via (<3 clojure):
-	// (def t (com.tdunning.math.stats.AVLTreeDigest. 100))
+	// (def t (com.tdunning.math.stream-stats.AVLTreeDigest. 100))
 	// (def r (java.util.Random.))
 	// (.setSeed r 0xDEADBEEF)
 	//

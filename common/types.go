@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"encoding/gob"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"sort"
@@ -39,14 +40,12 @@ const (
 )
 
 const (
-
 	OrderTimeInForceGTX  = "GTX"
 	OrderRespTypeAck     = "ACK"
 	OrderRespTypeResult  = "RESULT"
 	OrderRespTypeFull    = "FULL"
 	OrderIsIsolatedTrue  = "TRUE"
 	OrderIsIsolatedFalse = "FALSE"
-
 
 	OrderTypeStopLoss        = "STOP_LOSS"
 	OrderTypeStopLossLimit   = "STOP_LOSS_LIMIT"
@@ -176,10 +175,28 @@ func (f SortedFloatSlice) Delete(value float64) SortedFloatSlice {
 
 // Median of the slice
 func (f SortedFloatSlice) Median() float64 {
-	if len(f)%2 == 1 {
-		return f[len(f)/2]
+	if len(f) > 0 {
+		if len(f)%2 == 1 {
+			return f[len(f)/2]
+		}
+		return (f[len(f)/2] + f[len(f)/2-1]) / 2
+	} else {
+		return math.NaN()
 	}
-	return (f[len(f)/2] + f[len(f)/2-1]) / 2
+}
+func (f SortedFloatSlice) Min() float64 {
+	if len(f) > 0 {
+		return f[0]
+	} else {
+		return math.NaN()
+	}
+}
+func (f SortedFloatSlice) Max() float64 {
+	if len(f) > 0 {
+		return f[len(f)-1]
+	} else {
+		return math.NaN()
+	}
 }
 
 type Float64 float64
@@ -189,11 +206,10 @@ func (f Float64) MarshalJSON() ([]byte, error) {
 }
 
 type StringFloat string
+
 func (f StringFloat) MarshalJSON() ([]byte, error) {
 	return []byte(f), nil
 }
-
-
 
 type ZeroFundingRate struct {
 	Symbol string
@@ -210,4 +226,3 @@ func (f *ZeroFundingRate) GetFundingRate() float64 {
 func (f *ZeroFundingRate) GetNextFundingTime() time.Time {
 	return time.Time{}
 }
-

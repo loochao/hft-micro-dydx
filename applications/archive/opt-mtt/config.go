@@ -26,7 +26,7 @@ type Config struct {
 
 	MakerTakerPairs map[string]string `yaml:"makerTakerPairs"`
 
-	//LongEnterDelta  float64           `yaml:"longEnterDelta"`
+	//EnterDelta  float64           `yaml:"longEnterDelta"`
 	//LongExitDelta   float64           `yaml:"longExitDelta"`
 	//ShortEnterDelta float64           `yaml:"shortEnterDelta"`
 	//ShortExitDelta  float64           `yaml:"shortExitDelta"`
