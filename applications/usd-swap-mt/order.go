@@ -217,8 +217,8 @@ func (strat *XYStrategy) updateXYOrder() {
 			return
 		}
 		strat.price = math.Floor(strat.yWalkedDepth.MidPrice*(1.0+strat.yOrderOffset.Bot)/strat.yTickSize) * strat.yTickSize
-		if strat.price < strat.yWalkedDepth.BestAskPrice+strat.yTickSize {
-			strat.price = strat.yWalkedDepth.BestAskPrice + strat.yTickSize
+		if strat.price > strat.yWalkedDepth.BestBidPrice-strat.yTickSize {
+			strat.price = strat.yWalkedDepth.BestBidPrice - strat.yTickSize
 		}
 		strat.yNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.ySymbol,
