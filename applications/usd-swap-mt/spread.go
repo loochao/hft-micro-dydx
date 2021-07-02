@@ -37,8 +37,8 @@ func (strat *XYStrategy) walkSpread() {
 	strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 	strat.depthMatchCount++
 
-	strat.xyLastEnter = (strat.yWalkedDepth.BidPrice-strat.xWalkedDepth.MidPrice)/strat.xWalkedDepth.MidPrice
-	strat.yxLastEnter = (strat.xWalkedDepth.BidPrice-strat.yWalkedDepth.MidPrice)/strat.yWalkedDepth.MidPrice
+	strat.xyLastEnter = (strat.yWalkedDepth.BidPrice - strat.xWalkedDepth.MidPrice*(1.0+strat.xOrderOffset.NearBot)) / strat.xWalkedDepth.MidPrice * (1.0 + strat.xOrderOffset.NearBot)
+	strat.yxLastEnter = (strat.xWalkedDepth.BidPrice - strat.yWalkedDepth.MidPrice*(1.0+strat.yOrderOffset.NearBot)) / strat.yWalkedDepth.MidPrice * (1.0 + strat.yOrderOffset.NearBot)
 
 	strat.xyEnterTimedMedian.Insert(strat.spreadTime, strat.xyLastEnter)
 	strat.yxEnterTimedMedian.Insert(strat.spreadTime, strat.yxLastEnter)
