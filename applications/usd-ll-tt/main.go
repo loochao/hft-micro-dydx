@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	bnbf "github.com/geometrybase/hft-micro/binance-busdfuture"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
@@ -16,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/pprof"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -63,12 +63,6 @@ func main() {
 	}
 	config.SetDefaultIfNotSet()
 	xyConfig = &config
-
-	configStr, err := yaml.Marshal(xyConfig)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
 
 	switch xyConfig.XExchange.Name {
 	case "binanceUsdtSpotWithDepth5":
@@ -143,6 +137,16 @@ func main() {
 	}
 	xyConfig.XExchange.Symbols = xSymbols
 	xyConfig.YExchange.Symbols = ySymbols
+
+	configStr, err := yaml.Marshal(xyConfig)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	logger.Debug("\n\nCONFIG:")
+	for _, l := range strings.Split(string(configStr), "\n") {
+		logger.Debugf("%s", l)
+	}
+	logger.Debug("\n\n")
 
 	if xyConfig.CpuProfile != "" {
 		f, err := os.Create(xyConfig.CpuProfile)
