@@ -214,7 +214,7 @@ func (strat *XYStrategy) changeXPosition() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		strat.hedgeYTimer.Reset(strat.config.HedgeYDelay)
-		strat.hedgeCounter = time.Minute / strat.config.HedgeYDelay
+		strat.hedgeCounter = strat.config.HedgeCheckCount
 		logger.Debugf(
 			"%s %s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f,  XDepthDiff %v YDepthDiff %v SpreadDiff %v",
 			strat.xSymbol, strat.ySymbol,
