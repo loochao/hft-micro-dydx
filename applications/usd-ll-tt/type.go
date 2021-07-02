@@ -93,7 +93,7 @@ type XYStrategy struct {
 	saveTimer           *time.Timer
 	realisedSpreadTimer *time.Timer
 	hedgeYTimer         *time.Timer
-	hedgeCounter        time.Duration
+	hedgeCounter        int
 	spreadTime          time.Time
 	spread              *common.XYSpread
 
