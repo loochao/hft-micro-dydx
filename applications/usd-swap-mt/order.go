@@ -303,7 +303,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 
 func (strat *XYStrategy) isYOpenOrderOk() bool {
 	if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
-		logger.Debugf("%s CANCEL, SPREAD IS OUT OF DATE", strat.xSymbol)
+		logger.Debugf("%s CANCEL, SPREAD IS OUT OF DATE", strat.ySymbol)
 		return false
 	}
 	if strat.yOpenOrder.Side != common.OrderSideBuy {
@@ -318,7 +318,7 @@ func (strat *XYStrategy) isYOpenOrderOk() bool {
 		)
 		return false
 	} else if strat.yOpenOrder.Price > strat.yWalkedDepth.MidPrice*(1.0+strat.yOrderOffset.NearBot)+strat.yTickSize {
-		logger.Debugf("%s X CANCEL, BUY PRICE %f > NEAR BOT %f",
+		logger.Debugf("%s Y CANCEL, BUY PRICE %f > NEAR BOT %f",
 			strat.ySymbol,
 			strat.yOpenOrder.Price,
 			strat.yWalkedDepth.MidPrice*(1.0+strat.yOrderOffset.NearBot)+strat.yTickSize,
@@ -326,13 +326,13 @@ func (strat *XYStrategy) isYOpenOrderOk() bool {
 		return false
 	}
 
-	if (strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price >= strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor) {
+	if (strat.yWalkedDepth.BidPrice-strat.yOpenOrder.Price)/strat.yOpenOrder.Price >= strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor) {
 		//XY OPEN
 		return true
 	} else {
 		logger.Debugf(
-			"%s CANCEL, XY OPEN %f < %f", strat.xSymbol,
-			(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price >= strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor),
+			"%s CANCEL, XY OPEN %f < %f", strat.ySymbol,
+			(strat.yWalkedDepth.BidPrice-strat.yOpenOrder.Price)/strat.yOpenOrder.Price >= strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor),
 		)
 		return false
 	}
