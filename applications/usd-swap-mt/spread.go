@@ -40,7 +40,7 @@ func (strat *XYStrategy) walkSpread() {
 	//假定挂单基于MiroPrice, 考虑挂单的下界偏移进Spread
 	//如果想挂得远，成交少，吃大Spread, 可以orderOffsets参数，推NearBot NearTop, 反之亦然
 	strat.xyLastEnter = (strat.yWalkedDepth.BidPrice-strat.xWalkedDepth.MidPrice)/strat.xWalkedDepth.MidPrice + strat.xOrderOffset.NearBot
-	strat.yxLastEnter = (strat.yWalkedDepth.MidPrice-strat.xWalkedDepth.BidPrice)/strat.xWalkedDepth.BidPrice - strat.yOrderOffset.NearBot
+	strat.yxLastEnter = -((strat.xWalkedDepth.BidPrice-strat.yWalkedDepth.MidPrice)/strat.yWalkedDepth.MidPrice + strat.yOrderOffset.NearBot)
 
 	strat.xyEnterTimedMedian.Insert(strat.spreadTime, strat.xyLastEnter)
 	strat.yxEnterTimedMedian.Insert(strat.spreadTime, strat.yxLastEnter)
