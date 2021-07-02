@@ -20,5 +20,5 @@ git tag "usd-swap-mt.$dt"
 git push origin "usd-swap-mt.$dt" --force
 
 echo ""
-echo "vcarm01"
-rsync -avx --progress "./dist/usd-swap-mt.arm64.$dt" vcarm01:/usr/local/bin/
+echo "vcarm02"
+rsync -avx --progress "./dist/usd-swap-mt.arm64.$dt" vcarm02:/usr/local/bin/
