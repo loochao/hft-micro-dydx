@@ -86,8 +86,8 @@ type XYStrategy struct {
 	spreadTime           time.Time
 	spread               *XYSpread
 
-	shortEnterTimedMedian *common.TimedMedian
-	longEnterTimedMedian  *common.TimedMedian
+	xyEnterTimedMedian *common.TimedMedian
+	yxEnterTimedMedian *common.TimedMedian
 
 	xTimedPositionChange *common.TimedSum
 	yTimedPositionChange *common.TimedSum
@@ -97,8 +97,8 @@ type XYStrategy struct {
 	depthCount              int
 	xDepthExpireCount       int
 	yDepthExpireCount       int
-	shortLastEnter          float64
-	longLastEnter           float64
+	xyLastEnter             float64
+	yxLastEnter             float64
 	adjustedAgeDiff         time.Duration
 	stateOutputCh           chan XYStrategy
 

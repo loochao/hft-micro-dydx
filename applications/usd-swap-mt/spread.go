@@ -39,23 +39,23 @@ func (strat *XYStrategy) walkSpread() {
 
 	//假定挂单基于MiroPrice, 考虑挂单的下界偏移进Spread
 	//如果想挂得远，成交少，吃大Spread, 可以orderOffsets参数，推NearBot NearTop, 反之亦然
-	strat.shortLastEnter = (strat.yWalkedDepth.BidPrice-strat.xWalkedDepth.MidPrice)/strat.xWalkedDepth.MidPrice + strat.xOrderOffset.NearTop
-	strat.longLastEnter = (strat.yWalkedDepth.AskPrice-strat.xWalkedDepth.MidPrice)/strat.xWalkedDepth.MidPrice + strat.xOrderOffset.NearBot
+	strat.xyLastEnter = (strat.yWalkedDepth.BidPrice-strat.xWalkedDepth.MidPrice)/strat.xWalkedDepth.MidPrice + strat.xOrderOffset.NearBot
+	strat.yxLastEnter = (strat.yWalkedDepth.BidPrice-strat.xWalkedDepth.MidPrice)/strat.xWalkedDepth.MidPrice + strat.yOrderOffset.NearBot
 
-	strat.shortEnterTimedMedian.Insert(strat.spreadTime, strat.shortLastEnter)
-	strat.longEnterTimedMedian.Insert(strat.spreadTime, strat.longLastEnter)
+	strat.xyEnterTimedMedian.Insert(strat.spreadTime, strat.xyLastEnter)
+	strat.yxEnterTimedMedian.Insert(strat.spreadTime, strat.yxLastEnter)
 
-	if strat.shortEnterTimedMedian.Len() < strat.config.SpreadMinDepthCount {
+	if strat.xyEnterTimedMedian.Len() < strat.config.SpreadMinDepthCount {
 		return
 	}
-	if strat.shortEnterTimedMedian.Range() < strat.config.SpreadLookback/2 {
+	if strat.xyEnterTimedMedian.Range() < strat.config.SpreadLookback/2 {
 		return
 	}
 	strat.spread = &XYSpread{
-		XYLastEnter:   strat.shortLastEnter,
-		XYMedianEnter: strat.shortEnterTimedMedian.Median(),
-		YXLastEnter:   strat.longLastEnter,
-		YXMedianEnter: strat.longEnterTimedMedian.Median(),
+		XYLastEnter:   strat.xyLastEnter,
+		XYMedianEnter: strat.xyEnterTimedMedian.Median(),
+		YXLastEnter:   strat.yxLastEnter,
+		YXMedianEnter: strat.yxEnterTimedMedian.Median(),
 		EventTime:     strat.spreadTime,
 		ParseTime:     time.Now(),
 	}
