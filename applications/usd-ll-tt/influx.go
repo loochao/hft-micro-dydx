@@ -43,7 +43,6 @@ func handleSave(
 			st.yPosition != nil &&
 			st.spread != nil &&
 			st.midPrice != 0 {
-
 			unHedgeValue := math.Abs(st.xSize+st.ySize) * st.midPrice
 			totalUnHedgeValue += unHedgeValue
 			totalXSymbolValue += st.xAbsValue
