@@ -19,7 +19,7 @@ type Config struct {
 	YExchange          common.ExchangeSettings `yaml:"yExchange"`
 	HedgeYDelay        time.Duration           `yaml:"hedgeYDelay"`
 	HedgeCheckInterval time.Duration           `yaml:"hedgeCheckInterval"`
-	HedgeCheckCount    time.Duration           `yaml:"hedgeCheckCount"`
+	HedgeCheckCount    int                     `yaml:"hedgeCheckCount"`
 	DepthWalkDelay     time.Duration           `yaml:"depthWalkDelay"`
 	SpreadWalkDelay    time.Duration           `yaml:"spreadWalkDelay"`
 
