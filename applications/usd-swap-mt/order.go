@@ -172,9 +172,9 @@ func (strat *XYStrategy) updateXYOrder() {
 			time.Now().Sub(strat.yDepthTime),
 			strat.xyDepthMatchRatio,
 		)
-	} else if strat.spread.YXLastEnter < -strat.config.EnterDelta &&
-		strat.spread.YXMedianEnter < -strat.config.EnterDelta &&
-		strat.spread.YXLastEnter < strat.spread.YXMedianEnter &&
+	} else if strat.spread.YXLastEnter > strat.config.EnterDelta &&
+		strat.spread.YXMedianEnter > strat.config.EnterDelta &&
+		strat.spread.YXLastEnter > strat.spread.YXMedianEnter &&
 		strat.xSize < strat.xStepSize && strat.ySize < strat.yStepSize {
 
 		strat.enterValue = strat.enterStep
@@ -189,12 +189,12 @@ func (strat *XYStrategy) updateXYOrder() {
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s FAILED YX OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
+					"%s FAILED YX OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
 					strat.ySymbol,
 					strat.enterValue,
 					strat.usdAvailable,
-					strat.spread.YXLastEnter, -strat.config.EnterDelta,
-					strat.spread.YXMedianEnter, -strat.config.EnterDelta,
+					strat.spread.YXLastEnter, strat.config.EnterDelta,
+					strat.spread.YXMedianEnter, strat.config.EnterDelta,
 					strat.size,
 				)
 			}
@@ -206,11 +206,11 @@ func (strat *XYStrategy) updateXYOrder() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s FAILED YX OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
+					"%s FAILED YX OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
 					strat.ySymbol,
 					strat.enterValue,
-					strat.spread.YXLastEnter, -strat.config.EnterDelta,
-					strat.spread.YXMedianEnter, -strat.config.EnterDelta,
+					strat.spread.YXLastEnter, strat.config.EnterDelta,
+					strat.spread.YXMedianEnter, strat.config.EnterDelta,
 					strat.size,
 				)
 			}
@@ -250,10 +250,10 @@ func (strat *XYStrategy) updateXYOrder() {
 		strat.yOrderSilentTime = time.Now().Add(strat.config.OrderSilent)
 		strat.xOrderSilentTime = time.Now()
 		logger.Debugf(
-			"%s YX OPEN %f < %f, %f < %f, SIZE %f PRICE %f, X %v Y %v M %f",
+			"%s YX OPEN %f > %f, %f > %f, SIZE %f PRICE %f, X %v Y %v M %f",
 			strat.xSymbol,
-			strat.spread.YXLastEnter, -strat.config.EnterDelta,
-			strat.spread.YXMedianEnter, -strat.config.EnterDelta,
+			strat.spread.YXLastEnter, strat.config.EnterDelta,
+			strat.spread.YXMedianEnter, strat.config.EnterDelta,
 			strat.size,
 			strat.price,
 			time.Now().Sub(strat.xDepthTime),
@@ -326,13 +326,13 @@ func (strat *XYStrategy) isYOpenOrderOk() bool {
 		return false
 	}
 
-	if (strat.yOpenOrder.Price-strat.xWalkedDepth.BidPrice)/strat.xWalkedDepth.BidPrice <= -strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor) {
+	if (strat.xWalkedDepth.BidPrice-strat.yOpenOrder.Price)/strat.yOpenOrder.Price >= strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor) {
 		//XY OPEN
 		return true
 	} else {
 		logger.Debugf(
-			"%s CANCEL, YX OPEN %f > %f", strat.ySymbol,
-			(strat.yOpenOrder.Price-strat.xWalkedDepth.BidPrice)/strat.xWalkedDepth.BidPrice , -strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor),
+			"%s CANCEL, YX OPEN %f < %f", strat.ySymbol,
+			(strat.xWalkedDepth.BidPrice-strat.yOpenOrder.Price)/strat.yOpenOrder.Price, strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor),
 		)
 		return false
 	}
