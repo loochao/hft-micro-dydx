@@ -44,7 +44,8 @@ type Config struct {
 	TickerXBias          time.Duration `yaml:"tickerXBias"`
 	TickerMaxAgeDiffBias time.Duration `yaml:"tickerMaxAgeDiffBias"`
 	TickerReportCount    int           `yaml:"tickerReportCount"`
-	SpreadTimeToLive     time.Duration `yaml:"spreadTimeToLive"`
+	SpreadTimeToCancel   time.Duration `yaml:"SpreadTimeToCancel"`
+	SpreadTimeToEnter    time.Duration `yaml:"spreadTimeToEnter"`
 	SpreadLookback       time.Duration `yaml:"spreadLookback"`
 	SpreadMinTickerCount int           `yaml:"spreadMinTickerCount"`
 	BatchSize            int           `yaml:"batchSize"`
@@ -96,8 +97,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.TickerReportCount == 0 {
 		config.RestartSilent = 1000
 	}
-	if config.SpreadTimeToLive == 0 {
-		config.SpreadTimeToLive = time.Second * 3
+	if config.SpreadTimeToCancel == 0 {
+		config.SpreadTimeToCancel = time.Second * 3
 	}
 	if config.SpreadLookback == 0 {
 		config.SpreadLookback = time.Second
