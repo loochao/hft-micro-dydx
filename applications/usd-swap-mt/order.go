@@ -295,7 +295,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 	} else {
 		logger.Debugf(
 			"%s CANCEL, XY OPEN %f < %f", strat.xSymbol,
-			(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price >= strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor),
+			(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor),
 		)
 		return false
 	}
@@ -326,13 +326,13 @@ func (strat *XYStrategy) isYOpenOrderOk() bool {
 		return false
 	}
 
-	if (strat.yWalkedDepth.BidPrice-strat.yOpenOrder.Price)/strat.yOpenOrder.Price >= strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor) {
+	if (strat.yOpenOrder.Price-strat.xWalkedDepth.BidPrice)/strat.xWalkedDepth.BidPrice <= -strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor) {
 		//XY OPEN
 		return true
 	} else {
 		logger.Debugf(
 			"%s CANCEL, XY OPEN %f < %f", strat.ySymbol,
-			(strat.yWalkedDepth.BidPrice-strat.yOpenOrder.Price)/strat.yOpenOrder.Price >= strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor),
+			(strat.yOpenOrder.Price-strat.xWalkedDepth.BidPrice)/strat.xWalkedDepth.BidPrice , -strat.config.EnterDelta*(1.0-strat.config.CancelOffsetFactor),
 		)
 		return false
 	}
