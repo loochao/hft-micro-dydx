@@ -76,8 +76,8 @@ func handleSave(
 			fields["spreadTimeDelta"] = st.spread.ParseTime.Sub(st.spread.EventTime).Seconds()
 			fields["spreadXYLastEnter"] = st.spread.XYLastEnter
 			fields["spreadXYMedianEnter"] = st.spread.XYMedianEnter
-			fields["spreadXYLastEnter"] = st.spread.YXLastEnter
-			fields["spreadXYMedianEnter"] = st.spread.YXMedianEnter
+			fields["spreadYXLastEnter"] = st.spread.YXLastEnter
+			fields["spreadYXMedianEnter"] = st.spread.YXMedianEnter
 
 			fields["xBidPrice"] = st.xWalkedDepth.BidPrice
 			fields["xAskPrice"] = st.xWalkedDepth.AskPrice
