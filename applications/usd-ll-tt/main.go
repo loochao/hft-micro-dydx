@@ -128,11 +128,17 @@ func main() {
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
 	}
 
+	orderOffsets := make(map[string]Offset)
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)
 		if _, ok := xyConfig.TargetWeights[xSymbol]; !ok {
 			xyConfig.TargetWeights[xSymbol] = 1.0
+		}
+		orderOffsets[xSymbol], err = NewOffset(xyConfig.OrderOffsets[xSymbol])
+		if err != nil {
+			logger.Debugf("NewOffset error %s %v", xSymbol, err)
+			return
 		}
 	}
 	xyConfig.XExchange.Symbols = xSymbols
@@ -252,6 +258,7 @@ func main() {
 			xyGlobalCtx,
 			xSymbol, ySymbol,
 			*xyConfig,
+			orderOffsets[xSymbol],
 			xExchange,
 			yExchange,
 			xAccountChMap[xSymbol],

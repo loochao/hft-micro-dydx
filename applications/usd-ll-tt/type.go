@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"strings"
 	"time"
 )
 
@@ -115,6 +117,7 @@ type XYStrategy struct {
 	adjustedAgeDiff         time.Duration
 	spreadReport            *common.XYSpreadReport
 	stateOutputCh           chan XYStrategy
+	orderOffset             Offset
 
 	error error
 
@@ -152,4 +155,36 @@ type XYStrategy struct {
 	reduceOnly bool
 	orderSide  common.OrderSide
 	price      float64
+}
+
+type Offset struct {
+	FarTop  float64
+	Top     float64
+	NearTop float64
+	NearBot float64
+	Bot     float64
+	FarBot  float64
+}
+
+func NewOffset(msg string) (Offset, error) {
+	splits := strings.Split(msg, ",")
+	if len(splits) != 6 {
+		return Offset{}, fmt.Errorf("bad offsets %s", msg)
+	}
+	offsets := [6]float64{}
+	var err error
+	for i, s := range splits {
+		offsets[i], err = common.ParseFloat([]byte(s))
+		if err != nil {
+			return Offset{}, err
+		}
+	}
+	return Offset{
+		FarTop:  offsets[5],
+		Top:     offsets[4],
+		NearTop: offsets[3],
+		NearBot: offsets[2],
+		Bot:     offsets[1],
+		FarBot:  offsets[0],
+	}, nil
 }

@@ -33,6 +33,7 @@ type Config struct {
 	ShortEnterDelta         float64 `yaml:"shortEnterDelta"`
 	LongExitDelta           float64 `yaml:"longExitDelta"`
 	ShortExitDelta          float64 `yaml:"shortExitDelta"`
+	FokOffsetFactor         float64 `yaml:"fokOffsetFactor"`
 	MinimalEnterFundingRate float64 `yaml:"minimalEnterFundingRate"`
 	MinimalKeepFundingRate  float64 `yaml:"minimalKeepFundingRate"`
 
@@ -70,6 +71,7 @@ type Config struct {
 	XYPairs        map[string]string  `yaml:"xyPairs"`
 	TargetWeights  map[string]float64 `yaml:"targetWeights"`
 	MaxOrderValues map[string]float64 `yaml:"maxOrderValues"`
+	OrderOffsets   map[string]string  `yaml:"orderOffsets"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
