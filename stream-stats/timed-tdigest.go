@@ -23,7 +23,7 @@ func (tm *TimedTDigest) Insert(timestamp time.Time, value float64) (err error) {
 		tm.subTDStartTime = &timestamp
 	} else {
 		if timestamp.Sub(*tm.subTDStartTime) >= tm.subInterval {
-			//需要forward bump
+			//需要forward sub td
 			tm.times = append(tm.times, *tm.subTDStartTime)
 			tm.subTDs = append(tm.subTDs, tm.currentSubTD)
 			tm.subTDStartTime = &timestamp
@@ -97,5 +97,4 @@ func NewTimedTDigest(lookback, subInterval time.Duration) *TimedTDigest {
 		times:        make([]time.Time, 0),
 		subTDs:       make([]*tdigest.TDigest, 0),
 	}
-
 }
