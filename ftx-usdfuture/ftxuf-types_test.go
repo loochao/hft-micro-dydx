@@ -2,6 +2,7 @@ package ftx_usdfuture
 
 import (
 	"encoding/json"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
 	"hash/crc32"
@@ -56,4 +57,22 @@ func TestParseTickerByStdJson(t *testing.T) {
 	assert.Equal(t, 0.2784135, d.Data.Ask)
 	assert.Equal(t, 107.0, d.Data.BidSize)
 	assert.Equal(t, 5600.0, d.Data.AskSize)
+}
+
+
+func TestGetExchange(t *testing.T) {
+	var position common.Position = &Position{}
+	var fr common.FundingRate = &FutureStats{}
+	var order common.Order = &Order{}
+	var fill common.Order = &Fill{}
+	var balance common.Balance = &Account{}
+	var depth common.Depth = &OrderBook{}
+	var ticker common.Ticker = &Ticker{}
+	assert.Equal(t, common.FtxUsdFuture, fr.GetExchange())
+	assert.Equal(t, common.FtxUsdFuture, fill.GetExchange())
+	assert.Equal(t, common.FtxUsdFuture, position.GetExchange())
+	assert.Equal(t, common.FtxUsdFuture, order.GetExchange())
+	assert.Equal(t, common.FtxUsdFuture, depth.GetExchange())
+	assert.Equal(t, common.FtxUsdFuture, balance.GetExchange())
+	assert.Equal(t, common.FtxUsdFuture, ticker.GetExchange())
 }

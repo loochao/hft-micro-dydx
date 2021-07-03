@@ -26,6 +26,10 @@ func (bn *BinanceBusdSpot) IsSpot() bool {
 	return true
 }
 
+func (bn *BinanceBusdSpot) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (bn *BinanceBusdSpot) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	panic("implement me")
 }
@@ -168,7 +172,7 @@ func (bn *BinanceBusdSpot) StreamBasic(ctx context.Context, statusCh chan common
 						}
 					}
 					continue
-				}else if wsBalance.Asset == "BNB" {
+				} else if wsBalance.Asset == "BNB" {
 					continue
 				}
 				symbol := wsBalance.Asset + "BUSD"
@@ -231,7 +235,7 @@ func (bn *BinanceBusdSpot) StreamBasic(ctx context.Context, statusCh chan common
 						}
 					}
 					continue
-				}else if balance.Asset == "BNB" {
+				} else if balance.Asset == "BNB" {
 					if bnbBalance == nil {
 						bnbBalance = new(float64)
 					}

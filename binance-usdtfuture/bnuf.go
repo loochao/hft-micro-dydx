@@ -22,6 +22,10 @@ type BinanceUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
+
+func (bn *BinanceUsdtFuture) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
 func (bn *BinanceUsdtFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	panic("implement me")
 }
@@ -1001,6 +1005,7 @@ func (bn *BinanceUsdtFutureWidthDepth20) StreamDepth(ctx context.Context, channe
 type BinanceUsdtFutureWidthDepth5 struct {
 	BinanceUsdtFuture
 }
+
 
 func (b BinanceUsdtFutureWidthDepth5) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	panic("implement me")

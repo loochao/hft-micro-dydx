@@ -17,6 +17,7 @@ const (
 	OrderTypeMarket     = "market"
 	OrderTimeInForceGTC = "GTC"
 	OrderTimeInForceIOC = "IOC"
+	ExchangeID = common.KucoinUsdtFuture
 )
 
 type KlinesParam struct {

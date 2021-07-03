@@ -1,9 +1,17 @@
 package common
 
-type ExchangeID uint8
+type ExchangeID int
 
 const (
-	UnknownExchange uint8 = iota
+	UnknownExchange ExchangeID = iota
 	BinanceUsdtFuture
 	BinanceUsdtSpot
+	BinanceBusdFuture
+	BinanceBusdSpot
+	BinanceUsdcSpot
+	BinanceTusdSpot
+	BinanceCoinFuture
+	KucoinUsdtFuture
+	KucoinUsdtSpot
+	FtxUsdFuture
 )

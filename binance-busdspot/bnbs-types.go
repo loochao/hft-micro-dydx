@@ -53,6 +53,7 @@ const (
 	OrderStatusPendingCancel   = "PENDING_CANCEL"
 	OrderStatusReject          = "REJECTED"
 	OrderStatusExpired         = "EXPIRED"
+	ExchangeID                 = common.BinanceBusdSpot
 )
 
 type Depth20 struct {
@@ -61,6 +62,10 @@ type Depth20 struct {
 	Bids         [20][2]float64 `json:"-"`
 	Asks         [20][2]float64 `json:"_"`
 	ParseTime    time.Time      `json:"-"`
+}
+
+func (depth Depth20) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (depth Depth20) GetBids() common.Bids { return depth.Bids[:] }
@@ -216,6 +221,10 @@ type Balance struct {
 	ParseTime time.Time `json:"-"`
 }
 
+func (b *Balance) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (b *Balance) GetTime() time.Time {
 	return b.EventTime
 }
@@ -266,6 +275,10 @@ type TransferResponse struct {
 
 type FundingRate struct {
 	Symbol string
+}
+
+func (f FundingRate) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (f FundingRate) GetSymbol() string {
@@ -362,6 +375,10 @@ type NewOrderResponse struct {
 	} `json:"fills"`
 	EventTime time.Time `json:"-"`
 	ParseTime time.Time `json:"-"`
+}
+
+func (order *NewOrderResponse) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (order *NewOrderResponse) UnmarshalJSON(data []byte) error {
@@ -517,6 +534,10 @@ type Depth5 struct {
 	ParseTime    time.Time     `json:"-"`
 }
 
+func (depth Depth5) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (depth Depth5) GetBids() common.Bids { return depth.Bids[:] }
 func (depth Depth5) GetAsks() common.Asks { return depth.Asks[:] }
 func (depth Depth5) GetSymbol() string    { return depth.Symbol }
@@ -623,7 +644,6 @@ type WSTrade struct {
 	Stream string `json:"stream"`
 	Data   Trade  `json:"data"`
 }
-
 
 type TickerParam struct {
 	Symbol string `json:"symbol"`

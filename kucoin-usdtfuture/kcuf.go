@@ -20,6 +20,10 @@ type KucoinUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (k *KucoinUsdtFuture) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (k *KucoinUsdtFuture) IsSpot() bool {
 	return false
 }

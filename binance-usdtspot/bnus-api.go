@@ -47,6 +47,8 @@ const (
 	UniversalTransferTypeMiningUmFuture = "MINING_UMFUTURE"
 	UniversalTransferTypeMiningC2c      = "MINING_C2C"
 	UniversalTransferTypeMiningMargin   = "MINING_MARGIN"
+
+	ExchangeID = common.BinanceUsdtSpot
 )
 
 type API struct {

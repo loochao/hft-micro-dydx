@@ -51,6 +51,7 @@ const (
 
 	MarginTypeCrossed  = "CROSSED"
 	MarginTypeIsolated = "ISOLATED"
+	ExchangeID = common.BinanceCoinFuture
 )
 
 type API struct {

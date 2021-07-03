@@ -78,6 +78,10 @@ type WSPosition struct {
 	EventTime        time.Time `json:"-"`
 }
 
+func (W WSPosition) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (W WSPosition) GetSymbol() string {
 	return W.Symbol
 }
@@ -108,6 +112,10 @@ type WSBalance struct {
 	MaxWithdrawAmount  float64   `json:"maxWithdrawAmount,string"`
 	ParseTime          time.Time `json:"-"`
 	EventTime          time.Time `json:"-"`
+}
+
+func (W WSBalance) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (W WSBalance) GetCurrency() string {
@@ -149,6 +157,10 @@ type WSPositionUpdate struct {
 	PositionSide        string    `json:"ps"`
 	ParseTime           time.Time `json:"-"`
 	EventTime           time.Time `json:"-"`
+}
+
+func (wsp *WSPositionUpdate) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (wsp *WSPositionUpdate) GetEventTime() time.Time {
@@ -245,6 +257,10 @@ type WSOrder struct {
 	ActivationPrice           float64 `json:"AP,string,omitempty"`
 	CallbackRate              float64 `json:"cr,string,omitempty"`
 	IsOrderTriggerProtected   bool    `json:"pP,omitempty"`
+}
+
+func (order *WSOrder) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (order *WSOrder) GetSymbol() string {

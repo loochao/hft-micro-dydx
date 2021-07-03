@@ -80,7 +80,7 @@ func init() {
 	trGlobalContext, trGlobalCancel = context.WithCancel(context.Background())
 	switch trConfig.ExchangeSettings.Name {
 	case "ftx-usdfuture":
-		trExchange = new(ftx_usdfuture.FtxUsdtFuture)
+		trExchange = new(ftx_usdfuture.FtxUsdFuture)
 		err = trExchange.Setup(trGlobalContext, trConfig.ExchangeSettings)
 		if err != nil {
 			logger.Fatal(err)

@@ -84,7 +84,7 @@ func init() {
 
 	switch mConfig.MakerExchange.Name {
 	case "ftx-usdfuture":
-		mExchange = &ftx_usdfuture.FtxUsdtFuture{}
+		mExchange = &ftx_usdfuture.FtxUsdFuture{}
 	case "bnswap":
 		mExchange = &bnswap.Bnswap{}
 	default:

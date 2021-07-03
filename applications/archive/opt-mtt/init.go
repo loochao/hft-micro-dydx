@@ -115,7 +115,7 @@ func init() {
 
 	switch mtConfig.MakerExchange.Name {
 	case "ftx-usdfuture":
-		mExchange = &ftx_usdfuture.FtxUsdtFuture{}
+		mExchange = &ftx_usdfuture.FtxUsdFuture{}
 	case "bnswap":
 		mExchange = &bnswap.Bnswap{}
 	default:
@@ -124,7 +124,7 @@ func init() {
 
 	switch mtConfig.TakerExchange.Name {
 	case "ftx-usdfuture":
-		tExchange = &ftx_usdfuture.FtxUsdtFuture{}
+		tExchange = &ftx_usdfuture.FtxUsdFuture{}
 	case "bnswap":
 		tExchange = &bnswap.Bnswap{}
 	default:

@@ -22,6 +22,10 @@ type Depth20 struct {
 	EventTime    time.Time      `json:"-"`
 }
 
+func (depth *Depth20) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (depth *Depth20) GetBids() common.Bids {
 	return depth.Bids[:]
 }
@@ -480,6 +484,10 @@ type Order struct {
 	Msg           string  `json:"msg"`
 }
 
+func (order *Order) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (order *Order) GetSymbol() string {
 	return order.Symbol
 }
@@ -597,6 +605,10 @@ type PremiumIndex struct {
 	ParseTime            time.Time `json:"-"`
 }
 
+func (pi *PremiumIndex) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (pi *PremiumIndex) GetSymbol() string {
 	return pi.Symbol
 }
@@ -649,6 +661,10 @@ type Depth5 struct {
 	LastUpdateId int64         `json:"u,omitempty"`
 	Bids         [5][2]float64 `json:"b,omitempty"`
 	Asks         [5][2]float64 `json:"a,omitempty"`
+}
+
+func (depth *Depth5) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (depth *Depth5) GetBids() common.Bids {

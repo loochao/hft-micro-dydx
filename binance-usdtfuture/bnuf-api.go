@@ -45,6 +45,8 @@ const (
 	OrderStatusPendingCancel   = "PENDING_CANCEL"
 	OrderStatusReject          = "REJECTED"
 	OrderStatusExpired         = "EXPIRED"
+
+	ExchangeID = common.BinanceUsdtFuture
 )
 
 type API struct {

@@ -12,6 +12,7 @@ type Balance interface {
 	GetFree() float64
 	GetUsed() float64
 	GetTime() time.Time
+	GetExchange() ExchangeID
 }
 
 type Position interface {
@@ -20,6 +21,7 @@ type Position interface {
 	GetPrice() float64
 	GetEventTime() time.Time
 	GetParseTime() time.Time
+	GetExchange() ExchangeID
 }
 
 type CoinExchange interface {
@@ -42,6 +44,8 @@ type CoinExchange interface {
 	StreamKLine(ctx context.Context, channels map[string]chan []KLine, batchSize int, interval, lookback time.Duration)
 	StreamFundingRate(ctx context.Context, channels map[string]chan FundingRate, batchSize int)
 
+	GetExchange() ExchangeID
+
 	WatchOrders(ctx context.Context, requestChannels map[string]chan OrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
 	//WatchBatchOrders(ctx context.Context, requestChannels map[string]chan BatchOrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
 	GenerateClientID() string
@@ -52,6 +56,7 @@ type UsdExchange interface {
 	Done() chan interface{}
 	Stop()
 
+	GetExchange() ExchangeID
 	Setup(ctx context.Context, settings ExchangeSettings) error
 
 	GetMinNotional(symbol string) (float64, error)
@@ -85,6 +90,7 @@ type FundingRate interface {
 	GetSymbol() string
 	GetFundingRate() float64
 	GetNextFundingTime() time.Time
+	GetExchange() ExchangeID
 }
 
 type Ticker interface {
@@ -94,6 +100,7 @@ type Ticker interface {
 	GetAskPrice() float64
 	GetBidSize() float64
 	GetAskSize() float64
+	GetExchange() ExchangeID
 }
 
 type ExchangeSettings struct {
@@ -169,6 +176,7 @@ type Order interface {
 	GetType() OrderType
 	GetPostOnly() bool
 	GetReduceOnly() bool
+	GetExchange() ExchangeID
 }
 
 var OrderSideBuy = OrderSide("BUY")
@@ -346,6 +354,7 @@ type Depth interface {
 	GetAsks() Asks
 	GetBids() Bids
 	GetSymbol() string
+	GetExchange() ExchangeID
 }
 
 type SystemStatus string

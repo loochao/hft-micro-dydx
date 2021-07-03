@@ -19,6 +19,10 @@ type Depth20 struct {
 	ParseTime    time.Time      `json:"-"`
 }
 
+func (depth *Depth20) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (depth *Depth20) GetBids() common.Bids {
 	return depth.Bids[:]
 }
@@ -234,6 +238,10 @@ type Position struct {
 	EventTime              time.Time `json:"-"`
 }
 
+func (position *Position) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (position *Position) GetEventTime() time.Time {
 	return position.EventTime
 }
@@ -305,6 +313,10 @@ type Asset struct {
 	AvailableBalance       *float64  `json:"availableBalance,string,omitempty"`
 	EventTime              time.Time `json:"-"`
 	ParseTime              time.Time `json:"-"`
+}
+
+func (a *Asset) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (a *Asset) UnmarshalJSON(data []byte) error {
@@ -606,6 +618,10 @@ type Order struct {
 	Msg           string  `json:"msg"`
 }
 
+func (order *Order) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (order *Order) GetSymbol() string {
 	return order.Symbol
 }
@@ -835,6 +851,10 @@ type PremiumIndex struct {
 	ParseTime            time.Time `json:"-"`
 }
 
+func (mpu *PremiumIndex) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (mpu *PremiumIndex) GetSymbol() string {
 	return mpu.Symbol
 }
@@ -884,6 +904,10 @@ type Depth5 struct {
 	LastUpdateId int64         `json:"u,omitempty"`
 	Bids         [5][2]float64 `json:"b,omitempty"`
 	Asks         [5][2]float64 `json:"a,omitempty"`
+}
+
+func (depth *Depth5) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (depth *Depth5) GetBids() common.Bids {
@@ -964,8 +988,6 @@ func (cpmp *MultiAssetsMarginParam) ToUrlValues() url.Values {
 	return values
 }
 
-
 type MultiAssetsMargin struct {
 	MultiAssetsMargin bool `json:"multiAssetsMargin"`
 }
-

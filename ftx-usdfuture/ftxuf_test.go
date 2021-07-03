@@ -15,7 +15,7 @@ func TestFtxperp(t *testing.T) {
 		ApiSecret: os.Getenv("FTX_TEST_SECRET"),
 		Proxy:     os.Getenv("FTX_TEST_PROXY"),
 	}
-	var exchange = common.UsdExchange(&FtxUsdtFuture{})
+	var exchange common.UsdExchange = &FtxUsdFuture{}
 	err := exchange.Setup(ctx, settings)
 	if err != nil {
 		t.Fatal(err)

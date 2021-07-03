@@ -25,6 +25,10 @@ func (bn *BinanceUsdtSpot) IsSpot() bool {
 	return true
 }
 
+func (bn BinanceUsdtSpot) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (bn *BinanceUsdtSpot) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	panic("implement me")
 }

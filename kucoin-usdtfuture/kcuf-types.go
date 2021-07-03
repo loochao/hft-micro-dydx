@@ -142,6 +142,10 @@ type Depth5 struct {
 	EventTime time.Time     `json:"-"`
 }
 
+func (depth *Depth5) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (depth *Depth5) GetBids() common.Bids {
 	return depth.Bids[:]
 }
@@ -207,6 +211,10 @@ type Position struct {
 	OpeningTimestamp  time.Time `json:"-"`
 	EventTime         time.Time `json:"-"`
 	ParseTime         time.Time `json:"-"`
+}
+
+func (position *Position) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (position *Position) GetEventTime() time.Time {
@@ -450,6 +458,10 @@ type WSOrder struct {
 	ParseTime    time.Time `json:"-"`
 }
 
+func (wsOrder *WSOrder) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (wsOrder *WSOrder) GetSymbol() string {
 	return wsOrder.Symbol
 }
@@ -615,6 +627,10 @@ type Account struct {
 	ParseTime        time.Time `json:"-"`
 }
 
+func (a *Account) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (a *Account) UnmarshalJSON(data []byte) error {
 	type Alias Account
 	aux := struct {
@@ -716,6 +732,10 @@ type CurrentFundingRate struct {
 	PredictedValue float64   `json:"predictedValue"`
 	TimePoint      time.Time `json:"-"`
 	ParseTime      time.Time `json:"-"`
+}
+
+func (fr *CurrentFundingRate) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (fr *CurrentFundingRate) GetSymbol() string {

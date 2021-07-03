@@ -45,6 +45,10 @@ type WSPosition struct {
 	EventTime           time.Time `json:"-"`
 }
 
+func (wsp *WSPosition) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (wsp *WSPosition) GetEventTime() time.Time {
 	return wsp.EventTime
 }
@@ -200,6 +204,10 @@ type WSOrder struct {
 	CloseAll                  bool    `json:"cp,omitempty"`
 	ActivationPrice           float64 `json:"AP,string,omitempty"`
 	CallbackRate              float64 `json:"rp,string,omitempty"`
+}
+
+func (order *WSOrder) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (order *WSOrder) GetSymbol() string {

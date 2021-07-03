@@ -122,7 +122,7 @@ func init() {
 
 	switch xyConfig.XExchange.Name {
 	case "ftx-usdfuture":
-		xExchange = &ftx_usdfuture.FtxUsdtFuture{}
+		xExchange = &ftx_usdfuture.FtxUsdFuture{}
 	case "bnswap":
 		xExchange = &bnswap.Bnswap{}
 	case "kucoin-usdtfuture":
@@ -133,7 +133,7 @@ func init() {
 
 	switch xyConfig.YExchange.Name {
 	case "ftx-usdfuture":
-		yExchange = &ftx_usdfuture.FtxUsdtFuture{}
+		yExchange = &ftx_usdfuture.FtxUsdFuture{}
 	case "bnswap":
 		yExchange = &bnswap.Bnswap{}
 	case "kucoin-usdtfuture":

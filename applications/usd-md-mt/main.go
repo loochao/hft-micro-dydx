@@ -105,7 +105,7 @@ func main() {
 		xExchange = &kcuf.KucoinUsdtFutureWithDepth5{}
 		break
 	case "ftxUsdtFuture":
-		xExchange = &ftxuf.FtxUsdtFuture{}
+		xExchange = &ftxuf.FtxUsdFuture{}
 		break
 	//case "okexUsdtSpot":
 	//	xExchange = &okex_usdtspot.OkexUsdtSpot{}
@@ -140,7 +140,7 @@ func main() {
 		yExchange = &kcuf.KucoinUsdtFutureWithDepth5{}
 		break
 	case "ftxUsdtFuture":
-		yExchange = &ftxuf.FtxUsdtFuture{}
+		yExchange = &ftxuf.FtxUsdFuture{}
 		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)

@@ -155,6 +155,10 @@ type OrderUpdateEvent struct {
 	QuoteOrderQty                          float64   `json:"Q,string"`
 }
 
+func (o OrderUpdateEvent) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (o OrderUpdateEvent) GetSymbol() string {
 	return o.Symbol
 }

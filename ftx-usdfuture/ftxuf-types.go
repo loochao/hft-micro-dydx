@@ -116,6 +116,10 @@ type OrderBook struct {
 	Market   string      `json:"-"`
 }
 
+func (orderBook *OrderBook) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (orderBook *OrderBook) UnmarshalJSON(data []byte) error {
 	type Alias OrderBook
 	aux := &struct {
@@ -250,6 +254,10 @@ type Position struct {
 	EventTime                    time.Time `json:"-"`
 }
 
+func (position *Position) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (position *Position) GetEventTime() time.Time {
 	return position.EventTime
 }
@@ -312,6 +320,10 @@ type Account struct {
 	Username                     string     `json:"username"`
 	Positions                    []Position `json:"positions"`
 	ParseTime                    time.Time  `json:"-"`
+}
+
+func (account *Account) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (account *Account) UnmarshalJSON(data []byte) error {
@@ -389,6 +401,10 @@ type Order struct {
 	PostOnly      bool      `json:"postOnly"`
 	Ioc           bool      `json:"ioc"`
 	CreatedAt     time.Time `json:"-"`
+}
+
+func (order *Order) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (order *Order) UnmarshalJSON(data []byte) error {
@@ -545,6 +561,10 @@ type Fill struct {
 	ClientId   string  `json:"-"`
 }
 
+func (fill *Fill) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (fill *Fill) UnmarshalJSON(data []byte) error {
 	type Alias Fill
 	aux := &struct {
@@ -637,6 +657,10 @@ type FutureStats struct {
 	OpenInterest             float64   `json:"openInterest"`
 }
 
+func (fs *FutureStats) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (fs *FutureStats) GetSymbol() string {
 	return fs.Future
 }
@@ -684,6 +708,10 @@ type Ticker struct {
 	AskSize float64   `json:"askSize"`
 	Symbol  string    `json:"-"`
 	Time    time.Time `json:"-"`
+}
+
+func (t *Ticker) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (t *Ticker) GetSymbol() string {
