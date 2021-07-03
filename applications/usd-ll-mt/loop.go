@@ -89,6 +89,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		if strat.realisedSpread == nil {
 			strat.realisedSpread = new(float64)
 		}
+		strat.realisedOrderCount.Insert(time.Now(), 1.0)
 		*strat.realisedSpread = (*strat.yLastFilledSellPrice - *strat.xLastFilledBuyPrice) / *strat.yLastFilledSellPrice
 		strat.xLastFilledBuyPrice = nil
 		strat.yLastFilledBuyPrice = nil
@@ -99,6 +100,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		if strat.realisedSpread == nil {
 			strat.realisedSpread = new(float64)
 		}
+		strat.realisedOrderCount.Insert(time.Now(), 1.0)
 		*strat.realisedSpread = (*strat.yLastFilledBuyPrice - *strat.xLastFilledSellPrice) / *strat.yLastFilledBuyPrice
 		strat.xLastFilledBuyPrice = nil
 		strat.yLastFilledBuyPrice = nil

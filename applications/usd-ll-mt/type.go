@@ -160,6 +160,12 @@ type XYStrategy struct {
 	stopped                 int32
 	fundingRateSettleSilent bool
 	fundingRateSettleTimer  *time.Timer
+
+	shortTopOpenOrderCount  *common.TimedSum
+	shortBotCloseOrderCount *common.TimedSum
+	longBotOpenOrderCount   *common.TimedSum
+	longTopCloseOrderCount  *common.TimedSum
+	realisedOrderCount      *common.TimedSum
 }
 
 type Offset struct {

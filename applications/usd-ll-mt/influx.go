@@ -91,6 +91,18 @@ func handleSave(
 			fields["spreadLongMedianEnter"] = st.spread.LongMedianEnter
 			fields["spreadLongMedianLeave"] = st.spread.LongMedianLeave
 
+			fields["shortTopOpenOrderCount"] = st.shortTopOpenOrderCount.Sum()
+			fields["shortBotCloseOrderCount"] = st.shortBotCloseOrderCount.Sum()
+			fields["longBotOpenOrderCount"] = st.longBotOpenOrderCount.Sum()
+			fields["longTopCloseOrderCount"] = st.longTopCloseOrderCount.Sum()
+			fields["realisedOrderCount"] = st.realisedOrderCount.Sum()
+			totalCount := st.shortTopOpenOrderCount.Sum() +  st.shortBotCloseOrderCount.Sum() +
+				st.longBotOpenOrderCount.Sum() + st.longTopCloseOrderCount.Sum()
+			if totalCount > 0 {
+				fields["realisedOrderRatio"] = st.realisedOrderCount.Sum()/totalCount
+			}
+
+
 			fields["xBidPrice"] = st.xWalkedDepth.BidPrice
 			fields["xAskPrice"] = st.xWalkedDepth.AskPrice
 			fields["xMidPrice"] = st.xWalkedDepth.MidPrice

@@ -150,6 +150,11 @@ func startXYStrategy(
 		xCancelOrderParam:       common.CancelOrderParam{Symbol: xSymbol},
 		stopped:                 0,
 		fundingRateSettleSilent: false,
+		shortTopOpenOrderCount:  common.NewTimedSum(config.TurnoverLookback),
+		shortBotCloseOrderCount: common.NewTimedSum(config.TurnoverLookback),
+		longBotOpenOrderCount:   common.NewTimedSum(config.TurnoverLookback),
+		longTopCloseOrderCount:  common.NewTimedSum(config.TurnoverLookback),
+		realisedOrderCount:      common.NewTimedSum(config.TurnoverLookback),
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
