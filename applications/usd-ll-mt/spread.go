@@ -91,8 +91,34 @@ func (strat *XYStrategy) walkYDepth() {
 		strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 	}
 }
+func (strat *XYStrategy) handleDepth() {
+	switch strat.nextDepth.GetExchange() {
+	case strat.xExchangeID:
+		strat.xNextDepth = strat.nextDepth
+		strat.handleXDepth()
+		break
+	case strat.yExchangeID:
+		strat.yNextDepth = strat.nextDepth
+		strat.handleYDepth()
+		break
+	default:
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			logger.Debugf("unknown exchanged id %d", strat.nextDepth.GetExchange())
+			strat.logSilentTime = time.Now().Add(time.Minute)
+		}
+	}
+}
 
 func (strat *XYStrategy) handleXDepth() {
+	switch strat.nextDepth.GetExchange() {
+	case strat.xExchangeID:
+	case strat.yExchangeID:
+	default:
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			logger.Debugf("unknown exchanged id %d", strat.nextDepth.GetExchange())
+			strat.logSilentTime = time.Now().Add(time.Minute)
+		}
+	}
 	if strat.xDepth == strat.xNextDepth {
 		return
 	}

@@ -30,8 +30,7 @@ func startXYStrategy(
 	yOrderErrorCh chan common.OrderError,
 	xSystemStatusCh chan common.SystemStatus,
 	ySystemStatusCh chan common.SystemStatus,
-	xDepthCh chan common.Depth,
-	yDepthCh chan common.Depth,
+	depthCh chan common.Depth,
 	saveCh chan *XYStrategy,
 ) (err error) {
 
@@ -43,6 +42,8 @@ func startXYStrategy(
 	strat := XYStrategy{
 		xExchange:               xExchange,
 		yExchange:               yExchange,
+		xExchangeID:             xExchange.GetExchange(),
+		yExchangeID:             yExchange.GetExchange(),
 		isXSpot:                 xExchange.IsSpot(),
 		isYSpot:                 yExchange.IsSpot(),
 		xLeverage:               config.XExchange.Leverage,
@@ -70,8 +71,7 @@ func startXYStrategy(
 		yOrderRequestCh:         yOrderRequestCh,
 		xSystemStatusCh:         xSystemStatusCh,
 		ySystemStatusCh:         ySystemStatusCh,
-		xDepthCh:                xDepthCh,
-		yDepthCh:                yDepthCh,
+		depthCh:                 depthCh,
 		saveCh:                  saveCh,
 		xPositionUpdateTime:     time.Time{},
 		yPositionUpdateTime:     time.Time{},
@@ -288,11 +288,8 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 		case <-strat.spreadWalkTimer.C:
 			strat.walkSpread()
 			break
-		case strat.xNextDepth = <-strat.xDepthCh:
-			strat.handleXDepth()
-			break
-		case strat.yNextDepth = <-strat.yDepthCh:
-			strat.handleYDepth()
+		case strat.nextDepth = <-strat.depthCh:
+			strat.handleDepth()
 			break
 		case <-strat.realisedSpreadTimer.C:
 			strat.handleRealisedSpread()
