@@ -31,6 +31,13 @@ func handleSave(
 	hasAllSymbols := true
 	xTradeVolume := 0.0
 	yTradeVolume := 0.0
+
+	shortTopOpenOrderCount := 0.0
+	shortBotCloseOrderCount := 0.0
+	longBotOpenOrderCount := 0.0
+	longTopCloseOrderCount := 0.0
+	realisedOrderCount := 0.0
+
 	for _, xSymbol := range xSymbols {
 		st, ok := strategiesMap[xSymbol]
 		if !ok {
@@ -91,17 +98,11 @@ func handleSave(
 			fields["spreadLongMedianEnter"] = st.spread.LongMedianEnter
 			fields["spreadLongMedianLeave"] = st.spread.LongMedianLeave
 
-			fields["shortTopOpenOrderCount"] = st.shortTopOpenOrderCount.Sum()
-			fields["shortBotCloseOrderCount"] = st.shortBotCloseOrderCount.Sum()
-			fields["longBotOpenOrderCount"] = st.longBotOpenOrderCount.Sum()
-			fields["longTopCloseOrderCount"] = st.longTopCloseOrderCount.Sum()
-			fields["realisedOrderCount"] = st.realisedOrderCount.Sum()
-			totalCount := st.shortTopOpenOrderCount.Sum() +  st.shortBotCloseOrderCount.Sum() +
-				st.longBotOpenOrderCount.Sum() + st.longTopCloseOrderCount.Sum()
-			if totalCount > 0 {
-				fields["realisedOrderRatio"] = st.realisedOrderCount.Sum()/totalCount
-			}
-
+			shortTopOpenOrderCount += st.shortTopOpenOrderCount.Sum()
+			shortBotCloseOrderCount += st.shortBotCloseOrderCount.Sum()
+			longBotOpenOrderCount += st.longBotOpenOrderCount.Sum()
+			longTopCloseOrderCount += st.longTopCloseOrderCount.Sum()
+			realisedOrderCount += st.realisedOrderCount.Sum()
 
 			fields["xBidPrice"] = st.xWalkedDepth.BidPrice
 			fields["xAskPrice"] = st.xWalkedDepth.AskPrice
@@ -111,7 +112,6 @@ func handleSave(
 			fields["yAskPrice"] = st.yWalkedDepth.AskPrice
 			fields["yMidPrice"] = st.yWalkedDepth.MidPrice
 			fields["xyDepthMatchRatio"] = st.xyDepthMatchRatio
-
 
 			if st.spreadReport != nil {
 				fields["matchRatio"] = st.spreadReport.MatchRatio
@@ -204,6 +204,18 @@ func handleSave(
 		fields["xyURPnl"] = totalURPnl
 		fields["netWorth"] = netWorth
 		fields["startValue"] = xyConfig.StartValue
+
+		fields["shortTopOpenOrderCount"] = shortTopOpenOrderCount
+		fields["shortBotCloseOrderCount"] = shortBotCloseOrderCount
+		fields["longBotOpenOrderCount"] = longBotOpenOrderCount
+		fields["longTopCloseOrderCount"] = longTopCloseOrderCount
+		fields["realisedOrderCount"] = realisedOrderCount
+		totalCount := shortTopOpenOrderCount + shortBotCloseOrderCount +
+			longBotOpenOrderCount + longTopCloseOrderCount
+		if totalCount > 0 {
+			fields["realisedOrderRatio"] = realisedOrderCount / totalCount
+		}
+
 		pt, err := client.NewPoint(
 			xyConfig.InternalInflux.Measurement,
 			map[string]string{

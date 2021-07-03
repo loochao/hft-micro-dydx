@@ -260,6 +260,7 @@ func main() {
 		xAccountChMap[xSymbol] = make(chan common.Balance, 8)
 		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 1)
 
+		//depth channel是共用的，以防出现顺序错乱问题
 		xDepthChMap[xSymbol] = make(chan common.Depth, 64)
 		yDepthChMap[config.XYPairs[xSymbol]] = xDepthChMap[xSymbol]
 	}
