@@ -538,7 +538,7 @@ func (strat *XYStrategy) handleQuantileSave() {
 		if strat.error != nil {
 			logger.Debugf("json.Marshal(*strat.longTimedTDigest) error %v", strat.error)
 		} else {
-			strat.file, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+"-long-td.json"), os.O_CREATE|os.O_WRONLY, 0775)
+			strat.file, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+"-long-td.json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 			if strat.error != nil {
 				logger.Debugf("os.OpenFile error %v", strat.error)
 			} else {
@@ -558,7 +558,7 @@ func (strat *XYStrategy) handleQuantileSave() {
 		if strat.error != nil {
 			logger.Debugf("json.Marshal(*strat.shortTimedTDigest) error %v", strat.error)
 		} else {
-			strat.file, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+"-short-td.json"), os.O_CREATE|os.O_WRONLY, 0775)
+			strat.file, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+"-short-td.json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 			if strat.error != nil {
 				logger.Debugf("os.OpenFile error %v", strat.error)
 			} else {
