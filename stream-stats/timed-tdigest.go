@@ -3,6 +3,7 @@ package stream_stats
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/tdigest"
 	"time"
 )
@@ -41,6 +42,7 @@ func (ttd *TimedTDigest) MarshalJSON() ([]byte, error) {
 			return nil, err
 		}
 	}
+	logger.Debugf("%d", len(subTDs))
 	type Alias TimedTDigest
 	return json.Marshal(&struct {
 		SubTDs       [][]byte `json:"subTDs,omitempty"`
