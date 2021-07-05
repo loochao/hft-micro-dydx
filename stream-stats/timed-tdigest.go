@@ -20,6 +20,7 @@ type TimedTDigest struct {
 }
 
 func (ttd *TimedTDigest) MarshalJSON() ([]byte, error) {
+	logger.Debugf("(ttd *TimedTDigest) MarshalJSON")
 	var err error
 	rollingTD := make([]byte, 0)
 	currentSubTD := make([]byte, 0)
