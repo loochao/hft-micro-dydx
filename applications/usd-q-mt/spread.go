@@ -71,7 +71,6 @@ func (strat *XYStrategy) walkSpread() {
 	_ = strat.longTimedTDigest.Insert(strat.spreadTime, strat.longLastEnter)
 	strat.shortQuantileTop = strat.shortTimedTDigest.Quantile(strat.config.QuantileTop)
 	strat.longQuantileBot = strat.longTimedTDigest.Quantile(strat.config.QuantileBot)
-	strat.quantileMiddle = strat.shortQuantileTop * strat.config.QuantileTopBotRatio
 }
 
 func (strat *XYStrategy) walkXDepth() {

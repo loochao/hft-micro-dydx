@@ -32,7 +32,6 @@ type Config struct {
 	ShortExitDelta       float64       `yaml:"shortExitDelta"`
 	QuantileTop          float64       `yaml:"quantileTop"`
 	QuantileBot          float64       `yaml:"quantileBot"`
-	QuantileTopBotRatio  float64       `yaml:"quantileTopBotRatio"`
 	QuantileLookback     time.Duration `yaml:"quantileLookback"`
 	QuantileSubInterval  time.Duration `yaml:"quantileSubInterval"`
 	QuantilePath         string        `json:"quantilePath"`

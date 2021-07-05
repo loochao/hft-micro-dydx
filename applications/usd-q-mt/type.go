@@ -176,7 +176,6 @@ type XYStrategy struct {
 	quantileSaveTimer       *time.Timer
 	shortQuantileTop        float64
 	longQuantileBot         float64
-	quantileMiddle          float64
 	longTDBytes             []byte
 	shortTDBytes            []byte
 	file                    *os.File
