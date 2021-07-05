@@ -534,7 +534,7 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 
 func (strat *XYStrategy) handleQuantileSave() {
 	if strat.config.QuantilePath != "" {
-		strat.longTDBytes, strat.error = json.Marshal(*strat.longTimedTDigest)
+		strat.longTDBytes, strat.error = json.Marshal(strat.longTimedTDigest)
 		if strat.error != nil {
 			logger.Debugf("json.Marshal(*strat.longTimedTDigest) error %v", strat.error)
 		} else {
@@ -554,7 +554,7 @@ func (strat *XYStrategy) handleQuantileSave() {
 			}
 		}
 
-		strat.shortTDBytes, strat.error = json.Marshal(*strat.shortTimedTDigest)
+		strat.shortTDBytes, strat.error = json.Marshal(strat.shortTimedTDigest)
 		logger.Debugf("%s %d", strat.xSymbol, len(strat.shortTimedTDigest.SubTDs))
 		if strat.error != nil {
 			logger.Debugf("json.Marshal(*strat.shortTimedTDigest) error %v", strat.error)
