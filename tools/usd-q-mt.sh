@@ -22,3 +22,7 @@ git push origin "usd-q-mt.$dt" --force
 echo ""
 echo "vcarm02"
 rsync -avx --progress "./dist/usd-q-mt.arm64.$dt" vcarm02:/usr/local/bin/
+
+echo ""
+echo "arm1"
+rsync -avx --progress "./dist/usd-q-mt.arm64.$dt" arm1:/usr/local/bin/
