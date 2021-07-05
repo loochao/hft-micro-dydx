@@ -1,39 +1,110 @@
 package stream_stats
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/geometrybase/hft-micro/tdigest"
 	"time"
 )
 
 type TimedTDigest struct {
-	lookback       time.Duration
-	subInterval    time.Duration
-	times          []time.Time
-	subTDs         []*tdigest.TDigest
-	currentSubTD   *tdigest.TDigest
-	subTDStartTime *time.Time
-	subTDEndTime   *time.Time
-	rollingTD      *tdigest.TDigest
+	Lookback       time.Duration      `json:"lookback,omitempty"`
+	SubInterval    time.Duration      `json:"subInterval,omitempty"`
+	Times          []time.Time        `json:"times,omitempty"`
+	SubTDs         []*tdigest.TDigest `json:"-"`
+	SubTDStartTime *time.Time         `json:"subTDStartTime,omitempty"`
+	SubTDEndTime   *time.Time         `json:"subTDEndTime,omitempty"`
+	CurrentSubTD   *tdigest.TDigest   `json:"-"`
+	RollingTD      *tdigest.TDigest   `json:"-"`
 }
 
-func (tm *TimedTDigest) Insert(timestamp time.Time, value float64) (err error) {
-	tm.subTDEndTime = &timestamp
-	if tm.subTDStartTime == nil {
-		//第一次添加数据,以此为起点
-		tm.subTDStartTime = &timestamp
+func (ttd *TimedTDigest) MarshalJSON() ([]byte, error) {
+	var err error
+	rollingTD := make([]byte, 0)
+	currentSubTD := make([]byte, 0)
+	if ttd.RollingTD != nil {
+		rollingTD, err = ttd.RollingTD.AsBytes()
+		if err != nil {
+			return nil, err
+		}
+	}
+	if ttd.CurrentSubTD != nil {
+		currentSubTD, err = ttd.CurrentSubTD.AsBytes()
+		if err != nil {
+			return nil, err
+		}
+	}
+	subTDs := make([][]byte, len(ttd.SubTDs))
+	for i := range ttd.SubTDs {
+		subTDs[i], err = ttd.SubTDs[i].AsBytes()
+		if err != nil {
+			return nil, err
+		}
+	}
+	type Alias TimedTDigest
+	return json.Marshal(&struct {
+		SubTDs       [][]byte `json:"subTDs,omitempty"`
+		CurrentSubTD []byte   `json:"currentSubTD,omitempty"`
+		RollingTD    []byte   `json:"rollingTD,omitempty"`
+		*Alias
+	}{
+		SubTDs:       subTDs,
+		CurrentSubTD: currentSubTD,
+		RollingTD:    rollingTD,
+		Alias:        (*Alias)(ttd),
+	})
+}
+
+func (ttd *TimedTDigest) UnmarshalJSON(data []byte) error {
+	type Alias TimedTDigest
+	aux := &struct {
+		SubTDs       [][]byte `json:"subTDs,omitempty"`
+		CurrentSubTD []byte   `json:"currentSubTD,omitempty"`
+		RollingTD    []byte   `json:"rollingTD,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(ttd),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
 	} else {
-		if timestamp.Sub(*tm.subTDStartTime) >= tm.subInterval {
+		ttd.CurrentSubTD, err = tdigest.FromBytes(bytes.NewReader(aux.CurrentSubTD))
+		if err != nil {
+			return err
+		}
+		ttd.RollingTD, err = tdigest.FromBytes(bytes.NewReader(aux.RollingTD))
+		if err != nil {
+			return err
+		}
+		ttd.SubTDs = make([]*tdigest.TDigest, len(aux.SubTDs))
+		for i := range aux.SubTDs {
+			ttd.SubTDs[i], err = tdigest.FromBytes(bytes.NewReader(aux.SubTDs[i]))
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (ttd *TimedTDigest) Insert(timestamp time.Time, value float64) (err error) {
+	ttd.SubTDEndTime = &timestamp
+	if ttd.SubTDStartTime == nil {
+		//第一次添加数据,以此为起点
+		ttd.SubTDStartTime = &timestamp
+	} else {
+		if timestamp.Sub(*ttd.SubTDStartTime) >= ttd.SubInterval {
 			//需要forward sub td
-			tm.times = append(tm.times, *tm.subTDStartTime)
-			tm.subTDs = append(tm.subTDs, tm.currentSubTD)
-			tm.subTDStartTime = &timestamp
-			tm.currentSubTD, _ = tdigest.New()
+			ttd.Times = append(ttd.Times, *ttd.SubTDStartTime)
+			ttd.SubTDs = append(ttd.SubTDs, ttd.CurrentSubTD)
+			ttd.SubTDStartTime = &timestamp
+			ttd.CurrentSubTD, _ = tdigest.New()
 		}
 	}
 
 	cutIndex := -1
-	for i, t := range tm.times {
-		if timestamp.Sub(t) > tm.lookback {
+	for i, t := range ttd.Times {
+		if timestamp.Sub(t) > ttd.Lookback {
 			cutIndex = i
 		} else {
 			break
@@ -41,60 +112,53 @@ func (tm *TimedTDigest) Insert(timestamp time.Time, value float64) (err error) {
 	}
 	cutIndex += 1
 	if cutIndex > 0 {
-		tm.subTDs = tm.subTDs[cutIndex:]
-		tm.times = tm.times[cutIndex:]
-		tm.rollingTD, _ = tdigest.New()
-		for _, td := range tm.subTDs {
-			err = tm.rollingTD.Merge(td)
+		ttd.SubTDs = ttd.SubTDs[cutIndex:]
+		ttd.Times = ttd.Times[cutIndex:]
+		ttd.RollingTD, _ = tdigest.New()
+		for _, td := range ttd.SubTDs {
+			err = ttd.RollingTD.Merge(td)
 			if err != nil {
 				return
 			}
 		}
-		err = tm.rollingTD.Merge(tm.currentSubTD)
+		err = ttd.RollingTD.Merge(ttd.CurrentSubTD)
 		if err != nil {
 			return
 		}
 	}
-	err = tm.currentSubTD.Add(value)
+	err = ttd.CurrentSubTD.Add(value)
 	if err != nil {
 		return
 	}
-	err = tm.rollingTD.Add(value)
+	err = ttd.RollingTD.Add(value)
 	return
 }
-
-func (tm *TimedTDigest) SubTDs() []*tdigest.TDigest {
-	return tm.subTDs
+func (ttd *TimedTDigest) Len() int {
+	return len(ttd.Times)
 }
-func (tm *TimedTDigest) Times() []time.Time {
-	return tm.times
-}
-func (tm *TimedTDigest) Len() int {
-	return len(tm.times)
-}
-func (tm *TimedTDigest) Range() time.Duration {
-	if tm.subTDEndTime != nil && tm.subTDStartTime != nil {
-		if len(tm.times) > 0 {
-			return tm.subTDEndTime.Sub(tm.times[0])
+func (ttd *TimedTDigest) Range() time.Duration {
+	if ttd.SubTDEndTime != nil && ttd.SubTDStartTime != nil {
+		if len(ttd.Times) > 0 {
+			return ttd.SubTDEndTime.Sub(ttd.Times[0])
 		} else {
-			return tm.subTDEndTime.Sub(*tm.subTDStartTime)
+			return ttd.SubTDEndTime.Sub(*ttd.SubTDStartTime)
 		}
 	} else {
 		return time.Duration(0)
 	}
 }
-func (tm *TimedTDigest) Quantile(q float64) float64 {
-	return tm.rollingTD.Quantile(q)
+func (ttd *TimedTDigest) Quantile(q float64) float64 {
+	return ttd.RollingTD.Quantile(q)
 }
 func NewTimedTDigest(lookback, subInterval time.Duration) *TimedTDigest {
 	rollingTD, _ := tdigest.New()
 	subTD, _ := tdigest.New()
 	return &TimedTDigest{
-		currentSubTD: subTD,
-		rollingTD:    rollingTD,
-		lookback:     lookback,
-		subInterval:  subInterval,
-		times:        make([]time.Time, 0),
-		subTDs:       make([]*tdigest.TDigest, 0),
+		CurrentSubTD: subTD,
+		RollingTD:    rollingTD,
+		Lookback:     lookback,
+		SubInterval:  subInterval,
+		Times:        make([]time.Time, 0),
+		SubTDs:       make([]*tdigest.TDigest, 0),
 	}
 }

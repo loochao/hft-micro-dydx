@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
 	"math"
+	"os"
+	"path"
 	"sync/atomic"
 	"time"
 )
@@ -39,6 +42,37 @@ func startXYStrategy(
 	yBiasInMs := float64(config.DepthYBias / time.Millisecond)
 	minTimeDeltaInMs := float64(config.DepthMinTimeDelta / time.Millisecond)
 	maxTimeDeltaInMs := float64(config.DepthMaxTimeDelta / time.Millisecond)
+	longTimedTDigest := stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
+	shortTimedTDigest := stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
+	if config.QuantilePath != "" {
+		longBytes, err := os.ReadFile(path.Join(config.QuantilePath, xSymbol+"-"+ySymbol+"-long-td.json"))
+		if err != nil {
+			logger.Debugf("os.ReadFile error %v", err)
+		} else {
+			err = json.Unmarshal(longBytes, &longTimedTDigest)
+			if err != nil {
+				logger.Debugf("json.Unmarshal error %v", err)
+				longTimedTDigest = stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
+			} else {
+				longTimedTDigest.Lookback = config.QuantileLookback
+				longTimedTDigest.SubInterval = config.QuantileSubInterval
+			}
+		}
+		shortBytes, err := os.ReadFile(path.Join(config.QuantilePath, xSymbol+"-"+ySymbol+"-short-td.json"))
+		if err != nil {
+			logger.Debugf("os.ReadFile error %v", err)
+		} else {
+			err = json.Unmarshal(shortBytes, &shortTimedTDigest)
+			if err != nil {
+				logger.Debugf("json.Unmarshal error %v", err)
+				shortTimedTDigest = stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
+			} else {
+				shortTimedTDigest.Lookback = config.QuantileLookback
+				shortTimedTDigest.SubInterval = config.QuantileSubInterval
+			}
+		}
+	}
+	logger.Debugf("%s %s QUANTILE LONG BOT %f SHORT TOP %f", xSymbol, ySymbol, longTimedTDigest.Quantile(config.QuantileBot), shortTimedTDigest.Quantile(config.QuantileTop))
 
 	strat := XYStrategy{
 		xExchange:               xExchange,
@@ -156,8 +190,9 @@ func startXYStrategy(
 		longBotOpenOrderCount:   common.NewTimedSum(config.TurnoverLookback),
 		longTopCloseOrderCount:  common.NewTimedSum(config.TurnoverLookback),
 		realisedOrderCount:      common.NewTimedSum(config.TurnoverLookback),
-		longTimedTDigest:        stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval),
-		shortTimedTDigest:       stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval),
+		longTimedTDigest:        longTimedTDigest,
+		shortTimedTDigest:       shortTimedTDigest,
+		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
@@ -201,6 +236,7 @@ func startXYStrategy(
 func (strat *XYStrategy) Stop() {
 	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
 		logger.Debugf("stopped")
+		strat.handleQuantileSave()
 		strat.tryCancelXOpenOrder("end")
 	}
 }
@@ -252,6 +288,9 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 				strat.xOpenOrderCheckTimer.Reset(time.Hour * 9999)
 			}
 			break
+		case <-strat.quantileSaveTimer.C:
+			strat.handleQuantileSave()
+			strat.quantileSaveTimer.Reset(strat.config.QuantileSaveInterval)
 		case strat.xAccount = <-strat.xAccountCh:
 			strat.updateEnterStepAndTarget()
 			break
@@ -489,5 +528,49 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 		strat.yPosition = nextPos
 		strat.yPositionUpdateTime = nextPos.GetParseTime()
 		logger.Debugf("%s y position change nil -> %f", nextPos.GetSymbol(), nextPos.GetSize())
+	}
+}
+
+func (strat *XYStrategy) handleQuantileSave() {
+	if strat.config.QuantilePath != "" {
+		strat.longTDBytes, strat.error = json.Marshal(*strat.longTimedTDigest)
+		if strat.error != nil {
+			logger.Debugf("json.Marshal(*strat.longTimedTDigest) error %v", strat.error)
+		} else {
+			strat.file, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+"-long-td.json"), os.O_CREATE|os.O_WRONLY, 0775)
+			if strat.error != nil {
+				logger.Debugf("os.OpenFile error %v", strat.error)
+			} else {
+				_, strat.error = strat.file.Write(strat.longTDBytes)
+				if strat.error != nil {
+					logger.Debugf("strat.file.Write error %v", strat.error)
+				} else {
+					strat.error = strat.file.Close()
+					if strat.error != nil {
+						logger.Debugf("strat.file.Close() error %v", strat.error)
+					}
+				}
+			}
+		}
+
+		strat.shortTDBytes, strat.error = json.Marshal(*strat.shortTimedTDigest)
+		if strat.error != nil {
+			logger.Debugf("json.Marshal(*strat.shortTimedTDigest) error %v", strat.error)
+		} else {
+			strat.file, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+"-short-td.json"), os.O_CREATE|os.O_WRONLY, 0775)
+			if strat.error != nil {
+				logger.Debugf("os.OpenFile error %v", strat.error)
+			} else {
+				_, strat.error = strat.file.Write(strat.shortTDBytes)
+				if strat.error != nil {
+					logger.Debugf("strat.file.Write error %v", strat.error)
+				} else {
+					strat.error = strat.file.Close()
+					if strat.error != nil {
+						logger.Debugf("strat.file.Close() error %v", strat.error)
+					}
+				}
+			}
+		}
 	}
 }

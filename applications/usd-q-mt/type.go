@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
+	"os"
 	"strings"
 	"time"
 )
@@ -172,8 +173,13 @@ type XYStrategy struct {
 	realisedOrderCount      *common.TimedSum
 	longTimedTDigest        *stream_stats.TimedTDigest
 	shortTimedTDigest       *stream_stats.TimedTDigest
+	quantileSaveTimer       *time.Timer
 	shortQuantileTop        float64
 	longQuantileBot         float64
+	quantileMiddle          float64
+	longTDBytes             []byte
+	shortTDBytes            []byte
+	file                    *os.File
 }
 
 type Offset struct {

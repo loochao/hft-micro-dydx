@@ -24,16 +24,19 @@ type Config struct {
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
 
-	EnterOffsetDelta    float64       `yaml:"enterOffsetDelta"`
-	ExitOffsetDelta     float64       `yaml:"exitOffsetDelta"`
-	LongEnterDelta      float64       `yaml:"longEnterDelta"`
-	ShortEnterDelta     float64       `yaml:"shortEnterDelta"`
-	LongExitDelta       float64       `yaml:"longExitDelta"`
-	ShortExitDelta      float64       `yaml:"shortExitDelta"`
-	QuantileTop         float64       `yaml:"quantileTop"`
-	QuantileBot         float64       `yaml:"quantileBot"`
-	QuantileLookback    time.Duration `yaml:"quantileLookback"`
-	QuantileSubInterval time.Duration `yaml:"quantileSubInterval"`
+	EnterOffsetDelta     float64       `yaml:"enterOffsetDelta"`
+	ExitOffsetDelta      float64       `yaml:"exitOffsetDelta"`
+	LongEnterDelta       float64       `yaml:"longEnterDelta"`
+	ShortEnterDelta      float64       `yaml:"shortEnterDelta"`
+	LongExitDelta        float64       `yaml:"longExitDelta"`
+	ShortExitDelta       float64       `yaml:"shortExitDelta"`
+	QuantileTop          float64       `yaml:"quantileTop"`
+	QuantileBot          float64       `yaml:"quantileBot"`
+	QuantileTopBotRatio  float64       `yaml:"quantileTopBotRatio"`
+	QuantileLookback     time.Duration `yaml:"quantileLookback"`
+	QuantileSubInterval  time.Duration `yaml:"quantileSubInterval"`
+	QuantilePath         string        `json:"quantilePath"`
+	QuantileSaveInterval time.Duration `yaml:"quantileSaveInterval"`
 
 	CancelOffsetFactor      float64       `yaml:"cancelOffsetFactor"`
 	MinimalEnterFundingRate float64       `yaml:"minimalEnterFundingRate"`
