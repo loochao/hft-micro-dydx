@@ -34,7 +34,7 @@ type Config struct {
 	QuantileBot          float64       `yaml:"quantileBot"`
 	QuantileLookback     time.Duration `yaml:"quantileLookback"`
 	QuantileSubInterval  time.Duration `yaml:"quantileSubInterval"`
-	QuantilePath         string        `json:"quantilePath"`
+	QuantilePath         string        `yaml:"quantilePath"`
 	QuantileSaveInterval time.Duration `yaml:"quantileSaveInterval"`
 
 	CancelOffsetFactor      float64       `yaml:"cancelOffsetFactor"`
