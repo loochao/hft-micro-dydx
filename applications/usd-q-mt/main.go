@@ -488,5 +488,5 @@ mainLoop:
 	}
 	logger.Debugf("stop waiting 5s")
 	<-time.After(time.Second * 5)
-	logger.Debugf("exit 0")
+	logger.Fatal("exit after 5")
 }
