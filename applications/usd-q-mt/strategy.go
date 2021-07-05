@@ -45,6 +45,7 @@ func startXYStrategy(
 	longTimedTDigest := stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
 	shortTimedTDigest := stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
 	if config.QuantilePath != "" {
+
 		longBytes, err := os.ReadFile(path.Join(config.QuantilePath, xSymbol+"-"+ySymbol+"-long-td.json"))
 		if err != nil {
 			logger.Debugf("os.ReadFile error %v", err)
