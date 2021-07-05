@@ -3,7 +3,6 @@ package stream_stats
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/tdigest"
 	"time"
 )
@@ -36,7 +35,6 @@ func (ttd *TimedTDigest) MarshalJSON() ([]byte, error) {
 		}
 	}
 	subTDs := make([][]byte, len(ttd.SubTDs))
-	logger.Debugf("subTDS %d", len(subTDs))
 	for i := range ttd.SubTDs {
 		subTDs[i], err = ttd.SubTDs[i].AsBytes()
 		if err != nil {

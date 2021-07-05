@@ -555,6 +555,7 @@ func (strat *XYStrategy) handleQuantileSave() {
 		}
 
 		strat.shortTDBytes, strat.error = json.Marshal(*strat.shortTimedTDigest)
+		logger.Debugf("%s %d", strat.xSymbol, len(strat.shortTimedTDigest.SubTDs))
 		if strat.error != nil {
 			logger.Debugf("json.Marshal(*strat.shortTimedTDigest) error %v", strat.error)
 		} else {
