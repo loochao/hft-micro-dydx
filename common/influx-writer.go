@@ -140,7 +140,7 @@ func (iw *InfluxWriter) watchPoints(ctx context.Context) {
 				saveTimer.Reset(time.Minute)
 				err := iw.save()
 				if err != nil {
-					logger.Debugf("iw.save() error %d %f", len(iw.points), err)
+					logger.Debugf("iw.save() error %d %v", len(iw.points), err)
 				}
 			}
 		}
@@ -176,4 +176,5 @@ func NewInfluxWriter(ctx context.Context, address, username, password, database 
 	go iw.watchPoints(ctx)
 	return iw, nil
 }
+
 
