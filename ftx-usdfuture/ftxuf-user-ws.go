@@ -503,9 +503,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context, id int) {
 }
 
 func (w *UserWS) Start(ctx context.Context) {
-	for i := 0; i < 4; i++ {
-		go w.dataHandleLoop(ctx, i)
-	}
+	go w.dataHandleLoop(ctx, 0)
 	go w.mainLoop(ctx, w.key, w.secret, w.proxy)
 	w.reconnectCh <- nil
 }
