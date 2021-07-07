@@ -406,9 +406,9 @@ func (w *UserWS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *UserWS) dataHandleLoop(ctx context.Context, id int) {
-	logger.Debugf("START dataHandleLoop %d", id)
-	defer logger.Debugf("EXIT dataHandleLoop %d", id)
+func (w *UserWS) dataHandleLoop(ctx context.Context) {
+	logger.Debugf("START dataHandleLoop")
+	defer logger.Debugf("EXIT dataHandleLoop")
 	logSilentTime := time.Now()
 	var err error
 	for {
@@ -503,7 +503,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context, id int) {
 }
 
 func (w *UserWS) Start(ctx context.Context) {
-	go w.dataHandleLoop(ctx, 0)
+	go w.dataHandleLoop(ctx)
 	go w.mainLoop(ctx, w.key, w.secret, w.proxy)
 	w.reconnectCh <- nil
 }
