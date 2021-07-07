@@ -464,8 +464,8 @@ func NewTickerWS(
 	ws := TickerWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}, 4),
-		writeCh:     make(chan interface{}, len(channels)),
-		symbolCh:    make(chan string, len(channels)),
+		writeCh:     make(chan interface{}, len(channels)*100),
+		symbolCh:    make(chan string, len(channels)*100),
 		pingCh:      make(chan []byte, 4),
 		stopped:     0,
 	}
