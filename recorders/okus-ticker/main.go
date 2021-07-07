@@ -17,7 +17,7 @@ func main() {
 
 	proxyAddress := flag.String("proxy", "", "symbols group batch size")
 	symbolsStr := flag.String("symbols", "1INCH-USDT,AAVE-USDT,ADA-USDT,ALGO-USDT,ALPHA-USDT,ATOM-USDT,AVAX-USDT,BAL-USDT,BAND-USDT,BAT-USDT,BCH-USDT,BTC-USDT,BTT-USDT,CELR-USDT,CHZ-USDT,COMP-USDT,CRV-USDT,CVC-USDT,DASH-USDT,DGB-USDT,DOGE-USDT,DOT-USDT,EGLD-USDT,ENJ-USDT,EOS-USDT,ETC-USDT,ETH-USDT,FIL-USDT,FLM-USDT,FTM-USDT,GRT-USDT,HBAR-USDT,ICP-USDT,ICX-USDT,IOST-USDT,IOTA-USDT,KNC-USDT,KSM-USDT,LINK-USDT,LRC-USDT,LTC-USDT,LUNA-USDT,MANA-USDT,MATIC-USDT,MKR-USDT,NEAR-USDT,NEO-USDT,OMG-USDT,ONT-USDT,QTUM-USDT,REN-USDT,RSR-USDT,RVN-USDT,SAND-USDT,SC-USDT,SKL-USDT,SNX-USDT,SOL-USDT,SRM-USDT,STORJ-USDT,SUSHI-USDT,THETA-USDT,TRB-USDT,TRX-USDT,UNI-USDT,WAVES-USDT,XEM-USDT,XLM-USDT,XMR-USDT,XRP-USDT,XTZ-USDT,YFI-USDT,YFII-USDT,ZEC-USDT,ZEN-USDT,ZIL-USDT,ZRX-USDT", "symbols, separate by comma")
-	savePath := flag.String("path", "/root/okuf-ticker", "data save folder")
+	savePath := flag.String("path", "/root/okus-ticker", "data save folder")
 
 	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 	//symbolsStr := flag.String("symbols", "BTC-USDT,AAVE-USDT,WAVES-USDT", "symbols, separate by comma")
