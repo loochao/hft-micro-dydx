@@ -107,14 +107,14 @@ func (bn *OkexUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.Sy
 				logger.Debugf("statusCh <- common.SystemStatusRestart failed ch len %d", len(statusCh))
 			}
 			break
-		case account := <-userWS.AccountUpdateEventCh:
-			for _, wsBalance := range account.Balances {
-				if wsBalance.Asset == "USDT" {
+		case balances := <-userWS.BalancesCh:
+			for _, wsBalance := range balances {
+				if wsBalance.Currency == "USDT" {
 					if wsBalance.EventTime.Sub(usdtAccount.EventTime) > 0 {
-						usdtAccount.Free = wsBalance.FreeAmount
-						usdtAccount.Locked = wsBalance.LockedAmount
+						usdtAccount.Balance = wsBalance.Balance
+						usdtAccount.Hold = wsBalance.Hold
+						usdtAccount.Available = wsBalance.Available
 						usdtAccount.EventTime = wsBalance.EventTime
-						usdtAccount.ParseTime = wsBalance.ParseTime
 						outUsdtBalance := usdtAccount
 						select {
 						case usdtAccountCh <- &outUsdtBalance:
@@ -126,12 +126,10 @@ func (bn *OkexUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.Sy
 						}
 					}
 					continue
-				} else if wsBalance.Asset == "BNB" {
-					continue
 				}
-				symbol := wsBalance.Asset + "USDT"
+				symbol := wsBalance.Currency + "-USDT"
 				if ch, ok := positionChMap[symbol]; ok {
-					lastBalance, ok := balancesMap[wsBalance.Asset]
+					lastBalance, ok := balancesMap[symbol]
 					if ok && wsBalance.EventTime.Sub(lastBalance.EventTime) < 0 {
 						continue
 					}
@@ -192,8 +190,8 @@ func (bn *OkexUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.Sy
 					}
 					continue
 				}
-				symbol := balance.Currency + "USDT"
-				lastBalance, ok := balancesMap[balance.Currency]
+				symbol := balance.Currency + "-USDT"
+				lastBalance, ok := balancesMap[symbol]
 				if ok && balance.EventTime.Sub(lastBalance.EventTime) < 0 {
 					continue
 				}

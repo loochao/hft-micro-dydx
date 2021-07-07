@@ -47,8 +47,12 @@ type Balance struct {
 	EventTime time.Time `json:"-"`
 }
 
+func (b *Balance) GetExchange() common.ExchangeID {
+	return common.OkexUsdtSpot
+}
+
 func (b *Balance) GetSymbol() string {
-	return b.Currency+"-USDT"
+	return b.Currency + "-USDT"
 }
 
 func (b *Balance) GetSize() float64 {
@@ -60,11 +64,11 @@ func (b *Balance) GetPrice() float64 {
 }
 
 func (b *Balance) GetEventTime() time.Time {
-	panic("implement me")
+	return b.EventTime
 }
 
 func (b *Balance) GetParseTime() time.Time {
-	panic("implement me")
+	return b.EventTime
 }
 
 func (b *Balance) GetCurrency() string {
