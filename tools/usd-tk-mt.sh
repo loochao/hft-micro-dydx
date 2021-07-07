@@ -21,3 +21,7 @@ chmod 755 "./dist/usd-tk-mt.amd64.$dt"
 echo "vc001"
 rsync -avx --progress "./dist/usd-tk-mt.amd64.$dt" vc001:/usr/local/bin/
 
+echo "hk05"
+rsync -avx --progress "./dist/usd-tk-mt.amd64.$dt" hk05:/usr/local/bin/
+
+
