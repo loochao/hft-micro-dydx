@@ -28,7 +28,7 @@ func (tm *TimedDelta) Insert(timestamp time.Time, value float64) float64 {
 		tm.times = tm.times[cutIndex:]
 	}
 	if len(tm.values) > 1 {
-		tm.delta = tm.values[len(tm.values)] - tm.values[0]
+		tm.delta = tm.values[len(tm.values)-1] - tm.values[0]
 	}
 	return tm.delta
 }
@@ -63,3 +63,4 @@ func NewTimedDelta(lookback time.Duration) *TimedDelta {
 		delta:    0.0,
 	}
 }
+
