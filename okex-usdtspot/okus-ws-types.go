@@ -181,6 +181,10 @@ type WSOrder struct {
 	EventMessage    string    `json:"event_message,omitempty"`
 }
 
+func (order *WSOrder) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (order *WSOrder) GetSymbol() string {
 	return order.Symbol
 }
@@ -311,4 +315,85 @@ func (order *WSOrder) UnmarshalJSON(data []byte) error {
 		}
 	}
 	return nil
+}
+
+// {
+//            "instrument_id":"ETH-USDT",
+//            "last":"146.24",
+//            "last_qty":"0.082483",
+//            "best_bid":"146.24",
+//            "best_bid_size":"0.006822",
+//            "best_ask":"146.25",
+//            "best_ask_size":"80.541709",
+//            "open_24h":"147.17",
+//            "high_24h":"147.48",
+//            "low_24h":"143.88",
+//            "open_utc0": "34067.1",
+//            "open_utc8": "33830.9",
+//            "base_volume_24h":"117387.58",
+//            "quote_volume_24h":"17159427.21",
+//            "timestamp":"2019-12-11T02:31:40.436Z"
+// }
+
+type Ticker struct {
+	InstrumentID string `json:"instrument_id"`
+	//Last          float64   `json:"last,string"`
+	//LastQty       float64   `json:"last_qty,string"`
+	BestBid     float64 `json:"best_bid,string"`
+	BestBidSize float64 `json:"best_bid_size,string"`
+	BestAsk     float64 `json:"best_ask,string"`
+	BestAskSize float64 `json:"best_ask_size,string"`
+	//Open24h       float64   `json:"open_24h,string"`
+	//High24h       float64   `json:"high_24h,string"`
+	//OpenUtc0      float64   `json:"open_utc0,string"`
+	//OpenUtc8      float64   `json:"open_utc8,string"`
+	//BaseVolume24h float64   `json:"base_volume_24h,string"`
+	Timestamp time.Time `json:"-"`
+}
+
+func (ticker *Ticker) GetSymbol() string {
+	return ticker.InstrumentID
+}
+
+func (ticker *Ticker) GetTime() time.Time {
+	return ticker.Timestamp
+}
+
+func (ticker *Ticker) GetBidPrice() float64 {
+	return ticker.BestBid
+}
+
+func (ticker *Ticker) GetAskPrice() float64 {
+	return ticker.BestAsk
+}
+
+func (ticker *Ticker) GetBidSize() float64 {
+	return ticker.BestBidSize
+}
+
+func (ticker *Ticker) GetAskSize() float64 {
+	return ticker.BestAskSize
+}
+
+func (ticker *Ticker) GetExchange() common.ExchangeID {
+	panic("implement me")
+}
+
+func (ticker *Ticker) UnmarshalJSON(data []byte) (err error) {
+	type Alias Ticker
+	aux := &struct {
+		Timestamp string `json:"timestamp"`
+		*Alias
+	}{
+		Alias: (*Alias)(ticker),
+	}
+	if err = json.Unmarshal(data, &aux); err == nil {
+		ticker.Timestamp, err = time.Parse(okspotTimeLayout, aux.Timestamp)
+	}
+	return
+}
+
+type TickerData struct {
+	Table string   `json:"table"`
+	Data  []Ticker `json:"data"`
 }

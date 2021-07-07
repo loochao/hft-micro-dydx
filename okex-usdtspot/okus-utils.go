@@ -122,6 +122,116 @@ func ParseDepth5(msg []byte, depth5 *Depth5) (err error) {
 	return nil
 }
 
+func ParseTicker(msg []byte, ticker *Ticker) (err error) {
+	//logger.Debugf("%s", msg)
+	counter := 0
+	//{"table":"spot/ticker","data":[{"last":"16.486","open_24h":"16.206","best_bid":"16.475","high_24h":"16.619","low_24h":"15.945","open_utc0":"16.173","open_utc8":"16.288","base_volume_24h":"453392.90975651","quote_volume_24h":"7406915.38374752","best_ask":"16.496","instrument_id":"WAVES-USDT","timestamp":"2021-07-07T14:20:36.555Z","best_bid_size":"203.32785582","best_ask_size":"3.08008475","last_qty":"2.31531004"}]}
+	bytesLen := len(msg)
+	if bytesLen < 128 {
+		return fmt.Errorf("bad msg %s", msg)
+	}
+	currentKey := common.JsonKeyUnknown
+	offset := 61
+	collectStart := offset
+	for offset < bytesLen-10 {
+		switch currentKey {
+		case common.JsonKeySymbol:
+			if msg[offset] == '"' {
+				ticker.InstrumentID = common.UnsafeBytesToString(msg[collectStart:offset])
+				currentKey = common.JsonKeyUnknown
+				counter ++
+			}
+			break
+		case common.JsonKeyBidPrice:
+			if msg[offset] == '"' {
+				ticker.BestBid, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyUnknown
+				counter ++
+			}
+			break
+		case common.JsonKeyBidSize:
+			if msg[offset] == '"' {
+				ticker.BestBidSize, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyUnknown
+				counter ++
+			}
+			break
+		case common.JsonKeyAskPrice:
+			if msg[offset] == '"' {
+				ticker.BestAsk, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyUnknown
+				counter ++
+			}
+			break
+		case common.JsonKeyAskSize:
+			if msg[offset] == '"' {
+				ticker.BestAskSize, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyUnknown
+				counter ++
+			}
+			break
+		case common.JsonKeyEventTime:
+			if msg[offset] == '"' {
+				ticker.Timestamp, err = time.Parse(okspotTimeLayout, common.UnsafeBytesToString(msg[collectStart:offset]))
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyUnknown
+				counter ++
+			}
+			break
+		case common.JsonKeyUnknown:
+			if msg[offset] == '_' {
+				if msg[offset+1] == 'b' && msg[offset+4] == '"' {
+					currentKey = common.JsonKeyBidPrice
+					offset += 7
+					collectStart = offset
+				} else if msg[offset+1] == 'a' && msg[offset+4] == '"' {
+					currentKey = common.JsonKeyAskPrice
+					offset += 7
+					collectStart = offset
+				} else if msg[offset+1] == 'b' && msg[offset+4] == '_' {
+					//"best_bid_size":"203.32785582"
+					currentKey = common.JsonKeyBidSize
+					offset += 12
+					collectStart = offset
+				} else if msg[offset+1] == 'a' && msg[offset+4] == '_' {
+					currentKey = common.JsonKeyAskSize
+					offset += 12
+					collectStart = offset
+				} else if msg[offset+1] == 'i' {
+					//"instrument_id":"WAVES-USDT"
+					currentKey = common.JsonKeySymbol
+					offset += 6
+					collectStart = offset
+				}
+			} else if msg[offset] == 'p' && msg[offset+1] == '"' {
+				//"timestamp":"2021-07-07T14:20:36.555Z"
+				currentKey = common.JsonKeyEventTime
+				offset += 4
+				collectStart = offset
+			}
+		}
+		offset += 1
+	}
+	if counter != 6 {
+		return fmt.Errorf("missing fields, msg %s", msg)
+	}
+	return nil
+}
+
 func SystemStatusHttpLoop(
 	ctx context.Context, api *API, interval time.Duration,
 	output chan bool,

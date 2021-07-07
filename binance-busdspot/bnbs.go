@@ -177,7 +177,7 @@ func (bn *BinanceBusdSpot) StreamBasic(ctx context.Context, statusCh chan common
 				}
 				symbol := wsBalance.Asset + "BUSD"
 				if ch, ok := positionChMap[symbol]; ok {
-					lastBalance, ok := balancesMap[wsBalance.Asset]
+					lastBalance, ok := balancesMap[symbol]
 					if ok && wsBalance.EventTime.Sub(lastBalance.EventTime) < 0 {
 						continue
 					}
@@ -243,7 +243,7 @@ func (bn *BinanceBusdSpot) StreamBasic(ctx context.Context, statusCh chan common
 					continue
 				}
 				symbol := balance.Asset + "BUSD"
-				lastBalance, ok := balancesMap[balance.Asset]
+				lastBalance, ok := balancesMap[symbol]
 				if ok && balance.EventTime.Sub(lastBalance.EventTime) < 0 {
 					continue
 				}

@@ -25,7 +25,7 @@ func (bn *BinanceUsdtSpot) IsSpot() bool {
 	return true
 }
 
-func (bn BinanceUsdtSpot) GetExchange() common.ExchangeID {
+func (bn *BinanceUsdtSpot) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
@@ -175,7 +175,7 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 				}
 				symbol := wsBalance.Asset + "USDT"
 				if ch, ok := positionChMap[symbol]; ok {
-					lastBalance, ok := balancesMap[wsBalance.Asset]
+					lastBalance, ok := balancesMap[symbol]
 					if ok && wsBalance.EventTime.Sub(lastBalance.EventTime) < 0 {
 						continue
 					}
@@ -241,7 +241,7 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 					continue
 				}
 				symbol := balance.Asset + "USDT"
-				lastBalance, ok := balancesMap[balance.Asset]
+				lastBalance, ok := balancesMap[symbol]
 				if ok && balance.EventTime.Sub(lastBalance.EventTime) < 0 {
 					continue
 				}

@@ -48,7 +48,7 @@ type Balance struct {
 }
 
 func (b *Balance) GetExchange() common.ExchangeID {
-	return common.OkexUsdtSpot
+	return ExchangeID
 }
 
 func (b *Balance) GetSymbol() string {
@@ -168,6 +168,10 @@ type Depth5 struct {
 	Asks      [5][2]float64 `json:"_"`
 	ParseTime time.Time     `json:"-"`
 	EventTime time.Time     `json:"-"`
+}
+
+func (depth *Depth5) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (depth *Depth5) GetBids() common.Bids { return depth.Bids[:] }
@@ -310,3 +314,23 @@ func (trade *Trade) GetSize() float64   { return trade.Size }
 func (trade *Trade) GetPrice() float64  { return trade.Price }
 func (trade *Trade) GetTime() time.Time { return trade.EventTime }
 func (trade *Trade) IsUpTick() bool     { return trade.Side == TradeSideBuy }
+
+type FundingRate struct {
+	Symbol string
+}
+
+func (f FundingRate) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (f FundingRate) GetSymbol() string {
+	return f.Symbol
+}
+
+func (f FundingRate) GetFundingRate() float64 {
+	return 0
+}
+
+func (f FundingRate) GetNextFundingTime() time.Time {
+	return time.Time{}
+}

@@ -28,4 +28,33 @@ func TestDepth5(t *testing.T) {
 	}
 }
 
+func TestParseTicker(t *testing.T) {
+	msg := []byte(`{"table":"spot/ticker","data":[{"last":"16.486","open_24h":"16.206","best_bid":"16.475","high_24h":"16.619","low_24h":"15.945","open_utc0":"16.173","open_utc8":"16.288","base_volume_24h":"453392.90975651","quote_volume_24h":"7406915.38374752","best_ask":"16.496","instrument_id":"WAVES-USDT","timestamp":"2021-07-07T14:20:36.555Z","best_bid_size":"203.32785582","best_ask_size":"3.08008475","last_qty":"2.31531004"}]}`)
+	ticker := Ticker{}
+	tickerData := TickerData{}
+	err := json.Unmarshal(msg, &tickerData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ParseTicker(msg, &ticker)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 1, len(tickerData.Data))
+	assert.Equal(t, tickerData.Data[0].InstrumentID, ticker.InstrumentID)
+	assert.Equal(t, tickerData.Data[0].BestBid, ticker.BestBid)
+	assert.Equal(t, tickerData.Data[0].BestBidSize, ticker.BestBidSize)
+	assert.Equal(t, tickerData.Data[0].BestAsk, ticker.BestAsk)
+	assert.Equal(t, tickerData.Data[0].BestAskSize, ticker.BestAskSize)
+	assert.Equal(t, tickerData.Data[0].Timestamp.UnixNano(), ticker.Timestamp.UnixNano())
+}
 
+
+func BenchmarkParseTicker(b *testing.B) {
+	msg := []byte(`{"table":"spot/ticker","data":[{"last":"16.486","open_24h":"16.206","best_bid":"16.475","high_24h":"16.619","low_24h":"15.945","open_utc0":"16.173","open_utc8":"16.288","base_volume_24h":"453392.90975651","quote_volume_24h":"7406915.38374752","best_ask":"16.496","instrument_id":"WAVES-USDT","timestamp":"2021-07-07T14:20:36.555Z","best_bid_size":"203.32785582","best_ask_size":"3.08008475","last_qty":"2.31531004"}]}`)
+	ticker := Ticker{}
+	b.ReportAllocs()
+	for i := 0; i < b.N; i ++ {
+		_ = ParseTicker(msg, &ticker)
+	}
+}

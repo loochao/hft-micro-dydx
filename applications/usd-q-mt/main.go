@@ -11,6 +11,7 @@ import (
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
 	kcuf "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
+	okut "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -111,9 +112,9 @@ func main() {
 	case "ftxUsdtFuture":
 		xExchange = &ftxuf.FtxUsdFuture{}
 		break
-	//case "okexUsdtSpot":
-	//	xExchange = &okex_usdtspot.OkexUsdtSpot{}
-	//	break
+	case "okexUsdtSpot":
+		xExchange = &okut.OkexUsdtSpot{}
+		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -148,6 +149,9 @@ func main() {
 		break
 	case "ftxUsdtFuture":
 		yExchange = &ftxuf.FtxUsdFuture{}
+		break
+	case "okexUsdtSpot":
+		yExchange = &okut.OkexUsdtSpot{}
 		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)

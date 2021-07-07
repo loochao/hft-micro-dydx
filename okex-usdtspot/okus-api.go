@@ -62,6 +62,7 @@ const (
 	OrderStateFullyFilled      = "2"
 	OrderStateSubmitting       = "3"
 	OrderStateCancelling       = "4"
+	ExchangeID                 = common.OkexUsdtSpot
 )
 
 var ErrorCodes = map[string]error{
