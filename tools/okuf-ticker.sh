@@ -13,5 +13,5 @@ git push origin master
 chmod 755 "./dist/okuf-ticker.$dt"
 
 echo "hk04"
-rsync -avx --progress "./dist/okuf-ticker.$dt" hk02:/usr/local/bin/
+rsync -avx --progress "./dist/okuf-ticker.$dt" hk04:/usr/local/bin/
 
