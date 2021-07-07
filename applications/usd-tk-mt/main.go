@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
@@ -14,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/pprof"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -130,7 +130,11 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	fmt.Printf("CONFIG:\n\n%s\n\n", configStr)
+	logger.Debug("\n\nCONFIG:")
+	for _, l := range strings.Split(string(configStr), "\n") {
+		logger.Debugf("%s", l)
+	}
+	logger.Debug("\n\n")
 
 	xyGlobalCtx, xyGlobalCancel = context.WithCancel(context.Background())
 	defer xyGlobalCancel()
