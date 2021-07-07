@@ -20,7 +20,9 @@ import (
 func TestMatchSymbols(t *testing.T) {
 	symbols := make([]string, 0)
 	for uSymbol := range okex_usdtspot.TickSizes {
-		symbols = append(symbols, uSymbol)
+		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(uSymbol, "-USDT", "USDT", -1)]; ok {
+			symbols = append(symbols, uSymbol)
+		}
 	}
 	sort.Strings(symbols)
 	fmt.Printf("%s\n", strings.Join(symbols, ","))
