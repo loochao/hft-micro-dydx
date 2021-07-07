@@ -191,7 +191,6 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 		} else if msg[2] == 't' && len(msg) > 128 {
 			//{"table":"spot/depth5","data":[{"asks":[["31.605","4.32464","1"],["31.607","85","1"],["31.61","2","1"],["31.612","0.1","1"],["31.614","1.405511","1"]],"bids":[["31.583","302.09312","3"],["31.582","0.9","1"],["31.58","111.30127","1"],["31.579","76","1"],["31.576","31.83446","1"]],"instrument_id":"LINK-USDT","timestamp":"2021-04-25T08:24:33.352Z"}]}
 			symbol = w.findSymbol(msg)
-			logger.Debugf("%s", symbol)
 			if symbol == "" {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
@@ -500,10 +499,10 @@ func NewTickerWS(
 ) *TickerWS {
 	ws := TickerWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 4),
-		writeCh:     make(chan interface{}, len(channels)),
-		symbolCh:    make(chan string, len(channels)),
-		pingCh:      make(chan []byte, 4),
+		reconnectCh: make(chan interface{}, 16),
+		writeCh:     make(chan interface{}, len(channels)*4),
+		symbolCh:    make(chan string, len(channels)*16),
+		pingCh:      make(chan []byte, 16),
 		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
