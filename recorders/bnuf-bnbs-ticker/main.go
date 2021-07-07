@@ -120,11 +120,11 @@ func main() {
 
 	batchSize := flag.Int("batch", 40, "symbols group batch size")
 
-	//proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	//savePath := flag.String("path", "/root/bnuf-bnbs-ticker", "data save folder")
+	proxyAddress := flag.String("proxy", "", "symbols group batch size")
+	savePath := flag.String("path", "/root/bnuf-bnbs-ticker", "data save folder")
 
-	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
+	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
 	flag.Parse()
 	symbols := make([]string, 0)
 	for symbol := range symbolsMap {
