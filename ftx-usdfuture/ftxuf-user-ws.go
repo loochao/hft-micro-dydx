@@ -296,7 +296,7 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 		case <-loginSuccessTimer.C:
 			login = true
 			dataCheckTimer.Reset(time.Nanosecond)
-			loginSuccessTimer.Reset(time.Hour*9999)
+			loginSuccessTimer.Reset(time.Hour * 9999)
 		case <-loginTimer.C:
 			if !login {
 				param := LoginParam{}
@@ -307,7 +307,7 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 				param.Op = "login"
 				select {
 				case w.writeCh <- param:
-					loginSuccessTimer.Reset(time.Second*3)
+					loginSuccessTimer.Reset(time.Second * 3)
 					break
 				default:
 					logger.Debugf("w.writeCh <- param failed, ch len %d", len(w.writeCh))
@@ -382,8 +382,7 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 }
 
 func (w *UserWS) Stop() {
-	if atomic.LoadInt32(&w.stopped) == 0 {
-		atomic.StoreInt32(&w.stopped, 1)
+	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
