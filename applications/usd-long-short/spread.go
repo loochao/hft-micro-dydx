@@ -55,23 +55,23 @@ func (strat *XYStrategy) updateTargetPositionSize() {
 		strat.yPosition == nil ||
 		strat.xDepth == nil ||
 		strat.yDepth == nil {
-		if time.Now().Sub(strat.logSilentTime) > 0 {
-			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf(
-				"%v %v %v %v %v %v %v %v %v %v %v",
-				time.Now().Sub(strat.xOrderSilentTime) < 0,
-				time.Now().Sub(strat.yOrderSilentTime) < 0,
-				time.Now().Sub(strat.xPositionUpdateTime) > strat.config.BalancePositionMaxAge,
-				time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge,
-				time.Now().Sub(strat.updateTargetSilentTime) < 0,
-				strat.xAccount == nil,
-				strat.yAccount == nil,
-				strat.xPosition == nil,
-				strat.yPosition == nil,
-				strat.xDepth == nil,
-				strat.yDepth == nil,
-			)
-		}
+		//if time.Now().Sub(strat.logSilentTime) > 0 {
+		//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+		//	logger.Debugf(
+		//		"%v %v %v %v %v %v %v %v %v %v %v",
+		//		time.Now().Sub(strat.xOrderSilentTime) < 0,
+		//		time.Now().Sub(strat.yOrderSilentTime) < 0,
+		//		time.Now().Sub(strat.xPositionUpdateTime) > strat.config.BalancePositionMaxAge,
+		//		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge,
+		//		time.Now().Sub(strat.updateTargetSilentTime) < 0,
+		//		strat.xAccount == nil,
+		//		strat.yAccount == nil,
+		//		strat.xPosition == nil,
+		//		strat.yPosition == nil,
+		//		strat.xDepth == nil,
+		//		strat.yDepth == nil,
+		//	)
+		//}
 		return
 	}
 	strat.midPrice = (strat.xDepth.GetBids()[0][0] + strat.xDepth.GetAsks()[0][0] + strat.yDepth.GetBids()[0][0] + strat.yDepth.GetAsks()[0][0]) * 0.25
@@ -89,5 +89,5 @@ func (strat *XYStrategy) updateTargetPositionSize() {
 	*strat.xyTargetValue = math.Min(strat.config.EnterTarget, strat.xFreeValue+strat.xAbsValue)
 	*strat.xyTargetValue = math.Min(strat.config.EnterTarget, strat.yFreeValue+strat.yAbsValue)
 	strat.updateTargetSilentTime = time.Now().Add(strat.config.UpdateTargetSilent)
-	logger.Debugf("xyTargetValue %f %f", *strat.xyTargetValue, strat.midPrice)
+	//logger.Debugf("xyTargetValue %f %f", *strat.xyTargetValue, strat.midPrice)
 }
