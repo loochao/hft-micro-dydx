@@ -37,8 +37,6 @@ func startXYStrategy(
 		yExchange:           yExchange,
 		xExchangeID:         xExchange.GetExchange(),
 		yExchangeID:         yExchange.GetExchange(),
-		isXSpot:             xExchange.IsSpot(),
-		isYSpot:             yExchange.IsSpot(),
 		xLeverage:           config.XExchange.Leverage,
 		yLeverage:           config.YExchange.Leverage,
 		xSymbol:             xSymbol,

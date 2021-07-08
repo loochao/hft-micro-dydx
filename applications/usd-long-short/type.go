@@ -74,19 +74,14 @@ type XYStrategy struct {
 
 	error error
 
-	isXSpot bool
-	isYSpot bool
-
 	xSizeDiff float64
 	ySizeDiff float64
 
-	xSize        float64
-	ySize        float64
-	xFreeSize    float64
-	yFreeSize    float64
-	xAbsSize     float64
-	yAbsSize     float64
-	xyTargetSize *float64
+	xSize         float64
+	ySize         float64
+	xFreeValue    float64
+	yFreeValue    float64
+	xyTargetValue *float64
 
 	xValue    float64
 	yValue    float64

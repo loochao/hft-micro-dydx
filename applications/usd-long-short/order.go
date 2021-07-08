@@ -18,37 +18,26 @@ func (strat *XYStrategy) hedgeXPosition() {
 	}
 	if strat.yPosition == nil ||
 		strat.xPosition == nil ||
-		strat.xyTargetSize == nil ||
+		strat.xyTargetValue == nil ||
 		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
 		time.Now().Sub(strat.xPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
 		time.Now().Sub(strat.xOrderSilentTime) < 0 {
 		return
 	}
-	strat.xSizeDiff = *strat.xyTargetSize/strat.xMultiplier - strat.xPosition.GetSize()
+	strat.xSizeDiff = (*strat.xyTargetValue - strat.xValue) / strat.midPrice / strat.xMultiplier
 	if math.Abs(strat.xSizeDiff) < strat.xStepSize {
 		return
 	}
 	strat.xSizeDiff = math.Round(strat.xSizeDiff/strat.xStepSize) * strat.xStepSize
 
-	if strat.isXSpot {
-		if math.Abs(strat.xSizeDiff) < strat.xStepSize {
-			return
-		} else if strat.xSizeDiff < 0 && -strat.xSizeDiff*strat.xMultiplier*strat.xDepth.GetAsks()[0][0]< strat.xMinNotional {
-			return
-		} else if strat.xSizeDiff > 0 && strat.xSizeDiff*strat.xMultiplier*strat.xDepth.GetAsks()[0][0] < strat.xMinNotional {
-			return
-		}
-	} else {
-		//期货以close仓位，没有minNotional限制
-		if math.Abs(strat.xSizeDiff) < strat.xStepSize {
-			return
-		} else if strat.xSizeDiff < 0 && strat.xPosition.GetSize() <= 0 &&
-			-strat.xSizeDiff*strat.xMultiplier*strat.xDepth.GetAsks()[0][0] < strat.xMinNotional {
-			return
-		} else if strat.xSizeDiff > 0 && strat.xPosition.GetSize() >= 0 &&
-			strat.xSizeDiff*strat.xMultiplier*strat.xDepth.GetAsks()[0][0] < strat.xMinNotional {
-			return
-		}
+	if math.Abs(strat.xSizeDiff) < strat.xStepSize {
+		return
+	} else if strat.xSizeDiff < 0 && strat.xPosition.GetSize() <= 0 &&
+		-strat.xSizeDiff*strat.xMultiplier*strat.xDepth.GetAsks()[0][0] < strat.xMinNotional {
+		return
+	} else if strat.xSizeDiff > 0 && strat.xPosition.GetSize() >= 0 &&
+		strat.xSizeDiff*strat.xMultiplier*strat.xDepth.GetAsks()[0][0] < strat.xMinNotional {
+		return
 	}
 
 	strat.reduceOnly = false
@@ -94,35 +83,25 @@ func (strat *XYStrategy) hedgeYPosition() {
 	}
 	if strat.yPosition == nil ||
 		strat.xPosition == nil ||
-		strat.xyTargetSize == nil ||
+		strat.xyTargetValue == nil ||
 		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
 		time.Now().Sub(strat.xPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
 		time.Now().Sub(strat.yOrderSilentTime) < 0 {
 		return
 	}
-	strat.ySizeDiff = -*strat.xyTargetSize/strat.yMultiplier - strat.yPosition.GetSize()
+	strat.ySizeDiff = (-*strat.xyTargetValue - strat.yValue) / strat.midPrice / strat.yMultiplier
 	if math.Abs(strat.ySizeDiff) < strat.yStepSize {
 		return
 	}
 	strat.ySizeDiff = math.Round(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
 
-	if strat.isYSpot {
-		if math.Abs(strat.ySizeDiff) < strat.yStepSize {
-			return
-		} else if strat.ySizeDiff < 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yDepth.GetBids()[0][0] < strat.yMinNotional {
-			return
-		} else if strat.ySizeDiff > 0 && strat.ySizeDiff*strat.yMultiplier*strat.yDepth.GetBids()[0][0] < strat.yMinNotional {
-			return
-		}
-	} else {
-		//期货以close仓位，没有minNotional限制
-		if math.Abs(strat.ySizeDiff) < strat.yStepSize {
-			return
-		} else if strat.ySizeDiff < 0 && strat.yPosition.GetSize() <= 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yDepth.GetBids()[0][0] < strat.yMinNotional {
-			return
-		} else if strat.ySizeDiff > 0 && strat.yPosition.GetSize() >= 0 && strat.ySizeDiff*strat.yMultiplier*strat.yDepth.GetBids()[0][0] < strat.yMinNotional {
-			return
-		}
+	//期货以close仓位，没有minNotional限制
+	if math.Abs(strat.ySizeDiff) < strat.yStepSize {
+		return
+	} else if strat.ySizeDiff < 0 && strat.yPosition.GetSize() <= 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yDepth.GetBids()[0][0] < strat.yMinNotional {
+		return
+	} else if strat.ySizeDiff > 0 && strat.yPosition.GetSize() >= 0 && strat.ySizeDiff*strat.yMultiplier*strat.yDepth.GetBids()[0][0] < strat.yMinNotional {
+		return
 	}
 
 	strat.reduceOnly = false
@@ -156,4 +135,3 @@ func (strat *XYStrategy) hedgeYPosition() {
 	}
 	return
 }
-

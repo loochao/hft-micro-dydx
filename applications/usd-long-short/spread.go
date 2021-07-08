@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-
-
 func (strat *XYStrategy) handleXDepth() {
 	if strat.xDepth == strat.xNextDepth {
 		return
@@ -79,20 +77,17 @@ func (strat *XYStrategy) updateTargetPositionSize() {
 	strat.midPrice = (strat.xDepth.GetBids()[0][0] + strat.xDepth.GetAsks()[0][0] + strat.yDepth.GetBids()[0][0] + strat.yDepth.GetAsks()[0][0]) * 0.25
 	strat.xSize = strat.xPosition.GetSize() * strat.xMultiplier
 	strat.ySize = strat.yPosition.GetSize() * strat.yMultiplier
-	strat.xFreeSize = strat.xAccount.GetFree() * strat.xLeverage * 0.8 / strat.midPrice
-	strat.yFreeSize = strat.yAccount.GetFree() * strat.yLeverage * 0.8 / strat.midPrice
-	strat.xAbsSize = math.Abs(strat.xSize) + strat.xFreeSize
-	strat.yAbsSize = math.Abs(strat.ySize) + strat.yFreeSize
-	strat.xValue = strat.xSize * strat.midPrice
-	strat.yValue = strat.ySize * strat.midPrice
+	strat.xFreeValue = strat.xAccount.GetFree() * strat.xLeverage * 0.8
+	strat.yFreeValue = strat.yAccount.GetFree() * strat.yLeverage * 0.8
+	strat.xValue = strat.xSize * strat.xPosition.GetPrice()
+	strat.yValue = strat.ySize * strat.yPosition.GetPrice()
 	strat.xAbsValue = math.Abs(strat.xValue)
 	strat.yAbsValue = math.Abs(strat.yValue)
-	if strat.xyTargetSize == nil {
-		strat.xyTargetSize = new(float64)
+	if strat.xyTargetValue == nil {
+		strat.xyTargetValue = new(float64)
 	}
-	*strat.xyTargetSize = strat.config.EnterTarget / strat.midPrice
-	*strat.xyTargetSize = math.Min(*strat.xyTargetSize, strat.xAbsSize)
-	*strat.xyTargetSize = math.Min(*strat.xyTargetSize, strat.yAbsSize)
+	*strat.xyTargetValue = math.Min(strat.config.EnterTarget, strat.xFreeValue+strat.xAbsValue)
+	*strat.xyTargetValue = math.Min(strat.config.EnterTarget, strat.yFreeValue+strat.yAbsValue)
 	strat.updateTargetSilentTime = time.Now().Add(strat.config.UpdateTargetSilent)
-	logger.Debugf("xyTargetSize %v %f", *strat.xyTargetSize, strat.midPrice)
+	logger.Debugf("xyTargetValue %f %f", *strat.xyTargetValue, strat.midPrice)
 }
