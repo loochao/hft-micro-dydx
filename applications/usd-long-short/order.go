@@ -39,7 +39,7 @@ func (strat *XYStrategy) hedgeXPosition() {
 		strat.xSizeDiff*strat.xMultiplier*strat.xDepth.GetAsks()[0][0] < strat.xMinNotional {
 		return
 	}
-
+	logger.Debugf("strat.xSizeDiff %f", strat.xSizeDiff)
 	strat.reduceOnly = false
 	if strat.xSizeDiff*strat.xPosition.GetSize() < 0 && math.Abs(strat.xSizeDiff) <= math.Abs(strat.xPosition.GetSize()) {
 		strat.reduceOnly = true
@@ -104,6 +104,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		return
 	}
 
+	logger.Debugf("strat.ySizeDiff %f", strat.ySizeDiff)
 	strat.reduceOnly = false
 	if strat.ySizeDiff*strat.yPosition.GetSize() < 0 && math.Abs(strat.ySizeDiff) <= math.Abs(strat.yPosition.GetSize()) {
 		strat.reduceOnly = true
