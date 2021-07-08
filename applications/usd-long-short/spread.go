@@ -87,7 +87,7 @@ func (strat *XYStrategy) updateTargetPositionSize() {
 		strat.xyTargetValue = new(float64)
 	}
 	*strat.xyTargetValue = math.Min(strat.config.EnterTarget, strat.xFreeValue+strat.xAbsValue)
-	*strat.xyTargetValue = math.Min(strat.config.EnterTarget, strat.yFreeValue+strat.yAbsValue)
+	*strat.xyTargetValue = math.Min(*strat.xyTargetValue , strat.yFreeValue+strat.yAbsValue)
 	strat.updateTargetSilentTime = time.Now().Add(strat.config.UpdateTargetSilent)
 	//logger.Debugf("xyTargetValue %f %f", *strat.xyTargetValue, strat.midPrice)
 }
