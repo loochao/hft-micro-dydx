@@ -25,9 +25,9 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yPosition == nil ||
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
-		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive ||
+		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter ||
 		strat.fundingRateSettleSilent {
-		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
+		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
 			strat.tryCancelXOpenOrder("spread time out")
 		}
 		if strat.fundingRateSettleSilent {
@@ -386,7 +386,7 @@ func (strat *XYStrategy) updateXOrder() {
 }
 
 func (strat *XYStrategy) isXOpenOrderOk() bool {
-	if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToLive {
+	if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
 		logger.Debugf("%s CANCEL, SPREAD IS OUT OF DATE", strat.xSymbol)
 		return false
 	}

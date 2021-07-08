@@ -46,7 +46,8 @@ type Config struct {
 	DepthTakerImpact    float64       `yaml:"depthTakerImpact"`
 	DepthMaxAgeDiffBias time.Duration `yaml:"depthMaxAgeDiffBias"`
 	DepthReportCount    int           `yaml:"depthReportCount"`
-	SpreadTimeToLive    time.Duration `yaml:"spreadTimeToLive"`
+	SpreadTimeToCancel  time.Duration `yaml:"spreadTimeToCancel"`
+	SpreadTimeToEnter  time.Duration `yaml:"spreadTimeToEnter"`
 	SpreadLookback      time.Duration `yaml:"spreadLookback"`
 	SpreadMinDepthCount int           `yaml:"spreadMinDepthCount"`
 	BatchSize           int           `yaml:"batchSize"`
@@ -101,8 +102,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.DepthReportCount == 0 {
 		config.RestartSilent = 1000
 	}
-	if config.SpreadTimeToLive == 0 {
-		config.SpreadTimeToLive = time.Second * 3
+	if config.SpreadTimeToCancel == 0 {
+		config.SpreadTimeToCancel = time.Second * 3
 	}
 	if config.SpreadLookback == 0 {
 		config.SpreadLookback = time.Second
