@@ -19,6 +19,10 @@ type BinanceBusdFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (bn *BinanceBusdFuture) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (bn *BinanceBusdFuture) IsSpot() bool {
 	return false
 }
@@ -648,16 +652,20 @@ func (bn *BinanceBusdFuture) cancelOrder(ctx context.Context, param common.Cance
 	}
 }
 
-type BinanceBusdFutureWidthDepth20 struct {
+func (bn *BinanceBusdFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
+}
+
+func (bn *BinanceBusdFuture) StartSideLoop() {
+	panic("implement me")
+}
+
+type BinanceBusdFutureWidthDepth5 struct {
 	BinanceBusdFuture
 }
 
-func (bn *BinanceBusdFutureWidthDepth20) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
-	panic("implement me")
-}
-
-func (bn *BinanceBusdFutureWidthDepth20) StartSideLoop() {
-	panic("implement me")
+type BinanceBusdFutureWidthDepth20 struct {
+	BinanceBusdFuture
 }
 
 func (bn *BinanceBusdFutureWidthDepth20) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
@@ -705,14 +713,3 @@ func (bn *BinanceBusdFutureWidthDepth20) StreamDepth(ctx context.Context, channe
 	}
 }
 
-type BinanceBusdFutureWidthDepth5 struct {
-	BinanceBusdFuture
-}
-
-func (b BinanceBusdFutureWidthDepth5) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
-	panic("implement me")
-}
-
-func (b BinanceBusdFutureWidthDepth5) StartSideLoop() {
-	panic("implement me")
-}
