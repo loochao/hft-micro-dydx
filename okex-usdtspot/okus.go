@@ -40,7 +40,7 @@ func (okut *OkexUsdtSpot) StreamSymbolStatus(ctx context.Context, channels map[s
 }
 
 func (okut *OkexUsdtSpot) GenerateClientID() string {
-	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
+	return fmt.Sprintf("M%d", time.Now().Unix()*10000+int64(rand.Intn(10000)))
 }
 
 func (okut *OkexUsdtSpot) GetMultiplier(symbol string) (float64, error) {
@@ -569,7 +569,8 @@ func (okut *OkexUsdtSpot) watchOrder(
 					continue
 				}
 				okut.submitOrder(ctx, *req.New, responseCh, errorCh)
-			} else if req.Cancel != nil {
+			} else if req.Cancel != nil && req.Cancel.ClientID != ""{
+				//cancel need client order id
 				okut.cancelOrder(ctx, *req.Cancel, errorCh)
 			}
 		}

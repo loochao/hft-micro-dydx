@@ -112,7 +112,7 @@ func startXYStrategy(
 		xTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
 		yTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
 		expectedChanSendingTime: time.Nanosecond * 300,
-		tickerMatchCount:         0,
+		tickerMatchCount:        0,
 		tickerCount:             0,
 		xTickerExpireCount:      0,
 		yTickerExpireCount:      0,
@@ -341,7 +341,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		//期货以close仓位，没有minNotional限制
 		if math.Abs(strat.ySizeDiff) < strat.yStepSize {
 			return
-		} else if strat.ySizeDiff < 0 && strat.yPosition.GetSize() <= 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice()< strat.yMinNotional {
+		} else if strat.ySizeDiff < 0 && strat.yPosition.GetSize() <= 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice() < strat.yMinNotional {
 			return
 		} else if strat.ySizeDiff > 0 && strat.yPosition.GetSize() >= 0 && strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetAskPrice() < strat.yMinNotional {
 			return
@@ -434,12 +434,11 @@ func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
 	}
 	strat.xCancelSilentTime = time.Now().Add(strat.config.XCancelSilent)
 	if !strat.config.DryRun {
-		//logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
+		strat.xCancelOrderParam.ClientID = strat.xOpenOrder.ClientID
 		select {
 		case strat.xOrderRequestCh <- common.OrderRequest{
 			Cancel: &strat.xCancelOrderParam,
 		}:
-			//logger.Debugf("sent cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
 		}
 	}
 	strat.xOpenOrder = nil
