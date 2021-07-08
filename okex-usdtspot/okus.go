@@ -95,6 +95,8 @@ func (okut *OkexUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.
 
 	restartToReadyTimer := time.NewTimer(time.Hour * 9999)
 	defer restartToReadyTimer.Stop()
+	commissionTimer := time.NewTimer(time.Second)
+	defer commissionTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
