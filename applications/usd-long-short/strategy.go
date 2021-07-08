@@ -32,63 +32,63 @@ func startXYStrategy(
 ) (err error) {
 
 	strat := XYStrategy{
-		xExchange:               xExchange,
-		yExchange:               yExchange,
-		xExchangeID:             xExchange.GetExchange(),
-		yExchangeID:             yExchange.GetExchange(),
-		isXSpot:                 xExchange.IsSpot(),
-		isYSpot:                 yExchange.IsSpot(),
-		xLeverage:               config.XExchange.Leverage,
-		yLeverage:               config.YExchange.Leverage,
-		xSymbol:                 xSymbol,
-		ySymbol:                 ySymbol,
-		config:                  config,
-		xAccountCh:              xAccountCh,
-		yAccountCh:              yAccountCh,
-		xPositionCh:             xPositionCh,
-		yPositionCh:             yPositionCh,
-		xOrderCh:                xOrderCh,
-		yOrderCh:                yOrderCh,
-		xOrderErrorCh:           xOrderErrorCh,
-		yOrderErrorCh:           yOrderErrorCh,
-		xOrderRequestCh:         xOrderRequestCh,
-		yOrderRequestCh:         yOrderRequestCh,
-		xSystemStatusCh:         xSystemStatusCh,
-		ySystemStatusCh:         ySystemStatusCh,
-		depthCh:                 depthCh,
-		saveCh:                  saveCh,
-		xPositionUpdateTime:     time.Time{},
-		yPositionUpdateTime:     time.Time{},
-		xDepth:                  nil,
-		yDepth:                  nil,
-		xDepthTime:              time.Time{},
-		yDepthTime:              time.Time{},
-		xAccount:                nil,
-		yAccount:                nil,
-		xPosition:               nil,
-		yPosition:               nil,
-		xOrderSilentTime:        time.Now().Add(config.UpdateTargetSilent),
-		yOrderSilentTime:        time.Time{},
-		xOrder:                  nil,
-		yOrder:                  nil,
-		xOrderError:             common.OrderError{},
-		yOrderError:             common.OrderError{},
-		logSilentTime:           time.Time{},
-		saveTimer:               time.NewTimer(config.UpdateTargetSilent),
-		stateOutputCh:           nil,
-		error:                   nil,
-		xSizeDiff:               0,
-		ySizeDiff:               0,
-		xSize:                   0,
-		ySize:                   0,
-		xValue:                  0,
-		yValue:                  0,
-		xAbsValue:               0,
-		yAbsValue:               0,
-		midPrice:                0,
-		size:                    0,
-		orderSide:               common.OrderSideUnknown,
-		stopped:                 0,
+		xExchange:           xExchange,
+		yExchange:           yExchange,
+		xExchangeID:         xExchange.GetExchange(),
+		yExchangeID:         yExchange.GetExchange(),
+		isXSpot:             xExchange.IsSpot(),
+		isYSpot:             yExchange.IsSpot(),
+		xLeverage:           config.XExchange.Leverage,
+		yLeverage:           config.YExchange.Leverage,
+		xSymbol:             xSymbol,
+		ySymbol:             ySymbol,
+		config:              config,
+		xAccountCh:          xAccountCh,
+		yAccountCh:          yAccountCh,
+		xPositionCh:         xPositionCh,
+		yPositionCh:         yPositionCh,
+		xOrderCh:            xOrderCh,
+		yOrderCh:            yOrderCh,
+		xOrderErrorCh:       xOrderErrorCh,
+		yOrderErrorCh:       yOrderErrorCh,
+		xOrderRequestCh:     xOrderRequestCh,
+		yOrderRequestCh:     yOrderRequestCh,
+		xSystemStatusCh:     xSystemStatusCh,
+		ySystemStatusCh:     ySystemStatusCh,
+		depthCh:             depthCh,
+		saveCh:              saveCh,
+		xPositionUpdateTime: time.Time{},
+		yPositionUpdateTime: time.Time{},
+		xDepth:              nil,
+		yDepth:              nil,
+		xDepthTime:          time.Time{},
+		yDepthTime:          time.Time{},
+		xAccount:            nil,
+		yAccount:            nil,
+		xPosition:           nil,
+		yPosition:           nil,
+		xOrderSilentTime:    time.Time{},
+		yOrderSilentTime:    time.Time{},
+		xOrder:              nil,
+		yOrder:              nil,
+		xOrderError:         common.OrderError{},
+		yOrderError:         common.OrderError{},
+		logSilentTime:       time.Time{},
+		saveTimer:           time.NewTimer(config.UpdateTargetSilent),
+		stateOutputCh:       nil,
+		error:               nil,
+		xSizeDiff:           0,
+		ySizeDiff:           0,
+		xSize:               0,
+		ySize:               0,
+		xValue:              0,
+		yValue:              0,
+		xAbsValue:           0,
+		yAbsValue:           0,
+		midPrice:            0,
+		size:                0,
+		orderSide:           common.OrderSideUnknown,
+		stopped:             0,
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
@@ -139,7 +139,6 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.saveTimer.Stop()
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
-	strat.xOrderSilentTime = time.Now().Add(strat.config.UpdateTargetSilent)
 	for {
 		select {
 		case <-ctx.Done():
@@ -196,7 +195,6 @@ func (strat *XYStrategy) handleSave() {
 	strat.saveTimer.Reset(strat.config.InternalInflux.SaveInterval)
 }
 
-
 func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 	if nextPos.GetSymbol() != strat.xSymbol {
 		logger.Debugf("bad next position, symbol %s %s not match %v", nextPos.GetSymbol(), strat.xSymbol, nextPos)
@@ -209,8 +207,6 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 		}
 		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= 0 {
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
-				strat.xOrderSilentTime = time.Now().Add(strat.config.UpdateTargetSilent)
-				strat.yOrderSilentTime = time.Now()
 				logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 				strat.xPosition = nextPos
 				strat.hedgeYPosition()
