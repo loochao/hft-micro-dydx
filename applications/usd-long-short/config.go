@@ -27,14 +27,14 @@ type Config struct {
 	EnterTarget float64            `yaml:"enterTarget"`
 	StartValues map[string]float64 `yaml:"startValues"`
 
-	OrderTimeout    time.Duration `yaml:"orderTimeout"`
-	XOrderSilent    time.Duration `yaml:"xOrderSilent"`
-	YOrderSilent    time.Duration `yaml:"yOrderSilent"`
-	EnterSilent     time.Duration `yaml:"enterSilent"`
-	RestartSilent   time.Duration `yaml:"restartSilent"`
-	RestartInterval time.Duration `yaml:"restartInterval"`
+	OrderTimeout       time.Duration `yaml:"orderTimeout"`
+	XOrderSilent       time.Duration `yaml:"xOrderSilent"`
+	YOrderSilent       time.Duration `yaml:"yOrderSilent"`
+	UpdateTargetSilent time.Duration `yaml:"updateTargetSilent"`
+	RestartSilent      time.Duration `yaml:"restartSilent"`
+	RestartInterval    time.Duration `yaml:"restartInterval"`
 
-	XYPairs        map[string]string  `yaml:"xyPairs"`
+	XYPairs map[string]string `yaml:"xyPairs"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -47,8 +47,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.OrderTimeout == 0 {
 		config.OrderTimeout = time.Second * 5
 	}
-	if config.EnterSilent == 0 {
-		config.EnterSilent = time.Minute * 30
+	if config.UpdateTargetSilent == 0 {
+		config.UpdateTargetSilent = time.Minute * 30
 	}
 	if config.RestartSilent == 0 {
 		config.RestartSilent = time.Minute * 3

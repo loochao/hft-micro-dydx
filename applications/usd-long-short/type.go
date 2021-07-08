@@ -49,12 +49,13 @@ type XYStrategy struct {
 	xLeverage float64
 	yLeverage float64
 
-	xAccount          common.Balance
-	yAccount          common.Balance
-	xPosition         common.Position
-	yPosition         common.Position
-	xOrderSilentTime  time.Time
-	yOrderSilentTime  time.Time
+	xAccount               common.Balance
+	yAccount               common.Balance
+	xPosition              common.Position
+	yPosition              common.Position
+	xOrderSilentTime       time.Time
+	yOrderSilentTime       time.Time
+	updateTargetSilentTime time.Time
 
 	logSilentTime time.Time
 	saveTimer     *time.Timer
@@ -87,11 +88,11 @@ type XYStrategy struct {
 	yAbsSize     float64
 	xyTargetSize *float64
 
-	xValue        float64
-	yValue        float64
-	xAbsValue     float64
-	yAbsValue     float64
-	midPrice      float64
+	xValue    float64
+	yValue    float64
+	xAbsValue float64
+	yAbsValue float64
+	midPrice  float64
 
 	xOrder         common.Order
 	yOrder         common.Order

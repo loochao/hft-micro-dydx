@@ -67,14 +67,14 @@ func startXYStrategy(
 		yAccount:                nil,
 		xPosition:               nil,
 		yPosition:               nil,
-		xOrderSilentTime:        time.Now().Add(config.EnterSilent),
+		xOrderSilentTime:        time.Now().Add(config.UpdateTargetSilent),
 		yOrderSilentTime:        time.Time{},
 		xOrder:                  nil,
 		yOrder:                  nil,
 		xOrderError:             common.OrderError{},
 		yOrderError:             common.OrderError{},
 		logSilentTime:           time.Time{},
-		saveTimer:               time.NewTimer(config.EnterSilent),
+		saveTimer:               time.NewTimer(config.UpdateTargetSilent),
 		stateOutputCh:           nil,
 		error:                   nil,
 		xSizeDiff:               0,
@@ -139,7 +139,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.saveTimer.Stop()
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
-	strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
+	strat.xOrderSilentTime = time.Now().Add(strat.config.UpdateTargetSilent)
 	for {
 		select {
 		case <-ctx.Done():
@@ -209,7 +209,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 		}
 		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= 0 {
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
-				strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
+				strat.xOrderSilentTime = time.Now().Add(strat.config.UpdateTargetSilent)
 				strat.yOrderSilentTime = time.Now()
 				logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 				strat.xPosition = nextPos

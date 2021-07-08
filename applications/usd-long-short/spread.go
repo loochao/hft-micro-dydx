@@ -72,6 +72,7 @@ func (strat *XYStrategy) updateTargetPositionSize() {
 		time.Now().Sub(strat.yOrderSilentTime) < 0 ||
 		time.Now().Sub(strat.xPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
 		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
+		time.Now().Sub(strat.updateTargetSilentTime) < 0 ||
 		strat.xAccount == nil ||
 		strat.yAccount == nil ||
 		strat.xPosition == nil ||
@@ -97,4 +98,5 @@ func (strat *XYStrategy) updateTargetPositionSize() {
 	*strat.xyTargetSize = strat.config.EnterTarget / strat.midPrice
 	*strat.xyTargetSize = math.Min(*strat.xyTargetSize, strat.xAbsSize)
 	*strat.xyTargetSize = math.Min(*strat.xyTargetSize, strat.yAbsSize)
+	strat.updateTargetSilentTime = time.Now().Add(strat.config.UpdateTargetSilent)
 }
