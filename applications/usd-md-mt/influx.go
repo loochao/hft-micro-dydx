@@ -52,10 +52,6 @@ func handleSave(
 			xTradeVolume += st.xTimedPositionChange.Sum()
 			yTradeVolume += st.yTimedPositionChange.Sum()
 
-			//fields["xPosEventTime"] = st.xPosition.GetEventTime().UnixNano()
-			//fields["xPosParseTime"] = st.xPosition.GetParseTime().UnixNano()
-			//fields["yPosEventTime"] = st.yPosition.GetEventTime().UnixNano()
-			//fields["yPosParseTime"] = st.yPosition.GetParseTime().UnixNano()
 			fields["unHedgeValue"] = unHedgeValue
 			fields["xSize"] = st.xSize
 			fields["xAbsValue"] = st.xAbsValue
@@ -75,10 +71,10 @@ func handleSave(
 			fields["offsetFactor"] = st.offsetFactor
 
 			if st.xPosition.GetPrice() != 0 {
-				xURPnl += st.xValue * (st.xWalkedDepth.MidPrice - st.xPosition.GetPrice())
+				xURPnl += st.xValue * (st.xWalkedDepth.MidPrice - st.xPosition.GetPrice()) / st.xPosition.GetPrice()
 			}
 			if st.yPosition.GetPrice() != 0 {
-				yURPnl += st.yValue * (st.yWalkedDepth.MidPrice - st.yPosition.GetPrice())
+				yURPnl += st.yValue * (st.yWalkedDepth.MidPrice - st.yPosition.GetPrice()) / st.xPosition.GetPrice()
 			}
 
 			fields["spreadTimeDelta"] = st.spread.ParseTime.Sub(st.spread.EventTime).Seconds()
@@ -98,7 +94,6 @@ func handleSave(
 			fields["yBidPrice"] = st.yWalkedDepth.BidPrice
 			fields["yAskPrice"] = st.yWalkedDepth.AskPrice
 			fields["yMidPrice"] = st.yWalkedDepth.MidPrice
-
 
 			if st.spreadReport != nil {
 				fields["matchRatio"] = st.spreadReport.MatchRatio
