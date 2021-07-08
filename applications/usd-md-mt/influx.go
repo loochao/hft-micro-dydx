@@ -74,7 +74,7 @@ func handleSave(
 				xURPnl += st.xValue * (st.xWalkedDepth.MidPrice - st.xPosition.GetPrice()) / st.xPosition.GetPrice()
 			}
 			if st.yPosition.GetPrice() != 0 {
-				yURPnl += st.yValue * (st.yWalkedDepth.MidPrice - st.yPosition.GetPrice()) / st.xPosition.GetPrice()
+				yURPnl += st.yValue * (st.yWalkedDepth.MidPrice - st.yPosition.GetPrice()) / st.yPosition.GetPrice()
 			}
 
 			fields["spreadTimeDelta"] = st.spread.ParseTime.Sub(st.spread.EventTime).Seconds()
