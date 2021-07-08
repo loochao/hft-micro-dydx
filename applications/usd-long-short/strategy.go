@@ -27,7 +27,8 @@ func startXYStrategy(
 	yOrderErrorCh chan common.OrderError,
 	xSystemStatusCh chan common.SystemStatus,
 	ySystemStatusCh chan common.SystemStatus,
-	depthCh chan common.Depth,
+	xDepthCh chan common.Depth,
+	yDepthCh chan common.Depth,
 	saveCh chan *XYStrategy,
 ) (err error) {
 
@@ -55,7 +56,8 @@ func startXYStrategy(
 		yOrderRequestCh:     yOrderRequestCh,
 		xSystemStatusCh:     xSystemStatusCh,
 		ySystemStatusCh:     ySystemStatusCh,
-		depthCh:             depthCh,
+		xDepthCh:            xDepthCh,
+		yDepthCh:            yDepthCh,
 		saveCh:              saveCh,
 		xPositionUpdateTime: time.Time{},
 		yPositionUpdateTime: time.Time{},
@@ -172,8 +174,11 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 		case strat.yOrderError = <-strat.yOrderErrorCh:
 			strat.handleYOrderError()
 			break
-		case strat.nextDepth = <-strat.depthCh:
-			strat.handleDepth()
+		case strat.xNextDepth = <-strat.xDepthCh:
+			strat.handleXDepth()
+			break
+		case strat.yNextDepth = <-strat.yDepthCh:
+			strat.handleYDepth()
 			break
 		}
 	}

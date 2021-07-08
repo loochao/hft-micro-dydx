@@ -29,7 +29,8 @@ type XYStrategy struct {
 	yOrderErrorCh   chan common.OrderError
 	xSystemStatusCh chan common.SystemStatus
 	ySystemStatusCh chan common.SystemStatus
-	depthCh         chan common.Depth
+	xDepthCh        chan common.Depth
+	yDepthCh        chan common.Depth
 	saveCh          chan *XYStrategy
 
 	xSystemStatus common.SystemStatus
@@ -40,7 +41,6 @@ type XYStrategy struct {
 
 	xDepth     common.Depth
 	yDepth     common.Depth
-	nextDepth  common.Depth
 	xNextDepth common.Depth
 	yNextDepth common.Depth
 	xDepthTime time.Time

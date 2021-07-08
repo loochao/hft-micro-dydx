@@ -244,9 +244,7 @@ func main() {
 		xAccountChMap[xSymbol] = make(chan common.Balance, 8)
 		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 1)
 
-		//depth channel是共用的，以防出现顺序错乱问题
 		xDepthChMap[xSymbol] = make(chan common.Depth, 64)
-		yDepthChMap[config.XYPairs[xSymbol]] = xDepthChMap[xSymbol]
 	}
 
 	yPositionChMap := make(map[string]chan common.Position)
@@ -261,6 +259,7 @@ func main() {
 		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 1)
 		yAccountChMap[ySymbol] = make(chan common.Balance, 8)
 		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 1)
+		yDepthChMap[ySymbol] = make(chan common.Depth, 64)
 	}
 
 	saveCh := make(chan *XYStrategy, 2048)
@@ -290,6 +289,7 @@ func main() {
 			xSystemStatusChMap[xSymbol],
 			ySystemStatusChMap[ySymbol],
 			xDepthChMap[xSymbol],
+			yDepthChMap[ySymbol],
 			saveCh,
 		)
 		if err != nil {

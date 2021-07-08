@@ -7,37 +7,9 @@ import (
 	"time"
 )
 
-func (strat *XYStrategy) handleDepth() {
-	switch strat.nextDepth.GetExchange() {
-	case strat.xExchangeID:
-		strat.xNextDepth = strat.nextDepth
-		strat.handleXDepth()
-		break
-	case strat.yExchangeID:
-		strat.yNextDepth = strat.nextDepth
-		strat.handleYDepth()
-		break
-	default:
-		if time.Now().Sub(strat.logSilentTime) > 0 {
-			logger.Debugf("unknown exchanged id %d", strat.nextDepth.GetExchange())
-			strat.logSilentTime = time.Now().Add(time.Minute)
-		}
-	}
-	strat.updateTargetPositionSize()
-	strat.hedgeXPosition()
-	strat.hedgeYPosition()
-}
+
 
 func (strat *XYStrategy) handleXDepth() {
-	switch strat.nextDepth.GetExchange() {
-	case strat.xExchangeID:
-	case strat.yExchangeID:
-	default:
-		if time.Now().Sub(strat.logSilentTime) > 0 {
-			logger.Debugf("unknown exchanged id %d", strat.nextDepth.GetExchange())
-			strat.logSilentTime = time.Now().Add(time.Minute)
-		}
-	}
 	if strat.xDepth == strat.xNextDepth {
 		return
 	}
@@ -46,6 +18,9 @@ func (strat *XYStrategy) handleXDepth() {
 	}
 	strat.xDepth = strat.xNextDepth
 	strat.xDepthTime = strat.xDepth.GetTime()
+	strat.updateTargetPositionSize()
+	strat.hedgeXPosition()
+	strat.hedgeYPosition()
 }
 
 func (strat *XYStrategy) handleYDepth() {
@@ -57,6 +32,9 @@ func (strat *XYStrategy) handleYDepth() {
 	}
 	strat.yDepth = strat.yNextDepth
 	strat.yDepthTime = strat.yDepth.GetTime()
+	strat.updateTargetPositionSize()
+	strat.hedgeXPosition()
+	strat.hedgeYPosition()
 }
 
 func (strat *XYStrategy) updateTargetPositionSize() {
