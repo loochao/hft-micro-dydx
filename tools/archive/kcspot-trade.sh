@@ -4,7 +4,7 @@ dt=$(date -u +%Y%m%d)
 version=" BUILD @ $(date -u '+%Y%m%d %H:%M:%S') "
 echo "$version"
 
-env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-recorder-kcspot-trade.$dt" ./recorders/kcspot-trade
+env GOOS=linux GOARCH=amd64 go build -o "./dist/hft-recorder-kcspot-trade.$dt" ./recorders/kucoin-usdtspot-trade
 
 git add -A
 git commit -m "build hft-recorder-kcspot-trade.$dt"

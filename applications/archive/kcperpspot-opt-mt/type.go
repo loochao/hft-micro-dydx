@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"strings"
 )
 
@@ -15,12 +15,12 @@ type PerpOrderNewError struct {
 
 type SpotOrderNewError struct {
 	Error  error
-	Params kcspot.NewOrderParam
+	Params kucoin_usdtspot.NewOrderParam
 }
 
 type SpotOrderRequest struct {
-	New    *kcspot.NewOrderParam
-	Cancel *kcspot.CancelAllOrdersParam
+	New    *kucoin_usdtspot.NewOrderParam
+	Cancel *kucoin_usdtspot.CancelAllOrdersParam
 }
 
 type Offset struct {

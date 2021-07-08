@@ -1,4 +1,4 @@
-package kcspot
+package kucoin_usdtspot
 
 import (
 	"fmt"

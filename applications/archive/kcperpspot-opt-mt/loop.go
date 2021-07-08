@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/rand"
@@ -184,13 +184,13 @@ func updateSpotNewOrders() {
 						quantity,
 						price,
 					)
-					order := kcspot.NewOrderParam{
+					order := kucoin_usdtspot.NewOrderParam{
 						Symbol:      spotSymbol,
 						Price:       common.Float64(price),
 						Size:        common.Float64(quantity),
-						TimeInForce: kcspot.OrderTimeInForceGTC,
-						Side:        kcspot.OrderSideSell,
-						Type:        kcspot.OrderTypeLimit,
+						TimeInForce: kucoin_usdtspot.OrderTimeInForceGTC,
+						Side:        kucoin_usdtspot.OrderSideSell,
+						Type:        kucoin_usdtspot.OrderTypeLimit,
 						PostOnly:    true,
 						ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 					}
@@ -279,13 +279,13 @@ func updateSpotNewOrders() {
 				quantity,
 				price,
 			)
-			order := kcspot.NewOrderParam{
+			order := kucoin_usdtspot.NewOrderParam{
 				Symbol:      spotSymbol,
 				Price:       common.Float64(price),
 				Size:        common.Float64(quantity),
-				TimeInForce: kcspot.OrderTimeInForceGTC,
-				Side:        kcspot.OrderSideBuy,
-				Type:        kcspot.OrderTypeLimit,
+				TimeInForce: kucoin_usdtspot.OrderTimeInForceGTC,
+				Side:        kucoin_usdtspot.OrderSideBuy,
+				Type:        kucoin_usdtspot.OrderTypeLimit,
 				PostOnly:    true,
 				ClientOid:   fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
 			}

@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -244,7 +244,7 @@ func (w *TradeWS) mainLoop(
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 
-	api, err := kcspot.NewAPI("", "", "", proxy)
+	api, err := kucoin_usdtspot.NewAPI("", "", "", proxy)
 	if err != nil {
 		logger.Debugf("NewAPI error %v", err)
 		return
@@ -335,12 +335,12 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)
 			select {
-			case w.writeCh <- kcspot.Ping{
+			case w.writeCh <- kucoin_usdtspot.Ping{
 				ID:   fmt.Sprintf("%d", time.Now().Nanosecond()/1000000),
 				Type: "ping",
 			}:
 			default:
-				logger.Debugf("w.writeCh <- kcspot.Ping failed ch len %d", len(w.writeCh))
+				logger.Debugf("w.writeCh <- kucoin-usdtspot.Ping failed ch len %d", len(w.writeCh))
 
 			}
 			break
@@ -353,7 +353,7 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 					case <-ctx.Done():
 					case <-time.After(time.Millisecond):
 						logger.Debugf("w.writeCh <- SubscribeMsg timeout in 1ms, %s", fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol))
-					case w.writeCh <- kcspot.SubscribeMsg{
+					case w.writeCh <- kucoin_usdtspot.SubscribeMsg{
 						ID:             fmt.Sprintf("/market/match:%s", symbol),
 						Type:           "subscribe",
 						Topic:          fmt.Sprintf("/market/match:%s", symbol),
@@ -447,7 +447,7 @@ func (w *TradeWS) saveLoop(ctx context.Context, savePath, symbol string, inputCh
 				}
 			}
 			dayTime = time.Now().Truncate(time.Hour * 24)
-			outPath = fmt.Sprintf("%s/%s-%s.kcspot.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
+			outPath = fmt.Sprintf("%s/%s-%s.kucoin-usdtspot.trade.jl.gz", savePath, dayTime.Format("20060102"), symbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				w.Stop()

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"time"
@@ -12,7 +12,7 @@ import (
 
 func spotBarsPullingLoop(
 	ctx context.Context,
-	api *kcspot.API,
+	api *kucoin_usdtspot.API,
 	makerSymbols []string,
 	barsLookback int,
 	pullInterval time.Duration,
@@ -29,8 +29,8 @@ func spotBarsPullingLoop(
 	for i, makerSymbol := range makerSymbols {
 		nextPullTimes[makerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
 	}
-	candleDuration := kcspot.CandleTypeDurations[kcspot.CandleType30Min]
-	candleType := kcspot.CandleType30Min
+	candleDuration := kucoin_usdtspot.CandleTypeDurations[kucoin_usdtspot.CandleType30Min]
+	candleType := kucoin_usdtspot.CandleType30Min
 	globalNextPullTime := time.Now()
 	globalNextRetryTime := time.Now()
 	outputResults := true
@@ -73,7 +73,7 @@ func spotBarsPullingLoop(
 					}
 					symbolStartTime = symbolStartTime.Add(-candleDuration * 3)
 				}
-				history, err := api.GetCandles(ctx, kcspot.CandlesParam{
+				history, err := api.GetCandles(ctx, kucoin_usdtspot.CandlesParam{
 					Symbol:  symbol,
 					StartAt: symbolStartTime.Unix(),
 					EndAt:   symbolEndTime.Unix(),

@@ -196,7 +196,7 @@ func watchMakerTakerSpread(
 			newMakerDepth, err = hbspot.ParseDepth20(makerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("kcspot.ParseDepth5 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
+					logger.Debugf("kucoin-usdtspot.ParseDepth5 error %v %s %s", err, makerSymbol, makerRawDepth.Depth)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			} else if makerDepth == nil || newMakerDepth.EventTime.Sub(makerDepth.EventTime) > 0 {

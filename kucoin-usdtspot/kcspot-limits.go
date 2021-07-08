@@ -1,4 +1,4 @@
-package kcspot
+package kucoin_usdtspot
 
 var StepSizes = map[string]float64{
 	"1INCH-USDT":      0.0001,

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"time"
 )
 
@@ -14,7 +14,7 @@ type PerpOrderNewError struct {
 
 type SpotOrderNewError struct {
 	Error  error
-	Params kcspot.NewOrderParam
+	Params kucoin_usdtspot.NewOrderParam
 }
 
 type Quantile struct {
@@ -69,6 +69,6 @@ func (wo *WalkedOrderBook) ToString() string {
 }
 
 type SpotOrderRequest struct {
-	New    *kcspot.NewOrderParam
-	Cancel *kcspot.CancelAllOrdersParam
+	New    *kucoin_usdtspot.NewOrderParam
+	Cancel *kucoin_usdtspot.CancelAllOrdersParam
 }

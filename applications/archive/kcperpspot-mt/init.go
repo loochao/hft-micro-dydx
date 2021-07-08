@@ -5,7 +5,7 @@ import (
 	"flag"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -16,10 +16,10 @@ var kcInternalInfluxWriter *common.InfluxWriter
 var kcExternalInfluxWriter *common.InfluxWriter
 
 var kcperpAPI *kucoin_usdtfuture.API
-var kcspotAPI *kcspot.API
+var kcspotAPI *kucoin_usdtspot.API
 
 var kcperpUserWebsocket *kucoin_usdtfuture.UserWebsocket
-var kcspotUserWebsocket *kcspot.UserWebsocket
+var kcspotUserWebsocket *kucoin_usdtspot.UserWebsocket
 
 var kcperpOrderSilentTimes = make(map[string]time.Time)
 var kcperpPositionsUpdateTimes = make(map[string]time.Time)
@@ -63,15 +63,15 @@ var kcGlobalCancel context.CancelFunc
 var kcperpPositionCh = make(chan []kucoin_usdtfuture.Position, 10)
 var kcperpPositions = make(map[string]kucoin_usdtfuture.Position)
 
-var kcspotBalances = make(map[string]kcspot.Account)
-var kcspotUSDTBalance *kcspot.Account
+var kcspotBalances = make(map[string]kucoin_usdtspot.Account)
+var kcspotUSDTBalance *kucoin_usdtspot.Account
 
-var kcspotAccountCh = make(chan []kcspot.Account, 10)
+var kcspotAccountCh = make(chan []kucoin_usdtspot.Account, 10)
 
 var kcspotOrderRequestChs = make(map[string]chan SpotOrderRequest)
 var kcspotNewOrderErrorCh chan SpotOrderNewError
 
-var kcspotOpenOrders = make(map[string]kcspot.NewOrderParam)
+var kcspotOpenOrders = make(map[string]kucoin_usdtspot.NewOrderParam)
 var kcspotOrderCancelCounts = make(map[string]int)
 
 var kcperpFundingRates = make(map[string]kucoin_usdtfuture.CurrentFundingRate)

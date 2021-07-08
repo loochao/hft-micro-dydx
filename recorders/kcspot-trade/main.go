@@ -13,7 +13,7 @@ import (
 
 func main() {
 	symbolsStr := flag.String("symbols", "BTC-USDT,ETH-USDT,BCH-USDT,BCHSV-USDT,LINK-USDT,UNI-USDT,YFI-USDT,EOS-USDT,DOT-USDT,FIL-USDT,ADA-USDT,XRP-USDT,LTC-USDT,TRX-USDT,GRT-USDT,SUSHI-USDT,XLM-USDT,1INCH-USDT,ZEC-USDT,DASH-USDT,AAVE-USDT,KSM-USDT,DOGE-USDT,LUNA-USDT,VET-USDT,BNB-USDT,SXP-USDT,IOST-USDT,CRV-USDT,ALGO-USDT,AVAX-USDT,FTM-USDT,THETA-USDT,ATOM-USDT,BTT-USDT,CHZ-USDT,ENJ-USDT,MANA-USDT,BAT-USDT,XEM-USDT,XTZ-USDT", "symbols, separate by comma")
-	savePath := flag.String("path", "/root/kcspot-trade", "data save folder")
+	savePath := flag.String("path", "/root/kucoin-usdtspot-trade", "data save folder")
 	batchSize := flag.Int("batch", 20, "symbols group batch size")
 	proxyAddress := flag.String("proxy", "", "symbols group batch size")
 	flag.Parse()

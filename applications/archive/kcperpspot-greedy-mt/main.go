@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/kucoin-usdtfuture"
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"os/signal"
@@ -37,7 +37,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	kcspotAPI, err = kcspot.NewAPI(
+	kcspotAPI, err = kucoin_usdtspot.NewAPI(
 		*kcConfig.SpotApiKey,
 		*kcConfig.SpotApiSecret,
 		*kcConfig.SpotApiPassphrase,
@@ -54,7 +54,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	_, kcspotStepSizes, kcspotTickSizes, kcspotMinNotional, err = kcspot.GetOrderLimits(kcGlobalCtx, kcspotAPI, kcspotSymbols)
+	_, kcspotStepSizes, kcspotTickSizes, kcspotMinNotional, err = kucoin_usdtspot.GetOrderLimits(kcGlobalCtx, kcspotAPI, kcspotSymbols)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func main() {
 		}
 	}
 
-	kcspotUserWebsocket = kcspot.NewUserWebsocket(
+	kcspotUserWebsocket = kucoin_usdtspot.NewUserWebsocket(
 		kcGlobalCtx,
 		kcspotAPI,
 		*kcConfig.ProxyAddress,
@@ -150,9 +150,9 @@ func main() {
 		kucoin_usdtfuture.AccountParam{Currency: "USDT"},
 		*kcConfig.PullInterval, kcperpAccountCh,
 	)
-	go kcspot.AccountHttpLoop(
+	go kucoin_usdtspot.AccountHttpLoop(
 		kcGlobalCtx, kcspotAPI,
-		kcspot.AccountsParam{},
+		kucoin_usdtspot.AccountsParam{},
 		*kcConfig.PullInterval, kcspotAccountCh,
 	)
 	go kucoin_usdtfuture.FundingRateLoop(
@@ -278,7 +278,7 @@ func main() {
 			kcspotNewOrderErrorCh,
 		)
 		kcspotOrderRequestChs[spotSymbol] <- SpotOrderRequest{
-			Cancel: &kcspot.CancelAllOrdersParam{Symbol: spotSymbol},
+			Cancel: &kucoin_usdtspot.CancelAllOrdersParam{Symbol: spotSymbol},
 		}
 	}
 
@@ -312,7 +312,7 @@ func main() {
 		*kcConfig.PullInterval/2,
 		kcPerpSystemStatusCh,
 	)
-	go kcspot.WatchSystemStatusHttp(
+	go kucoin_usdtspot.WatchSystemStatusHttp(
 		kcGlobalCtx,
 		kcspotAPI,
 		*kcConfig.PullInterval/2,
@@ -358,13 +358,13 @@ func main() {
 			handleSpotWSBalance(msg)
 			break
 		case spotOrder := <-kcspotUserWebsocket.OrderCh:
-			if spotOrder.Type == kcspot.OrderTypeFilled {
+			if spotOrder.Type == kucoin_usdtspot.OrderTypeFilled {
 				kcLoopTimer.Reset(time.Nanosecond)
 				kcspotHttpBalanceUpdateSilentTimes[spotOrder.Symbol] = time.Now().Add(*kcConfig.HttpSilent)
 				logger.Debugf("SPOT WS ORDER FILLED %s %s SIZE %f PRICE %f", spotOrder.Symbol, spotOrder.Side, spotOrder.FilledSize, spotOrder.Price)
 				if openOrder, ok := kcspotOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOid == spotOrder.ClientOid {
 					if spotOrder.FilledSize > 0 {
-						if spotOrder.Side == kcspot.OrderSideBuy {
+						if spotOrder.Side == kucoin_usdtspot.OrderSideBuy {
 							kcspotLastFilledBuyPrices[spotOrder.Symbol] = spotOrder.Price
 						} else {
 							kcspotLastFilledSellPrices[spotOrder.Symbol] = spotOrder.Price
@@ -372,11 +372,11 @@ func main() {
 					}
 					delete(kcspotOpenOrders, spotOrder.Symbol)
 				}
-			} else if spotOrder.Type == kcspot.OrderTypeCanceled {
+			} else if spotOrder.Type == kucoin_usdtspot.OrderTypeCanceled {
 				if openOrder, ok := kcspotOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOid == spotOrder.ClientOid {
 					delete(kcspotOpenOrders, spotOrder.Symbol)
 				}
-			} else if spotOrder.Status == kcspot.OrderStatusDone {
+			} else if spotOrder.Status == kucoin_usdtspot.OrderStatusDone {
 				if openOrder, ok := kcspotOpenOrders[spotOrder.Symbol]; ok && openOrder.ClientOid == spotOrder.ClientOid {
 					delete(kcspotOpenOrders, spotOrder.Symbol)
 				}
@@ -504,7 +504,7 @@ func main() {
 				if len(kcspotOpenOrders) > 0 {
 					for symbol := range kcspotOpenOrders {
 						kcspotOrderRequestChs[symbol] <- SpotOrderRequest{
-							Cancel: &kcspot.CancelAllOrdersParam{Symbol: symbol},
+							Cancel: &kucoin_usdtspot.CancelAllOrdersParam{Symbol: symbol},
 						}
 						delete(kcspotOpenOrders, symbol)
 					}

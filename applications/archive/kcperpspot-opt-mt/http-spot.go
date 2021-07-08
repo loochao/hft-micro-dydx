@@ -1,19 +1,19 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"strings"
 	"time"
 )
 
-func handleSpotHttpAccount(accounts []kcspot.Account) {
+func handleSpotHttpAccount(accounts []kucoin_usdtspot.Account) {
 	hasUSDT := false
 	hasAccounts := make(map[string]bool)
 	for _, account := range accounts {
 		if account.Currency == "USDT" {
 			//only spot account
-			if account.Type == kcspot.AccountTypeTrade {
+			if account.Type == kucoin_usdtspot.AccountTypeTrade {
 				hasUSDT = true
 				balance := account
 				if kcspotUSDTBalance == nil || kcspotUSDTBalance.Available != balance.Available {
@@ -36,7 +36,7 @@ func handleSpotHttpAccount(accounts []kcspot.Account) {
 		//	continue
 		//}
 
-		var lastAccount *kcspot.Account
+		var lastAccount *kucoin_usdtspot.Account
 		if b, ok := kcspotBalances[symbol]; ok {
 			b := b
 			lastAccount = &b
@@ -57,7 +57,7 @@ func handleSpotHttpAccount(accounts []kcspot.Account) {
 		}
 	}
 	if !hasUSDT {
-		balance := kcspot.Account{
+		balance := kucoin_usdtspot.Account{
 			Balance:   0,
 			Available: 0,
 			Holds:     0,
@@ -71,7 +71,7 @@ func handleSpotHttpAccount(accounts []kcspot.Account) {
 
 	for _, symbol := range kcspotSymbols {
 		if _, ok := hasAccounts[symbol]; !ok {
-			account := kcspot.Account{
+			account := kucoin_usdtspot.Account{
 				Currency:  strings.Replace(symbol, "-USDT", "", -1),
 				Balance:   0,
 				Available: 0,

@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/tdigest"
 	"os"
@@ -45,7 +45,7 @@ func main() {
 		tradeCounts[symbol] = 0
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/kcspot-trade/%s-%s.kcspot.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/Users/chenjilin/MarketData/kucoin-usdtspot-trade/%s-%s.kucoin-usdtspot.trade.jl.gz", dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -57,10 +57,10 @@ func main() {
 				return
 			}
 			scanner := bufio.NewScanner(gr)
-			var takerFirstMatch *kcspot.Trade
-			var takerLastMatch *kcspot.Trade
+			var takerFirstMatch *kucoin_usdtspot.Trade
+			var takerLastMatch *kucoin_usdtspot.Trade
 			for scanner.Scan() {
-				wsTrade := kcspot.WSTrade{}
+				wsTrade := kucoin_usdtspot.WSTrade{}
 				err := json.Unmarshal(scanner.Bytes(), &wsTrade)
 				if err != nil {
 					//logger.Debugf("json.Unmarshal %v %s", err, scanner.Bytes())

@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
 func watchSpotOrderRequest(
 	ctx context.Context,
-	api *kcspot.API,
+	api *kucoin_usdtspot.API,
 	timeout time.Duration,
 	dryRun bool,
 	orderRequestCh chan SpotOrderRequest,
@@ -41,10 +41,10 @@ func watchSpotOrderRequest(
 						Error:  err,
 						Params: *request.New,
 					}
-					//} else if order.Status == kcspot.OrderStatusFilled ||
-					//	order.Status == kcspot.OrderStatusCancelled ||
-					//	order.Status == kcspot.OrderStatusReject ||
-					//	order.Status == kcspot.OrderStatusExpired {
+					//} else if order.Status == kucoin-usdtspot.OrderStatusFilled ||
+					//	order.Status == kucoin-usdtspot.OrderStatusCancelled ||
+					//	order.Status == kucoin-usdtspot.OrderStatusReject ||
+					//	order.Status == kucoin-usdtspot.OrderStatusExpired {
 					//	outputNewOrderResponseCh <- *order
 				}
 			}
@@ -73,12 +73,12 @@ func updateSpotOldOrders() {
 		kcspotCancelSilentTimes[order.Symbol] = time.Now().Add(*kcConfig.CancelSilent)
 		kcspotOrderCancelCounts[order.Symbol] += 1
 		kcspotOrderRequestChs[order.Symbol] <- SpotOrderRequest{
-			Cancel: &kcspot.CancelAllOrdersParam{Symbol: order.Symbol},
+			Cancel: &kucoin_usdtspot.CancelAllOrdersParam{Symbol: order.Symbol},
 		}
 	}
 }
 
-func isOrderProfitable(order kcspot.NewOrderParam, entryTarget float64) bool {
+func isOrderProfitable(order kucoin_usdtspot.NewOrderParam, entryTarget float64) bool {
 	spread, okSpread := kcSpreads[order.Symbol]
 	spotBalance, okSpotBalance := kcspotBalances[order.Symbol]
 	if !okSpread || !okSpotBalance || time.Now().Sub(spread.Time) > *kcConfig.SpreadTimeToLive {
@@ -96,7 +96,7 @@ func isOrderProfitable(order kcspot.NewOrderParam, entryTarget float64) bool {
 	offset := kcspotOffsets[order.Symbol]
 	enterDelta := *kcConfig.EnterDelta + *kcConfig.OffsetDelta*(currentSpotValue/entryTarget)
 	exitDelta := *kcConfig.ExitDelta + *kcConfig.OffsetDelta*(currentSpotValue/entryTarget)
-	if order.Side == kcspot.OrderSideBuy &&
+	if order.Side == kucoin_usdtspot.OrderSideBuy &&
 		float64(order.Price) < spread.MakerDepth.BestBidPrice*(1.0+offset.FarBot) {
 		logger.Debugf("%s BUY PRICE %f < FAR BOT %f, CANCEL",
 			order.Symbol,
@@ -104,7 +104,7 @@ func isOrderProfitable(order kcspot.NewOrderParam, entryTarget float64) bool {
 			spread.MakerDepth.BestBidPrice*(1.0+offset.FarBot),
 		)
 		return false
-	} else if order.Side == kcspot.OrderSideBuy &&
+	} else if order.Side == kucoin_usdtspot.OrderSideBuy &&
 		float64(order.Price) > spread.MakerDepth.BestBidPrice*(1.0+offset.NearBot) {
 		logger.Debugf("%s BUY PRICE %f > NEAR BOT %f, CANCEL",
 			order.Symbol,
@@ -112,7 +112,7 @@ func isOrderProfitable(order kcspot.NewOrderParam, entryTarget float64) bool {
 			spread.MakerDepth.BestBidPrice*(1.0+offset.NearBot),
 		)
 		return false
-	} else if order.Side == kcspot.OrderSideSell &&
+	} else if order.Side == kucoin_usdtspot.OrderSideSell &&
 		float64(order.Price) > spread.MakerDepth.BestAskPrice*(1.0+offset.FarTop) {
 		logger.Debugf("%s SELL PRICE %f > FAR TOP %f, CANCEL",
 			order.Symbol,
@@ -120,7 +120,7 @@ func isOrderProfitable(order kcspot.NewOrderParam, entryTarget float64) bool {
 			spread.MakerDepth.BestAskPrice*(1.0+offset.FarTop),
 		)
 		return false
-	} else if order.Side == kcspot.OrderSideSell &&
+	} else if order.Side == kucoin_usdtspot.OrderSideSell &&
 		float64(order.Price) < spread.MakerDepth.BestAskPrice*(1.0+offset.NearTop) {
 		logger.Debugf("%s SELL PRICE %f < NEAR TOP %f, CANCEL",
 			order.Symbol,
@@ -129,14 +129,14 @@ func isOrderProfitable(order kcspot.NewOrderParam, entryTarget float64) bool {
 		)
 		return false
 	}
-	if order.Side == kcspot.OrderSideBuy &&
+	if order.Side == kucoin_usdtspot.OrderSideBuy &&
 		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > enterDelta {
 		return true
-	} else if order.Side == kcspot.OrderSideSell &&
+	} else if order.Side == kucoin_usdtspot.OrderSideSell &&
 		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < exitDelta {
 		return true
 	}
-	if order.Side == kcspot.OrderSideBuy {
+	if order.Side == kucoin_usdtspot.OrderSideBuy {
 		logger.Debugf(
 			"%s NOT PROFITABLE BUY ORDER PERP TAKER BID %f ORDER PRICE %f DELTA %f < TOP %f CANCEL",
 			order.Symbol,

@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 )
 
 func makerDepthWSLoop(
 	ctx context.Context,
 	cancel context.CancelFunc,
-	api *kcspot.API,
+	api *kucoin_usdtspot.API,
 	proxyAddress string,
 	channels map[string]chan *common.DepthRawMessage,
 ) {
@@ -20,7 +20,7 @@ func makerDepthWSLoop(
 	}
 	logger.Debugf("START makerDepthWSLoop %s", symbols)
 	defer logger.Debugf("EXIT makerDepthWSLoop %s", symbols)
-	ws := kcspot.NewDepth5RoutedWebsocket(
+	ws := kucoin_usdtspot.NewDepth5RoutedWebsocket(
 		ctx,
 		api,
 		proxyAddress,

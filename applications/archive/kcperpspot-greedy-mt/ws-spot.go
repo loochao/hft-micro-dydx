@@ -1,16 +1,16 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/kcspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"time"
 )
 
-func handleSpotWSBalance(balance *kcspot.WsBalance) {
+func handleSpotWSBalance(balance *kucoin_usdtspot.WsBalance) {
 	if balance.Currency == "USDT" {
 		if kcspotUSDTBalance == nil {
-			kcspotUSDTBalance = &kcspot.Account{
+			kcspotUSDTBalance = &kucoin_usdtspot.Account{
 				Currency:  balance.Currency,
 				Available: balance.Available,
 				Balance:   balance.Total,
@@ -30,12 +30,12 @@ func handleSpotWSBalance(balance *kcspot.WsBalance) {
 	if _, ok := kcspSymbolsMap[symbol]; !ok {
 		return
 	}
-	var lastBalance *kcspot.Account
+	var lastBalance *kucoin_usdtspot.Account
 	if b, ok := kcspotBalances[symbol]; ok {
 		b := b
 		lastBalance = &b
 	} else {
-		kcspotBalances[symbol] = kcspot.Account{
+		kcspotBalances[symbol] = kucoin_usdtspot.Account{
 			Currency:  balance.Currency,
 			Available: balance.Available,
 			Balance:   balance.Total,
