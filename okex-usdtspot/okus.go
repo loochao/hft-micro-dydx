@@ -121,6 +121,14 @@ func (okut *OkexUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.
 				logger.Debugf("statusCh <- common.SystemStatusRestart failed ch len %d", len(statusCh))
 			}
 			break
+		case <-commissionTimer.C:
+			select {
+			case commissionAssetValueCh <- 0.0:
+			default:
+				logger.Debugf("commissionAssetValueCh <- 0.0 failed ch len %d", len(commissionAssetValueCh))
+			}
+			commissionTimer.Reset(time.Minute)
+			break
 		case balances := <-userWS.BalancesCh:
 			for _, wsBalance := range balances {
 				if wsBalance.Currency == "USDT" {
@@ -571,7 +579,7 @@ func (okut *OkexUsdtSpot) watchOrder(
 					continue
 				}
 				okut.submitOrder(ctx, *req.New, responseCh, errorCh)
-			} else if req.Cancel != nil && req.Cancel.ClientID != ""{
+			} else if req.Cancel != nil && req.Cancel.ClientID != "" {
 				//cancel need client order id
 				okut.cancelOrder(ctx, *req.Cancel, errorCh)
 			}
@@ -628,7 +636,7 @@ func (okut *OkexUsdtSpot) cancelOrder(ctx context.Context, param common.CancelOr
 	if param.Symbol != "" {
 		_, err := okut.api.CancelOrders(ctx, CancelOrderParam{
 			ClientOid: param.ClientID,
-			Symbol: param.Symbol,
+			Symbol:    param.Symbol,
 		})
 		if err != nil {
 			select {
