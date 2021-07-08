@@ -626,6 +626,7 @@ func (okut *OkexUsdtSpot) cancelOrder(ctx context.Context, param common.CancelOr
 	if param.Symbol != "" {
 		_, err := okut.api.CancelOrders(ctx, CancelOrderParam{
 			ClientOid: param.ClientID,
+			Symbol: param.Symbol,
 		})
 		if err != nil {
 			select {
