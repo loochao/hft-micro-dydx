@@ -24,7 +24,7 @@ func (strat *XYStrategy) hedgeXPosition() {
 		time.Now().Sub(strat.xOrderSilentTime) < 0 {
 		return
 	}
-	strat.xSizeDiff = (*strat.xyTargetValue - strat.xValue) / strat.midPrice / strat.xMultiplier
+	strat.xSizeDiff = (*strat.xyTargetValue - strat.xPosition.GetPrice()* strat.xPosition.GetSize()) / strat.midPrice / strat.xMultiplier
 	if math.Abs(strat.xSizeDiff) < strat.xStepSize {
 		return
 	}
@@ -89,7 +89,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		time.Now().Sub(strat.yOrderSilentTime) < 0 {
 		return
 	}
-	strat.ySizeDiff = (-*strat.xyTargetValue - strat.yValue) / strat.midPrice / strat.yMultiplier
+	strat.ySizeDiff = (-*strat.xyTargetValue - strat.yPosition.GetPrice()* strat.yPosition.GetSize()) / strat.midPrice / strat.yMultiplier
 	if math.Abs(strat.ySizeDiff) < strat.yStepSize {
 		return
 	}
