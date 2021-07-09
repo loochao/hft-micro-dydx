@@ -44,7 +44,7 @@ type Config struct {
 	TickerXBias          time.Duration `yaml:"tickerXBias"`
 	TickerMaxAgeDiffBias time.Duration `yaml:"tickerMaxAgeDiffBias"`
 	TickerReportCount    int           `yaml:"tickerReportCount"`
-	SpreadTimeToCancel   time.Duration `yaml:"SpreadTimeToCancel"`
+	SpreadTimeToCancel   time.Duration `yaml:"spreadTimeToCancel"`
 	SpreadTimeToEnter    time.Duration `yaml:"spreadTimeToEnter"`
 	SpreadLookback       time.Duration `yaml:"spreadLookback"`
 	SpreadMinTickerCount int           `yaml:"spreadMinTickerCount"`
