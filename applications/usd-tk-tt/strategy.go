@@ -211,6 +211,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 				strat.fundingRateSettleSilent = false
 				strat.fundingRateSettleTimer.Reset(time.Minute)
 			}
+			break
 		case <-strat.saveTimer.C:
 			strat.handleSave()
 			break
@@ -256,7 +257,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			strat.updateSpread()
 			break
 		case strat.nextTicker = <-strat.xyTickerCh:
-			strat.handleXTicker()
+			strat.handleTicker()
 			break
 		case <-strat.realisedSpreadTimer.C:
 			strat.handleRealisedSpread()
