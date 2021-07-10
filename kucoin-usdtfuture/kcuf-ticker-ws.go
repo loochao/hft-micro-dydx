@@ -297,7 +297,7 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 		}
 	}()
 
-	symbolTimeout := time.Minute
+	symbolTimeout := time.Minute*5
 	symbolCheckInterval := time.Second
 	pingTimer := time.NewTimer(time.Second)
 	symbolCheckTimer := time.NewTimer(time.Second)

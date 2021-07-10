@@ -6,6 +6,7 @@ import (
 )
 
 func (strat *XYStrategy) updateSpread() {
+	//ticker 盘口无变动可能更新得很慢
 
 	//需要用ema time delta 对age diff进行修正
 	strat.adjustedAgeDiff = strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
@@ -36,12 +37,6 @@ func (strat *XYStrategy) updateSpread() {
 	strat.shortEnterTimedMedian.Insert(strat.spreadTime, strat.shortLastEnter)
 	strat.longEnterTimedMedian.Insert(strat.spreadTime, strat.longLastEnter)
 
-	if strat.shortEnterTimedMedian.Len() < strat.config.SpreadMinTickerCount {
-		return
-	}
-	if strat.shortEnterTimedMedian.Range() < strat.config.SpreadLookback/2 {
-		return
-	}
 	strat.spread = &common.XYSpread{
 		ShortLastEnter:   strat.shortLastEnter,
 		ShortLastLeave:   strat.longLastEnter,
