@@ -68,6 +68,8 @@ func (strat *XYStrategy) handleTicker() {
 	} else if strat.nextTicker.GetExchange() == strat.yExchangeID {
 		strat.yNextTicker = strat.nextTicker
 		strat.handleYTicker()
+	}else{
+		logger.Debugf("other ticker %v", strat.nextTicker)
 	}
 }
 
