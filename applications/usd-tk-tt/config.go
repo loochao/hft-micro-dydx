@@ -59,7 +59,6 @@ type Config struct {
 	OrderTimeout       time.Duration `yaml:"orderTimeout"`
 	XOrderSilent       time.Duration `yaml:"xOrderSilent"`
 	YOrderSilent       time.Duration `yaml:"yOrderSilent"`
-	XErrorSilent       time.Duration `yaml:"xErrorSilent"`
 	HedgeDelay         time.Duration `yaml:"hedgeDelay"`
 	HedgeCheckDuration time.Duration `yaml:"hedgeCheckDuration"`
 	HedgeCheckInterval time.Duration `yaml:"hedgeCheckInterval"`
@@ -117,9 +116,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.FundingInterval == 0 {
 		config.FundingInterval = time.Hour * 4
-	}
-	if config.XErrorSilent == 0 {
-		config.XErrorSilent = config.EnterSilent
 	}
 	config.XExchange.DryRun = config.DryRun
 	config.YExchange.DryRun = config.DryRun
