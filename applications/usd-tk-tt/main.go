@@ -441,7 +441,7 @@ mainLoop:
 					time.Now().Truncate(
 						xyConfig.InternalInflux.SaveInterval,
 					).Add(
-						xyConfig.InternalInflux.SaveInterval + time.Second*15,
+						xyConfig.InternalInflux.SaveInterval,
 					).Sub(time.Now()),
 				)
 			}
