@@ -10,6 +10,7 @@ func (strat *XYStrategy) updateSpread() {
 
 	//需要用ema time delta 对age diff进行修正
 	strat.adjustedAgeDiff = strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
+
 	//取新一点的时间为spread time
 	if strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) < 0 {
 		//需要对时间进行补偿
@@ -18,6 +19,7 @@ func (strat *XYStrategy) updateSpread() {
 		//需要对时间进行补偿
 		strat.spreadTime = strat.xTicker.GetTime().Add(time.Millisecond * time.Duration(strat.xTickerFilter.TimeDeltaEma))
 	}
+
 	if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
 		strat.yTickerExpireCount++
 		//logger.Debugf("%s x expire y %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
@@ -27,6 +29,7 @@ func (strat *XYStrategy) updateSpread() {
 		strat.xTickerExpireCount++
 		return
 	}
+
 	strat.tickerMatchCount++
 
 	//假定挂单基于MidPrice, 考虑挂单的下界偏移进Spread

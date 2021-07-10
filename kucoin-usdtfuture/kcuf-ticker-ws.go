@@ -96,7 +96,7 @@ func (w *TickerWS) readLoop(
 			go w.restart()
 			return
 		}
-		//logger.Debugf("%s", msg)
+		logger.Debugf("%s", msg)
 		//{"data":{"symbol":"XBTUSDTM","sequence":1624824090150,"side":"sell","size":2,"price":33590,"bestBidSize":47,"bestBidPrice":"33590.0","bestAskPrice":"33591.0","tradeId":"60e92c8c3c7feb289d2ab154","ts":1625894028299209614,"bestAskSize":463},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"} 317
 		if msg[2] == 'd' {
 			if msg[27] == '"' {
@@ -110,17 +110,17 @@ func (w *TickerWS) readLoop(
 			} else if msg[31] == '"' {
 				symbol = common.UnsafeBytesToString(msg[19:31])
 			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logSilentTime = time.Now().Add(time.Minute)
-					logger.Debugf("OTHER MSG %s", msg)
-				}
+				//if time.Now().Sub(logSilentTime) > 0 {
+				//	logSilentTime = time.Now().Add(time.Minute)
+				//	logger.Debugf("OTHER MSG %s", msg)
+				//}
 				continue
 			}
 		} else {
-			if time.Now().Sub(logSilentTime) > 0 {
-				logSilentTime = time.Now().Add(time.Minute)
-				logger.Debugf("OTHER MSG %s", msg)
-			}
+			//if time.Now().Sub(logSilentTime) > 0 {
+			//	logSilentTime = time.Now().Add(time.Minute)
+			//	logger.Debugf("OTHER MSG %s", msg)
+			//}
 			continue
 		}
 
