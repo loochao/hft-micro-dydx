@@ -255,7 +255,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 		case <-strat.spreadWalkTimer.C:
 			strat.updateSpread()
 			break
-		case strat.xNextTicker = <-strat.xyTickerCh:
+		case strat.nextTicker = <-strat.xyTickerCh:
 			strat.handleXTicker()
 			break
 		case <-strat.realisedSpreadTimer.C:
