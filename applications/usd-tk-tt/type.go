@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"strings"
 	"time"
 )
 
@@ -11,23 +13,8 @@ type XYStrategy struct {
 
 	xSymbol string
 	ySymbol string
-	isXSpot bool
-	isYSpot bool
 
-	params Config
-
-	xLeverage float64
-	yLeverage float64
-
-	xTickSize            float64
-	yTickSize            float64
-	xStepSize            float64
-	yStepSize            float64
-	xMultiplier          float64
-	yMultiplier          float64
-	xMinNotional         float64
-	yMinNotional         float64
-	xyMergedSpotStepSize float64
+	config Config
 
 	xAccountCh      chan common.Balance
 	yAccountCh      chan common.Balance
@@ -43,8 +30,7 @@ type XYStrategy struct {
 	yOrderErrorCh   chan common.OrderError
 	xSystemStatusCh chan common.SystemStatus
 	ySystemStatusCh chan common.SystemStatus
-	xDepthCh        chan common.Depth
-	yDepthCh        chan common.Depth
+	xyTickerCh      chan common.Ticker
 	saveCh          chan *XYStrategy
 
 	xSystemStatus common.SystemStatus
@@ -53,22 +39,29 @@ type XYStrategy struct {
 	xPositionUpdateTime time.Time
 	yPositionUpdateTime time.Time
 
-	xDepth       common.Depth
-	yDepth       common.Depth
-	xNextDepth   common.Depth
-	yNextDepth   common.Depth
-	xDepthTime   time.Time
-	yDepthTime   time.Time
-	xDepthFilter common.TimeFilter
-	yDepthFilter common.TimeFilter
-	xWalkedDepth common.WalkedDepthBMA
-	yWalkedDepth common.WalkedDepthBMA
+	xTicker   common.Ticker
+	yTicker   common.Ticker
+	xMidPrice float64
+	yMidPrice float64
+
+	xNextTicker common.Ticker
+	yNextTicker common.Ticker
+	nextTicker  common.Ticker
+
+	xTickerTime   time.Time
+	yTickerTime   time.Time
+	xTickerFilter common.TimeFilter
+	yTickerFilter common.TimeFilter
+
+	xLeverage float64
+	yLeverage float64
 
 	xAccount             common.Balance
 	yAccount             common.Balance
 	xPosition            common.Position
 	yPosition            common.Position
 	xOrderSilentTime     time.Time
+	xCancelSilentTime    time.Time
 	yOrderSilentTime     time.Time
 	xFundingRate         common.FundingRate
 	yFundingRate         common.FundingRate
@@ -77,24 +70,15 @@ type XYStrategy struct {
 	xLastFilledSellPrice *float64
 	yLastFilledBuyPrice  *float64
 	yLastFilledSellPrice *float64
-	enterStep            float64
-	enterTarget          float64
-	targetWeight         float64
-	usdtAvailable        float64
-
-	xTargetPositionSize              *float64
-	yTargetPositionSize              *float64
-	xyTargetPositionUpdateSilentTime time.Time
-	maxOrderValue                    float64
+	//xyTargetSpotSizeUpdateSilentTime time.Time
+	enterStep    float64
+	enterTarget  float64
+	usdAvailable float64
 
 	logSilentTime       time.Time
-	xWalkDepthTimer     *time.Timer
-	yWalkDepthTimer     *time.Timer
 	spreadWalkTimer     *time.Timer
 	saveTimer           *time.Timer
 	realisedSpreadTimer *time.Timer
-	hedgeTimer          *time.Timer
-	hedgeCounter        time.Duration
 	spreadTime          time.Time
 	spread              *common.XYSpread
 
@@ -105,17 +89,30 @@ type XYStrategy struct {
 	yTimedPositionChange *common.TimedSum
 
 	expectedChanSendingTime time.Duration
-	depthMatchCount         int
-	depthCount              int
-	xDepthExpireCount       int
-	yDepthExpireCount       int
+	tickerMatchCount        int
+	tickerCount             int
+	xTickerExpireCount      int
+	yTickerExpireCount      int
 	shortLastEnter          float64
 	longLastEnter           float64
 	adjustedAgeDiff         time.Duration
 	spreadReport            *common.XYSpreadReport
 	stateOutputCh           chan XYStrategy
 
+	xTickSize            float64
+	yTickSize            float64
+	xStepSize            float64
+	yStepSize            float64
+	xMultiplier          float64
+	yMultiplier          float64
+	xMinNotional         float64
+	yMinNotional         float64
+	xyMergedSpotStepSize float64
+
 	error error
+
+	isXSpot bool
+	isYSpot bool
 
 	xSizeDiff float64
 	ySizeDiff float64
@@ -134,6 +131,8 @@ type XYStrategy struct {
 	yAbsValue      float64
 	midPrice       float64
 	enterValue     float64
+	targetWeight   float64
+	maxOrderValue  float64
 	targetValue    float64
 	realisedSpread *float64
 
@@ -145,7 +144,49 @@ type XYStrategy struct {
 	yOrderError    common.OrderError
 
 	size       float64
+	price      float64
 	reduceOnly bool
 	orderSide  common.OrderSide
 
+	stopped                 int32
+	fundingRateSettleSilent bool
+	fundingRateSettleTimer  *time.Timer
+
+	xExchangeID common.ExchangeID
+	yExchangeID common.ExchangeID
+
+	hedgeCheckTimer    *time.Timer
+	hedgeCheckStopTime time.Time
+}
+
+type Offset struct {
+	FarTop  float64
+	Top     float64
+	NearTop float64
+	NearBot float64
+	Bot     float64
+	FarBot  float64
+}
+
+func NewOffset(msg string) (Offset, error) {
+	splits := strings.Split(msg, ",")
+	if len(splits) != 6 {
+		return Offset{}, fmt.Errorf("bad offsets %s", msg)
+	}
+	offsets := [6]float64{}
+	var err error
+	for i, s := range splits {
+		offsets[i], err = common.ParseFloat([]byte(s))
+		if err != nil {
+			return Offset{}, err
+		}
+	}
+	return Offset{
+		FarTop:  offsets[5],
+		Top:     offsets[4],
+		NearTop: offsets[3],
+		NearBot: offsets[2],
+		Bot:     offsets[1],
+		FarBot:  offsets[0],
+	}, nil
 }

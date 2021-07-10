@@ -21,7 +21,7 @@ func TestNewTickerWS(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	symbols := []string{"XBTUSDTM", "ATOMUSDTM", "WAVESUSDTM"}[:1]
+	symbols := []string{"XBTUSDTM", "ATOMUSDTM", "WAVESUSDTM"}
 	//symbols := make([]string, 0)
 	//for symbol := range TickSizes {
 	//	symbols = append(symbols, symbol)

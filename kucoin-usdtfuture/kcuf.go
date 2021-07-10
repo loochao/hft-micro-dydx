@@ -400,7 +400,46 @@ func (k *KucoinUsdtFuture) StreamTrade(ctx context.Context, channels map[string]
 }
 
 func (k *KucoinUsdtFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
-	panic("implement me")
+	logger.Debugf("START StreamTicker")
+	defer logger.Debugf("STOP StreamTicker")
+	defer k.Stop()
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+	k.mu.Lock()
+	proxy := k.settings.Proxy
+	k.mu.Unlock()
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			defer k.Stop()
+			ws := NewTickerWS(ctx, k.api, proxy, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-k.done:
+			return
+		}
+	}
 }
 
 func (k *KucoinUsdtFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
@@ -684,14 +723,15 @@ func (k *KucoinUsdtFuture) cancelOrder(ctx context.Context, param common.CancelO
 	}
 }
 
+func (k *KucoinUsdtFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
+}
+
+func (k *KucoinUsdtFuture) StartSideLoop() {
+	panic("implement me")
+}
+
 type KucoinUsdtFutureWithDepth5 struct {
 	KucoinUsdtFuture
 }
 
-func (k KucoinUsdtFutureWithDepth5) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
-	panic("implement me")
-}
-
-func (k KucoinUsdtFutureWithDepth5) StartSideLoop() {
-	panic("implement me")
-}

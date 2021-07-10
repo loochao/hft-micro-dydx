@@ -96,6 +96,7 @@ func (w *TickerWS) readLoop(
 			go w.restart()
 			return
 		}
+		logger.Debugf("%s", msg)
 		//{"data":{"symbol":"XBTUSDTM","sequence":1624824090150,"side":"sell","size":2,"price":33590,"bestBidSize":47,"bestBidPrice":"33590.0","bestAskPrice":"33591.0","tradeId":"60e92c8c3c7feb289d2ab154","ts":1625894028299209614,"bestAskSize":463},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"} 317
 		if msg[2] == 'd' {
 			if msg[27] == '"' {
@@ -388,11 +389,14 @@ func (w *TickerWS) restart() {
 }
 
 func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Ticker) {
-	//logSilentTime := time.Now()
-	//depth5 := &Depth5{
-	//	Symbol: symbol,
-	//}
-	//var err error
+	logSilentTime := time.Now()
+	var err error
+	index := -1
+	pool := [4]*Ticker{}
+	for i := 0; i < 4; i++ {
+		pool[i] = &Ticker{}
+	}
+	var ticker *Ticker
 	for {
 		select {
 		case <-ctx.Done():
@@ -400,28 +404,35 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 		case <-w.done:
 			return
 		case msg := <-inputCh:
-			logger.Debugf("%s", msg)
-			//err = ParseDepth5(msg, depth5)
-			//if err != nil {
-			//	logger.Debugf("ParseDepth5(msg) error %v %s", err, msg)
-			//	continue
-			//}
-			//select {
-			//case outputCh <- depth5:
-			//	select {
-			//	case w.symbolCh <- symbol:
-			//	default:
-			//		if time.Now().Sub(logSilentTime) > 0 {
-			//			logger.Debugf("w.symbolCh <- symbol failed, ch len %d", len(w.symbolCh))
-			//			logSilentTime = time.Now().Add(time.Minute)
-			//		}
-			//	}
-			//default:
-			//	if time.Now().Sub(logSilentTime) > 0 {
-			//		logger.Debugf("outputCh <- depth5 failed, ch len %d", len(outputCh))
-			//		logSilentTime = time.Now().Add(time.Minute)
-			//	}
-			//}
+			index++
+			if index == 4 {
+				index = 0
+			}
+			ticker = pool[index]
+			err = ParseTicker(msg, ticker)
+			if err != nil {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logSilentTime = time.Now().Add(time.Minute)
+					logger.Debugf("ParseTicker(msg) error %v %s", err, msg)
+				}
+				continue
+			}
+			select {
+			case outputCh <- ticker:
+				select {
+				case w.symbolCh <- symbol:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.symbolCh <- symbol failed, ch len %d", len(w.symbolCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("outputCh <- depth5 failed, ch len %d", len(outputCh))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
 		}
 	}
 }

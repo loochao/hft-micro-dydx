@@ -825,19 +825,45 @@ func (match *Match) UnmarshalJSON(data []byte) error {
 //      "ts": 1550653727731              // 成交时间 - 纳秒
 //    }
 //  }
+type TickerData struct {
+	Data Ticker `json:"data"`
+}
 
 type Ticker struct {
-	Sequence     int64     `json:"sequence"`
-	Symbol       int64     `json:"symbol"`
-	Side         string    `json:"side"`
-	Size         float64   `json:"size,float64"`
-	Price        float64   `json:"price,float64"`
-	BestBidSize  float64   `json:"bestBidSize,float64"`
-	BestBidPrice float64   `json:"bestBidPrice,float64"`
-	BestAskSize  float64   `json:"bestAskSize,float64"`
-	BestAskPrice float64   `json:"bestAskPrice,float64"`
-	TradeId      string    `json:"tradeId"`
+	Symbol       string    `json:"symbol"`
+	BestBidSize  float64   `json:"bestBidSize"`
+	BestBidPrice float64   `json:"bestBidPrice,string"`
+	BestAskSize  float64   `json:"bestAskSize"`
+	BestAskPrice float64   `json:"bestAskPrice,string"`
 	Timestamp    time.Time `json:"-"`
+}
+
+func (ticker *Ticker) GetSymbol() string {
+	return ticker.Symbol
+}
+
+func (ticker *Ticker) GetTime() time.Time {
+	return ticker.Timestamp
+}
+
+func (ticker *Ticker) GetBidPrice() float64 {
+	return ticker.BestBidPrice
+}
+
+func (ticker *Ticker) GetAskPrice() float64 {
+	return ticker.BestAskPrice
+}
+
+func (ticker *Ticker) GetBidSize() float64 {
+	return ticker.BestBidSize
+}
+
+func (ticker *Ticker) GetAskSize() float64 {
+	return ticker.BestAskSize
+}
+
+func (ticker *Ticker) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (ticker *Ticker) UnmarshalJSON(data []byte) error {
