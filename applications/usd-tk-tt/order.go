@@ -230,7 +230,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
-			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
+			//strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -248,7 +248,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
-			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
+			//strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -325,7 +325,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
-			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
+			//strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -343,7 +343,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
-			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
+			//strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
