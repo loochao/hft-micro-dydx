@@ -181,6 +181,15 @@ func BenchmarkParseDepth5StdJson(t *testing.B) {
 	GlobalD = jsonD
 }
 
+func TestParseTicker2(t *testing.T) {
+	msg := []byte(`{"data":{"symbol":"LUNAUSDTM","sequence":1624823570185,"side":"buy","size":2,"price":8,"bestBidSize":74,"bestBidPrice":"7.998","bestAskPrice":"8.001","tradeId":"60e9ce1bb87b91182f0d4ec7","ts":1625935387036251046,"bestAskSize":12},"subject":"ticker","topic":"/contractMarket/ticker:LUNAUSDTM","type":"message"} {"data":{"symbol":"LUNAUSDTM","sequence":1624823570185,"side":"buy","size":2,"price":8,"bestBidSize":74,"bestBidPrice":"7.998","bestAskPrice":"8.001","tradeId":"60e9ce1bb87b91182f0d4ec7","ts":1625935387036251046,"bestAskSize":12},"subject":"ticker","topic":"/contractMarket/ticker:LUNAUSDTM","type":"message"}`)
+	ticker := Ticker{}
+	err := ParseTicker(msg, &ticker)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestParseTicker(t *testing.T) {
 	ticker := Ticker{}
 	jTicker := TickerData{}
