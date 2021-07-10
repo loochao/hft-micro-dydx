@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
@@ -21,11 +22,11 @@ func (strat *XYStrategy) updateSpread() {
 	}
 
 	if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
+		logger.Debugf("%v", strat.adjustedAgeDiff)
 		strat.yTickerExpireCount++
-		//logger.Debugf("%s x expire y %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
 		return
 	} else if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
-		//logger.Debugf("%s y expire x %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
+		logger.Debugf("%v", strat.adjustedAgeDiff)
 		strat.xTickerExpireCount++
 		return
 	}
