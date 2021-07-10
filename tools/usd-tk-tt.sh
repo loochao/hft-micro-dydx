@@ -24,6 +24,5 @@ rsync -avx --progress "./dist/usd-tk-tt.amd64.$dt" hk05:/usr/local/bin/
 echo "arm1"
 rsync -avx --progress "./dist/usd-tk-tt.arm64.$dt" arm1:/usr/local/bin/
 
-
-
-
+echo "vcarm02"
+rsync -avx --progress "./dist/usd-tk-tt.arm64.$dt" vcarm02:/usr/local/bin/
