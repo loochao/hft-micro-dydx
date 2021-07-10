@@ -678,7 +678,8 @@ func (k *KucoinUsdtFuture) submitOrder(ctx context.Context, param common.NewOrde
 	} else {
 		newOrderParam.Type = OrderTypeLimit
 	}
-	if param.TimeInForce == common.OrderTimeInForceIOC {
+	if param.TimeInForce == common.OrderTimeInForceIOC ||
+		param.TimeInForce == common.OrderTimeInForceFOK {
 		newOrderParam.TimeInForce = OrderTimeInForceIOC
 	}
 	newOrderParam.PostOnly = param.PostOnly
