@@ -906,6 +906,22 @@ type Depth5 struct {
 	Asks         [5][2]float64 `json:"a,omitempty"`
 }
 
+func (depth *Depth5) GetBidPrice() float64 {
+	return depth.Bids[0][0]
+}
+
+func (depth *Depth5) GetAskPrice() float64 {
+	return depth.Asks[0][0]
+}
+
+func (depth *Depth5) GetBidSize() float64 {
+	return depth.Bids[0][1]
+}
+
+func (depth *Depth5) GetAskSize() float64 {
+	return depth.Asks[0][1]
+}
+
 func (depth *Depth5) GetExchange() common.ExchangeID {
 	return ExchangeID
 }

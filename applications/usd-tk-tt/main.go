@@ -90,6 +90,12 @@ func main() {
 	case "kucoinUsdtFuture":
 		xExchange = &kcut.KucoinUsdtFuture{}
 		break
+	case "kucoinUsdtFutureWithMergedTicker":
+		xExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
+		break
+	case "binanceUsdtFutureWidthMergedTicker":
+		xExchange = &bnuf.BinanceUsdtFutureWidthMergedTicker{}
+		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -105,7 +111,13 @@ func main() {
 		yExchange = &okut.OkexUsdtSpot{}
 		break
 	case "kucoinUsdtFuture":
-		xExchange = &kcut.KucoinUsdtFuture{}
+		yExchange = &kcut.KucoinUsdtFuture{}
+		break
+	case "kucoinUsdtFutureWithMergedTicker":
+		yExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
+		break
+	case "binanceUsdtFutureWidthMergedTicker":
+		yExchange = &bnuf.BinanceUsdtFutureWidthMergedTicker{}
 		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)

@@ -735,3 +735,52 @@ type KucoinUsdtFutureWithDepth5 struct {
 	KucoinUsdtFuture
 }
 
+type KucoinUsdtFutureWithMergedTicker struct {
+	KucoinUsdtFuture
+}
+
+func (k *KucoinUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+	logger.Debugf("START StreamTicker")
+	defer logger.Debugf("STOP StreamTicker")
+	defer k.Stop()
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+	k.mu.Lock()
+	proxy := k.settings.Proxy
+	k.mu.Unlock()
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			defer k.Stop()
+			ws1 := NewTickerWS(ctx, k.api, proxy, channels)
+			ws2 := NewDepth5TickerWS(ctx, k.api, proxy, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws1.Done():
+					return
+				case <-ws2.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-k.done:
+			return
+		}
+	}
+}

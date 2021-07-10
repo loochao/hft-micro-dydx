@@ -22,7 +22,6 @@ type BinanceUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
-
 func (bn *BinanceUsdtFuture) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
@@ -1006,11 +1005,53 @@ type BinanceUsdtFutureWidthDepth5 struct {
 	BinanceUsdtFuture
 }
 
-
-func (b BinanceUsdtFutureWidthDepth5) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
-	panic("implement me")
+type BinanceUsdtFutureWidthMergedTicker struct {
+	BinanceUsdtFuture
 }
+func (bn *BinanceUsdtFutureWidthMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+	logger.Debugf("START StreamDepth")
+	defer logger.Debugf("STOP StreamDepth")
+	defer bn.Stop()
 
-func (b BinanceUsdtFutureWidthDepth5) StartSideLoop() {
-	panic("implement me")
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+
+	bn.mu.Lock()
+	proxy := bn.settings.Proxy
+	bn.mu.Unlock()
+
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			ws1 := NewBookTickerWS(ctx, proxy, channels)
+			ws2 := NewDepth5TickerWS(ctx, proxy, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws1.Done():
+					return
+				case <-ws2.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-bn.done:
+			return
+		}
+	}
 }
