@@ -266,7 +266,7 @@ func (strat *XYStrategy) updateXPosition() {
 			Side:        common.OrderSideBuy,
 			Type:        common.OrderTypeLimit,
 			Price:       strat.price,
-			TimeInForce: common.OrderTimeInForceGTC,
+			TimeInForce: common.OrderTimeInForceFOK,
 			Size:        strat.size,
 			PostOnly:    false,
 			ReduceOnly:  false,
