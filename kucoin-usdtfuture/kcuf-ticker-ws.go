@@ -297,7 +297,7 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 		}
 	}()
 
-	symbolTimeout := time.Minute*5
+	symbolTimeout := time.Minute * 5
 	symbolCheckInterval := time.Second
 	pingTimer := time.NewTimer(time.Second)
 	symbolCheckTimer := time.NewTimer(time.Second)
@@ -397,13 +397,16 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 		pool[i] = &Ticker{}
 	}
 	var ticker *Ticker
+	var msg []byte
+	var parseTimer = time.NewTimer(time.Hour * 9999)
+	defer parseTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case msg := <-inputCh:
+		case <-parseTimer.C:
 			index++
 			if index == 4 {
 				index = 0
@@ -433,6 +436,10 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+			break
+		case msg = <-inputCh:
+			parseTimer.Reset(time.Millisecond)
+			break
 		}
 	}
 }

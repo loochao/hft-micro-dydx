@@ -278,13 +278,16 @@ func (w *Depth5BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, 
 	for i := 0; i < 4; i++ {
 		pool[i] = &Depth5{}
 	}
+	var msg []byte
+	var parseTimer = time.NewTimer(time.Hour * 9999)
+	defer parseTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case msg := <-inputCh:
+		case <-parseTimer.C:
 			index++
 			if index == 4 {
 				index = 0
@@ -303,6 +306,10 @@ func (w *Depth5BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, 
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+			break
+		case msg = <-inputCh:
+			parseTimer.Reset(time.Millisecond)
+			break
 		}
 	}
 }

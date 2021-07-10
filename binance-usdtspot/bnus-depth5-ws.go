@@ -278,13 +278,14 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	for i := 0; i < 4; i++ {
 		pool[i] = &Depth5{}
 	}
+	var msg []byte
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case msg := <-inputCh:
+		case msg = <-inputCh:
 			index++
 			if index == 4 {
 				index = 0

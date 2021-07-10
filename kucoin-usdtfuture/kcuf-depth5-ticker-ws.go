@@ -267,7 +267,7 @@ func (w *Depth5TickerWS) mainLoop(
 			go w.readLoop(conn, channels)
 			go w.writeLoop(internalCtx, conn)
 			go w.heartbeatLoop(internalCtx, conn, symbols, time.Millisecond*time.Duration(connectToken.InstanceServers[0].PingInterval))
-			reconnectTimer.Reset(time.Hour*9999)
+			reconnectTimer.Reset(time.Hour * 9999)
 		}
 	}
 }
@@ -386,13 +386,16 @@ func (w *Depth5TickerWS) dataHandleLoop(ctx context.Context, symbol string, inpu
 		pool[i] = &Depth5{}
 	}
 	var depth5 *Depth5
+	var msg []byte
+	var parseTimer = time.NewTimer(time.Hour * 9999)
+	defer parseTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case msg := <-inputCh:
+		case <-parseTimer.C:
 			index++
 			if index == 4 {
 				index = 0
@@ -419,6 +422,10 @@ func (w *Depth5TickerWS) dataHandleLoop(ctx context.Context, symbol string, inpu
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+			break
+		case msg = <-inputCh:
+			parseTimer.Reset(time.Millisecond)
+			break
 		}
 	}
 }
