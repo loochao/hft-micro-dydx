@@ -450,7 +450,7 @@ func NewDepth5TickerWS(
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[symbol] = make(chan []byte, 128)
+		messageChs[symbol] = make(chan []byte, 64)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[symbol], ch)
 	}
 	go ws.mainLoop(ctx, api, proxy, messageChs)
