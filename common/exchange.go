@@ -1,6 +1,6 @@
 package common
 
-type ExchangeID int
+type ExchangeID uint8
 
 const (
 	UnknownExchange ExchangeID = iota

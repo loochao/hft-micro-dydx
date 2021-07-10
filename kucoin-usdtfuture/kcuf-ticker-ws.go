@@ -10,7 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -19,8 +19,7 @@ type TickerWS struct {
 	done        chan interface{}
 	reconnectCh chan interface{}
 	symbolCh    chan string
-	stopped     bool
-	mu          sync.Mutex
+	stopped     int32
 }
 
 func (w *TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
@@ -74,11 +73,10 @@ func (w *TickerWS) readLoop(
 	defer func() {
 		logger.Debugf("EXIT readLoop")
 	}()
-	//logSilentTime := time.Now()
-	//var symbol string
-	//var ch chan []byte
-	//var ok bool
-	//var msgLen int
+	logSilentTime := time.Now()
+	var symbol string
+	var ch chan []byte
+	var ok bool
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -98,38 +96,44 @@ func (w *TickerWS) readLoop(
 			go w.restart()
 			return
 		}
-		logger.Debugf("%s %d", msg, len(msg))
-		//{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,
-		//msgLen = len(msg)
-		//if msgLen > 128 {
-		//	if msg[msgLen-28] == ':' {
-		//		symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
-		//	} else if msg[msgLen-29] == ':' {
-		//		symbol = common.UnsafeBytesToString(msg[msgLen-28 : msgLen-19])
-		//	} else if msg[msgLen-30] == ':' {
-		//		symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
-		//	} else if msg[msgLen-31] == ':' {
-		//		symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
-		//	} else {
-		//		logger.Debugf("OTHER MSG %s", msg)
-		//		continue
-		//	}
-		//	if ch, ok = channels[symbol]; ok {
-		//		select {
-		//		case ch <- msg:
-		//		default:
-		//			if time.Now().Sub(logSilentTime) > 0 {
-		//				logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
-		//				logSilentTime = time.Now().Add(time.Minute)
-		//			}
-		//		}
-		//	}
-		//} else {
-		//	//{"id":"/contract/position:BNBUSDTM","type":"ack"}
-		//	if len(msg) > 3 && msg[2] == 'i' && msg[len(msg)-3] == 'k' {
-		//		logger.Debugf("%s", msg)
-		//	}
-		//}
+		//{"data":{"symbol":"XBTUSDTM","sequence":1624824090150,"side":"sell","size":2,"price":33590,"bestBidSize":47,"bestBidPrice":"33590.0","bestAskPrice":"33591.0","tradeId":"60e92c8c3c7feb289d2ab154","ts":1625894028299209614,"bestAskSize":463},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"} 317
+		if msg[2] == 'd' {
+			if msg[27] == '"' {
+				symbol = common.UnsafeBytesToString(msg[19:27])
+			} else if msg[28] == '"' {
+				symbol = common.UnsafeBytesToString(msg[19:28])
+			} else if msg[29] == '"' {
+				symbol = common.UnsafeBytesToString(msg[19:29])
+			} else if msg[30] == '"' {
+				symbol = common.UnsafeBytesToString(msg[19:30])
+			} else if msg[31] == '"' {
+				symbol = common.UnsafeBytesToString(msg[19:31])
+			} else {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logSilentTime = time.Now().Add(time.Minute)
+					logger.Debugf("OTHER MSG %s", msg)
+				}
+				continue
+			}
+		} else {
+			if time.Now().Sub(logSilentTime) > 0 {
+				logSilentTime = time.Now().Add(time.Minute)
+				logger.Debugf("OTHER MSG %s", msg)
+			}
+			continue
+		}
+
+		if ch, ok = channels[symbol]; ok {
+			select {
+			case ch <- msg:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
+		}
+
 	}
 }
 
@@ -203,7 +207,6 @@ func (w *TickerWS) mainLoop(
 ) {
 
 	logger.Debugf("START mainLoop")
-
 	symbols := make([]string, 0)
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
@@ -230,12 +233,19 @@ func (w *TickerWS) mainLoop(
 				internalCancel = nil
 			}
 			return
+		case <-w.done:
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
+			return
 		case <-w.reconnectCh:
 			if internalCancel != nil {
 				internalCancel()
 				internalCancel = nil
 			}
 			reconnectTimer.Reset(time.Second * 15)
+			break
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
 				internalCancel()
@@ -356,10 +366,7 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 }
 
 func (w *TickerWS) Stop() {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	if !w.stopped {
-		w.stopped = true
+	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
@@ -432,9 +439,9 @@ func NewTickerWS(
 	ws := TickerWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		writeCh:     make(chan interface{}, 4),
-		symbolCh:    make(chan string, 4),
-		stopped:     false,
+		writeCh:     make(chan interface{}, 4*len(channels)),
+		symbolCh:    make(chan string, 4*len(channels)),
+		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
