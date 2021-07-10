@@ -47,7 +47,6 @@ type Config struct {
 
 	SpreadTimeToEnter    time.Duration `yaml:"spreadTimeToEnter"`
 	SpreadLookback       time.Duration `yaml:"spreadLookback"`
-	SpreadMinTickerCount int           `yaml:"spreadMinTickerCount"`
 	BatchSize            int           `yaml:"batchSize"`
 
 	StartValue        float64            `yaml:"startValue"`
