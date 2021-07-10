@@ -192,7 +192,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.saveTimer.Stop()
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
-	strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
+	strat.xOrderSilentTime = time.Now().Add(time.Minute*5)
 	for {
 		select {
 		case <-ctx.Done():
