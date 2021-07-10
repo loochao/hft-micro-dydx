@@ -22,11 +22,11 @@ func (strat *XYStrategy) updateSpread() {
 	}
 
 	if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
-		logger.Debugf("%v", strat.adjustedAgeDiff)
+		//logger.Debugf("%v", strat.adjustedAgeDiff)
 		strat.yTickerExpireCount++
 		return
 	} else if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
-		logger.Debugf("%v", strat.adjustedAgeDiff)
+		//logger.Debugf("%v", strat.adjustedAgeDiff)
 		strat.xTickerExpireCount++
 		return
 	}
