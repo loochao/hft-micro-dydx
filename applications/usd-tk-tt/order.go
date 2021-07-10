@@ -27,6 +27,10 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xyFundingRate == nil ||
 		strat.fundingRateSettleSilent ||
 		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter {
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+			logger.Debugf("time.Now().Sub(strat.spread.EventTime) %v", time.Now().Sub(strat.spread.EventTime))
+		}
 		return
 	}
 
@@ -51,10 +55,6 @@ func (strat *XYStrategy) updateXPosition() {
 	}
 
 	if time.Now().Sub(strat.xOrderSilentTime) < 0 {
-		return
-	}
-
-	if time.Now().Sub(strat.xCancelSilentTime) < 0 {
 		return
 	}
 
@@ -213,7 +213,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.ShortMedianEnter > strat.shortTop &&
 		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
 		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
-		strat.xSize >= strat.xStepSize*strat.xMultiplier {
+		strat.xSize > -strat.xStepSize*strat.xMultiplier {
 
 		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
@@ -308,7 +308,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.LongMedianEnter < strat.longBot &&
 		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
 		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
-		strat.xSize <= -strat.xStepSize*strat.xMultiplier {
+		strat.xSize < strat.xStepSize*strat.xMultiplier {
 
 		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
