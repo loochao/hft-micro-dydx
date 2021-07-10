@@ -328,6 +328,76 @@ func ParseTrade(msg []byte) (*Trade, error) {
 	return &trade, nil
 }
 
+func ParseTicker(msg []byte, bookTicker *BookTicker) (err error) {
+	//{"stream":"scusdt@bookTicker","data":{"u":358652006,"s":"SCUSDT","b":"0.01285500","B":"21000.00000000","a":"0.01287800","A":"21000.00000000"}}
+	bookTicker.ParseTime = time.Now()
+	offset := 50
+	collectStart := offset
+	msgLen := len(msg)
+	currentKey := common.JsonKeyUnknown
+	for offset < msgLen-1 {
+		switch currentKey {
+		case common.JsonKeySymbol:
+			if msg[offset] == '"' {
+				bookTicker.Symbol = common.UnsafeBytesToString(msg[collectStart:offset])
+				currentKey = common.JsonKeyBidPrice
+				offset += 7
+				collectStart = offset
+			}
+			break
+		case common.JsonKeyBidPrice:
+			if msg[offset] == '"' {
+				bookTicker.BestBidPrice, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyBidSize
+				offset += 7
+				collectStart = offset
+			}
+			break
+		case common.JsonKeyBidSize:
+			if msg[offset] == '"' {
+				bookTicker.BestBidQty, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyAskPrice
+				offset += 7
+				collectStart = offset
+			}
+			break
+		case common.JsonKeyAskPrice:
+			if msg[offset] == '"' {
+				bookTicker.BestAskPrice, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyAskSize
+				offset += 7
+				collectStart = offset
+			}
+			break
+		case common.JsonKeyAskSize:
+			if msg[offset] == '"' {
+				bookTicker.BestAskQty, err = common.ParseDecimal(msg[collectStart:offset])
+				return
+			}
+			break
+		case common.JsonKeyUnknown:
+			if msg[offset] == 's' && msg[offset+1] == '"' {
+				currentKey = common.JsonKeySymbol
+				offset += 4
+				collectStart = offset
+				offset += 4
+			}
+			break
+		}
+		offset += 1
+	}
+	return fmt.Errorf("bad msg, missing fields %s", msg)
+}
+
 var Depth5Lines = `{"stream":"btcusdt@depth5@100ms","data":{"lastUpdateId":11719214114,"bids":[["40069.98000000","0.00002300"],["40067.04000000","0.06000000"],["40067.03000000","0.03743200"],["40066.08000000","0.13019700"],["40066.07000000","0.24799400"]],"asks":[["40069.99000000","1.32492400"],["40072.90000000","0.00099900"],["40073.10000000","0.20501400"],["40073.11000000","0.31000000"],["40073.29000000","0.06158400"]]}}
 {"stream":"ethusdt@depth5@100ms","data":{"lastUpdateId":8641847242,"bids":[["2548.07000000","3.57932000"],["2548.03000000","4.00000000"],["2548.02000000","0.08351000"],["2548.00000000","0.00589000"],["2547.88000000","1.00000000"]],"asks":[["2548.09000000","0.00469000"],["2548.18000000","2.77814000"],["2548.20000000","4.00000000"],["2548.21000000","2.14000000"],["2548.22000000","1.43557000"]]}}
 {"stream":"flmusdt@depth5@100ms","data":{"lastUpdateId":306654321,"bids":[["0.54250000","645.16000000"],["0.54200000","92.25000000"],["0.54190000","2131.66000000"],["0.54120000","615.75000000"],["0.54110000","477.34000000"]],"asks":[["0.54290000","5590.00000000"],["0.54300000","755.83000000"],["0.54310000","2227.18000000"],["0.54330000","6500.00000000"],["0.54340000","1286.20000000"]]}}

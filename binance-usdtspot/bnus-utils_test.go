@@ -107,3 +107,22 @@ func TestParseDepth5(t *testing.T) {
 		}
 	}
 }
+
+func TestParseTicker(t *testing.T) {
+	msg := []byte(`{"stream":"scusdt@bookTicker","data":{"u":358652006,"s":"SCUSDT","b":"0.01285500","B":"21000.00000000","a":"0.01287800","A":"21000.00000000"}}`)
+	ticker := BookTicker{}
+	tickerStream := BookTickerStream{}
+	err := ParseTicker(msg, &ticker)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = json.Unmarshal(msg, &tickerStream)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, tickerStream.Data.Symbol, ticker.Symbol)
+	assert.Equal(t, tickerStream.Data.BestBidPrice, ticker.BestBidPrice)
+	assert.Equal(t, tickerStream.Data.BestAskPrice, ticker.BestAskPrice)
+	assert.Equal(t, tickerStream.Data.BestBidQty, ticker.BestBidQty)
+	assert.Equal(t, tickerStream.Data.BestAskQty, ticker.BestAskQty)
+}

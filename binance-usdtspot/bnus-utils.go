@@ -22,7 +22,7 @@ func ParseDepth20(bytes []byte, depth20 *Depth20) (err error) {
 			if bytes[offset] == '"' {
 				depth20.Bids[counter/2][counter%2], err = common.ParseDecimal(bytes[collectStart:offset])
 				if err != nil {
-					return  fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 40 {
@@ -42,7 +42,7 @@ func ParseDepth20(bytes []byte, depth20 *Depth20) (err error) {
 			if bytes[offset] == '"' {
 				depth20.Asks[counter/2][counter%2], err = common.ParseDecimal(bytes[collectStart:offset])
 				if err != nil {
-					return  fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 40 {
@@ -62,7 +62,7 @@ func ParseDepth20(bytes []byte, depth20 *Depth20) (err error) {
 			if bytes[offset] == ',' {
 				depth20.LastUpdateId, err = common.ParseInt(bytes[collectStart:offset])
 				if err != nil {
-					return  fmt.Errorf("JsonKeyLastUpdateId error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return fmt.Errorf("JsonKeyLastUpdateId error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				currentKey = common.JsonKeyUnknown
 				offset += 2
@@ -126,21 +126,21 @@ func ParseDepth20(bytes []byte, depth20 *Depth20) (err error) {
 	return nil
 }
 
-func ParseDepth5(bytes []byte, depth5 *Depth5) (err error) {
+func ParseDepth5(msg []byte, depth5 *Depth5) (err error) {
 	//{"stream":"flmusdt@depth5@100ms","data":{"lastUpdateId":165284515,"bids":[["0.48560000","536.0500000"],["0.48550000","480.00000000"],["0.4855000","14257.67000000"],["0.48510000","1056.25000000"],["0.48500000","1894.3500000"],["0.48480000","2145.67000000"],["0.48460000","2196.59000000"],["0.48330000","3000.00000000"],["0.4835000","2531.26000000"],["0.48310000","21.18000000"],["0.48300000","4292.54000000"],["0.48270000","5042.00000000"],["0.48240000","5051.00000000"],["0.48230000","24.83000000"],["0.4825000","457.11000000"],["0.4850000","4142.1500000"],["0.48160000","31.15000000"],["0.48150000","71.96000000"],["0.48130000","1284.94000000"],["0.48110000","1098.85000000"]],"asks":[["0.48630000","5601.00000000"],["0.48650000","990.00000000"],["0.48670000","7816.00000000"],["0.48680000","7914.96000000"],["0.48690000","963.00000000"],["0.4875000","3640.00000000"],["0.48730000","814.24000000"],["0.48780000","3560.00000000"],["0.48800000","1029.00000000"],["0.48880000","13221.24000000"],["0.48940000","3000.00000000"],["0.48980000","62.75000000"],["0.49000000","1482.94000000"],["0.49040000","516.34000000"],["0.49110000","46.50000000"],["0.4915000","27.10000000"],["0.49130000","31.03000000"],["0.49150000","66.27000000"],["0.49160000","1291.65000000"],["0.49190000","159.76000000"]]}}
 	depth5.ParseTime = time.Now()
 	offset := 2
 	collectStart := offset
-	bytesLen := len(bytes)
+	bytesLen := len(msg)
 	currentKey := common.JsonKeyUnknown
 	counter := 0
 	for offset < bytesLen-4 {
 		switch currentKey {
 		case common.JsonKeyBids:
-			if bytes[offset] == '"' {
-				depth5.Bids[counter/2][counter%2], err = common.ParseDecimal(bytes[collectStart:offset])
+			if msg[offset] == '"' {
+				depth5.Bids[counter/2][counter%2], err = common.ParseDecimal(msg[collectStart:offset])
 				if err != nil {
-					return fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 10 {
@@ -157,10 +157,10 @@ func ParseDepth5(bytes []byte, depth5 *Depth5) (err error) {
 			}
 			break
 		case common.JsonKeyAsks:
-			if bytes[offset] == '"' {
-				depth5.Asks[counter/2][counter%2], err = common.ParseDecimal(bytes[collectStart:offset])
+			if msg[offset] == '"' {
+				depth5.Asks[counter/2][counter%2], err = common.ParseDecimal(msg[collectStart:offset])
 				if err != nil {
-					return fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
 				}
 				counter += 1
 				if counter >= 10 {
@@ -177,10 +177,10 @@ func ParseDepth5(bytes []byte, depth5 *Depth5) (err error) {
 			}
 			break
 		case common.JsonKeyLastUpdateId:
-			if bytes[offset] == ',' {
-				depth5.LastUpdateId, err = common.ParseInt(bytes[collectStart:offset])
+			if msg[offset] == ',' {
+				depth5.LastUpdateId, err = common.ParseInt(msg[collectStart:offset])
 				if err != nil {
-					return fmt.Errorf("JsonKeyLastUpdateId error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return fmt.Errorf("JsonKeyLastUpdateId error %v mainLoop %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
 				}
 				currentKey = common.JsonKeyUnknown
 				offset += 2
@@ -188,8 +188,8 @@ func ParseDepth5(bytes []byte, depth5 *Depth5) (err error) {
 			}
 			break
 		case common.JsonKeyStream:
-			if bytes[offset] == '"' {
-				s := strings.Split(string(bytes[collectStart:offset]), "@")
+			if msg[offset] == '"' {
+				s := strings.Split(string(msg[collectStart:offset]), "@")
 				depth5.Symbol = strings.ToUpper(s[0])
 				currentKey = common.JsonKeyUnknown
 				offset += 3
@@ -197,41 +197,41 @@ func ParseDepth5(bytes []byte, depth5 *Depth5) (err error) {
 			}
 			break
 		case common.JsonKeyUnknown:
-			if bytes[offset] == 'l' && offset+11 < bytesLen && bytes[offset+11] == 'd' {
+			if msg[offset] == 'l' && offset+11 < bytesLen && msg[offset+11] == 'd' {
 				currentKey = common.JsonKeyLastUpdateId
 				offset += 14
 				collectStart = offset
 				continue
-			} else if bytes[offset] == 'b' &&
-				bytes[offset-1] == '"' &&
-				bytes[offset+1] == 'i' &&
-				bytes[offset+2] == 'd' &&
-				bytes[offset+3] == 's' &&
-				bytes[offset+4] == '"' {
+			} else if msg[offset] == 'b' &&
+				msg[offset-1] == '"' &&
+				msg[offset+1] == 'i' &&
+				msg[offset+2] == 'd' &&
+				msg[offset+3] == 's' &&
+				msg[offset+4] == '"' {
 				currentKey = common.JsonKeyBids
 				offset += 9
 				collectStart = offset
 				counter = 0
 				continue
-			} else if bytes[offset] == 'a' &&
-				bytes[offset-1] == '"' &&
-				bytes[offset+1] == 's' &&
-				bytes[offset+2] == 'k' &&
-				bytes[offset+3] == 's' &&
-				bytes[offset+4] == '"' {
+			} else if msg[offset] == 'a' &&
+				msg[offset-1] == '"' &&
+				msg[offset+1] == 's' &&
+				msg[offset+2] == 'k' &&
+				msg[offset+3] == 's' &&
+				msg[offset+4] == '"' {
 				currentKey = common.JsonKeyAsks
 				offset += 9
 				collectStart = offset
 				counter = 0
 				continue
-			} else if bytes[offset] == 's' && offset < bytesLen-6 &&
-				bytes[offset-1] == '"' &&
-				bytes[offset+1] == 't' &&
-				bytes[offset+2] == 'r' &&
-				bytes[offset+3] == 'e' &&
-				bytes[offset+4] == 'a' &&
-				bytes[offset+5] == 'm' &&
-				bytes[offset+6] == '"' {
+			} else if msg[offset] == 's' && offset < bytesLen-6 &&
+				msg[offset-1] == '"' &&
+				msg[offset+1] == 't' &&
+				msg[offset+2] == 'r' &&
+				msg[offset+3] == 'e' &&
+				msg[offset+4] == 'a' &&
+				msg[offset+5] == 'm' &&
+				msg[offset+6] == '"' {
 				currentKey = common.JsonKeyStream
 				offset += 9
 				collectStart = offset
@@ -326,6 +326,76 @@ func ParseTrade(msg []byte) (*Trade, error) {
 		offset += 1
 	}
 	return &trade, nil
+}
+
+func ParseTicker(msg []byte, bookTicker *BookTicker) (err error) {
+	//{"stream":"scusdt@bookTicker","data":{"u":358652006,"s":"SCUSDT","b":"0.01285500","B":"21000.00000000","a":"0.01287800","A":"21000.00000000"}}
+	bookTicker.ParseTime = time.Now()
+	offset := 50
+	collectStart := offset
+	msgLen := len(msg)
+	currentKey := common.JsonKeyUnknown
+	for offset < msgLen-1 {
+		switch currentKey {
+		case common.JsonKeySymbol:
+			if msg[offset] == '"' {
+				bookTicker.Symbol = common.UnsafeBytesToString(msg[collectStart:offset])
+				currentKey = common.JsonKeyBidPrice
+				offset += 7
+				collectStart = offset
+			}
+			break
+		case common.JsonKeyBidPrice:
+			if msg[offset] == '"' {
+				bookTicker.BestBidPrice, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyBidSize
+				offset += 7
+				collectStart = offset
+			}
+			break
+		case common.JsonKeyBidSize:
+			if msg[offset] == '"' {
+				bookTicker.BestBidQty, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyAskPrice
+				offset += 7
+				collectStart = offset
+			}
+			break
+		case common.JsonKeyAskPrice:
+			if msg[offset] == '"' {
+				bookTicker.BestAskPrice, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyAskSize
+				offset += 7
+				collectStart = offset
+			}
+			break
+		case common.JsonKeyAskSize:
+			if msg[offset] == '"' {
+				bookTicker.BestAskQty, err = common.ParseDecimal(msg[collectStart:offset])
+				return
+			}
+			break
+		case common.JsonKeyUnknown:
+			if msg[offset] == 's' && msg[offset+1] == '"' {
+				currentKey = common.JsonKeySymbol
+				offset += 4
+				collectStart = offset
+				offset += 4
+			}
+			break
+		}
+		offset += 1
+	}
+	return fmt.Errorf("bad msg, missing fields %s", msg)
 }
 
 var Depth5Lines = `{"stream":"btcusdt@depth5@100ms","data":{"lastUpdateId":11719214114,"bids":[["40069.98000000","0.00002300"],["40067.04000000","0.06000000"],["40067.03000000","0.03743200"],["40066.08000000","0.13019700"],["40066.07000000","0.24799400"]],"asks":[["40069.99000000","1.32492400"],["40072.90000000","0.00099900"],["40073.10000000","0.20501400"],["40073.11000000","0.31000000"],["40073.29000000","0.06158400"]]}}

@@ -21,6 +21,14 @@ type BinanceUsdtSpot struct {
 	settings common.ExchangeSettings
 }
 
+func (bn *BinanceUsdtSpot) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
+}
+
+func (bn *BinanceUsdtSpot) StartSideLoop() {
+	panic("implement me")
+}
+
 func (bn *BinanceUsdtSpot) IsSpot() bool {
 	return true
 }
@@ -399,7 +407,49 @@ func (bn *BinanceUsdtSpot) StreamTrade(ctx context.Context, channels map[string]
 }
 
 func (bn *BinanceUsdtSpot) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
-	panic("implement me")
+	logger.Debugf("START StreamTicker")
+	defer logger.Debugf("STOP StreamTicker")
+	defer bn.Stop()
+
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+
+	bn.mu.Lock()
+	proxy := bn.settings.Proxy
+	bn.mu.Unlock()
+
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			defer bn.Stop()
+			ws := NewBookTickerWS(ctx, proxy, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-bn.done:
+			return
+		}
+	}
 }
 
 func (bn *BinanceUsdtSpot) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
@@ -784,6 +834,60 @@ func (bn *BinanceUsdtSpotWithDepth20) StreamDepth(ctx context.Context, channels 
 				case <-ctx.Done():
 					return
 				case <-ws.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-bn.done:
+			return
+		}
+	}
+}
+
+
+type BinanceUsdtSpotWithMergedTicker struct {
+	BinanceUsdtSpot
+}
+
+func (bn *BinanceUsdtSpotWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+	logger.Debugf("START StreamTicker")
+	defer logger.Debugf("STOP StreamTicker")
+	defer bn.Stop()
+
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+
+	bn.mu.Lock()
+	proxy := bn.settings.Proxy
+	bn.mu.Unlock()
+
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			defer bn.Stop()
+			ws1 := NewBookTickerWS(ctx, proxy, channels)
+			ws2 := NewDepth5BookTickerWS(ctx, proxy, channels)
+			for {
+				select {
+				case <-ws1.Done():
+					return
+				case <-ws2.Done():
+					return
+				case <-ctx.Done():
 					return
 				}
 			}

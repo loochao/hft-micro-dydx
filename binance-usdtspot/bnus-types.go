@@ -533,14 +533,30 @@ type Depth5 struct {
 	ParseTime    time.Time     `json:"-"`
 }
 
-func (depth Depth5) GetExchange() common.ExchangeID {
+func (depth *Depth5) GetBidPrice() float64 {
+	return depth.Bids[0][0]
+}
+
+func (depth *Depth5) GetAskPrice() float64 {
+	return depth.Asks[0][0]
+}
+
+func (depth *Depth5) GetBidSize() float64 {
+	return depth.Bids[0][1]
+}
+
+func (depth *Depth5) GetAskSize() float64 {
+	return depth.Asks[0][1]
+}
+
+func (depth *Depth5) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (depth Depth5) GetBids() common.Bids { return depth.Bids[:] }
-func (depth Depth5) GetAsks() common.Asks { return depth.Asks[:] }
-func (depth Depth5) GetSymbol() string    { return depth.Symbol }
-func (depth Depth5) GetTime() time.Time   { return depth.ParseTime }
+func (depth *Depth5) GetBids() common.Bids { return depth.Bids[:] }
+func (depth *Depth5) GetAsks() common.Asks { return depth.Asks[:] }
+func (depth *Depth5) GetSymbol() string    { return depth.Symbol }
+func (depth *Depth5) GetTime() time.Time   { return depth.ParseTime }
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	type Alias Depth5
 	aux := &struct {
@@ -657,4 +673,66 @@ func (lk *TickerParam) ToUrlValues() url.Values {
 type Ticker struct {
 	Symbol string  `json:"symbol"`
 	Price  float64 `json:"price,string"`
+}
+
+//{
+//  "u":400900217,     // order book updateId
+//  "s":"BNBUSDT",     // symbol
+//  "b":"25.35190000", // best bid price
+//  "B":"31.21000000", // best bid qty
+//  "a":"25.36520000", // best ask price
+//  "A":"40.66000000"  // best ask qty
+//}
+
+type BookTicker struct {
+	Symbol       string    `json:"s"`
+	BestBidPrice float64   `json:"b,string"`
+	BestBidQty   float64   `json:"B,string"`
+	BestAskPrice float64   `json:"a,string"`
+	BestAskQty   float64   `json:"A,string"`
+	ParseTime    time.Time `json:"-"`
+}
+
+func (bt *BookTicker) GetTime() time.Time {
+	return bt.ParseTime
+}
+
+func (bt *BookTicker) GetBidPrice() float64 {
+	return bt.BestBidPrice
+}
+
+func (bt *BookTicker) GetAskPrice() float64 {
+	return bt.BestAskPrice
+}
+
+func (bt *BookTicker) GetBidSize() float64 {
+	return bt.BestBidQty
+}
+
+func (bt *BookTicker) GetAskSize() float64 {
+	return bt.BestAskQty
+}
+
+func (bt *BookTicker) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (bt *BookTicker) GetSymbol() string {
+	return bt.Symbol
+}
+
+func (bt *BookTicker) UnmarshalJSON(data []byte) error {
+	type Alias BookTicker
+	aux := struct{ *Alias }{Alias: (*Alias)(bt)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	} else {
+		bt.ParseTime = time.Now()
+		return nil
+	}
+}
+
+type BookTickerStream struct {
+	Stream string     `json:"stream"`
+	Data   BookTicker `json:"data"`
 }
