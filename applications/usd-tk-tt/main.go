@@ -341,6 +341,7 @@ func main() {
 	restartTimer := time.NewTimer(xyConfig.RestartInterval)
 	defer restartTimer.Stop()
 
+	lastExternalSaveTime := &time.Time{}
 mainLoop:
 	for {
 		select {
@@ -434,6 +435,7 @@ mainLoop:
 					xyConfig,
 					xCommissionAssetValue, yCommissionAssetValue,
 					xyInternalInfluxWriter, xyExternalInfluxWriter,
+					lastExternalSaveTime,
 				)
 				influxSaveTimer.Reset(
 					time.Now().Truncate(

@@ -18,6 +18,7 @@ func handleSave(
 	xyConfig *Config,
 	xCommissionAssetValue, yCommissionAssetValue *float64,
 	xyInternalInfluxWriter, xyExternalInfluxWriter *common.InfluxWriter,
+	lastExternalSaveTime *time.Time,
 ) {
 	if yCommissionAssetValue == nil || xCommissionAssetValue == nil {
 		return
@@ -82,10 +83,12 @@ func handleSave(
 			}
 
 			fields["spreadTimeDelta"] = st.spread.ParseTime.Sub(st.spread.EventTime).Seconds()
+
 			fields["spreadShortLastEnter"] = st.spread.ShortLastEnter
 			fields["spreadShortLastLeave"] = st.spread.ShortLastLeave
 			fields["spreadShortMedianEnter"] = st.spread.ShortMedianEnter
 			fields["spreadShortMedianLeave"] = st.spread.ShortMedianLeave
+
 			fields["spreadLongLastEnter"] = st.spread.LongLastEnter
 			fields["spreadLongLastLeave"] = st.spread.LongLastLeave
 			fields["spreadLongMedianEnter"] = st.spread.LongMedianEnter
@@ -207,32 +210,33 @@ func handleSave(
 				logger.Debugf("xyInfluxWriter.PushPoint error %v", err)
 			}
 		}
-
-		fields = make(map[string]interface{})
-		fields["netWorth"] = netWorth
-		for name, start := range xyConfig.StartValues {
-			if start > 0 {
-				fields["currentValue_"+strings.ToLower(name)] = netWorth * start
+		if time.Now().Sub(*lastExternalSaveTime) > xyConfig.ExternalInflux.SaveInterval {
+			*lastExternalSaveTime = time.Now()
+			fields = make(map[string]interface{})
+			fields["netWorth"] = netWorth
+			for name, start := range xyConfig.StartValues {
+				if start > 0 {
+					fields["currentValue_"+strings.ToLower(name)] = netWorth * start
+				}
 			}
-		}
-		if len(fields) > 0 {
-			pt, err := client.NewPoint(
-				xyConfig.ExternalInflux.Measurement,
-				map[string]string{
-					"name": *xyConfig.Name,
-				},
-				fields,
-				time.Now().UTC(),
-			)
-			if err != nil {
-				logger.Debugf("client.NewPoint error %v", err)
-			} else {
-				err = xyExternalInfluxWriter.PushPoint(pt)
+			if len(fields) > 0 {
+				pt, err := client.NewPoint(
+					xyConfig.ExternalInflux.Measurement,
+					map[string]string{
+						"name": *xyConfig.Name,
+					},
+					fields,
+					time.Now().UTC(),
+				)
 				if err != nil {
-					logger.Debugf("xyExternalInfluxWriter.PushPoint error %v", err)
+					logger.Debugf("client.NewPoint error %v", err)
+				} else {
+					err = xyExternalInfluxWriter.PushPoint(pt)
+					if err != nil {
+						logger.Debugf("xyExternalInfluxWriter.PushPoint error %v", err)
+					}
 				}
 			}
 		}
-
 	}
 }
