@@ -41,6 +41,7 @@ func startXYStrategy(
 	yBiasInMs := float64(config.TickerYBias / time.Millisecond)
 	minTimeDeltaInMs := float64(config.TickerMinTimeDelta / time.Millisecond)
 	maxTimeDeltaInMs := float64(config.TickerMaxTimeDelta / time.Millisecond)
+	var quantileMiddle *float64
 
 	timedTDigest := stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
 	if config.QuantilePath != "" {
@@ -56,10 +57,12 @@ func startXYStrategy(
 			} else {
 				timedTDigest.Lookback = config.QuantileLookback
 				timedTDigest.SubInterval = config.QuantileSubInterval
+				quantileMiddle = new(float64)
+				*quantileMiddle = timedTDigest.Quantile(0.5)
+				logger.Debugf("%s - %s QUANTILE MIDDLE %f", xSymbol, ySymbol, *quantileMiddle)
 			}
 		}
 	}
-	logger.Debugf("%s - %s QUANTILE MIDDLE %f", xSymbol, ySymbol, timedTDigest.Quantile(0.5))
 
 	strat := XYStrategy{
 		xExchange:               xExchange,
@@ -166,6 +169,7 @@ func startXYStrategy(
 		timedTDigest:            timedTDigest,
 		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
 		quantileLastSampleTime:  time.Time{},
+		quantileMiddle:          quantileMiddle,
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
