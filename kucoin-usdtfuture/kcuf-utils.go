@@ -316,7 +316,7 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 		offset += 1
 	}
 	if counter != 5 {
-		err = fmt.Errorf("bad msg, miss fileds %s", msg)
+		err = fmt.Errorf("bad msg, %d miss fileds %s", counter, msg)
 	}
 	return
 }
