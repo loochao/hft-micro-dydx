@@ -420,8 +420,8 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			logger.Debugf("bad strat.xPosition == nextPos pass same pointer")
 			return
 		}
-		logger.Debugf("%s %v %v %f %f", strat.xSymbol, nextPos.GetEventTime(), strat.xPosition.GetEventTime(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()), strat.xStepSize)
-		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= -time.Minute {
+		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= -time.Second {
+			//logger.Debugf("%s %v %v %f %f", strat.xSymbol, nextPos.GetEventTime(), strat.xPosition.GetEventTime(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()), strat.xStepSize)
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 				strat.yOrderSilentTime = time.Now()
@@ -458,8 +458,8 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 			logger.Debugf("bad strat.yPosition == nextPos pass same pointer")
 			return
 		}
-		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= 0 {
-			if math.Abs(strat.yPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
+		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= -time.Second {
+			if math.Abs(strat.yPosition.GetSize()-nextPos.GetSize()) >= strat.yStepSize {
 				if strat.yTicker != nil {
 					strat.yTimedPositionChange.Insert(time.Now(), math.Abs(strat.yPosition.GetSize()-nextPos.GetSize())*strat.yMidPrice*strat.yMultiplier)
 				}
