@@ -19,6 +19,7 @@ func handleSave(
 	xCommissionAssetValue, yCommissionAssetValue *float64,
 	xyInternalInfluxWriter, xyExternalInfluxWriter *common.InfluxWriter,
 ) {
+	logger.Debugf("handleSave %v %v", yCommissionAssetValue, xCommissionAssetValue)
 	if yCommissionAssetValue == nil || xCommissionAssetValue == nil {
 		return
 	}
