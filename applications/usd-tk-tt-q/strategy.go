@@ -420,7 +420,8 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			logger.Debugf("bad strat.xPosition == nextPos pass same pointer")
 			return
 		}
-		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= 0 {
+		logger.Debugf("%s %v %v %f %f", strat.xSymbol, nextPos.GetEventTime(), strat.xPosition.GetEventTime(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()), strat.xStepSize)
+		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= -time.Minute {
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 				strat.yOrderSilentTime = time.Now()
@@ -434,6 +435,9 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 				}
 			} else {
 				strat.xPosition = nextPos
+				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
+					strat.hedgeYPosition()
+				}
 			}
 		}
 		strat.xPositionUpdateTime = nextPos.GetParseTime()
