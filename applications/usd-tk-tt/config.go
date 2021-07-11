@@ -119,4 +119,7 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	config.XExchange.DryRun = config.DryRun
 	config.YExchange.DryRun = config.DryRun
+	if config.BestSizeFactor == 0 {
+		config.BestSizeFactor = 1.0
+	}
 }
