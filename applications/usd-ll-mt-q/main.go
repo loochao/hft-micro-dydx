@@ -66,7 +66,6 @@ func main() {
 	config.SetDefaultIfNotSet()
 	xyConfig = &config
 
-
 	if xyConfig.CpuProfile != "" {
 		f, err := os.Create(xyConfig.CpuProfile)
 		if err != nil {
@@ -191,6 +190,14 @@ func main() {
 	xyGlobalCtx, xyGlobalCancel = context.WithCancel(context.Background())
 	defer xyGlobalCancel()
 
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-sigs
+		logger.Debugf("catch exit signal %v", sig)
+		xyGlobalCancel()
+	}()
+
 	err = xExchange.Setup(xyGlobalCtx, xyConfig.XExchange)
 	if err != nil {
 		logger.Debugf("xExchange.Setup(xyGlobalCtx, xyConfig.XExchange) error %v", err)
@@ -249,7 +256,6 @@ func main() {
 	xNewOrderErrorChMap := make(map[string]chan common.OrderError)
 	xAccountChMap := make(map[string]chan common.Balance)
 	xSystemStatusChMap := make(map[string]chan common.SystemStatus)
-
 
 	xDepthChMap := make(map[string]chan common.Depth)
 	yDepthChMap := make(map[string]chan common.Depth)
@@ -323,6 +329,12 @@ func main() {
 		}
 	}
 
+	//需要等待一会再stream数据，读取quantile需要时间
+	select {
+	case <-xyGlobalCtx.Done():
+		return
+	case <-time.After(time.Minute):
+	}
 
 	go xExchange.StreamBasic(
 		xyGlobalCtx,
@@ -374,13 +386,6 @@ func main() {
 		yNewOrderErrorChMap,
 	)
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		sig := <-sigs
-		logger.Debugf("catch exit signal %v", sig)
-		xyGlobalCancel()
-	}()
 
 	logger.Debugf("start main loop")
 	restartTimer := time.NewTimer(xyConfig.RestartInterval)
