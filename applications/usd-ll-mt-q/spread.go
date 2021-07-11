@@ -67,10 +67,14 @@ func (strat *XYStrategy) walkSpread() {
 	strat.hedgeYPosition()
 	strat.updateXOrder()
 
-	_ = strat.shortTimedTDigest.Insert(strat.spreadTime, strat.shortLastEnter)
-	_ = strat.longTimedTDigest.Insert(strat.spreadTime, strat.longLastEnter)
-	strat.shortQuantileTop = strat.shortTimedTDigest.Quantile(strat.config.QuantileTop)
-	strat.longQuantileBot = strat.longTimedTDigest.Quantile(strat.config.QuantileBot)
+	if strat.spreadTime.Sub(strat.quantileLastSampleTime) > strat.config.QuantileSampleInterval {
+		strat.quantileLastSampleTime = strat.spreadTime
+		_ = strat.timedTDigest.Insert(strat.spreadTime, (strat.shortLastEnter+strat.longLastEnter)*0.5)
+		if strat.quantileMiddle == nil {
+			strat.quantileMiddle = new(float64)
+		}
+		*strat.quantileMiddle = strat.timedTDigest.Quantile(0.5)
+	}
 }
 
 func (strat *XYStrategy) walkXDepth() {

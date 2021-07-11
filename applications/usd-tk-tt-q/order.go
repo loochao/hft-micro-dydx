@@ -85,7 +85,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.ShortLastLeave < strat.spread.ShortMedianLeave &&
 		*strat.xyFundingRate < strat.config.MinimalKeepFundingRate &&
 		strat.xSize >= strat.xStepSize*strat.xMultiplier &&
-		strat.xSize*strat.xTicker.GetBidPrice() > strat.xMinNotional {
+		strat.xSize*strat.xTicker.GetBidPrice()*strat.xMultiplier > 1.2*strat.xMinNotional {
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), math.Min(strat.xAbsValue, strat.yAbsValue))
 		if *strat.xyFundingRate > strat.config.MinimalKeepFundingRate*0.5 {
 			strat.enterValue = math.Min(math.Max(2*strat.enterStep, strat.xAbsValue*0.25), math.Min(strat.xAbsValue, strat.yAbsValue))

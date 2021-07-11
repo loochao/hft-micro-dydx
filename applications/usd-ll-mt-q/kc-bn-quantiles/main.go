@@ -116,7 +116,7 @@ func main() {
 	quantileBot := 0.05
 	shortQuantileTop := 0.0
 	longQuantileBot := 0.0
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-q-mt/configs/kc-quantiles"
+	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-ll-mt-q/configs/kc-quantiles"
 
 	for ySymbol, xSymbol := range symbolsMap {
 		if _, err := os.Stat(path.Join(quantilePath, xSymbol+"-"+ySymbol+"-long-td.json")); err == nil {
@@ -205,7 +205,7 @@ func main() {
 						fields["shortLastEnter"] = shortLastEnter
 						fields["longLastEnter"] = longLastEnter
 						pt, err := client.NewPoint(
-							"usd-q-mt-kc-bn",
+							"usd-ll-mt-q-kc-bn",
 							map[string]string{
 								"xSymbol": xSymbol,
 							},

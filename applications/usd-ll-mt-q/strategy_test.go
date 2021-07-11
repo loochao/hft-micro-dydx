@@ -7,7 +7,7 @@ import (
 )
 
 func TestReadFile(t *testing.T) {
-	contents, err := os.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-q-mt/configs/quantiles/1INCHUSDT-1INCHUSDT-long-td.json")
+	contents, err := os.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-ll-mt-q/configs/quantiles/1INCHUSDT-1INCHUSDT-long-td.json")
 	if err != nil {
 		t.Fatal(err)
 	}else{

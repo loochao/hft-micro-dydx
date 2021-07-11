@@ -25,6 +25,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yPosition == nil ||
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
+		strat.quantileMiddle == nil ||
 		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter ||
 		strat.fundingRateSettleSilent {
 		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
@@ -44,10 +45,17 @@ func (strat *XYStrategy) updateXOrder() {
 	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
 	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
 
-	strat.shortTop = strat.shortQuantileTop + strat.config.ShortEnterDelta + strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
-	strat.shortBot = strat.longQuantileBot + strat.config.ShortExitDelta + strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
-	strat.longBot = strat.longQuantileBot + strat.config.LongEnterDelta - strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
-	strat.longTop = strat.shortQuantileTop + strat.config.LongExitDelta - strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
+	if strat.xSize >= 0 {
+		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta + strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.shortBot = *strat.quantileMiddle + strat.config.ShortExitDelta + strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.longBot = *strat.quantileMiddle + strat.config.LongEnterDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.longTop = *strat.quantileMiddle + strat.config.LongExitDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
+	} else {
+		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.shortBot = *strat.quantileMiddle + strat.config.ShortExitDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.longBot = *strat.quantileMiddle + strat.config.LongEnterDelta - strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.longTop = *strat.quantileMiddle + strat.config.LongExitDelta - strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
+	}
 
 	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
 	if math.IsNaN(strat.longBot) && time.Now().Sub(strat.logSilentTime) > 0 {
@@ -94,7 +102,8 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.spread.ShortMedianLeave < strat.shortBot &&
 		strat.spread.ShortLastLeave < strat.spread.ShortMedianLeave &&
 		*strat.xyFundingRate < strat.config.MinimalKeepFundingRate &&
-		strat.xSize >= strat.xStepSize*strat.xMultiplier {
+		strat.xSize >= strat.xStepSize*strat.xMultiplier &&
+		strat.xSize*strat.xMultiplier*strat.midPrice > 1.2*strat.xMinNotional {
 
 		//平一半或者平4个entryStep, 钱多优先平一半
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), math.Min(strat.xAbsValue, strat.yAbsValue))
@@ -250,7 +259,6 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
-			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -267,7 +275,6 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
-			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -344,7 +351,6 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
-			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -361,7 +367,6 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
-			strat.xOrderSilentTime = time.Now().Add(strat.config.XErrorSilent)
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(

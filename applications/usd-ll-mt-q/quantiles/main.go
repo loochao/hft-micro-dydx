@@ -60,7 +60,7 @@ func main() {
 	quantileBot := 0.05
 	shortQuantileTop := 0.0
 	longQuantileBot := 0.0
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-q-mt/configs/quantiles"
+	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-ll-mt-q/configs/quantiles"
 
 	longTimedTDigests := make(map[string]*stream_stats.TimedTDigest)
 	shortTimedTDigests := make(map[string]*stream_stats.TimedTDigest)
@@ -144,7 +144,7 @@ func main() {
 						fields["shortLastEnter"] = shortLastEnter
 						fields["longLastEnter"] = longLastEnter
 						pt, err := client.NewPoint(
-							"usd-q-mt",
+							"usd-ll-mt-q",
 							map[string]string{
 								"symbol": symbol,
 							},

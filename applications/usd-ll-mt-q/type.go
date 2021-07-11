@@ -171,14 +171,13 @@ type XYStrategy struct {
 	longBotOpenOrderCount   *common.TimedSum
 	longTopCloseOrderCount  *common.TimedSum
 	realisedOrderCount      *common.TimedSum
-	longTimedTDigest        *stream_stats.TimedTDigest
-	shortTimedTDigest       *stream_stats.TimedTDigest
-	quantileSaveTimer       *time.Timer
-	shortQuantileTop        float64
-	longQuantileBot         float64
-	longTDBytes             []byte
-	shortTDBytes            []byte
-	file                    *os.File
+
+	timedTDigest           *stream_stats.TimedTDigest
+	quantileSaveTimer      *time.Timer
+	quantileLastSampleTime time.Time
+	quantileBytes          []byte
+	quantileFile           *os.File
+	quantileMiddle         *float64
 }
 
 type Offset struct {

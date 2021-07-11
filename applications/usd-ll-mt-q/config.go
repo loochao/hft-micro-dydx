@@ -24,18 +24,18 @@ type Config struct {
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
 
-	EnterOffsetDelta     float64       `yaml:"enterOffsetDelta"`
-	ExitOffsetDelta      float64       `yaml:"exitOffsetDelta"`
-	LongEnterDelta       float64       `yaml:"longEnterDelta"`
-	ShortEnterDelta      float64       `yaml:"shortEnterDelta"`
-	LongExitDelta        float64       `yaml:"longExitDelta"`
-	ShortExitDelta       float64       `yaml:"shortExitDelta"`
-	QuantileTop          float64       `yaml:"quantileTop"`
-	QuantileBot          float64       `yaml:"quantileBot"`
-	QuantileLookback     time.Duration `yaml:"quantileLookback"`
-	QuantileSubInterval  time.Duration `yaml:"quantileSubInterval"`
-	QuantilePath         string        `yaml:"quantilePath"`
-	QuantileSaveInterval time.Duration `yaml:"quantileSaveInterval"`
+	EnterOffsetDelta float64 `yaml:"enterOffsetDelta"`
+	ExitOffsetDelta  float64 `yaml:"exitOffsetDelta"`
+	LongEnterDelta   float64 `yaml:"longEnterDelta"`
+	ShortEnterDelta  float64 `yaml:"shortEnterDelta"`
+	LongExitDelta    float64 `yaml:"longExitDelta"`
+	ShortExitDelta   float64 `yaml:"shortExitDelta"`
+
+	QuantileSampleInterval time.Duration `yaml:"quantileSampleInterval"`
+	QuantileLookback       time.Duration `yaml:"quantileLookback"`
+	QuantileSubInterval    time.Duration `yaml:"quantileSubInterval"`
+	QuantilePath           string        `yaml:"quantilePath"`
+	QuantileSaveInterval   time.Duration `yaml:"quantileSaveInterval"`
 
 	CancelOffsetFactor      float64       `yaml:"cancelOffsetFactor"`
 	MinimalEnterFundingRate float64       `yaml:"minimalEnterFundingRate"`
@@ -68,7 +68,6 @@ type Config struct {
 
 	OrderTimeout        time.Duration `yaml:"orderTimeout"`
 	XOrderSilent        time.Duration `yaml:"xOrderSilent"`
-	XErrorSilent        time.Duration `yaml:"xErrorSilent"`
 	YOrderSilent        time.Duration `yaml:"yOrderSilent"`
 	XCancelSilent       time.Duration `yaml:"xCancelSilent"`
 	XOrderCheckInterval time.Duration `yaml:"xOrderCheckInterval"`
@@ -139,9 +138,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.FundingInterval == 0 {
 		config.FundingInterval = time.Hour * 4
-	}
-	if config.XErrorSilent == 0 {
-		config.XErrorSilent = config.EnterSilent
 	}
 	config.XExchange.DryRun = config.DryRun
 	config.YExchange.DryRun = config.DryRun

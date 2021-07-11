@@ -82,10 +82,10 @@ func handleSave(
 			fields["offsetFactor"] = st.offsetFactor
 
 			if st.xPosition.GetPrice() != 0 {
-				xURPnl += st.xValue * (st.xWalkedDepth.MidPrice - st.xPosition.GetPrice())/st.xPosition.GetPrice()
+				xURPnl += st.xValue * (st.xWalkedDepth.MidPrice - st.xPosition.GetPrice()) / st.xPosition.GetPrice()
 			}
 			if st.yPosition.GetPrice() != 0 {
-				yURPnl += st.yValue * (st.yWalkedDepth.MidPrice - st.yPosition.GetPrice())/st.yPosition.GetPrice()
+				yURPnl += st.yValue * (st.yWalkedDepth.MidPrice - st.yPosition.GetPrice()) / st.yPosition.GetPrice()
 			}
 
 			fields["spreadTimeDelta"] = st.spread.ParseTime.Sub(st.spread.EventTime).Seconds()
@@ -97,8 +97,9 @@ func handleSave(
 			fields["spreadLongLastLeave"] = st.spread.LongLastLeave
 			fields["spreadLongMedianEnter"] = st.spread.LongMedianEnter
 			fields["spreadLongMedianLeave"] = st.spread.LongMedianLeave
-			fields["longQuantileBot"] = st.longQuantileBot
-			fields["shortQuantileTop"] = st.shortQuantileTop
+			if st.quantileMiddle != nil {
+				fields["quantileMiddle"] = *st.quantileMiddle
+			}
 
 			shortTopOpenOrderCount += st.shortTopOpenOrderCount.Sum()
 			shortBotCloseOrderCount += st.shortBotCloseOrderCount.Sum()

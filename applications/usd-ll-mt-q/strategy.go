@@ -42,38 +42,28 @@ func startXYStrategy(
 	yBiasInMs := float64(config.DepthYBias / time.Millisecond)
 	minTimeDeltaInMs := float64(config.DepthMinTimeDelta / time.Millisecond)
 	maxTimeDeltaInMs := float64(config.DepthMaxTimeDelta / time.Millisecond)
-	longTimedTDigest := stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
-	shortTimedTDigest := stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
+	var quantileMiddle *float64
+
+	timedTDigest := stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
 	if config.QuantilePath != "" {
 
-		longBytes, err := os.ReadFile(path.Join(config.QuantilePath, xSymbol+"-"+ySymbol+"-long-td.json"))
+		tdBytes, err := os.ReadFile(path.Join(config.QuantilePath, xSymbol+"-"+ySymbol+".json"))
 		if err != nil {
 			logger.Debugf("os.ReadFile error %v", err)
 		} else {
-			err = json.Unmarshal(longBytes, &longTimedTDigest)
+			err = json.Unmarshal(tdBytes, &timedTDigest)
 			if err != nil {
 				logger.Debugf("json.Unmarshal error %v", err)
-				longTimedTDigest = stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
+				timedTDigest = stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
 			} else {
-				longTimedTDigest.Lookback = config.QuantileLookback
-				longTimedTDigest.SubInterval = config.QuantileSubInterval
-			}
-		}
-		shortBytes, err := os.ReadFile(path.Join(config.QuantilePath, xSymbol+"-"+ySymbol+"-short-td.json"))
-		if err != nil {
-			logger.Debugf("os.ReadFile error %v", err)
-		} else {
-			err = json.Unmarshal(shortBytes, &shortTimedTDigest)
-			if err != nil {
-				logger.Debugf("json.Unmarshal error %v", err)
-				shortTimedTDigest = stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
-			} else {
-				shortTimedTDigest.Lookback = config.QuantileLookback
-				shortTimedTDigest.SubInterval = config.QuantileSubInterval
+				timedTDigest.Lookback = config.QuantileLookback
+				timedTDigest.SubInterval = config.QuantileSubInterval
+				quantileMiddle = new(float64)
+				*quantileMiddle = timedTDigest.Quantile(0.5)
+				logger.Debugf("%s - %s QUANTILE MIDDLE %f", xSymbol, ySymbol, *quantileMiddle)
 			}
 		}
 	}
-	logger.Debugf("%s %s QUANTILE LONG BOT %f SHORT TOP %f", xSymbol, ySymbol, longTimedTDigest.Quantile(config.QuantileBot), shortTimedTDigest.Quantile(config.QuantileTop))
 
 	strat := XYStrategy{
 		xExchange:               xExchange,
@@ -191,9 +181,10 @@ func startXYStrategy(
 		longBotOpenOrderCount:   common.NewTimedSum(config.TurnoverLookback),
 		longTopCloseOrderCount:  common.NewTimedSum(config.TurnoverLookback),
 		realisedOrderCount:      common.NewTimedSum(config.TurnoverLookback),
-		longTimedTDigest:        longTimedTDigest,
-		shortTimedTDigest:       shortTimedTDigest,
+		timedTDigest:            timedTDigest,
 		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
+		quantileLastSampleTime:  time.Time{},
+		quantileMiddle:          quantileMiddle,
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
@@ -464,7 +455,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			logger.Debugf("bad strat.xPosition == nextPos pass same pointer")
 			return
 		}
-		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= 0 {
+		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= -time.Second {
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 				strat.yOrderSilentTime = time.Now()
@@ -516,7 +507,7 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 			logger.Debugf("bad strat.yPosition == nextPos pass same pointer")
 			return
 		}
-		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= 0 {
+		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= -time.Second  {
 			if math.Abs(strat.yPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				if strat.yWalkedDepth.Symbol != "" {
 					strat.yTimedPositionChange.Insert(time.Now(), math.Abs(strat.yPosition.GetSize()-nextPos.GetSize())*strat.yWalkedDepth.MidPrice*strat.yMultiplier)
@@ -535,42 +526,21 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 
 func (strat *XYStrategy) handleQuantileSave() {
 	if strat.config.QuantilePath != "" {
-		strat.longTDBytes, strat.error = json.Marshal(strat.longTimedTDigest)
+		strat.quantileBytes, strat.error = json.Marshal(strat.timedTDigest)
 		if strat.error != nil {
-			logger.Debugf("json.Marshal(*strat.longTimedTDigest) error %v", strat.error)
+			logger.Debugf("json.Marshal(strat.timedTDigest) error %v", strat.error)
 		} else {
-			strat.file, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+"-long-td.json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+			strat.quantileFile, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+".json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 			if strat.error != nil {
 				logger.Debugf("os.OpenFile error %v", strat.error)
 			} else {
-				_, strat.error = strat.file.Write(strat.longTDBytes)
+				_, strat.error = strat.quantileFile.Write(strat.quantileBytes)
 				if strat.error != nil {
-					logger.Debugf("strat.file.Write error %v", strat.error)
+					logger.Debugf("strat.quantileFile.Write error %v", strat.error)
 				} else {
-					strat.error = strat.file.Close()
+					strat.error = strat.quantileFile.Close()
 					if strat.error != nil {
-						logger.Debugf("strat.file.Close() error %v", strat.error)
-					}
-				}
-			}
-		}
-
-		strat.shortTDBytes, strat.error = json.Marshal(strat.shortTimedTDigest)
-		//logger.Debugf("%s %d", strat.xSymbol, len(strat.shortTimedTDigest.SubTDs))
-		if strat.error != nil {
-			logger.Debugf("json.Marshal(*strat.shortTimedTDigest) error %v", strat.error)
-		} else {
-			strat.file, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+"-short-td.json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-			if strat.error != nil {
-				logger.Debugf("os.OpenFile error %v", strat.error)
-			} else {
-				_, strat.error = strat.file.Write(strat.shortTDBytes)
-				if strat.error != nil {
-					logger.Debugf("strat.file.Write error %v", strat.error)
-				} else {
-					strat.error = strat.file.Close()
-					if strat.error != nil {
-						logger.Debugf("strat.file.Close() error %v", strat.error)
+						logger.Debugf("strat.quantileFile.Close() error %v", strat.error)
 					}
 				}
 			}
