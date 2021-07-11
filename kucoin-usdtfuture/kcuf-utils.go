@@ -232,7 +232,7 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 	}
 
 	var ts int64
-	offset := 90
+	offset := 80
 	collectStart := offset
 	msgLen := len(msg)
 	counter := 0
