@@ -30,12 +30,11 @@ type Config struct {
 	LongExitDelta    float64 `yaml:"longExitDelta"`
 	ShortExitDelta   float64 `yaml:"shortExitDelta"`
 
-	QuantileShort        float64       `yaml:"quantileShort"`
-	QuantileLong         float64       `yaml:"quantileLong"`
-	QuantileLookback     time.Duration `yaml:"quantileLookback"`
-	QuantileSubInterval  time.Duration `yaml:"quantileSubInterval"`
-	QuantilePath         string        `yaml:"quantilePath"`
-	QuantileSaveInterval time.Duration `yaml:"quantileSaveInterval"`
+	QuantileLookback       time.Duration `yaml:"quantileLookback"`
+	QuantileSubInterval    time.Duration `yaml:"quantileSubInterval"`
+	QuantilePath           string        `yaml:"quantilePath"`
+	QuantileSaveInterval   time.Duration `yaml:"quantileSaveInterval"`
+	QuantileSampleInterval time.Duration `yaml:"quantileSampleInterval"`
 
 	MinimalEnterFundingRate float64       `yaml:"minimalEnterFundingRate"`
 	MinimalKeepFundingRate  float64       `yaml:"minimalKeepFundingRate"`

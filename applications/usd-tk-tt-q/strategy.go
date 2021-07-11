@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
 	"math"
+	"os"
+	"path"
 	"sync/atomic"
 	"time"
 )
@@ -37,6 +41,25 @@ func startXYStrategy(
 	yBiasInMs := float64(config.TickerYBias / time.Millisecond)
 	minTimeDeltaInMs := float64(config.TickerMinTimeDelta / time.Millisecond)
 	maxTimeDeltaInMs := float64(config.TickerMaxTimeDelta / time.Millisecond)
+
+	timedTDigest := stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
+	if config.QuantilePath != "" {
+
+		longBytes, err := os.ReadFile(path.Join(config.QuantilePath, xSymbol+"-"+ySymbol+".json"))
+		if err != nil {
+			logger.Debugf("os.ReadFile error %v", err)
+		} else {
+			err = json.Unmarshal(longBytes, &timedTDigest)
+			if err != nil {
+				logger.Debugf("json.Unmarshal error %v", err)
+				timedTDigest = stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
+			} else {
+				timedTDigest.Lookback = config.QuantileLookback
+				timedTDigest.SubInterval = config.QuantileSubInterval
+			}
+		}
+	}
+	logger.Debugf("%s - %s QUANTILE MIDDLE %f", xSymbol, ySymbol, timedTDigest.Quantile(0.5))
 
 	strat := XYStrategy{
 		xExchange:               xExchange,
@@ -140,6 +163,9 @@ func startXYStrategy(
 		fundingRateSettleSilent: false,
 		xExchangeID:             xExchange.GetExchange(),
 		yExchangeID:             yExchange.GetExchange(),
+		timedTDigest:            timedTDigest,
+		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
+		quantileLastSampleTime:  time.Time{},
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
@@ -192,7 +218,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.saveTimer.Stop()
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
-	strat.xOrderSilentTime = time.Now().Add(time.Minute*5)
+	strat.xOrderSilentTime = time.Now().Add(time.Minute * 5)
 	for {
 		select {
 		case <-ctx.Done():
@@ -213,6 +239,10 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			break
 		case <-strat.saveTimer.C:
 			strat.handleSave()
+			break
+		case <-strat.quantileSaveTimer.C:
+			strat.handleQuantileSave()
+			strat.quantileSaveTimer.Reset(strat.config.QuantileSaveInterval)
 			break
 		case <-strat.hedgeCheckTimer.C:
 			if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
@@ -433,5 +463,29 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 		strat.yPosition = nextPos
 		strat.yPositionUpdateTime = nextPos.GetParseTime()
 		logger.Debugf("%s y position change nil -> %f", nextPos.GetSymbol(), nextPos.GetSize())
+	}
+}
+
+func (strat *XYStrategy) handleQuantileSave() {
+	if strat.config.QuantilePath != "" {
+		strat.quantileBytes, strat.error = json.Marshal(strat.timedTDigest)
+		if strat.error != nil {
+			logger.Debugf("json.Marshal(strat.timedTDigest) error %v", strat.error)
+		} else {
+			strat.quantileFile, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+".json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+			if strat.error != nil {
+				logger.Debugf("os.OpenFile error %v", strat.error)
+			} else {
+				_, strat.error = strat.quantileFile.Write(strat.quantileBytes)
+				if strat.error != nil {
+					logger.Debugf("strat.file.Write error %v", strat.error)
+				} else {
+					strat.error = strat.quantileFile.Close()
+					if strat.error != nil {
+						logger.Debugf("strat.file.Close() error %v", strat.error)
+					}
+				}
+			}
+		}
 	}
 }

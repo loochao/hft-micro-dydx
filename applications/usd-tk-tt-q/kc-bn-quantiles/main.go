@@ -109,10 +109,6 @@ func main() {
 
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
-	quantileTop := 0.95
-	quantileBot := 0.05
-	shortQuantileTop := 0.0
-	longQuantileBot := 0.0
 	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/kc-bn-quantiles"
 
 	for ySymbol, xSymbol := range symbolsMap {
@@ -124,8 +120,7 @@ func main() {
 			continue
 		}
 		counter := 0
-		longTimedTDigest := stream_stats.NewTimedTDigest(quantileLookback, quantileSubInterval)
-		shortTimedTDigest := stream_stats.NewTimedTDigest(quantileLookback, quantileSubInterval)
+		timedTDigest := stream_stats.NewTimedTDigest(quantileLookback, quantileSubInterval)
 
 		shortLastEnter := 0.0
 		longLastEnter := 0.0
@@ -169,30 +164,22 @@ func main() {
 						logger.Debugf("%v", err)
 						continue
 					}
-				}else{
+				} else {
 					continue
 				}
 
 				if xDepth.Symbol != "" && yDepth.Symbol != "" {
+
 					shortLastEnter = (yDepth.Bids[0][0] - xDepth.Asks[0][0]) / xDepth.Asks[0][0]
 					longLastEnter = (yDepth.Asks[0][0] - xDepth.Bids[0][0]) / xDepth.Bids[0][0]
 					if xDepth.EventTime.Sub(yDepth.EventTime) > 0 {
-						_ = shortTimedTDigest.Insert(xDepth.EventTime, shortLastEnter)
-						_ = longTimedTDigest.Insert(xDepth.EventTime, longLastEnter)
-					}else{
-						_ = shortTimedTDigest.Insert(yDepth.EventTime, shortLastEnter)
-						_ = longTimedTDigest.Insert(yDepth.EventTime, longLastEnter)
+						_ = timedTDigest.Insert(xDepth.EventTime, (shortLastEnter+longLastEnter)*0.5)
+					} else {
+						_ = timedTDigest.Insert(yDepth.EventTime, (shortLastEnter+longLastEnter)*0.5)
 					}
 					if counter%1000 == 0 {
-						shortQuantileTop = shortTimedTDigest.Quantile(quantileTop)
-						longQuantileBot = longTimedTDigest.Quantile(quantileBot)
 						fields := make(map[string]interface{})
-						fields["shortQuantileTop"] = shortQuantileTop
-						fields["longQuantileBot"] = longQuantileBot
-						fields["shortQuantileTop80"] = shortTimedTDigest.Quantile(0.8)
-						fields["shortQuantileTop50"] = shortTimedTDigest.Quantile(0.5)
-						fields["longQuantileBot20"] = longTimedTDigest.Quantile(0.2)
-						fields["longQuantileBot50"] = longTimedTDigest.Quantile(0.5)
+						fields["enterMiddle"] = timedTDigest.Quantile(0.5)
 						fields["shortLastEnter"] = shortLastEnter
 						fields["longLastEnter"] = longLastEnter
 						pt, err := client.NewPoint(
@@ -212,32 +199,12 @@ func main() {
 			_ = gr.Close()
 			_ = file.Close()
 		}
-		data, err := json.Marshal(longTimedTDigest)
+		data, err := json.Marshal(timedTDigest)
 		if err != nil {
 			logger.Debugf("%v", err)
 			continue
 		}
-		file, err := os.OpenFile(path.Join(quantilePath, xSymbol+"-"+ySymbol+"-LQ.json"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
-		if err != nil {
-			logger.Debugf("%v", err)
-			continue
-		}
-		_, err = file.Write(data)
-		if err != nil {
-			logger.Debugf("%v", err)
-			continue
-		}
-		err = file.Close()
-		if err != nil {
-			logger.Debugf("%v", err)
-			continue
-		}
-		data, err = json.Marshal(shortTimedTDigest)
-		if err != nil {
-			logger.Debugf("%v", err)
-			continue
-		}
-		file, err = os.OpenFile(path.Join(quantilePath, xSymbol+"-"+ySymbol+"-SQ.json"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0775)
+		file, err := os.OpenFile(path.Join(quantilePath, xSymbol+"-"+ySymbol+".json"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 		if err != nil {
 			logger.Debugf("%v", err)
 			continue
@@ -253,5 +220,4 @@ func main() {
 			continue
 		}
 	}
-
 }

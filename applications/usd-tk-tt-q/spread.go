@@ -58,6 +58,14 @@ func (strat *XYStrategy) updateSpread() {
 	if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 		strat.hedgeYPosition()
 	}
+	if strat.spreadTime.Sub(strat.quantileLastSampleTime) > strat.config.QuantileSampleInterval {
+		strat.quantileLastSampleTime = strat.spreadTime
+		_ = strat.timedTDigest.Insert(strat.spreadTime, (strat.shortLastEnter+strat.longLastEnter)*0.5)
+		if strat.quantileMiddle == nil {
+			strat.quantileMiddle = new(float64)
+		}
+		*strat.quantileMiddle = strat.timedTDigest.Quantile(0.5)
+	}
 }
 
 func (strat *XYStrategy) handleTicker() {
@@ -67,7 +75,7 @@ func (strat *XYStrategy) handleTicker() {
 	} else if strat.nextTicker.GetExchange() == strat.yExchangeID {
 		strat.yNextTicker = strat.nextTicker
 		strat.handleYTicker()
-	}else{
+	} else {
 		logger.Debugf("other ticker %v", strat.nextTicker)
 	}
 }

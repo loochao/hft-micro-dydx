@@ -292,6 +292,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 		case <-strat.quantileSaveTimer.C:
 			strat.handleQuantileSave()
 			strat.quantileSaveTimer.Reset(strat.config.QuantileSaveInterval)
+			break
 		case strat.xAccount = <-strat.xAccountCh:
 			strat.updateEnterStepAndTarget()
 			break

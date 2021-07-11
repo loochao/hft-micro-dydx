@@ -74,6 +74,9 @@ func handleSave(
 			fields["enterStep"] = st.enterStep
 			fields["enterValue"] = st.enterValue
 			fields["offsetFactor"] = st.offsetFactor
+			if st.quantileMiddle != nil {
+				fields["quantileMiddle"] = *st.quantileMiddle
+			}
 
 			if st.xPosition.GetPrice() != 0 {
 				xURPnl += st.xValue * (st.xMidPrice - st.xPosition.GetPrice())/st.xPosition.GetPrice()

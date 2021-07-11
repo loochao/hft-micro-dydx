@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
+	"os"
 	"strings"
 	"time"
 )
@@ -156,6 +158,13 @@ type XYStrategy struct {
 
 	hedgeCheckTimer    *time.Timer
 	hedgeCheckStopTime time.Time
+
+	timedTDigest           *stream_stats.TimedTDigest
+	quantileSaveTimer      *time.Timer
+	quantileLastSampleTime time.Time
+	quantileBytes          []byte
+	quantileFile           *os.File
+	quantileMiddle         *float64
 }
 
 type Offset struct {
