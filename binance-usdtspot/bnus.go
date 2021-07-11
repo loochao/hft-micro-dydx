@@ -162,7 +162,7 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 		case account := <-userWS.AccountUpdateEventCh:
 			for _, wsBalance := range account.Balances {
 				if wsBalance.Asset == "USDT" {
-					if wsBalance.EventTime.Sub(usdtAccount.EventTime) > 0 {
+					if wsBalance.ParseTime.Sub(usdtAccount.ParseTime) > 0 {
 						usdtAccount.Free = wsBalance.FreeAmount
 						usdtAccount.Locked = wsBalance.LockedAmount
 						usdtAccount.EventTime = wsBalance.EventTime
@@ -184,7 +184,7 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 				symbol := wsBalance.Asset + "USDT"
 				if ch, ok := positionChMap[symbol]; ok {
 					lastBalance, ok := balancesMap[symbol]
-					if ok && wsBalance.EventTime.Sub(lastBalance.EventTime) < 0 {
+					if ok && wsBalance.ParseTime.Sub(lastBalance.ParseTime) < 0 {
 						continue
 					}
 					if !ok {
@@ -229,7 +229,7 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 			for _, balance := range account.Balances {
 				balance := balance
 				if balance.Asset == "USDT" {
-					if balance.EventTime.Sub(usdtAccount.EventTime) >= 0 {
+					if balance.ParseTime.Sub(usdtAccount.ParseTime) >= 0 {
 						usdtAccount = balance
 						select {
 						case usdtAccountCh <- &balance:
@@ -250,13 +250,14 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 				}
 				symbol := balance.Asset + "USDT"
 				lastBalance, ok := balancesMap[symbol]
-				if ok && balance.EventTime.Sub(lastBalance.EventTime) < 0 {
+				if ok && balance.ParseTime.Sub(lastBalance.ParseTime) < 0 {
 					continue
 				}
 				balancesMap[symbol] = &balance
+				outBalance := balance
 				if ch, ok := positionChMap[symbol]; ok {
 					select {
-					case ch <- &balance:
+					case ch <- &outBalance:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logger.Debugf("ch <- balance failed, ch len %d", len(ch))
@@ -273,8 +274,9 @@ func (bn *BinanceUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common
 						ParseTime: account.ParseTime,
 					}
 					balancesMap[symbol] = balance
+					outBalance := *balance
 					select {
-					case ch <- balance:
+					case ch <- &outBalance:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logger.Debugf("ch <- balance failed, ch len %d", len(ch))
@@ -781,14 +783,6 @@ func (bn *BinanceUsdtSpot) cancelOrder(ctx context.Context, param common.CancelO
 
 type BinanceUsdtSpotWithDepth5 struct {
 	BinanceUsdtSpot
-}
-
-func (b BinanceUsdtSpotWithDepth5) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
-	panic("implement me")
-}
-
-func (b BinanceUsdtSpotWithDepth5) StartSideLoop() {
-	panic("implement me")
 }
 
 type BinanceUsdtSpotWithDepth20 struct {

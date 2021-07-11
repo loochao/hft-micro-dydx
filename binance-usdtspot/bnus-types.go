@@ -225,11 +225,13 @@ func (b *Balance) GetExchange() common.ExchangeID {
 }
 
 func (b *Balance) GetTime() time.Time {
-	return b.EventTime
+	//统一使用ParseTime, Event不更新
+	return b.ParseTime
 }
 
 func (b *Balance) GetEventTime() time.Time {
-	return b.EventTime
+	//统一使用ParseTime, Event不更新
+	return b.ParseTime
 }
 
 func (b *Balance) GetParseTime() time.Time {
