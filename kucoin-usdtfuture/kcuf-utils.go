@@ -255,8 +255,11 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 				if err != nil {
 					return
 				}
-				currentKey = common.JsonKeyUnknown
 				counter++
+				if counter == 5 {
+					return
+				}
+				currentKey = common.JsonKeyUnknown
 			}
 			break
 		case common.JsonKeyBidPrice:
