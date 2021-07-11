@@ -386,7 +386,6 @@ func main() {
 		yNewOrderErrorChMap,
 	)
 
-
 	logger.Debugf("start main loop")
 	restartTimer := time.NewTimer(xyConfig.RestartInterval)
 	defer restartTimer.Stop()
@@ -436,9 +435,10 @@ mainLoop:
 			break
 		case xcv := <-xCommissionAssetValueCh:
 			xCommissionAssetValue = &xcv
-			//logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
+			logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
 		case ycv := <-yCommissionAssetValueCh:
 			yCommissionAssetValue = &ycv
+			logger.Debugf("yCommissionAssetValue %f", *yCommissionAssetValue)
 		case account := <-xAccountCh:
 			if xAccount == account {
 				logger.Debugf("bad xAccount == account pass same pointer")
@@ -474,7 +474,6 @@ mainLoop:
 			break
 		case <-influxSaveTimer.C:
 			if xyConfig.InternalInflux.Address != "" {
-
 				handleSave(
 					xAccount, yAccount,
 					xExchange, yExchange,
@@ -489,7 +488,7 @@ mainLoop:
 					time.Now().Truncate(
 						xyConfig.InternalInflux.SaveInterval,
 					).Add(
-						xyConfig.InternalInflux.SaveInterval + time.Second*15,
+						xyConfig.InternalInflux.SaveInterval,
 					).Sub(time.Now()),
 				)
 			}
