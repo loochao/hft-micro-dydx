@@ -45,12 +45,13 @@ type Config struct {
 	TickerMaxAgeDiffBias time.Duration `yaml:"tickerMaxAgeDiffBias"`
 	TickerReportCount    int           `yaml:"tickerReportCount"`
 
-	SpreadTimeToEnter    time.Duration `yaml:"spreadTimeToEnter"`
-	SpreadLookback       time.Duration `yaml:"spreadLookback"`
-	BatchSize            int           `yaml:"batchSize"`
+	SpreadTimeToEnter time.Duration `yaml:"spreadTimeToEnter"`
+	SpreadLookback    time.Duration `yaml:"spreadLookback"`
+	BatchSize         int           `yaml:"batchSize"`
 
 	StartValue        float64            `yaml:"startValue"`
 	EnterFreePct      float64            `yaml:"enterFreePct"`
+	BestSizeFactor    float64            `yaml:"bestSizeFactor"`
 	EnterMinimalStep  float64            `yaml:"enterMinimalStep"`
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
 	StartValues       map[string]float64 `yaml:"startValues"`

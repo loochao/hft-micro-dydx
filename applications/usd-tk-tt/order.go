@@ -87,8 +87,8 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.size = strat.enterValue / strat.midPrice
 
 		//限开仓大小限制到best bid ask size
-		strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier, strat.size)
-		strat.size = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier, strat.size)
+		strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
+		strat.size = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 
 		strat.enterValue = strat.size * strat.midPrice
@@ -153,8 +153,8 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.size = strat.enterValue / strat.midPrice
 		//限开仓大小限制到best bid ask size
-		strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier, strat.size)
-		strat.size = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier, strat.size)
+		strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
+		strat.size = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
 
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
@@ -224,8 +224,8 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.enterValue = strat.maxOrderValue
 		}
 		strat.size = strat.enterValue / strat.midPrice
-		strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier, strat.size)
-		strat.size = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier, strat.size)
+		strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
+		strat.size = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
 
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
@@ -317,8 +317,8 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.enterValue = strat.maxOrderValue
 		}
 		strat.size = strat.enterValue / strat.midPrice
-		strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier, strat.size)
-		strat.size = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier, strat.size)
+		strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
+		strat.size = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
 
 		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
