@@ -54,7 +54,7 @@ func (w *Depth5TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan
 		//{"stream":"wavesusdt@depth5@100ms","data":{"e":"depthUpdate","E":1623494540937,"T":1623494540873,"s":"WAVESUSDT","U":510743910668,"u":510743911915,"pu":510743903045,"b":[["14.2300","0.4"],["14.2270","59.0"],["14.2260","112.0"],["14.2250","78.5"],["14.2240","195.9"]],"a":[["14.2310","11.0"],["14.2340","38.4"],["14.2350","105.0"],["14.2360","3.5"],["14.2370","193.0"]]}}
 		if msg[18] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:18])
-		}else if msg[19] == '@' {
+		} else if msg[19] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:19])
 		} else if msg[20] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:20])
@@ -328,7 +328,7 @@ func (w *Depth5TickerWS) dataHandleLoop(ctx context.Context, symbol string, inpu
 			case outputCh <- depth5:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("ch <- depth5 failed ch len %d", len(outputCh))
+					logger.Debugf("ch <- depth5 failed, %s ch len %d", symbol, len(outputCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
