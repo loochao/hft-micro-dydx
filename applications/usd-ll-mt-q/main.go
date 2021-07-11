@@ -323,6 +323,7 @@ func main() {
 		}
 	}
 
+
 	go xExchange.StreamBasic(
 		xyGlobalCtx,
 		xSystemStatusCh,

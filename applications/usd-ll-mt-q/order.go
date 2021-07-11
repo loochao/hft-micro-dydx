@@ -157,10 +157,11 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.shortBotCloseOrderCount.Insert(time.Now(), 1.0)
 			logger.Debugf(
-				"%s SHORT BOT REDUCE %f < %f, %f < %f, SIZE %f PRICE %f, X %v Y %v M %f",
+				"%s SHORT BOT REDUCE %f < %f, %f < %f QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
 				strat.xSymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
+				*strat.quantileMiddle,
 				strat.size,
 				strat.price,
 				time.Now().Sub(strat.xDepthTime),
@@ -227,10 +228,11 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.longTopCloseOrderCount.Insert(time.Now(), 1.0)
 			logger.Debugf(
-				"%s LONG TOP REDUCE %f > %f, %f > %f, SIZE %f PRICE %f, X %v Y %v M %f",
+				"%s LONG TOP REDUCE %f > %f, %f > %f, QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
 				strat.xSymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
+				*strat.quantileMiddle,
 				strat.size,
 				strat.price,
 				time.Now().Sub(strat.xDepthTime),
@@ -321,10 +323,11 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.shortTopOpenOrderCount.Insert(time.Now(), 1.0)
 		logger.Debugf(
-			"%s SHORT TOP OPEN %f > %f, %f > %f, SIZE %f PRICE %f, X %v Y %v M %f",
+			"%s SHORT TOP OPEN %f > %f, %f > %f, QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
 			strat.xSymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
+			*strat.quantileMiddle,
 			strat.size,
 			strat.price,
 			time.Now().Sub(strat.xDepthTime),
@@ -413,10 +416,11 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.longBotOpenOrderCount.Insert(time.Now(), 1.0)
 		logger.Debugf(
-			"%s LONG BOT OPEN %f < %f, %f < %f, SIZE %f PRICE %f, X %v Y %v M %f",
+			"%s LONG BOT OPEN %f < %f, %f < %f, QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
 			strat.xSymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
+			*strat.quantileMiddle,
 			strat.size,
 			strat.price,
 			time.Now().Sub(strat.xDepthTime),
