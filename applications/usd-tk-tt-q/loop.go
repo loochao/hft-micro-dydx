@@ -30,7 +30,7 @@ func (strat *XYStrategy) handleXOrder() {
 			//logger.Debugf("x order ended %s %s %s", strat.xOrder.GetSymbol(), strat.xOrder.GetStatus(), strat.xOrder.GetSide())
 			strat.xPositionUpdateTime = time.Unix(0, 0)
 		} else {
-			logger.Debugf("x order filled %s %s %s size %f price %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice())
+			logger.Debugf("x order filled %s %s %s size %f price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice())
 			strat.realisedSpreadTimer.Reset(time.Second * 5)
 			if strat.xOrder.GetSide() == common.OrderSideBuy {
 				if strat.xLastFilledBuyPrice == nil {
@@ -62,7 +62,7 @@ func (strat *XYStrategy) handleYOrder() {
 			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 			strat.yPositionUpdateTime = time.Time{}
 		} else {
-			logger.Debugf("y order filled %s %s %s size %f price %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice())
+			logger.Debugf("y order filled %s %s %s size %f price %f value %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice(), strat.yOrder.GetFilledPrice()*strat.yOrder.GetFilledSize())
 			if strat.yOrder.GetSide() == common.OrderSideBuy {
 				if strat.yLastFilledBuyPrice == nil {
 					strat.yLastFilledBuyPrice = new(float64)
