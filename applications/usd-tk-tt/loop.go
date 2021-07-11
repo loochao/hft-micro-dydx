@@ -90,7 +90,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		strat.yLastFilledBuyPrice = nil
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledSellPrice = nil
-		logger.Debugf("%s - %s realised short spread %f", strat.xSymbol, strat.ySymbol, *strat.realisedSpread)
+		logger.Debugf("%s - %s realised short spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
 	} else if strat.xLastFilledSellPrice != nil && strat.yLastFilledBuyPrice != nil {
 		if strat.realisedSpread == nil {
 			strat.realisedSpread = new(float64)
