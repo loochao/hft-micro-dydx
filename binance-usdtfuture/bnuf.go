@@ -1005,11 +1005,11 @@ type BinanceUsdtFutureWidthDepth5 struct {
 	BinanceUsdtFuture
 }
 
-type BinanceUsdtFutureWidthMergedTicker struct {
+type BinanceUsdtFutureWithMergedTicker struct {
 	BinanceUsdtFuture
 }
 
-func (bn *BinanceUsdtFutureWidthMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (bn *BinanceUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")
 	defer bn.Stop()

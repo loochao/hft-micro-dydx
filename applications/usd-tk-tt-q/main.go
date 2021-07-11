@@ -95,8 +95,8 @@ func main() {
 	case "kucoinUsdtFutureWithMergedTicker":
 		xExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
 		break
-	case "binanceUsdtFutureWidthMergedTicker":
-		xExchange = &bnuf.BinanceUsdtFutureWidthMergedTicker{}
+	case "binanceUsdtFutureWithMergedTicker":
+		xExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
 		break
 	case "binanceUsdtSpot":
 		xExchange = &bnus.BinanceUsdtSpot{}
@@ -130,8 +130,8 @@ func main() {
 	case "kucoinUsdtFutureWithMergedTicker":
 		yExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
 		break
-	case "binanceUsdtFutureWidthMergedTicker":
-		yExchange = &bnuf.BinanceUsdtFutureWidthMergedTicker{}
+	case "binanceUsdtFutureWithMergedTicker":
+		yExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
 		break
 	case "binanceUsdtSpot":
 		yExchange = &bnus.BinanceUsdtSpot{}
