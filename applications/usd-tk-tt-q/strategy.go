@@ -208,6 +208,7 @@ func startXYStrategy(
 
 func (strat *XYStrategy) Stop() {
 	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
+		strat.handleQuantileSave()
 		logger.Debugf("stopped")
 	}
 }
