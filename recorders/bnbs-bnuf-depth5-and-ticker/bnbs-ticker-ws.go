@@ -10,25 +10,31 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync/atomic"
+	"sync"
 	"time"
 )
 
-type SpotDepth5WS struct {
+type BnbsBookTickerWS struct {
 	done        chan interface{}
 	reconnectCh chan interface{}
-	stopped     int32
+	stopped     bool
+	mu          sync.Mutex
 }
 
-func (w *SpotDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan Message) {
+func (w *BnbsBookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *Message) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
-	var symbol string
-	var ch chan Message
+	var ch chan *Message
 	var ok bool
-	var msgOut = Message{
-		Source: []byte("S"),
+	var symbol string
+	var message *Message
+	index := -1
+	pool := [4096]*Message{}
+	for i := 0; i < 4096; i++ {
+		pool[i] = &Message{
+			Source: []byte{'S', 'T'},
+		}
 	}
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -45,45 +51,63 @@ func (w *SpotDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan M
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
-			logger.Warnf("w.readAll error %v", err)
+			logger.Warnf("w.readAl error %v", err)
 			w.restart()
 			return
 		}
-		if len(msg) > 128 {
-			if msg[18] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:18])
-			} else if msg[19] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:19])
-			} else if msg[20] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:20])
-			} else if msg[21] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:21])
-			} else if msg[17] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:17])
-			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("other msg %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-				continue
+		if len(msg) < 128 {
+			continue
+		}
+		//{"stream":"scusdt@bookTicker","data":{"e":"bookTicker","u":552297398961,"s":"SCUSDT","b":"0.012805","B":"46556","a":"0.012816","A":"90351","T":1624971386657,"E":1624971386662}}
+		if msg[18] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:18])
+		} else if msg[19] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:19])
+		} else if msg[20] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:20])
+		} else if msg[21] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:21])
+		} else if msg[22] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:22])
+		} else if msg[17] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:17])
+		} else if msg[23] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:23])
+		} else if msg[24] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:24])
+		} else if msg[25] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:25])
+		} else if msg[26] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:26])
+		} else {
+			if time.Now().Sub(logSilentTime) > 0 {
+				logger.Debugf("bad msg, can't find symbol: %s", msg)
+				logSilentTime = time.Now().Add(time.Minute)
 			}
-			if ch, ok = channels[symbol]; ok {
-				msgOut.Data = msg
-				select {
-				case ch <- msgOut:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
+			continue
+		}
+		if ch, ok = channels[symbol]; ok {
+			index++
+			if index == 4096 {
+				index = 0
+			}
+			message = pool[index]
+			message.Time = time.Now().UnixNano()
+			message.Data = msg
+			select {
+			case ch <- message:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
+					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
 		}
 	}
 }
 
-func (w *SpotDepth5WS) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 512)
+func (w *BnbsBookTickerWS) readAll(r io.Reader) ([]byte, error) {
+	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
 			// Add more capacity (let append pick how much).
@@ -100,10 +124,10 @@ func (w *SpotDepth5WS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *SpotDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *BnbsBookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
-		logger.Debugf("reconnect %s, %d retries", wsUrl, counter)
+		logger.Debugf("RECONNECT %s, %d RETRIES", wsUrl, counter)
 	}
 
 	var dialer *websocket.Dialer
@@ -111,7 +135,7 @@ func (w *SpotDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
+			return nil, fmt.Errorf("url.Parse error %v", err)
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -132,7 +156,7 @@ func (w *SpotDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string
 		},
 	)
 	if err != nil {
-		logger.Warnf("dialer.DialContext error %v", err)
+		logger.Warnf("dialer.DialContext ERROR %v", err)
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("reconnect error: context is done")
@@ -145,39 +169,33 @@ func (w *SpotDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string
 	return conn, nil
 }
 
-func (w *SpotDepth5WS) mainLoop(ctx context.Context, channels map[string]chan Message, proxy string) {
+func (w *BnbsBookTickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *Message) {
 	urlStr := "wss://stream.binance.com:9443/stream?streams="
+	symbols := make([]string, 0)
 	for symbol := range channels {
+		symbols = append(symbols, symbol)
 		urlStr += fmt.Sprintf(
-			"%s@depth5@100ms/",
+			"%s@bookTicker/",
 			strings.ToLower(symbol),
 		)
 	}
 	urlStr = urlStr[:len(urlStr)-1]
 	logger.Debugf("START mainLoop %s", urlStr)
 
+	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 
 	defer func() {
-		if internalCancel != nil {
-			internalCancel()
-			internalCancel = nil
-		}
 		w.Stop()
-		logger.Debugf("EXIT mainLoop")
+		cancel()
+		logger.Debugf("EXIT mainLoop %s", symbols)
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			if internalCancel != nil {
-				internalCancel()
-				internalCancel = nil
-			}
-			return
-		case <-w.done:
 			if internalCancel != nil {
 				internalCancel()
 				internalCancel = nil
@@ -202,25 +220,28 @@ func (w *SpotDepth5WS) mainLoop(ctx context.Context, channels map[string]chan Me
 					internalCancel()
 					internalCancel = nil
 				}
+				w.Stop()
 				return
 			}
 			go w.readLoop(conn, channels)
 			go w.heartbeatLoop(internalCtx, conn)
+
 		}
 	}
 }
 
-func (w *SpotDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *BnbsBookTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("EXIT heartbeatLoop")
 		err := conn.Close()
 		if err != nil {
-			logger.Debugf("conn.Close() ERROR %v", err)
+			logger.Debugf("conn.Close() error %v", err)
 		}
 	}()
 
-	trafficCh := make(chan interface{}, 100)
+	trafficCh := make(chan interface{})
+
 	conn.SetPingHandler(func(msg string) error {
 		select {
 		case trafficCh <- nil:
@@ -228,13 +249,19 @@ func (w *SpotDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) 
 		}
 		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
-			w.restart()
-			return err
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+				w.restart()
+			}
+			return nil
 		}
 		return nil
 	})
 
 	timer := time.NewTimer(time.Minute * 15)
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -252,39 +279,47 @@ func (w *SpotDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) 
 
 }
 
-func (w *SpotDepth5WS) Stop() {
-	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
+func (w *BnbsBookTickerWS) Stop() {
+	w.mu.Lock()
+	if !w.stopped {
+		w.stopped = true
 		close(w.done)
-		logger.Debugf("stopped")
 	}
+	w.mu.Unlock()
 }
 
-func (w *SpotDepth5WS) restart() {
+func (w *BnbsBookTickerWS) restart() {
 	select {
 	case <-w.done:
-	case w.reconnectCh <- nil:
-		logger.Debugf("restart")
+		return
 	default:
-		logger.Debugf("w.reconnectCh <- nil failed, stop ws")
+	}
+	select {
+	case <-time.After(time.Second):
 		w.Stop()
+		logger.Debugf("w.reconnectCh <- nil timeout in 1s, stop ws")
+	case w.reconnectCh <- nil:
+		logger.Debugf("restart ws")
+		return
 	}
 }
 
-func (w *SpotDepth5WS) Done() chan interface{} {
+func (w *BnbsBookTickerWS) Done() chan interface{} {
 	return w.done
 }
 
-func NewSpotDepth5WS(
+func NewBnbsBookTickerWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan Message,
-) *SpotDepth5WS {
-	ws := SpotDepth5WS{
+	channels map[string]chan *Message,
+) *BnbsBookTickerWS {
+	ws := BnbsBookTickerWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}, 4),
-		stopped:     0,
+		stopped:     false,
+		mu:          sync.Mutex{},
 	}
-	go ws.mainLoop(ctx, channels, proxy)
+	go ws.mainLoop(ctx, proxy, channels)
 	ws.reconnectCh <- nil
 	return &ws
 }
