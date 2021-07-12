@@ -333,7 +333,6 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	}
 }
 func (strat *XYStrategy) handleSave() {
-	logger.Debugf("handleSave %s", strat.xSymbol)
 	strat.saveTimer.Reset(strat.config.InternalInflux.SaveInterval)
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady ||
