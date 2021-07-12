@@ -156,7 +156,7 @@ func (bn *BinanceUsdcSpot) StreamBasic(ctx context.Context, statusCh chan common
 		case account := <-userWS.AccountUpdateEventCh:
 			for _, wsBalance := range account.Balances {
 				if wsBalance.Asset == "USDC" {
-					if wsBalance.EventTime.Sub(usdtAccount.EventTime) > 0 {
+					if wsBalance.EventTime.Sub(usdtAccount.EventTime) > -time.Second {
 						usdtAccount.Free = wsBalance.FreeAmount
 						usdtAccount.Locked = wsBalance.LockedAmount
 						usdtAccount.EventTime = wsBalance.EventTime
@@ -178,7 +178,7 @@ func (bn *BinanceUsdcSpot) StreamBasic(ctx context.Context, statusCh chan common
 				symbol := wsBalance.Asset + "USDC"
 				if ch, ok := positionChMap[symbol]; ok {
 					lastBalance, ok := balancesMap[symbol]
-					if ok && wsBalance.EventTime.Sub(lastBalance.EventTime) < 0 {
+					if ok && wsBalance.EventTime.Sub(lastBalance.EventTime) < -time.Second {
 						continue
 					}
 					if !ok {
@@ -223,7 +223,7 @@ func (bn *BinanceUsdcSpot) StreamBasic(ctx context.Context, statusCh chan common
 			for _, balance := range account.Balances {
 				balance := balance
 				if balance.Asset == "USDC" {
-					if balance.EventTime.Sub(usdtAccount.EventTime) >= 0 {
+					if balance.EventTime.Sub(usdtAccount.EventTime) > -time.Second {
 						usdtAccount = balance
 						select {
 						case usdtAccountCh <- &balance:
@@ -244,13 +244,14 @@ func (bn *BinanceUsdcSpot) StreamBasic(ctx context.Context, statusCh chan common
 				}
 				symbol := balance.Asset + "USDC"
 				lastBalance, ok := balancesMap[symbol]
-				if ok && balance.EventTime.Sub(lastBalance.EventTime) < 0 {
+				if ok && balance.EventTime.Sub(lastBalance.EventTime) < -time.Second {
 					continue
 				}
 				balancesMap[symbol] = &balance
 				if ch, ok := positionChMap[symbol]; ok {
+					outBalance := balance
 					select {
-					case ch <- &balance:
+					case ch <- &outBalance:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logger.Debugf("ch <- balance failed, ch len %d", len(ch))
