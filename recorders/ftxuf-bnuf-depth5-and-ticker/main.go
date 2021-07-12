@@ -13,11 +13,13 @@ import (
 
 func main() {
 
-	batchSize := flag.Int("batch", 30, "symbols group batch size")
+	batchSize := flag.Int("batch", 10, "symbols group batch size")
 
 	proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	symbolsStr := flag.String("symbols", "BZRXUSDT,SOLUSDT,SKLUSDT,XLMUSDT,STORJUSDT,KEEPUSDT,XMRUSDT,LINKUSDT,THETAUSDT,TRBUSDT,RUNEUSDT,LUNAUSDT,SANDUSDT,GTCUSDT,MANAUSDT,SFPUSDT,HOTUSDT,UNIUSDT,ENJUSDT,ZENUSDT,ETCUSDT,BAKEUSDT,ALGOUSDT,BTCUSDT,IOTAUSDT,DODOUSDT,RVNUSDT,CTKUSDT,EGLDUSDT,REEFUSDT,BCHUSDT,OMGUSDT,QTUMUSDT,AKROUSDT,ZILUSDT,LITUSDT,ADAUSDT,DENTUSDT,ONTUSDT,FILUSDT,UNFIUSDT,NEARUSDT,HNTUSDT,TOMOUSDT,MTLUSDT,DGBUSDT,AXSUSDT,BANDUSDT,CVCUSDT,SXPUSDT,AAVEUSDT,KNCUSDT,CRVUSDT,KAVAUSDT,AVAXUSDT,BLZUSDT,CHZUSDT,BALUSDT,RENUSDT,BNBUSDT,ALPHAUSDT,DASHUSDT,LRCUSDT,ETHUSDT,SUSHIUSDT,IOSTUSDT,XEMUSDT,ALICEUSDT,SNXUSDT,BTTUSDT,FLMUSDT,ONEUSDT,OGNUSDT,MKRUSDT,XTZUSDT,YFIIUSDT,MATICUSDT,ICXUSDT,BATUSDT,BTSUSDT,CELRUSDT,LTCUSDT,COTIUSDT,1INCHUSDT,OCEANUSDT,RLCUSDT,STMXUSDT,GRTUSDT,KSMUSDT,FTMUSDT,SCUSDT,WAVESUSDT,LINAUSDT,NKNUSDT,ZECUSDT,DOTUSDT,ATOMUSDT,ANKRUSDT,VETUSDT,TRXUSDT,RSRUSDT,NEOUSDT,DOGEUSDT,ICPUSDT,YFIUSDT,BELUSDT,XRPUSDT,COMPUSDT,EOSUSDT,ZRXUSDT,HBARUSDT,SRMUSDT,CHRUSDT", "symbols, separate by comma")
-	savePath := flag.String("path", "/root/bnus-bnuf-depth5-and-ticker", "data save folder")
+	symbolsStr := flag.String("symbols", "LINA-PERP,FLM-PERP,SOL-PERP,XLM-PERP,MATIC-PERP,BAND-PERP,SXP-PERP,DASH-PERP,SC-PERP,STORJ-PERP,EGLD-PERP,NEO-PERP,KSM-PERP,XTZ-PERP,ALGO-PERP,WAVES-PERP,1INCH-PERP,BAL-PERP,BNB-PERP,ATOM-PERP,CHZ-PERP,ETC-PERP,LRC-PERP,SNX-PERP,YFII-PERP,ADA-PERP,BCH-PERP,IOTA-PERP,OMG-PERP,ONT-PERP,ICP-PERP,HOT-PERP,RSR-PERP,QTUM-PERP,ZRX-PERP,KAVA-PERP,ZEC-PERP,DOGE-PERP,HNT-PERP,BTC-PERP,AVAX-PERP,NEAR-PERP,VET-PERP,THETA-PERP,GRT-PERP,XEM-PERP,FIL-PERP,DOT-PERP,LINK-PERP,DEFI-PERP,BAT-PERP,TRX-PERP,ALPHA-PERP,REEF-PERP,HBAR-PERP,UNI-PERP,SRM-PERP,AXS-PERP,CRV-PERP,SAND-PERP,DENT-PERP,YFI-PERP,MKR-PERP,ENJ-PERP,DODO-PERP,SUSHI-PERP,ZIL-PERP,FTM-PERP,COMP-PERP,AAVE-PERP,TOMO-PERP,EOS-PERP,REN-PERP,KNC-PERP,SKL-PERP,BTT-PERP,MTL-PERP,LTC-PERP,XRP-PERP,RUNE-PERP,ETH-PERP,XMR-PERP,LUNA-PERP,STMX-PERP", "symbols, separate by comma")
+	savePath := flag.String("path", "/root/ftxuf-bnuf-depth5-and-ticker", "data save folder")
+
+
 
 	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
 	//symbolsStr := flag.String("symbols", "BTCUSDT", "symbols, separate by comma")
@@ -31,13 +33,13 @@ func main() {
 		if end > len(symbols) {
 			end = len(symbols)
 		}
-		bnusChMap := make(map[string]chan *Message)
+		ftxufChMap := make(map[string]chan *Message)
 		bnufChMap := make(map[string]chan *Message)
 		for _, xSymbol := range symbols[start:end] {
-			ySymbol := strings.Replace(xSymbol, "USDT", "USDT", -1)
-			bnusChMap[strings.ToLower(xSymbol)] = make(chan *Message, 1024)
-			bnufChMap[strings.ToLower(ySymbol)] = bnusChMap[strings.ToLower(xSymbol)]
-			go saveLoop(ctx, cancel, *savePath, xSymbol, ySymbol, bnusChMap[strings.ToLower(xSymbol)], fileSavedCh)
+			ySymbol := strings.Replace(xSymbol, "-PERP", "USDT", -1)
+			ftxufChMap[xSymbol] = make(chan *Message, 1024)
+			bnufChMap[strings.ToLower(ySymbol)] = ftxufChMap[xSymbol]
+			go saveLoop(ctx, cancel, *savePath, xSymbol, ySymbol, ftxufChMap[xSymbol], fileSavedCh)
 		}
 		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan *Message) {
 			ws1 := NewBnufDepth5WS(ctx, proxy, outputChMap)
@@ -51,16 +53,13 @@ func main() {
 			}
 		}(ctx, cancel, *proxyAddress, bnufChMap)
 		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan *Message) {
-			ws1 := NewBnusDepth5WS(ctx, proxy, outputChMap)
-			ws2 := NewBnusBookTickerWS(ctx, proxy, outputChMap)
+			ws1 := NewFtxufTickerWS(ctx, proxy, outputChMap)
 			select {
 			case <-ctx.Done():
 			case <-ws1.Done():
 				cancel()
-			case <-ws2.Done():
-				cancel()
 			}
-		}(ctx, cancel, *proxyAddress, bnusChMap)
+		}(ctx, cancel, *proxyAddress, ftxufChMap)
 	}
 	go archiveFiles(context.Background(), *savePath)
 	go func() {
