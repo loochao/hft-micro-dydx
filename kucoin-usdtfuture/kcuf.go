@@ -473,13 +473,13 @@ func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[s
 						logger.Debugf("ch <- fr failed, %s ch len %d", symbol, len(ch))
 					}
 				}
-				select {
-				case <-ctx.Done():
-					return
-				case <-k.done:
-					return
-				case <-time.After(time.Second):
-				}
+				//select {
+				//case <-ctx.Done():
+				//	return
+				//case <-k.done:
+				//	return
+				//case <-time.After(time.Second):
+				//}
 			}
 			afterFrTimer.Reset(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
 			break
