@@ -300,6 +300,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	}
 }
 func (strat *XYStrategy) handleSave() {
+	strat.saveTimer.Reset(strat.config.InternalInflux.SaveInterval)
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady ||
 		strat.xPosition == nil ||
@@ -313,7 +314,6 @@ func (strat *XYStrategy) handleSave() {
 	default:
 		logger.Debugf("strat.saveCh <- strat failed %s %s ch len %d", strat.xSymbol, strat.ySymbol, len(strat.saveCh))
 	}
-	strat.saveTimer.Reset(strat.config.InternalInflux.SaveInterval)
 }
 
 func (strat *XYStrategy) hedgeYPosition() {
