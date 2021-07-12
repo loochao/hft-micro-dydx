@@ -472,7 +472,6 @@ mainLoop:
 			}
 			break
 		case st := <-saveCh:
-			logger.Debugf("GET %s", st.xSymbol)
 			strategiesMap[st.xSymbol] = st
 			break
 		case <-influxSaveTimer.C:
