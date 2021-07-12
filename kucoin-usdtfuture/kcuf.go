@@ -452,12 +452,37 @@ func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[s
 	k.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
+	afterFrTimer := time.NewTimer(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
+	defer afterFrTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-k.done:
 			return
+		case <-afterFrTimer.C:
+			for symbol, ch := range channels {
+				subCtx, _ := context.WithTimeout(ctx, time.Minute)
+				fr, err := k.api.GetCurrentFundingRate(subCtx, symbol)
+				if err != nil {
+					logger.Debugf("api.GetCurrentFundingRate error %v", err)
+				} else {
+					select {
+					case ch <- fr:
+					default:
+						logger.Debugf("ch <- fr failed, %s ch len %d", symbol, len(ch))
+					}
+				}
+				select {
+				case <-ctx.Done():
+					return
+				case <-k.done:
+					return
+				case <-time.After(time.Second):
+				}
+			}
+			afterFrTimer.Reset(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
+			break
 		case <-timer.C:
 			for symbol, ch := range channels {
 				subCtx, _ := context.WithTimeout(ctx, time.Minute)
@@ -480,6 +505,7 @@ func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[s
 				}
 			}
 			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
+			break
 		}
 	}
 }

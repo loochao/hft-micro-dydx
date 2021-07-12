@@ -421,10 +421,32 @@ func (bn *BinanceUsdtFuture) StreamFundingRate(ctx context.Context, channels map
 	pullInterval := time.Minute
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
+	afterFrTimer := time.NewTimer(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
+	defer afterFrTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
+		case <-afterFrTimer.C:
+			//刚过fr直接再拉一次
+			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+			indexes, err := bn.ufApi.GetPremiumIndex(subCtx)
+			if err != nil {
+				logger.Debugf("WatchPositionsFromHttp GetPositions error %v", err)
+			} else {
+				for _, fr := range indexes {
+					if ch, ok := channels[fr.Symbol]; ok {
+						fr := fr
+						select {
+						case ch <- &fr:
+						default:
+						}
+					}
+				}
+			}
+			cancel()
+			afterFrTimer.Reset(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
+			break
 		case <-timer.C:
 			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
 			indexes, err := bn.ufApi.GetPremiumIndex(subCtx)
@@ -443,6 +465,7 @@ func (bn *BinanceUsdtFuture) StreamFundingRate(ctx context.Context, channels map
 			}
 			cancel()
 			timer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
+			break
 		}
 	}
 }
