@@ -333,6 +333,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	}
 }
 func (strat *XYStrategy) handleSave() {
+	logger.Debugf("handleSave %s", strat.xSymbol)
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady ||
 		strat.xPosition == nil ||
