@@ -12,6 +12,6 @@ git push origin master
 
 chmod 755 "./dist/bnus-bnuf-depth5-and-ticker.$dt"
 
-echo "hk02"
+echo "hk04"
 rsync -avx --progress "./dist/bnus-bnuf-depth5-and-ticker.$dt" hk04:/usr/local/bin/
 
