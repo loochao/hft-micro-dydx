@@ -239,7 +239,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 				strat.fundingRateSettleTimer.Reset(strat.config.FundingRateSilentTime * 2)
 			} else {
 				strat.fundingRateSettleSilent = false
-				strat.fundingRateSettleTimer.Reset(time.Minute)
+				strat.fundingRateSettleTimer.Reset(time.Now().Truncate(strat.config.FundingInterval).Add(strat.config.FundingInterval - strat.config.FundingRateSilentTime).Sub(time.Now()))
 			}
 			break
 		case <-strat.saveTimer.C:
