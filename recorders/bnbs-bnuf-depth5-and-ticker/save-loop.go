@@ -53,7 +53,7 @@ func saveLoop(ctx context.Context, cancel context.CancelFunc, savePath, xSymbol,
 			}
 			time.Sleep(time.Second * 5)
 			dayTime = time.Now().Truncate(time.Hour * 24)
-			outPath = fmt.Sprintf("%s/%s-%s,%s.depth5.jl.gz", savePath, dayTime.Format("20060102"), xSymbol, ySymbol)
+			outPath = fmt.Sprintf("%s/%s-%s,%s.jl.gz", savePath, dayTime.Format("20060102"), xSymbol, ySymbol)
 			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
 			if err != nil {
 				cancel()

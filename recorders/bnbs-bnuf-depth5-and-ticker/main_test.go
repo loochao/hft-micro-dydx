@@ -13,7 +13,7 @@ import (
 func TestGetSymbols(t *testing.T) {
 	symbols := make([]string, 0)
 	for key := range binance_busdspot.TickSizes {
-		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(key, "USDC", "USDT", -1)]; ok {
+		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(key, "BUSD", "USDT", -1)]; ok {
 			symbols = append(symbols, key)
 		}
 	}
