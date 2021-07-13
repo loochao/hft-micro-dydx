@@ -605,7 +605,8 @@ func (ftx *FtxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderP
 	} else {
 		newOrderParam.Type = OrderTypeLimit
 	}
-	if param.TimeInForce == common.OrderTimeInForceIOC {
+	if param.TimeInForce == common.OrderTimeInForceIOC ||
+		param.TimeInForce == common.OrderTimeInForceFOK {
 		newOrderParam.Ioc = true
 	}
 	newOrderParam.PostOnly = param.PostOnly
