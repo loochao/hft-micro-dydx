@@ -38,6 +38,8 @@ func main() {
 			symbols = append(symbols, symbol)
 		}
 	}
+	//logger.Debugf("%s", symbols)
+	//return
 	startTime, err := time.Parse("20060102", "20210712")
 	if err != nil {
 		logger.Fatal(err)
