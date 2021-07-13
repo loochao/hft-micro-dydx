@@ -37,13 +37,13 @@ func (strat *XYStrategy) handleXOrder() {
 					strat.xLastFilledBuyPrice = new(float64)
 				}
 				*strat.xLastFilledBuyPrice = strat.xOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second * 5)
+				strat.realisedSpreadTimer.Reset(strat.config.EnterSilent/100)
 			} else if strat.xOrder.GetSide() == common.OrderSideSell {
 				if strat.xLastFilledSellPrice == nil {
 					strat.xLastFilledSellPrice = new(float64)
 				}
 				*strat.xLastFilledSellPrice = strat.xOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second * 5)
+				strat.realisedSpreadTimer.Reset(strat.config.EnterSilent/100)
 			}
 		}
 	}
@@ -68,13 +68,13 @@ func (strat *XYStrategy) handleYOrder() {
 					strat.yLastFilledBuyPrice = new(float64)
 				}
 				*strat.yLastFilledBuyPrice = strat.yOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second * 5)
+				strat.realisedSpreadTimer.Reset(strat.config.EnterSilent/100)
 			} else if strat.yOrder.GetSide() == common.OrderSideSell {
 				if strat.yLastFilledSellPrice == nil {
 					strat.yLastFilledSellPrice = new(float64)
 				}
 				*strat.yLastFilledSellPrice = strat.yOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second * 5)
+				strat.realisedSpreadTimer.Reset(strat.config.EnterSilent/100)
 			}
 		}
 	}
