@@ -230,8 +230,14 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case strat.xSystemStatus = <-strat.xSystemStatusCh:
+			if strat.xSystemStatus != common.SystemStatusReady {
+				strat.xOrderSilentTime = time.Now().Add(strat.config.RestartSilent)
+			}
 			break
 		case strat.ySystemStatus = <-strat.ySystemStatusCh:
+			if strat.ySystemStatus != common.SystemStatusReady {
+				strat.xOrderSilentTime = time.Now().Add(strat.config.RestartSilent)
+			}
 			break
 		case <-strat.fundingRateSettleTimer.C:
 			if time.Now().Truncate(strat.config.FundingInterval).Add(strat.config.FundingInterval).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
