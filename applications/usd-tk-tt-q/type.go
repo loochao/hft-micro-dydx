@@ -118,24 +118,25 @@ type XYStrategy struct {
 	xSizeDiff float64
 	ySizeDiff float64
 
-	offsetFactor   float64
-	offsetStep     float64
-	shortTop       float64
-	shortBot       float64
-	longBot        float64
-	longTop        float64
-	xSize          float64
-	ySize          float64
-	xValue         float64
-	yValue         float64
-	xAbsValue      float64
-	yAbsValue      float64
-	midPrice       float64
-	enterValue     float64
-	targetWeight   float64
-	maxOrderValue  float64
-	targetValue    float64
-	realisedSpread *float64
+	offsetFactor           float64
+	offsetStep             float64
+	shortTop               float64
+	shortBot               float64
+	longBot                float64
+	longTop                float64
+	xSize                  float64
+	ySize                  float64
+	xValue                 float64
+	yValue                 float64
+	xAbsValue              float64
+	yAbsValue              float64
+	midPrice               float64
+	enterValue             float64
+	targetWeight           float64
+	maxOrderValue          float64
+	targetValue            float64
+	realisedSpread         *float64
+	adjustedRealisedSpread *float64
 
 	xOrder         common.Order
 	yOrder         common.Order

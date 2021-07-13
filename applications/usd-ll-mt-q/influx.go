@@ -148,6 +148,9 @@ func handleSave(
 		if st.realisedSpread != nil {
 			fields["realisedSpread"] = *st.realisedSpread
 		}
+		if st.adjustedRealisedSpread != nil {
+			fields["adjustedRealisedSpread"] = *st.adjustedRealisedSpread
+		}
 		if xSystemStatus == common.SystemStatusReady {
 			fields["xSystemStatus"] = 1.0
 		} else {
