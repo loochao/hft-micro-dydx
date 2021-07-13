@@ -401,6 +401,7 @@ type Order struct {
 	PostOnly      bool      `json:"postOnly"`
 	Ioc           bool      `json:"ioc"`
 	CreatedAt     time.Time `json:"-"`
+	ParseTime     time.Time `json:"-"`
 }
 
 func (order *Order) GetExchange() common.ExchangeID {
@@ -422,6 +423,7 @@ func (order *Order) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
+		order.ParseTime = time.Now()
 	}
 	return nil
 }

@@ -7,7 +7,6 @@ version=" BUILD @ $(date -u '+%Y%m%d %H:%M:%S') "
 echo "$version"
 sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/usd-tk-tt-q/init.go
 
-
 env GOOS=linux GOARCH=arm64 go build -o "./dist/usd-tk-tt-q.arm64.$dt" ./applications/usd-tk-tt-q
 env GOOS=linux GOARCH=amd64 go build -o "./dist/usd-tk-tt-q.amd64.$dt" ./applications/usd-tk-tt-q
 
@@ -41,5 +40,3 @@ rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" vcarm02:/usr/local/bin/
 
 echo "vcarm03"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" vcarm03:/usr/local/bin/
-
-cd -

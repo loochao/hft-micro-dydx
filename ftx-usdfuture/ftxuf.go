@@ -201,9 +201,48 @@ func (ftx *FtxUsdFuture) StreamBasic(
 				}
 			}
 		case order := <-userWS.OrderCh:
-			if order.Status == "new" {
+			if order.Status == OrderStatusNew {
 				//logger.Debugf("SAVE INTERNAL ORDER %d %v", order.ID, order)
 				internalOrders[order.ID] = order
+			}
+			if order.Status == OrderStatusClosed &&
+				order.FilledSize != 0 {
+				if pos, ok := internalPositions[order.Market]; ok {
+					if pos.ParseTime.Sub(order.ParseTime) > time.Second {
+						continue
+					}
+					size := order.FilledSize
+					if order.Side != OrderSideBuy {
+						size = -order.FilledSize
+					}
+					price := order.AvgFillPrice
+					if pos.NetSize*size < 0 {
+						if math.Abs(size) > math.Abs(pos.NetSize) {
+							pos.Cost = (pos.NetSize + size) * price
+							pos.NetSize = pos.NetSize + size
+						} else {
+							pos.Cost = pos.Cost - size*price
+							pos.NetSize = pos.NetSize + size
+						}
+					} else {
+						pos.Cost += size * price
+						pos.NetSize += size
+					}
+					pos.ParseTime = order.ParseTime
+					//logger.Debugf("UPDATE POSITION BY FILL %v", pos)
+					internalPositions[order.Market] = pos
+					if positionCh, ok := positionsCh[order.Market]; ok {
+						select {
+						case positionCh <- &pos:
+						default:
+							if time.Now().Sub(logSilentTime) > 0 {
+								logger.Debugf("positionCh <- &pos failed, ch len %d", len(positionCh))
+								logSilentTime = time.Now().Add(time.Minute)
+							}
+						}
+					}
+				}
+
 			}
 			if orderCh, ok := ordersCh[order.Market]; ok {
 				select {
@@ -227,41 +266,6 @@ func (ftx *FtxUsdFuture) StreamBasic(
 				fill.Price = order.Price
 				fill.Size = order.Size
 				fill.OrderType = order.Type
-			}
-			if pos, ok := internalPositions[fill.Market]; ok {
-				if pos.ParseTime.Sub(fill.Time) > time.Second {
-					continue
-				}
-				size := fill.FilledSize
-				if fill.Side != OrderSideBuy {
-					size = -fill.FilledSize
-				}
-				price := fill.FilledPrice
-				if pos.NetSize*size < 0 {
-					if math.Abs(size) > math.Abs(pos.NetSize) {
-						pos.Cost = (pos.NetSize + size) * price
-						pos.NetSize = pos.NetSize + size
-					} else {
-						pos.Cost = pos.Cost - size*price
-						pos.NetSize = pos.NetSize + size
-					}
-				} else {
-					pos.Cost += size * price
-					pos.NetSize += size
-				}
-				pos.ParseTime = fill.Time
-				//logger.Debugf("UPDATE POSITION BY FILL %v", pos)
-				internalPositions[fill.Market] = pos
-				if positionCh, ok := positionsCh[fill.Market]; ok {
-					select {
-					case positionCh <- &pos:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("positionCh <- &pos failed, ch len %d", len(positionCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
-				}
 			}
 			if orderCh, ok := ordersCh[fill.Market]; ok {
 				select {
