@@ -241,6 +241,27 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 				if order.FilledSize == 0 || order.MatchPrice == 0 {
 					continue
 				}
+				if order.FilledSize != 0 {
+					if pos, ok := positionsMap[order.Symbol]; ok && order.EventTime.Sub(pos.EventTime) > 0 {
+						if order.Side == OrderSideBuy {
+							pos.CurrentQty += order.FilledSize
+						} else {
+							pos.CurrentQty -= order.FilledSize
+						}
+						pos.EventTime = order.EventTime
+						positionsMap[order.Symbol] = pos
+						if ch, ok := positionChMap[pos.Symbol]; ok {
+							select {
+							case ch <- &pos:
+							default:
+								if time.Now().Sub(logSilentTime) > 0 {
+									logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
+									logSilentTime = time.Now().Add(time.Minute)
+								}
+							}
+						}
+					}
+				}
 			}
 			if ch, ok := orderChs[order.Symbol]; ok {
 				select {
