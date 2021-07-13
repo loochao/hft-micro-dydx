@@ -230,7 +230,7 @@ func (b *Balance) GetTime() time.Time {
 }
 
 func (b *Balance) GetEventTime() time.Time {
-	return b.EventTime
+	return b.ParseTime
 }
 
 func (b *Balance) GetParseTime() time.Time {
