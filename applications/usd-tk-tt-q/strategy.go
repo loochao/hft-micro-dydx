@@ -106,7 +106,7 @@ func startXYStrategy(
 		yAccount:                nil,
 		xPosition:               nil,
 		yPosition:               nil,
-		xOrderSilentTime:        time.Now().Add(time.Minute),
+		xOrderSilentTime:        time.Now().Add(config.RestartSilent),
 		yOrderSilentTime:        time.Time{},
 		xFundingRate:            nil,
 		yFundingRate:            nil,
@@ -125,7 +125,7 @@ func startXYStrategy(
 		logSilentTime:           time.Time{},
 		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
 		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
-		saveTimer:               time.NewTimer(time.Minute*3),
+		saveTimer:               time.NewTimer(config.RestartSilent),
 		fundingRateSettleTimer:  time.NewTimer(time.Now().Truncate(config.FundingInterval).Add(config.FundingInterval - time.Second).Sub(time.Now())),
 		spreadTime:              time.Time{},
 		spread:                  nil,
@@ -224,7 +224,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.saveTimer.Stop()
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
-	strat.xOrderSilentTime = time.Now().Add(time.Minute * 5)
+	strat.xOrderSilentTime = time.Now().Add(strat.config.RestartSilent)
 	for {
 		select {
 		case <-ctx.Done():
