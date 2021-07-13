@@ -62,15 +62,15 @@ type Config struct {
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
 	StartValues       map[string]float64 `yaml:"startValues"`
 
-	OrderTimeout       time.Duration `yaml:"orderTimeout"`
-	XOrderSilent       time.Duration `yaml:"xOrderSilent"`
-	YOrderSilent       time.Duration `yaml:"yOrderSilent"`
-	HedgeDelay         time.Duration `yaml:"hedgeDelay"`
-	HedgeCheckDuration time.Duration `yaml:"hedgeCheckDuration"`
-	HedgeCheckInterval time.Duration `yaml:"hedgeCheckInterval"`
-	EnterSilent        time.Duration `yaml:"enterSilent"`
-	RestartSilent      time.Duration `yaml:"restartSilent"`
-	RestartInterval    time.Duration `yaml:"restartInterval"`
+	OrderTimeout           time.Duration `yaml:"orderTimeout"`
+	XOrderSilent           time.Duration `yaml:"xOrderSilent"`
+	YOrderSilent           time.Duration `yaml:"yOrderSilent"`
+	HedgeDelay             time.Duration `yaml:"hedgeDelay"`
+	HedgeCheckDuration     time.Duration `yaml:"hedgeCheckDuration"`
+	HedgeCheckInterval     time.Duration `yaml:"hedgeCheckInterval"`
+	RealisedSpreadLogDelay time.Duration `yaml:"realisedSpreadLogDelay"`
+	RestartSilent          time.Duration `yaml:"restartSilent"`
+	RestartInterval        time.Duration `yaml:"restartInterval"`
 
 	XYPairs        map[string]string  `yaml:"xyPairs"`
 	TargetWeights  map[string]float64 `yaml:"targetWeights,omitempty"`
@@ -87,8 +87,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.OrderTimeout == 0 {
 		config.OrderTimeout = time.Second * 5
 	}
-	if config.EnterSilent == 0 {
-		config.EnterSilent = time.Minute * 30
+	if config.RealisedSpreadLogDelay == 0 {
+		config.RealisedSpreadLogDelay = time.Second
 	}
 	if config.RestartSilent == 0 {
 		config.RestartSilent = time.Minute * 3

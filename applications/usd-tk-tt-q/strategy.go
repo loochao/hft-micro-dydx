@@ -106,7 +106,7 @@ func startXYStrategy(
 		yAccount:                nil,
 		xPosition:               nil,
 		yPosition:               nil,
-		xOrderSilentTime:        time.Now().Add(config.EnterSilent),
+		xOrderSilentTime:        time.Now().Add(time.Minute),
 		yOrderSilentTime:        time.Time{},
 		xFundingRate:            nil,
 		yFundingRate:            nil,
@@ -125,7 +125,7 @@ func startXYStrategy(
 		logSilentTime:           time.Time{},
 		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
 		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
-		saveTimer:               time.NewTimer(config.EnterSilent),
+		saveTimer:               time.NewTimer(time.Minute*3),
 		fundingRateSettleTimer:  time.NewTimer(time.Now().Truncate(config.FundingInterval).Add(config.FundingInterval - time.Second).Sub(time.Now())),
 		spreadTime:              time.Time{},
 		spread:                  nil,
@@ -170,6 +170,7 @@ func startXYStrategy(
 		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
 		quantileLastSampleTime:  time.Time{},
 		quantileMiddle:          quantileMiddle,
+		lastSpreadEnterTime: time.Time{},
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
@@ -423,7 +424,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= -time.Second {
 			//logger.Debugf("%s %v %v %f %f", strat.xSymbol, nextPos.GetEventTime(), strat.xPosition.GetEventTime(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()), strat.xStepSize)
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
-				strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
+				strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 				strat.yOrderSilentTime = time.Now()
 				if strat.xTicker != nil {
 					strat.xTimedPositionChange.Insert(time.Now(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize())*strat.xMidPrice*strat.xMultiplier)
