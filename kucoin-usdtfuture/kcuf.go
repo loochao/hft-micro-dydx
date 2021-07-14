@@ -337,8 +337,8 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 					}
 				}
 			}
+			break
 		}
-		break
 	}
 }
 
