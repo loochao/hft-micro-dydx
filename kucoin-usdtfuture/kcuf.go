@@ -286,8 +286,8 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 			if position, ok := positionsMap[wsPosition.Symbol]; ok {
 				//logger.Debugf("POSITION %s %s %v", position.Symbol, position.EventTime)
 				//这儿需要防止和order更新的仓位挨得太近, 重复变更仓位的问题，所以ws的仓位默认需要有一个delay
-				//最近三秒的都不要
-				if wsPosition.EventTime.Sub(position.EventTime) < time.Second*3 {
+				//最近一秒的都不要
+				if wsPosition.EventTime.Sub(position.EventTime) < time.Second {
 					continue
 				}
 				position.EventTime = wsPosition.EventTime
