@@ -1,8 +1,9 @@
-package kucoin_usdtspot
+package archive
 
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"log"
 	"os"
@@ -10,10 +11,10 @@ import (
 )
 
 func TestNewDepth5RoutedWebsocket(t *testing.T) {
-	var api *API
+	var api *kucoin_usdtspot.API
 	var ctx = context.Background()
 	var err error
-	api, err = NewAPI(
+	api, err = kucoin_usdtspot.NewAPI(
 		os.Getenv("KCSPOT_KEY"),
 		os.Getenv("KCSPOT_SECRET"),
 		os.Getenv("KCSPOT_PASSPHRASE"),

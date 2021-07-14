@@ -1,10 +1,11 @@
-package kucoin_usdtspot
+package archive
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -222,7 +223,7 @@ func (w *Depth5RoutedWebsocket) reconnect(ctx context.Context, wsUrl string, pro
 }
 
 func (w *Depth5RoutedWebsocket) mainLoop(
-	ctx context.Context, api *API,
+	ctx context.Context, api *kucoin_usdtspot.API,
 	proxy string,
 	channels map[string]chan *common.DepthRawMessage,
 ) {
@@ -328,7 +329,7 @@ func (w *Depth5RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websock
 				return
 			case <-time.After(time.Millisecond):
 				logger.Debug("w.writeCh <- Ping timeout in 1ms")
-			case w.writeCh <- Ping{
+			case w.writeCh <- kucoin_usdtspot.Ping{
 				ID:   fmt.Sprintf("%d", time.Now().Nanosecond()/1000000),
 				Type: "ping",
 			}:
@@ -343,7 +344,7 @@ func (w *Depth5RoutedWebsocket) heartbeatLoop(ctx context.Context, conn *websock
 					case <-ctx.Done():
 					case <-time.After(time.Millisecond):
 						logger.Debugf("w.writeCh <- SubscribeMsg timeout in 1ms, %s", fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol))
-					case w.writeCh <- SubscribeMsg{
+					case w.writeCh <- kucoin_usdtspot.SubscribeMsg{
 						ID:             fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol),
 						Type:           "subscribe",
 						Topic:          fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol),
@@ -392,7 +393,7 @@ func (w *Depth5RoutedWebsocket) Done() chan interface{} {
 
 func NewDepth5RoutedWebsocket(
 	ctx context.Context,
-	api *API,
+	api *kucoin_usdtspot.API,
 	proxy string,
 	channels map[string]chan *common.DepthRawMessage,
 ) *Depth5RoutedWebsocket {

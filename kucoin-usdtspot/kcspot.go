@@ -90,7 +90,7 @@ func (k *KucoinUsdtSpot) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Account, positionMapCh map[string]chan common.Position, orderChs map[string]chan common.Order) {
+func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, positionMapCh map[string]chan common.Position, orderChs map[string]chan common.Order) {
 	defer k.Stop()
 	settings := k.settings
 	var err error
@@ -146,7 +146,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					}
 					continue
 				}
-				symbol := account.Currency + "USDT"
+				symbol := account.Currency + "-USDT"
 				lastBalance, ok := accountsMap[symbol]
 				if ok && account.EventTime.Sub(lastBalance.EventTime) < 0 {
 					continue
@@ -243,11 +243,11 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 			//DEBUG 2021/05/22 01:21:54.839661 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"24","matchPrice":"325.94","matchSize":"21","tradeId":"60a85cb2b87b911178425c73","remainSize":"0","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
 			//DEBUG 2021/05/22 01:21:54.839676 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"3","matchPrice":"325.73","matchSize":"2","tradeId":"60a85cb2b87b911178425c72","remainSize":"21","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
 			//滤掉没有价格的事件
-			if order.EventType == "filled" || order.EventType == "match" {
-				if order.FilledSize == 0 || order.MatchPrice == 0 {
-					continue
-				}
-			}
+			//if order.EventType == "filled" || order.EventType == "match" {
+			//	if order.FilledSize == 0 || order.MatchPrice == 0 {
+			//		continue
+			//	}
+			//}
 			if ch, ok := orderChs[order.Symbol]; ok {
 				select {
 				case ch <- order:
@@ -255,39 +255,6 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("ch <- &order failed, ch len %d", len(ch))
 						logSilentTime = time.Now().Add(time.Minute)
-					}
-				}
-			}
-		case wsPosition := <-userWS.PositionCh:
-			if position, ok := accountsMap[wsPosition.Symbol]; ok {
-				if position.EventTime.Sub(wsPosition.EventTime) > 0 {
-					continue
-				}
-				position.EventTime = wsPosition.EventTime
-				if wsPosition.AvgEntryPrice != nil {
-					position.AvgEntryPrice = *wsPosition.AvgEntryPrice
-				}
-				if wsPosition.UnrealisedPnl != nil {
-					position.UnrealisedPnl = *wsPosition.UnrealisedPnl
-				}
-				if wsPosition.CurrentQty != nil {
-					position.CurrentQty = *wsPosition.CurrentQty
-				}
-				if wsPosition.UnrealisedPnlPcnt != nil {
-					position.UnrealisedPnlPcnt = *wsPosition.UnrealisedPnlPcnt
-				}
-				if wsPosition.UnrealisedRoePcnt != nil {
-					position.UnrealisedRoePcnt = *wsPosition.UnrealisedRoePcnt
-				}
-				accountsMap[wsPosition.Symbol] = position
-				if ch, ok := positionMapCh[position.Symbol]; ok {
-					select {
-					case ch <- &position:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("ch <- &wsPosition failed, ch len %d", len(ch))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
 					}
 				}
 			}
@@ -493,9 +460,7 @@ func (k *KucoinUsdtSpot) GenerateClientID() string {
 func (k *KucoinUsdtSpot) systemStatusLoop(
 	ctx context.Context, output chan common.SystemStatus,
 ) {
-	k.mu.Lock()
 	pullInterval := k.settings.PullInterval
-	k.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
@@ -537,9 +502,7 @@ func (k *KucoinUsdtSpot) systemStatusLoop(
 func (k *KucoinUsdtSpot) accountLoop(
 	ctx context.Context, output chan []Account,
 ) {
-	k.mu.Lock()
 	pullInterval := k.settings.PullInterval
-	k.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
@@ -697,4 +660,3 @@ func (k *KucoinUsdtSpot) accountLoop(
 //		}
 //	}
 //}
-*/

@@ -263,7 +263,8 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 					}
 					delete(matchedOrders, order.ClientOid)
 				}
-			}else if order.Status == "match" {
+			}
+			if order.MatchSize != 0 && order.MatchPrice != 0 {
 				if oldOrder, ok := matchedOrders[order.ClientOid]; ok {
 					if oldOrder.FilledSize+order.MatchSize != 0 {
 						order.FilledPrice = (order.MatchPrice*order.MatchSize + oldOrder.FilledSize*oldOrder.FilledPrice) / (oldOrder.FilledSize + order.MatchSize)

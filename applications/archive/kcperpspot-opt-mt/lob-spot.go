@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot/archive"
 	"github.com/geometrybase/hft-micro/logger"
 )
 
@@ -20,7 +21,7 @@ func makerDepthWSLoop(
 	}
 	logger.Debugf("START makerDepthWSLoop %s", symbols)
 	defer logger.Debugf("EXIT makerDepthWSLoop %s", symbols)
-	ws := kucoin_usdtspot.NewDepth5RoutedWebsocket(
+	ws := archive.NewDepth5RoutedWebsocket(
 		ctx,
 		api,
 		proxyAddress,

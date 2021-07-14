@@ -2,17 +2,16 @@ package kucoin_usdtspot
 
 import (
 	"context"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"log"
 	"os"
 	"testing"
-	"time"
 )
 
-func init() {
-}
 
-func TestNewDepth5Websocket(t *testing.T) {
+
+func TestNewDepth5WS(t *testing.T) {
 	var api *API
 	var ctx = context.Background()
 	var err error
@@ -20,16 +19,33 @@ func TestNewDepth5Websocket(t *testing.T) {
 		os.Getenv("KCPERP_KEY"),
 		os.Getenv("KCPERP_SECRET"),
 		os.Getenv("KCPERP_PASSPHRASE"),
-		"socks5://127.0.0.1:1081")
+		"socks5://127.0.0.1:1080")
 	if err != nil {
 		log.Fatal(err)
 	}
-	ws := NewDepth5Websocket(ctx, api, []string{"ENJ-USDT"},  "socks5://127.0.0.1:1081" )
+	symbols := []string{"ENJ-USDT", "WAVES-USDT"}
+	//symbols := make([]string, 0)
+	//for symbol := range TickSizes {
+	//	symbols = append(symbols, symbol)
+	//}
+	channels := make(map[string]chan common.Depth)
+	outputCh := make(chan common.Depth, 128)
+	for _, symbol := range symbols {
+		channels[symbol] = outputCh
+	}
+	ws := NewDepth5WS(
+		ctx, api,
+		"socks5://127.0.0.1:1081",
+		channels,
+	)
 	for {
 		select {
-		case d := <- ws.DataCh:
-			logger.Debugf("%v %v", d.EventTime, time.Now().Sub(d.EventTime))
+		case <- ws.Done():
+			return
+		case d := <-outputCh:
+			logger.Debugf("%s %v", d.GetSymbol(), d.GetTime())
 		}
 	}
 }
+
 

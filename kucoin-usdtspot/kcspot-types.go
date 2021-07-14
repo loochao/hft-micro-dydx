@@ -13,53 +13,6 @@ import (
 	"time"
 )
 
-const (
-	CandleType1Min   = "1min"
-	CandleType3Min   = "3min"
-	CandleType5Min   = "5min"
-	CandleType15Min  = "15min"
-	CandleType30Min  = "30min"
-	CandleType1Hour  = "1hour"
-	CandleType4Hour  = "4hour"
-	CandleType6Hour  = "6hour"
-	CandleType8Hour  = "8hour"
-	CandleType12Hour = "12hour"
-	CandleType1Day   = "1day"
-	CandleType1Week  = "1week"
-
-	OrderStatusOpen  = "open"
-	OrderStatusMatch = "match"
-	OrderStatusDone  = "done"
-
-	OrderTypeOpen     = "open"
-	OrderTypeMatch    = "match"
-	OrderTypeFilled   = "filled"
-	OrderTypeCanceled = "canceled"
-	OrderTypeUpdate   = "update"
-
-	SystemStatusOpen       = "open"
-	SystemStatusCancelOnly = "cancelonly"
-	SystemStatusClose      = "close"
-
-	TradeSideBuy  = "buy"
-	TradeSideSell = "sell"
-)
-
-var CandleTypeDurations = map[string]time.Duration{
-	CandleType1Min:   time.Minute,
-	CandleType3Min:   time.Minute * 3,
-	CandleType5Min:   time.Minute * 5,
-	CandleType15Min:  time.Minute * 15,
-	CandleType30Min:  time.Minute * 30,
-	CandleType1Hour:  time.Hour,
-	CandleType4Hour:  time.Hour * 4,
-	CandleType6Hour:  time.Hour * 6,
-	CandleType8Hour:  time.Hour * 8,
-	CandleType12Hour: time.Hour * 12,
-	CandleType1Day:   time.Hour * 24,
-	CandleType1Week:  time.Hour * 168,
-}
-
 type Symbol struct {
 	Symbol          string  `json:"symbol,omitempty"`
 	Name            string  `json:"name,omitempty"`
@@ -151,10 +104,20 @@ type Depth5 struct {
 	EventTime time.Time     `json:"-"`
 }
 
-func (depth *Depth5) GetBids() [5][2]float64 { return depth.Bids }
-func (depth *Depth5) GetAsks() [5][2]float64 { return depth.Asks }
-func (depth *Depth5) GetSymbol() string      { return depth.Symbol }
-func (depth *Depth5) GetTime() time.Time     { return depth.EventTime }
+func (depth *Depth5) GetAsks() common.Asks {
+	return depth.Asks[:]
+}
+
+func (depth *Depth5) GetBids() common.Bids {
+	return depth.Bids[:]
+}
+
+func (depth *Depth5) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (depth *Depth5) GetSymbol() string  { return depth.Symbol }
+func (depth *Depth5) GetTime() time.Time { return depth.EventTime }
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	type Alias Depth5
 	aux := struct {
@@ -212,6 +175,10 @@ type Account struct {
 	Holds     float64   `json:"holds,string"`
 	EventTime time.Time `json:"-"`
 	ParseTime time.Time `json:"-"`
+}
+
+func (a *Account) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (a *Account) GetSymbol() string {
@@ -410,22 +377,97 @@ type WSOrder struct {
 	ParseTime  time.Time `json:"-"`
 }
 
-func (wsCap *WSOrder) UnmarshalJSON(data []byte) error {
+func (wsOrder *WSOrder) GetSymbol() string {
+	return wsOrder.Symbol
+}
+
+func (wsOrder *WSOrder) GetSize() float64 {
+	return wsOrder.Size
+}
+
+func (wsOrder *WSOrder) GetPrice() float64 {
+	return wsOrder.Price
+}
+
+func (wsOrder *WSOrder) GetFilledSize() float64 {
+	return wsOrder.FilledSize
+}
+
+func (wsOrder *WSOrder) GetFilledPrice() float64 {
+	return wsOrder.Price
+}
+
+func (wsOrder *WSOrder) GetSide() common.OrderSide {
+	switch wsOrder.Status {
+	case OrderSideBuy:
+		return common.OrderSideBuy
+	case OrderSideSell:
+		return common.OrderSideSell
+	default:
+		return common.OrderSideUnknown
+	}
+}
+
+func (wsOrder *WSOrder) GetClientID() string {
+	return wsOrder.ClientOid
+}
+
+func (wsOrder *WSOrder) GetID() string {
+	return wsOrder.OrderId
+}
+
+func (wsOrder *WSOrder) GetStatus() common.OrderStatus {
+	switch wsOrder.Status {
+	case OrderStatusOpen:
+		return common.OrderStatusOpen
+	case OrderStatusMatch:
+		return common.OrderStatusFilled
+	case OrderStatusDone:
+		return common.OrderStatusFilled
+	default:
+		return common.OrderStatusUnknown
+	}
+}
+
+func (wsOrder *WSOrder) GetType() common.OrderType {
+	switch wsOrder.OrderType {
+	case OrderTypeLimit:
+		return common.OrderTypeLimit
+	case OrderTypeMarket:
+		return common.OrderTypeMarket
+	default:
+		return common.OrderTypeUnknown
+	}
+}
+
+func (wsOrder *WSOrder) GetPostOnly() bool {
+	return false
+}
+
+func (wsOrder *WSOrder) GetReduceOnly() bool {
+	return false
+}
+
+func (wsOrder *WSOrder) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (wsOrder *WSOrder) UnmarshalJSON(data []byte) error {
 	type Alias WSOrder
 	aux := struct {
 		OrderTime int64 `json:"orderTime,omitempty"`
 		EventTime int64 `json:"ts,omitempty"`
 		*Alias
 	}{
-		Alias: (*Alias)(wsCap),
+		Alias: (*Alias)(wsOrder),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		logger.Debugf("UnmarshalJSON WsOrder error %v", err)
 		return err
 	}
-	wsCap.EventTime = time.Unix(0, aux.EventTime)
-	wsCap.ParseTime = time.Now()
-	wsCap.OrderTime = time.Unix(0, aux.OrderTime)
+	wsOrder.EventTime = time.Unix(0, aux.EventTime)
+	wsOrder.ParseTime = time.Now()
+	wsOrder.OrderTime = time.Unix(0, aux.OrderTime)
 	return nil
 }
 
