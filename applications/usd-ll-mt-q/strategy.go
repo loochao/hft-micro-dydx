@@ -241,8 +241,8 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.saveTimer.Stop()
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
-	//strat.xOpenOrder = &common.NewOrderParam{}
-	//strat.tryCancelXOpenOrder("start")
+	strat.xOpenOrder = &common.NewOrderParam{}
+	strat.tryCancelXOpenOrder("start")
 	strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 	for {
 		select {
