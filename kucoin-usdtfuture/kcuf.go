@@ -256,13 +256,13 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 			//DEBUG 2021/05/22 01:21:54.839676 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"3","matchPrice":"325.73","matchSize":"2","tradeId":"60a85cb2b87b911178425c72","remainSize":"21","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
 			//滤掉没有价格的事件
 			if order.EventType == "filled" || order.EventType == "match" {
-				if order.FilledSize == 0 || order.MatchPrice == 0 {
+				if order.MatchSize == 0 || order.MatchPrice == 0 {
 					continue
 				}
 				if pos, ok := positionsMap[order.Symbol]; ok  {
-					size := order.FilledSize
+					size := order.MatchSize
 					if order.Side != OrderSideBuy {
-						size = -order.FilledSize
+						size = -order.MatchSize
 					}
 					logger.Debugf("ORDER %s %s %v POS %f -> %f %v", order.Symbol, order.EventType, order.EventTime, pos.CurrentQty, pos.CurrentQty+size, pos.EventTime)
 					price := order.MatchPrice
@@ -277,8 +277,8 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 					}
 					//这儿需要防止和order更新的仓位挨得太近, 重复变更仓位的问题，所以ws的仓位默认需要有一个delay
 					//一分钟内不要更新仓位
-					pos.ParseTime = order.ParseTime.Add(time.Minute)
-					pos.EventTime = order.EventTime.Add(time.Minute)
+					pos.ParseTime = order.ParseTime.Add(time.Second*5)
+					pos.EventTime = order.EventTime.Add(time.Second*5)
 					positionsMap[order.Symbol] = pos
 					if ch, ok := positionChMap[pos.Symbol]; ok {
 						select {
