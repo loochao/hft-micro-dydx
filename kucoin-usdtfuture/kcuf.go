@@ -241,23 +241,18 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 				if order.FilledSize == 0 || order.MatchPrice == 0 {
 					continue
 				}
-				logger.Debugf("ORDER %s %s %v", order.Symbol, order.EventType, order.EventTime)
 				if pos, ok := positionsMap[order.Symbol]; ok && order.EventTime.Sub(pos.EventTime) >= 0 {
-					if order.Side == OrderSideBuy {
-						pos.CurrentQty += order.FilledSize
-					} else {
-						pos.CurrentQty -= order.FilledSize
-					}
+					logger.Debugf("ORDER %s %s %v POS %v", order.Symbol, order.EventType, order.EventTime, pos.EventTime)
 					size := order.FilledSize
 					if order.Side != OrderSideBuy {
 						size = -order.FilledSize
 					}
 					price := order.MatchPrice
 					if pos.CurrentQty*size <= 0 {
-						pos.CurrentQty = pos.CurrentQty + size
 						if math.Abs(size) > math.Abs(pos.CurrentQty) {
 							pos.AvgEntryPrice = price
 						}
+						pos.CurrentQty = pos.CurrentQty + size
 					} else {
 						pos.AvgEntryPrice = (pos.CurrentQty*pos.AvgEntryPrice + size*price) / (pos.CurrentQty + size)
 						pos.CurrentQty += size
