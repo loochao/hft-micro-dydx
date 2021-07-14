@@ -241,7 +241,8 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 				if order.FilledSize == 0 || order.MatchPrice == 0 {
 					continue
 				}
-				if pos, ok := positionsMap[order.Symbol]; ok && order.EventTime.Sub(pos.EventTime) >= -time.Millisecond {
+				logger.Debugf("ORDER %s %s %v", order.Symbol, order.EventType, order.EventTime)
+				if pos, ok := positionsMap[order.Symbol]; ok && order.EventTime.Sub(pos.EventTime) >= 0 {
 					if order.Side == OrderSideBuy {
 						pos.CurrentQty += order.FilledSize
 					} else {
@@ -274,6 +275,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 			}
 		case wsPosition := <-userWS.PositionCh:
 			if position, ok := positionsMap[wsPosition.Symbol]; ok {
+				logger.Debugf("POSITION %s %s %v", position.Symbol, position.EventTime)
 				if position.EventTime.Sub(wsPosition.EventTime) > 0 {
 					continue
 				}
