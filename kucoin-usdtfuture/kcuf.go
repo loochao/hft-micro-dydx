@@ -241,7 +241,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 				if order.FilledSize == 0 || order.MatchPrice == 0 {
 					continue
 				}
-				if pos, ok := positionsMap[order.Symbol]; ok && order.EventTime.Sub(pos.EventTime) >= 0 {
+				if pos, ok := positionsMap[order.Symbol]; ok && order.EventTime.Sub(pos.EventTime) >= -time.Millisecond {
 					if order.Side == OrderSideBuy {
 						pos.CurrentQty += order.FilledSize
 					} else {
