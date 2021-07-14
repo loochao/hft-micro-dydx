@@ -439,11 +439,15 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 				strat.xPosition = nextPos
 				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 					strat.hedgeYPosition()
+				}else{
+					strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 				}
 			} else {
 				strat.xPosition = nextPos
 				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 					strat.hedgeYPosition()
+				}else{
+					strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 				}
 			}
 		}
