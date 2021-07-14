@@ -157,18 +157,32 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 				logger.Debugf("commissionAssetValueCh <- 0.0 failed, ch len %d", len(commissionAssetValueCh))
 			}
 			commissionAssetTimer.Reset(time.Minute)
-		case positionsMap = <-httpPositionsCh:
-			for symbol, pos := range positionsMap {
+			break
+		case positions := <-httpPositionsCh:
+			for symbol, pos := range positions {
 				if ch, ok := positionChMap[symbol]; ok {
-					//logger.Debugf("%v", pos)
-					pos := pos
-					select {
-					case ch <- &pos:
-					default:
-						logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
+					if oldPos, ok := positionsMap[symbol]; ok {
+						if pos.EventTime.Sub(oldPos.EventTime) > 0 {
+							pos := pos
+							positionsMap[symbol] = pos
+							select {
+							case ch <- &pos:
+							default:
+								logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
+							}
+						}
+					}else{
+						pos := pos
+						positionsMap[symbol] = pos
+						select {
+						case ch <- &pos:
+						default:
+							logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
+						}
 					}
 				}
 			}
+			break
 		case <-restartResetTimer.C:
 			select {
 			case statusCh <- common.SystemStatusReady:
@@ -181,6 +195,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+			break
 		case a := <-httpAccountCh:
 			account = &a
 			select {
@@ -191,6 +206,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+			break
 		case <-userWS.RestartCh:
 			select {
 			case statusCh <- common.SystemStatusRestart:
@@ -202,6 +218,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+			break
 		case balance := <-userWS.BalanceCh:
 			if account != nil {
 				if account.EventTime.Sub(balance.EventTime) > 0 {
@@ -227,6 +244,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 					}
 				}
 			}
+			break
 		case order := <-userWS.OrderCh:
 			//DEBUG 2021/05/22 01:21:54.774559 kucoin-usdtfuture.go:606: 	k.api.SubmitOrder {"clientOid":"16216465147940","side":"buy","symbol":"BNBUSDTM","type":"market","leverage":3,"size":24,"reduceOnly":true}
 			//DEBUG 2021/05/22 01:21:54.774573 kucoin-usdtfuture-api.go:77: 	{"clientOid":"16216465147940","side":"buy","symbol":"BNBUSDTM","type":"market","leverage":3,"size":24,"reduceOnly":true}
@@ -241,7 +259,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 				if order.FilledSize == 0 || order.MatchPrice == 0 {
 					continue
 				}
-				if pos, ok := positionsMap[order.Symbol]; ok && order.EventTime.Sub(pos.EventTime) >= 0 {
+				if pos, ok := positionsMap[order.Symbol]; ok  {
 					size := order.FilledSize
 					if order.Side != OrderSideBuy {
 						size = -order.FilledSize
@@ -257,8 +275,10 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 						pos.AvgEntryPrice = (pos.CurrentQty*pos.AvgEntryPrice + size*price) / (pos.CurrentQty + size)
 						pos.CurrentQty += size
 					}
-					pos.ParseTime = order.ParseTime
-					pos.EventTime = order.EventTime
+					//这儿需要防止和order更新的仓位挨得太近, 重复变更仓位的问题，所以ws的仓位默认需要有一个delay
+					//一分钟内不要更新仓位
+					pos.ParseTime = order.ParseTime.Add(time.Minute)
+					pos.EventTime = order.EventTime.Add(time.Minute)
 					positionsMap[order.Symbol] = pos
 					if ch, ok := positionChMap[pos.Symbol]; ok {
 						select {
@@ -282,12 +302,11 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 					}
 				}
 			}
+			break
 		case wsPosition := <-userWS.PositionCh:
 			if position, ok := positionsMap[wsPosition.Symbol]; ok {
 				//logger.Debugf("POSITION %s %s %v", position.Symbol, position.EventTime)
-				//这儿需要防止和order更新的仓位挨得太近, 重复变更仓位的问题，所以ws的仓位默认需要有一个delay
-				//最近一秒的都不要
-				if wsPosition.EventTime.Sub(position.EventTime) < time.Second {
+				if wsPosition.EventTime.Sub(position.EventTime) < 0 {
 					continue
 				}
 				position.EventTime = wsPosition.EventTime
@@ -319,6 +338,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 				}
 			}
 		}
+		break
 	}
 }
 
