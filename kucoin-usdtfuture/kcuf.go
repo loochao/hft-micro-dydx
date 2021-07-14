@@ -144,6 +144,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 	var account *Account
 	positionsMap := make(map[string]Position)
 	var commissionAssetTimer = time.NewTimer(time.Second)
+	matchedOrders := make(map[string]*WSOrder)
 	for {
 		select {
 		case <-userWS.Done():
@@ -171,7 +172,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 								logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
 							}
 						}
-					}else{
+					} else {
 						pos := pos
 						positionsMap[symbol] = pos
 						select {
@@ -255,11 +256,25 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 			//DEBUG 2021/05/22 01:21:54.839661 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"24","matchPrice":"325.94","matchSize":"21","tradeId":"60a85cb2b87b911178425c73","remainSize":"0","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
 			//DEBUG 2021/05/22 01:21:54.839676 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"3","matchPrice":"325.73","matchSize":"2","tradeId":"60a85cb2b87b911178425c72","remainSize":"21","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
 			//滤掉没有价格的事件
-			if order.EventType == "filled" || order.EventType == "match" {
-				if order.MatchSize == 0 || order.MatchPrice == 0 {
-					continue
+			if order.Status == "done" {
+				if oldOrder, ok := matchedOrders[order.ClientOid]; ok {
+					if order.EventType == "filled" {
+						order.FilledPrice = oldOrder.FilledPrice
+					}
+					delete(matchedOrders, order.ClientOid)
 				}
-				if pos, ok := positionsMap[order.Symbol]; ok  {
+			}else if order.Status == "match" {
+				if oldOrder, ok := matchedOrders[order.ClientOid]; ok {
+					if oldOrder.FilledSize+order.MatchSize != 0 {
+						order.FilledPrice = (order.MatchPrice*order.MatchSize + oldOrder.FilledSize*oldOrder.FilledPrice) / (oldOrder.FilledSize + order.MatchSize)
+					} else {
+						order.FilledPrice = order.MatchPrice
+					}
+				} else {
+					order.FilledPrice = order.MatchPrice
+				}
+				matchedOrders[order.ClientOid] = order
+				if pos, ok := positionsMap[order.Symbol]; ok {
 					size := order.MatchSize
 					if order.Side != OrderSideBuy {
 						size = -order.MatchSize
@@ -277,8 +292,8 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 					}
 					//这儿需要防止和order更新的仓位挨得太近, 重复变更仓位的问题，所以ws的仓位默认需要有一个delay
 					//一分钟内不要更新仓位
-					pos.ParseTime = order.ParseTime.Add(time.Second*5)
-					pos.EventTime = order.EventTime.Add(time.Second*5)
+					pos.ParseTime = order.ParseTime.Add(time.Second * 5)
+					pos.EventTime = order.EventTime.Add(time.Second * 5)
 					positionsMap[order.Symbol] = pos
 					if ch, ok := positionChMap[pos.Symbol]; ok {
 						select {

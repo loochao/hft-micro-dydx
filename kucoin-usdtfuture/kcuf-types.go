@@ -464,6 +464,7 @@ type WSOrder struct {
 	Size         float64   `json:"-"`
 	RemainSize   float64   `json:"remainSize,string,omitempty"`
 	FilledSize   float64   `json:"filledSize,string,omitempty"`
+	FilledPrice  float64   `json:"-"`
 	CanceledSize float64   `json:"canceledSize,string"`
 	TradeId      string    `json:"tradeId"`
 	ClientOid    string    `json:"clientOid"`
@@ -495,7 +496,11 @@ func (wsOrder *WSOrder) GetFilledSize() float64 {
 }
 
 func (wsOrder *WSOrder) GetFilledPrice() float64 {
-	return wsOrder.MatchPrice
+	if wsOrder.FilledPrice != 0 {
+		return wsOrder.FilledPrice
+	} else {
+		return wsOrder.MatchPrice
+	}
 }
 
 func (wsOrder *WSOrder) GetSide() common.OrderSide {
