@@ -110,7 +110,8 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
-			strat.price = strat.xTicker.GetBidPrice()
+			strat.price = strat.xTicker.GetBidPrice()*(1.0 - strat.config.EnterSlippage)
+			strat.price = math.Floor(strat.price/strat.xTickSize)*strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
 				Side:        common.OrderSideSell,
@@ -176,7 +177,8 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
-			strat.price = strat.xTicker.GetAskPrice()
+			strat.price = strat.xTicker.GetAskPrice()*(1.0 + strat.config.EnterSlippage)
+			strat.price = math.Ceil(strat.price/strat.xTickSize)*strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
 				Side:        common.OrderSideBuy,
@@ -272,7 +274,8 @@ func (strat *XYStrategy) updateXPosition() {
 			}
 			return
 		}
-		strat.price = strat.xTicker.GetAskPrice()
+		strat.price = strat.xTicker.GetAskPrice()*(1.0 + strat.config.EnterSlippage)
+		strat.price = math.Ceil(strat.price/strat.xTickSize)*strat.xTickSize
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideBuy,
@@ -366,7 +369,8 @@ func (strat *XYStrategy) updateXPosition() {
 			}
 			return
 		}
-		strat.price = strat.xTicker.GetBidPrice()
+		strat.price = strat.xTicker.GetBidPrice()*(1.0 - strat.config.EnterSlippage)
+		strat.price = math.Floor(strat.price/strat.xTickSize)*strat.xTickSize
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideSell,

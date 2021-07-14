@@ -58,6 +58,7 @@ type Config struct {
 	StartValue        float64            `yaml:"startValue"`
 	EnterFreePct      float64            `yaml:"enterFreePct"`
 	BestSizeFactor    float64            `yaml:"bestSizeFactor"`
+	EnterSlippage     float64            `yaml:"enterSlippage"`
 	EnterMinimalStep  float64            `yaml:"enterMinimalStep"`
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
 	StartValues       map[string]float64 `yaml:"startValues"`
