@@ -56,7 +56,7 @@ func main() {
 
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/bn-bsuf-quantiles"
+	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/bn-csuf-quantiles"
 
 	for _, xSymbol := range symbols {
 		ySymbol := strings.Replace(xSymbol, "BUSD", "USDT", -1)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
+	bncs "github.com/geometrybase/hft-micro/binance-usdcspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
@@ -110,6 +111,9 @@ func main() {
 	case "binanceBusdSpotWithMergedTicker":
 		xExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
 		break
+	case "binanceUsdcSpotWithMergedTicker":
+		xExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
+		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -144,6 +148,9 @@ func main() {
 		break
 	case "binanceBusdSpotWithMergedTicker":
 		yExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
+		break
+	case "binanceUsdcSpotWithMergedTicker":
+		yExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
 		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
