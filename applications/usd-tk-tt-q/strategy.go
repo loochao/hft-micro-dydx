@@ -257,10 +257,10 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			strat.quantileSaveTimer.Reset(strat.config.QuantileSaveInterval)
 			break
 		case <-strat.hedgeCheckTimer.C:
+			strat.hedgeYPosition()
 			if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 				strat.hedgeCheckTimer.Reset(time.Hour * 9999)
 			} else {
-				strat.hedgeYPosition()
 				strat.hedgeCheckTimer.Reset(strat.config.HedgeCheckInterval)
 			}
 			break
