@@ -491,7 +491,7 @@ func (wsOrder *WSOrder) GetPrice() float64 {
 }
 
 func (wsOrder *WSOrder) GetFilledSize() float64 {
-	return wsOrder.MatchSize
+	return wsOrder.FilledSize
 }
 
 func (wsOrder *WSOrder) GetFilledPrice() float64 {
