@@ -12,8 +12,11 @@ import (
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
+	"github.com/geometrybase/hft-micro/tdigest"
+	"math"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"time"
 )
@@ -38,6 +41,8 @@ func main() {
 			symbols = append(symbols, symbol)
 		}
 	}
+	sort.Strings(symbols)
+	//symbols = symbols[:1]
 	//logger.Debugf("%s", symbols)
 	//return
 	startTime, err := time.Parse("20060102", "20210712")
@@ -58,6 +63,9 @@ func main() {
 	quantileSubInterval := time.Hour
 	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/bn-csuf-quantiles"
 
+	bidTDs := make(map[string]*tdigest.TDigest)
+	askTDs := make(map[string]*tdigest.TDigest)
+
 	for _, xSymbol := range symbols {
 		ySymbol := strings.Replace(xSymbol, "USDC", "USDT", -1)
 		//if _, err := os.Stat(path.Join(quantilePath, xSymbol+"-"+ySymbol+".json")); err == nil {
@@ -69,6 +77,9 @@ func main() {
 		//}
 		counter := 0
 		timedTDigest := stream_stats.NewTimedTDigest(quantileLookback, quantileSubInterval)
+
+		bidTD, _ := tdigest.New()
+		askTD, _ := tdigest.New()
 
 		shortLastEnter := 0.0
 		longLastEnter := 0.0
@@ -137,7 +148,10 @@ func main() {
 				}
 
 				if yTD != nil && xTD != nil {
-
+					bidValue := math.Min(xTD.GetBidSize()*xTD.GetBidPrice(), yTD.GetBidSize()*yTD.GetBidPrice())
+					askValue := math.Min(xTD.GetAskSize()*xTD.GetAskPrice(), yTD.GetAskSize()*yTD.GetAskPrice())
+					_ = bidTD.Add(bidValue)
+					_ = askTD.Add(askValue)
 					shortLastEnter = (yTD.GetBidPrice() - xTD.GetAskPrice()) / xTD.GetAskPrice()
 					longLastEnter = (yTD.GetAskPrice() - xTD.GetBidPrice()) / xTD.GetBidPrice()
 					_ = timedTDigest.Insert(yDepth.EventTime, (shortLastEnter+longLastEnter)*0.5)
@@ -162,6 +176,8 @@ func main() {
 			}
 			_ = gr.Close()
 			_ = file.Close()
+			bidTDs[xSymbol] = bidTD
+			askTDs[xSymbol] = askTD
 		}
 		data, err := json.Marshal(timedTDigest)
 		if err != nil {
@@ -183,5 +199,13 @@ func main() {
 			logger.Debugf("%v", err)
 			continue
 		}
+	}
+	fmt.Printf("\n\nmaxBuyValues:\n")
+	for xSymbol, td := range askTDs {
+		fmt.Printf("  %s: %.2f\n", xSymbol, td.Quantile(0.2))
+	}
+	fmt.Printf("\n\nmaxSellValues:\n")
+	for xSymbol, td := range bidTDs {
+		fmt.Printf("  %s: %.2f\n", xSymbol, td.Quantile(0.2))
 	}
 }

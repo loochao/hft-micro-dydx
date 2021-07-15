@@ -1,10 +1,11 @@
-package kucoin_usdtspot
+package archive
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -188,7 +189,7 @@ func (w *TradeRoutedWS) mainLoop(
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
-	api, err := NewAPI("", "", "", proxy)
+	api, err := kucoin_usdtspot.NewAPI("", "", "", proxy)
 	if err != nil {
 		logger.Debugf("NewAPI error %v", err)
 		return
@@ -276,7 +277,7 @@ func (w *TradeRoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 				return
 			case <-time.After(time.Millisecond):
 				logger.Debug("w.writeCh <- Ping timeout in 1ms")
-			case w.writeCh <- Ping{
+			case w.writeCh <- kucoin_usdtspot.Ping{
 				ID:   fmt.Sprintf("%d", time.Now().Nanosecond()/1000000),
 				Type: "ping",
 			}:
@@ -291,7 +292,7 @@ func (w *TradeRoutedWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 					case <-ctx.Done():
 					case <-time.After(time.Millisecond):
 						logger.Debugf("w.writeCh <- SubscribeMsg timeout in 1ms, %s", fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol))
-					case w.writeCh <- SubscribeMsg{
+					case w.writeCh <- kucoin_usdtspot.SubscribeMsg{
 						ID:             fmt.Sprintf("/market/match:%s", symbol),
 						Type:           "subscribe",
 						Topic:          fmt.Sprintf("/market/match:%s", symbol),
@@ -343,7 +344,7 @@ func (w *TradeRoutedWS) dataHandleLoop(ctx context.Context, id int, channels map
 	defer logger.Debugf("EXIT dataHandleLoop %d", id)
 	logSilentTime := time.Now()
 	var err error
-	var wsTrade WSTrade
+	var wsTrade kucoin_usdtspot.WSTrade
 	var ch chan common.Trade
 	var ok bool
 	for {

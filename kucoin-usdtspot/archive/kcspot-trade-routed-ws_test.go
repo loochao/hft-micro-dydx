@@ -1,4 +1,4 @@
-package kucoin_usdtspot
+package archive
 
 import (
 	"context"

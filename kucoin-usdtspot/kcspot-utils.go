@@ -280,3 +280,105 @@ func WatchSystemStatusHttp(
 		}
 	}
 }
+
+
+
+func ParseTicker(msg []byte, ticker *Ticker) (err error) {
+
+	ticker.ParseTime = time.Now()
+
+	//{"data":{"sequence":"1618200193317","bestAsk":"32704.5","size":"0.0017491","bestBidSize":"0.06093004","price":"32704.4","time":1626290933804,"bestAskSize":"0.02047287","bestBid":"32704.4"},"subject":"trade.ticker","topic":"/market/ticker:BTC-USDT","type":"message"}
+	msgLen := len(msg)
+	if msg[msgLen-27] == ':' {
+		ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-26:msgLen-19])
+	} else if msg[msgLen-28] == ':' {
+		ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-27:msgLen-19])
+	} else if msg[msgLen-29] == ':' {
+		ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-28:msgLen-19])
+	} else if msg[msgLen-30] == ':' {
+		ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-29:msgLen-19])
+	} else if msg[msgLen-31] == ':' {
+		ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-30:msgLen-19])
+	} else {
+		return fmt.Errorf("bad msg, symbol not found %s", msg)
+	}
+
+	offset :=37
+	collectStart := offset
+	counter := 0
+	currentKey := common.JsonKeyUnknown
+	for offset < msgLen-23 {
+		switch currentKey {
+		case common.JsonKeyBidSize:
+			if msg[offset] == '"' {
+				ticker.BestBidSize, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyUnknown
+				counter++
+			}
+			break
+		case common.JsonKeyAskSize:
+			if msg[offset] == '"' {
+				ticker.BestAskSize, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyUnknown
+				counter++
+			}
+			break
+		case common.JsonKeyBidPrice:
+			if msg[offset] == '"' {
+				ticker.BestBidPrice, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyUnknown
+				counter++
+				if counter == 4 {
+					return
+				}
+			}
+			break
+		case common.JsonKeyAskPrice:
+			if msg[offset] == '"' {
+				ticker.BestAskPrice, err = common.ParseDecimal(msg[collectStart:offset])
+				if err != nil {
+					return
+				}
+				currentKey = common.JsonKeyUnknown
+				counter++
+			}
+			break
+		case common.JsonKeyUnknown:
+			if msg[offset] == 'b' && msg[offset+4] == 'B' && msg[offset+10] == 'e' {
+				currentKey = common.JsonKeyBidSize
+				offset += 14
+				collectStart = offset
+				break
+			} else if msg[offset] == 'b' && msg[offset+4] == 'B' && msg[offset+7] == '"' {
+				currentKey = common.JsonKeyBidPrice
+				offset += 10
+				collectStart = offset
+				break
+			} else if msg[offset] == 'b' && msg[offset+4] == 'A' && msg[offset+10] == 'e' {
+				currentKey = common.JsonKeyAskSize
+				offset += 14
+				collectStart = offset
+				break
+			} else if msg[offset] == 'b' && msg[offset+4] == 'A' && msg[offset+7] == '"' {
+				currentKey = common.JsonKeyAskPrice
+				offset += 10
+				collectStart = offset
+				break
+			}
+		}
+		offset += 1
+	}
+	if counter != 4 {
+		err = fmt.Errorf("bad msg, %d miss fileds %s", counter, msg)
+	}
+	return
+}

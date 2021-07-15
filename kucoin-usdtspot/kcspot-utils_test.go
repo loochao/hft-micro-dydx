@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
@@ -103,3 +104,45 @@ func TestParseDepth52(t *testing.T) {
 //		assert.Equal(t, jsonD.Asks[i][1], depth5.Asks[i][1])
 //	}
 //}
+
+var GlobalT *Ticker
+
+
+func TestParseTicker(t *testing.T) {
+	ticker := Ticker{}
+	jTicker := TickerData{}
+	for _, msg := range strings.Split(TickerTestLines, "\n") {
+		err := json.Unmarshal([]byte(msg), &jTicker)
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = ParseTicker([]byte(msg), &ticker)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, jTicker.Data.Symbol, ticker.Symbol)
+		assert.Equal(t, jTicker.Data.BestBidSize, ticker.BestBidSize)
+		assert.Equal(t, jTicker.Data.BestBidPrice, ticker.BestBidPrice)
+		assert.Equal(t, jTicker.Data.BestAskSize, ticker.BestAskSize)
+		assert.Equal(t, jTicker.Data.BestAskPrice, ticker.BestAskPrice)
+	}
+}
+
+func BenchmarkParseTicker(t *testing.B) {
+	b := []byte(`{"data":{"sequence":"1612914399696","bestAsk":"13.3792","size":"8","bestBidSize":"167.5597","price":"13.3365","time":1626290933890,"bestAskSize":"2.4461","bestBid":"13.3339"},"subject":"trade.ticker","topic":"/market/ticker:WAVES-USDT","type":"message"}`)
+	x := &Ticker{}
+	t.ReportAllocs()
+	for i := 0; i < t.N; i++ {
+		_ = ParseTicker(b, x)
+	}
+	GlobalT = x
+}
+
+func BenchmarkParseTickerStdJson(t *testing.B) {
+	b := []byte(`{"data":{"symbol":"XBTUSDTM","sequence":1624824091680,"side":"buy","size":63,"price":33679,"bestBidSize":16,"bestBidPrice":"33678.0","bestAskPrice":"33679.0","tradeId":"60e93a803c7feb289d2be531","ts":1625897600449461736,"bestAskSize":1119},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}`)
+	x := &TickerData{}
+	t.ReportAllocs()
+	for i := 0; i < t.N; i++ {
+		_ = json.Unmarshal(b, x)
+	}
+}

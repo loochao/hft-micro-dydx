@@ -8,7 +8,7 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/gtspot"
 	"github.com/geometrybase/hft-micro/hbspot"
-	"github.com/geometrybase/hft-micro/kucoin-usdtspot"
+	"github.com/geometrybase/hft-micro/kucoin-usdtspot/archive"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"strings"
@@ -43,7 +43,7 @@ func StreamMergedSignals(
 		case "hbspot":
 			go hbspot.StreamTimedTradeImbalances(ctx, cancel, proxy, lookback, channels)
 		case "kucoin-usdtspot":
-			go kucoin_usdtspot.StreamTimedTradeImbalances(ctx, cancel, proxy, lookback, channels)
+			go archive.StreamTimedTradeImbalances(ctx, cancel, proxy, lookback, channels)
 		case "gtspot":
 			go gtspot.StreamTimedTradeImbalances(ctx, cancel, proxy, lookback, channels)
 		case "okex-usdtspot":

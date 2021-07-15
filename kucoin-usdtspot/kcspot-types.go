@@ -104,6 +104,22 @@ type Depth5 struct {
 	EventTime time.Time     `json:"-"`
 }
 
+func (depth *Depth5) GetBidPrice() float64 {
+	return depth.Bids[0][0]
+}
+
+func (depth *Depth5) GetAskPrice() float64 {
+	return depth.Asks[0][0]
+}
+
+func (depth *Depth5) GetBidSize() float64 {
+	return depth.Asks[0][1]
+}
+
+func (depth *Depth5) GetAskSize() float64 {
+	return depth.Asks[0][1]
+}
+
 func (depth *Depth5) GetAsks() common.Asks {
 	return depth.Asks[:]
 }
@@ -555,3 +571,112 @@ func (trade *Trade) GetSize() float64   { return trade.Size }
 func (trade *Trade) GetPrice() float64  { return trade.Price }
 func (trade *Trade) GetTime() time.Time { return trade.Time }
 func (trade *Trade) IsUpTick() bool     { return trade.Side == TradeSideBuy }
+
+type TickerData struct {
+	Type    string `json:"type"`
+	Topic   string `json:"topic"`
+	Subject string `json:"subject"`
+	Data    Ticker `json:"data"`
+}
+
+func (ticker *TickerData) UnmarshalJSON(data []byte) error {
+	type Alias TickerData
+	aux := struct {
+		*Alias
+	}{
+		Alias: (*Alias)(ticker),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("json.Unmarshal error %v", err)
+		return err
+	}
+	symbols := strings.Split(ticker.Topic, ":")
+	if len(symbols) != 2 {
+		return fmt.Errorf("bad topic %s", ticker.Topic)
+	}
+	ticker.Data.Symbol = symbols[1]
+	return nil
+}
+
+//  "data":{
+//
+//        "sequence":"1545896668986", //序列号
+//        "price":"0.08",             // 最近成交价格
+//        "size":"0.011",             // 最近成交数量
+//        "bestAsk":"0.08",           //最佳卖一价
+//        "bestAskSize":"0.18",       // 最佳卖一数量
+//        "bestBid":"0.049",          //最佳买一价
+//        "bestBidSize":"0.036",      //最佳买一数量
+//    }
+
+type Ticker struct {
+	Symbol       string    `json:"-"`
+	BestBidSize  float64   `json:"bestBidSize,string"`
+	BestBidPrice float64   `json:"bestBid,string"`
+	BestAskSize  float64   `json:"bestAskSize,string"`
+	BestAskPrice float64   `json:"bestAsk,string"`
+	ParseTime    time.Time `json:"-"`
+}
+
+func (ticker *Ticker) GetSymbol() string {
+	return ticker.Symbol
+}
+
+func (ticker *Ticker) GetTime() time.Time {
+	return ticker.ParseTime
+}
+
+func (ticker *Ticker) GetBidPrice() float64 {
+	return ticker.BestBidPrice
+}
+
+func (ticker *Ticker) GetAskPrice() float64 {
+	return ticker.BestAskPrice
+}
+
+func (ticker *Ticker) GetBidSize() float64 {
+	return ticker.BestBidSize
+}
+
+func (ticker *Ticker) GetAskSize() float64 {
+	return ticker.BestAskSize
+}
+
+func (ticker *Ticker) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (ticker *Ticker) UnmarshalJSON(data []byte) error {
+	type Alias Ticker
+	aux := struct {
+		*Alias
+	}{
+		Alias: (*Alias)(ticker),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		logger.Debugf("json.Unmarshal error %v", err)
+		return err
+	}
+	ticker.ParseTime = time.Now()
+	return nil
+}
+
+type FundingRate struct {
+	Symbol string
+}
+
+func (f FundingRate) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (f FundingRate) GetSymbol() string {
+	return f.Symbol
+}
+
+func (f FundingRate) GetFundingRate() float64 {
+	return 0
+}
+
+func (f FundingRate) GetNextFundingTime() time.Time {
+	return time.Time{}
+}

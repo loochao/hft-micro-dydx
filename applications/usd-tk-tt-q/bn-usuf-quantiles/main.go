@@ -12,6 +12,7 @@ import (
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
+	"github.com/geometrybase/hft-micro/tdigest"
 	"os"
 	"path"
 	"strings"
@@ -35,7 +36,7 @@ func main() {
 	symbols := strings.Split(
 		`1INCHUSDT,AAVEUSDT,ADAUSDT,AKROUSDT,ALGOUSDT,ALICEUSDT,ALPHAUSDT,ANKRUSDT,ATOMUSDT,AVAXUSDT,AXSUSDT,BAKEUSDT,BALUSDT,BANDUSDT,BATUSDT,BCHUSDT,BELUSDT,BLZUSDT,BNBUSDT,BTCUSDT,BTSUSDT,BTTUSDT,BZRXUSDT,CELRUSDT,CHRUSDT,CHZUSDT,COMPUSDT,COTIUSDT,CRVUSDT,CTKUSDT,CVCUSDT,DASHUSDT,DENTUSDT,DGBUSDT,DODOUSDT,DOGEUSDT,DOTUSDT,EGLDUSDT,ENJUSDT,EOSUSDT,ETCUSDT,ETHUSDT,FILUSDT,FLMUSDT,FTMUSDT,GRTUSDT,HBARUSDT,HNTUSDT,HOTUSDT,ICPUSDT,ICXUSDT,IOSTUSDT,IOTAUSDT,KAVAUSDT,KNCUSDT,KSMUSDT,LINAUSDT,LINKUSDT,LITUSDT,LRCUSDT,LTCUSDT,LUNAUSDT,MANAUSDT,MATICUSDT,MKRUSDT,MTLUSDT,NEARUSDT,NEOUSDT,NKNUSDT,OCEANUSDT,OGNUSDT,OMGUSDT,ONEUSDT,ONTUSDT,QTUMUSDT,REEFUSDT,RENUSDT,RLCUSDT,RSRUSDT,RUNEUSDT,RVNUSDT,SANDUSDT,SCUSDT,SFPUSDT,SKLUSDT,SNXUSDT,SOLUSDT,SRMUSDT,STMXUSDT,STORJUSDT,SUSHIUSDT,SXPUSDT,THETAUSDT,TOMOUSDT,TRBUSDT,TRXUSDT,UNFIUSDT,UNIUSDT,VETUSDT,WAVESUSDT,XEMUSDT,XLMUSDT,XMRUSDT,XRPUSDT,XTZUSDT,YFIIUSDT,YFIUSDT,ZECUSDT,ZENUSDT,ZILUSDT,ZRXUSDT`,
 		",",
-	)
+	)[:1]
 	startTime, err := time.Parse("20060102", "20210708")
 	if err != nil {
 		logger.Fatal(err)
@@ -54,6 +55,9 @@ func main() {
 	quantileSubInterval := time.Hour
 	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/bn-usuf-quantiles"
 
+	bidTDs := make(map[string]*tdigest.TDigest)
+	askTDs := make(map[string]*tdigest.TDigest)
+
 	for _, xSymbol := range symbols {
 		ySymbol := xSymbol
 		if _, err := os.Stat(path.Join(quantilePath, xSymbol+"-"+ySymbol+"-long-td.json")); err == nil {
@@ -65,6 +69,9 @@ func main() {
 		}
 		counter := 0
 		timedTDigest := stream_stats.NewTimedTDigest(quantileLookback, quantileSubInterval)
+
+		bidTD, _ := tdigest.New()
+		askTD, _ := tdigest.New()
 
 		shortLastEnter := 0.0
 		longLastEnter := 0.0

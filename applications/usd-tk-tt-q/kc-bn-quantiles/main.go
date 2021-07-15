@@ -12,6 +12,7 @@ import (
 	kucoin_usdtfuture "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
+	"github.com/geometrybase/hft-micro/tdigest"
 	"os"
 	"path"
 	"strings"
@@ -111,6 +112,9 @@ func main() {
 	quantileSubInterval := time.Hour
 	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/kc-bn-quantiles"
 
+	bidTDs := make(map[string]*tdigest.TDigest)
+	askTDs := make(map[string]*tdigest.TDigest)
+
 	for ySymbol, xSymbol := range symbolsMap {
 		if _, err := os.Stat(path.Join(quantilePath, xSymbol+"-"+ySymbol+"-long-td.json")); err == nil {
 			logger.Debugf("Exists %s %s %v", ySymbol, xSymbol, err)
@@ -124,6 +128,9 @@ func main() {
 
 		shortLastEnter := 0.0
 		longLastEnter := 0.0
+
+		bidTD, _ := tdigest.New()
+		askTD, _ := tdigest.New()
 
 		xDepth := &kucoin_usdtfuture.Depth5{}
 		yDepth := &binance_usdtfuture.Depth5{}
