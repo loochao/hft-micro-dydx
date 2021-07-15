@@ -83,7 +83,7 @@ func (w *KcufTickerWS) readLoop(
 	pool := [4096]*Message{}
 	for i := 0; i < 4096; i++ {
 		pool[i] = &Message{
-			Source: []byte{'K', 'D'},
+			Source: []byte{'K', 'T'},
 		}
 	}
 	for {
@@ -365,7 +365,7 @@ func (w *KcufTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, 
 						w.restart()
 						return
 					}
-					logger.Debugf("subscribe %s", fmt.Sprintf("/contractMarket/ticker:%s", symbol))
+					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/contractMarket/ticker:%s", symbol))
 					select {
 					case <-ctx.Done():
 						return

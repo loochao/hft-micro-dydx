@@ -6,6 +6,7 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -75,18 +76,19 @@ func main() {
 
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
 
-	//proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	//savePath := flag.String("path", "/root/kcuf-bnuf-depth5-and-ticker", "data save folder")
+	proxyAddress := flag.String("proxy", "", "symbols group batch size")
+	savePath := flag.String("path", "/root/kcuf-bnuf-depth5-and-ticker", "data save folder")
 
-	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
+	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
 
 	flag.Parse()
 	symbols := make([]string, 0)
 	for xSymbol := range symbolsMap {
 		symbols = append(symbols, xSymbol)
 	}
-	symbols = symbols[:1]
+	sort.Strings(symbols)
+	//symbols = symbols[:1]
 	ctx, cancel := context.WithCancel(context.Background())
 	fileSavedCh := make(chan string, len(symbols))
 	for start := 0; start < len(symbols); start += *batchSize {
@@ -96,7 +98,8 @@ func main() {
 		}
 		kcufChMap := make(map[string]chan *Message)
 		bnufChMap := make(map[string]chan *Message)
-		for xSymbol, ySymbol := range symbolsMap {
+		for _, xSymbol := range symbols[start:end] {
+			ySymbol := symbolsMap[xSymbol]
 			kcufChMap[xSymbol] = make(chan *Message, 1024)
 			bnufChMap[strings.ToLower(ySymbol)] = kcufChMap[xSymbol]
 			go saveLoop(ctx, cancel, *savePath, xSymbol, ySymbol, kcufChMap[xSymbol], fileSavedCh)
