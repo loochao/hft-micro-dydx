@@ -365,7 +365,7 @@ func (w *KcusTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, 
 						w.restart()
 						return
 					}
-					logger.Debugf("subscribe %s", fmt.Sprintf("/market/ticker:%s", symbol))
+					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/market/ticker:%s", symbol))
 					select {
 					case <-ctx.Done():
 						return
