@@ -93,7 +93,7 @@ func main() {
 		}
 		kcusChMap := make(map[string]chan *Message)
 		bnufChMap := make(map[string]chan *Message)
-		for _, xSymbol := range symbols {
+		for _, xSymbol := range symbols[start:end] {
 			ySymbol := strings.Replace(xSymbol, "-USDT", "USDT", -1)
 			kcusChMap[xSymbol] = make(chan *Message, 1024)
 			bnufChMap[strings.ToLower(ySymbol)] = kcusChMap[xSymbol]
