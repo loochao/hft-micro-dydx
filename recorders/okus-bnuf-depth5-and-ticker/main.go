@@ -15,13 +15,13 @@ func main() {
 
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
 
-	//proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	//symbolsStr := flag.String("symbols", "ZEC-USDT,FLM-USDT,REN-USDT,CVC-USDT,ALGO-USDT,SRM-USDT,XMR-USDT,LUNA-USDT,ONT-USDT,AAVE-USDT,TRB-USDT,UNI-USDT,BTT-USDT,BCH-USDT,IOST-USDT,ATOM-USDT,MATIC-USDT,MANA-USDT,SKL-USDT,QTUM-USDT,NEAR-USDT,LRC-USDT,FTM-USDT,CRV-USDT,SUSHI-USDT,ALPHA-USDT,ICP-USDT,BTC-USDT,SNX-USDT,BAL-USDT,NEO-USDT,SAND-USDT,AVAX-USDT,XLM-USDT,ZIL-USDT,ETH-USDT,RSR-USDT,CHZ-USDT,YFII-USDT,LTC-USDT,CELR-USDT,FIL-USDT,MKR-USDT,DASH-USDT,BAT-USDT,EOS-USDT,ZEN-USDT,LINK-USDT,ADA-USDT,COMP-USDT,DOT-USDT,THETA-USDT,ICX-USDT,GRT-USDT,WAVES-USDT,1INCH-USDT,DGB-USDT,OMG-USDT,SC-USDT,SOL-USDT,KNC-USDT,IOTA-USDT,ETC-USDT,KSM-USDT,TRX-USDT,BAND-USDT,DOGE-USDT,YFI-USDT,HBAR-USDT,XTZ-USDT,STORJ-USDT,EGLD-USDT,XEM-USDT,ZRX-USDT,XRP-USDT,RVN-USDT,ENJ-USDT", "symbols, separate by comma")
-	//savePath := flag.String("path", "/root/okus-bnuf-depth5-and-ticker", "data save folder")
+	proxyAddress := flag.String("proxy", "", "symbols group batch size")
+	symbolsStr := flag.String("symbols", "ZEC-USDT,FLM-USDT,REN-USDT,CVC-USDT,ALGO-USDT,SRM-USDT,XMR-USDT,LUNA-USDT,ONT-USDT,AAVE-USDT,TRB-USDT,UNI-USDT,BTT-USDT,BCH-USDT,IOST-USDT,ATOM-USDT,MATIC-USDT,MANA-USDT,SKL-USDT,QTUM-USDT,NEAR-USDT,LRC-USDT,FTM-USDT,CRV-USDT,SUSHI-USDT,ALPHA-USDT,ICP-USDT,BTC-USDT,SNX-USDT,BAL-USDT,NEO-USDT,SAND-USDT,AVAX-USDT,XLM-USDT,ZIL-USDT,ETH-USDT,RSR-USDT,CHZ-USDT,YFII-USDT,LTC-USDT,CELR-USDT,FIL-USDT,MKR-USDT,DASH-USDT,BAT-USDT,EOS-USDT,ZEN-USDT,LINK-USDT,ADA-USDT,COMP-USDT,DOT-USDT,THETA-USDT,ICX-USDT,GRT-USDT,WAVES-USDT,1INCH-USDT,DGB-USDT,OMG-USDT,SC-USDT,SOL-USDT,KNC-USDT,IOTA-USDT,ETC-USDT,KSM-USDT,TRX-USDT,BAND-USDT,DOGE-USDT,YFI-USDT,HBAR-USDT,XTZ-USDT,STORJ-USDT,EGLD-USDT,XEM-USDT,ZRX-USDT,XRP-USDT,RVN-USDT,ENJ-USDT", "symbols, separate by comma")
+	savePath := flag.String("path", "/root/okus-bnuf-depth5-and-ticker", "data save folder")
 
-	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	symbolsStr := flag.String("symbols", "BTC-USDT", "symbols, separate by comma")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
+	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//symbolsStr := flag.String("symbols", "BTC-USDT", "symbols, separate by comma")
+	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 
 	flag.Parse()
 	symbols := strings.Split(*symbolsStr, ",")
