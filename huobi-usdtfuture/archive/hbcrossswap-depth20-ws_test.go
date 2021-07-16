@@ -1,4 +1,4 @@
-package huobi_usdtfuture
+package archive
 
 import (
 	"context"

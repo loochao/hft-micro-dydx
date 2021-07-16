@@ -1,10 +1,11 @@
-package huobi_usdtfuture
+package archive
 
 import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -16,7 +17,7 @@ import (
 
 type Depth20Websocket struct {
 	messageCh   chan []byte
-	DataCh      chan *Depth20
+	DataCh      chan *huobi_usdtfuture.Depth20
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
@@ -186,7 +187,7 @@ func (w *Depth20Websocket) startDataHandler(ctx context.Context, id int) {
 			return
 		case msg := <-w.messageCh:
 			if msg[2] == 'c' {
-				depth20, err := ParseDepth20(msg)
+				depth20, err := huobi_usdtfuture.ParseDepth20(msg)
 				if err != nil {
 					logger.Debugf("ParseDepth20 error %v %s", err, msg)
 					continue
@@ -364,7 +365,7 @@ func (w *Depth20Websocket) maintainHeartbeat(ctx context.Context, conn *websocke
 					case <-time.After(time.Millisecond):
 						logger.Debugf("SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", fmt.Sprintf("market.%s.depth.step6", symbol))
 						break
-					case w.writeCh <- SubParam{
+					case w.writeCh <- huobi_usdtfuture.SubParam{
 						ID:  fmt.Sprintf("%d", time.Now().UnixNano()),
 						Sub: fmt.Sprintf("market.%s.depth.step6", symbol),
 					}:
@@ -426,7 +427,7 @@ func NewDepth20Websocket(
 	ws := Depth20Websocket{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		DataCh:      make(chan *Depth20, 100*len(symbols)),
+		DataCh:      make(chan *huobi_usdtfuture.Depth20, 100*len(symbols)),
 		RestartCh:   make(chan interface{}, 100),
 		messageCh:   make(chan []byte, 100*len(symbols)),
 		writeCh:     make(chan interface{}, 100*len(symbols)),

@@ -84,7 +84,7 @@ func main() {
 	}
 
 	fmt.Printf(
-		"longTD: \t%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
+		"longTD2: \t%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
 		longTD.Quantile(0.0005),
 		longTD.Quantile(0.005),
 		longTD.Quantile(0.05),
@@ -96,7 +96,7 @@ func main() {
 		longTD.Quantile(0.9995),
 	)
 	fmt.Printf(
-		"shortTD: \t%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
+		"shortTD2: \t%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
 		shortTD.Quantile(0.0005),
 		shortTD.Quantile(0.005),
 		shortTD.Quantile(0.05),

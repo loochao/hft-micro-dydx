@@ -10,6 +10,7 @@ import (
 	"github.com/geometrybase/hft-micro/influx/client"
 	kucoin_usdtfuture "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
+	"github.com/geometrybase/hft-micro/tdigest"
 	"math"
 	"os"
 	"sort"
@@ -98,13 +99,13 @@ func main() {
 	}
 	sort.Strings(symbols)
 	logger.Debugf("%d", len(symbols))
-	symbols = symbols[3:4]
+	symbols = symbols[:]
 
-	startTime, err := time.Parse("20060102", "20210701")
+	startTime, err := time.Parse("20060102", "20210715")
 	if err != nil {
 		logger.Fatal(err)
 	}
-	endTime, err := time.Parse("20060102", "20210706")
+	endTime, err := time.Parse("20060102", "20210715")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -113,8 +114,8 @@ func main() {
 		dateStrs += i.Format("20060102,")
 	}
 	dateStrs = dateStrs[:len(dateStrs)-1]
-	for _, kSymbol := range symbols {
-		bSymbol := pairs[kSymbol]
+	for _, xSymbol := range symbols {
+		ySymbol := pairs[xSymbol]
 
 		kcPositionSize := 0.0
 		kcPositionPrice := 0.0
@@ -126,18 +127,28 @@ func main() {
 		enterSilent := time.Minute
 		enterValue := 0.1
 		commission := -0.0004
-		kcDepth := &kucoin_usdtfuture.Depth5{}
-		bnDepth := &binance_usdtfuture.Depth5{}
+		xDepth := &kucoin_usdtfuture.Depth5{}
+		yDepth := &binance_usdtfuture.Depth5{}
+
+		xTicker := &kucoin_usdtfuture.Ticker{}
+		yTicker := &binance_usdtfuture.BookTicker{}
+
+		var xT common.Ticker
+		var yT common.Ticker
+
 		longSpreadMean := common.NewTimedMean(time.Second * 3)
 		shortSpreadMean := common.NewTimedMean(time.Second * 3)
-		hedgeDelay := time.Second*5
+		hedgeDelay := time.Second * 5
 		kcEnterTime := time.Time{}
+
+		longTD, _ := tdigest.New()
+		shortTD, _ := tdigest.New()
 
 		var msg []byte
 		for _, dateStr := range strings.Split(dateStrs, ",") {
-			logger.Debugf("%s %s", kSymbol, dateStr)
+			//logger.Debugf("%s %s", xSymbol, dateStr)
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bnuf-kcuf-depth5/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, bSymbol, kSymbol),
+				fmt.Sprintf("/Users/chenjilin/MarketData/kcuf-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -152,114 +163,133 @@ func main() {
 			counter := 0
 			for scanner.Scan() {
 				msg = scanner.Bytes()
-				if msg[0] == 'B' {
-					err = binance_usdtfuture.ParseDepth5(msg[1:], bnDepth)
+				if msg[0] == 'B' && msg[1] == 'D' {
+					err = binance_usdtfuture.ParseDepth5(msg[21:], yDepth)
 					if err != nil {
 						logger.Debugf("binance_usdtfuture.ParseDepth5 error %v", err)
 						continue
 					}
-				} else if msg[0] == 'K' {
-					err = kucoin_usdtfuture.ParseDepth5(msg[1:], kcDepth)
+					yT = yDepth
+				} else if msg[0] == 'B' && msg[1] == 'T' {
+					err = binance_usdtfuture.ParseBookTicker(msg[21:], yTicker)
+					if err != nil {
+						logger.Debugf("binance_usdtfuture.ParseBookTicker error %v", err)
+						continue
+					}
+					yT = yTicker
+				} else if msg[0] == 'K' && msg[1] == 'D' {
+					err = kucoin_usdtfuture.ParseDepth5(msg[21:], xDepth)
 					if err != nil {
 						logger.Debugf("kucoin_usdtfuture.ParseDepth5 error %v", err)
 						continue
 					}
+					xT = xDepth
+				} else if msg[0] == 'K' && msg[1] == 'T' {
+					err = kucoin_usdtfuture.ParseTicker(msg[21:], xTicker)
+					if err != nil {
+						logger.Debugf("kucoin_usdtfuture.ParseDepth5 error %v", err)
+						continue
+					}
+					xT = xTicker
 				} else {
 					continue
 				}
-				if kcDepth.Symbol == "" || bnDepth.Symbol == "" {
+
+				if xT == nil || yT == nil {
 					continue
 				}
 
-				if bnDepth.EventTime.Sub(bnDepth.EventTime.Truncate(time.Hour*4)) < time.Minute {
+				if yT.GetTime().Sub(yT.GetTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
-				if bnDepth.EventTime.Truncate(time.Hour*4).Add(time.Hour*4).Sub(bnDepth.EventTime) < time.Minute {
+				if xT.GetTime().Sub(xT.GetTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
 
-				if kcDepth.EventTime.Sub(bnDepth.EventTime) < time.Second &&
-					kcDepth.EventTime.Sub(bnDepth.EventTime) > -time.Second {
+				if xT.GetTime().Sub(yT.GetTime()) < time.Second &&
+					xT.GetTime().Sub(yT.GetTime()) > -time.Second {
 
-					longSpread := (bnDepth.Asks[0][0] - kcDepth.Bids[0][0]) / kcDepth.Bids[0][0]
-					shortSpread := (bnDepth.Bids[0][0] - kcDepth.Asks[0][0]) / kcDepth.Asks[0][0]
-					longSpreadMean.Insert(bnDepth.EventTime, longSpread)
-					shortSpreadMean.Insert(bnDepth.EventTime, shortSpread)
+					longSpread := (yT.GetAskPrice() - xT.GetBidPrice()) / xT.GetBidPrice()
+					shortSpread := (yT.GetBidPrice() - xT.GetAskPrice()) / xT.GetAskPrice()
+					longSpreadMean.Insert(yT.GetTime(), longSpread)
+					shortSpreadMean.Insert(yT.GetTime(), shortSpread)
+					_ = longTD.Add(longSpread)
+					_ = shortTD.Add(shortSpread)
 
-					if bnDepth.EventTime.Sub(enterSilentTime) > 0 {
+					if yT.GetTime().Sub(enterSilentTime) > 0 {
 						if shortSpreadMean.Mean() > 0.001 && shortSpread >= shortSpreadMean.Mean() {
-							enterSilentTime = bnDepth.EventTime.Add(enterSilent)
-							size := enterValue / kcDepth.Asks[0][0]
+							enterSilentTime = yT.GetTime().Add(enterSilent)
+							size := enterValue / xT.GetAskPrice()
 							if kcPositionSize >= 0 {
-								if kcPositionSize == 0 || kcPositionPrice < kcDepth.Asks[0][0] {
+								if kcPositionSize == 0 || kcPositionPrice < xT.GetAskPrice() {
 									kcPositionPrice = (kcPositionSize*kcPositionPrice + enterValue) / (kcPositionSize + size)
 									netWorth += commission * enterValue
 									kcPositionSize += size
-									kcEnterTime = bnDepth.EventTime
+									kcEnterTime = yT.GetTime()
 								}
 							} else {
 								//先平仓
-								netWorth += kcPositionSize * (kcDepth.Asks[0][0] - kcPositionPrice)
-								netWorth += -kcPositionSize * kcDepth.Asks[0][0] * commission
+								netWorth += kcPositionSize * (xT.GetAskPrice() - kcPositionPrice)
+								netWorth += -kcPositionSize * xT.GetAskPrice() * commission
 								//再加仓
 								netWorth += commission * enterValue
-								kcPositionPrice = kcDepth.Asks[0][0]
+								kcPositionPrice = xT.GetAskPrice()
 								kcPositionSize = size
-								kcEnterTime = bnDepth.EventTime
+								kcEnterTime = yT.GetTime()
 							}
 						} else if longSpreadMean.Mean() < -0.001 && longSpread <= longSpreadMean.Mean() {
-							enterSilentTime = bnDepth.EventTime.Add(enterSilent)
-							size := -enterValue / kcDepth.Bids[0][0]
+							enterSilentTime = yT.GetTime().Add(enterSilent)
+							size := -enterValue / xT.GetBidPrice()
 							if kcPositionSize <= 0 {
-								if kcPositionSize == 0 || kcPositionPrice > kcDepth.Bids[0][0] {
+								if kcPositionSize == 0 || kcPositionPrice > xT.GetBidPrice() {
 									kcPositionPrice = (kcPositionSize*kcPositionPrice - enterValue) / (kcPositionSize + size)
 									netWorth += commission * enterValue
 									kcPositionSize += size
-									kcEnterTime = bnDepth.EventTime
+									kcEnterTime = yT.GetTime()
 								}
 							} else {
 								//先平仓
-								netWorth += kcPositionSize * (kcDepth.Bids[0][0] - kcPositionPrice)
-								netWorth += kcPositionSize * kcDepth.Bids[0][0] * commission
+								netWorth += kcPositionSize * (xT.GetBidPrice() - kcPositionPrice)
+								netWorth += kcPositionSize * xT.GetBidPrice() * commission
 								//再加仓
 								netWorth += commission * enterValue
-								kcPositionPrice = kcDepth.Bids[0][0]
+								kcPositionPrice = xT.GetBidPrice()
 								kcPositionSize = size
-								kcEnterTime = bnDepth.EventTime
+								kcEnterTime = yT.GetTime()
 							}
 						}
 					}
 
 					bnSize := -kcPositionSize - bnPositionSize
-					if bnSize != 0 && bnDepth.EventTime.Sub(kcEnterTime) > hedgeDelay {
+					if bnSize != 0 && yT.GetTime().Sub(kcEnterTime) > hedgeDelay {
 						if bnSize*bnPositionSize > 0 {
 							//同向加仓
 							if bnSize > 0 {
-								bnPositionPrice = (bnPositionSize*bnPositionPrice + bnSize*bnDepth.Asks[0][0]) / (bnPositionSize + bnSize)
-								netWorth += bnSize * bnDepth.Asks[0][0] * commission
+								bnPositionPrice = (bnPositionSize*bnPositionPrice + bnSize*yT.GetAskPrice()) / (bnPositionSize + bnSize)
+								netWorth += bnSize * yT.GetAskPrice() * commission
 							} else {
-								bnPositionPrice = (bnPositionSize*bnPositionPrice + bnSize*bnDepth.Bids[0][0]) / (bnPositionSize + bnSize)
-								netWorth += -bnSize * bnDepth.Bids[0][0] * commission
+								bnPositionPrice = (bnPositionSize*bnPositionPrice + bnSize*yT.GetBidPrice()) / (bnPositionSize + bnSize)
+								netWorth += -bnSize * yT.GetBidPrice() * commission
 							}
 						} else if math.Abs(bnSize) >= math.Abs(bnPositionSize) {
 							//换仓
 							if bnPositionSize > 0 {
-								netWorth += math.Abs(bnSize) * bnDepth.Bids[0][0] * commission
-								netWorth += bnPositionSize * (bnDepth.Bids[0][0] - bnPositionPrice)
-								bnPositionPrice = bnDepth.Bids[0][0]
+								netWorth += math.Abs(bnSize) * yT.GetBidPrice() * commission
+								netWorth += bnPositionSize * (yT.GetBidPrice() - bnPositionPrice)
+								bnPositionPrice = yT.GetBidPrice()
 							} else {
-								netWorth += math.Abs(bnSize) * bnDepth.Asks[0][0] * commission
-								netWorth += bnPositionSize * (bnDepth.Asks[0][0] - bnPositionPrice)
-								bnPositionPrice = bnDepth.Asks[0][0]
+								netWorth += math.Abs(bnSize) * yT.GetAskPrice() * commission
+								netWorth += bnPositionSize * (yT.GetAskPrice() - bnPositionPrice)
+								bnPositionPrice = yT.GetAskPrice()
 							}
 						} else {
 							//减仓
 							if bnSize > 0 {
-								netWorth += bnSize * bnDepth.Bids[0][0] * commission
-								netWorth += -bnSize * (bnDepth.Bids[0][0] - bnPositionPrice)
+								netWorth += bnSize * yT.GetBidPrice() * commission
+								netWorth += -bnSize * (yT.GetBidPrice() - bnPositionPrice)
 							} else {
-								netWorth += -bnSize * bnDepth.Asks[0][0] * commission
-								netWorth += -bnSize * (bnDepth.Asks[0][0] - bnPositionPrice)
+								netWorth += -bnSize * yT.GetAskPrice() * commission
+								netWorth += -bnSize * (yT.GetAskPrice() - bnPositionPrice)
 							}
 						}
 						bnPositionSize += bnSize
@@ -268,8 +298,8 @@ func main() {
 					counter++
 					if counter%100 == 0 {
 						fields := make(map[string]interface{})
-						fields["bidPrice"] = kcDepth.Bids[0][0]
-						fields["askPrice"] = kcDepth.Asks[0][0]
+						fields["bidPrice"] = xT.GetBidPrice()
+						fields["askPrice"] = xT.GetAskPrice()
 						fields["shortSpread"] = shortSpread
 						fields["shortSpreadMean"] = shortSpreadMean.Mean()
 						fields["longSpread"] = longSpread
@@ -285,25 +315,25 @@ func main() {
 						kcUnPnl := 0.0
 						bnUnPnl := 0.0
 						if kcPositionSize > 0 {
-							kcUnPnl =  kcPositionSize*(kcDepth.Bids[0][0]-kcPositionPrice)
+							kcUnPnl = kcPositionSize * (xT.GetBidPrice() - kcPositionPrice)
 						} else if kcPositionSize < 0 {
-							kcUnPnl = kcPositionSize*(kcDepth.Asks[0][0]-kcPositionPrice)
+							kcUnPnl = kcPositionSize * (xT.GetAskPrice() - kcPositionPrice)
 						}
 						if bnPositionSize > 0 {
-							bnUnPnl =  bnPositionSize*(bnDepth.Bids[0][0]-bnPositionPrice)
+							bnUnPnl = bnPositionSize * (yT.GetBidPrice() - bnPositionPrice)
 						} else if bnPositionSize < 0 {
-							bnUnPnl = bnPositionSize*(bnDepth.Asks[0][0]-bnPositionPrice)
+							bnUnPnl = bnPositionSize * (yT.GetAskPrice() - bnPositionPrice)
 						}
 						fields["netWorth"] = netWorth + kcUnPnl + bnUnPnl
 						pt, err := client.NewPoint(
-							"bnuf-kcuf-leadlag-depth5",
+							"kcuf-bnuf-leadlag-depth5-and-ticker",
 							map[string]string{
-								"kSymbol": kSymbol,
-								"bSymbol": bSymbol,
-								"delay": fmt.Sprintf("%v", hedgeDelay),
+								"xSymbol": xSymbol,
+								"ySymbol": ySymbol,
+								"delay":   fmt.Sprintf("%v", hedgeDelay),
 							},
 							fields,
-							bnDepth.EventTime,
+							yT.GetTime(),
 						)
 						if err == nil {
 							iw.PointCh <- pt
@@ -314,5 +344,14 @@ func main() {
 			_ = gr.Close()
 			_ = file.Close()
 		}
+
+		fmt.Printf("\n\n%s Long Spread CDF:\n", xSymbol)
+		fmt.Printf("  %.6f:%.6f\n", -0.000999, longTD.CDF(-0.000999))
+		fmt.Printf("  %.6f:%.6f\n", -0.001111, longTD.CDF(-0.001111))
+		fmt.Printf("  %.6f:%.6f\n", -0.001222, longTD.CDF(-0.001222))
+		fmt.Printf("%s Short Spread CDF:\n", xSymbol)
+		fmt.Printf("  %.6f:%.6f\n", 0.000999, 1.0 - shortTD.CDF(0.000999))
+		fmt.Printf("  %.6f:%.6f\n", 0.001111, 1.0 - shortTD.CDF(0.001111))
+		fmt.Printf("  %.6f:%.6f\n", 0.001222, 1.0 - shortTD.CDF(0.001222))
 	}
 }

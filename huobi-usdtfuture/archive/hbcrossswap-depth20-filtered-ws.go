@@ -1,4 +1,4 @@
-package huobi_usdtfuture
+package archive
 
 import (
 	"compress/gzip"
@@ -6,29 +6,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
 	"net/http"
 	"net/url"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
-type Depth20FilteredWebsocket struct {
+type Depth20WS struct {
 	messageCh   chan []byte
-	DataCh      chan *Depth20
+	DataCh      chan *huobi_usdtfuture.Depth20
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
 	RestartCh   chan interface{}
 	symbolCh    chan string
 	pingCh      chan []byte
-	mu          sync.Mutex
-	stopped     bool
+	stopped     int32
 }
 
-func (w *Depth20FilteredWebsocket) startWrite(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth20WS) startWrite(ctx context.Context, conn *websocket.Conn) {
 	defer func() {
 		logger.Debugf("EXIT writeLoop")
 	}()
@@ -79,7 +79,7 @@ func (w *Depth20FilteredWebsocket) startWrite(ctx context.Context, conn *websock
 	}
 }
 
-func (w *Depth20FilteredWebsocket) startRead(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth20WS) startRead(ctx context.Context, conn *websocket.Conn) {
 	defer func() {
 		logger.Debugf("EXIT readLoop")
 	}()
@@ -157,7 +157,7 @@ func (w *Depth20FilteredWebsocket) startRead(ctx context.Context, conn *websocke
 
 }
 
-func (w *Depth20FilteredWebsocket) readAll(r io.Reader) ([]byte, error) {
+func (w *Depth20WS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -175,7 +175,7 @@ func (w *Depth20FilteredWebsocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int, decay, bias float64) {
+func (w *Depth20WS) startDataHandler(ctx context.Context, id int, decay, bias float64) {
 	defer func() {
 		logger.Debugf("EXIT dataHandleLoop %d", id)
 	}()
@@ -252,7 +252,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
-				depth20, err := ParseDepth20(msg)
+				depth20, err := huobi_usdtfuture.ParseDepth20(msg)
 				if err != nil {
 					logger.Debugf("ParseDepth20 error %v %s", err, msg)
 					continue
@@ -279,7 +279,7 @@ func (w *Depth20FilteredWebsocket) startDataHandler(ctx context.Context, id int,
 	}
 }
 
-func (w *Depth20FilteredWebsocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *Depth20WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("RECONNECT %s, %d RETRIES", wsUrl, counter)
@@ -325,7 +325,7 @@ func (w *Depth20FilteredWebsocket) reconnect(ctx context.Context, wsUrl string, 
 	return conn, nil
 }
 
-func (w *Depth20FilteredWebsocket) start(ctx context.Context, decay, bias float64, symbols []string, proxy string) {
+func (w *Depth20WS) start(ctx context.Context, decay, bias float64, symbols []string, proxy string) {
 
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
@@ -379,7 +379,7 @@ func (w *Depth20FilteredWebsocket) start(ctx context.Context, decay, bias float6
 	}
 }
 
-func (w *Depth20FilteredWebsocket) maintainHeartbeat(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *Depth20WS) maintainHeartbeat(ctx context.Context, conn *websocket.Conn, symbols []string) {
 
 	defer func() {
 		logger.Debugf("EXIT heartbeatLoop")
@@ -426,7 +426,7 @@ func (w *Depth20FilteredWebsocket) maintainHeartbeat(ctx context.Context, conn *
 					case <-time.After(time.Millisecond):
 						logger.Debugf("SEND SUBSCRIBE %s TO WRITE TIMEOUT IN 1MS", fmt.Sprintf("market.%s.depth.step6", symbol))
 						break
-					case w.writeCh <- SubParam{
+					case w.writeCh <- huobi_usdtfuture.SubParam{
 						ID:  fmt.Sprintf("%d", time.Now().UnixNano()),
 						Sub: fmt.Sprintf("market.%s.depth.step6", symbol),
 					}:
@@ -444,16 +444,14 @@ func (w *Depth20FilteredWebsocket) maintainHeartbeat(ctx context.Context, conn *
 
 }
 
-func (w *Depth20FilteredWebsocket) Stop() {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	if !w.stopped {
-		w.stopped = true
+func (w *Depth20WS) Stop() {
+	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
+		logger.Debugf("stopped")
 	}
 }
 
-func (w *Depth20FilteredWebsocket) restart() {
+func (w *Depth20WS) restart() {
 	logger.Infof("SWAP WS RESTART")
 	select {
 	case <-w.done:
@@ -476,27 +474,26 @@ func (w *Depth20FilteredWebsocket) restart() {
 	}
 }
 
-func (w *Depth20FilteredWebsocket) Done() chan interface{} {
+func (w *Depth20WS) Done() chan interface{} {
 	return w.done
 }
 
-func NewDepth20FilteredWebsocket(
+func NewDepth20WS(
 	ctx context.Context,
 	decay, bias float64,
 	symbols []string,
 	proxy string,
-) *Depth20FilteredWebsocket {
-	ws := Depth20FilteredWebsocket{
+) *Depth20WS {
+	ws := Depth20WS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		DataCh:      make(chan *Depth20, 100*len(symbols)),
+		DataCh:      make(chan *huobi_usdtfuture.Depth20, 100*len(symbols)),
 		RestartCh:   make(chan interface{}, 100),
 		messageCh:   make(chan []byte, 100*len(symbols)),
 		writeCh:     make(chan interface{}, 100*len(symbols)),
 		symbolCh:    make(chan string, 100*len(symbols)),
 		pingCh:      make(chan []byte, 100),
-		mu:          sync.Mutex{},
-		stopped:     false,
+		stopped:     0,
 	}
 	go ws.start(ctx, decay, bias, symbols, proxy)
 	ws.reconnectCh <- nil
