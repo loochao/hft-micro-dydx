@@ -11,66 +11,6 @@ import (
 	"time"
 )
 
-var symbolsMap = map[string]string{
-	"BTCUSDT":   "XBTUSDTM",
-	"IOSTUSDT":  "IOSTUSDTM",
-	"UNIUSDT":   "UNIUSDTM",
-	"ICPUSDT":   "ICPUSDTM",
-	"THETAUSDT": "THETAUSDTM",
-	"YFIUSDT":   "YFIUSDTM",
-	"OCEANUSDT": "OCEANUSDTM",
-	"XMRUSDT":   "XMRUSDTM",
-	"SXPUSDT":   "SXPUSDTM",
-	"BCHUSDT":   "BCHUSDTM",
-	"TRXUSDT":   "TRXUSDTM",
-	"XEMUSDT":   "XEMUSDTM",
-	"ETHUSDT":   "ETHUSDTM",
-	"MKRUSDT":   "MKRUSDTM",
-	"FTMUSDT":   "FTMUSDTM",
-	"ATOMUSDT":  "ATOMUSDTM",
-	"BANDUSDT":  "BANDUSDTM",
-	"DOTUSDT":   "DOTUSDTM",
-	"FILUSDT":   "FILUSDTM",
-	"AVAXUSDT":  "AVAXUSDTM",
-	"QTUMUSDT":  "QTUMUSDTM",
-	"COMPUSDT":  "COMPUSDTM",
-	"ZECUSDT":   "ZECUSDTM",
-	"ADAUSDT":   "ADAUSDTM",
-	"DOGEUSDT":  "DOGEUSDTM",
-	"XLMUSDT":   "XLMUSDTM",
-	"EOSUSDT":   "EOSUSDTM",
-	"LTCUSDT":   "LTCUSDTM",
-	"VETUSDT":   "VETUSDTM",
-	"ONTUSDT":   "ONTUSDTM",
-	"RVNUSDT":   "RVNUSDTM",
-	"MATICUSDT": "MATICUSDTM",
-	"1INCHUSDT": "1INCHUSDTM",
-	"XRPUSDT":   "XRPUSDTM",
-	"NEOUSDT":   "NEOUSDTM",
-	"ALGOUSDT":  "ALGOUSDTM",
-	"MANAUSDT":  "MANAUSDTM",
-	"WAVESUSDT": "WAVESUSDTM",
-	"KSMUSDT":   "KSMUSDTM",
-	"AAVEUSDT":  "AAVEUSDTM",
-	"LINKUSDT":  "LINKUSDTM",
-	"BATUSDT":   "BATUSDTM",
-	"DENTUSDT":  "DENTUSDTM",
-	"LUNAUSDT":  "LUNAUSDTM",
-	"ETCUSDT":   "ETCUSDTM",
-	"CHZUSDT":   "CHZUSDTM",
-	"CRVUSDT":   "CRVUSDTM",
-	"DASHUSDT":  "DASHUSDTM",
-	"SNXUSDT":   "SNXUSDTM",
-	"GRTUSDT":   "GRTUSDTM",
-	"BTTUSDT":   "BTTUSDTM",
-	"SUSHIUSDT": "SUSHIUSDTM",
-	"ENJUSDT":   "ENJUSDTM",
-	"XTZUSDT":   "XTZUSDTM",
-	"DGBUSDT":   "DGBUSDTM",
-	"SOLUSDT":   "SOLUSDTM",
-	"BNBUSDT":   "BNBUSDTM",
-}
-
 func main() {
 
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
@@ -81,7 +21,7 @@ func main() {
 
 	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
 	symbolsStr := flag.String("symbols", "BTC-USDT", "symbols, separate by comma")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
+	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 
 	flag.Parse()
 	symbols := strings.Split(*symbolsStr, ",")
