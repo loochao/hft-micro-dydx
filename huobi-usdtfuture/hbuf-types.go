@@ -2,6 +2,7 @@ package huobi_usdtfuture
 
 import (
 	"encoding/json"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"strings"
 	"time"
@@ -436,3 +437,35 @@ func (wsAccounts *WSAccounts) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+
+type Ticker struct {
+
+}
+
+func (t Ticker) GetSymbol() string {
+	panic("implement me")
+}
+
+func (t Ticker) GetTime() time.Time {
+	panic("implement me")
+}
+
+func (t Ticker) GetBidPrice() float64 {
+	panic("implement me")
+}
+
+func (t Ticker) GetAskPrice() float64 {
+	panic("implement me")
+}
+
+func (t Ticker) GetBidSize() float64 {
+	panic("implement me")
+}
+
+func (t Ticker) GetAskSize() float64 {
+	panic("implement me")
+}
+
+func (t Ticker) GetExchange() common.ExchangeID {
+	panic("implement me")
+}
