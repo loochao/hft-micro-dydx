@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 )
 
@@ -19,7 +19,7 @@ func makerRoutedDepthLoop(
 	}
 	logger.Debugf("START makerRoutedDepthLoop %s", symbols)
 	defer logger.Debugf("EXIT makerRoutedDepthLoop %s", symbols)
-	ws := hbcrossswap.NewDepth20RoutedWebsocket(
+	ws := huobi_usdtfuture.NewDepth20RoutedWebsocket(
 		ctx,
 		proxyAddress,
 		channels,

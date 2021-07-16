@@ -2,17 +2,17 @@ package main
 
 import (
 	"context"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
 func watchSwapOrderRequest(
 	ctx context.Context,
-	api *hbcrossswap.API,
+	api *huobi_usdtfuture.API,
 	timeout time.Duration,
 	dryRun bool,
-	orderRequestCh chan hbcrossswap.NewOrderParam,
+	orderRequestCh chan huobi_usdtfuture.NewOrderParam,
 	outputOrderErrorCh chan SwapOrderNewError,
 ) {
 	for {

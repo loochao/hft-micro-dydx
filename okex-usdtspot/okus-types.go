@@ -170,6 +170,22 @@ type Depth5 struct {
 	EventTime time.Time     `json:"-"`
 }
 
+func (depth *Depth5) GetBidPrice() float64 {
+	return depth.Bids[0][0]
+}
+
+func (depth *Depth5) GetAskPrice() float64 {
+	return depth.Bids[1][0]
+}
+
+func (depth *Depth5) GetBidSize() float64 {
+	return depth.Bids[0][1]
+}
+
+func (depth *Depth5) GetAskSize() float64 {
+	return depth.Bids[1][1]
+}
+
 func (depth *Depth5) GetExchange() common.ExchangeID {
 	return ExchangeID
 }

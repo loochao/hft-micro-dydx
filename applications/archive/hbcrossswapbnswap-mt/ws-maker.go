@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"time"
 )
 
-func handleMakerWSAccount(wsBalance *hbcrossswap.WSAccounts) {
+func handleMakerWSAccount(wsBalance *huobi_usdtfuture.WSAccounts) {
 	for _, account := range wsBalance.Accounts {
 		if account.MarginAsset == "USDT" {
 			account := account
@@ -31,10 +31,10 @@ func handleMakerWSAccount(wsBalance *hbcrossswap.WSAccounts) {
 	}
 }
 
-func handleMakerWSPosition(wsPositions *hbcrossswap.WSPositions) {
+func handleMakerWSPosition(wsPositions *huobi_usdtfuture.WSPositions) {
 	for _, nextPos := range wsPositions.Positions {
 		if takerSymbol, ok := mtSymbolsMap[nextPos.Symbol]; ok {
-			if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
+			if nextPos.Direction == huobi_usdtfuture.PositionDirectionBuy {
 				if lastPos, ok := mBuyPositions[nextPos.Symbol]; ok {
 					mHttpPositionUpdateSilentTimes[nextPos.Symbol] = time.Now().Add(*mtConfig.HttpSilent)
 					if nextPos.Volume != lastPos.Volume {

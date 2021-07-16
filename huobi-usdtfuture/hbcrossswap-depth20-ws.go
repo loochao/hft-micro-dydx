@@ -1,4 +1,4 @@
-package hbcrossswap
+package huobi_usdtfuture
 
 import (
 	"compress/gzip"

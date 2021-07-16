@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 )
 
 func takerDepthWebsocketLoop(
@@ -12,7 +12,7 @@ func takerDepthWebsocketLoop(
 	proxyAddress string,
 	channels map[string]chan *common.DepthRawMessage,
 ) {
-	ws := hbcrossswap.NewDepth20RoutedWebsocket(
+	ws := huobi_usdtfuture.NewDepth20RoutedWebsocket(
 		ctx,
 		proxyAddress,
 		channels,

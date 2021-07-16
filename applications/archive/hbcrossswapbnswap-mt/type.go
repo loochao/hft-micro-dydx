@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/bnswap"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"time"
 )
 
@@ -14,16 +14,16 @@ type TakerOrderNewError struct {
 
 type MakerOrderNewError struct {
 	Error  error
-	Params hbcrossswap.NewOrderParam
+	Params huobi_usdtfuture.NewOrderParam
 }
 
 type MakerOrderRequest struct {
-	New    *hbcrossswap.NewOrderParam
-	Cancel *hbcrossswap.CancelAllParam
+	New    *huobi_usdtfuture.NewOrderParam
+	Cancel *huobi_usdtfuture.CancelAllParam
 }
 
 type MakerOpenOrder struct {
-	*hbcrossswap.NewOrderParam
+	*huobi_usdtfuture.NewOrderParam
 	ResponseOrderID string
 	Symbol          string
 }

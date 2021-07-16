@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/hbspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
@@ -31,13 +31,13 @@ func main() {
 	}
 
 	var err error
-	hbcrossswapAPI, err = hbcrossswap.NewAPI(
+	hbcrossswapAPI, err = huobi_usdtfuture.NewAPI(
 		*hbConfig.ApiKey,
 		*hbConfig.ApiSecret,
 		*hbConfig.ProxyAddress,
 	)
 	if err != nil {
-		logger.Debugf("hbcrossswap.NewAPI %v", err)
+		logger.Debugf("huobi-usdtfuture.NewAPI %v", err)
 		return
 	}
 	hbspotAPI, err = hbspot.NewAPI(
@@ -68,9 +68,9 @@ func main() {
 		return
 	}
 
-	_, hbcrossswapContractSizes, err = hbcrossswap.GetOrderLimits(hbGlobalCtx, hbcrossswapAPI, hbcrossswapSymbols)
+	_, hbcrossswapContractSizes, err = huobi_usdtfuture.GetOrderLimits(hbGlobalCtx, hbcrossswapAPI, hbcrossswapSymbols)
 	if err != nil {
-		logger.Debugf("hbcrossswap.GetOrderLimits %v", err)
+		logger.Debugf("huobi-usdtfuture.GetOrderLimits %v", err)
 		return
 	}
 	hbspotTickSizes, hbspotStepSizes, _, hbspotMinNotional, hbspotPricePrecisions, hbspotAmountPrecisions, err = hbspot.GetOrderLimits(hbGlobalCtx, hbspotAPI, hbspotSymbols)
@@ -130,7 +130,7 @@ func main() {
 	)
 	defer hbspotUserWebsocket.Stop()
 
-	hbcrossswapUserWebsocket = hbcrossswap.NewUserWebsocket(
+	hbcrossswapUserWebsocket = huobi_usdtfuture.NewUserWebsocket(
 		hbGlobalCtx,
 		*hbConfig.ApiKey,
 		*hbConfig.ApiSecret,
@@ -161,12 +161,12 @@ func main() {
 	defer frRankUpdatedTimer.Stop()
 	defer externalInfluxSaveTimer.Stop()
 
-	go hbcrossswap.WatchPositionsFromHttp(
+	go huobi_usdtfuture.WatchPositionsFromHttp(
 		hbGlobalCtx, hbcrossswapAPI,
 		hbcrossswapSymbols, *hbConfig.PullInterval,
 		hbcrossswapPositionCh,
 	)
-	go hbcrossswap.WatchAccountFromHttp(
+	go huobi_usdtfuture.WatchAccountFromHttp(
 		hbGlobalCtx, hbcrossswapAPI,
 		*hbConfig.PullInterval, hbcrossswapAccountCh,
 	)
@@ -174,7 +174,7 @@ func main() {
 		hbGlobalCtx, hbspotAPI, hbspotAccountID,
 		*hbConfig.PullInterval, hbspotAccountCh,
 	)
-	go hbcrossswap.WatchFundingRate(
+	go huobi_usdtfuture.WatchFundingRate(
 		hbGlobalCtx, hbcrossswapAPI,
 		hbcrossswapSymbols,
 		*hbConfig.PullInterval*10,
@@ -297,7 +297,7 @@ func main() {
 
 	hbcrossswapNewOrderErrorCh = make(chan SwapOrderNewError, len(hbspotSymbols)*2)
 	for _, swapSymbol := range hbcrossswapSymbols {
-		hbcrossswapOrderRequestChs[swapSymbol] = make(chan hbcrossswap.NewOrderParam, 2)
+		hbcrossswapOrderRequestChs[swapSymbol] = make(chan huobi_usdtfuture.NewOrderParam, 2)
 		go watchSwapOrderRequest(
 			hbGlobalCtx,
 			hbcrossswapAPI,
@@ -308,7 +308,7 @@ func main() {
 		)
 	}
 
-	go hbcrossswap.SystemStatusLoop(
+	go huobi_usdtfuture.SystemStatusLoop(
 		hbGlobalCtx,
 		hbcrossswapAPI,
 		*hbConfig.PullInterval/2,
@@ -427,10 +427,10 @@ func main() {
 			break
 		case swapOrder := <-hbcrossswapUserWebsocket.OrderCh:
 			hbLoopTimer.Reset(time.Nanosecond)
-			if swapOrder.Status == hbcrossswap.OrderStatusFilled ||
-				swapOrder.Status == hbcrossswap.OrderStatusCancelled ||
-				swapOrder.Status == hbcrossswap.OrderStatusPartiallyFilledButCancelledByClient {
-				if swapOrder.Status == hbcrossswap.OrderStatusCancelled {
+			if swapOrder.Status == huobi_usdtfuture.OrderStatusFilled ||
+				swapOrder.Status == huobi_usdtfuture.OrderStatusCancelled ||
+				swapOrder.Status == huobi_usdtfuture.OrderStatusPartiallyFilledButCancelledByClient {
+				if swapOrder.Status == huobi_usdtfuture.OrderStatusCancelled {
 					logger.Debugf("SWAP WS ORDER CANCELED %v ", swapOrder)
 					hbcrossswapOrderSilentTimes[swapOrder.Symbol] = time.Now().Add(time.Second)
 					hbcrossswapPositionsUpdateTimes[swapOrder.Symbol] = time.Unix(0, 0)
@@ -440,14 +440,14 @@ func main() {
 						swapOrder.Symbol, swapOrder.Direction, swapOrder.TradeVolume, swapOrder.TradeAvgPrice,
 					)
 					hbcrossswapHttpPositionUpdateSilentTimes[swapOrder.Symbol] = time.Now().Add(*hbConfig.PullInterval * 3)
-					if swapOrder.Direction == hbcrossswap.OrderDirectionSell {
+					if swapOrder.Direction == huobi_usdtfuture.OrderDirectionSell {
 						if spotSymbol, ok := hbSwapSpotSymbolsMap[swapOrder.Symbol]; ok {
 							if spotPrice, ok := hbspotLastFilledBuyPrices[spotSymbol]; ok {
 								hbRealisedSpread[spotSymbol] = (swapOrder.TradeAvgPrice - spotPrice) / spotPrice
 								logger.Debugf("%s %s REALISED OPEN SPREAD %f", spotSymbol, swapOrder.Symbol, hbRealisedSpread[spotSymbol])
 							}
 						}
-					} else if swapOrder.Direction == hbcrossswap.OrderDirectionBuy {
+					} else if swapOrder.Direction == huobi_usdtfuture.OrderDirectionBuy {
 						if spotSymbol, ok := hbSwapSpotSymbolsMap[swapOrder.Symbol]; ok {
 							if spotPrice, ok := hbspotLastFilledSellPrices[spotSymbol]; ok {
 								hbRealisedSpread[spotSymbol] = (swapOrder.TradeAvgPrice - spotPrice) / spotPrice

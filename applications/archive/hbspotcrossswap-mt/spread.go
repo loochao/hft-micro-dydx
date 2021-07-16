@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/hbspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
@@ -28,7 +28,7 @@ func watchMakerTakerSpread(
 	var err error
 	var makerRawDepth, takerRawDepth *common.DepthRawMessage
 	var makerDepth, newMakerDepth *hbspot.Depth20
-	var takerDepth, newTakerDepth *hbcrossswap.Depth20
+	var takerDepth, newTakerDepth *huobi_usdtfuture.Depth20
 	var makerWalkedDepth, takerWalkedDepth *common.WalkedMakerTakerDepth
 	var spreadTime time.Time
 	var ageDiff time.Duration
@@ -208,7 +208,7 @@ func watchMakerTakerSpread(
 			if takerRawDepth == nil {
 				break
 			}
-			newTakerDepth, err = hbcrossswap.ParseDepth20(takerRawDepth.Depth)
+			newTakerDepth, err = huobi_usdtfuture.ParseDepth20(takerRawDepth.Depth)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("kucoin-usdtfuture.ParseDepth5 error %v %s %s", err, takerSymbol, takerRawDepth.Depth)

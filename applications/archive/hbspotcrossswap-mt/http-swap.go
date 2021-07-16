@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
-func handleSwapHttpPositions(positions []hbcrossswap.Position) {
+func handleSwapHttpPositions(positions []huobi_usdtfuture.Position) {
 	hasPositions := make(map[string]bool)
 	for _, makerSymbol := range hbcrossswapSymbols {
 		hasPositions[makerSymbol] = false
@@ -15,7 +15,7 @@ func handleSwapHttpPositions(positions []hbcrossswap.Position) {
 		if _, ok := hbSwapSpotSymbolsMap[nextPos.Symbol]; !ok {
 			continue
 		}
-		if nextPos.Direction != hbcrossswap.PositionDirectionSell {
+		if nextPos.Direction != huobi_usdtfuture.PositionDirectionSell {
 			continue
 		}
 		hasPositions[nextPos.Symbol] = true
@@ -26,7 +26,7 @@ func handleSwapHttpPositions(positions []hbcrossswap.Position) {
 			return
 		}
 
-		var lastPosition *hbcrossswap.Position
+		var lastPosition *huobi_usdtfuture.Position
 		if p, ok := hbcrossswapPositions[nextPos.Symbol]; ok {
 			p := p
 			lastPosition = &p
@@ -46,14 +46,14 @@ func handleSwapHttpPositions(positions []hbcrossswap.Position) {
 		if has {
 			continue
 		}
-		nextPos := hbcrossswap.Position{
-			Symbol: symbol,
-			Direction: hbcrossswap.PositionDirectionSell,
+		nextPos := huobi_usdtfuture.Position{
+			Symbol:    symbol,
+			Direction: huobi_usdtfuture.PositionDirectionSell,
 		}
 		if hbcrossswapHttpPositionUpdateSilentTimes[nextPos.Symbol].Sub(time.Now()) > 0 {
 			return
 		}
-		var lastPosition *hbcrossswap.Position
+		var lastPosition *huobi_usdtfuture.Position
 		if p, ok := hbcrossswapPositions[nextPos.Symbol]; ok {
 			p := p
 			lastPosition = &p
@@ -71,7 +71,7 @@ func handleSwapHttpPositions(positions []hbcrossswap.Position) {
 	}
 }
 
-func handleSwapHttpAccount(account hbcrossswap.Account) {
+func handleSwapHttpAccount(account huobi_usdtfuture.Account) {
 	if hbcrossswapAccount == nil {
 		logger.Debugf("SWAP HTTP USDT ACCOUNT MarginBalance nil -> %f", account.MarginBalance)
 		//} else if hbcrossswapAccount.MarginBalance != account.MarginBalance{

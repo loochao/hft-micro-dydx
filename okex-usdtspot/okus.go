@@ -360,12 +360,15 @@ func (okut *OkexUsdtSpot) StreamTicker(ctx context.Context, channels map[string]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
 			defer okut.Stop()
-			ws := NewTickerWS(ctx, proxy, channels)
+			ws1 := NewTickerWS(ctx, proxy, channels)
+			ws2 := NewDepth5TickerWS(ctx, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
 					return
-				case <-ws.Done():
+				case <-ws1.Done():
+					return
+				case <-ws2.Done():
 					return
 				}
 			}

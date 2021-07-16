@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/hbspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
@@ -53,12 +53,12 @@ func updatePerpPositions() {
 			swapSize = -positionVolume
 		}
 		logger.Debugf("updatePerpPositions %s SIZE %f POS %f -> %f", swapSymbol, swapSize, positionVolume, positionVolume+swapSize)
-		offset := hbcrossswap.OrderOffsetOpen
+		offset := huobi_usdtfuture.OrderOffsetOpen
 		if swapSize*positionVolume < 0 && math.Abs(swapSize) <= math.Abs(positionVolume) {
-			offset = hbcrossswap.OrderOffsetClose
+			offset = huobi_usdtfuture.OrderOffsetClose
 		}
 		//price := math.Round(swapOrderBook.AskPrice*(1.0+*hbConfig.CloseProfitPct)/swapTickSize) * swapTickSize
-		direction := hbcrossswap.OrderDirectionBuy
+		direction := huobi_usdtfuture.OrderDirectionBuy
 		id, _ := common.GenerateShortId()
 		clOrdID := fmt.Sprintf(
 			"%s%d",
@@ -67,11 +67,11 @@ func updatePerpPositions() {
 		)
 		clOrdID = strings.ReplaceAll(clOrdID, ".", "_")
 		if swapSize < 0 {
-			direction = hbcrossswap.OrderDirectionSell
+			direction = huobi_usdtfuture.OrderDirectionSell
 			swapSize = -swapSize
 			//price = math.Round(swapOrderBook.BidPrice*(1.0-*hbConfig.CloseProfitPct)/swapTickSize) * swapTickSize
 		}
-		order := hbcrossswap.NewOrderParam{
+		order := huobi_usdtfuture.NewOrderParam{
 			Symbol:        swapSymbol,
 			ClientOrderID: time.Now().Unix()*10000 + int64(rand.Intn(10000)),
 			//Price:          common.Float64(price),
@@ -79,8 +79,8 @@ func updatePerpPositions() {
 			Direction:      direction,
 			Offset:         offset,
 			LeverRate:      *hbConfig.Leverage,
-			OrderPriceType: hbcrossswap.OrderPriceTypeFOKOptimal20FOK,
-			//OrderPriceType: hbcrossswap.OrderPriceTypeLimit,
+			OrderPriceType: huobi_usdtfuture.OrderPriceTypeFOKOptimal20FOK,
+			//OrderPriceType: huobi-usdtfuture.OrderPriceTypeLimit,
 		}
 		logger.Debugf("SWAP ORDER %v", order)
 		hbspotOrderSilentTimes[spotSymbol] = time.Now().Add(*hbConfig.OrderSilent)

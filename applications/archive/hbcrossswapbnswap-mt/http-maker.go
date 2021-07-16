@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"time"
 )
 
-func handleMakerHttpPositions(positions []hbcrossswap.Position) {
+func handleMakerHttpPositions(positions []huobi_usdtfuture.Position) {
 	hasBuyPositions := make(map[string]bool)
 	hasSellPositions := make(map[string]bool)
 	for _, makerSymbol := range mSymbols {
@@ -16,7 +16,7 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 	}
 	for _, nextPos := range positions {
 		if takerSymbol, ok := mtSymbolsMap[nextPos.Symbol]; ok {
-			if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
+			if nextPos.Direction == huobi_usdtfuture.PositionDirectionBuy {
 				hasBuyPositions[nextPos.Symbol] = true
 			} else {
 				hasSellPositions[nextPos.Symbol] = true
@@ -24,8 +24,8 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 			if time.Now().Sub(mHttpPositionUpdateSilentTimes[nextPos.Symbol]) < 0 {
 				continue
 			}
-			var lastPosition *hbcrossswap.Position
-			if nextPos.Direction == hbcrossswap.PositionDirectionBuy {
+			var lastPosition *huobi_usdtfuture.Position
+			if nextPos.Direction == huobi_usdtfuture.PositionDirectionBuy {
 				if p, ok := mBuyPositions[nextPos.Symbol]; ok {
 					p := p
 					lastPosition = &p
@@ -68,8 +68,8 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 		if hasPosition {
 			continue
 		}
-		nextPos := hbcrossswap.Position{Symbol: makerSymbol, Direction: hbcrossswap.PositionDirectionBuy}
-		var lastPosition *hbcrossswap.Position
+		nextPos := huobi_usdtfuture.Position{Symbol: makerSymbol, Direction: huobi_usdtfuture.PositionDirectionBuy}
+		var lastPosition *huobi_usdtfuture.Position
 		if p, ok := mBuyPositions[nextPos.Symbol]; ok {
 			p := p
 			lastPosition = &p
@@ -92,8 +92,8 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 		if hasPosition {
 			continue
 		}
-		nextPos := hbcrossswap.Position{Symbol: makerSymbol, Direction: hbcrossswap.PositionDirectionSell}
-		var lastPosition *hbcrossswap.Position
+		nextPos := huobi_usdtfuture.Position{Symbol: makerSymbol, Direction: huobi_usdtfuture.PositionDirectionSell}
+		var lastPosition *huobi_usdtfuture.Position
 		if p, ok := mSellPositions[nextPos.Symbol]; ok {
 			p := p
 			lastPosition = &p
@@ -114,7 +114,7 @@ func handleMakerHttpPositions(positions []hbcrossswap.Position) {
 	}
 }
 
-func handleMakerHttpAccount(account hbcrossswap.Account) {
+func handleMakerHttpAccount(account huobi_usdtfuture.Account) {
 	if mAccount == nil {
 		mtLoopTimer.Reset(time.Nanosecond)
 		logger.Debugf("MAKER HTTP USDT CHANGE MB nil -> %f", account.MarginBalance)

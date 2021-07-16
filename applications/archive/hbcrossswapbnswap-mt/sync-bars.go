@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnswap"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"time"
@@ -12,7 +12,7 @@ import (
 
 func watchMakerBars(
 	ctx context.Context,
-	api *hbcrossswap.API,
+	api *huobi_usdtfuture.API,
 	makerSymbols []string,
 	barsLookback int,
 	pullInterval time.Duration,
@@ -29,8 +29,8 @@ func watchMakerBars(
 	for i, makerSymbol := range makerSymbols {
 		nextPullTimes[makerSymbol] = time.Now().Add(requestInterval * time.Duration(i))
 	}
-	klinePeriod := hbcrossswap.KlinePeriod5min
-	klineDuration := hbcrossswap.KlinePeriodDuration[klinePeriod]
+	klinePeriod := huobi_usdtfuture.KlinePeriod5min
+	klineDuration := huobi_usdtfuture.KlinePeriodDuration[klinePeriod]
 	globalNextPullTime := time.Now()
 	globalNextRetryTime := time.Now()
 	outputResults := true
@@ -74,7 +74,7 @@ func watchMakerBars(
 					symbolStartTime = symbolStartTime.Add(-klineDuration * 3)
 				}
 				history, err := api.GetKlines(
-					ctx, hbcrossswap.KlinesParam{
+					ctx, huobi_usdtfuture.KlinesParam{
 						Symbol: symbol,
 						Size:   barsLookback,
 						Period: klinePeriod,

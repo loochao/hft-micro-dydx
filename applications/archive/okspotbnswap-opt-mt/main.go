@@ -39,7 +39,7 @@ func main() {
 		*mtConfig.ProxyAddress,
 	)
 	if err != nil {
-		logger.Debugf("hbcrossswap.NewAPI error %v", err)
+		logger.Debugf("huobi-usdtfuture.NewAPI error %v", err)
 		return
 	}
 	tAPI, err = bnswap.NewAPI(

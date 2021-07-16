@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-type Depth5WS struct {
+type Depth5TickerWS struct {
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
@@ -27,7 +27,7 @@ type Depth5WS struct {
 	stopped     int32
 }
 
-func (w *Depth5WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth5TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -66,7 +66,7 @@ func (w *Depth5WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 		}
 	}
 }
-func (w *Depth5WS) parseBinaryResponse(resp []byte) ([]byte, error) {
+func (w *Depth5TickerWS) parseBinaryResponse(resp []byte) ([]byte, error) {
 	var standardMessage []byte
 	var err error
 	// Detect GZIP
@@ -99,7 +99,7 @@ func (w *Depth5WS) parseBinaryResponse(resp []byte) ([]byte, error) {
 	return standardMessage, nil
 }
 
-func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *Depth5TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -217,7 +217,7 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 	}
 }
 
-func (w *Depth5WS) readAll(r io.Reader) ([]byte, error) {
+func (w *Depth5TickerWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -235,7 +235,7 @@ func (w *Depth5WS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *Depth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *Depth5TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -280,7 +280,7 @@ func (w *Depth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, co
 	return conn, nil
 }
 
-func (w *Depth5WS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
+func (w *Depth5TickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -333,7 +333,7 @@ func (w *Depth5WS) mainLoop(ctx context.Context, proxy string, channels map[stri
 	}
 }
 
-func (w *Depth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *Depth5TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -416,14 +416,14 @@ func (w *Depth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 
 }
 
-func (w *Depth5WS) Stop() {
+func (w *Depth5TickerWS) Stop() {
 	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (w *Depth5WS) restart() {
+func (w *Depth5TickerWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -431,11 +431,11 @@ func (w *Depth5WS) restart() {
 	}
 }
 
-func (w *Depth5WS) Done() chan interface{} {
+func (w *Depth5TickerWS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Depth) {
+func (w *Depth5TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Ticker) {
 	logSilentTime := time.Now()
 	var err error
 	var depth5 *Depth5
@@ -473,12 +473,12 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	}
 }
 
-func NewDepth5WS(
+func NewDepth5TickerWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan common.Depth,
-) *Depth5WS {
-	ws := Depth5WS{
+	channels map[string]chan common.Ticker,
+) *Depth5TickerWS {
+	ws := Depth5TickerWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}, 4),
 		writeCh:     make(chan interface{}, len(channels)),

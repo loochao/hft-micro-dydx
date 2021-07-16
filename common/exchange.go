@@ -15,4 +15,5 @@ const (
 	KucoinUsdtSpot
 	FtxUsdFuture
 	OkexUsdtSpot
+	MexcUsdtFuture
 )

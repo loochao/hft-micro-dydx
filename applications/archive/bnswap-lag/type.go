@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/geometrybase/hft-micro/bnswap"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 )
 
 type OrderNewError struct {
@@ -16,7 +16,7 @@ type OrderRequest struct {
 }
 
 type MakerOpenOrder struct {
-	*hbcrossswap.NewOrderParam
+	*huobi_usdtfuture.NewOrderParam
 	ResponseOrderID string
 	Symbol          string
 }

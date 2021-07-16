@@ -1,0 +1,36 @@
+package mexc_usdtfuture
+
+//func TestNewTickerWS(t *testing.T) {
+//	var api *API
+//	var ctx = context.Background()
+//	var err error
+//	api, err = NewAPI(
+//		os.Getenv("KCPERP_KEY"),
+//		os.Getenv("KCPERP_SECRET"),
+//		os.Getenv("KCPERP_PASSPHRASE"),
+//		"socks5://127.0.0.1:1080")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	symbols := []string{"BTC-USDT", "WAVES-USDT"}
+//	//symbols := make([]string, 0)
+//	//for symbol := range TickSizes {
+//	//	symbols = append(symbols, symbol)
+//	//}
+//	channels := make(map[string]chan common.Ticker)
+//	outputCh := make(chan common.Ticker, 4)
+//	for _, symbol := range symbols {
+//		channels[symbol] = outputCh
+//	}
+//	_ = NewTickerWS(
+//		ctx, api,
+//		"socks5://127.0.0.1:1081",
+//		channels,
+//	)
+//	for {
+//		select {
+//		case d := <-outputCh:
+//			logger.Debugf("%s %v", d.GetSymbol(), d.GetTime())
+//		}
+//	}
+//}

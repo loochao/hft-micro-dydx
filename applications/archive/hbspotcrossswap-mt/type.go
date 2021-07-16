@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/hbspot"
 )
 
 type SwapOrderNewError struct {
 	Error  error
-	Params hbcrossswap.NewOrderParam
+	Params huobi_usdtfuture.NewOrderParam
 }
 
 type SpotOrderNewError struct {

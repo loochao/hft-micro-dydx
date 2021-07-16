@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
 func watchMakerOrderRequest(
 	ctx context.Context,
-	api *hbcrossswap.API,
+	api *huobi_usdtfuture.API,
 	timeout time.Duration,
 	dryRun bool,
 	orderRequestCh chan MakerOrderRequest,
@@ -77,7 +77,7 @@ func cancelAllMakerOpenOrders() {
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &hbcrossswap.CancelAllParam{Symbol: order.Symbol},
+			Cancel: &huobi_usdtfuture.CancelAllParam{Symbol: order.Symbol},
 		}
 	}
 }
@@ -99,12 +99,12 @@ func updateMakerOldOrders() {
 		mOrderCancelSilentTimes[order.Symbol] = time.Now().Add(*mtConfig.OrderCancelSilent)
 		mOrderCancelCounts[order.Symbol] += 1
 		mOrderRequestChs[order.Symbol] <- MakerOrderRequest{
-			Cancel: &hbcrossswap.CancelAllParam{Symbol: order.Symbol},
+			Cancel: &huobi_usdtfuture.CancelAllParam{Symbol: order.Symbol},
 		}
 	}
 }
 
-func isOrderProfitable(order hbcrossswap.NewOrderParam) bool {
+func isOrderProfitable(order huobi_usdtfuture.NewOrderParam) bool {
 	spread, ok1 := mtSpreads[order.Symbol]
 	quantile, ok2 := mtQuantiles[order.Symbol]
 	if !ok1 || !ok2 || time.Now().Sub(spread.Time) > *mtConfig.SpreadTimeToLive {
@@ -113,7 +113,7 @@ func isOrderProfitable(order hbcrossswap.NewOrderParam) bool {
 	}
 
 	//检查价格有没有挂太远，太远撤掉
-	if order.Direction == hbcrossswap.OrderDirectionBuy &&
+	if order.Direction == huobi_usdtfuture.OrderDirectionBuy &&
 		float64(order.Price) < (1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid {
 		logger.Debugf("%s BUY PRICE %f < MAKER BID MINIMAL PRICE %f",
 			order.Symbol,
@@ -121,7 +121,7 @@ func isOrderProfitable(order hbcrossswap.NewOrderParam) bool {
 			(1.0-2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarBid,
 		)
 		return false
-	} else if order.Direction == hbcrossswap.OrderDirectionSell &&
+	} else if order.Direction == huobi_usdtfuture.OrderDirectionSell &&
 		float64(order.Price) > (1.0+2**mtConfig.MakerOrderOffset)*spread.MakerDepth.TakerFarAsk {
 		logger.Debugf("%s SELL PRICE %f > MAKER ASK MAXIMAL PRICE %f",
 			order.Symbol,
@@ -131,28 +131,28 @@ func isOrderProfitable(order hbcrossswap.NewOrderParam) bool {
 		return false
 	}
 
-	if order.Direction == hbcrossswap.OrderDirectionBuy &&
-		order.Offset == hbcrossswap.OrderOffsetOpen &&
+	if order.Direction == huobi_usdtfuture.OrderDirectionBuy &&
+		order.Offset == huobi_usdtfuture.OrderOffsetOpen &&
 		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.ShortTop-*mtConfig.MakerOrderOffset {
 		//买入开多, 是开空价差, 参考ShortTop
 		return true
-	} else if order.Direction == hbcrossswap.OrderDirectionSell &&
-		order.Offset == hbcrossswap.OrderOffsetClose &&
+	} else if order.Direction == huobi_usdtfuture.OrderDirectionSell &&
+		order.Offset == huobi_usdtfuture.OrderOffsetClose &&
 		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.ShortBot+*mtConfig.MakerOrderOffset {
 		//卖出平多, 是平空价, 参考ShortBot
 		return true
-	} else if order.Direction == hbcrossswap.OrderDirectionSell &&
-		order.Offset == hbcrossswap.OrderOffsetOpen &&
+	} else if order.Direction == huobi_usdtfuture.OrderDirectionSell &&
+		order.Offset == huobi_usdtfuture.OrderOffsetOpen &&
 		(spread.TakerDepth.TakerAsk-float64(order.Price))/float64(order.Price) < quantile.LongBot+*mtConfig.MakerOrderOffset {
 		//卖出开空, 是开多价差, 参考LongBot
 		return true
-	} else if order.Direction == hbcrossswap.OrderDirectionBuy &&
-		order.Offset == hbcrossswap.OrderOffsetClose &&
+	} else if order.Direction == huobi_usdtfuture.OrderDirectionBuy &&
+		order.Offset == huobi_usdtfuture.OrderOffsetClose &&
 		(spread.TakerDepth.TakerBid-float64(order.Price))/float64(order.Price) > quantile.LongTop-*mtConfig.MakerOrderOffset {
 		//买入平空, 是平多价差, 参考LongTop
 		return true
 	}
-	if order.Direction == hbcrossswap.OrderDirectionBuy {
+	if order.Direction == huobi_usdtfuture.OrderDirectionBuy {
 		logger.Debugf(
 			"NOT PROFITABLE %s BUY ORDER, CANCEL", order.Symbol,
 		)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/hbcrossswap"
+	"github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/hbspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"gopkg.in/yaml.v2"
@@ -15,11 +15,11 @@ import (
 var hbInternalInfluxWriter *common.InfluxWriter
 var hbExternalInfluxWriter *common.InfluxWriter
 
-var hbcrossswapAPI *hbcrossswap.API
+var hbcrossswapAPI *huobi_usdtfuture.API
 var hbspotAPI *hbspot.API
 var hbspotAccountID int64
 
-var hbcrossswapUserWebsocket *hbcrossswap.UserWebsocket
+var hbcrossswapUserWebsocket *huobi_usdtfuture.UserWebsocket
 var hbspotUserWebsocket *hbspot.UserWebsocket
 
 var hbcrossswapOrderSilentTimes = make(map[string]time.Time)
@@ -33,7 +33,7 @@ var hbLoopTimer *time.Timer
 
 var hbspotBalancesUpdateTimes = make(map[string]time.Time)
 var hbcrossswapNewOrderErrorCh = make(chan SwapOrderNewError, 10)
-var hbcrossswapOrderRequestChs = make(map[string]chan hbcrossswap.NewOrderParam)
+var hbcrossswapOrderRequestChs = make(map[string]chan huobi_usdtfuture.NewOrderParam)
 
 var hbspotHttpBalanceUpdateSilentTimes = make(map[string]time.Time)
 var hbcrossswapHttpPositionUpdateSilentTimes = make(map[string]time.Time)
@@ -45,9 +45,9 @@ var hbSwapSpotSymbolsMap = make(map[string]string, 0)
 
 var hbLogSilentTimes = make(map[string]time.Time)
 
-var hbcrossswapAccountCh = make(chan hbcrossswap.Account, 10)
+var hbcrossswapAccountCh = make(chan huobi_usdtfuture.Account, 10)
 
-var hbcrossswapAccount *hbcrossswap.Account
+var hbcrossswapAccount *huobi_usdtfuture.Account
 
 var hbcrossswapContractSizes = make(map[string]float64)
 var hbspotPricePrecisions = make(map[string]int)
@@ -61,8 +61,8 @@ var hbMergedStepSizes = make(map[string]float64)
 
 var hbGlobalCtx context.Context
 var hbGlobalCancel context.CancelFunc
-var hbcrossswapPositionCh = make(chan []hbcrossswap.Position, 10)
-var hbcrossswapPositions = make(map[string]hbcrossswap.Position)
+var hbcrossswapPositionCh = make(chan []huobi_usdtfuture.Position, 10)
+var hbcrossswapPositions = make(map[string]huobi_usdtfuture.Position)
 
 var hbspotBalances = make(map[string]*hbspot.Balance)
 var hbspotUSDTBalance *hbspot.Balance
@@ -79,8 +79,8 @@ var hbspotNewOrderErrorCh chan SpotOrderNewError
 var hbspotOpenOrders = make(map[string]hbspot.NewOrderParam)
 var hbspotOrderCancelCounts = make(map[string]int)
 
-var hbcrossswapFundingRates = make(map[string]hbcrossswap.FundingRate)
-var hbcrossswapFundingRatesCh = make(chan map[string]hbcrossswap.FundingRate, 10)
+var hbcrossswapFundingRates = make(map[string]huobi_usdtfuture.FundingRate)
+var hbcrossswapFundingRatesCh = make(chan map[string]huobi_usdtfuture.FundingRate, 10)
 var hbRankSymbolMap map[int]string
 
 var hbcrossswapBarsMapCh = make(chan common.KLinesMap)
