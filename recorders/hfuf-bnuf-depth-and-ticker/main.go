@@ -15,13 +15,13 @@ func main() {
 
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
 
-	//proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	//symbolsStr := flag.String("symbols", "DEBUG 2021/07/17 00:30:39.202903 main_test.go:20: \tIOST-USDT,LUNA-USDT,XRP-USDT,AAVE-USDT,BNB-USDT,YFII-USDT,ATOM-USDT,ICP-USDT,XTZ-USDT,SUSHI-USDT,ZEN-USDT,ALGO-USDT,ETC-USDT,MATIC-USDT,REEF-USDT,STORJ-USDT,CRV-USDT,DOGE-USDT,FIL-USDT,SNX-USDT,NEAR-USDT,DASH-USDT,KSM-USDT,QTUM-USDT,ONE-USDT,XEM-USDT,DOT-USDT,IOTA-USDT,THETA-USDT,WAVES-USDT,ZEC-USDT,XMR-USDT,CHR-USDT,CHZ-USDT,LTC-USDT,UNI-USDT,VET-USDT,BCH-USDT,KAVA-USDT,ONT-USDT,RSR-USDT,OMG-USDT,XLM-USDT,1INCH-USDT,BTC-USDT,COMP-USDT,ENJ-USDT,NEO-USDT,ADA-USDT,BTT-USDT,ZIL-USDT,YFI-USDT,GRT-USDT,LINK-USDT,SOL-USDT,TRX-USDT,MKR-USDT,AVAX-USDT,EOS-USDT,ETH-USDT,MANA-USDT", "symbols, separate by comma")
-	//savePath := flag.String("path", "/root/hbuf-bnuf-depth5-and-ticker", "data save folder")
+	proxyAddress := flag.String("proxy", "", "symbols group batch size")
+	symbolsStr := flag.String("symbols", "DEBUG 2021/07/17 00:30:39.202903 main_test.go:20: \tIOST-USDT,LUNA-USDT,XRP-USDT,AAVE-USDT,BNB-USDT,YFII-USDT,ATOM-USDT,ICP-USDT,XTZ-USDT,SUSHI-USDT,ZEN-USDT,ALGO-USDT,ETC-USDT,MATIC-USDT,REEF-USDT,STORJ-USDT,CRV-USDT,DOGE-USDT,FIL-USDT,SNX-USDT,NEAR-USDT,DASH-USDT,KSM-USDT,QTUM-USDT,ONE-USDT,XEM-USDT,DOT-USDT,IOTA-USDT,THETA-USDT,WAVES-USDT,ZEC-USDT,XMR-USDT,CHR-USDT,CHZ-USDT,LTC-USDT,UNI-USDT,VET-USDT,BCH-USDT,KAVA-USDT,ONT-USDT,RSR-USDT,OMG-USDT,XLM-USDT,1INCH-USDT,BTC-USDT,COMP-USDT,ENJ-USDT,NEO-USDT,ADA-USDT,BTT-USDT,ZIL-USDT,YFI-USDT,GRT-USDT,LINK-USDT,SOL-USDT,TRX-USDT,MKR-USDT,AVAX-USDT,EOS-USDT,ETH-USDT,MANA-USDT", "symbols, separate by comma")
+	savePath := flag.String("path", "/root/hbuf-bnuf-depth5-and-ticker", "data save folder")
 
-	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	symbolsStr := flag.String("symbols", "BTC-USDT", "symbols, separate by comma")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
+	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//symbolsStr := flag.String("symbols", "BTC-USDT", "symbols, separate by comma")
+	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 
 	flag.Parse()
 	symbols := strings.Split(*symbolsStr, ",")

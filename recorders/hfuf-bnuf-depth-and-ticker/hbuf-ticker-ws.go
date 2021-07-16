@@ -331,6 +331,7 @@ func (w *HbufTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, 
 			return
 		case symbol := <-w.symbolCh:
 			symbolUpdatedTimes[symbol] = time.Now()
+			break
 		case msg := <-w.pingCh:
 			select {
 			case w.writeCh <- msg:
