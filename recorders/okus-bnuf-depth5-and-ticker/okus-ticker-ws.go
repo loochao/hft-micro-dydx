@@ -242,6 +242,15 @@ func (w *OkusTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+
+			select {
+			case w.symbolCh <- symbol:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("w.symbolCh <- symbol failed %s ch len %d", symbol, len(w.symbolCh))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
 		}
 	}
 }

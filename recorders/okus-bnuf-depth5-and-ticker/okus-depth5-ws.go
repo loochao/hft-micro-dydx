@@ -179,9 +179,11 @@ func (w *OkusDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 			} else if msg[msgLen-54] == ':' {
 				symbol = common.UnsafeBytesToString(msg[msgLen-52 : msgLen-43])
 			} else if msg[msgLen-55] == ':' {
-				symbol =common.UnsafeBytesToString(msg[msgLen-53 : msgLen-43])
+				symbol = common.UnsafeBytesToString(msg[msgLen-53 : msgLen-43])
 			} else if msg[msgLen-56] == ':' {
 				symbol = common.UnsafeBytesToString(msg[msgLen-54 : msgLen-43])
+			} else if msg[msgLen-52] == ':' {
+				symbol = common.UnsafeBytesToString(msg[msgLen-49 : msgLen-43])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
@@ -220,6 +222,14 @@ func (w *OkusDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("ch <- message failed %s len(ch) = %d", symbol, len(ch))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
+			select {
+			case w.symbolCh <- symbol:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("w.symbolCh <- symbol failed %s ch len %d", symbol, len(w.symbolCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
