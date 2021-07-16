@@ -110,15 +110,15 @@ func (w *OkusTickerWS) findSymbol(msg []byte) string {
 	for offset < len(msg)-20 {
 		if msg[offset] == '_' && msg[offset+1] == 'i' {
 			if msg[offset+14] == '"' {
-				return common.UnsafeBytesToString(msg[offset+6 : offset + 14])
+				return common.UnsafeBytesToString(msg[offset+6 : offset+14])
 			} else if msg[offset+13] == '"' {
-				return common.UnsafeBytesToString(msg[offset+6 : offset + 13])
+				return common.UnsafeBytesToString(msg[offset+6 : offset+13])
 			} else if msg[offset+15] == '"' {
-				return common.UnsafeBytesToString(msg[offset+6 : offset + 15])
+				return common.UnsafeBytesToString(msg[offset+6 : offset+15])
 			} else if msg[offset+16] == '"' {
-				return common.UnsafeBytesToString(msg[offset+6 : offset + 16])
+				return common.UnsafeBytesToString(msg[offset+6 : offset+16])
 			} else if msg[offset+17] == '"' {
-				return common.UnsafeBytesToString(msg[offset+6 : offset + 17])
+				return common.UnsafeBytesToString(msg[offset+6 : offset+17])
 			}
 		}
 		offset++
@@ -218,11 +218,13 @@ func (w *OkusTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *
 				}
 			}
 			continue
-		} else if msgLen == 4 {
-			if time.Now().Sub(logSilentTime) > 0 {
-				//logger.Debugf("other msg %s", msg)
-				logSilentTime = time.Now().Add(time.Minute)
-			}
+		//} else if msgLen == 4 {
+			//if time.Now().Sub(logSilentTime) > 0 {
+			//logger.Debugf("other msg %s", msg)
+			//logSilentTime = time.Now().Add(time.Minute)
+			//}
+			//continue
+		} else {
 			continue
 		}
 		//logger.Debugf("%s %v", symbol, channels)
@@ -472,7 +474,6 @@ func (w *OkusTickerWS) restart() {
 func (w *OkusTickerWS) Done() chan interface{} {
 	return w.done
 }
-
 
 func NewOkusTickerWS(
 	ctx context.Context,

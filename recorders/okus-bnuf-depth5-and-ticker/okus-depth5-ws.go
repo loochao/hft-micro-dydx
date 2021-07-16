@@ -201,11 +201,13 @@ func (w *OkusDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 				}
 			}
 			continue
-		} else if msgLen == 4 {
-			if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("other msg %s", msg)
-				logSilentTime = time.Now().Add(time.Minute)
-			}
+		//} else if msgLen == 4 {
+		//	if time.Now().Sub(logSilentTime) > 0 {
+		//		logger.Debugf("other msg %s", msg)
+		//		logSilentTime = time.Now().Add(time.Minute)
+		//	}
+		//	continue
+		}else{
 			continue
 		}
 		//logger.Debugf("%s %v", symbol, channels)
