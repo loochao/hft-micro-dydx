@@ -29,8 +29,8 @@ func (w *BnufBookTickerWS) readLoop(conn *websocket.Conn, channels map[string]ch
 	var symbol string
 	var message *Message
 	index := -1
-	pool := [4096]*Message{}
-	for i := 0; i < 4096; i++ {
+	pool := [1024]*Message{}
+	for i := 0; i < 1024; i++ {
 		pool[i] = &Message{
 			Source: []byte{'B', 'T'},
 		}
@@ -87,7 +87,7 @@ func (w *BnufBookTickerWS) readLoop(conn *websocket.Conn, channels map[string]ch
 		}
 		if ch, ok = channels[symbol]; ok {
 			index++
-			if index == 4096 {
+			if index == 1024 {
 				index = 0
 			}
 			message = pool[index]

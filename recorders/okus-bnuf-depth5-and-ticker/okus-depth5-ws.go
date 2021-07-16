@@ -117,8 +117,8 @@ func (w *OkusDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 	var symbol string
 	var message *Message
 	index := -1
-	pool := [4096]*Message{}
-	for i := 0; i < 4096; i++ {
+	pool := [1024]*Message{}
+	for i := 0; i < 1024; i++ {
 		pool[i] = &Message{
 			Source: []byte{'O', 'D'},
 		}
@@ -209,7 +209,7 @@ func (w *OkusDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 		//logger.Debugf("%s %v", symbol, channels)
 		if ch, ok = channels[symbol]; ok {
 			index++
-			if index == 4096 {
+			if index == 1024 {
 				index = 0
 			}
 			message = pool[index]
