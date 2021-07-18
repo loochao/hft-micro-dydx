@@ -16,4 +16,5 @@ const (
 	FtxUsdFuture
 	OkexUsdtSpot
 	MexcUsdtFuture
+	BybitUsdtFuture
 )

@@ -1,0 +1,54 @@
+{
+  "topic": "orderBookL2_25.ETHUSDT",
+  "type": "delta",
+  "data": {
+    "delete": [],
+    "update": [
+      {
+        "price": "1958.15",
+        "symbol": "ETHUSDT",
+        "id": "19581500",
+        "side": "Buy",
+        "size": 16.94
+      },
+      {
+        "price": "1959.20",
+        "symbol": "ETHUSDT",
+        "id": "19592000",
+        "side": "Buy",
+        "size": 53.98
+      },
+      {
+        "price": "1958.00",
+        "symbol": "ETHUSDT",
+        "id": "19580000",
+        "side": "Buy",
+        "size": 64.25
+      },
+      {
+        "price": "1957.95",
+        "symbol": "ETHUSDT",
+        "id": "19579500",
+        "side": "Buy",
+        "size": 38.64
+      },
+      {
+        "price": "1958.05",
+        "symbol": "ETHUSDT",
+        "id": "19580500",
+        "side": "Buy",
+        "size": 80.509995
+      },
+      {
+        "price": "1958.10",
+        "symbol": "ETHUSDT",
+        "id": "19581000",
+        "side": "Buy",
+        "size": 100.729996
+      }
+    ],
+    "insert": []
+  },
+  "cross_seq": "3501318536",
+  "timestamp_e6": "1626591373727814"
+}
