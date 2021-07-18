@@ -112,7 +112,7 @@ func main() {
 					}
 					xTD = xDepth
 				} else if msg[0] == 'S' && msg[1] == 'T' {
-					err = binance_busdspot.ParseTicker(msg[21:], xTicker)
+					err = binance_busdspot.ParseBookTicker(msg[21:], xTicker)
 					if err != nil {
 						logger.Debugf("%v", err)
 						continue

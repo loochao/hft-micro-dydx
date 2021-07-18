@@ -328,7 +328,7 @@ func ParseTrade(msg []byte) (*Trade, error) {
 	return &trade, nil
 }
 
-func ParseTicker(msg []byte, bookTicker *BookTicker) (err error) {
+func ParseBookTicker(msg []byte, bookTicker *BookTicker) (err error) {
 	//{"stream":"scusdt@bookTicker","data":{"u":358652006,"s":"SCUSDT","b":"0.01285500","B":"21000.00000000","a":"0.01287800","A":"21000.00000000"}}
 	bookTicker.ParseTime = time.Now()
 	offset := 50

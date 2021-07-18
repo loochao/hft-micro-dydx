@@ -508,7 +508,6 @@ func WatchPremiumIndexesFromHttp(
 }
 
 //{"stream":"scusdt@bookTicker","data":{"e":"bookTicker","u":552297398961,"s":"SCUSDT","b":"0.012805","B":"46556","a":"0.012816","A":"90351","T":1624971386657,"E":1624971386662}}
-
 func ParseBookTicker(msg []byte, bookTicker *BookTicker) (err error) {
 	msgLen := len(msg)
 	if msgLen < 15 {

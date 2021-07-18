@@ -63,15 +63,16 @@ type Config struct {
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
 	StartValues       map[string]float64 `yaml:"startValues"`
 
-	OrderTimeout           time.Duration `yaml:"orderTimeout"`
-	XOrderSilent           time.Duration `yaml:"xOrderSilent"`
-	YOrderSilent           time.Duration `yaml:"yOrderSilent"`
-	HedgeDelay             time.Duration `yaml:"hedgeDelay"`
-	HedgeCheckDuration     time.Duration `yaml:"hedgeCheckDuration"`
-	HedgeCheckInterval     time.Duration `yaml:"hedgeCheckInterval"`
-	RealisedSpreadLogDelay time.Duration `yaml:"realisedSpreadLogDelay"`
-	RestartSilent          time.Duration `yaml:"restartSilent"`
-	RestartInterval        time.Duration `yaml:"restartInterval"`
+	OrderTimeout           time.Duration           `yaml:"orderTimeout"`
+	XOrderSilent           time.Duration           `yaml:"xOrderSilent"`
+	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
+	YOrderSilent           time.Duration           `yaml:"yOrderSilent"`
+	HedgeDelay             time.Duration           `yaml:"hedgeDelay"`
+	HedgeCheckDuration     time.Duration           `yaml:"hedgeCheckDuration"`
+	HedgeCheckInterval     time.Duration           `yaml:"hedgeCheckInterval"`
+	RealisedSpreadLogDelay time.Duration           `yaml:"realisedSpreadLogDelay"`
+	RestartSilent          time.Duration           `yaml:"restartSilent"`
+	RestartInterval        time.Duration           `yaml:"restartInterval"`
 
 	XYPairs        map[string]string  `yaml:"xyPairs"`
 	TargetWeights  map[string]float64 `yaml:"targetWeights,omitempty"`
@@ -128,5 +129,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	config.YExchange.DryRun = config.DryRun
 	if config.BestSizeFactor == 0 {
 		config.BestSizeFactor = 1.0
+	}
+	if config.XOrderTimeInForce == "" {
+		config.XOrderTimeInForce = common.OrderTimeInForceFOK
 	}
 }
