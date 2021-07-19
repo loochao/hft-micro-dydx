@@ -12,13 +12,13 @@ func (strat *XYStrategy) updateSpread() {
 	//需要用ema time delta 对age diff进行修正
 	strat.adjustedAgeDiff = strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
 
-	//取新一点的时间为spread time
+	//取旧一点的时间为spread time
 	if strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) < 0 {
 		//需要对时间进行补偿
-		strat.spreadTime = strat.yTicker.GetTime().Add(time.Millisecond * time.Duration(strat.yTickerFilter.TimeDeltaEma))
+		strat.spreadTime = strat.xTicker.GetTime().Add(time.Millisecond * time.Duration(strat.xTickerFilter.TimeDeltaEma))
 	} else {
 		//需要对时间进行补偿
-		strat.spreadTime = strat.xTicker.GetTime().Add(time.Millisecond * time.Duration(strat.xTickerFilter.TimeDeltaEma))
+		strat.spreadTime = strat.yTicker.GetTime().Add(time.Millisecond * time.Duration(strat.yTickerFilter.TimeDeltaEma))
 	}
 
 	if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
