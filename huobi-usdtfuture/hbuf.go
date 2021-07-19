@@ -244,25 +244,47 @@ func (h *HuobiUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.
 			}
 			break
 		case wsPositions := <-userWS.PositionCh:
-			changedSymbols := make([]string, 0)
+			newPositions := make(map[string]MergedPosition, 0)
 			for _, nextPos := range wsPositions.Positions {
-				logger.Debugf("HTTP POS %v", nextPos)
-				if oldPos, ok := positionsMap[nextPos.Symbol]; ok {
-					if nextPos.Direction == PositionDirectionBuy && nextPos.Volume != 0 {
-						oldPos.Size = nextPos.Volume
-						oldPos.Price = nextPos.CostOpen / nextPos.Volume
-						positionsMap[nextPos.Symbol] = oldPos
-						changedSymbols = append(changedSymbols, nextPos.Symbol)
-					} else if nextPos.Direction == PositionDirectionSell && nextPos.Volume != 0 {
-						oldPos.Size = nextPos.Volume
-						oldPos.Price = nextPos.CostOpen / nextPos.Volume
-						positionsMap[nextPos.Symbol] = oldPos
-						changedSymbols = append(changedSymbols, nextPos.Symbol)
+				if newPos, ok := newPositions[nextPos.Symbol]; ok {
+					newPos.ParseTime = nextPos.ParseTime
+					newPos.EventTime = wsPositions.Timestamp
+					if nextPos.Direction == PositionDirectionBuy {
+						newPos.Size += nextPos.Volume
+						if nextPos.Volume != 0 {
+							newPos.Price = nextPos.CostOpen / nextPos.Volume
+						}
+					} else {
+						newPos.Size -= nextPos.Volume
+						if nextPos.Volume != 0 {
+							newPos.Price = nextPos.CostOpen / nextPos.Volume
+						}
 					}
+					newPositions[nextPos.Symbol] = newPos
+					logger.Debugf("WS POS %v, %v", nextPos, newPos)
+				} else {
+					newPos = MergedPosition{
+						Symbol:    nextPos.Symbol,
+						ParseTime: nextPos.ParseTime,
+						EventTime: wsPositions.Timestamp,
+					}
+					if nextPos.Direction == PositionDirectionBuy {
+						newPos.Size = nextPos.Volume
+						if nextPos.Volume != 0 {
+							newPos.Price = nextPos.CostOpen / nextPos.Volume
+						}
+					} else {
+						newPos.Size = -nextPos.Volume
+						if nextPos.Volume != 0 {
+							newPos.Price = nextPos.CostOpen / nextPos.Volume
+						}
+					}
+					newPositions[nextPos.Symbol] = newPos
+					logger.Debugf("WS POS %v, %v", nextPos, newPos)
 				}
 			}
-			for _, symbol := range changedSymbols {
-				pos := positionsMap[symbol]
+			for symbol, newPos := range newPositions {
+				pos := newPos
 				if ch, ok := positionChMap[symbol]; ok {
 					select {
 					case ch <- &pos:
@@ -556,15 +578,19 @@ func (h *HuobiUsdtFuture) positionsLoop(
 				}
 				//假定只有一个方向的仓位
 				for _, position := range positions {
-					if position.Direction == PositionDirectionBuy && position.Volume != 0 {
+					if position.Direction == PositionDirectionBuy {
 						mP := positionBySymbols[position.Symbol]
-						mP.Size = position.Volume
-						mP.Price = position.CostOpen / position.Volume
+						mP.Size += position.Volume
+						if position.Volume != 0 {
+							mP.Price = position.CostOpen / position.Volume
+						}
 						positionBySymbols[position.Symbol] = mP
-					} else if position.Direction == PositionDirectionSell && position.Volume != 0 {
+					} else if position.Direction == PositionDirectionSell {
 						mP := positionBySymbols[position.Symbol]
-						mP.Size = -position.Volume
-						mP.Price = position.CostOpen / position.Volume
+						mP.Size -= position.Volume
+						if position.Volume != 0 {
+							mP.Price = position.CostOpen / position.Volume
+						}
 						positionBySymbols[position.Symbol] = mP
 					}
 				}
@@ -653,7 +679,7 @@ func (h *HuobiUsdtFuture) submitOrder(ctx context.Context, param common.NewOrder
 	}
 	if param.ReduceOnly {
 		newOrderParam.Offset = OrderOffsetClose
-	}else{
+	} else {
 		newOrderParam.Offset = OrderOffsetOpen
 	}
 	_, err = h.api.SubmitOrder(ctx, newOrderParam)
