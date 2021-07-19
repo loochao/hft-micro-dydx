@@ -251,14 +251,10 @@ func (h *HuobiUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.
 					newPos.EventTime = wsPositions.Timestamp
 					if nextPos.Direction == PositionDirectionBuy {
 						newPos.Size += nextPos.Volume
-						if nextPos.Volume != 0 {
-							newPos.Price = nextPos.CostOpen / nextPos.Volume
-						}
+						newPos.Price = nextPos.CostOpen
 					} else {
 						newPos.Size -= nextPos.Volume
-						if nextPos.Volume != 0 {
-							newPos.Price = nextPos.CostOpen / nextPos.Volume
-						}
+						newPos.Price = nextPos.CostOpen
 					}
 					newPositions[nextPos.Symbol] = newPos
 					//logger.Debugf("WS POS %v, %v", nextPos, newPos)
@@ -270,14 +266,10 @@ func (h *HuobiUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.
 					}
 					if nextPos.Direction == PositionDirectionBuy {
 						newPos.Size = nextPos.Volume
-						if nextPos.Volume != 0 {
-							newPos.Price = nextPos.CostOpen / nextPos.Volume
-						}
+						newPos.Price = nextPos.CostOpen
 					} else {
 						newPos.Size = -nextPos.Volume
-						if nextPos.Volume != 0 {
-							newPos.Price = nextPos.CostOpen / nextPos.Volume
-						}
+						newPos.Price = nextPos.CostOpen
 					}
 					newPositions[nextPos.Symbol] = newPos
 					//logger.Debugf("WS POS %v, %v", nextPos, newPos)
@@ -581,16 +573,12 @@ func (h *HuobiUsdtFuture) positionsLoop(
 					if position.Direction == PositionDirectionBuy {
 						mP := positionBySymbols[position.Symbol]
 						mP.Size += position.Volume
-						if position.Volume != 0 {
-							mP.Price = position.CostOpen / position.Volume
-						}
+						mP.Price = position.CostOpen
 						positionBySymbols[position.Symbol] = mP
 					} else if position.Direction == PositionDirectionSell {
 						mP := positionBySymbols[position.Symbol]
 						mP.Size -= position.Volume
-						if position.Volume != 0 {
-							mP.Price = position.CostOpen / position.Volume
-						}
+						mP.Price = position.CostOpen
 						positionBySymbols[position.Symbol] = mP
 					}
 				}
