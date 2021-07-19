@@ -668,6 +668,9 @@ func (h *HuobiUsdtFuture) submitOrder(ctx context.Context, param common.NewOrder
 		newOrderParam.OrderPriceType = OrderPriceTypeLimit
 	}
 	if param.TimeInForce == common.OrderTimeInForceIOC {
+		newOrderParam.OrderPriceType = OrderPriceTypeIOC
+	}
+	if param.TimeInForce == common.OrderTimeInForceFOK {
 		newOrderParam.OrderPriceType = OrderPriceTypeFOK
 	}
 	if param.PostOnly {
