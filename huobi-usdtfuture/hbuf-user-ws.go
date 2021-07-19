@@ -43,15 +43,15 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 		case <-w.done:
 			return
 		case msg := <-w.writeCh:
-			var bytes []byte
+			var msgData []byte
 			var err error
 			switch d := msg.(type) {
 			case []byte:
-				bytes = d
+				msgData = d
 			case string:
-				bytes = ([]byte)(d)
+				msgData = ([]byte)(d)
 			default:
-				bytes, err = json.Marshal(msg)
+				msgData, err = json.Marshal(msg)
 				if err != nil {
 					logger.Warnf("Marshal err %v", err)
 					continue
@@ -64,9 +64,9 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 				return
 			}
 
-			err = conn.WriteMessage(websocket.TextMessage, bytes)
+			err = conn.WriteMessage(websocket.TextMessage, msgData)
 			if err != nil {
-				logger.Warnf("conn.WriteMessage %s error %v", string(bytes), err)
+				logger.Warnf("conn.WriteMessage %s error %v", string(msgData), err)
 				w.restart()
 				return
 			}
@@ -77,8 +77,6 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 func (w *UserWebsocket) readLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
-	totalCount := 0
-	totalLen := 0
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -103,13 +101,6 @@ func (w *UserWebsocket) readLoop(ctx context.Context, conn *websocket.Conn) {
 			logger.Warnf("w.readAll error %v", err)
 			w.restart()
 			return
-		}
-		totalCount += 1
-		totalLen += len(msg)
-		if totalCount > 1000000 {
-			logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
-			totalLen = 0
-			totalCount = 0
 		}
 		select {
 		case w.messageCh <- msg:
@@ -144,9 +135,9 @@ func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
+func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 	logger.Debugf("START dataHandleLoop")
-	defer logger.Debugf("EXIT dataHandleLoop %d", id)
+	defer logger.Debugf("EXIT dataHandleLoop")
 	var err error
 	logSilentTime := time.Now()
 	for {
@@ -555,10 +546,7 @@ func NewUserWebsocket(
 		stopped:     0,
 	}
 	go ws.mainLoop(ctx, symbols, proxy)
-	go ws.dataHandleLoop(ctx, 0)
-	go ws.dataHandleLoop(ctx, 1)
-	go ws.dataHandleLoop(ctx, 2)
-	go ws.dataHandleLoop(ctx, 3)
+	go ws.dataHandleLoop(ctx)
 	ws.reconnectCh <- nil
 	return &ws
 }

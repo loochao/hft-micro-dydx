@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-type TickerWS struct {
+type Depth20TickerWS struct {
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
@@ -24,7 +24,7 @@ type TickerWS struct {
 	stopped     int32
 }
 
-func (w *TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *Depth20TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START writeLoop %s", symbols)
 	defer logger.Debugf("EXIT writeLoop %s", symbols)
 	for {
@@ -64,7 +64,7 @@ func (w *TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn, symbols 
 	}
 }
 
-func (w *TickerWS) readLoop(ctx context.Context, conn *websocket.Conn, symbols []string, channels map[string]chan []byte) {
+func (w *Depth20TickerWS) readLoop(ctx context.Context, conn *websocket.Conn, symbols []string, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop %s", symbols)
 	defer logger.Debugf("EXIT readLoop %s", symbols)
 	logSilentTime := time.Now()
@@ -116,17 +116,15 @@ func (w *TickerWS) readLoop(ctx context.Context, conn *websocket.Conn, symbols [
 			}
 			return
 		}
-		//{"ch":"market.FIL-USDT.bbo","ts":1626452640293,"tick":{"mrid":43567961897,"id":1626452640,"bid":[46.948,1699],"ask":[46.949,251],"ts":1626452640293,"version":43567961897,"ch":"market.FIL-USDT.bbo"}}
+		//{"ch":"market.FIL-USDT.depth.step6","ts":1618845641135,"tick":{"mrid":18528726394,"id":1618845641,"bids":[[154.423,36],[154.419,214],[154.414,380],[154.407,421],[154.398,64],[154.388,73],[154.386,8],[154.361,171],[154.36,300],[154.359,1],[154.354,175],[154.34,171],[154.339,48],[154.329,283],[154.327,243],[154.323,13],[154.315,50],[154.303,200],[154.302,48],[154.285,806]],"asks":[[154.436,154],[154.459,441],[154.46,58],[154.472,154],[154.473,134],[154.475,380],[154.497,163],[154.499,666],[154.511,88],[154.514,30],[154.515,283],[154.516,715],[154.517,70],[154.52,2],[154.53,222],[154.532,50],[154.557,1297],[154.565,3],[154.609,48],[154.61,4]],"ts":1618845641132,"version":1618845641,"ch":"market.FIL-USDT.depth.step6"}}
 		if msg[2] == 'c' && len(msg) > 57 {
-			if msg[32] == ':' {
+			if msg[40] == ':' {
 				symbol = common.UnsafeBytesToString(msg[14:22])
-			} else if msg[33] == ':' {
+			} else if msg[41] == ':' {
 				symbol = common.UnsafeBytesToString(msg[14:23])
-			} else if msg[34] == ':' {
+			} else if msg[42] == ':' {
 				symbol = common.UnsafeBytesToString(msg[14:24])
-			} else if msg[31] == ':' {
-				symbol = common.UnsafeBytesToString(msg[14:21])
-			} else if msg[35] == ':' {
+			} else if msg[43] == ':' {
 				symbol = common.UnsafeBytesToString(msg[14:25])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
@@ -165,7 +163,7 @@ func (w *TickerWS) readLoop(ctx context.Context, conn *websocket.Conn, symbols [
 	}
 }
 
-func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
+func (w *Depth20TickerWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -183,7 +181,7 @@ func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *Depth20TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retries", wsUrl, counter)
@@ -228,7 +226,7 @@ func (w *TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, co
 	return conn, nil
 }
 
-func (w *TickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
+func (w *Depth20TickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
 	logger.Debugf("START mainLoop")
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -287,7 +285,7 @@ func (w *TickerWS) mainLoop(ctx context.Context, proxy string, channels map[stri
 	}
 }
 
-func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *Depth20TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop %s", symbols)
 	defer func() {
 		logger.Debugf("EXIT heartbeatLoop %s", symbols)
@@ -324,11 +322,11 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
-					logger.Debugf("SWAP SUBSCRIBE %s", fmt.Sprintf("market.%s.bbo", symbol))
+					logger.Debugf("SWAP SUBSCRIBE %s", fmt.Sprintf("market.%s.depth.step6", symbol))
 					select {
 					case w.writeCh <- SubParam{
 						ID:  fmt.Sprintf("%d", time.Now().UnixNano()),
-						Sub: fmt.Sprintf("market.%s.bbo", symbol),
+						Sub: fmt.Sprintf("market.%s.depth.step6", symbol),
 					}:
 						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval * time.Duration(len(symbols)*2))
 						break loop
@@ -343,19 +341,18 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 			return
 		}
 	}
-
 }
 
-func (w *TickerWS) Stop() {
+func (w *Depth20TickerWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
 	}
 }
 
-func (w *TickerWS) restart() {
+func (w *Depth20TickerWS) restart() {
 	select {
-	case <- w.done:
+	case <-w.done:
 		return
 	case w.reconnectCh <- nil:
 		logger.Debugf("restart ws")
@@ -364,77 +361,84 @@ func (w *TickerWS) restart() {
 	}
 }
 
-func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Ticker) {
-	logger.Debugf("START dataHandleLoop %s", symbol)
-	defer logger.Debugf("EXIT dataHandleLoop %s", symbol)
+func (w *Depth20TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Ticker) {
+	//logger.Debugf("START dataHandleLoop %s", symbol)
+	//defer logger.Debugf("EXIT dataHandleLoop %s", symbol)
 	logSilentTime := time.Now()
-	index := -1
-	pool := [4]*Ticker{}
-	for i := 0; i < 4; i++ {
-		pool[i] = &Ticker{}
-	}
-	var ticker *Ticker
 	var err error
-
+	index := -1
+	pool := [4]*Depth20{}
+	for i := 0; i < 4; i++ {
+		pool[i] = &Depth20{}
+	}
+	var depth *Depth20
+	var msg []byte
+	var parseTimer = time.NewTimer(time.Hour * 9999)
+	defer parseTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case msg := <-inputCh:
-			index ++
+		case <-parseTimer.C:
+			index++
 			if index == 4 {
 				index = 0
 			}
-			ticker = pool[index]
-			if err != nil && time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("ParseTicker(msg, ticker) error %s %v", msg, err)
-				logSilentTime = time.Now().Add(time.Minute)
-			} else {
-				select {
-				case outputCh <- ticker:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("outputCh <- ticker failed ch len %d", len(outputCh))
-						logSilentTime = time.Now().Add(time.Minute)
-						continue
-					}
-				}
+			depth = pool[index]
+			err = ParseDepth20(msg, depth)
+			if err != nil {
+				logger.Debugf("ParseDepth5(msg) error %v %s", err, msg)
+				continue
 			}
 			select {
-			case w.symbolCh <- symbol:
+			case outputCh <- depth:
+				select {
+				case w.symbolCh <- symbol:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.symbolCh <- symbol failed, ch len %d", len(w.symbolCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
 			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("outputCh <- depth failed, ch len %d", len(outputCh))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
 			}
+			break
+		case msg = <-inputCh:
+			parseTimer.Reset(time.Millisecond)
 			break
 		}
 	}
 }
 
-
-func (w *TickerWS) Done() chan interface{} {
+func (w *Depth20TickerWS) Done() chan interface{} {
 	return w.done
 }
 
-func NewTickerWS(
+func NewDepth20TickerWS(
 	ctx context.Context,
 	proxy string,
 	channels map[string]chan common.Ticker,
-) *TickerWS {
-	ws := TickerWS{
+) *Depth20TickerWS {
+	ws := Depth20TickerWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		writeCh:     make(chan interface{}, len(channels)),
+		writeCh:     make(chan interface{}, 4*len(channels)),
 		symbolCh:    make(chan string, 4*len(channels)),
 		pingCh:      make(chan []byte, 4),
 		stopped:     0,
 	}
-	messagesCh := make(map[string]chan []byte)
-	for market, ch := range channels {
-		messagesCh[market] = make(chan []byte, 1000)
-		go ws.dataHandleLoop(ctx, market, messagesCh[market], ch)
+	messageChs := make(map[string]chan []byte)
+	for symbol, ch := range channels {
+		messageChs[symbol] = make(chan []byte, 64)
+		go ws.dataHandleLoop(ctx, symbol, messageChs[symbol], ch)
 	}
-	go ws.mainLoop(ctx, proxy, messagesCh)
+	go ws.mainLoop(ctx, proxy, messageChs)
 	ws.reconnectCh <- nil
 	return &ws
 }

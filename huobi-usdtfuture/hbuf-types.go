@@ -2,6 +2,7 @@ package huobi_usdtfuture
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"strings"
@@ -77,10 +78,31 @@ type Depth20 struct {
 	ParseTime time.Time      `json:"-"`
 	EventTime time.Time      `json:"-"`
 }
-func (depth *Depth20) GetBids() [20][2]float64 { return depth.Bids }
-func (depth *Depth20) GetAsks() [20][2]float64 { return depth.Asks }
-func (depth *Depth20) GetSymbol() string { return depth.Symbol }
-func (depth *Depth20) GetTime() time.Time { return depth.EventTime }
+
+func (depth *Depth20) GetBidPrice() float64 {
+	return depth.Bids[0][0]
+}
+
+func (depth *Depth20) GetAskPrice() float64 {
+	return depth.Asks[0][0]
+}
+
+func (depth *Depth20) GetBidSize() float64 {
+	return depth.Bids[0][1]
+}
+
+func (depth *Depth20) GetAskSize() float64 {
+	return depth.Asks[0][1]
+}
+
+func (depth *Depth20) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (depth *Depth20) GetBids() common.Bids { return depth.Bids[:] }
+func (depth *Depth20) GetAsks() common.Asks { return depth.Asks[:] }
+func (depth *Depth20) GetSymbol() string    { return depth.Symbol }
+func (depth *Depth20) GetTime() time.Time   { return depth.EventTime }
 
 func (depth *Depth20) UnmarshalJSON(data []byte) error {
 	type Alias Depth20
@@ -129,6 +151,22 @@ type FundingRate struct {
 	NextFundingTime time.Time `json:"-"`
 }
 
+func (fr *FundingRate) GetSymbol() string {
+	return fr.Symbol
+}
+
+func (fr *FundingRate) GetFundingRate() float64 {
+	return fr.FundingRate
+}
+
+func (fr *FundingRate) GetNextFundingTime() time.Time {
+	return fr.NextFundingTime
+}
+
+func (fr *FundingRate) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 func (fr *FundingRate) UnmarshalJSON(data []byte) error {
 	type Alias FundingRate
 	aux := struct {
@@ -147,27 +185,39 @@ func (fr *FundingRate) UnmarshalJSON(data []byte) error {
 }
 
 type Position struct {
-	BaseSymbol     string  `json:"symbol"`
-	Symbol         string  `json:"contract_code"`
-	Volume         float64 `json:"volume"`
-	Available      float64 `json:"available"`
-	Frozen         float64 `json:"frozen"`
-	CostOpen       float64 `json:"cost_open"`
-	CostHold       float64 `json:"cost_hold"`
-	ProfitUnreal   float64 `json:"profit_unreal"`
-	ProfitRate     float64 `json:"profit_rate"`
-	LeverRate      float64 `json:"lever_rate"`
-	PositionMargin float64 `json:"position_margin"`
-	Direction      string  `json:"direction"`
-	Profit         float64 `json:"profit"`
-	LastPrice      float64 `json:"last_price"`
-	MarginAsset    string  `json:"margin_asset"`
-	MarginMode     string  `json:"margin_mode"`
-	MarginAccount  string  `json:"margin_account"`
+	BaseSymbol     string    `json:"symbol"`
+	Symbol         string    `json:"contract_code"`
+	Volume         float64   `json:"volume"`
+	Available      float64   `json:"available"`
+	Frozen         float64   `json:"frozen"`
+	CostOpen       float64   `json:"cost_open"`
+	CostHold       float64   `json:"cost_hold"`
+	ProfitUnreal   float64   `json:"profit_unreal"`
+	ProfitRate     float64   `json:"profit_rate"`
+	LeverRate      float64   `json:"lever_rate"`
+	PositionMargin float64   `json:"position_margin"`
+	Direction      string    `json:"direction"`
+	Profit         float64   `json:"profit"`
+	LastPrice      float64   `json:"last_price"`
+	MarginAsset    string    `json:"margin_asset"`
+	MarginMode     string    `json:"margin_mode"`
+	MarginAccount  string    `json:"margin_account"`
+	ParseTime      time.Time `json:"-"`
+}
+
+func (pos *Position) UnmarshalJSON(data []byte) error {
+	type Alias Position
+	aux := struct{ *Alias }{
+		Alias: (*Alias)(pos),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	pos.ParseTime = time.Now()
+	return nil
 }
 
 //{"status":"ok","data":{"order_id":832225072378114048,"client_order_id":16184595178081,"order_id_str":"832225072378114048"},"ts":1618459519269}
-
 type NewOrderResponse struct {
 	OrderID       int64  `json:"order_id"`
 	ClientOrderID int64  `json:"client_order_id"`
@@ -207,6 +257,45 @@ type Account struct {
 	WithdrawAvailable float64          `json:"withdraw_available,omitempty"`
 	RiskRate          float64          `json:"risk_rate,omitempty"`
 	ContractDetail    []ContractDetail `json:"contract_detail"`
+	ParseTime         time.Time        `json:"-"`
+}
+
+func (a *Account) UnmarshalJSON(data []byte) error {
+	type Alias Account
+	aux := struct {
+		*Alias
+	}{
+		Alias: (*Alias)(a),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	a.ParseTime = time.Now()
+	return nil
+}
+
+func (a Account) GetCurrency() string {
+	return "USDT"
+}
+
+func (a Account) GetBalance() float64 {
+	return a.MarginBalance
+}
+
+func (a Account) GetFree() float64 {
+	return a.WithdrawAvailable
+}
+
+func (a Account) GetUsed() float64 {
+	return a.MarginBalance - a.WithdrawAvailable
+}
+
+func (a Account) GetTime() time.Time {
+	return a.ParseTime
+}
+
+func (a Account) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 type ContractDetail struct {
@@ -284,6 +373,88 @@ type WSOrder struct {
 	MarginFrozen   float64   `json:"margin_frozen"`
 	Profit         float64   `json:"profit"`
 	Trade          []Trade   `json:"trade"`
+}
+
+func (wsOrder *WSOrder) GetSymbol() string {
+	return wsOrder.Symbol
+}
+
+func (wsOrder *WSOrder) GetSize() float64 {
+	return float64(wsOrder.Volume)
+}
+
+func (wsOrder *WSOrder) GetPrice() float64 {
+	return wsOrder.Price
+}
+
+func (wsOrder *WSOrder) GetFilledSize() float64 {
+	return float64(wsOrder.TradeVolume)
+}
+
+func (wsOrder *WSOrder) GetFilledPrice() float64 {
+	return wsOrder.TradeAvgPrice
+}
+
+func (wsOrder *WSOrder) GetSide() common.OrderSide {
+	if wsOrder.Direction == OrderDirectionSell {
+		return common.OrderSideSell
+	}else if wsOrder.Direction == OrderDirectionBuy {
+		return common.OrderSideBuy
+	}else{
+		return common.OrderSideUnknown
+	}
+}
+
+func (wsOrder *WSOrder) GetClientID() string {
+	return fmt.Sprintf("%d", wsOrder.ClientOrderID)
+}
+
+func (wsOrder *WSOrder) GetID() string {
+	return fmt.Sprintf("%s", wsOrder.OrderID)
+}
+
+func (wsOrder *WSOrder) GetStatus() common.OrderStatus {
+	if wsOrder.Status == OrderStatusFilled {
+		return common.OrderStatusFilled
+	}else if wsOrder.Status == OrderStatusPartiallyFilled {
+		return common.OrderStatusFilled
+	}else if wsOrder.Status == OrderStatusPartiallyFilledButCancelledByClient {
+		return common.OrderStatusFilled
+	}else if wsOrder.Status == OrderStatusSubmitting {
+		return common.OrderStatusNew
+	}else if wsOrder.Status == OrderStatusSubmit {
+		return common.OrderStatusOpen
+	}else if wsOrder.Status == OrderStatusCancelling {
+		return common.OrderStatusCancelled
+	}else if wsOrder.Status == OrderStatusCancelled {
+		return common.OrderStatusCancelled
+	}else{
+		return common.OrderStatusUnknown
+	}
+}
+
+func (wsOrder *WSOrder) GetType() common.OrderType {
+	if wsOrder.OrderPriceType == OrderPriceTypeOpponentIOC {
+		return common.OrderTypeMarket
+	}else{
+		return common.OrderTypeLimit
+	}
+}
+
+func (wsOrder *WSOrder) GetPostOnly() bool {
+	if wsOrder.OrderPriceType == OrderPriceTypePostOnly {
+		return true
+	}else{
+		return false
+	}
+}
+
+func (wsOrder *WSOrder) GetReduceOnly() bool {
+	return false
+}
+
+func (wsOrder *WSOrder) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (wsOrder *WSOrder) UnmarshalJSON(data []byte) error {
@@ -437,35 +608,98 @@ func (wsAccounts *WSAccounts) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+//{"ch":"market.1INCH-USDT.bbo","ts":1626480000472,"tick":{"mrid":13218587529,"id":1626480000,"bid":[1.9631,10],"ask":[1.9641,38],"ts":1626480000472,"version":13218587529,"ch":"market.1INCH-USDT.bbo"}}
+
+type TickerData struct {
+	Ch   string `json:"ch"`
+	Ts   int64  `json:"ts"`
+	Tick Ticker `json:"tick"`
+}
 
 type Ticker struct {
-
+	Symbol    string     `json:"-"`
+	Bid       [2]float64 `json:"bid"`
+	Ask       [2]float64 `json:"ask"`
+	EventTime time.Time  `json:"-"`
 }
 
-func (t Ticker) GetSymbol() string {
-	panic("implement me")
+func (t *Ticker) UnmarshalJSON(data []byte) error {
+	type Alias Ticker
+	aux := struct {
+		Ch        string `json:"ch"`
+		Timestamp int64  `json:"ts"`
+		*Alias
+	}{
+		Alias: (*Alias)(t),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	segs := strings.Split(aux.Ch, ".")
+	if len(segs) != 3 {
+		return fmt.Errorf("bad ch %s", aux.Ch)
+	}
+	t.Symbol = segs[1]
+	t.EventTime = time.Unix(0, aux.Timestamp*1000000)
+	return nil
 }
 
-func (t Ticker) GetTime() time.Time {
-	panic("implement me")
+func (t *Ticker) GetSymbol() string {
+	return t.Symbol
 }
 
-func (t Ticker) GetBidPrice() float64 {
-	panic("implement me")
+func (t *Ticker) GetTime() time.Time {
+	return t.EventTime
 }
 
-func (t Ticker) GetAskPrice() float64 {
-	panic("implement me")
+func (t *Ticker) GetBidPrice() float64 {
+	return t.Bid[0]
 }
 
-func (t Ticker) GetBidSize() float64 {
-	panic("implement me")
+func (t *Ticker) GetAskPrice() float64 {
+	return t.Ask[0]
 }
 
-func (t Ticker) GetAskSize() float64 {
-	panic("implement me")
+func (t *Ticker) GetBidSize() float64 {
+	return t.Bid[1]
 }
 
-func (t Ticker) GetExchange() common.ExchangeID {
-	panic("implement me")
+func (t *Ticker) GetAskSize() float64 {
+	return t.Ask[1]
+}
+
+func (t *Ticker) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+type MergedPosition struct {
+	Price     float64
+	Size      float64
+	Symbol    string
+	EventTime time.Time
+	ParseTime time.Time
+}
+
+func (m MergedPosition) GetSymbol() string {
+	return m.Symbol
+}
+
+func (m MergedPosition) GetSize() float64 {
+	return m.Size
+}
+
+func (m MergedPosition) GetPrice() float64 {
+	return m.Price
+}
+
+func (m MergedPosition) GetEventTime() time.Time {
+	return m.EventTime
+}
+
+func (m MergedPosition) GetParseTime() time.Time {
+	return m.ParseTime
+}
+
+func (m MergedPosition) GetExchange() common.ExchangeID {
+	return ExchangeID
 }

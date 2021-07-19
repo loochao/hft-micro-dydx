@@ -9,7 +9,6 @@ import (
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
-	hbuf "github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	kcut "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	okut "github.com/geometrybase/hft-micro/okex-usdtspot"
@@ -115,9 +114,6 @@ func main() {
 	case "binanceUsdcSpotWithMergedTicker":
 		xExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
 		break
-	case "huobiUsdtFutureWithMergedTicker":
-		xExchange = &hbuf.HuobiUsdtFutureWithMergedTicker{}
-		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -155,9 +151,6 @@ func main() {
 		break
 	case "binanceUsdcSpotWithMergedTicker":
 		yExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
-		break
-	case "huobiUsdtFutureWithMergedTicker":
-		yExchange = &hbuf.HuobiUsdtFutureWithMergedTicker{}
 		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)

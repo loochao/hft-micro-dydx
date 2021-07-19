@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"compress/gzip"
 	"fmt"
+	binance_busdfuture "github.com/geometrybase/hft-micro/binance-busdfuture"
 	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
-	huobi_usdtfuture "github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
 	"github.com/geometrybase/hft-micro/tdigest"
@@ -20,9 +20,8 @@ import (
 func main() {
 
 	pairs := map[string]string{
-		//"ZIL-USDT": "ZILUSDT",
-		//"RSR-USDT": "RSRUSDT",
-		"EOS-USDT": "EOSUSDT",
+		"BTCBUSD": "BTCUSDT",
+		"ETHBUSD": "ETHUSDT",
 	}
 	symbols := make([]string, 0)
 	for bSymbol := range pairs {
@@ -36,7 +35,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	endTime, err := time.Parse("20060102", "20210717")
+	endTime, err := time.Parse("20060102", "20210716")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -58,10 +57,10 @@ func main() {
 	for _, xSymbol := range symbols {
 		ySymbol := pairs[xSymbol]
 
-		xDepth := &huobi_usdtfuture.Depth20{}
+		xDepth := &binance_busdfuture.Depth5{}
 		yDepth := &binance_usdtfuture.Depth5{}
 
-		xBookTicker := &huobi_usdtfuture.Ticker{}
+		xBookTicker := &binance_busdfuture.BookTicker{}
 		yBookTicker := &binance_usdtfuture.BookTicker{}
 
 		var xTicker common.Ticker
@@ -78,7 +77,7 @@ func main() {
 			dayCounter++
 			//logger.Debugf("%s %s", xSymbol, dateStr)
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/hbuf-bnuf-depth-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
+				fmt.Sprintf("/Users/chenjilin/MarketData/bnbf-bnuf-depth-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -93,28 +92,28 @@ func main() {
 			lastCollectTime := time.Time{}
 			for scanner.Scan() {
 				msg = scanner.Bytes()
-				if msg[0] == 'H' && msg[1] == 'D' {
-					err = huobi_usdtfuture.ParseDepth20(msg[21:], xDepth)
+				if msg[0] == 'X' && msg[1] == 'D' {
+					err = binance_busdfuture.ParseDepth5(msg[21:], xDepth)
 					if err != nil {
 						logger.Debugf("binance_busdfuture.ParseDepth5 error %v", err)
 						continue
 					}
 					xTicker = xDepth
-				} else if msg[0] == 'H' && msg[1] == 'T' {
-					err = huobi_usdtfuture.ParseTicker(msg[21:], xBookTicker)
+				} else if msg[0] == 'X' && msg[1] == 'T' {
+					err = binance_busdfuture.ParseBookTicker(msg[21:], xBookTicker)
 					if err != nil {
 						logger.Debugf("binance_busdfuture.ParseBookTicker error %v", err)
 						continue
 					}
 					xTicker = xBookTicker
-				} else if msg[0] == 'B' && msg[1] == 'D' {
+				} else if msg[0] == 'Y' && msg[1] == 'D' {
 					err = binance_usdtfuture.ParseDepth5(msg[21:], yDepth)
 					if err != nil {
 						logger.Debugf("binance_usdtfuture.ParseDepth5 error %v", err)
 						continue
 					}
 					yTicker = yDepth
-				} else if msg[0] == 'B' && msg[1] == 'T' {
+				} else if msg[0] == 'Y' && msg[1] == 'T' {
 					err = binance_usdtfuture.ParseBookTicker(msg[21:], yBookTicker)
 					if err != nil {
 						logger.Debugf("binance_usdtfuture.ParseBookTicker error %v", err)
@@ -148,8 +147,8 @@ func main() {
 					_ = maxBidTD.Add(yTicker.GetBidSize() * yTicker.GetBidPrice())
 					_ = maxAskTD.Add(yTicker.GetAskSize() * yTicker.GetAskPrice())
 					//if dayCounter >= 3 {
-					bidWeight := uint32(xTicker.GetBidSize() * xTicker.GetBidPrice() * huobi_usdtfuture.ContractSizes[xSymbol])
-					askWeight := uint32(xTicker.GetAskSize() * xTicker.GetAskPrice() * huobi_usdtfuture.ContractSizes[xSymbol])
+					bidWeight := uint32(xTicker.GetBidSize() * xTicker.GetBidPrice())
+					askWeight := uint32(xTicker.GetAskSize() * xTicker.GetAskPrice())
 					if bidWeight > 0 {
 						totalBidWeight += float64(bidWeight)
 						_ = longTD.AddWeighted(longSpread-timedTD.Quantile(0.5), bidWeight)
@@ -178,14 +177,14 @@ func main() {
 	}
 	longBytes, err := longTD.AsBytes()
 	if err == nil {
-		err = ioutil.WriteFile("/Users/chenjilin/Projects/hft-micro/researches/hbuf-bnuf-depth-and-ticker/configs/longTD", longBytes, 0755)
+		err = ioutil.WriteFile("/Users/chenjilin/Projects/hft-micro/researches/bnbf-bnuf-depth-and-ticker/configs/longTD", longBytes, 0755)
 		if err != nil {
 			logger.Debugf("%v", err)
 		}
 	}
 	shortBytes, err := shortTD.AsBytes()
 	if err == nil {
-		err = ioutil.WriteFile("/Users/chenjilin/Projects/hft-micro/researches/hbuf-bnuf-depth-and-ticker/configs/shortTD", shortBytes, 0755)
+		err = ioutil.WriteFile("/Users/chenjilin/Projects/hft-micro/researches/bnbf-bnuf-depth-and-ticker/configs/shortTD", shortBytes, 0755)
 		if err != nil {
 			logger.Debugf("%v", err)
 		}
