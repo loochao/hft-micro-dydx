@@ -435,7 +435,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 				if strat.xTicker != nil {
 					strat.xTimedPositionChange.Insert(time.Now(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize())*strat.xMidPrice*strat.xMultiplier)
 				}
-				logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
+				logger.Debugf("%s x position change %f -> %f %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
 				strat.xPosition = nextPos
 				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 					strat.hedgeYPosition()
@@ -455,7 +455,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 	} else {
 		strat.xPosition = nextPos
 		strat.xPositionUpdateTime = nextPos.GetParseTime()
-		logger.Debugf("%s x position change nil -> %f", nextPos.GetSymbol(), nextPos.GetSize())
+		logger.Debugf("%s x position change nil -> %f %f", nextPos.GetSymbol(), nextPos.GetSize(), nextPos.GetPrice())
 	}
 }
 
@@ -474,7 +474,7 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 				if strat.yTicker != nil {
 					strat.yTimedPositionChange.Insert(time.Now(), math.Abs(strat.yPosition.GetSize()-nextPos.GetSize())*strat.yMidPrice*strat.yMultiplier)
 				}
-				logger.Debugf("%s y position change %f -> %f %v", nextPos.GetSymbol(), strat.yPosition.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
+				logger.Debugf("%s y position change %f -> %f %f %v", nextPos.GetSymbol(), strat.yPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
 			}
 			strat.yPosition = nextPos
 		}
@@ -482,7 +482,7 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 	} else {
 		strat.yPosition = nextPos
 		strat.yPositionUpdateTime = nextPos.GetParseTime()
-		logger.Debugf("%s y position change nil -> %f", nextPos.GetSymbol(), nextPos.GetSize())
+		logger.Debugf("%s y position change nil -> %f %f", nextPos.GetSymbol(), nextPos.GetSize(), nextPos.GetPrice())
 	}
 }
 

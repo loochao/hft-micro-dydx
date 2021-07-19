@@ -22,11 +22,11 @@ chmod 755 "./dist/usd-tk-tt-q.amd64.$dt"
 echo "hk05"
 rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" hk05:/usr/local/bin/
 
-echo "hk07"
-rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" hk07:/usr/local/bin/
+echo "hk05"
+rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" hk05:/usr/local/bin/
 
-echo "vc001"
-rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" vc001:/usr/local/bin/
+#echo "vc001"
+#rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" vc001:/usr/local/bin/
 
 echo "arm1"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm1:/usr/local/bin/
