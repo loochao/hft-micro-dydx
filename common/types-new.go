@@ -66,6 +66,7 @@ type UsdExchange interface {
 	GetMultiplier(symbol string) (float64, error)
 
 	StreamBasic(ctx context.Context, statusCh chan SystemStatus, accountCh chan Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan Position, orderCh map[string]chan Order, )
+	StreamSystemStatus(ctx context.Context, statusCh chan SystemStatus)
 	StreamSymbolStatus(ctx context.Context, channels map[string]chan SymbolStatusMsg, batchSize int)
 	StreamDepth(ctx context.Context, channels map[string]chan Depth, batchSize int)
 	StreamTrade(ctx context.Context, channels map[string]chan Trade, batchSize int)

@@ -34,9 +34,6 @@ func main() {
 	var xAccount common.Balance
 	var xAccountCh = make(chan common.Balance, 4)
 	var xOrderRequestChMap = make(map[string]chan common.OrderRequest)
-	var yAccount common.Balance
-	var yAccountCh = make(chan common.Balance, 4)
-	var yOrderRequestChMap = make(map[string]chan common.OrderRequest)
 
 	var xyConfig *Config
 	var xExchange common.UsdExchange
@@ -259,28 +256,18 @@ func main() {
 		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 1)
 	}
 
-	yPositionChMap := make(map[string]chan common.Position)
-	yOrderChMap := make(map[string]chan common.Order)
 	yFundingRateChMap := make(map[string]chan common.FundingRate)
-	yNewOrderErrorChMap := make(map[string]chan common.OrderError)
-	yAccountChMap := make(map[string]chan common.Balance)
 	ySystemStatusChMap := make(map[string]chan common.SystemStatus)
 	for _, ySymbol := range ySymbols {
-		yPositionChMap[ySymbol] = make(chan common.Position, 4)
-		yOrderChMap[ySymbol] = make(chan common.Order, 32)
 		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 1)
-		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 1)
-		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 1)
-		yAccountChMap[ySymbol] = make(chan common.Balance, 4)
 		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 1)
 	}
 
 	saveCh := make(chan *XYStrategy, 2048)
 	strategiesMap := make(map[string]*XYStrategy)
 
-	var xCommissionAssetValue, yCommissionAssetValue *float64
+	var xCommissionAssetValue *float64
 	var xCommissionAssetValueCh = make(chan float64, 4)
-	var yCommissionAssetValueCh = make(chan float64, 4)
 
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		err = startXYStrategy(
@@ -290,17 +277,12 @@ func main() {
 			xExchange,
 			yExchange,
 			xAccountChMap[xSymbol],
-			yAccountChMap[ySymbol],
 			xPositionChMap[xSymbol],
-			yPositionChMap[ySymbol],
 			xFundingRateChMap[xSymbol],
 			yFundingRateChMap[ySymbol],
 			xOrderRequestChMap[xSymbol],
-			yOrderRequestChMap[ySymbol],
 			xOrderChMap[xSymbol],
-			yOrderChMap[ySymbol],
 			xNewOrderErrorChMap[xSymbol],
-			yNewOrderErrorChMap[ySymbol],
 			xSystemStatusChMap[xSymbol],
 			ySystemStatusChMap[ySymbol],
 			xTickerChMap[xSymbol],
@@ -337,13 +319,9 @@ func main() {
 		xNewOrderErrorChMap,
 	)
 
-	go yExchange.StreamBasic(
+	go yExchange.StreamSystemStatus(
 		xyGlobalCtx,
 		ySystemStatusCh,
-		yAccountCh,
-		yCommissionAssetValueCh,
-		yPositionChMap,
-		yOrderChMap,
 	)
 	go yExchange.StreamFundingRate(
 		xyGlobalCtx,
@@ -354,12 +332,6 @@ func main() {
 		xyGlobalCtx,
 		yTickerChMap,
 		xyConfig.BatchSize,
-	)
-	go yExchange.WatchOrders(
-		xyGlobalCtx,
-		yOrderRequestChMap,
-		yOrderChMap,
-		yNewOrderErrorChMap,
 	)
 
 	sigs := make(chan os.Signal, 1)
@@ -421,8 +393,6 @@ mainLoop:
 		case xcv := <-xCommissionAssetValueCh:
 			xCommissionAssetValue = &xcv
 			//logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
-		case ycv := <-yCommissionAssetValueCh:
-			yCommissionAssetValue = &ycv
 		case account := <-xAccountCh:
 			if xAccount == account {
 				logger.Debugf("bad xAccount == account pass same pointer")
@@ -438,35 +408,19 @@ mainLoop:
 				}
 			}
 			break
-		case account := <-yAccountCh:
-			if yAccount == account {
-				logger.Debugf("bad  yAccount == account pass same pointer")
-			}
-			if yAccount == nil || account.GetTime().Sub(yAccount.GetTime()) >= 0 {
-				yAccount = account
-				for ySymbol, ch := range yAccountChMap {
-					select {
-					case ch <- yAccount:
-					default:
-						logger.Debugf("ch <- yAccount failed %s ch len %d", ySymbol, len(ch))
-					}
-				}
-			}
-			break
 		case st := <-saveCh:
 			strategiesMap[st.xSymbol] = st
 			break
 		case <-influxSaveTimer.C:
 			if xyConfig.InternalInflux.Address != "" {
-
 				handleSave(
-					xAccount, yAccount,
+					xAccount,
 					xExchange, yExchange,
 					strategiesMap,
 					xSymbols,
 					xSystemStatus, ySystemStatus,
 					xyConfig,
-					xCommissionAssetValue, yCommissionAssetValue,
+					xCommissionAssetValue,
 					xyInternalInfluxWriter, xyExternalInfluxWriter,
 					lastExternalSaveTime,
 				)

@@ -20,6 +20,48 @@ type KucoinUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (k *KucoinUsdtFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	k.mu.Lock()
+	pullInterval := k.settings.PullInterval
+	k.mu.Unlock()
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-k.done:
+			return
+		case <-timer.C:
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			systemStatus, err := k.api.GetSystemStatus(subCtx)
+			if err != nil {
+				logger.Debugf("k.api.GetSystemStatus(subCtx) error %v", err)
+				select {
+				case statusCh <- common.SystemStatusError:
+				default:
+					logger.Debugf("statusCh <- common.SystemStatusError failed ch len %d", len(statusCh))
+				}
+			} else {
+				if systemStatus.Status == SystemStatusOpen {
+					select {
+					case statusCh <- common.SystemStatusReady:
+					default:
+						logger.Debugf("statusCh <- common.SystemStatusReady failed ch len %d", len(statusCh))
+					}
+				} else {
+					select {
+					case statusCh <- common.SystemStatusNotReady:
+					default:
+						logger.Debugf("statusCh <- common.SystemStatusNotReady failed ch len %d", len(statusCh))
+					}
+				}
+			}
+			timer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
+		}
+	}
+}
+
 func (k *KucoinUsdtFuture) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
@@ -834,6 +876,7 @@ type KucoinUsdtFutureWithDepth5 struct {
 type KucoinUsdtFutureWithMergedTicker struct {
 	KucoinUsdtFuture
 }
+
 
 func (k *KucoinUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")

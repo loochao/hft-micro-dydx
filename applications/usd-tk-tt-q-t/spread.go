@@ -55,9 +55,6 @@ func (strat *XYStrategy) updateSpread() {
 		ParseTime:       time.Now(),
 	}
 	strat.updateXPosition()
-	if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
-		strat.hedgeYPosition()
-	}
 	if strat.spreadTime.Sub(strat.quantileLastSampleTime) > strat.config.QuantileSampleInterval {
 		strat.quantileLastSampleTime = strat.spreadTime
 		_ = strat.timedTDigest.Insert(strat.spreadTime, (strat.shortLastEnter+strat.longLastEnter)*0.5)

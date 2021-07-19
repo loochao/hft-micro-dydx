@@ -21,6 +21,10 @@ type BinanceUsdtSpot struct {
 	settings common.ExchangeSettings
 }
 
+func (bn *BinanceUsdtSpot) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	panic("implement me")
+}
+
 func (bn *BinanceUsdtSpot) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	panic("implement me")
 }
@@ -846,6 +850,10 @@ func (bn *BinanceUsdtSpotWithDepth20) StreamDepth(ctx context.Context, channels 
 
 type BinanceUsdtSpotWithMergedTicker struct {
 	BinanceUsdtSpot
+}
+
+func (bn *BinanceUsdtSpotWithMergedTicker) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	panic("implement me")
 }
 
 func (bn *BinanceUsdtSpotWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {

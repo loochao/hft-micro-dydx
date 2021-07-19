@@ -18,11 +18,8 @@ func (strat *XYStrategy) updateXPosition() {
 	}
 
 	if time.Now().Sub(strat.xPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
-		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
 		strat.xAccount == nil ||
-		strat.yAccount == nil ||
 		strat.xPosition == nil ||
-		strat.yPosition == nil ||
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
 		strat.quantileMiddle == nil ||
@@ -37,12 +34,9 @@ func (strat *XYStrategy) updateXPosition() {
 	}
 
 	strat.xSize = strat.xPosition.GetSize() * strat.xMultiplier
-	strat.ySize = strat.yPosition.GetSize() * strat.yMultiplier
 	strat.xValue = strat.xSize * strat.xMidPrice
-	strat.yValue = strat.ySize * strat.yMidPrice
 	strat.xAbsValue = math.Abs(strat.xValue)
-	strat.yAbsValue = math.Abs(strat.yValue)
-	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
+	strat.offsetFactor = strat.xAbsValue * 0.5 / strat.enterTarget
 	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
 
 	if strat.xSize >= 0 {
@@ -67,19 +61,6 @@ func (strat *XYStrategy) updateXPosition() {
 		return
 	}
 
-	if math.Abs(strat.xValue+strat.yValue) > strat.enterStep*0.8 {
-		if time.Now().Sub(strat.logSilentTime) > 0 {
-			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf(
-				"%s %s unhedged value %f > 0.8*enterStep %f",
-				strat.xSymbol, strat.ySymbol, math.Abs(strat.xValue+strat.yValue), strat.enterStep*0.8,
-			)
-		}
-		if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
-			strat.hedgeYPosition()
-		}
-		return
-	}
 
 	if strat.spread.ShortLastLeave < strat.shortBot &&
 		strat.spread.ShortMedianLeave < strat.shortBot &&
@@ -87,9 +68,9 @@ func (strat *XYStrategy) updateXPosition() {
 		*strat.xyFundingRate < strat.config.MinimalKeepFundingRate &&
 		strat.xSize >= strat.xStepSize*strat.xMultiplier &&
 		strat.xSize*strat.xTicker.GetBidPrice()*strat.xMultiplier > 1.2*strat.xMinNotional {
-		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), math.Min(strat.xAbsValue, strat.yAbsValue))
+		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), strat.xAbsValue)
 		if *strat.xyFundingRate > strat.config.MinimalKeepFundingRate*0.5 {
-			strat.enterValue = math.Min(math.Max(2*strat.enterStep, strat.xAbsValue*0.25), math.Min(strat.xAbsValue, strat.yAbsValue))
+			strat.enterValue = math.Min(math.Max(2*strat.enterStep, strat.xAbsValue*0.25), strat.xAbsValue)
 		}
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
@@ -98,14 +79,11 @@ func (strat *XYStrategy) updateXPosition() {
 
 		//限开仓大小限制到best bid ask size
 		strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
-		strat.size = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
-		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 
 		strat.enterValue = strat.size * strat.midPrice
-		if strat.xAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
-			strat.yAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
+		if strat.xAbsValue-strat.enterValue < strat.xStepSize*1.005 ||
 			strat.size > strat.xSize {
-			//两种情况都把x全平，间接y全平
+			//两种情况都把x全平
 			strat.size = strat.xSize
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
@@ -117,7 +95,6 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.price = strat.price * (1.0 - strat.config.EnterSlippage)
 				strat.price = math.Floor(strat.price/strat.xTickSize) * strat.xTickSize
 			}
-
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
 				Side:        common.OrderSideSell,
@@ -136,13 +113,7 @@ func (strat *XYStrategy) updateXPosition() {
 				}:
 				}
 			}
-			strat.xLastFilledBuyPrice = nil
-			strat.xLastFilledSellPrice = nil
-			strat.yLastFilledBuyPrice = nil
-			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
 				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
@@ -162,9 +133,9 @@ func (strat *XYStrategy) updateXPosition() {
 		*strat.xyFundingRate > -strat.config.MinimalKeepFundingRate &&
 		strat.xSize <= -strat.xStepSize*strat.xMultiplier {
 
-		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), math.Min(strat.xAbsValue, strat.yAbsValue))
+		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), strat.xAbsValue)
 		if *strat.xyFundingRate < -strat.config.MinimalKeepFundingRate*0.5 {
-			strat.enterValue = math.Min(math.Max(2*strat.enterStep, strat.xAbsValue*0.25), math.Min(strat.xAbsValue, strat.yAbsValue))
+			strat.enterValue = math.Min(math.Max(2*strat.enterStep, strat.xAbsValue*0.25), strat.xAbsValue)
 		}
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
@@ -172,12 +143,9 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.size = strat.enterValue / strat.midPrice
 		//限开仓大小限制到best bid ask size
 		strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
-		strat.size = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
 
-		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
-		if strat.xAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
-			strat.yAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
+		if strat.xAbsValue-strat.enterValue < strat.xStepSize*1.005 ||
 			strat.size > -strat.xSize {
 			strat.size = -strat.xSize
 		}
@@ -206,13 +174,7 @@ func (strat *XYStrategy) updateXPosition() {
 				}:
 				}
 			}
-			strat.xLastFilledBuyPrice = nil
-			strat.xLastFilledSellPrice = nil
-			strat.yLastFilledBuyPrice = nil
-			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
 				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
@@ -238,19 +200,17 @@ func (strat *XYStrategy) updateXPosition() {
 		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
 		strat.xSize > -strat.xStepSize*strat.xMultiplier {
 
-		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.enterStep
+		strat.targetValue = strat.xAbsValue + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
 			strat.targetValue = strat.enterTarget
 		}
-		strat.enterValue = strat.targetValue - math.Max(strat.xAbsValue, strat.yAbsValue)
+		strat.enterValue = strat.targetValue - strat.xAbsValue
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
 		}
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
-		strat.size = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
 
-		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
@@ -269,7 +229,7 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
+		if strat.size <= 0 || strat.enterValue < 1.2*strat.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -306,13 +266,7 @@ func (strat *XYStrategy) updateXPosition() {
 			}:
 			}
 		}
-		strat.xLastFilledBuyPrice = nil
-		strat.xLastFilledSellPrice = nil
-		strat.yLastFilledBuyPrice = nil
-		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-		strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
@@ -336,19 +290,17 @@ func (strat *XYStrategy) updateXPosition() {
 		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
 		strat.xSize < strat.xStepSize*strat.xMultiplier {
 
-		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.enterStep
+		strat.targetValue = strat.xAbsValue + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
 			strat.targetValue = strat.enterTarget
 		}
-		strat.enterValue = strat.targetValue - math.Max(strat.xAbsValue, strat.yAbsValue)
+		strat.enterValue = strat.targetValue - strat.xAbsValue
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
 		}
 		strat.size = strat.enterValue / strat.midPrice
 		strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
-		strat.size = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
 
-		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
@@ -367,7 +319,7 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
+		if strat.size <= 0 || strat.enterValue < 1.2*strat.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -405,13 +357,7 @@ func (strat *XYStrategy) updateXPosition() {
 			}:
 			}
 		}
-		strat.xLastFilledBuyPrice = nil
-		strat.xLastFilledSellPrice = nil
-		strat.yLastFilledBuyPrice = nil
-		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-		strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",

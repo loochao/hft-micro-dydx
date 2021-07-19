@@ -816,6 +816,10 @@ type BinanceUsdcSpotWithMergedTicker struct {
 	BinanceUsdcSpot
 }
 
+func (bn *BinanceUsdcSpotWithMergedTicker) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	panic("implement me")
+}
+
 func (bn *BinanceUsdcSpotWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")
 	defer logger.Debugf("STOP StreamTicker")

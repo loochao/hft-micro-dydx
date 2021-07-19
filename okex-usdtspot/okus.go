@@ -19,6 +19,10 @@ type OkexUsdtSpot struct {
 	settings common.ExchangeSettings
 }
 
+func (okut *OkexUsdtSpot) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	panic("implement me")
+}
+
 func (okut *OkexUsdtSpot) GetExchange() common.ExchangeID {
 	return ExchangeID
 }

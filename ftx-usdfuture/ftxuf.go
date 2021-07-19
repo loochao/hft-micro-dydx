@@ -20,6 +20,10 @@ type FtxUsdFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (ftx *FtxUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	panic("implement me")
+}
+
 func (ftx *FtxUsdFuture) GetExchange() common.ExchangeID {
 	return ExchangeID
 }

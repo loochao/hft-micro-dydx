@@ -53,16 +53,12 @@ func handleSave(
 			xTradeVolume += st.xTimedPositionChange.Sum()
 			yTradeVolume += st.yTimedPositionChange.Sum()
 
-			//fields["xPosEventTime"] = st.xPosition.GetEventTime().UnixNano()
-			//fields["xPosParseTime"] = st.xPosition.GetParseTime().UnixNano()
-			//fields["yPosEventTime"] = st.yPosition.GetEventTime().UnixNano()
-			//fields["yPosParseTime"] = st.yPosition.GetParseTime().UnixNano()
 			fields["unHedgeValue"] = unHedgeValue
 			fields["xSize"] = st.xSize
 			fields["xAbsValue"] = st.xAbsValue
 			fields["xValue"] = st.xValue
 			fields["ySize"] = st.ySize
-			fields["yAbsValue"] = st.xAbsValue
+			fields["yAbsValue"] = st.yAbsValue
 			fields["yValue"] = st.yValue
 			fields["xyValue"] = st.xValue + st.yValue
 			totalURPnl += st.xValue + st.yValue

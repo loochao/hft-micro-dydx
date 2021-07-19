@@ -22,6 +22,40 @@ type BinanceUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (bn *BinanceUsdtFuture) StreamSystemStatus(ctx context.Context, output chan common.SystemStatus) {
+	bn.mu.Lock()
+	updateInterval := bn.settings.PullInterval
+	bn.mu.Unlock()
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-bn.done:
+			return
+		case <-timer.C:
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			_, err := bn.ufApi.PingServer(subCtx)
+			if err != nil {
+				logger.Debugf("api.PingServer error %v", err)
+				select {
+				case output <- common.SystemStatusError:
+				default:
+					logger.Debugf("output <- common.SystemStatusError failed")
+				}
+			} else {
+				select {
+				case output <- common.SystemStatusReady:
+				default:
+					logger.Debugf("output <- common.SystemStatusReady failed")
+				}
+			}
+			timer.Reset(time.Now().Truncate(updateInterval).Add(updateInterval).Sub(time.Now()))
+		}
+	}
+}
+
 func (bn *BinanceUsdtFuture) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
@@ -1031,6 +1065,7 @@ type BinanceUsdtFutureWidthDepth5 struct {
 type BinanceUsdtFutureWithMergedTicker struct {
 	BinanceUsdtFuture
 }
+
 
 func (bn *BinanceUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamDepth")

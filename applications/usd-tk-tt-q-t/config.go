@@ -66,11 +66,7 @@ type Config struct {
 	OrderTimeout           time.Duration           `yaml:"orderTimeout"`
 	XOrderSilent           time.Duration           `yaml:"xOrderSilent"`
 	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
-	YOrderSilent           time.Duration           `yaml:"yOrderSilent"`
-	HedgeDelay             time.Duration           `yaml:"hedgeDelay"`
-	HedgeCheckDuration     time.Duration           `yaml:"hedgeCheckDuration"`
-	HedgeCheckInterval     time.Duration           `yaml:"hedgeCheckInterval"`
-	RealisedSpreadLogDelay time.Duration           `yaml:"realisedSpreadLogDelay"`
+
 	RestartSilent          time.Duration           `yaml:"restartSilent"`
 	RestartInterval        time.Duration           `yaml:"restartInterval"`
 
@@ -88,9 +84,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.OrderTimeout == 0 {
 		config.OrderTimeout = time.Second * 5
-	}
-	if config.RealisedSpreadLogDelay == 0 {
-		config.RealisedSpreadLogDelay = time.Second
 	}
 	if config.RestartSilent == 0 {
 		config.RestartSilent = time.Minute * 3
@@ -115,9 +108,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.XOrderSilent == 0 {
 		config.XOrderSilent = time.Second
-	}
-	if config.YOrderSilent == 0 {
-		config.YOrderSilent = time.Second * 5
 	}
 	if config.FundingRateSilentTime == 0 {
 		config.FundingRateSilentTime = time.Minute

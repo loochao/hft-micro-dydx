@@ -4,34 +4,28 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
-	"math"
 	"strings"
 	"time"
 )
 
 func handleSave(
-	xAccount, yAccount common.Balance,
+	xAccount common.Balance,
 	xExchange, yExchange common.UsdExchange,
 	strategiesMap map[string]*XYStrategy,
 	xSymbols []string,
 	xSystemStatus, ySystemStatus common.SystemStatus,
 	xyConfig *Config,
-	xCommissionAssetValue, yCommissionAssetValue *float64,
+	xCommissionAssetValue *float64,
 	xyInternalInfluxWriter, xyExternalInfluxWriter *common.InfluxWriter,
 	lastExternalSaveTime *time.Time,
 ) {
-	if yCommissionAssetValue == nil || xCommissionAssetValue == nil {
+	if xCommissionAssetValue == nil {
 		return
 	}
-	totalUnHedgeValue := 0.0
 	totalXSymbolValue := 0.0
-	totalYSymbolValue := 0.0
-	yURPnl := 0.0
 	xURPnl := 0.0
-	totalURPnl := 0.0
 	hasAllSymbols := true
 	xTradeVolume := 0.0
-	yTradeVolume := 0.0
 	for _, xSymbol := range xSymbols {
 		st, ok := strategiesMap[xSymbol]
 		if !ok {
@@ -41,31 +35,20 @@ func handleSave(
 		ySymbol := st.ySymbol
 		fields := make(map[string]interface{})
 		if st.xPosition != nil &&
-			st.yPosition != nil &&
 			st.spread != nil &&
 			st.midPrice != 0 {
 
-			unHedgeValue := math.Abs(st.xSize+st.ySize) * st.midPrice
-			totalUnHedgeValue += unHedgeValue
 			totalXSymbolValue += st.xAbsValue
-			totalYSymbolValue += st.yAbsValue
 
 			xTradeVolume += st.xTimedPositionChange.Sum()
-			yTradeVolume += st.yTimedPositionChange.Sum()
 
 			//fields["xPosEventTime"] = st.xPosition.GetEventTime().UnixNano()
 			//fields["xPosParseTime"] = st.xPosition.GetParseTime().UnixNano()
 			//fields["yPosEventTime"] = st.yPosition.GetEventTime().UnixNano()
 			//fields["yPosParseTime"] = st.yPosition.GetParseTime().UnixNano()
-			fields["unHedgeValue"] = unHedgeValue
 			fields["xSize"] = st.xSize
 			fields["xAbsValue"] = st.xAbsValue
 			fields["xValue"] = st.xValue
-			fields["ySize"] = st.ySize
-			fields["yAbsValue"] = st.xAbsValue
-			fields["yValue"] = st.yValue
-			fields["xyValue"] = st.xValue + st.yValue
-			totalURPnl += st.xValue + st.yValue
 			fields["shortTop"] = st.shortTop
 			fields["shortBot"] = st.shortBot
 			fields["longBot"] = st.longBot
@@ -79,10 +62,7 @@ func handleSave(
 			}
 
 			if st.xPosition.GetPrice() != 0 {
-				xURPnl += st.xValue * (st.xMidPrice - st.xPosition.GetPrice())/st.xPosition.GetPrice()
-			}
-			if st.yPosition.GetPrice() != 0 {
-				yURPnl += st.yValue * (st.yMidPrice - st.yPosition.GetPrice())/st.yPosition.GetPrice()
+				xURPnl += st.xValue * (st.xMidPrice - st.xPosition.GetPrice()) / st.xPosition.GetPrice()
 			}
 
 			fields["spreadTimeDelta"] = st.spread.ParseTime.Sub(st.spread.EventTime).Seconds()
@@ -105,7 +85,6 @@ func handleSave(
 			fields["yAskPrice"] = st.yTicker.GetAskPrice()
 			fields["yMidPrice"] = st.yMidPrice
 
-
 			if st.spreadReport != nil {
 				fields["matchRatio"] = st.spreadReport.MatchRatio
 				fields["xTimeDeltaEma"] = st.spreadReport.XTimeDeltaEma
@@ -120,8 +99,8 @@ func handleSave(
 
 		} else {
 			logger.Debugf(
-				"%s %s save failed, okXPosition %v okYPosition %v okSpread %v midPrice %v",
-				xSymbol, ySymbol, st.xPosition != nil, st.yPosition != nil, st.spread != nil, st.midPrice,
+				"%s %s save failed, okXPosition %v okSpread %v midPrice %v",
+				xSymbol, ySymbol, st.xPosition != nil, st.spread != nil, st.midPrice,
 			)
 			hasAllSymbols = false
 		}
@@ -170,34 +149,23 @@ func handleSave(
 		}
 	}
 
-	if yAccount != nil &&
-		xAccount != nil &&
+	if xAccount != nil &&
 		hasAllSymbols {
 		xBalance := xAccount.GetBalance()
-		yBalance := yAccount.GetBalance()
 		if xExchange.IsSpot() {
 			xBalance += totalXSymbolValue
 		}
-		if yExchange.IsSpot() {
-			yBalance += totalYSymbolValue
-		}
-		totalBalance := xBalance + yBalance + *xCommissionAssetValue + *yCommissionAssetValue
+		totalBalance := xBalance  + *xCommissionAssetValue
 		netWorth := totalBalance / xyConfig.StartValue
 		fields := make(map[string]interface{})
-		fields["totalUnHedgeValue"] = totalUnHedgeValue
 		fields["totalBalance"] = totalBalance
 		fields["xCommissionAssetValue"] = *xCommissionAssetValue
-		fields["yCommissionAssetValue"] = *yCommissionAssetValue
-		fields["yBalance"] = yBalance
 		fields["xBalance"] = xBalance
-		fields["yAvailable"] = yAccount.GetFree()
 		fields["xAvailable"] = xAccount.GetFree()
 		fields["xURPnl"] = xURPnl
-		fields["yURPnl"] = yURPnl
-		fields["xyTurnover"] = (xTradeVolume + yTradeVolume) / totalBalance
-		fields["xTurnover"] = xTradeVolume / xBalance
-		fields["yTurnover"] = yTradeVolume / yBalance
-		fields["xyURPnl"] = totalURPnl
+		if xBalance != 0 {
+			fields["xTurnover"] = xTradeVolume / xBalance
+		}
 		fields["netWorth"] = netWorth
 		fields["startValue"] = xyConfig.StartValue
 		pt, err := client.NewPoint(
