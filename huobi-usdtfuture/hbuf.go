@@ -261,7 +261,7 @@ func (h *HuobiUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.
 						}
 					}
 					newPositions[nextPos.Symbol] = newPos
-					logger.Debugf("WS POS %v, %v", nextPos, newPos)
+					//logger.Debugf("WS POS %v, %v", nextPos, newPos)
 				} else {
 					newPos = MergedPosition{
 						Symbol:    nextPos.Symbol,
