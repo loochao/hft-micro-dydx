@@ -63,6 +63,7 @@ func handleSave(
 
 			if st.xPosition.GetPrice() != 0 {
 				xURPnl += st.xValue * (st.xMidPrice - st.xPosition.GetPrice()) / st.xPosition.GetPrice()
+				fields["xURPnlBySymbol"] = st.xValue * (st.xMidPrice - st.xPosition.GetPrice()) / st.xPosition.GetPrice()
 			}
 
 			fields["spreadTimeDelta"] = st.spread.ParseTime.Sub(st.spread.EventTime).Seconds()
