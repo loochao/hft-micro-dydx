@@ -25,6 +25,9 @@ rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" hk05:/usr/local/bin/
 echo "hk07"
 rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" hk07:/usr/local/bin/
 
+echo "hk06"
+ssh hk07 "rsync -avx --progress /usr/local/bin//usd-tk-tt-q.amd64.$dt hk06:/usr/local/bin/"
+
 #echo "vc001"
 #rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" vc001:/usr/local/bin/
 
