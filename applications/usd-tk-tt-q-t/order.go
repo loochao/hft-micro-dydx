@@ -78,7 +78,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.size = strat.enterValue / strat.midPrice
 
 		//限开仓大小限制到best bid ask size
-		strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
+		strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor*2.0, strat.size)
 
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.xAbsValue-strat.enterValue < strat.xStepSize*1.005 ||
@@ -91,8 +91,8 @@ func (strat *XYStrategy) updateXPosition() {
 
 			strat.price = strat.xTicker.GetBidPrice()
 			//防止TickSize太大
-			if strat.xTickSize/strat.price < strat.config.EnterSlippage {
-				strat.price = strat.price * (1.0 - strat.config.EnterSlippage)
+			if strat.xTickSize/strat.price < strat.config.EnterSlippage*2.0 {
+				strat.price = strat.price * (1.0 - strat.config.EnterSlippage*2.0)
 				strat.price = math.Floor(strat.price/strat.xTickSize) * strat.xTickSize
 			}
 			strat.xNewOrderParam = common.NewOrderParam{
@@ -142,7 +142,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.size = strat.enterValue / strat.midPrice
 		//限开仓大小限制到best bid ask size
-		strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
+		strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor*2.0, strat.size)
 
 		strat.enterValue = strat.size * strat.midPrice
 		if strat.xAbsValue-strat.enterValue < strat.xStepSize*1.005 ||
@@ -152,8 +152,8 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
 			strat.price = strat.xTicker.GetAskPrice()
-			if strat.xTickSize/strat.price < strat.config.EnterSlippage {
-				strat.price = strat.price * (1.0 + strat.config.EnterSlippage)
+			if strat.xTickSize/strat.price < strat.config.EnterSlippage*2.0 {
+				strat.price = strat.price * (1.0 + strat.config.EnterSlippage*2.0)
 				strat.price = math.Ceil(strat.price/strat.xTickSize) * strat.xTickSize
 			}
 			strat.xNewOrderParam = common.NewOrderParam{
