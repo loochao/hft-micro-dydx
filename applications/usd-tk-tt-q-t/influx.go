@@ -26,6 +26,8 @@ func handleSave(
 	xURPnl := 0.0
 	hasAllSymbols := true
 	xTradeVolume := 0.0
+	longValue := 0.0
+	shortValue := 0.0
 	for _, xSymbol := range xSymbols {
 		st, ok := strategiesMap[xSymbol]
 		if !ok {
@@ -63,6 +65,11 @@ func handleSave(
 
 			if st.xPosition.GetPrice() != 0 {
 				xURPnl += st.xValue * (st.xMidPrice - st.xPosition.GetPrice()) / st.xPosition.GetPrice()
+				if st.xValue > 0 {
+					longValue += st.xValue
+				}else{
+					shortValue -= st.xValue
+				}
 				fields["xURPnlBySymbol"] = st.xValue * (st.xMidPrice - st.xPosition.GetPrice()) / st.xPosition.GetPrice()
 			}
 
@@ -164,6 +171,8 @@ func handleSave(
 		fields["xBalance"] = xBalance
 		fields["xAvailable"] = xAccount.GetFree()
 		fields["xURPnl"] = xURPnl
+		fields["xLongValue"] = longValue
+		fields["xShortValue"] = shortValue
 		if xBalance != 0 {
 			fields["xTurnover"] = xTradeVolume / xBalance
 		}
