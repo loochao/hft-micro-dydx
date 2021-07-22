@@ -55,7 +55,7 @@ type WSPosition struct {
 	TpSlMode            string    `json:"tp_sl_mode"`
 	UnrealisedPnl       float64   `json:"unrealised_pnl"`
 	DeleverageIndicator float64   `json:"deleverage_indicator"`
-	RiskID              float64   `json:"risk_id"`
+	RiskID              float64   `json:"risk_id,string"`
 	StopLoss            float64   `json:"stop_loss"`
 	TakeProfit          float64   `json:"take_profit"`
 	TrailingStop        float64   `json:"trailing_stop"`

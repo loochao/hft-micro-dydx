@@ -23,8 +23,8 @@ func TestNewUserWebsocket(t *testing.T) {
 			logger.Debugf("%v", d)
 		case d := <-ws.PositionsCh:
 			logger.Debugf("%v", d)
-		case d := <-ws.ExecutionsCh:
-			logger.Debugf("%v", d)
+		//case d := <-ws.ExecutionsCh:
+		//	logger.Debugf("%v", d)
 		case <-ws.RestartCh:
 			logger.Debugf("restart")
 		}
