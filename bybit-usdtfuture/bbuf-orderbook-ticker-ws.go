@@ -102,9 +102,11 @@ func (w *OrderBookTickerWS) readLoop(conn *websocket.Conn, channels map[string]c
 			} else if msg[35] == '"' {
 				symbol = common.UnsafeBytesToString(msg[25:35])
 			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("other msg %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
+				if msgLen < 28 ||  msg[27] != 'p' {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("other msg %s", msg)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 				continue
 			}
