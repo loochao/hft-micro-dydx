@@ -299,6 +299,7 @@ func (w *OrderBookTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.C
 			for market, updateTime := range marketUpdatedTimes {
 				if time.Now().Sub(updateTime) > marketTimeout {
 					args = append(args, fmt.Sprintf("orderBookL2_25.%s", market))
+					marketUpdatedTimes[market] = time.Now().Add(time.Minute)
 				}
 			}
 			select {
