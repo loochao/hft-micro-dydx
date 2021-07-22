@@ -163,8 +163,16 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logSilentTime = time.Now().Add(time.Minute)
-							logger.Debugf("w.PositionsCh <- positions failed ch len %d", len(w.pingCh))
+							logger.Debugf("w.PositionsCh <- positions failed ch len %d", len(w.PositionsCh))
 						}
+					}
+				}
+				select {
+				case w.topicCh <- wsCap.Topic:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("w.topicCh <- wsCap.Topic failed ch len %d", len(w.topicCh))
 					}
 				}
 				break
@@ -181,8 +189,16 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logSilentTime = time.Now().Add(time.Minute)
-							logger.Debugf("w.OrdersCh <- orders failed ch len %d", len(w.pingCh))
+							logger.Debugf("w.OrdersCh <- orders failed ch len %d", len(w.OrdersCh))
 						}
+					}
+				}
+				select {
+				case w.topicCh <- wsCap.Topic:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("w.topicCh <- wsCap.Topic failed ch len %d", len(w.topicCh))
 					}
 				}
 				break
@@ -217,8 +233,16 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logSilentTime = time.Now().Add(time.Minute)
-							logger.Debugf("w.WalletsCh <- wallets failed ch len %d", len(w.pingCh))
+							logger.Debugf("w.WalletsCh <- wallets failed ch len %d", len(w.WalletsCh))
 						}
+					}
+				}
+				select {
+				case w.topicCh <- wsCap.Topic:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("w.topicCh <- wsCap.Topic failed ch len %d", len(w.topicCh))
 					}
 				}
 				break
@@ -240,7 +264,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 							default:
 								if time.Now().Sub(logSilentTime) > 0 {
 									logSilentTime = time.Now().Add(time.Minute)
-									logger.Debugf("w.topicCh <- topic failed ch len %d", len(w.pingCh))
+									logger.Debugf("w.topicCh <- topic failed ch len %d", len(w.topicCh))
 								}
 							}
 						}
@@ -408,6 +432,7 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, topics
 			trafficTimeoutTimer.Reset(time.Minute)
 			break
 		case <-w.pingCh:
+			logger.Debugf("<-w.pingCh")
 			trafficTimeoutTimer.Reset(time.Minute)
 			break
 		case <-pingTimer.C:
