@@ -1,0 +1,31 @@
+{
+  "topic": "order",
+  "action": "",
+  "data": [
+    {
+      "order_id": "bc8482cb-f8c4-42b4-afd7-41d98215b225",
+      "order_link_id": "16269806036575",
+      "symbol": "BNBUSDT",
+      "side": "Buy",
+      "order_type": "Market",
+      "price": 308.5,
+      "qty": 0.11,
+      "leaves_qty": 0,
+      "last_exec_price": 293.9,
+      "cum_exec_qty": 0.11,
+      "cum_exec_value": 32.329002,
+      "cum_exec_fee": 0.02424675,
+      "time_in_force": "ImmediateOrCancel",
+      "create_type": "CreateByUser",
+      "cancel_type": "UNKNOWN",
+      "order_status": "Filled",
+      "take_profit": 0,
+      "stop_loss": 0,
+      "trailing_stop": 0,
+      "create_time": "2021-07-22T19:03:23.357503314Z",
+      "update_time": "2021-07-22T19:03:23.357625Z",
+      "reduce_only": false,
+      "close_on_trigger": false
+    }
+  ]
+}

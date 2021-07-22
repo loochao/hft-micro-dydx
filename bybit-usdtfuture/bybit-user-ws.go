@@ -15,21 +15,21 @@ import (
 )
 
 type UserWS struct {
-	messageCh    chan []byte
-	OrdersCh     chan []Order
-	ExecutionsCh chan []Execution
-	PositionsCh  chan []WSPosition
-	WalletsCh    chan []Wallet
-	pingCh       chan interface{}
-	RestartCh    chan interface{}
-	writeCh      chan interface{}
-	done         chan interface{}
-	reconnectCh  chan interface{}
-	stopped      int32
-	topicCh      chan string
-	symbols      []string
-	api          *API
-	proxy        string
+	messageCh chan []byte
+	OrdersCh  chan []Order
+	//ExecutionsCh chan []Execution
+	PositionsCh chan []WSPosition
+	WalletsCh   chan []Wallet
+	pingCh      chan interface{}
+	RestartCh   chan interface{}
+	writeCh     chan interface{}
+	done        chan interface{}
+	reconnectCh chan interface{}
+	stopped     int32
+	topicCh     chan string
+	symbols     []string
+	api         *API
+	proxy       string
 }
 
 func (w *UserWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
@@ -132,7 +132,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 	logSilentTime := time.Now()
 	positions := make([]WSPosition, 0)
 	orders := make([]Order, 0)
-	executions := make([]Execution, 0)
+	//executions := make([]Execution, 0)
 	wallets := make([]Wallet, 0)
 	for {
 		select {
@@ -141,9 +141,9 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			if len(msg) < 28 || msg[27] != 'p' {
-				logger.Debugf("%s", msg)
-			}
+			//if len(msg) < 28 || msg[27] != 'p' {
+				//logger.Debugf("%s", msg)
+			//}
 			err := json.Unmarshal(msg, &wsCap)
 			if err != nil {
 				logger.Debugf("json.Unmarshal error %v %s", err, msg)
@@ -186,24 +186,24 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 					}
 				}
 				break
-			case "execution":
-				err = json.Unmarshal(wsCap.Data, &executions)
-				if err != nil {
-					if time.Now().Sub(logSilentTime) > 0 {
-						logSilentTime = time.Now().Add(time.Minute)
-						logger.Debugf("json.Unmarshal error %v", err)
-					}
-				} else {
-					select {
-					case w.ExecutionsCh <- executions:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logSilentTime = time.Now().Add(time.Minute)
-							logger.Debugf("w.ExecutionsCh <- executions failed ch len %d", len(w.pingCh))
-						}
-					}
-				}
-				break
+			//case "execution":
+			//	err = json.Unmarshal(wsCap.Data, &executions)
+			//	if err != nil {
+			//		if time.Now().Sub(logSilentTime) > 0 {
+			//			logSilentTime = time.Now().Add(time.Minute)
+			//			logger.Debugf("json.Unmarshal error %v", err)
+			//		}
+			//	} else {
+			//		select {
+			//		case w.ExecutionsCh <- executions:
+			//		default:
+			//			if time.Now().Sub(logSilentTime) > 0 {
+			//				logSilentTime = time.Now().Add(time.Minute)
+			//				logger.Debugf("w.ExecutionsCh <- executions failed ch len %d", len(w.pingCh))
+			//			}
+			//		}
+			//	}
+			//	break
 			case "wallet":
 				err = json.Unmarshal(wsCap.Data, &wallets)
 				if err != nil {
@@ -304,7 +304,7 @@ func (w *UserWS) mainLoop(ctx context.Context, key, secret string, proxy string)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 
-	topics := []string{"position", "execution", "order", "wallet"}
+	topics := []string{"position", "order", "wallet"}
 	defer func() {
 		w.Stop()
 		if internalCancel != nil {
@@ -477,18 +477,18 @@ func NewUserWS(
 	proxy string,
 ) *UserWS {
 	ws := UserWS{
-		done:         make(chan interface{}),
-		reconnectCh:  make(chan interface{}),
-		OrdersCh:     make(chan []Order, 16),
-		ExecutionsCh: make(chan []Execution, 16),
-		PositionsCh:  make(chan []WSPosition, 16),
-		WalletsCh:    make(chan []Wallet, 16),
-		RestartCh:    make(chan interface{}, 16),
-		pingCh:       make(chan interface{}, 16),
-		messageCh:    make(chan []byte, 128),
-		writeCh:      make(chan interface{}, 128),
-		topicCh:      make(chan string, 128),
-		stopped:      0,
+		done:        make(chan interface{}),
+		reconnectCh: make(chan interface{}),
+		OrdersCh:    make(chan []Order, 16),
+		//ExecutionsCh: make(chan []Execution, 16),
+		PositionsCh: make(chan []WSPosition, 16),
+		WalletsCh:   make(chan []Wallet, 16),
+		RestartCh:   make(chan interface{}, 16),
+		pingCh:      make(chan interface{}, 16),
+		messageCh:   make(chan []byte, 128),
+		writeCh:     make(chan interface{}, 128),
+		topicCh:     make(chan string, 128),
+		stopped:     0,
 	}
 	go ws.mainLoop(ctx, key, secret, proxy)
 	go ws.dataHandleLoop(ctx)

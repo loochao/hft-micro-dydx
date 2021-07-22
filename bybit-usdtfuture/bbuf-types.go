@@ -45,7 +45,7 @@ type WSPosition struct {
 	LiqPrice            float64   `json:"liq_price"`
 	BustPrice           float64   `json:"bust_price"`
 	Leverage            float64   `json:"leverage"`
-	AutoAddMargin       float64   `json:"auto_add_margin"`
+	AutoAddMargin       float64   `json:"auto_add_margin,string"`
 	IsIsolated          bool      `json:"is_isolated"`
 	PositionMargin      float64   `json:"position_margin"`
 	OccClosingFee       float64   `json:"occ_closing_fee"`
