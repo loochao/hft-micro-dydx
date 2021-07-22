@@ -393,6 +393,14 @@ func (w *OrderBookTickerWS) dataHandleLoop(ctx context.Context, symbol string, i
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
+				select {
+				case w.symbolCh <- symbol:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.symbolCh <- symbol failed, ch len %d", len(symbolCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
 			} else {
 				hasPartial = false
 				select {
