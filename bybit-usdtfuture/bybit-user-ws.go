@@ -141,7 +141,9 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			logger.Debugf("%s", msg)
+			if len(msg) < 28 || msg[27] != 'p' {
+				logger.Debugf("%s", msg)
+			}
 			err := json.Unmarshal(msg, &wsCap)
 			if err != nil {
 				logger.Debugf("json.Unmarshal error %v %s", err, msg)
