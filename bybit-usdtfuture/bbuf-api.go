@@ -36,7 +36,7 @@ func (api *API) GetServerTime(ctx context.Context) (*time.Time, error) {
 	if err != nil {
 		return nil, err
 	}
-	logger.Debugf("%s", contents)
+	//logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, method, path string, param 
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%s", contents)
+	//logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
@@ -111,7 +111,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%s", contents)
+	//logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
