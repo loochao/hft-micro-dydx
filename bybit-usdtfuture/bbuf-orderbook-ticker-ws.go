@@ -369,17 +369,21 @@ func (w *OrderBookTickerWS) dataHandleLoop(ctx context.Context, symbol string, i
 			if msg[35+symbolLen] == 's' {
 				hasPartial = true
 				err = UpdateOrderBook(msg, &orderBook)
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("UpdateOrderBook error %v", err)
-					logSilentTime = time.Now().Add(time.Minute)
-					continue
+				if err != nil {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("UpdateOrderBook error %v", err)
+						logSilentTime = time.Now().Add(time.Minute)
+						continue
+					}
 				}
 			} else if hasPartial {
 				err = UpdateOrderBook(msg, &orderBook)
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("UpdateOrderBook error %v", err)
-					logSilentTime = time.Now().Add(time.Minute)
-					continue
+				if err != nil {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("UpdateOrderBook error %v", err)
+						logSilentTime = time.Now().Add(time.Minute)
+						continue
+					}
 				}
 			} else {
 				continue
