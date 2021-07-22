@@ -111,6 +111,7 @@ type ExchangeSettings struct {
 	ApiKey                              string        `yaml:"apiKey" json:"apiKey"`
 	ApiSecret                           string        `yaml:"apiSecret" json:"apiSecret"`
 	ApiPassphrase                       string        `yaml:"apiPassphrase" json:"apiPassphrase"`
+	ApiUrl                              string        `yaml:"apiUrl" json:"apiUrl"`
 	Symbols                             []string      `yaml:"symbols" json:"symbols"`
 	PullInterval                        time.Duration `yaml:"pullInterval" json:"httpPullInterval"`
 	HttpRequestInterval                 time.Duration `yaml:"httpRequestInterval" json:"httpRequestInterval"`

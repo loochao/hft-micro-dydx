@@ -37,6 +37,7 @@ const (
 	JsonKeyAskPrice
 	JsonKeyBidSize
 	JsonKeyAskSize
+	JsonKeySize
 )
 
 const (

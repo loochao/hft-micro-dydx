@@ -1,4 +1,4 @@
-package huobi_usdtfuture
+package bybit_usdtfuture
 
 import (
 	"context"
@@ -6,44 +6,47 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"math"
 	"math/rand"
 	"sync/atomic"
 	"time"
 )
 
-type HuobiUsdtFuture struct {
+type BybitUsdtFuture struct {
 	done     chan interface{}
 	stopped  int32
 	api      *API
 	settings common.ExchangeSettings
 }
 
-func (h *HuobiUsdtFuture) GetExchange() common.ExchangeID {
+func (h *BybitUsdtFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	panic("implement me")
+}
+
+func (h *BybitUsdtFuture) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (h *HuobiUsdtFuture) IsSpot() bool {
+func (h *BybitUsdtFuture) IsSpot() bool {
 	return false
 }
 
-func (h *HuobiUsdtFuture) Done() chan interface{} {
+func (h *BybitUsdtFuture) Done() chan interface{} {
 	return h.done
 }
 
-func (h *HuobiUsdtFuture) Stop() {
+func (h *BybitUsdtFuture) Stop() {
 	if atomic.CompareAndSwapInt32(&h.stopped, 0, 1) {
 		close(h.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (h *HuobiUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
+func (h *BybitUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
 	var err error
 	h.stopped = 0
 	h.done = make(chan interface{})
 	h.settings = settings
-	h.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.Proxy)
+	h.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.ApiUrl, settings.Proxy)
 	if err != nil {
 		return err
 	}
@@ -63,67 +66,67 @@ func (h *HuobiUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSet
 		if _, err = h.GetMinNotional(symbol); err != nil {
 			return err
 		}
-		//if settings.ChangeLeverage {
-		//	_, err = h.api.ChangeAutoDepositStatus(ctx, AutoDepositStatusParam{
-		//		Symbol: symbol,
-		//		Status: true,
-		//	})
-		//	if err != nil {
-		//		return err
-		//	}
-		//}
+		if settings.ChangeLeverage {
+			err := h.api.SwitchIsolated(ctx, SwitchIsolatedParam{
+				Symbol:       symbol,
+				IsIsolated:   false,
+				BuyLeverage:  int(settings.Leverage),
+				SellLeverage: int(settings.Leverage),
+			})
+			if err != nil {
+				logger.Debugf("SwitchIsolated %s %v", symbol, err)
+			}
+		}
 	}
 	return nil
 }
 
-func (h *HuobiUsdtFuture) GetMultiplier(symbol string) (float64, error) {
-	if v, ok := ContractSizes[symbol]; ok {
-		return v, nil
-	} else {
-		return 0.0, fmt.Errorf(common.MultiplierNotFoundError, symbol)
-	}
+func (h *BybitUsdtFuture) GetMultiplier(symbol string) (float64, error) {
+	return 1.0, nil
 }
 
-func (h *HuobiUsdtFuture) GetMinNotional(symbol string) (float64, error) {
+func (h *BybitUsdtFuture) GetMinNotional(symbol string) (float64, error) {
 	return 0.0, nil
 }
 
-func (h *HuobiUsdtFuture) GetMinSize(symbol string) (float64, error) {
-	return 1.0, nil
+func (h *BybitUsdtFuture) GetMinSize(symbol string) (float64, error) {
+	if v, ok := StepSizes[symbol]; ok {
+		return v, nil
+	} else {
+		return 0.0, fmt.Errorf(common.MinSizeNotFoundError, symbol)
+	}
 }
 
-func (h *HuobiUsdtFuture) GetStepSize(symbol string) (float64, error) {
-	return 1.0, nil
+func (h *BybitUsdtFuture) GetStepSize(symbol string) (float64, error) {
+	if v, ok := StepSizes[symbol]; ok {
+		return v, nil
+	} else {
+		return 0.0, fmt.Errorf(common.StepSizeNotFoundError, symbol)
+	}
 }
 
-func (h *HuobiUsdtFuture) GetTickSize(symbol string) (float64, error) {
-	if v, ok := PriceTicks[symbol]; ok {
+func (h *BybitUsdtFuture) GetTickSize(symbol string) (float64, error) {
+	if v, ok := TickSizes[symbol]; ok {
 		return v, nil
 	} else {
 		return 0.0, fmt.Errorf(common.TickSizeNotFoundError, symbol)
 	}
 }
 
-func (h *HuobiUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
+func (h *BybitUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
 	defer h.Stop()
 	settings := h.settings
 	symbols := h.settings.Symbols[:]
-	var err error
-	h.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.Proxy)
-	if err != nil {
-		return
-	}
-	userWS := NewUserWebsocket(
+	userWS := NewUserWS(
 		ctx,
 		h.settings.ApiKey,
 		h.settings.ApiSecret,
-		symbols[:],
 		settings.Proxy,
 	)
 	go h.systemStatusLoop(ctx, statusCh)
 	httpPositionsCh := make(chan map[string]MergedPosition, 4)
 	go h.positionsLoop(ctx, symbols, httpPositionsCh)
-	httpAccountCh := make(chan []Account, 128)
+	httpAccountCh := make(chan Balance, 128)
 	go h.accountLoop(ctx, httpAccountCh)
 	logSilentTime := time.Now()
 	restartResetTimer := time.NewTimer(time.Hour * 9999)
@@ -184,20 +187,12 @@ func (h *HuobiUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.
 			}
 			break
 		case accounts := <-httpAccountCh:
-			for _, account := range accounts {
-				//msg, _ := json.Marshal(account)
-				//logger.Debugf("%s", msg)
-				if account.MarginAsset == "USDT" {
-					outAccount := account
-					select {
-					case accountCh <- &outAccount:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("accountCh <- &outAccount failed, ch len %d", len(accountCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
-					break
+			select {
+			case accountCh <- &accounts:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("accountCh <- &outAccount failed, ch len %d", len(accountCh))
+					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
 			break
@@ -213,66 +208,64 @@ func (h *HuobiUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.
 				}
 			}
 			break
-		case wsAccounts := <-userWS.AccountCh:
-			for _, account := range wsAccounts.Accounts {
-				//msg, _ := json.Marshal(account)
-				//logger.Debugf("%s", msg)
-				if account.MarginAsset == "USDT" {
-					outAccount := account
-					select {
-					case accountCh <- &outAccount:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("accountCh <- &outAccount failed, ch len %d", len(accountCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
-					break
-				}
-			}
-			break
-		case order := <-userWS.OrderCh:
-			if ch, ok := orderChs[order.Symbol]; ok {
+		case wallets := <-userWS.WalletsCh:
+			if len(wallets) > 0 {
+				wallet := wallets[0]
 				select {
-				case ch <- order:
+				case accountCh <- &wallet:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- &order failed, ch len %d", len(ch))
+						logger.Debugf("accountCh <- &wallet failed, ch len %d", len(accountCh))
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
+				break
 			}
 			break
-		case wsPositions := <-userWS.PositionCh:
+		case orders := <-userWS.OrdersCh:
+			for _, order := range orders {
+				if ch, ok := orderChs[order.Symbol]; ok {
+					order := order
+					select {
+					case ch <- &order:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("ch <- &order failed, ch len %d", len(ch))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
+					}
+				}
+			}
+			break
+		case wsPositions := <-userWS.PositionsCh:
 			newPositions := make(map[string]MergedPosition, 0)
-			for _, nextPos := range wsPositions.Positions {
+			for _, nextPos := range wsPositions {
 				if newPos, ok := newPositions[nextPos.Symbol]; ok {
 					newPos.ParseTime = nextPos.ParseTime
-					newPos.EventTime = wsPositions.Timestamp
-					if nextPos.Direction == PositionDirectionBuy {
-						newPos.Size += nextPos.Volume
-						newPos.Price = nextPos.CostHold
+					newPos.EventTime = nextPos.ParseTime
+					if nextPos.Side == PositionSideBuy {
+						newPos.Size += nextPos.Size
+						newPos.Price = nextPos.EntryPrice
 					} else {
-						newPos.Size -= nextPos.Volume
-						newPos.Price = nextPos.CostHold
+						newPos.Size -= nextPos.Size
+						newPos.Price = nextPos.EntryPrice
 					}
 					newPositions[nextPos.Symbol] = newPos
-					//logger.Debugf("WS POS %v, %v", nextPos, newPos)
 				} else {
 					newPos = MergedPosition{
 						Symbol:    nextPos.Symbol,
 						ParseTime: nextPos.ParseTime,
-						EventTime: wsPositions.Timestamp,
+						EventTime: nextPos.ParseTime,
 					}
-					if nextPos.Direction == PositionDirectionBuy {
-						newPos.Size = nextPos.Volume
-						newPos.Price = nextPos.CostHold
+					if nextPos.Side == PositionSideBuy {
+						newPos.Size = nextPos.Size
+						newPos.Price = nextPos.EntryPrice
 					} else {
-						newPos.Size = -nextPos.Volume
-						newPos.Price = nextPos.CostHold
+						newPos.Size = -nextPos.Size
+						newPos.Price = nextPos.EntryPrice
 					}
 					newPositions[nextPos.Symbol] = newPos
-					//logger.Debugf("WS POS %v, %v", nextPos, newPos)
+					logger.Debugf("WS POS %v, %v", nextPos, newPos)
 				}
 			}
 			for symbol, newPos := range newPositions {
@@ -290,11 +283,11 @@ func (h *HuobiUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.
 	}
 }
 
-func (h *HuobiUsdtFuture) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
+func (h *BybitUsdtFuture) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	panic("implement me")
 }
 
-func (h *HuobiUsdtFuture) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
+func (h *BybitUsdtFuture) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")
 	defer h.Stop()
@@ -314,7 +307,7 @@ func (h *HuobiUsdtFuture) StreamDepth(ctx context.Context, channels map[string]c
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
 			defer h.Stop()
-			ws := NewDepth20WS(ctx, proxy, channels)
+			ws := NewOrderBookWS(ctx, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
@@ -335,11 +328,11 @@ func (h *HuobiUsdtFuture) StreamDepth(ctx context.Context, channels map[string]c
 	}
 }
 
-func (h *HuobiUsdtFuture) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
+func (h *BybitUsdtFuture) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
 	panic("implement me")
 }
 
-func (h *HuobiUsdtFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (h *BybitUsdtFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")
 	defer logger.Debugf("STOP StreamTicker")
 	defer h.Stop()
@@ -359,7 +352,7 @@ func (h *HuobiUsdtFuture) StreamTicker(ctx context.Context, channels map[string]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
 			defer h.Stop()
-			ws := NewTickerWS(ctx, proxy, channels)
+			ws := NewOrderBookTickerWS(ctx, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
@@ -380,11 +373,11 @@ func (h *HuobiUsdtFuture) StreamTicker(ctx context.Context, channels map[string]
 	}
 }
 
-func (h *HuobiUsdtFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
+func (h *BybitUsdtFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
 	panic("implement me")
 }
 
-func (h *HuobiUsdtFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
+func (h *BybitUsdtFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
 	interval := h.settings.PullInterval * 2
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
@@ -397,38 +390,36 @@ func (h *HuobiUsdtFuture) StreamFundingRate(ctx context.Context, channels map[st
 		case <-h.done:
 			return
 		case <-afterFrTimer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			frs, err := h.api.GetFundingRates(subCtx)
-			if err != nil {
-				logger.Debugf("k.api.GetFundingRates error %v", err)
-			} else {
-				for _, fr := range frs {
-					if ch, ok := channels[fr.Symbol]; ok {
-						fr := fr
-						select {
-						case ch <- &fr:
-						default:
-							logger.Debugf("ch <- &fr failed %s ch len %d", fr.Symbol, len(ch))
-						}
+			for symbol, ch := range channels {
+				subCtx, _ := context.WithTimeout(ctx, time.Minute)
+				fr, err := h.api.GetPrevFundingRate(subCtx, PrevFundingRateParam{
+					Symbol: symbol,
+				})
+				if err != nil {
+					logger.Debugf("h.api.GetPrevFundingRate error %v", err)
+				} else {
+					select {
+					case ch <- fr:
+					default:
+						logger.Debugf("ch <- &fr failed %s ch len %d", fr.Symbol, len(ch))
 					}
 				}
 			}
 			afterFrTimer.Reset(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
 			break
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			frs, err := h.api.GetFundingRates(subCtx)
-			if err != nil {
-				logger.Debugf("k.api.GetFundingRates error %v", err)
-			} else {
-				for _, fr := range frs {
-					if ch, ok := channels[fr.Symbol]; ok {
-						fr := fr
-						select {
-						case ch <- &fr:
-						default:
-							logger.Debugf("ch <- &fr failed %s ch len %d", fr.Symbol, len(ch))
-						}
+			for symbol, ch := range channels {
+				subCtx, _ := context.WithTimeout(ctx, time.Minute)
+				fr, err := h.api.GetPrevFundingRate(subCtx, PrevFundingRateParam{
+					Symbol: symbol,
+				})
+				if err != nil {
+					logger.Debugf("h.api.GetPrevFundingRate error %v", err)
+				} else {
+					select {
+					case ch <- fr:
+					default:
+						logger.Debugf("ch <- &fr failed %s ch len %d", fr.Symbol, len(ch))
 					}
 				}
 			}
@@ -438,7 +429,7 @@ func (h *HuobiUsdtFuture) StreamFundingRate(ctx context.Context, channels map[st
 	}
 }
 
-func (h *HuobiUsdtFuture) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+func (h *BybitUsdtFuture) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	defer h.Stop()
 	for symbol, reqCh := range requestChannels {
 		respCh, ok := responseChannels[symbol]
@@ -464,11 +455,11 @@ func (h *HuobiUsdtFuture) WatchOrders(ctx context.Context, requestChannels map[s
 	}
 }
 
-func (h *HuobiUsdtFuture) GenerateClientID() string {
+func (h *BybitUsdtFuture) GenerateClientID() string {
 	return fmt.Sprintf("%d", time.Now().Unix()*10000+int64(rand.Intn(10000)))
 }
 
-func (h *HuobiUsdtFuture) systemStatusLoop(
+func (h *BybitUsdtFuture) systemStatusLoop(
 	ctx context.Context, output chan common.SystemStatus,
 ) {
 	pullInterval := h.settings.PullInterval
@@ -482,7 +473,7 @@ func (h *HuobiUsdtFuture) systemStatusLoop(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Second*3)
-			heartBeat, err := h.api.GetHeartBeat(subCtx)
+			heartBeat, err := h.api.GetServerTime(subCtx)
 			if err != nil {
 				logger.Debugf("h.api.GetHeartBeat(subCtx) error %v", err)
 				select {
@@ -491,8 +482,8 @@ func (h *HuobiUsdtFuture) systemStatusLoop(
 					logger.Debugf("output <- common.SystemStatusError failed ch len %d", len(output))
 				}
 			} else {
-				//logger.Debugf("heartBeat %v", heartBeat)
-				if heartBeat.LinearSwapHeartbeat == 1 {
+				if time.Now().Sub(*heartBeat) < time.Minute &&
+					time.Now().Sub(*heartBeat) > -time.Minute {
 					select {
 					case output <- common.SystemStatusReady:
 					default:
@@ -502,7 +493,7 @@ func (h *HuobiUsdtFuture) systemStatusLoop(
 					select {
 					case output <- common.SystemStatusNotReady:
 					default:
-						logger.Debugf("output <- common.SystemStatusNotReady failed ch len %d", len(output))
+						logger.Debugf("output <- common.SystemStatusReady failed ch len %d", len(output))
 					}
 				}
 			}
@@ -511,8 +502,8 @@ func (h *HuobiUsdtFuture) systemStatusLoop(
 	}
 }
 
-func (h *HuobiUsdtFuture) accountLoop(
-	ctx context.Context, output chan []Account,
+func (h *BybitUsdtFuture) accountLoop(
+	ctx context.Context, output chan Balance,
 ) {
 	pullInterval := h.settings.PullInterval
 	timer := time.NewTimer(time.Second)
@@ -523,12 +514,14 @@ func (h *HuobiUsdtFuture) accountLoop(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			accounts, err := h.api.GetAccounts(subCtx)
+			account, err := h.api.GetBalance(subCtx, BalanceParam{
+				Coin: "USDT",
+			})
 			if err != nil {
-				logger.Debugf("h.api.GetAccounts error %v", err)
+				logger.Debugf("h.api.GetBalance error %v", err)
 			} else {
 				select {
-				case output <- accounts:
+				case output <- *account:
 				default:
 					logger.Debugf("output <- account failed ch len %d", len(output))
 				}
@@ -539,7 +532,7 @@ func (h *HuobiUsdtFuture) accountLoop(
 	}
 }
 
-func (h *HuobiUsdtFuture) positionsLoop(
+func (h *BybitUsdtFuture) positionsLoop(
 	ctx context.Context,
 	symbols []string,
 	outputCh chan map[string]MergedPosition,
@@ -570,16 +563,15 @@ func (h *HuobiUsdtFuture) positionsLoop(
 				}
 				//假定只有一个方向的仓位
 				for _, position := range positions {
-					if position.Direction == PositionDirectionBuy {
-						mP := positionBySymbols[position.Symbol]
-						mP.Size += position.Volume
-						mP.Price = position.CostHold
-						positionBySymbols[position.Symbol] = mP
-					} else if position.Direction == PositionDirectionSell {
-						mP := positionBySymbols[position.Symbol]
-						mP.Size -= position.Volume
-						mP.Price = position.CostHold
-						positionBySymbols[position.Symbol] = mP
+					if mP, ok := positionBySymbols[position.Data.Symbol]; ok {
+						if position.Data.Side == PositionSideBuy {
+							mP.Size += position.Data.Size
+							mP.Price = position.Data.EntryPrice
+						} else if position.Data.Side == PositionSideSell {
+							mP.Size -= position.Data.Size
+							mP.Price = position.Data.EntryPrice
+						}
+						positionBySymbols[mP.Symbol] = mP
 					}
 				}
 				select {
@@ -593,7 +585,7 @@ func (h *HuobiUsdtFuture) positionsLoop(
 	}
 }
 
-func (h *HuobiUsdtFuture) watchOrder(
+func (h *BybitUsdtFuture) watchOrder(
 	ctx context.Context,
 	symbol string,
 	requestCh chan common.OrderRequest,
@@ -628,52 +620,39 @@ func (h *HuobiUsdtFuture) watchOrder(
 	}
 }
 
-func (h *HuobiUsdtFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
+func (h *BybitUsdtFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParam{}
 	var err error
-	newOrderParam.ClientOrderID, err = common.ParseInt([]byte(param.ClientID))
-	if err != nil {
-		select {
-		case errCh <- common.OrderError{
-			New:   &param,
-			Error: err,
-		}:
-		default:
-			logger.Debugf("errCh <- common.OrderError failed, ch len %d", len(errCh))
-		}
-		return
-	}
+	newOrderParam.OrderLinkID = param.ClientID
 	newOrderParam.Symbol = param.Symbol
-	newOrderParam.Volume = int64(math.Round(param.Size))
+	newOrderParam.Qty = param.Size
+	newOrderParam.ReduceOnly = param.ReduceOnly
 	if param.Side == common.OrderSideBuy {
-		newOrderParam.Direction = OrderDirectionBuy
+		newOrderParam.Side = OrderSideBuy
 	} else {
-		newOrderParam.Direction = OrderDirectionSell
+		newOrderParam.Side = OrderSideSell
 	}
 	if param.Type == common.OrderTypeMarket {
-		newOrderParam.OrderPriceType = OrderPriceTypeOpponent
+		newOrderParam.OrderType = OrderTypeMarket
 	} else {
-		newOrderParam.OrderPriceType = OrderPriceTypeLimit
+		newOrderParam.OrderType = OrderTypeMarket
 	}
-	if param.TimeInForce == common.OrderTimeInForceIOC {
-		newOrderParam.OrderPriceType = OrderPriceTypeIOC
-	}
-	if param.TimeInForce == common.OrderTimeInForceFOK {
-		newOrderParam.OrderPriceType = OrderPriceTypeFOK
+	switch param.TimeInForce {
+	case common.OrderTimeInForceFOK:
+		newOrderParam.TimeInForce = TimeInForceFillOrKill
+	case common.OrderTimeInForceIOC:
+		newOrderParam.TimeInForce = TimeInForceImmediateOrCancel
+	case common.OrderTimeInForceGTC:
+		newOrderParam.TimeInForce = TimeInForceGoodTillCancel
 	}
 	if param.PostOnly {
-		newOrderParam.OrderPriceType = OrderPriceTypePostOnly
+		newOrderParam.TimeInForce = TimeInForcePostOnly
 	}
-	newOrderParam.LeverRate = int(h.settings.Leverage)
 	if param.Price != 0 {
-		newOrderParam.Price = common.Float64(param.Price)
+		newOrderParam.Price = param.Price
 	}
-	if param.ReduceOnly {
-		newOrderParam.Offset = OrderOffsetClose
-	} else {
-		newOrderParam.Offset = OrderOffsetOpen
-	}
-	_, err = h.api.SubmitOrder(ctx, newOrderParam)
+	order, err := h.api.PlaceOrder(ctx, newOrderParam)
+	logger.Debugf("%v", order)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{
@@ -686,7 +665,7 @@ func (h *HuobiUsdtFuture) submitOrder(ctx context.Context, param common.NewOrder
 	}
 }
 
-func (h *HuobiUsdtFuture) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
+func (h *BybitUsdtFuture) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
 	if param.Symbol != "" {
 		_, err := h.api.CancelAllOrders(ctx, CancelAllParam{
 			Symbol: param.Symbol,
@@ -704,66 +683,10 @@ func (h *HuobiUsdtFuture) cancelOrder(ctx context.Context, param common.CancelOr
 	}
 }
 
-func (h *HuobiUsdtFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+func (h *BybitUsdtFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	panic("implement me")
 }
 
-func (h *HuobiUsdtFuture) StartSideLoop() {
+func (h *BybitUsdtFuture) StartSideLoop() {
 	panic("implement me")
-}
-
-type HuobiUsdtFutureWithDepth5 struct {
-	HuobiUsdtFuture
-}
-
-type HuobiUsdtFutureWithMergedTicker struct {
-	HuobiUsdtFuture
-}
-
-func (k *HuobiUsdtFutureWithMergedTicker) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
-	panic("implement me")
-}
-
-func (k *HuobiUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
-	logger.Debugf("START StreamTicker")
-	defer logger.Debugf("STOP StreamTicker")
-	defer k.Stop()
-	symbols := make([]string, 0)
-	for symbol := range channels {
-		symbols = append(symbols, symbol)
-	}
-	proxy := k.settings.Proxy
-	for start := 0; start < len(symbols); start += batchSize {
-		end := start + batchSize
-		if end > len(symbols) {
-			end = len(symbols)
-		}
-		subChannels := make(map[string]chan common.Ticker)
-		for _, symbol := range symbols[start:end] {
-			subChannels[symbol] = channels[symbol]
-		}
-		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
-			defer k.Stop()
-			ws1 := NewDepth20TickerWS(ctx, proxy, channels)
-			ws2 := NewTickerWS(ctx, proxy, channels)
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case <-ws1.Done():
-					return
-				case <-ws2.Done():
-					return
-				}
-			}
-		}(ctx, proxy, subChannels)
-	}
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-k.done:
-			return
-		}
-	}
 }

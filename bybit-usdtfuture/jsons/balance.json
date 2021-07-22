@@ -1,0 +1,27 @@
+{
+  "ret_code": 0,
+  "ret_msg": "OK",
+  "ext_code": "",
+  "ext_info": "",
+  "result": {
+    "USDT": {
+      "equity": 0,
+      "available_balance": 0,
+      "used_margin": 0,
+      "order_margin": 0,
+      "position_margin": 0,
+      "occ_closing_fee": 0,
+      "occ_funding_fee": 0,
+      "wallet_balance": 0,
+      "realised_pnl": 0,
+      "unrealised_pnl": 0,
+      "cum_realised_pnl": 0,
+      "given_cash": 0,
+      "service_cash": 0
+    }
+  },
+  "time_now": "1626888823.904283",
+  "rate_limit_status": 119,
+  "rate_limit_reset_ms": 1626888823900,
+  "rate_limit": 120
+}

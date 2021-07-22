@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "ret_msg": "pong",
+  "conn_id": "a27b874d-33bb-4995-aa1d-4e23d03a32d9",
+  "request": {
+    "op": "ping",
+    "args": null
+  }
+}

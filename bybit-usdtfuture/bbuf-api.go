@@ -1,18 +1,17 @@
 package bybit_usdtfuture
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -20,10 +19,40 @@ type API struct {
 	client *http.Client
 	key    string
 	secret string
+	url    string
+}
+
+func (api *API) GetServerTime(ctx context.Context) (*time.Time, error) {
+	req, err := http.NewRequest(http.MethodGet, api.url+"/v2/public/time", nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.client.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+	reader := resp.Body
+	contents, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	logger.Debugf("%s", contents)
+	err = resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	var dataCap ResponseCap
+	if err := json.Unmarshal(contents, &dataCap); err != nil {
+		return nil, err
+	} else if dataCap.RetCode != 0 {
+		return nil, errors.New(dataCap.RetMsg)
+	}
+	t := time.Unix(0, int64(dataCap.TimeNow*1000000000))
+	return &t, nil
 }
 
 func (api *API) SendHTTPRequest(ctx context.Context, method, path string, param common.Params, result interface{}) error {
-	path = "https://api.bybit.com" + path
+	path = api.url + path
 	values := url.Values{}
 	var err error
 	if param != nil {
@@ -57,36 +86,22 @@ func (api *API) SendHTTPRequest(ctx context.Context, method, path string, param 
 	return json.Unmarshal(dataCap.Result, result)
 }
 
-func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path string, params common.Params, body, result interface{}) error {
-
+func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path string, param Param, result interface{}) error {
 	values := url.Values{}
-	if params != nil {
-		values = params.ToUrlValues()
+	if param != nil {
+		values = param.ToUrlValues()
 	}
+	values.Set("api_key", api.key)
+	values.Set("recv_window", "5000")
+	values.Set("timestamp", strconv.FormatInt(time.Now().UnixNano()/1000000, 10))
+	hmacSigned := common.GetHMAC(common.HashSHA256, []byte(values.Encode()), []byte(api.secret))
+	values.Set("sign", common.HexEncodeToString(hmacSigned))
 	path = common.EncodeURLValues(path, values)
-	var rBody io.Reader
-	var bodyStr []byte
-	var err error
-	if body != nil {
-		bodyStr, err = json.Marshal(body)
-		if err != nil {
-			return err
-		}
-		//logger.Debugf("%s", bodyStr)
-		rBody = bytes.NewReader(bodyStr)
-	}
-	req, err := http.NewRequest(method, "https://ftx.com/api"+path, rBody)
+	logger.Debugf("%s", api.url+path)
+	req, err := http.NewRequest(method, api.url+path, nil)
 	if err != nil {
 		return err
 	}
-
-	timestamp := fmt.Sprintf("%d", time.Now().Unix()*1000)
-	signature := fmt.Sprintf("%s%s%s%s", timestamp, method, "/api"+path, bodyStr)
-	hmacSigned := common.GetHMAC(common.HashSHA256, []byte(signature), []byte(api.secret))
-	req.Header.Set("FTX-KEY", api.key)
-	req.Header.Set("FTX-SIGN", common.HexEncodeToString(hmacSigned))
-	req.Header.Set("FTX-TS", timestamp)
-	req.Header.Set("Content-Type", "application/json")
 	resp, err := api.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
@@ -96,7 +111,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err != nil {
 		return err
 	}
-	//logger.Debugf("%s", contents)
+	logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
@@ -105,9 +120,13 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err := json.Unmarshal(contents, &dataCap); err != nil {
 		return err
 	} else if dataCap.RetCode != 0 {
-		return errors.New(dataCap.RetMsg)
+		return fmt.Errorf("RetCode: %d, RetMsg: \"%s\"", dataCap.RetCode, dataCap.RetMsg)
 	}
-	return json.Unmarshal(dataCap.Result, result)
+	if result != nil {
+		return json.Unmarshal(dataCap.Result, result)
+	} else {
+		return nil
+	}
 }
 
 func (api *API) GetSymbols(ctx context.Context) ([]Symbol, error) {
@@ -115,7 +134,52 @@ func (api *API) GetSymbols(ctx context.Context) ([]Symbol, error) {
 	return symbols, api.SendHTTPRequest(ctx, http.MethodGet, "/v2/public/symbols", nil, &symbols)
 }
 
-func NewAPI(key, secret, proxy string) (*API, error) {
+func (api *API) GetPrevFundingRate(ctx context.Context, param PrevFundingRateParam) (*FundingRate, error) {
+	fr := &FundingRate{}
+	return fr, api.SendHTTPRequest(ctx, http.MethodGet, "/public/linear/funding/prev-funding-rate", &param, fr)
+}
+
+func (api *API) GetBalance(ctx context.Context, param BalanceParam) (*Balance, error) {
+	balances := make(map[string]Balance, 0)
+	err := api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/v2/private/wallet/balance", &param, &balances)
+	if err != nil {
+		return nil, err
+	}
+	if balance, ok := balances[param.Coin]; ok {
+		return &balance, nil
+	} else {
+		return nil, fmt.Errorf("balance for %s not found", param.Coin)
+	}
+}
+
+func (api *API) GetPositions(ctx context.Context) ([]PositionData, error) {
+	positions := make([]PositionData, 0)
+	return positions, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/private/linear/position/list", nil, &positions)
+}
+
+func (api *API) SetAutoAddMargin(ctx context.Context, param SetAutoAddMarginParam) error {
+	return api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/private/linear/position/set-auto-add-margin", &param, nil)
+}
+
+func (api *API) SwitchIsolated(ctx context.Context, param SwitchIsolatedParam) error {
+	return api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/private/linear/position/switch-isolated", &param, nil)
+}
+
+func (api *API) SetLeverage(ctx context.Context, param SetLeverageParam) error {
+	return api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/private/linear/position/set-leverage", &param, nil)
+}
+
+func (api *API) PlaceOrder(ctx context.Context, param NewOrderParam) (*Order, error) {
+	order := &Order{}
+	return order, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/private/linear/order/create", &param, &order)
+}
+
+func (api *API) CancelAllOrders(ctx context.Context, param CancelAllParam) ([]string, error) {
+	ids := make([]string, 0)
+	return ids, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/private/linear/order/cancel-all", &param, &ids)
+}
+
+func NewAPI(key, secret, apiUrl, proxy string) (*API, error) {
 	var client http.Client
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
@@ -151,10 +215,14 @@ func NewAPI(key, secret, proxy string) (*API, error) {
 			},
 		}
 	}
+	if apiUrl == "" {
+		apiUrl = "https://api.bybit.com"
+	}
 	api := API{
 		client: &client,
 		key:    key,
 		secret: secret,
+		url:    apiUrl,
 	}
 	return &api, nil
 }
