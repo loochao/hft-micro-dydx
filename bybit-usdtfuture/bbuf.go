@@ -243,10 +243,10 @@ func (h *BybitUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.
 				if newPos, ok := newPositions[nextPos.Symbol]; ok {
 					newPos.ParseTime = nextPos.ParseTime
 					newPos.EventTime = nextPos.ParseTime
-					if nextPos.Side == PositionSideBuy {
+					if nextPos.Side == PositionSideBuy && nextPos.Size != 0 {
 						newPos.Size += nextPos.Size
 						newPos.Price = nextPos.EntryPrice
-					} else {
+					} else if nextPos.Side == PositionSideSell && nextPos.Size != 0 {
 						newPos.Size -= nextPos.Size
 						newPos.Price = nextPos.EntryPrice
 					}
@@ -257,10 +257,10 @@ func (h *BybitUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.
 						ParseTime: nextPos.ParseTime,
 						EventTime: nextPos.ParseTime,
 					}
-					if nextPos.Side == PositionSideBuy {
+					if nextPos.Side == PositionSideBuy && nextPos.Size != 0 {
 						newPos.Size = nextPos.Size
 						newPos.Price = nextPos.EntryPrice
-					} else {
+					} else if nextPos.Side == PositionSideSell && nextPos.Size != 0 {
 						newPos.Size = -nextPos.Size
 						newPos.Price = nextPos.EntryPrice
 					}
@@ -564,10 +564,10 @@ func (h *BybitUsdtFuture) positionsLoop(
 				//假定只有一个方向的仓位
 				for _, position := range positions {
 					if mP, ok := positionBySymbols[position.Data.Symbol]; ok {
-						if position.Data.Side == PositionSideBuy {
+						if position.Data.Side == PositionSideBuy && position.Data.Size != 0{
 							mP.Size += position.Data.Size
 							mP.Price = position.Data.EntryPrice
-						} else if position.Data.Side == PositionSideSell {
+						} else if position.Data.Side == PositionSideSell && position.Data.Size != 0{
 							mP.Size -= position.Data.Size
 							mP.Price = position.Data.EntryPrice
 						}
