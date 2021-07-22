@@ -397,7 +397,7 @@ func (w *OrderBookTickerWS) dataHandleLoop(ctx context.Context, symbol string, i
 				case w.symbolCh <- symbol:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("w.symbolCh <- symbol failed, ch len %d", len(symbolCh))
+						logger.Debugf("w.symbolCh <- symbol failed, ch len %d", len(w.symbolCh))
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
