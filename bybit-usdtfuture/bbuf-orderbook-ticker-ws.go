@@ -302,21 +302,23 @@ func (w *OrderBookTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.C
 					marketUpdatedTimes[market] = time.Now().Add(time.Minute)
 				}
 			}
-			select {
-			case w.writeCh <- SubscribeParam{
-				Op:   "unsubscribe",
-				Args: args,
-			}:
-			default:
-				logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
-			}
-			select {
-			case w.writeCh <- SubscribeParam{
-				Op:   "subscribe",
-				Args: args,
-			}:
-			default:
-				logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+			if len(args) > 0 {
+				select {
+				case w.writeCh <- SubscribeParam{
+					Op:   "unsubscribe",
+					Args: args,
+				}:
+				default:
+					logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+				}
+				select {
+				case w.writeCh <- SubscribeParam{
+					Op:   "subscribe",
+					Args: args,
+				}:
+				default:
+					logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+				}
 			}
 			marketCheckTimer.Reset(marketCheckInterval)
 			break

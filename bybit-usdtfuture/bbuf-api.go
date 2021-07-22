@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -97,7 +96,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	hmacSigned := common.GetHMAC(common.HashSHA256, []byte(values.Encode()), []byte(api.secret))
 	values.Set("sign", common.HexEncodeToString(hmacSigned))
 	path = common.EncodeURLValues(path, values)
-	logger.Debugf("%s", api.url+path)
+	//logger.Debugf("%s", api.url+path)
 	req, err := http.NewRequest(method, api.url+path, nil)
 	if err != nil {
 		return err
