@@ -373,8 +373,8 @@ func (w *OrderBookTickerWS) dataHandleLoop(ctx context.Context, symbol string, i
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("UpdateOrderBook error %v", err)
 						logSilentTime = time.Now().Add(time.Minute)
-						continue
 					}
+					continue
 				}
 			} else if hasPartial {
 				err = UpdateOrderBook(msg, &orderBook)
@@ -382,8 +382,8 @@ func (w *OrderBookTickerWS) dataHandleLoop(ctx context.Context, symbol string, i
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("UpdateOrderBook error %v", err)
 						logSilentTime = time.Now().Add(time.Minute)
-						continue
 					}
+					continue
 				}
 			} else {
 				continue
