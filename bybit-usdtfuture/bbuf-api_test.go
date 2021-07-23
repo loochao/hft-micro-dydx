@@ -162,6 +162,7 @@ func TestAPI_GetBalances(t *testing.T) {
 		t.Fatal(err)
 	}
 	logger.Debugf("%v", balance)
+	logger.Debugf("%f %f", balance.Equity, balance.UnrealisedPnl)
 }
 
 func TestAPI_PlaceOrder(t *testing.T) {

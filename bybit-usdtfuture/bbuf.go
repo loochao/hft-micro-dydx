@@ -208,19 +208,19 @@ func (h *BybitUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.
 				}
 			}
 			break
-		case wallets := <-userWS.WalletsCh:
-			if len(wallets) > 0 {
-				wallet := wallets[0]
-				select {
-				case accountCh <- &wallet:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("accountCh <- &wallet failed, ch len %d", len(accountCh))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
-				}
-				break
-			}
+		case _ = <-userWS.WalletsCh:
+			//if len(wallets) > 0 {
+			//	wallet := wallets[0]
+			//	select {
+			//	case accountCh <- &wallet:
+			//	default:
+			//		if time.Now().Sub(logSilentTime) > 0 {
+			//			logger.Debugf("accountCh <- &wallet failed, ch len %d", len(accountCh))
+			//			logSilentTime = time.Now().Add(time.Minute)
+			//		}
+			//	}
+			//	break
+			//}
 			break
 		case orders := <-userWS.OrdersCh:
 			for _, order := range orders {

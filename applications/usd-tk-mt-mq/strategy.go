@@ -17,7 +17,6 @@ func startXYStrategy(
 	ctx context.Context,
 	xSymbol, ySymbol string,
 	config Config,
-	orderOffset Offset,
 	xExchange common.UsdExchange,
 	yExchange common.UsdExchange,
 	xAccountCh chan common.Balance,
@@ -34,14 +33,16 @@ func startXYStrategy(
 	yOrderErrorCh chan common.OrderError,
 	xSystemStatusCh chan common.SystemStatus,
 	ySystemStatusCh chan common.SystemStatus,
-	depthCh chan common.Depth,
+	xTickerCh chan common.Ticker,
+	yTickerCh chan common.Ticker,
 	saveCh chan *XYStrategy,
 ) (err error) {
 
-	xBiasInMs := float64(config.DepthXBias / time.Millisecond)
-	yBiasInMs := float64(config.DepthYBias / time.Millisecond)
-	minTimeDeltaInMs := float64(config.DepthMinTimeDelta / time.Millisecond)
-	maxTimeDeltaInMs := float64(config.DepthMaxTimeDelta / time.Millisecond)
+	xBiasInMs := float64(config.TickerXBias / time.Millisecond)
+	yBiasInMs := float64(config.TickerYBias / time.Millisecond)
+	minTimeDeltaInMs := float64(config.TickerMinTimeDelta / time.Millisecond)
+	maxTimeDeltaInMs := float64(config.TickerMaxTimeDelta / time.Millisecond)
+
 	var quantileMiddle *float64
 
 	timedTDigest := stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
@@ -68,8 +69,6 @@ func startXYStrategy(
 	strat := XYStrategy{
 		xExchange:               xExchange,
 		yExchange:               yExchange,
-		xExchangeID:             xExchange.GetExchange(),
-		yExchangeID:             yExchange.GetExchange(),
 		isXSpot:                 xExchange.IsSpot(),
 		isYSpot:                 yExchange.IsSpot(),
 		xLeverage:               config.XExchange.Leverage,
@@ -78,11 +77,7 @@ func startXYStrategy(
 		ySymbol:                 ySymbol,
 		targetWeight:            config.TargetWeights[xSymbol],
 		maxOrderValue:           config.MaxOrderValues[xSymbol],
-		xyDepthMatchSum:         common.NewRollingSum(config.DepthReportCount),
-		xyDepthMatchWindow:      float64(config.DepthReportCount),
-		xyDepthMatchRatio:       0.0,
 		config:                  config,
-		orderOffset:             orderOffset,
 		xAccountCh:              xAccountCh,
 		yAccountCh:              yAccountCh,
 		xPositionCh:             xPositionCh,
@@ -97,18 +92,17 @@ func startXYStrategy(
 		yOrderRequestCh:         yOrderRequestCh,
 		xSystemStatusCh:         xSystemStatusCh,
 		ySystemStatusCh:         ySystemStatusCh,
-		depthCh:                 depthCh,
+		xTickerCh:               xTickerCh,
+		yTickerCh:               yTickerCh,
 		saveCh:                  saveCh,
 		xPositionUpdateTime:     time.Time{},
 		yPositionUpdateTime:     time.Time{},
-		xDepth:                  nil,
-		yDepth:                  nil,
-		xDepthTime:              time.Time{},
-		yDepthTime:              time.Time{},
-		xDepthFilter:            common.NewTimeFilter(config.DepthXDecay, xBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs),
-		yDepthFilter:            common.NewTimeFilter(config.DepthYDecay, yBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs),
-		xWalkedDepth:            common.WalkedDepthBBMAA{},
-		yWalkedDepth:            common.WalkedDepthBBMAA{},
+		xTicker:                 nil,
+		yTicker:                 nil,
+		xTickerTime:             time.Time{},
+		yTickerTime:             time.Time{},
+		xTickerFilter:           common.NewTimeFilter(config.TickerXDecay, xBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs),
+		yTickerFilter:           common.NewTimeFilter(config.TickerYDecay, yBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs),
 		xAccount:                nil,
 		yAccount:                nil,
 		xPosition:               nil,
@@ -131,8 +125,6 @@ func startXYStrategy(
 		enterTarget:             0,
 		usdAvailable:            0,
 		logSilentTime:           time.Time{},
-		xWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
-		yWalkDepthTimer:         time.NewTimer(time.Hour * 9999),
 		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
 		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
 		xOpenOrderCheckTimer:    time.NewTimer(time.Hour * 9999),
@@ -145,10 +137,10 @@ func startXYStrategy(
 		xTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
 		yTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
 		expectedChanSendingTime: time.Nanosecond * 300,
-		depthMatchCount:         0,
-		depthCount:              0,
-		xDepthExpireCount:       0,
-		yDepthExpireCount:       0,
+		tickerMatchCount:        0,
+		tickerCount:             0,
+		xTickerExpireCount:      0,
+		yTickerExpireCount:      0,
 		shortLastEnter:          0,
 		longLastEnter:           0,
 		adjustedAgeDiff:         0,
@@ -176,6 +168,8 @@ func startXYStrategy(
 		xCancelOrderParam:       common.CancelOrderParam{Symbol: xSymbol},
 		stopped:                 0,
 		fundingRateSettleSilent: false,
+
+
 		shortTopOpenOrderCount:  common.NewTimedSum(config.TurnoverLookback),
 		shortBotCloseOrderCount: common.NewTimedSum(config.TurnoverLookback),
 		longBotOpenOrderCount:   common.NewTimedSum(config.TurnoverLookback),
@@ -185,6 +179,7 @@ func startXYStrategy(
 		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
 		quantileLastSampleTime:  time.Time{},
 		quantileMiddle:          quantileMiddle,
+
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
@@ -227,18 +222,15 @@ func startXYStrategy(
 
 func (strat *XYStrategy) Stop() {
 	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
-		logger.Debugf("stopped %s %s", strat.xSymbol, strat.ySymbol)
+		logger.Debugf("stopped")
 		strat.handleQuantileSave()
 		strat.tryCancelXOpenOrder("end")
 	}
 }
 
 func (strat *XYStrategy) startLoop(ctx context.Context) {
-	defer strat.xWalkDepthTimer.Stop()
-	defer strat.yWalkDepthTimer.Stop()
 	defer strat.spreadWalkTimer.Stop()
 	defer strat.realisedSpreadTimer.Stop()
-	defer strat.quantileSaveTimer.Stop()
 	defer strat.saveTimer.Stop()
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
@@ -266,10 +258,14 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 				strat.fundingRateSettleTimer.Reset(strat.config.FundingRateSilentTime * 2)
 			} else {
 				strat.fundingRateSettleSilent = false
-				strat.fundingRateSettleTimer.Reset(time.Now().Truncate(strat.config.FundingInterval).Add(strat.config.FundingInterval - strat.config.FundingRateSilentTime).Sub(time.Now()))
+				strat.fundingRateSettleTimer.Reset(time.Minute)
 			}
 		case <-strat.saveTimer.C:
 			strat.handleSave()
+			break
+		case <-strat.quantileSaveTimer.C:
+			strat.handleQuantileSave()
+			strat.quantileSaveTimer.Reset(strat.config.QuantileSaveInterval)
 			break
 		case <-strat.xOpenOrderCheckTimer.C:
 			if strat.xOpenOrder != nil {
@@ -280,10 +276,6 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			} else {
 				strat.xOpenOrderCheckTimer.Reset(time.Hour * 9999)
 			}
-			break
-		case <-strat.quantileSaveTimer.C:
-			strat.handleQuantileSave()
-			strat.quantileSaveTimer.Reset(strat.config.QuantileSaveInterval)
 			break
 		case strat.xAccount = <-strat.xAccountCh:
 			strat.updateEnterStepAndTarget()
@@ -315,17 +307,14 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 		case strat.yOrderError = <-strat.yOrderErrorCh:
 			strat.handleYOrderError()
 			break
-		case <-strat.xWalkDepthTimer.C:
-			strat.walkXDepth()
-			break
-		case <-strat.yWalkDepthTimer.C:
-			strat.walkYDepth()
-			break
 		case <-strat.spreadWalkTimer.C:
 			strat.walkSpread()
 			break
-		case strat.nextDepth = <-strat.depthCh:
-			strat.handleDepth()
+		case strat.xNextTicker = <-strat.xTickerCh:
+			strat.handleXTicker()
+			break
+		case strat.yNextTicker = <-strat.yTickerCh:
+			strat.handleYTicker()
 			break
 		case <-strat.realisedSpreadTimer.C:
 			strat.handleRealisedSpread()
@@ -334,7 +323,6 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	}
 }
 func (strat *XYStrategy) handleSave() {
-	strat.saveTimer.Reset(strat.config.InternalInflux.SaveInterval)
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady ||
 		strat.xPosition == nil ||
@@ -348,6 +336,7 @@ func (strat *XYStrategy) handleSave() {
 	default:
 		logger.Debugf("strat.saveCh <- strat failed %s %s ch len %d", strat.xSymbol, strat.ySymbol, len(strat.saveCh))
 	}
+	strat.saveTimer.Reset(strat.config.InternalInflux.SaveInterval)
 }
 
 func (strat *XYStrategy) hedgeYPosition() {
@@ -375,28 +364,28 @@ func (strat *XYStrategy) hedgeYPosition() {
 		return
 	}
 	//如y下单也加上控制，以限下单太大，造成市场冲击
-	if strat.ySizeDiff*strat.yMultiplier < -strat.maxOrderValue/strat.yWalkedDepth.MidPrice {
-		strat.ySizeDiff = -strat.maxOrderValue / strat.yWalkedDepth.MidPrice / strat.yMultiplier
-	} else if strat.ySizeDiff*strat.yMultiplier > strat.maxOrderValue/strat.yWalkedDepth.MidPrice {
-		strat.ySizeDiff = strat.maxOrderValue / strat.yWalkedDepth.MidPrice / strat.yMultiplier
+	if strat.ySizeDiff*strat.yMultiplier < -strat.maxOrderValue/strat.yTicker.GetBidPrice() {
+		strat.ySizeDiff = -strat.maxOrderValue / strat.yTicker.GetBidPrice() / strat.yMultiplier
+	} else if strat.ySizeDiff*strat.yMultiplier > strat.maxOrderValue/strat.yTicker.GetAskPrice() {
+		strat.ySizeDiff = strat.maxOrderValue / strat.yTicker.GetAskPrice() / strat.yMultiplier
 	}
 	strat.ySizeDiff = math.Floor(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
 
 	if strat.isYSpot {
 		if math.Abs(strat.ySizeDiff) < strat.yStepSize {
 			return
-		} else if strat.ySizeDiff < 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yWalkedDepth.MidPrice < strat.yMinNotional {
+		} else if strat.ySizeDiff < 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice() < strat.yMinNotional {
 			return
-		} else if strat.ySizeDiff > 0 && strat.ySizeDiff*strat.yMultiplier*strat.yWalkedDepth.MidPrice < strat.yMinNotional {
+		} else if strat.ySizeDiff > 0 && strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetAskPrice() < strat.yMinNotional {
 			return
 		}
 	} else {
 		//期货以close仓位，没有minNotional限制
 		if math.Abs(strat.ySizeDiff) < strat.yStepSize {
 			return
-		} else if strat.ySizeDiff < 0 && strat.yPosition.GetSize() <= 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yWalkedDepth.MidPrice < strat.yMinNotional {
+		} else if strat.ySizeDiff < 0 && strat.yPosition.GetSize() <= 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice() < strat.yMinNotional {
 			return
-		} else if strat.ySizeDiff > 0 && strat.yPosition.GetSize() >= 0 && strat.ySizeDiff*strat.yMultiplier*strat.yWalkedDepth.MidPrice < strat.yMinNotional {
+		} else if strat.ySizeDiff > 0 && strat.yPosition.GetSize() >= 0 && strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetAskPrice() < strat.yMinNotional {
 			return
 		}
 	}
@@ -456,12 +445,12 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			logger.Debugf("bad strat.xPosition == nextPos pass same pointer")
 			return
 		}
-		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= -time.Second {
+		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= 0 {
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 				strat.yOrderSilentTime = time.Now()
-				if strat.xWalkedDepth.Symbol != "" {
-					strat.xTimedPositionChange.Insert(time.Now(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize())*strat.xWalkedDepth.MidPrice*strat.xMultiplier)
+				if strat.xTicker != nil {
+					strat.xTimedPositionChange.Insert(time.Now(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize())*strat.xMidPrice*strat.xMultiplier)
 				}
 				logger.Debugf("%s x position change %f -> %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 				strat.xPosition = nextPos
@@ -487,12 +476,11 @@ func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
 	}
 	strat.xCancelSilentTime = time.Now().Add(strat.config.XCancelSilent)
 	if !strat.config.DryRun {
-		//logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
+		strat.xCancelOrderParam.ClientID = strat.xOpenOrder.ClientID
 		select {
 		case strat.xOrderRequestCh <- common.OrderRequest{
 			Cancel: &strat.xCancelOrderParam,
 		}:
-			//logger.Debugf("sent cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
 		}
 	}
 	strat.xOpenOrder = nil
@@ -508,10 +496,10 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 			logger.Debugf("bad strat.yPosition == nextPos pass same pointer")
 			return
 		}
-		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= -time.Second {
+		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= 0 {
 			if math.Abs(strat.yPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
-				if strat.yWalkedDepth.Symbol != "" {
-					strat.yTimedPositionChange.Insert(time.Now(), math.Abs(strat.yPosition.GetSize()-nextPos.GetSize())*strat.yWalkedDepth.MidPrice*strat.yMultiplier)
+				if strat.yTicker != nil {
+					strat.yTimedPositionChange.Insert(time.Now(), math.Abs(strat.yPosition.GetSize()-nextPos.GetSize())*strat.yMidPrice*strat.yMultiplier)
 				}
 				logger.Debugf("%s y position change %f -> %f %v", nextPos.GetSymbol(), strat.yPosition.GetSize(), nextPos.GetSize(), nextPos.GetEventTime())
 			}

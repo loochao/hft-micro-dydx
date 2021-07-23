@@ -441,7 +441,6 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, topics
 				Op: "ping",
 			}:
 				pingTimer.Reset(pingInterval)
-				break
 			default:
 				logger.Debugf("w.writeCh <- WSRequest failed, ch len %d", len(w.writeCh))
 				pingTimer.Reset(pingInterval / 4)
@@ -457,7 +456,6 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, topics
 						Args: []string{topic},
 					}:
 						topicUpdatedTimes[topic] = time.Now().Add(topicCheckInterval * time.Duration(len(topics)*2))
-						break
 					default:
 						logger.Debugf("w.writeCh <- WSRequest failed, topic %s ch len %d", topic, len(w.writeCh))
 					}
