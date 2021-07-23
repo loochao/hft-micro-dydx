@@ -150,6 +150,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 				logger.Debugf("json.Unmarshal error %v %s", err, msg)
 				continue
 			}
+			logger.Debugf("%s", wsCap.Topic)
 			switch wsCap.Topic {
 			case "position":
 				err = json.Unmarshal(wsCap.Data, &positions)
