@@ -141,6 +141,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
+			logger.Debugf("%s", msg)
 			//if len(msg) < 28 || msg[27] != 'p' {
 				//logger.Debugf("%s", msg)
 			//}
@@ -247,6 +248,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 				}
 				break
 			case "":
+				logger.Debugf("%v", wsCap.Request)
 				if wsCap.Request != nil {
 					if wsCap.Request.Op == "ping" {
 						select {
@@ -426,7 +428,6 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, topics
 			break
 		case topic := <-w.topicCh:
 			if _, ok := topicUpdatedTimes[topic]; ok {
-				//logger.Debugf("TOPIC %s add 1 hour", topic)
 				topicUpdatedTimes[topic] = time.Now().Add(time.Hour)
 			}
 			trafficTimeoutTimer.Reset(time.Minute)
