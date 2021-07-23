@@ -746,6 +746,10 @@ type BinanceUsdcSpotWithDepth5 struct {
 	BinanceUsdcSpot
 }
 
+func (b BinanceUsdcSpotWithDepth5) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	panic("implement me")
+}
+
 func (b BinanceUsdcSpotWithDepth5) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	panic("implement me")
 }
@@ -756,6 +760,10 @@ func (b BinanceUsdcSpotWithDepth5) StartSideLoop() {
 
 type BinanceUsdcSpotWithDepth20 struct {
 	BinanceUsdcSpot
+}
+
+func (bn *BinanceUsdcSpotWithDepth20) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	panic("implement me")
 }
 
 func (bn *BinanceUsdcSpotWithDepth20) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {

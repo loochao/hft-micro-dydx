@@ -12,13 +12,13 @@ func (strat *XYStrategy) walkSpread() {
 	}
 	//需要用ema time delta 对age diff进行修正
 	strat.adjustedAgeDiff = strat.xWalkedDepth.Time.Sub(strat.yWalkedDepth.Time) + time.Duration(strat.xDepthFilter.TimeDeltaEma-strat.yDepthFilter.TimeDeltaEma)*time.Millisecond
-	//取新一点的时间为spread time
+	//取旧一点的时间为spread time
 	if strat.xWalkedDepth.Time.Sub(strat.yWalkedDepth.Time) < 0 {
 		//需要对时间进行补偿
-		strat.spreadTime = strat.yWalkedDepth.Time.Add(time.Millisecond * time.Duration(strat.yDepthFilter.TimeDeltaEma))
-	} else {
-		//需要对时间进行补偿
 		strat.spreadTime = strat.xWalkedDepth.Time.Add(time.Millisecond * time.Duration(strat.xDepthFilter.TimeDeltaEma))
+	} else {
+		strat.spreadTime = strat.yWalkedDepth.Time.Add(time.Millisecond * time.Duration(strat.yDepthFilter.TimeDeltaEma))
+		//需要对时间进行补偿
 	}
 	if strat.adjustedAgeDiff > strat.config.DepthMaxAgeDiffBias {
 		strat.yDepthExpireCount++
