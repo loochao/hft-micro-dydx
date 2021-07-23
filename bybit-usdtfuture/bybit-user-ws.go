@@ -145,12 +145,13 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 			//if len(msg) < 28 || msg[27] != 'p' {
 				//logger.Debugf("%s", msg)
 			//}
+			wsCap.Topic = ""
 			err := json.Unmarshal(msg, &wsCap)
 			if err != nil {
 				logger.Debugf("json.Unmarshal error %v %s", err, msg)
 				continue
 			}
-			logger.Debugf("%s", wsCap.Topic)
+			//logger.Debugf("%s", wsCap.Topic)
 			switch wsCap.Topic {
 			case "position":
 				err = json.Unmarshal(wsCap.Data, &positions)
@@ -249,7 +250,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 				}
 				break
 			case "":
-				logger.Debugf("%v", wsCap.Request)
+				//logger.Debugf("%v", wsCap.Request)
 				if wsCap.Request != nil {
 					if wsCap.Request.Op == "ping" {
 						select {
