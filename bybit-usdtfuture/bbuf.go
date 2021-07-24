@@ -379,7 +379,7 @@ func (h *BybitUsdtFuture) StreamKLine(ctx context.Context, channels map[string]c
 
 func (h *BybitUsdtFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
 	interval := h.settings.PullInterval * 2
-	timer := time.NewTimer(time.Second)
+	timer := time.NewTimer(time.Minute)
 	defer timer.Stop()
 	afterFrTimer := time.NewTimer(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
 	defer afterFrTimer.Stop()
@@ -404,6 +404,13 @@ func (h *BybitUsdtFuture) StreamFundingRate(ctx context.Context, channels map[st
 						logger.Debugf("ch <- &fr failed %s ch len %d", fr.Symbol, len(ch))
 					}
 				}
+				select {
+				case <-time.After(h.settings.HttpRequestInterval):
+				case <-ctx.Done():
+					return
+				case <-h.done:
+					return
+				}
 			}
 			afterFrTimer.Reset(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
 			break
@@ -421,6 +428,13 @@ func (h *BybitUsdtFuture) StreamFundingRate(ctx context.Context, channels map[st
 					default:
 						logger.Debugf("ch <- &fr failed %s ch len %d", fr.Symbol, len(ch))
 					}
+				}
+				select {
+				case <-time.After(h.settings.HttpRequestInterval):
+				case <-ctx.Done():
+					return
+				case <-h.done:
+					return
 				}
 			}
 			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
@@ -564,10 +578,10 @@ func (h *BybitUsdtFuture) positionsLoop(
 				//假定只有一个方向的仓位
 				for _, position := range positions {
 					if mP, ok := positionBySymbols[position.Data.Symbol]; ok {
-						if position.Data.Side == PositionSideBuy && position.Data.Size != 0{
+						if position.Data.Side == PositionSideBuy && position.Data.Size != 0 {
 							mP.Size += position.Data.Size
 							mP.Price = position.Data.EntryPrice
-						} else if position.Data.Side == PositionSideSell && position.Data.Size != 0{
+						} else if position.Data.Side == PositionSideSell && position.Data.Size != 0 {
 							mP.Size -= position.Data.Size
 							mP.Price = position.Data.EntryPrice
 						}
@@ -635,7 +649,7 @@ func (h *BybitUsdtFuture) submitOrder(ctx context.Context, param common.NewOrder
 	if param.Type == common.OrderTypeMarket {
 		newOrderParam.OrderType = OrderTypeMarket
 	} else {
-		newOrderParam.OrderType = OrderTypeMarket
+		newOrderParam.OrderType = OrderTypeLimit
 	}
 	switch param.TimeInForce {
 	case common.OrderTimeInForceFOK:
@@ -651,6 +665,7 @@ func (h *BybitUsdtFuture) submitOrder(ctx context.Context, param common.NewOrder
 	if param.Price != 0 {
 		newOrderParam.Price = param.Price
 	}
+	logger.Debugf("%v", newOrderParam)
 	order, err := h.api.PlaceOrder(ctx, newOrderParam)
 	logger.Debugf("%v", order)
 	if err != nil {

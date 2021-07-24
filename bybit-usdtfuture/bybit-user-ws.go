@@ -141,7 +141,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 		case <-w.done:
 			return
 		case msg := <-w.messageCh:
-			logger.Debugf("%s", msg)
+			//logger.Debugf("%s", msg)
 			//if len(msg) < 28 || msg[27] != 'p' {
 				//logger.Debugf("%s", msg)
 			//}
