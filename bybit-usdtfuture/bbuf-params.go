@@ -2,7 +2,6 @@ package bybit_usdtfuture
 
 import (
 	"fmt"
-	"github.com/geometrybase/hft-micro/logger"
 	"net/url"
 	"strconv"
 )
@@ -116,7 +115,7 @@ func (o *NewOrderParam) ToUrlValues() url.Values {
 	if o.OrderLinkID != "" {
 		values.Set("order_link_id", o.OrderLinkID)
 	}
-	logger.Debugf("%s", values.Encode())
+	//logger.Debugf("%s", values.Encode())
 	return values
 }
 
