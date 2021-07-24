@@ -665,9 +665,9 @@ func (h *BybitUsdtFuture) submitOrder(ctx context.Context, param common.NewOrder
 	if param.Price != 0 {
 		newOrderParam.Price = param.Price
 	}
-	logger.Debugf("%v", newOrderParam)
-	order, err := h.api.PlaceOrder(ctx, newOrderParam)
-	logger.Debugf("%v", order)
+	//logger.Debugf("%v", newOrderParam)
+	_, err = h.api.PlaceOrder(ctx, newOrderParam)
+	//logger.Debugf("%v", order)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{
