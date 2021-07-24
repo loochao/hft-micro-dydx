@@ -82,6 +82,9 @@ func main() {
 	}
 
 	switch xyConfig.XExchange.Name {
+	case "binanceUsdtFuture":
+		xExchange = &bnuf.BinanceUsdtFuture{}
+		break
 	case "binanceUsdtSpotWithDepth5":
 		xExchange = &bnus.BinanceUsdtSpotWithDepth5{}
 		break
@@ -123,6 +126,9 @@ func main() {
 	}
 
 	switch xyConfig.YExchange.Name {
+	case "binanceUsdtFuture":
+		yExchange = &bnuf.BinanceUsdtFuture{}
+		break
 	case "binanceUsdtSpotWithDepth5":
 		yExchange = &bnus.BinanceUsdtSpotWithDepth5{}
 		break
