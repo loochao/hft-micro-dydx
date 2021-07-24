@@ -696,6 +696,7 @@ func (h *BybitUsdtFuture) cancelOrder(ctx context.Context, param common.CancelOr
 			default:
 				logger.Debugf("errCh <- common.OrderError failed first time, ch len %d", len(errCh))
 			}
+			time.Sleep(time.Second*5)
 			_, err := h.api.CancelOrder(ctx, CancelParam{
 				Symbol:      param.Symbol,
 				OrderLinkID: param.ClientID,
@@ -709,6 +710,7 @@ func (h *BybitUsdtFuture) cancelOrder(ctx context.Context, param common.CancelOr
 				default:
 					logger.Debugf("errCh <- common.OrderError failed second time, ch len %d", len(errCh))
 				}
+				time.Sleep(time.Second*5)
 				_, err := h.api.CancelOrder(ctx, CancelParam{
 					Symbol:      param.Symbol,
 					OrderLinkID: param.ClientID,
