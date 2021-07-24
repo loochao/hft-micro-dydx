@@ -93,9 +93,9 @@ func (o *NewOrderParam) ToUrlValues() url.Values {
 	values.Set("side", o.Side)
 	values.Set("symbol", o.Symbol)
 	values.Set("order_type", o.OrderType)
-	values.Set("qty", strconv.FormatFloat(o.Qty, 'f', -1, 64))
+	values.Set("qty", fmt.Sprintf("%.8f", o.Qty))
 	if o.Price != 0 {
-		values.Set("price", strconv.FormatFloat(o.Price, 'f', -1, 64))
+		values.Set("price", fmt.Sprintf("%.8f", o.Qty))
 	}
 	if o.TimeInForce == "" {
 		values.Set("time_in_force", TimeInForceGoodTillCancel)
