@@ -6,19 +6,26 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
+	"strings"
+	"sync/atomic"
 	"time"
 )
 
 type API struct {
-	client *http.Client
-	key    string
-	secret string
-	url    string
+	client      *http.Client
+	key         string
+	secret      string
+	url         string
+	clients     []*http.Client
+	clientIndex int32
+	useProxies  bool
 }
 
 func (api *API) GetServerTime(ctx context.Context) (*time.Time, error) {
@@ -26,7 +33,12 @@ func (api *API) GetServerTime(ctx context.Context) (*time.Time, error) {
 	if err != nil {
 		return nil, err
 	}
-	resp, err := api.client.Do(req.WithContext(ctx))
+	var client = api.client
+	if api.useProxies {
+		index := int(atomic.AddInt32(&api.clientIndex, 1))%len(api.clients)
+		client = api.clients[index]
+	}
+	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +74,12 @@ func (api *API) SendHTTPRequest(ctx context.Context, method, path string, param 
 	if err != nil {
 		return err
 	}
-	resp, err := api.client.Do(req.WithContext(ctx))
+	var client = api.client
+	if api.useProxies {
+		index := int(atomic.AddInt32(&api.clientIndex, 1))%len(api.clients)
+		client = api.clients[index]
+	}
+	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
 	}
@@ -101,7 +118,12 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err != nil {
 		return err
 	}
-	resp, err := api.client.Do(req.WithContext(ctx))
+	var client = api.client
+	if api.useProxies {
+		index := int(atomic.AddInt32(&api.clientIndex, 1))%len(api.clients)
+		client = api.clients[index]
+	}
+	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
 	}
@@ -180,48 +202,79 @@ func (api *API) CancelAllOrders(ctx context.Context, param CancelAllParam) ([]st
 
 func NewAPI(key, secret, apiUrl, proxy string) (*API, error) {
 	var client http.Client
-	if proxy != "" {
-		proxyUrl, err := url.Parse(proxy)
-		if err != nil {
-			return nil, err
-		}
-		client = http.Client{
-			Timeout: 60 * time.Second,
-			Transport: &http.Transport{
-				Proxy:                 http.ProxyURL(proxyUrl),
-				MaxIdleConns:          100,
-				IdleConnTimeout:       90 * time.Second,
-				TLSHandshakeTimeout:   60 * time.Second,
-				ExpectContinueTimeout: 10 * time.Second,
-				DialContext: (&net.Dialer{
-					Timeout:   60 * time.Second,
-					KeepAlive: 90 * time.Second,
-				}).DialContext,
-			},
+	var clients = make([]*http.Client, 0)
+	if os.Getenv("BBUF_API_PROXIES") == "" {
+		if proxy != "" {
+			proxyUrl, err := url.Parse(proxy)
+			if err != nil {
+				return nil, err
+			}
+			client = http.Client{
+				Timeout: 60 * time.Second,
+				Transport: &http.Transport{
+					Proxy:                 http.ProxyURL(proxyUrl),
+					MaxIdleConns:          100,
+					IdleConnTimeout:       90 * time.Second,
+					TLSHandshakeTimeout:   60 * time.Second,
+					ExpectContinueTimeout: 10 * time.Second,
+					DialContext: (&net.Dialer{
+						Timeout:   60 * time.Second,
+						KeepAlive: 90 * time.Second,
+					}).DialContext,
+				},
+			}
+		} else {
+			client = http.Client{
+				Timeout: 30 * time.Second,
+				Transport: &http.Transport{
+					MaxIdleConns:          100,
+					IdleConnTimeout:       90 * time.Second,
+					TLSHandshakeTimeout:   10 * time.Second,
+					ExpectContinueTimeout: 1 * time.Second,
+					DialContext: (&net.Dialer{
+						Timeout:   10 * time.Second,
+						KeepAlive: 90 * time.Second,
+					}).DialContext,
+				},
+			}
 		}
 	} else {
-		client = http.Client{
-			Timeout: 30 * time.Second,
-			Transport: &http.Transport{
-				MaxIdleConns:          100,
-				IdleConnTimeout:       90 * time.Second,
-				TLSHandshakeTimeout:   10 * time.Second,
-				ExpectContinueTimeout: 1 * time.Second,
-				DialContext: (&net.Dialer{
-					Timeout:   10 * time.Second,
-					KeepAlive: 90 * time.Second,
-				}).DialContext,
-			},
+		proxies := strings.Split(os.Getenv("BBUF_API_PROXIES"), ",")
+		for _, proxy := range proxies {
+			logger.Debugf("PROXY %s", proxy)
+			proxyUrl, err := url.Parse(proxy)
+			if err != nil {
+				return nil, err
+			}
+			client := http.Client{
+				Timeout: 60 * time.Second,
+				Transport: &http.Transport{
+					Proxy:                 http.ProxyURL(proxyUrl),
+					MaxIdleConns:          100,
+					IdleConnTimeout:       90 * time.Second,
+					TLSHandshakeTimeout:   60 * time.Second,
+					ExpectContinueTimeout: 10 * time.Second,
+					DialContext: (&net.Dialer{
+						Timeout:   60 * time.Second,
+						KeepAlive: 90 * time.Second,
+					}).DialContext,
+				},
+			}
+			clients = append(clients, &client)
 		}
+
 	}
 	if apiUrl == "" {
 		apiUrl = "https://api.bybit.com"
 	}
 	api := API{
-		client: &client,
-		key:    key,
-		secret: secret,
-		url:    apiUrl,
+		client:      &client,
+		key:         key,
+		secret:      secret,
+		url:         apiUrl,
+		clientIndex: 0,
+		clients:     clients,
+		useProxies:  os.Getenv("BBUF_API_PROXIES") != "",
 	}
 	return &api, nil
 }
