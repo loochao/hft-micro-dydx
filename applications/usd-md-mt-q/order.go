@@ -438,19 +438,19 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 	}
 	//检查价格有没有在OFFSET范围内，不在撤掉
 	if strat.xOpenOrder.Side == common.OrderSideBuy &&
-		strat.xOpenOrder.Price < strat.xWalkedDepth.BestBidPrice*(1.0 - (strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor) {
+		strat.xOpenOrder.Price < strat.xWalkedDepth.BestBidPrice*(1.0 - (strat.config.ShortEnterDelta-strat.config.ShortExitDelta)) {
 		logger.Debugf("%s CANCEL, BUY PRICE %f < OFFSET BEST BID %f",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
-			strat.xWalkedDepth.BestBidPrice*(1.0 - (strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor) ,
+			strat.xWalkedDepth.BestBidPrice*(1.0 - (strat.config.ShortEnterDelta-strat.config.ShortExitDelta)) ,
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
-		strat.xOpenOrder.Price > strat.xWalkedDepth.BestAskPrice*(1.0 + (strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor) {
+		strat.xOpenOrder.Price > strat.xWalkedDepth.BestAskPrice*(1.0 + (strat.config.LongExitDelta-strat.config.LongEnterDelta)) {
 		logger.Debugf("%s CANCEL, SELL PRICE %f > OFFSET BEST ASK %f",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
-			strat.xWalkedDepth.BestAskPrice*(1.0 + (strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor),
+			strat.xWalkedDepth.BestAskPrice*(1.0 + (strat.config.LongExitDelta-strat.config.LongEnterDelta)),
 		)
 		return false
 	}
