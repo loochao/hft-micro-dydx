@@ -2,6 +2,7 @@ package bybit_usdtfuture
 
 import (
 	"fmt"
+	"github.com/geometrybase/hft-micro/logger"
 	"net/url"
 	"strconv"
 )
@@ -93,9 +94,9 @@ func (o *NewOrderParam) ToUrlValues() url.Values {
 	values.Set("side", o.Side)
 	values.Set("symbol", o.Symbol)
 	values.Set("order_type", o.OrderType)
-	values.Set("qty", fmt.Sprintf("%.8f", o.Qty))
+	values.Set("qty", fmt.Sprintf("%.4f", o.Qty))
 	if o.Price != 0 {
-		values.Set("price", fmt.Sprintf("%.8f", o.Qty))
+		values.Set("price", fmt.Sprintf("%.4f", o.Qty))
 	}
 	if o.TimeInForce == "" {
 		values.Set("time_in_force", TimeInForceGoodTillCancel)
@@ -115,6 +116,7 @@ func (o *NewOrderParam) ToUrlValues() url.Values {
 	if o.OrderLinkID != "" {
 		values.Set("order_link_id", o.OrderLinkID)
 	}
+	logger.Debugf("%s", values.Encode())
 	return values
 }
 
