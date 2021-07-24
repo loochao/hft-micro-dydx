@@ -129,6 +129,24 @@ func (ca *CancelAllParam) ToUrlValues() url.Values {
 	return values
 }
 
+type CancelParam struct {
+	Symbol      string
+	OrderID     string
+	OrderLinkID string
+}
+
+func (ca *CancelParam) ToUrlValues() url.Values {
+	values := url.Values{}
+	values.Set("symbol", ca.Symbol)
+	if ca.OrderID != "" {
+		values.Set("order_id", ca.OrderID)
+	}
+	if ca.OrderLinkID != "" {
+		values.Set("order_link_id", ca.OrderLinkID)
+	}
+	return values
+}
+
 type WSRequest struct {
 	Op   string   `json:"op"`
 	Args []string `json:"args,omitempty"`

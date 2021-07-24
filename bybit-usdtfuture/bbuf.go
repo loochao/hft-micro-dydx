@@ -681,7 +681,51 @@ func (h *BybitUsdtFuture) submitOrder(ctx context.Context, param common.NewOrder
 }
 
 func (h *BybitUsdtFuture) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
-	if param.Symbol != "" {
+	if param.Symbol != "" && param.ClientID != "" {
+		logger.Debugf("CANCEL %s %s", param.Symbol, param.ClientID)
+		_, err := h.api.CancelOrder(ctx, CancelParam{
+			Symbol:      param.Symbol,
+			OrderLinkID: param.ClientID,
+		})
+		if err != nil {
+			select {
+			case errCh <- common.OrderError{
+				Cancel: &param,
+				Error:  err,
+			}:
+			default:
+				logger.Debugf("errCh <- common.OrderError failed first time, ch len %d", len(errCh))
+			}
+			_, err := h.api.CancelOrder(ctx, CancelParam{
+				Symbol:      param.Symbol,
+				OrderLinkID: param.ClientID,
+			})
+			if err != nil {
+				select {
+				case errCh <- common.OrderError{
+					Cancel: &param,
+					Error:  err,
+				}:
+				default:
+					logger.Debugf("errCh <- common.OrderError failed second time, ch len %d", len(errCh))
+				}
+				_, err := h.api.CancelOrder(ctx, CancelParam{
+					Symbol:      param.Symbol,
+					OrderLinkID: param.ClientID,
+				})
+				if err != nil {
+					select {
+					case errCh <- common.OrderError{
+						Cancel: &param,
+						Error:  err,
+					}:
+					default:
+						logger.Debugf("errCh <- common.OrderError failed third time, ch len %d", len(errCh))
+					}
+				}
+			}
+		}
+	} else if param.Symbol != "" {
 		_, err := h.api.CancelAllOrders(ctx, CancelAllParam{
 			Symbol: param.Symbol,
 		})

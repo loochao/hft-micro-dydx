@@ -650,3 +650,7 @@ func (m MergedPosition) GetParseTime() time.Time {
 func (m MergedPosition) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
+
+type CancelOrderResp struct {
+	OrderID string `json:"order_id"`
+}

@@ -492,6 +492,7 @@ func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
 	strat.xCancelSilentTime = time.Now().Add(strat.config.XCancelSilent)
 	if !strat.config.DryRun {
 		//logger.Debugf("sending cancel strat.xOrderRequestCh <- common.OrderRequest %s %s", strat.xSymbol, reason)
+		strat.xCancelOrderParam.ClientID = strat.xOpenOrder.ClientID
 		select {
 		case strat.xOrderRequestCh <- common.OrderRequest{
 			Cancel: &strat.xCancelOrderParam,

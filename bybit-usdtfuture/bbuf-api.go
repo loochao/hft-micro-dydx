@@ -203,6 +203,11 @@ func (api *API) CancelAllOrders(ctx context.Context, param CancelAllParam) ([]st
 	return ids, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/private/linear/order/cancel-all", &param, &ids)
 }
 
+func (api *API) CancelOrder(ctx context.Context, param CancelParam) (*CancelOrderResp, error) {
+	res := &CancelOrderResp{}
+	return res, api.SendAuthenticatedHTTPRequest(ctx, http.MethodPost, "/private/linear/order/cancel", &param, &res)
+}
+
 func NewAPI(key, secret, apiUrl, proxy string) (*API, error) {
 	var client http.Client
 	var clients = make([]*http.Client, 0)
