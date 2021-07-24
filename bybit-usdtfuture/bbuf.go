@@ -265,7 +265,7 @@ func (h *BybitUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.
 						newPos.Price = nextPos.EntryPrice
 					}
 					newPositions[nextPos.Symbol] = newPos
-					logger.Debugf("WS POS %v, %v", nextPos, newPos)
+					//logger.Debugf("WS POS %v, %v", nextPos, newPos)
 				}
 			}
 			for symbol, newPos := range newPositions {
