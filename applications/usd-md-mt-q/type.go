@@ -41,6 +41,8 @@ type XYStrategy struct {
 
 	xPositionUpdateTime time.Time
 	yPositionUpdateTime time.Time
+	yOrderTime          time.Time
+	xOrderTime          time.Time
 
 	xyDepthMatchRatio  float64
 	xyDepthMatchWindow float64
@@ -79,7 +81,7 @@ type XYStrategy struct {
 	enterStep    float64
 	enterTarget  float64
 	usdAvailable float64
-	takerImpact *float64
+	takerImpact  *float64
 
 	logSilentTime        time.Time
 	xWalkDepthTimer      *time.Timer

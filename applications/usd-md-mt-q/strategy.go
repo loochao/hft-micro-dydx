@@ -424,11 +424,13 @@ func (strat *XYStrategy) hedgeYPosition() {
 		}:
 			//logger.Debugf("sent strat.yOrderRequestCh <- common.OrderRequest %s", strat.yNewOrderParam.Symbol)
 			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
-			strat.yPositionUpdateTime = time.Unix(0, 0)
+			strat.yPositionUpdateTime = time.Time{}
+			strat.yOrderTime = time.Now()
 		}
 	} else {
 		strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
-		strat.yPositionUpdateTime = time.Unix(0, 0)
+		strat.yPositionUpdateTime = time.Time{}
+		strat.yOrderTime = time.Now()
 	}
 }
 
@@ -445,7 +447,7 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 	if strat.takerImpact == nil {
 		strat.takerImpact = new(float64)
 	}
-	*strat.takerImpact = strat.enterStep*strat.config.TakerImpactFactor
+	*strat.takerImpact = strat.enterStep * strat.config.TakerImpactFactor
 }
 
 func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
@@ -458,7 +460,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			logger.Debugf("bad strat.xPosition == nextPos pass same pointer")
 			return
 		}
-		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= -time.Second {
+		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= 0 {
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
 				strat.yOrderSilentTime = time.Now()
@@ -510,7 +512,8 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 			logger.Debugf("bad strat.yPosition == nextPos pass same pointer")
 			return
 		}
-		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= -time.Second {
+		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= 0 &&
+			nextPos.GetEventTime().Sub(strat.yOrderSilentTime) > 0 {
 			if math.Abs(strat.yPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				if strat.yWalkedDepth.Symbol != "" {
 					strat.yTimedPositionChange.Insert(time.Now(), math.Abs(strat.yPosition.GetSize()-nextPos.GetSize())*strat.yWalkedDepth.MidPrice*strat.yMultiplier)
