@@ -37,6 +37,7 @@ func (api *API) GetServerTime(ctx context.Context) (*time.Time, error) {
 	if api.useProxies {
 		index := int(atomic.AddInt32(&api.clientIndex, 1))%len(api.clients)
 		client = api.clients[index]
+		logger.Debugf("%s", index)
 	}
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
@@ -78,6 +79,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, method, path string, param 
 	if api.useProxies {
 		index := int(atomic.AddInt32(&api.clientIndex, 1))%len(api.clients)
 		client = api.clients[index]
+		logger.Debugf("%s", index)
 	}
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
@@ -122,6 +124,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if api.useProxies {
 		index := int(atomic.AddInt32(&api.clientIndex, 1))%len(api.clients)
 		client = api.clients[index]
+		logger.Debugf("%s", index)
 	}
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
