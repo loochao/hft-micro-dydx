@@ -435,7 +435,7 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, topics
 			trafficTimeoutTimer.Reset(time.Minute)
 			break
 		case <-w.pingCh:
-			logger.Debugf("<-w.pingCh")
+			//logger.Debugf("<-w.pingCh")
 			trafficTimeoutTimer.Reset(time.Minute)
 			break
 		case <-pingTimer.C:
