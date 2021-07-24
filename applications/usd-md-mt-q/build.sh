@@ -23,5 +23,5 @@ git push origin "usd-md-mt-q.$dt" --force
 
 echo ""
 echo "hk05"
-rsync -avx --progress "./dist/usd-md-mt-q.arm64.$dt" hk05:/usr/local/bin/
+rsync -avx --progress "./dist/usd-md-mt-q.amd64.$dt" hk05:/usr/local/bin/
 
