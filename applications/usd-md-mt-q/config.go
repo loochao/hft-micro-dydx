@@ -52,6 +52,7 @@ type Config struct {
 	DepthXBias           time.Duration `yaml:"depthXBias"`
 	DepthMaxAgeDiffBias  time.Duration `yaml:"depthMaxAgeDiffBias"`
 	DepthReportCount     int           `yaml:"depthReportCount"`
+
 	SpreadTimeToCancel   time.Duration `yaml:"spreadTimeToCancel"`
 	SpreadTimeToEnter    time.Duration `yaml:"spreadTimeToEnter"`
 	SpreadLookback       time.Duration `yaml:"spreadLookback"`

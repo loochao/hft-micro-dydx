@@ -102,9 +102,11 @@ func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []
 			} else if msg[35] == '"' {
 				symbol = common.UnsafeBytesToString(msg[25:35])
 			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("other msg %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
+				if msgLen < 28 ||  msg[27] != 'p' {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("other msg %s", msg)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 				continue
 			}
@@ -299,23 +301,26 @@ func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 			for market, updateTime := range marketUpdatedTimes {
 				if time.Now().Sub(updateTime) > marketTimeout {
 					args = append(args, fmt.Sprintf("orderBookL2_25.%s", market))
+					marketUpdatedTimes[market] = time.Now().Add(time.Minute)
 				}
 			}
-			select {
-			case w.writeCh <- SubscribeParam{
-				Op:   "unsubscribe",
-				Args: args,
-			}:
-			default:
-				logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
-			}
-			select {
-			case w.writeCh <- SubscribeParam{
-				Op:   "subscribe",
-				Args: args,
-			}:
-			default:
-				logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+			if len(args) > 0 {
+				select {
+				case w.writeCh <- SubscribeParam{
+					Op:   "unsubscribe",
+					Args: args,
+				}:
+				default:
+					logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+				}
+				select {
+				case w.writeCh <- SubscribeParam{
+					Op:   "subscribe",
+					Args: args,
+				}:
+				default:
+					logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+				}
 			}
 			marketCheckTimer.Reset(marketCheckInterval)
 			break
@@ -347,15 +352,14 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, symbol string, inputCh
 	logger.Debugf("START dataHandleLoop %s", symbol)
 	defer logger.Debugf("EXIT dataHandleLoop %s", symbol)
 	logSilentTime := time.Now()
-	orderBookMsg := OrderBookMsg{}
 	var err error
 	var orderBook = OrderBook{
 		Bids:   common.Bids{},
 		Asks:   common.Asks{},
 		Symbol: symbol,
 	}
+	var symbolLen = len(symbol)
 	var hasPartial = false
-	var crossSeq int64 = 0
 	for {
 		select {
 		case <-ctx.Done():
@@ -363,30 +367,33 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, symbol string, inputCh
 		case <-w.done:
 			return
 		case msg := <-inputCh:
-			//logger.Debugf("%s", msg)
-			err = json.Unmarshal(msg, &orderBookMsg)
-			if err != nil {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("json.Unmarshal error %v", err)
-					logSilentTime = time.Now().Add(time.Minute)
+			//logger.Debugf("%s", msg[35+symbolLen:])
+			if msg[35+symbolLen] == 's' {
+				hasPartial = true
+				err = UpdateOrderBook(msg, &orderBook)
+				if err != nil {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("UpdateOrderBook error %v", err)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+					continue
 				}
+			} else if hasPartial {
+				err = UpdateOrderBook(msg, &orderBook)
+				if err != nil {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("UpdateOrderBook error %v", err)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+					continue
+				}
+			} else {
 				continue
 			}
-			if orderBookMsg.Type == "snapshot" {
-				logger.Debugf("%d", orderBookMsg.CrossSeq)
-				hasPartial = true
-				crossSeq = orderBookMsg.CrossSeq
-				orderBook.Bids = common.Bids{}
-				orderBook.Asks = common.Asks{}
-				for _, l := range orderBookMsg.Data.OrderBook {
-					if l.Side == "Buy" {
-						orderBook.Bids = orderBook.Bids.Update([2]float64{l.Price, l.Size})
-					} else {
-						orderBook.Asks = orderBook.Asks.Update([2]float64{l.Price, l.Size})
-					}
-				}
+
+			if orderBook.IsValidate() {
 				outOrderbook := orderBook
-				logger.Debugf("%v", outOrderbook.IsValidate())
+				//logger.Debugf("%v", outOrderbook.IsValidate())
 				select {
 				case outputCh <- &outOrderbook:
 				default:
@@ -403,57 +410,15 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, symbol string, inputCh
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
-			} else if hasPartial {
-				if orderBookMsg.CrossSeq <= crossSeq {
-					hasPartial = false
-					select {
-					case w.symbolResetCh <- symbol:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("w.symbolResetCh <- symbol failed, ch len %d", len(w.symbolResetCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
-				} else {
-					crossSeq = orderBookMsg.CrossSeq
-					for _, l := range orderBookMsg.Data.Delete {
-						if l.Side == "Buy" {
-							orderBook.Bids = orderBook.Bids.Update([2]float64{l.Price, 0})
-						} else {
-							orderBook.Asks = orderBook.Asks.Update([2]float64{l.Price, 0})
-						}
-					}
-					for _, l := range orderBookMsg.Data.Update {
-						if l.Side == "Buy" {
-							orderBook.Bids = orderBook.Bids.Update([2]float64{l.Price, l.Size})
-						} else {
-							orderBook.Asks = orderBook.Asks.Update([2]float64{l.Price, l.Size})
-						}
-					}
-					for _, l := range orderBookMsg.Data.Insert {
-						if l.Side == "Buy" {
-							orderBook.Bids = orderBook.Bids.Update([2]float64{l.Price, l.Size})
-						} else {
-							orderBook.Asks = orderBook.Asks.Update([2]float64{l.Price, l.Size})
-						}
-					}
-					outOrderbook := orderBook
-					logger.Debugf("%v", outOrderbook.IsValidate())
-					select {
-					case outputCh <- &outOrderbook:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("outputCh <- &outOrderbook failed, ch len %d", len(outputCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
-					select {
-					case w.symbolCh <- symbol:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("w.symbolCh <- symbol failed, ch len %d", len(w.symbolCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
+			} else {
+				hasPartial = false
+				select {
+				case w.symbolResetCh <- symbol:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.symbolResetCh <- symbol failed ch len %d", len(w.symbolResetCh))
+						logSilentTime = time.Now().Add(time.Minute)
+						continue
 					}
 				}
 			}
@@ -469,15 +434,15 @@ func NewOrderBookWS(
 ) *OrderBookWS {
 	ws := OrderBookWS{
 		done:          make(chan interface{}),
-		reconnectCh:   make(chan interface{}, 100),
-		writeCh:       make(chan interface{}, 100*len(channels)),
-		symbolCh:      make(chan string, 100*len(channels)),
-		symbolResetCh: make(chan string, 100*len(channels)),
+		reconnectCh:   make(chan interface{}, 16),
+		writeCh:       make(chan interface{}, 16*len(channels)),
+		symbolCh:      make(chan string, 64*len(channels)),
+		symbolResetCh: make(chan string, 64*len(channels)),
 		stopped:       0,
 	}
 	messagesCh := make(map[string]chan []byte)
 	for market, ch := range channels {
-		messagesCh[market] = make(chan []byte, 1000)
+		messagesCh[market] = make(chan []byte, 256)
 		go ws.dataHandleLoop(ctx, market, messagesCh[market], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messagesCh)
