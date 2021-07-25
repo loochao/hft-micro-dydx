@@ -1,4 +1,4 @@
-package cbspot
+package coinbase_usdspot
 
 import (
 	"context"
@@ -19,7 +19,7 @@ func StreamTimedTradeImbalances(
 		matchesCh[symbol] = make(chan common.Trade, 10000)
 		go common.StreamTimedTradeImbalance(
 			ctx,
-			fmt.Sprintf("cbspot-trade-imbalance-%s", symbol),
+			fmt.Sprintf("coinbase-usdspot-trade-imbalance-%s", symbol),
 			lookback,
 			matchesCh[symbol],
 			output,

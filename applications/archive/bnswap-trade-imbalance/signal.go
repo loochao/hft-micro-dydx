@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/bnspot"
 	"github.com/geometrybase/hft-micro/bnswap"
-	"github.com/geometrybase/hft-micro/cbspot"
+	"github.com/geometrybase/hft-micro/coinbase-usdspot"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/gtspot"
 	"github.com/geometrybase/hft-micro/hbspot"
@@ -38,8 +38,8 @@ func StreamMergedSignals(
 			go bnswap.StreamTimedTradeImbalances(ctx, cancel, proxy, lookback, channels)
 		case "bnspot":
 			go bnspot.StreamTimedTradeImbalances(ctx, cancel, proxy, lookback, channels)
-		case "cbspot":
-			go cbspot.StreamTimedTradeImbalances(ctx, cancel, proxy, lookback, channels)
+		case "coinbase-usdspot":
+			go coinbase_usdspot.StreamTimedTradeImbalances(ctx, cancel, proxy, lookback, channels)
 		case "hbspot":
 			go hbspot.StreamTimedTradeImbalances(ctx, cancel, proxy, lookback, channels)
 		case "kucoin-usdtspot":

@@ -8,7 +8,6 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/rand"
-	"sync"
 	"time"
 )
 
@@ -16,7 +15,6 @@ type FtxUsdFuture struct {
 	api      *API
 	done     chan interface{}
 	stopped  bool
-	mu       sync.Mutex
 	settings common.ExchangeSettings
 }
 
@@ -90,13 +88,11 @@ func (ftx *FtxUsdFuture) StreamBasic(
 ) {
 	defer ftx.Stop()
 
-	ftx.mu.Lock()
 	userWS := NewUserWS(
 		ftx.settings.ApiKey,
 		ftx.settings.ApiSecret,
 		ftx.settings.Proxy,
 	)
-	ftx.mu.Unlock()
 	go userWS.Start(ctx)
 	defer userWS.Stop()
 	internalOrders := make(map[int64]Order)
@@ -296,9 +292,7 @@ func (ftx *FtxUsdFuture) StreamTrade(ctx context.Context, channels map[string]ch
 		markets = append(markets, market)
 	}
 
-	ftx.mu.Lock()
 	proxy := ftx.settings.Proxy
-	ftx.mu.Unlock()
 
 	for start := 0; start < len(markets); start += batchSize {
 		end := start + batchSize
@@ -341,9 +335,7 @@ func (ftx *FtxUsdFuture) StreamTicker(ctx context.Context, channels map[string]c
 		markets = append(markets, market)
 	}
 
-	ftx.mu.Lock()
 	proxy := ftx.settings.Proxy
-	ftx.mu.Unlock()
 
 	for start := 0; start < len(markets); start += batchSize {
 		end := start + batchSize
@@ -381,9 +373,7 @@ func (ftx *FtxUsdFuture) StreamKLine(ctx context.Context, channels map[string]ch
 }
 
 func (ftx *FtxUsdFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
-	ftx.mu.Lock()
 	pullInterval := ftx.settings.PullInterval + time.Duration(len(channels))*time.Second
-	ftx.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	pullTimes := make(map[string]time.Time)
@@ -466,7 +456,6 @@ func (ftx *FtxUsdFuture) Setup(ctx context.Context, settings common.ExchangeSett
 	if err != nil {
 		return err
 	}
-	ftx.mu = sync.Mutex{}
 	if settings.ChangeLeverage {
 		_, err = ftx.api.ChangeLeverage(ctx, LeverageParam{
 			Leverage: int(settings.Leverage),
@@ -513,13 +502,11 @@ func (ftx *FtxUsdFuture) watchOrder(
 }
 
 func (ftx *FtxUsdFuture) Stop() {
-	ftx.mu.Lock()
 	if !ftx.stopped {
 		ftx.stopped = true
 		close(ftx.done)
 		logger.Debugf("stopped")
 	}
-	ftx.mu.Unlock()
 }
 
 func (ftx *FtxUsdFuture) Done() chan interface{} {
@@ -527,9 +514,7 @@ func (ftx *FtxUsdFuture) Done() chan interface{} {
 }
 
 func (ftx *FtxUsdFuture) positionsLoop(ctx context.Context, markets []string, positionsCh chan []Position) {
-	ftx.mu.Lock()
 	pullInterval := ftx.settings.PullInterval
-	ftx.mu.Unlock()
 	pullTimer := time.NewTimer(pullInterval)
 	defer pullTimer.Stop()
 	for {
@@ -571,9 +556,7 @@ func (ftx *FtxUsdFuture) positionsLoop(ctx context.Context, markets []string, po
 }
 
 func (ftx *FtxUsdFuture) accountLoop(ctx context.Context, accountCh chan *Account) {
-	ftx.mu.Lock()
 	pullInterval := ftx.settings.PullInterval
-	ftx.mu.Unlock()
 	pullTimer := time.NewTimer(pullInterval)
 	defer pullTimer.Stop()
 	for {
@@ -682,9 +665,7 @@ func (ftx *FtxUsdFuture) StreamDepth(ctx context.Context, channels map[string]ch
 		markets = append(markets, market)
 	}
 
-	ftx.mu.Lock()
 	proxy := ftx.settings.Proxy
-	ftx.mu.Unlock()
 
 	for start := 0; start < len(markets); start += batchSize {
 		end := start + batchSize

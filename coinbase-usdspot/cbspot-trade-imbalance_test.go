@@ -1,4 +1,4 @@
-package cbspot
+package coinbase_usdspot
 
 import (
 	"context"
