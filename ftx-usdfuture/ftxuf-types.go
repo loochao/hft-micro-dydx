@@ -288,11 +288,7 @@ func (position *Position) GetSize() float64 {
 	return position.NetSize
 }
 func (position *Position) GetPrice() float64 {
-	if position.NetSize == 0 {
-		return 0.0
-	} else {
-		return (position.Cost - position.RealizedPnl) / position.NetSize
-	}
+	return position.EntryPrice
 }
 func (position *Position) GetTime() time.Time {
 	return position.ParseTime
