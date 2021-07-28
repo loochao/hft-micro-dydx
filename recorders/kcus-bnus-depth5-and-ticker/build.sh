@@ -6,14 +6,14 @@ dt=$(date -u +%Y%m%d)
 version=" BUILD @ $(date -u '+%Y%m%d %H:%M:%S') "
 echo "$version"
 
-env GOOS=linux GOARCH=amd64 go build -o "./dist/kcus-bnuf-depth5-and-ticker.$dt" ./recorders/kcus-bnuf-depth5-and-ticker
+env GOOS=linux GOARCH=amd64 go build -o "./dist/kcus-bnus-depth5-and-ticker.$dt" ./recorders/kcus-bnus-depth5-and-ticker
 
 git add -A
-git commit -m "build kcus-bnuf-depth5-and-ticker.$dt"
+git commit -m "build kcus-bnus-depth5-and-ticker.$dt"
 git push origin master
 
-chmod 755 "./dist/kcus-bnuf-depth5-and-ticker.$dt"
+chmod 755 "./dist/kcus-bnus-depth5-and-ticker.$dt"
 
 echo "hk05"
-rsync -avx --progress "./dist/kcus-bnuf-depth5-and-ticker.$dt" hk05:/usr/local/bin/
+rsync -avx --progress "./dist/kcus-bnus-depth5-and-ticker.$dt" hk05:/usr/local/bin/
 
