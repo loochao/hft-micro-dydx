@@ -1,4 +1,4 @@
-package bfperp
+package bitfinex_usdtfuture
 
 import (
 	"fmt"
@@ -24,4 +24,18 @@ func (r *ErrorResponse) Error() string {
 		r.Message,
 		r.Code,
 	)
+}
+
+type Pair struct {
+	Symbol        string
+	MinOrderSize  float64
+	MaxOrderSize  float64
+	initialMargin float64
+	minMargin     float64
+}
+
+type WSRequest struct {
+	Event   string `json:"event"`
+	Channel string `json:"channel"`
+	Symbol  string `json:"symbol"`
 }

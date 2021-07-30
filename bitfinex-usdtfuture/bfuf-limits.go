@@ -1,0 +1,30 @@
+package bitfinex_usdtfuture
+
+var MinSizes = map[string]float64{
+	"LTCF0:USTF0":  0.001,
+	"ADAF0:USTF0":  0.001,
+	"IOTF0:USTF0":  0.001,
+	"BTCF0:USTF0":  0.0002,
+	"DOTF0:USTF0":  0.001,
+	"ETHF0:USTF0":  0.006,
+	"XLMF0:USTF0":  0.001,
+	"DOGEF0:USTF0": 0.001,
+	"EOSF0:USTF0":  0.001,
+	"UNIF0:USTF0":  0.001,
+	"ETHF0:BTCF0":  0.001,
+	"LINKF0:USTF0": 0.001,
+}
+
+var TickSizes = map[string]float64{
+	"LTCF0:USTF0":  0.01,
+	"ADAF0:USTF0":  0.0001,
+	"IOTF0:USTF0":  0.00001,
+	"BTCF0:USTF0":  1.0,
+	"DOTF0:USTF0":  0.001,
+	"ETHF0:USTF0":  0.1,
+	"XLMF0:USTF0":  0.00001,
+	"DOGEF0:USTF0": 0.00001,
+	"EOSF0:USTF0":  0.0001,
+	"UNIF0:USTF0":  0.001,
+	"LINKF0:USTF0": 0.001,
+}

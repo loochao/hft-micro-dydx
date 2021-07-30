@@ -1,0 +1,17 @@
+{
+  "type": "ticker",
+  "sequence": 423120225,
+  "product_id": "1INCH-USD",
+  "price": "2.044",
+  "open_24h": "2.042",
+  "volume_24h": "1742122.18000000",
+  "low_24h": "1.946",
+  "high_24h": "2.129",
+  "volume_30d": "27934228.80000000",
+  "best_bid": "2.043",
+  "best_ask": "2.046",
+  "side": "sell",
+  "time": "2021-07-26T00:00:30.644743Z",
+  "trade_id": 1963944,
+  "last_size": "99"
+}

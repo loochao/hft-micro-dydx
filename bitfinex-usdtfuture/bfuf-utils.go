@@ -1,11 +1,13 @@
-package bfperp
+package bitfinex_usdtfuture
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 // checkResponse checks response status code and response
@@ -63,4 +65,46 @@ func newResponse(r *http.Response) *Response {
 	}
 
 	return &Response{r, body}
+}
+
+//[[PAIR,[PLACEHOLDER,PLACEHOLDER,PLACEHOLDER,MIN_ORDER_SIZE,MAX_ORDER_SIZE,PLACEHOLDER,PLACEHOLDER,PLACEHOLDER,INITIAL_MARGIN,MIN_MARGIN]]...]
+func ParsePairs(msg []byte) ([]Pair, error) {
+	pSegs := strings.Split(string(msg), "],[")
+	pairs := make([]Pair, 0)
+	var err error
+	for _, seg := range pSegs {
+		seg = strings.Replace(seg, "[", "", -1)
+		seg = strings.Replace(seg, "]", "", -1)
+		segs := strings.Split(seg, ",")
+		pair := Pair{}
+		if len(segs) != 11 {
+			continue
+		}
+		pair.Symbol = segs[0][1:len(segs[0])-1]
+		if len(segs[4]) <= 2 {
+			continue
+		}
+		pair.MinOrderSize, err = common.ParseDecimal([]byte(segs[4][2 : len(segs[4])-1]))
+		if err != nil {
+			return nil, err
+		}
+		if len(segs[5]) <= 2 {
+			continue
+		}
+		pair.MaxOrderSize, err = common.ParseDecimal([]byte(segs[5][2 : len(segs[5])-1]))
+		if err != nil {
+			return nil, err
+		}
+
+		pair.initialMargin, err = common.ParseDecimal([]byte(segs[9]))
+		if err != nil {
+			return nil, err
+		}
+		pair.minMargin, err = common.ParseDecimal([]byte(segs[10]))
+		if err != nil {
+			return nil, err
+		}
+		pairs = append(pairs, pair)
+	}
+	return pairs, nil
 }

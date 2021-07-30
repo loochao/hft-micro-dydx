@@ -122,3 +122,47 @@ type Product struct {
 	Status          string  `json:"status"`
 	StatusMessage   string  `json:"status_message"`
 }
+
+//{
+//  "type": "ticker",
+//  "sequence": 423120225,
+//  "product_id": "1INCH-USD",
+//  "price": "2.044",
+//  "open_24h": "2.042",
+//  "volume_24h": "1742122.18000000",
+//  "low_24h": "1.946",
+//  "high_24h": "2.129",
+//  "volume_30d": "27934228.80000000",
+//  "best_bid": "2.043",
+//  "best_ask": "2.046",
+//  "side": "sell",
+//  "time": "2021-07-26T00:00:30.644743Z",
+//  "trade_id": 1963944,
+//  "last_size": "99"
+//}
+
+type Ticker struct {
+	BestBid float64   `json:"best_bid,string"`
+	BestAsk float64   `json:"best_ask,string"`
+	Symbol  string    `json:"product_id"`
+	Time    time.Time `json:"-"`
+}
+
+
+func (ticker *Ticker) UnmarshalJSON(data []byte) error {
+	type Alias Ticker
+	aux := struct {
+		Time  string          `json:"time"`
+		*Alias
+	}{Alias: (*Alias)(ticker)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	} else {
+		ticker.Time, err = time.Parse("2006-01-02T15:04:05.999999Z", aux.Time)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+}
+

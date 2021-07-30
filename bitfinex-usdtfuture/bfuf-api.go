@@ -1,8 +1,7 @@
-package bfperp
+package bitfinex_usdtfuture
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/geometrybase/hft-micro/common"
 	"net"
 	"net/http"
@@ -27,7 +26,7 @@ type API struct {
 	mu          sync.Mutex
 }
 
-func (api *API) SendHTTPRequest(ctx context.Context, path string, params common.Params, result interface{}) error {
+func (api *API) SendHTTPRequest(ctx context.Context, path string, params common.Params) ([]byte, error) {
 	path = "https://api-pub.bitfinex.com" + path
 	values := url.Values{}
 	var err error
@@ -37,34 +36,39 @@ func (api *API) SendHTTPRequest(ctx context.Context, path string, params common.
 	path = common.EncodeURLValues(path, values)
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	resp, err := api.client.Do(req.WithContext(ctx))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	response := newResponse(resp)
 	err = checkResponse(response)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if result != nil {
-		return json.Unmarshal(response.Body, result)
-	}
-	return nil
+	return response.Body, nil
 }
 
-func (api *API) GetDerivativeParis(ctx context.Context) ([]string, error) {
-	pairs := [1][]string{}
-	err := api.SendHTTPRequest(
+func (api *API) ListParis(ctx context.Context) (string, error) {
+	msg, err := api.SendHTTPRequest(
 		ctx,
 		"/v2/conf/pub:list:pair:futures",
 		nil,
-		&pairs,
 	)
-	return pairs[0], err
+	return string(msg), err
 }
 
+//func (api *API) GetPariInfos(ctx context.Context) ([]string, error) {
+//	pairs := [1][]string{}
+//	err := api.SendHTTPRequest(
+//		ctx,
+//		"/v2/conf/pub:info:pair:futures",
+//		nil,
+//		&pairs,
+//	)
+//	return pairs[0], err
+//}
 
 //func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path string, params common.Params, result interface{}) (map[string]int64, error) {
 //
@@ -175,4 +179,3 @@ func NewAPI(credentials *common.Credentials, proxy string) (*API, error) {
 	}
 	return &api, nil
 }
-
