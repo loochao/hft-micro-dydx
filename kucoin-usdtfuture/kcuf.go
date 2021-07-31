@@ -110,12 +110,14 @@ func (k *KucoinUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSe
 			return err
 		}
 		if settings.ChangeLeverage {
-			_, err = k.api.ChangeAutoDepositStatus(ctx, AutoDepositStatusParam{
+			resp, err := k.api.ChangeAutoDepositStatus(ctx, AutoDepositStatusParam{
 				Symbol: symbol,
 				Status: true,
 			})
 			if err != nil {
 				return err
+			}else{
+				logger.Debugf("%v", resp)
 			}
 		}
 	}

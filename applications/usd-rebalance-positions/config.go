@@ -16,8 +16,9 @@ type Config struct {
 	BalancePositionMaxAge time.Duration           `yaml:"balancePositionMaxAge"`
 	OrderValue            float64                 `yaml:"orderValue"`
 	OrderTimeout          time.Duration           `yaml:"orderTimeout"`
-	XOrderSilent          time.Duration           `yaml:"xOrderSilent"`
+	OrderSilent           time.Duration           `yaml:"orderSilent"`
 	LogInterval           time.Duration           `yaml:"logInterval"`
+	BatchSize             int                     `yaml:"batchSize"`
 
 	RestartSilent   time.Duration `yaml:"restartSilent"`
 	RestartInterval time.Duration `yaml:"restartInterval"`
@@ -38,8 +39,11 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.RestartInterval == 0 {
 		config.RestartInterval = time.Hour * 9999
 	}
-	if config.XOrderSilent == 0 {
-		config.XOrderSilent = time.Second
+	if config.OrderSilent == 0 {
+		config.OrderSilent = time.Minute
+	}
+	if config.BatchSize == 0 {
+		config.BatchSize = 30
 	}
 	config.XExchange.DryRun = config.DryRun
 	config.YExchange.DryRun = config.DryRun

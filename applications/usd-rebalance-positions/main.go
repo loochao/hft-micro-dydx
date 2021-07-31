@@ -28,12 +28,6 @@ func main() {
 
 	var xyGlobalCtx context.Context
 	var xyGlobalCancel context.CancelFunc
-	var xyInternalInfluxWriter *common.InfluxWriter
-	var xyExternalInfluxWriter *common.InfluxWriter
-
-	var xAccount common.Balance
-	var xAccountCh = make(chan common.Balance, 4)
-	var xOrderRequestChMap = make(map[string]chan common.OrderRequest)
 
 	var xyConfig *Config
 	var xExchange common.UsdExchange
@@ -156,14 +150,6 @@ func main() {
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)
-		if _, ok := xyConfig.TargetWeights[xSymbol]; !ok {
-			logger.Debugf("miss target weight for %s", xSymbol)
-			return
-		}
-		if _, ok := xyConfig.MaxOrderValues[xSymbol]; !ok {
-			logger.Debugf("miss max order value for %s", xSymbol)
-			return
-		}
 	}
 	xyConfig.XExchange.Symbols = xSymbols
 	xyConfig.YExchange.Symbols = ySymbols
@@ -192,101 +178,87 @@ func main() {
 		return
 	}
 
-	if xyConfig.InternalInflux.Address != "" {
-		xyInternalInfluxWriter, err = common.NewInfluxWriter(
-			xyGlobalCtx,
-			xyConfig.InternalInflux.Address,
-			xyConfig.InternalInflux.Username,
-			xyConfig.InternalInflux.Password,
-			xyConfig.InternalInflux.Database,
-			xyConfig.InternalInflux.BatchSize,
-		)
-		if err != nil {
-			logger.Debugf("common.NewInfluxWriter error %v", err)
-			return
-		}
-		defer xyInternalInfluxWriter.Stop()
-	}
-
-	if xyConfig.ExternalInflux.Address != "" {
-		xyExternalInfluxWriter, err = common.NewInfluxWriter(
-			xyGlobalCtx,
-			xyConfig.ExternalInflux.Address,
-			xyConfig.ExternalInflux.Username,
-			xyConfig.ExternalInflux.Password,
-			xyConfig.ExternalInflux.Database,
-			xyConfig.ExternalInflux.BatchSize,
-		)
-		if err != nil {
-			logger.Debugf("common.NewInfluxWriter error %v", err)
-			return
-		}
-		defer xyExternalInfluxWriter.Stop()
-	}
-
-	influxSaveTimer := time.NewTimer(
-		time.Now().Truncate(
-			xyConfig.InternalInflux.SaveInterval,
-		).Add(
-			xyConfig.InternalInflux.SaveInterval * 3,
-		).Sub(time.Now()),
-	)
-	defer influxSaveTimer.Stop()
+	xAccountChMap := make(map[string]chan common.Balance)
+	yAccountChMap := make(map[string]chan common.Balance)
 
 	xPositionChMap := make(map[string]chan common.Position)
+	yPositionChMap := make(map[string]chan common.Position)
+
 	xOrderChMap := make(map[string]chan common.Order)
-	xFundingRateChMap := make(map[string]chan common.FundingRate)
+	yOrderChMap := make(map[string]chan common.Order)
+
 	xNewOrderErrorChMap := make(map[string]chan common.OrderError)
-	xAccountChMap := make(map[string]chan common.Balance)
+	yNewOrderErrorChMap := make(map[string]chan common.OrderError)
+
 	xSystemStatusChMap := make(map[string]chan common.SystemStatus)
-	//此处的原则，chan越短，发送速度越快, 对于时效性高的，立即发出的要短
+	ySystemStatusChMap := make(map[string]chan common.SystemStatus)
 
 	xTickerChMap := make(map[string]chan common.Ticker)
 	yTickerChMap := make(map[string]chan common.Ticker)
 
+	var xAccount common.Balance
+	var yAccount common.Balance
+
+	var xAccountCh = make(chan common.Balance, 4)
+	var yAccountCh = make(chan common.Balance, 4)
+
+	var xOrderRequestChMap = make(map[string]chan common.OrderRequest)
+	var yOrderRequestChMap = make(map[string]chan common.OrderRequest)
+
 	for _, xSymbol := range xSymbols {
+		xAccountChMap[xSymbol] = make(chan common.Balance, 4)
 		xPositionChMap[xSymbol] = make(chan common.Position, 4)
 		xOrderChMap[xSymbol] = make(chan common.Order, 32)
-		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 1)
 		xTickerChMap[xSymbol] = make(chan common.Ticker, 256)
-		yTickerChMap[config.XYPairs[xSymbol]] = xTickerChMap[xSymbol]
-		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 1)
+		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 4)
 		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 1)
-		xAccountChMap[xSymbol] = make(chan common.Balance, 4)
 		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 1)
 	}
 
-	yFundingRateChMap := make(map[string]chan common.FundingRate)
-	ySystemStatusChMap := make(map[string]chan common.SystemStatus)
 	for _, ySymbol := range ySymbols {
-		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 1)
+		yAccountChMap[ySymbol] = make(chan common.Balance, 4)
+		yPositionChMap[ySymbol] = make(chan common.Position, 4)
+		yOrderChMap[ySymbol] = make(chan common.Order, 32)
+		yTickerChMap[ySymbol] = make(chan common.Ticker, 256)
+		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 4)
+		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 1)
 		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 1)
 	}
 
-	saveCh := make(chan *XYStrategy, 2048)
-	strategiesMap := make(map[string]*XYStrategy)
-
-	var xCommissionAssetValue *float64
 	var xCommissionAssetValueCh = make(chan float64, 4)
+	var yCommissionAssetValueCh = make(chan float64, 4)
 
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		err = startXYStrategy(
 			xyGlobalCtx,
+
 			xSymbol, ySymbol,
+
 			*xyConfig,
+
 			xExchange,
 			yExchange,
+
 			xAccountChMap[xSymbol],
+			yAccountChMap[ySymbol],
+
 			xPositionChMap[xSymbol],
-			xFundingRateChMap[xSymbol],
-			yFundingRateChMap[ySymbol],
+			yPositionChMap[ySymbol],
+
 			xOrderRequestChMap[xSymbol],
+			yOrderRequestChMap[ySymbol],
+
 			xOrderChMap[xSymbol],
+			yOrderChMap[ySymbol],
+
 			xNewOrderErrorChMap[xSymbol],
+			yNewOrderErrorChMap[ySymbol],
+
 			xSystemStatusChMap[xSymbol],
 			ySystemStatusChMap[ySymbol],
+
 			xTickerChMap[xSymbol],
-			saveCh,
+			yTickerChMap[ySymbol],
 		)
 		if err != nil {
 			logger.Debugf("startXYStrategy %s %s error %v", xSymbol, ySymbol, err)
@@ -302,36 +274,46 @@ func main() {
 		xPositionChMap,
 		xOrderChMap,
 	)
-	go xExchange.StreamFundingRate(
+	go yExchange.StreamBasic(
 		xyGlobalCtx,
-		xFundingRateChMap,
-		xyConfig.BatchSize,
+		ySystemStatusCh,
+		yAccountCh,
+		yCommissionAssetValueCh,
+		yPositionChMap,
+		yOrderChMap,
 	)
+
 	go xExchange.StreamTicker(
 		xyGlobalCtx,
 		xTickerChMap,
-		xyConfig.BatchSize,
-	)
-	go xExchange.WatchOrders(
-		xyGlobalCtx,
-		xOrderRequestChMap,
-		xOrderChMap,
-		xNewOrderErrorChMap,
-	)
-
-	go yExchange.StreamSystemStatus(
-		xyGlobalCtx,
-		ySystemStatusCh,
-	)
-	go yExchange.StreamFundingRate(
-		xyGlobalCtx,
-		yFundingRateChMap,
 		xyConfig.BatchSize,
 	)
 	go yExchange.StreamTicker(
 		xyGlobalCtx,
 		yTickerChMap,
 		xyConfig.BatchSize,
+	)
+
+	go xExchange.WatchOrders(
+		xyGlobalCtx,
+		xOrderRequestChMap,
+		xOrderChMap,
+		xNewOrderErrorChMap,
+	)
+	go yExchange.WatchOrders(
+		xyGlobalCtx,
+		yOrderRequestChMap,
+		yOrderChMap,
+		yNewOrderErrorChMap,
+	)
+
+	go xExchange.StreamSystemStatus(
+		xyGlobalCtx,
+		xSystemStatusCh,
+	)
+	go yExchange.StreamSystemStatus(
+		xyGlobalCtx,
+		ySystemStatusCh,
 	)
 
 	sigs := make(chan os.Signal, 1)
@@ -346,7 +328,6 @@ func main() {
 	restartTimer := time.NewTimer(xyConfig.RestartInterval)
 	defer restartTimer.Stop()
 
-	lastExternalSaveTime := &time.Time{}
 mainLoop:
 	for {
 		select {
@@ -390,9 +371,10 @@ mainLoop:
 				}
 			}
 			break
-		case xcv := <-xCommissionAssetValueCh:
-			xCommissionAssetValue = &xcv
-			//logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
+		case _ = <-xCommissionAssetValueCh:
+			break
+		case _ = <-yCommissionAssetValueCh:
+			break
 		case account := <-xAccountCh:
 			if xAccount == account {
 				logger.Debugf("bad xAccount == account pass same pointer")
@@ -408,34 +390,21 @@ mainLoop:
 				}
 			}
 			break
-		case st := <-saveCh:
-			strategiesMap[st.xSymbol] = st
-			break
-		case <-influxSaveTimer.C:
-			if xyConfig.InternalInflux.Address != "" {
-				handleSave(
-					xAccount,
-					xExchange, yExchange,
-					strategiesMap,
-					xSymbols,
-					xSystemStatus, ySystemStatus,
-					xyConfig,
-					xCommissionAssetValue,
-					xyInternalInfluxWriter, xyExternalInfluxWriter,
-					lastExternalSaveTime,
-				)
-				influxSaveTimer.Reset(
-					time.Now().Truncate(
-						xyConfig.InternalInflux.SaveInterval,
-					).Add(
-						xyConfig.InternalInflux.SaveInterval,
-					).Sub(time.Now()),
-				)
+		case account := <-yAccountCh:
+			if yAccount == account {
+				logger.Debugf("bad yAccount == account pass same pointer")
+			}
+			if yAccount == nil || account.GetTime().Sub(yAccount.GetTime()) >= 0 {
+				yAccount = account
+				for ySymbol, ch := range yAccountChMap {
+					select {
+					case ch <- yAccount:
+					default:
+						logger.Debugf("ch <- yAccount failed %s ch len %d", ySymbol, len(ch))
+					}
+				}
 			}
 			break
 		}
 	}
-	logger.Debugf("stop waiting 5s")
-	<-time.After(time.Second * 5)
-	logger.Debugf("exit 0")
 }

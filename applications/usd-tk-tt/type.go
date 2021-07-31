@@ -33,6 +33,7 @@ type XYStrategy struct {
 	xyTickerCh      chan common.Ticker
 	saveCh          chan *XYStrategy
 
+
 	xSystemStatus common.SystemStatus
 	ySystemStatus common.SystemStatus
 
