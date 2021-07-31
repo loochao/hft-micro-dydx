@@ -171,6 +171,10 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *Mess
 				default:
 				}
 			}
+		}else{
+			if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
+				logger.Debugf("%s", msg)
+			}
 		}
 	}
 }

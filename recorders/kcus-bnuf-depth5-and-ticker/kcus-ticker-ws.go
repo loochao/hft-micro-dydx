@@ -178,7 +178,6 @@ func (w *KcusTickerWS) readLoop(
 			if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
 				logger.Debugf("%s", msg)
 			}
-			continue
 		}
 	}
 }
