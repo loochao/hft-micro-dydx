@@ -7,110 +7,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"time"
-	"unsafe"
 )
-
-//{"data":{"sequence":1617684642656,"asks":[[60818,160000],[60823.0,10325],[60824.0,3000],[60828.0,5325],[60829.0,5000],[60831.0,112438],[60833.0,3000],[60834.0,3750],[60836.0,80000],[60837.0,71844],[60838.0,54426],[60841.0,74100],[60842.0,60564],[60843.0,3000],[60848.0,73816],[60850.0,49770],[60851,80000],[60852.0,63455],[60855.0,54438],[60857.0,51719],[60859.0,123907],[60869.0,5697],[60888,1397],[60894.0,6089],[60900,6168],[60904,4134],[60905.0,6494],[60906.0,84187],[60938.0,119895],[60952.0,7333],[60990,13840],[61030.0,7764],[61040,12262],[61041.0,7764],[61060,12262],[61080,12262],[61100,12262],[61120,12262],[61138,142396],[61140,12262],[61180.0,8644],[61200,954],[61238,15],[61355,71706],[61400,10],[61416.0,541265],[61425.0,10000],[61427.0,606647],[61448.0,10000],[61500,1436]],"bids":[[60811,160000],[60810.0,124958],[60806.0,70501],[60804,145306],[60803.0,3000],[60801.0,52777],[60800.0,70833],[60798,80000],[60796.0,3000],[60794.0,54705],[60793.0,67823],[60789.0,58175],[60788.0,52072],[60784.0,59274],[60782.0,3000],[60780.0,72154],[60763.0,53314],[60755.0,5325],[60741.0,5697],[60736.0,1397],[60725.0,6494],[60711,100100],[60707.0,6494],[60693.0,62797],[60691.0,74153],[60662.0,6909],[60640,12262],[60627,25],[60622,13840],[60620,12262],[60613.0,7333],[60600.0,12362],[60589.0,7764],[60580,12262],[60560,12262],[60540,12262],[60500,1442],[60490,2029],[60488.0,8201],[60467.0,8644],[60458,141278],[60444,25],[60417,15],[60367.0,8201],[60363,70473],[60347.0,9092],[60327,50],[60300,341727],[60206.0,504206],[60201,12000]],"ts":1618219600281,"timestamp":1618219600281},"subject":"level2","topic":"/contractMarket/level2Depth50:XBTUSDM","type":"message"} {"data":{"sequence":1617684642656,"asks":[[60818,160000],[60823.0,10325],[60824.0,3000],[60828.0,5325],[60829.0,5000],[60831.0,112438],[60833.0,3000],[60834.0,3750],[60836.0,80000],[60837.0,71844],[60838.0,54426],[60841.0,74100],[60842.0,60564],[60843.0,3000],[60848.0,73816],[60850.0,49770],[60851,80000],[60852.0,63455],[60855.0,54438],[60857.0,51719],[60859.0,123907],[60869.0,5697],[60888,1397],[60894.0,6089],[60900,6168],[60904,4134],[60905.0,6494],[60906.0,84187],[60938.0,119895],[60952.0,7333],[60990,13840],[61030.0,7764],[61040,12262],[61041.0,7764],[61060,12262],[61080,12262],[61100,12262],[61120,12262],[61138,142396],[61140,12262],[61180.0,8644],[61200,954],[61238,15],[61355,71706],[61400,10],[61416.0,541265],[61425.0,10000],[61427.0,606647],[61448.0,10000],[61500,1436]],"bids":[[60811,160000],[60810.0,124958],[60806.0,70501],[60804,145306],[60803.0,3000],[60801.0,52777],[60800.0,70833],[60798,80000],[60796.0,3000],[60794.0,54705],[60793.0,67823],[60789.0,58175],[60788.0,52072],[60784.0,59274],[60782.0,3000],[60780.0,72154],[60763.0,53314],[60755.0,5325],[60741.0,5697],[60736.0,1397],[60725.0,6494],[60711,100100],[60707.0,6494],[60693.0,62797],[60691.0,74153],[60662.0,6909],[60640,12262],[60627,25],[60622,13840],[60620,12262],[60613.0,7333],[60600.0,12362],[60589.0,7764],[60580,12262],[60560,12262],[60540,12262],[60500,1442],[60490,2029],[60488.0,8201],[60467.0,8644],[60458,141278],[60444,25],[60417,15],[60367.0,8201],[60363,70473],[60347.0,9092],[60327,50],[60300,341727],[60206.0,504206],[60201,12000]],"ts":1618219600281,"timestamp":1618219600281},"subject":"level2","topic":"/contractMarket/level2Depth50:XBTUSDM","type":"message"}
-func ParseDepth50(bytes []byte) (*Depth50, error) {
-	var err error
-	orderBook := Depth50{
-		Bids:      [50][2]float64{},
-		Asks:      [50][2]float64{},
-		ParseTime: time.Now(),
-	}
-	offset := 16
-	if bytes[offset] != 'c' && bytes[offset+1] != 'e' && bytes[offset+2] != '"' {
-		return nil, fmt.Errorf("bad bytes %s", bytes)
-	}
-	offset = 20
-	collectStart := offset
-	bytesLen := len(bytes)
-	counter := 0
-	currentKey := common.JsonKeyLastUpdateId
-	for offset < bytesLen-6 {
-		switch currentKey {
-		case common.JsonKeyLastUpdateId:
-			if bytes[offset] == ',' {
-				orderBook.Sequence, err = common.ParseInt(bytes[collectStart:offset])
-				if err != nil {
-					return nil, err
-				}
-				if bytes[offset+4] != 'k' && bytes[offset+5] != 's' && bytes[offset+6] != '"' {
-					return nil, fmt.Errorf("bad bytes %s", bytes)
-				}
-				currentKey = common.JsonKeyAsks
-				offset += 10
-				collectStart = offset
-			}
-		case common.JsonKeyBids:
-			if bytes[offset] == ',' || bytes[offset] == ']' {
-				orderBook.Bids[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
-				if err != nil {
-					return nil, err
-				}
-				counter += 1
-				if counter >= 100 {
-					currentKey = common.JsonKeyEventTime
-					offset += 8
-					collectStart = offset
-				} else if counter%2 == 0 {
-					offset += 3
-					collectStart = offset
-				} else {
-					offset += 1
-					collectStart = offset
-				}
-				continue
-			}
-			break
-		case common.JsonKeyAsks:
-			if bytes[offset] == ',' || bytes[offset] == ']' {
-				orderBook.Asks[counter/2][counter%2], err = common.ParseFloat(bytes[collectStart:offset])
-				if err != nil {
-					return nil, err
-				}
-				counter += 1
-				if counter >= 100 {
-					currentKey = common.JsonKeyBids
-					offset += 12
-					collectStart = offset
-					counter = 0
-				} else if counter%2 == 0 {
-					offset += 3
-					collectStart = offset
-				} else {
-					offset += 1
-					collectStart = offset
-				}
-				continue
-			}
-			break
-		case common.JsonKeyEventTime:
-			offset += 13
-			timestamp, err := common.ParseInt(bytes[collectStart:offset])
-			if err != nil {
-				return nil, err
-			}
-			orderBook.EventTime = time.Unix(0, timestamp*1000000)
-			offset += 86
-			collectStart = offset
-			offset += 6
-			currentKey = common.JsonKeySymbol
-			continue
-		case common.JsonKeySymbol:
-			if bytes[offset] == '"' {
-				symbol := bytes[collectStart:offset]
-				orderBook.Symbol = *(*string)(unsafe.Pointer(&symbol))
-				offset = bytesLen
-				//在此退出
-				continue
-			}
-			break
-		}
-		offset += 1
-	}
-	return &orderBook, nil
-}
 
 func ParseDepth5(msg []byte, depth5 *Depth5) error {
 	var err error
@@ -158,7 +55,7 @@ func ParseDepth5(msg []byte, depth5 *Depth5) error {
 			return fmt.Errorf("symbol not found for %s", msg)
 		}
 		offset = 100
-	}else{
+	} else {
 		return fmt.Errorf("bad msg %s", msg)
 	}
 	collectStart := offset
@@ -238,27 +135,52 @@ func passPhraseEncrypt(key, plain []byte) string {
 func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 
 	//{"data":{"symbol":"XBTUSDTM","sequence":1624824090655,"side":"buy","size":292,"price":33606,"bestBidSize":1567,"bestBidPrice":"33600.0","bestAskPrice":"33606.0","tradeId":"60e92ef53c7feb289d2b0072","ts":1625894645558931144,"bestAskSize":1819},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}
-	if msg[27] == '"' {
-		ticker.Symbol = common.UnsafeBytesToString(msg[19:27])
-	} else if msg[28] == '"' {
-		ticker.Symbol = common.UnsafeBytesToString(msg[19:28])
-	} else if msg[29] == '"' {
-		ticker.Symbol = common.UnsafeBytesToString(msg[19:29])
-	} else if msg[30] == '"' {
-		ticker.Symbol = common.UnsafeBytesToString(msg[19:30])
-	} else if msg[31] == '"' {
-		ticker.Symbol = common.UnsafeBytesToString(msg[19:31])
+	//{"type":"message","topic":"/contractMarket/ticker:1INCHUSDTM","subject":"ticker","data":{"symbol":"1INCHUSDTM","sequence":1627371661456,"side":"buy","size":21,"price":2.379,"bestBidSize":203,"bestBidPrice":"2.377","bestAskPrice":"2.38","tradeId":"6105178a991e1303211759d8","ts":1627723658671236584,"bestAskSize":251}}
+	msgLen := len(msg)
+	offset := 0
+	if msgLen > 128 {
+		if msg[2] == 'd' {
+			if msg[27] == '"' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[19:27])
+			} else if msg[28] == '"' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[19:28])
+			} else if msg[29] == '"' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[19:29])
+			} else if msg[30] == '"' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[19:30])
+			} else if msg[31] == '"' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[19:31])
+			} else {
+				return fmt.Errorf("symbol not fund in msg %s", msg)
+			}
+			offset = 80
+		} else if msg[2] == 't' {
+			if msg[59] == ',' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[50:58])
+			} else if msg[60] == ',' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[50:59])
+			} else if msg[61] == ',' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[50:60])
+			} else if msg[58] == ',' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[50:57])
+			} else if msg[62] == ',' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[50:61])
+			} else {
+				return fmt.Errorf("symbol not fund in msg %s", msg)
+			}
+			offset = 128
+		} else {
+			return fmt.Errorf("bad msg %s", msg)
+		}
 	} else {
-		return fmt.Errorf("symbol not fund in msg %s", msg)
+		return fmt.Errorf("bad msg %s", msg)
 	}
 
 	var ts int64
-	offset := 80
 	collectStart := offset
-	msgLen := len(msg)
 	counter := 0
 	currentKey := common.JsonKeyUnknown
-	for offset < msgLen-23 {
+	for offset < msgLen {
 		switch currentKey {
 		case common.JsonKeyBidSize:
 			if msg[offset] == ',' || msg[offset] == '}' {
@@ -304,27 +226,27 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 			}
 			break
 		case common.JsonKeyUnknown:
-			if msg[offset] == 'b' && msg[offset+4] == 'B' && msg[offset+10] == 'e' {
+			if offset+10 < msgLen && msg[offset] == 'b' && msg[offset+4] == 'B' && msg[offset+10] == 'e' {
 				currentKey = common.JsonKeyBidSize
 				offset += 13
 				collectStart = offset
 				break
-			} else if msg[offset] == 'b' && msg[offset+4] == 'B' && msg[offset+11] == 'e' {
+			} else if offset+11 < msgLen && msg[offset] == 'b' && msg[offset+4] == 'B' && msg[offset+11] == 'e' {
 				currentKey = common.JsonKeyBidPrice
 				offset += 15
 				collectStart = offset
 				break
-			} else if msg[offset] == 'b' && msg[offset+4] == 'A' && msg[offset+10] == 'e' {
+			} else if offset+10 < msgLen && msg[offset] == 'b' && msg[offset+4] == 'A' && msg[offset+10] == 'e' {
 				currentKey = common.JsonKeyAskSize
 				offset += 13
 				collectStart = offset
 				break
-			} else if msg[offset] == 'b' && msg[offset+4] == 'A' && msg[offset+11] == 'e' {
+			} else if offset+11 < msgLen && msg[offset] == 'b' && msg[offset+4] == 'A' && msg[offset+11] == 'e' {
 				currentKey = common.JsonKeyAskPrice
 				offset += 15
 				collectStart = offset
 				break
-			} else if msg[offset] == 't' && msg[offset+1] == 's' {
+			} else if offset+23 < msgLen && msg[offset] == 't' && msg[offset+1] == 's' {
 				ts, err = common.ParseInt(msg[offset+4 : offset+23])
 				if err != nil {
 					return
@@ -402,7 +324,11 @@ var Depth5SampleLines = `{"data":{"sequence":1617730626597,"asks":[[35466.0,63],
 {"data":{"sequence":1617730748179,"asks":[[1.702,3979],[1.703,4243],[1.704,5631],[1.705,4831],[1.706,6031]],"bids":[[1.701,3002],[1.700,958],[1.699,1961],[1.698,2546],[1.697,2969]],"ts":1623511717680,"timestamp":1623511717680},"subject":"level2","topic":"/contractMarket/level2Depth5:SXPUSDTM","type":"message"}
 {"data":{"sequence":1617730408564,"asks":[[13.26,3141],[13.27,2277],[13.28,3132],[13.29,2430],[13.30,1745]],"bids":[[13.25,2049],[13.24,5631],[13.23,2473],[13.22,5257],[13.21,6779]],"ts":1623511718666,"timestamp":1623511718666},"subject":"level2","topic":"/contractMarket/level2Depth5:AVAXUSDTM","type":"message"}
 {"data":{"sequence":1617729979632,"asks":[[161.90,4337],[161.95,6550],[162.00,5212],[162.05,3558],[162.10,13584]],"bids":[[161.75,2252],[161.70,2260],[161.65,2110],[161.60,2756],[161.55,8799]],"ts":1623511719640,"timestamp":1623511719640},"subject":"level2","topic":"/contractMarket/level2Depth5:BSVUSDTM","type":"message"}
-{"data":{"sequence":1620871789135,"asks":[[160.10,1426],[160.11,30],[160.12,117],[160.15,98],[160.21,137]],"bids":[[159.6900000000000000000000000,1],[159.68,2233],[159.62,455],[159.58,1394],[159.56,361]],"ts":1621608082211,"timestamp":1621608082211},"subject":"level2","topic":"/contractMarket/level2Depth5:ZECUSDTM","type":"message"}`
+{"data":{"sequence":1620871789135,"asks":[[160.10,1426],[160.11,30],[160.12,117],[160.15,98],[160.21,137]],"bids":[[159.6900000000000000000000000,1],[159.68,2233],[159.62,455],[159.58,1394],[159.56,361]],"ts":1621608082211,"timestamp":1621608082211},"subject":"level2","topic":"/contractMarket/level2Depth5:ZECUSDTM","type":"message"}
+{"type":"message","topic":"/contractMarket/level2Depth5:GRTUSDTM","subject":"level2","data":{"sequence":1627365704601,"asks":[[0.62612,194],[0.62625,194],[0.62640,3230],[0.62655,6368],[0.62656,6300]],"bids":[[0.62580,1846],[0.62565,1087],[0.62555,1959],[0.62551,1038],[0.62550,601]],"ts":1627723139256,"timestamp":1627723139256}}
+{"type":"message","topic":"/contractMarket/level2Depth5:EOSUSDTM","subject":"level2","data":{"sequence":1627365839109,"asks":[[4.046,61],[4.047,4363],[4.048,14649],[4.049,8223],[4.050,10789]],"bids":[[4.04500000,439],[4.04400000,12210],[4.04300000,12191],[4.04200000,10348],[4.041,6692]],"ts":1627723139255,"timestamp":1627723139255}}
+{"type":"message","topic":"/contractMarket/level2Depth5:SNXUSDTM","subject":"level2","data":{"sequence":1627365713359,"asks":[[10.02,121],[10.021,977],[10.022,1097],[10.023,1087],[10.024,60]],"bids":[[10.018,24],[10.017,810],[10.016,513],[10.013,1932],[10.012,4]],"ts":1627723139254,"timestamp":1627723139254}}
+{"type":"message","topic":"/contractMarket/level2Depth5:CHZUSDTM","subject":"level2","data":{"sequence":1627365884233,"asks":[[0.2621,7501],[0.2622,3599],[0.2623,52851],[0.2624,38379],[0.2625,39980]],"bids":[[0.2619,2298],[0.2618,19222],[0.2617,17837],[0.2616,21857],[0.2615,31419]],"ts":1627723139251,"timestamp":1627723139251}}`
 
 var TickerSampleLines = `{"data":{"symbol":"XBTUSDTM","sequence":1624824091610,"side":"buy","size":1,"price":33678,"bestBidSize":352,"bestBidPrice":"33677.0","bestAskPrice":"33678.0","tradeId":"60e93a503c7feb289d2bdbc9","ts":1625897552791988455,"bestAskSize":4790},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}
 {"data":{"symbol":"XBTUSDTM","sequence":1624824091610,"side":"buy","size":1,"price":33678,"bestBidSize":352,"bestBidPrice":"33677.0","bestAskPrice":"33678.0","tradeId":"60e93a503c7feb289d2bdbc9","ts":1625897552791988455,"bestAskSize":4790},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}
@@ -554,7 +480,4 @@ var TickerSampleLines = `{"data":{"symbol":"XBTUSDTM","sequence":1624824091610,"
 {"data":{"symbol":"ATOMUSDTM","sequence":1624823453979,"side":"sell","size":1,"price":13.538,"bestBidSize":555,"bestBidPrice":"13.538","bestAskPrice":"13.545","tradeId":"60e93a7f96bab2241409ca88","ts":1625897599390117747,"bestAskSize":381},"subject":"ticker","topic":"/contractMarket/ticker:ATOMUSDTM","type":"message"}
 {"data":{"symbol":"ATOMUSDTM","sequence":1624823453979,"side":"sell","size":1,"price":13.538,"bestBidSize":555,"bestBidPrice":"13.538","bestAskPrice":"13.545","tradeId":"60e93a7f96bab2241409ca88","ts":1625897599390117747,"bestAskSize":381},"subject":"ticker","topic":"/contractMarket/ticker:ATOMUSDTM","type":"message"}
 {"data":{"symbol":"XBTUSDTM","sequence":1624824091680,"side":"buy","size":63,"price":33679,"bestBidSize":16,"bestBidPrice":"33678.0","bestAskPrice":"33679.0","tradeId":"60e93a803c7feb289d2be531","ts":1625897600449461736,"bestAskSize":1119},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}
-{"type":"message","topic":"/contractMarket/level2Depth5:GRTUSDTM","subject":"level2","data":{"sequence":1627365704601,"asks":[[0.62612,194],[0.62625,194],[0.62640,3230],[0.62655,6368],[0.62656,6300]],"bids":[[0.62580,1846],[0.62565,1087],[0.62555,1959],[0.62551,1038],[0.62550,601]],"ts":1627723139256,"timestamp":1627723139256}}
-{"type":"message","topic":"/contractMarket/level2Depth5:EOSUSDTM","subject":"level2","data":{"sequence":1627365839109,"asks":[[4.046,61],[4.047,4363],[4.048,14649],[4.049,8223],[4.050,10789]],"bids":[[4.04500000,439],[4.04400000,12210],[4.04300000,12191],[4.04200000,10348],[4.041,6692]],"ts":1627723139255,"timestamp":1627723139255}}
-{"type":"message","topic":"/contractMarket/level2Depth5:SNXUSDTM","subject":"level2","data":{"sequence":1627365713359,"asks":[[10.02,121],[10.021,977],[10.022,1097],[10.023,1087],[10.024,60]],"bids":[[10.018,24],[10.017,810],[10.016,513],[10.013,1932],[10.012,4]],"ts":1627723139254,"timestamp":1627723139254}}
-{"type":"message","topic":"/contractMarket/level2Depth5:CHZUSDTM","subject":"level2","data":{"sequence":1627365884233,"asks":[[0.2621,7501],[0.2622,3599],[0.2623,52851],[0.2624,38379],[0.2625,39980]],"bids":[[0.2619,2298],[0.2618,19222],[0.2617,17837],[0.2616,21857],[0.2615,31419]],"ts":1627723139251,"timestamp":1627723139251}}`
+{"type":"message","topic":"/contractMarket/ticker:1INCHUSDTM","subject":"ticker","data":{"symbol":"1INCHUSDTM","sequence":1627371661456,"side":"buy","size":21,"price":2.379,"bestBidSize":203,"bestBidPrice":"2.377","bestAskPrice":"2.38","tradeId":"6105178a991e1303211759d8","ts":1627723658671236584,"bestAskSize":251}}`

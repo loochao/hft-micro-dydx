@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestNewTickerWS(t *testing.T) {
+func TestNewDepth5TickerWS(t *testing.T) {
 	var api *API
 	var ctx = context.Background()
 	var err error
@@ -22,22 +22,20 @@ func TestNewTickerWS(t *testing.T) {
 		log.Fatal(err)
 	}
 	symbols := []string{"XBTUSDTM", "ATOMUSDTM", "WAVESUSDTM"}
-	//symbols := make([]string, 0)
-	//for symbol := range TickSizes {
-	//	symbols = append(symbols, symbol)
-	//}
-	channels := make(map[string]chan common.Ticker)
-	outputCh := make(chan common.Ticker, 4)
+	channels := make(map[string]chan common.Depth)
+	outputCh := make(chan common.Depth, 128)
 	for _, symbol := range symbols {
 		channels[symbol] = outputCh
 	}
-	_ = NewTickerWS(
+	ws := NewDepth5WS(
 		ctx, api,
 		"socks5://127.0.0.1:1081",
 		channels,
 	)
 	for {
 		select {
+		case <- ws.Done():
+			return
 		case d := <-outputCh:
 			logger.Debugf("%s %v", d.GetSymbol(), d)
 		}

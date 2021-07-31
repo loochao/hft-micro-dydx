@@ -180,7 +180,7 @@ func (w *KcufDepth5WS) readLoop(
 				}
 			}
 		} else {
-			if len(msg) > 3 && msg[2] == 'i' && msg[len(msg)-3] == 'k' {
+			if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
 				logger.Debugf("%s", msg)
 			}
 		}

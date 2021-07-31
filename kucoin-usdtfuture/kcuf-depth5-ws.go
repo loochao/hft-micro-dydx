@@ -145,19 +145,6 @@ func (w *Depth5WS) readLoop(
 				}
 				continue
 			}
-
-			if msg[msgLen-28] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
-			} else if msg[msgLen-29] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-28 : msgLen-19])
-			} else if msg[msgLen-30] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
-			} else if msg[msgLen-31] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
-			} else {
-				logger.Debugf("OTHER MSG %s", msg)
-				continue
-			}
 			if ch, ok = channels[symbol]; ok {
 				select {
 				case ch <- msg:
@@ -169,11 +156,11 @@ func (w *Depth5WS) readLoop(
 				}
 			}
 		} else {
-			//{"id":"/contract/position:BNBUSDTM","type":"ack"}
-			if len(msg) > 3 && msg[2] == 'i' && msg[len(msg)-3] == 'k' {
+			if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
 				logger.Debugf("%s", msg)
 			}
 		}
+
 	}
 }
 

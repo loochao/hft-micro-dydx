@@ -98,19 +98,51 @@ func (w *Depth5TickerWS) readLoop(
 			go w.restart()
 			return
 		}
+
+		//中间有一次数据变更，可能两种格式
 		//{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,
+		//{"type":"message","topic":"/contractMarket/level2Depth5:GRTUSDTM","subject":"level2","data":{"sequence":1627365704601,"asks":[[0.62612,194],[0.62625,194],[0.62640,3230],[0.62655,6368],[0.62656,6300]],"bids":[[0.62580,1846],[0.62565,1087],[0.62555,1959],[0.62551,1038],[0.62550,601]],"ts":1627723139256,"timestamp":1627723139256}}
 		msgLen = len(msg)
 		if msgLen > 128 {
-			if msg[msgLen-28] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
-			} else if msg[msgLen-29] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-28 : msgLen-19])
-			} else if msg[msgLen-30] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
-			} else if msg[msgLen-31] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
+			if msg[2] == 't' {
+				if msg[65] == ',' {
+					symbol = common.UnsafeBytesToString(msg[56:64])
+				} else if msg[66] == ',' {
+					symbol = common.UnsafeBytesToString(msg[56:65])
+				} else if msg[67] == ',' {
+					symbol = common.UnsafeBytesToString(msg[56:66])
+				} else if msg[64] == ',' {
+					symbol = common.UnsafeBytesToString(msg[56:63])
+				} else if msg[68] == ',' {
+					symbol = common.UnsafeBytesToString(msg[56:67])
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("OTHER MSG %s", msg)
+					}
+					continue
+				}
+			} else if msg[2] == 'd' {
+				if msg[msgLen-28] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
+				} else if msg[msgLen-29] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-28 : msgLen-19])
+				} else if msg[msgLen-30] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
+				} else if msg[msgLen-31] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("OTHER MSG %s", msg)
+					}
+					continue
+				}
 			} else {
-				logger.Debugf("OTHER MSG %s", msg)
+				if time.Now().Sub(logSilentTime) > 0 {
+					logSilentTime = time.Now().Add(time.Minute)
+					logger.Debugf("OTHER MSG %s", msg)
+				}
 				continue
 			}
 			if ch, ok = channels[symbol]; ok {
@@ -118,17 +150,17 @@ func (w *Depth5TickerWS) readLoop(
 				case ch <- msg:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
 						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
 					}
 				}
 			}
 		} else {
-			//{"id":"/contract/position:BNBUSDTM","type":"ack"}
-			if len(msg) > 3 && msg[2] == 'i' && msg[len(msg)-3] == 'k' {
+			if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
 				logger.Debugf("%s", msg)
 			}
 		}
+
 	}
 }
 
