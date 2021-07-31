@@ -2,7 +2,6 @@ package kucoin_usdtfuture
 
 import (
 	"encoding/json"
-	"github.com/geometrybase/hft-micro/logger"
 	"github.com/minio/simdjson-go"
 	"github.com/stretchr/testify/assert"
 	"strings"
@@ -124,7 +123,7 @@ func BenchmarkJsonParseDepth50(t *testing.B) {
 
 func TestParseDepth5(t *testing.T) {
 	for _, line := range strings.Split(Depth5SampleLines, "\n") {
-		logger.Debugf("%s", line)
+		//logger.Debugf("%s", line)
 		wsCap := WsCap{}
 		err := json.Unmarshal([]byte(line), &wsCap)
 		if err != nil {
@@ -143,7 +142,6 @@ func TestParseDepth5(t *testing.T) {
 		}
 		assert.Equal(t, jsonD.Symbol, depth5.Symbol)
 		assert.Equal(t, jsonD.EventTime, depth5.EventTime)
-		assert.Equal(t, jsonD.Sequence, depth5.Sequence)
 		assert.Equal(t, 5, len(jsonD.Bids))
 		assert.Equal(t, 5, len(jsonD.Asks))
 		assert.Equal(t, 5, len(depth5.Bids))
@@ -161,6 +159,7 @@ var GlobalD *Depth5
 
 func BenchmarkParseDepth5(t *testing.B) {
 	b := []byte(`{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060],[18.082,11060],[17.779,407]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,"timestamp":1618717277315},"subject":"level2","topic":"/contractMarket/level2Depth5:ATOMUSDTM","type":"message"}`)
+	//b := []byte(`{"type":"message","topic":"/contractMarket/level2Depth5:CHZUSDTM","subject":"level2","data":{"sequence":1627365884233,"asks":[[0.2621,7501],[0.2622,3599],[0.2623,52851],[0.2624,38379],[0.2625,39980]],"bids":[[0.2619,2298],[0.2618,19222],[0.2617,17837],[0.2616,21857],[0.2615,31419]],"ts":1627723139251,"timestamp":1627723139251}}`)
 	x := &Depth5{}
 	t.ReportAllocs()
 	for i := 0; i < t.N; i++ {

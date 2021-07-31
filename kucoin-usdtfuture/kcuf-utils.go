@@ -112,40 +112,74 @@ func ParseDepth50(bytes []byte) (*Depth50, error) {
 	return &orderBook, nil
 }
 
-func ParseDepth5(bytes []byte, depth5 *Depth5) error {
+func ParseDepth5(msg []byte, depth5 *Depth5) error {
 	var err error
-	offset := 16
-	if bytes[offset] != 'c' && bytes[offset+1] != 'e' && bytes[offset+2] != '"' {
-		return fmt.Errorf("bad bytes %s", bytes)
+	//{"data":{"sequence":1617729498880,"asks":[[411.340,1295],[411.574,129],[411.593,1458],[411.617,1170],[411.640,944]],"bids":[[411.163,53],[411.162,53],[411.160,2174],[411.063,132],[411.033,2319]],"ts":1623511700678,"timestamp":1623511700678},"subject":"level2","topic":"/contractMarket/level2Depth5:KSMUSDTM","type":"message"}
+	//{"type":"message","topic":"/contractMarket/level2Depth5:GRTUSDTM","subject":"level2","data":{"sequence":1627365704601,"asks":[[0.62612,194],[0.62625,194],[0.62640,3230],[0.62655,6368],[0.62656,6300]],"bids":[[0.62580,1846],[0.62565,1087],[0.62555,1959],[0.62551,1038],[0.62550,601]],"ts":1627723139256,"timestamp":1627723139256}}
+	msgLen := len(msg)
+	if msgLen < 128 {
+		return fmt.Errorf("bad msg %s", msg)
 	}
-	offset = 20
+	offset := 0
+	currentKey := common.JsonKeyUnknown
+	if msg[2] == 'd' {
+		offset = 16
+		if msg[offset] != 'c' && msg[offset+1] != 'e' && msg[offset+2] != '"' {
+			return fmt.Errorf("bad msg %s", msg)
+		}
+		if msg[msgLen-28] == ':' {
+			depth5.Symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
+		} else if msg[msgLen-29] == ':' {
+			depth5.Symbol = common.UnsafeBytesToString(msg[msgLen-28 : msgLen-19])
+		} else if msg[msgLen-30] == ':' {
+			depth5.Symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
+		} else if msg[msgLen-31] == ':' {
+			depth5.Symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
+		} else {
+			return fmt.Errorf("symbol not found for %s", msg)
+		}
+		offset = 32
+	} else if msg[2] == 't' {
+		offset = 54
+		if msg[offset] != '5' && msg[offset+1] != '"' {
+			return fmt.Errorf("bad msg %s", msg)
+		}
+		if msg[65] == ',' {
+			depth5.Symbol = common.UnsafeBytesToString(msg[56:64])
+		} else if msg[66] == ',' {
+			depth5.Symbol = common.UnsafeBytesToString(msg[56:65])
+		} else if msg[67] == ',' {
+			depth5.Symbol = common.UnsafeBytesToString(msg[56:66])
+		} else if msg[64] == ',' {
+			depth5.Symbol = common.UnsafeBytesToString(msg[56:63])
+		} else if msg[68] == ',' {
+			depth5.Symbol = common.UnsafeBytesToString(msg[56:67])
+		} else {
+			return fmt.Errorf("symbol not found for %s", msg)
+		}
+		offset = 100
+	}else{
+		return fmt.Errorf("bad msg %s", msg)
+	}
 	collectStart := offset
-	bytesLen := len(bytes)
 	counter := 0
-	currentKey := common.JsonKeyLastUpdateId
-	for offset < bytesLen-6 {
+	for offset < msgLen-6 {
 		switch currentKey {
-		case common.JsonKeyLastUpdateId:
-			if bytes[offset] == ',' {
-				depth5.Sequence, err = common.ParseInt(bytes[collectStart:offset])
-				if err != nil {
-					return fmt.Errorf("JsonKeyLastUpdateId error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
-				}
-				if bytes[offset+4] != 'k' && bytes[offset+5] != 's' && bytes[offset+6] != '"' {
-					return fmt.Errorf("bad bytes %s", bytes)
-				}
+		case common.JsonKeyUnknown:
+			if msg[offset] == 'k' && msg[offset+1] == 's' && msg[offset+2] == '"' {
 				currentKey = common.JsonKeyAsks
-				offset += 10
+				offset += 6
 				collectStart = offset
 			}
+			break
 		case common.JsonKeyBids:
-			if bytes[offset] == ',' || bytes[offset] == ']' {
-				depth5.Bids[counter/2][counter%2], err = common.ParseDecimal(bytes[collectStart:offset])
+			if msg[offset] == ',' || msg[offset] == ']' {
+				depth5.Bids[counter/2][counter%2], err = common.ParseDecimal(msg[collectStart:offset])
 				if err != nil {
-					return fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return fmt.Errorf("JsonKeyBids error %v mainLoop %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
 				}
 				counter += 1
-				if counter >= 10 || bytes[offset+1] == ']' {
+				if counter >= 10 || msg[offset+1] == ']' {
 					currentKey = common.JsonKeyEventTime
 					offset += 8
 					collectStart = offset
@@ -160,13 +194,13 @@ func ParseDepth5(bytes []byte, depth5 *Depth5) error {
 			}
 			break
 		case common.JsonKeyAsks:
-			if bytes[offset] == ',' || bytes[offset] == ']' {
-				depth5.Asks[counter/2][counter%2], err = common.ParseDecimal(bytes[collectStart:offset])
+			if msg[offset] == ',' || msg[offset] == ']' {
+				depth5.Asks[counter/2][counter%2], err = common.ParseDecimal(msg[collectStart:offset])
 				if err != nil {
-					return fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+					return fmt.Errorf("JsonKeyAsks error %v mainLoop %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
 				}
 				counter += 1
-				if counter >= 10 || bytes[offset+1] == ']' {
+				if counter >= 10 || msg[offset+1] == ']' {
 					currentKey = common.JsonKeyBids
 					offset += 12
 					collectStart = offset
@@ -183,29 +217,16 @@ func ParseDepth5(bytes []byte, depth5 *Depth5) error {
 			break
 		case common.JsonKeyEventTime:
 			offset += 13
-			timestamp, err := common.ParseInt(bytes[collectStart:offset])
+			timestamp, err := common.ParseInt(msg[collectStart:offset])
 			if err != nil {
-				return fmt.Errorf("JsonKeyEventTime error %v mainLoop %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
+				return fmt.Errorf("JsonKeyEventTime error %v mainLoop %d end %d %s", err, collectStart, offset, msg[collectStart:offset])
 			}
 			depth5.EventTime = time.Unix(0, timestamp*1000000)
-			offset += 85
-			collectStart = offset
-			offset += 6
-			currentKey = common.JsonKeySymbol
-			continue
-		case common.JsonKeySymbol:
-			if bytes[offset] == '"' {
-				symbol := bytes[collectStart:offset]
-				depth5.Symbol = *(*string)(unsafe.Pointer(&symbol))
-				offset = bytesLen
-				//在此退出
-				continue
-			}
-			break
+			return nil
 		}
 		offset += 1
 	}
-	return nil
+	return fmt.Errorf("bad msg %s", msg)
 }
 
 func passPhraseEncrypt(key, plain []byte) string {
@@ -532,4 +553,8 @@ var TickerSampleLines = `{"data":{"symbol":"XBTUSDTM","sequence":1624824091610,"
 {"data":{"symbol":"XBTUSDTM","sequence":1624824091679,"side":"buy","size":24,"price":33678.0,"bestBidSize":192,"bestBidPrice":"33677.0","bestAskPrice":"33678.0","tradeId":"60e93a7a3c7feb289d2be51b","ts":1625897594325396916,"bestAskSize":1},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}
 {"data":{"symbol":"ATOMUSDTM","sequence":1624823453979,"side":"sell","size":1,"price":13.538,"bestBidSize":555,"bestBidPrice":"13.538","bestAskPrice":"13.545","tradeId":"60e93a7f96bab2241409ca88","ts":1625897599390117747,"bestAskSize":381},"subject":"ticker","topic":"/contractMarket/ticker:ATOMUSDTM","type":"message"}
 {"data":{"symbol":"ATOMUSDTM","sequence":1624823453979,"side":"sell","size":1,"price":13.538,"bestBidSize":555,"bestBidPrice":"13.538","bestAskPrice":"13.545","tradeId":"60e93a7f96bab2241409ca88","ts":1625897599390117747,"bestAskSize":381},"subject":"ticker","topic":"/contractMarket/ticker:ATOMUSDTM","type":"message"}
-{"data":{"symbol":"XBTUSDTM","sequence":1624824091680,"side":"buy","size":63,"price":33679,"bestBidSize":16,"bestBidPrice":"33678.0","bestAskPrice":"33679.0","tradeId":"60e93a803c7feb289d2be531","ts":1625897600449461736,"bestAskSize":1119},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}`
+{"data":{"symbol":"XBTUSDTM","sequence":1624824091680,"side":"buy","size":63,"price":33679,"bestBidSize":16,"bestBidPrice":"33678.0","bestAskPrice":"33679.0","tradeId":"60e93a803c7feb289d2be531","ts":1625897600449461736,"bestAskSize":1119},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}
+{"type":"message","topic":"/contractMarket/level2Depth5:GRTUSDTM","subject":"level2","data":{"sequence":1627365704601,"asks":[[0.62612,194],[0.62625,194],[0.62640,3230],[0.62655,6368],[0.62656,6300]],"bids":[[0.62580,1846],[0.62565,1087],[0.62555,1959],[0.62551,1038],[0.62550,601]],"ts":1627723139256,"timestamp":1627723139256}}
+{"type":"message","topic":"/contractMarket/level2Depth5:EOSUSDTM","subject":"level2","data":{"sequence":1627365839109,"asks":[[4.046,61],[4.047,4363],[4.048,14649],[4.049,8223],[4.050,10789]],"bids":[[4.04500000,439],[4.04400000,12210],[4.04300000,12191],[4.04200000,10348],[4.041,6692]],"ts":1627723139255,"timestamp":1627723139255}}
+{"type":"message","topic":"/contractMarket/level2Depth5:SNXUSDTM","subject":"level2","data":{"sequence":1627365713359,"asks":[[10.02,121],[10.021,977],[10.022,1097],[10.023,1087],[10.024,60]],"bids":[[10.018,24],[10.017,810],[10.016,513],[10.013,1932],[10.012,4]],"ts":1627723139254,"timestamp":1627723139254}}
+{"type":"message","topic":"/contractMarket/level2Depth5:CHZUSDTM","subject":"level2","data":{"sequence":1627365884233,"asks":[[0.2621,7501],[0.2622,3599],[0.2623,52851],[0.2624,38379],[0.2625,39980]],"bids":[[0.2619,2298],[0.2618,19222],[0.2617,17837],[0.2616,21857],[0.2615,31419]],"ts":1627723139251,"timestamp":1627723139251}}`

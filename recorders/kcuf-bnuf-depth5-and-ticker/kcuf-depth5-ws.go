@@ -115,16 +115,19 @@ func (w *KcufDepth5WS) readLoop(
 			if msg[2] == 't' {
 				if msg[65] == ',' {
 					symbol = common.UnsafeBytesToString(msg[56:64])
-				}else if msg[66] == ',' {
+				} else if msg[66] == ',' {
 					symbol = common.UnsafeBytesToString(msg[56:65])
-				}else if msg[67] == ',' {
+				} else if msg[67] == ',' {
 					symbol = common.UnsafeBytesToString(msg[56:66])
-				}else if msg[64] == ',' {
+				} else if msg[64] == ',' {
 					symbol = common.UnsafeBytesToString(msg[56:63])
-				}else if msg[68] == ',' {
+				} else if msg[68] == ',' {
 					symbol = common.UnsafeBytesToString(msg[56:67])
 				} else {
-					logger.Debugf("OTHER MSG %s", msg)
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("OTHER MSG %s", msg)
+					}
 					continue
 				}
 			} else if msg[2] == 'd' {
@@ -137,9 +140,18 @@ func (w *KcufDepth5WS) readLoop(
 				} else if msg[msgLen-31] == ':' {
 					symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
 				} else {
-					logger.Debugf("OTHER MSG %s", msg)
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("OTHER MSG %s", msg)
+					}
 					continue
 				}
+			}else{
+				if time.Now().Sub(logSilentTime) > 0 {
+					logSilentTime = time.Now().Add(time.Minute)
+					logger.Debugf("OTHER MSG %s", msg)
+				}
+				continue
 			}
 			//logger.Debugf("%s %s", symbol, msg)
 			if ch, ok = channels[symbol]; ok {

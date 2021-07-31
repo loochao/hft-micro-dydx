@@ -138,7 +138,7 @@ type Depth5 struct {
 	Symbol    string        `json:"-"`
 	Bids      [5][2]float64 `json:"bids,omitempty"`
 	Asks      [5][2]float64 `json:"asks,omitempty"`
-	Sequence  int64         `json:"sequence"`
+	//Sequence  int64         `json:"sequence"`
 	EventTime time.Time     `json:"-"`
 }
 
