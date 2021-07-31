@@ -166,6 +166,10 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *Mess
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
+				select {
+				case w.symbolCh <- symbol:
+				default:
+				}
 			}
 		}
 

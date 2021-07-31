@@ -169,6 +169,10 @@ func (w *KcusTickerWS) readLoop(
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
+				select {
+				case w.symbolCh <- symbol:
+				default:
+				}
 			}
 		} else {
 			if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
