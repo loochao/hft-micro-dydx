@@ -74,7 +74,7 @@ func (w *Depth5TickerWS) readLoop(
 	defer func() {
 		logger.Debugf("EXIT readLoop")
 	}()
-	logSilentTime := time.Now()
+	logSilentTime := time.Now().Add(-time.Minute)
 	var symbol string
 	var ch chan []byte
 	var ok bool
@@ -98,6 +98,7 @@ func (w *Depth5TickerWS) readLoop(
 			go w.restart()
 			return
 		}
+		//logger.Debugf("%s", msg)
 
 		//中间有一次数据变更，可能两种格式
 		//{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,

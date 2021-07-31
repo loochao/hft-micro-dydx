@@ -99,42 +99,67 @@ func (w *TickerWS) readLoop(
 		}
 		msgLen = len(msg)
 		//{"data":{"sequence":"1618200194453","bestAsk":"32704.5","size":"0.00058862","bestBidSize":"0.06704767","price":"32704.5","time":1626290937603,"bestAskSize":"0.01955972","bestBid":"32704.4"},"subject":"trade.ticker","topic":"/market/ticker:BTC-USDT","type":"message"}
-		if msg[2] == 'd' {
-			if msg[msgLen-27] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-26:msgLen-19])
-			} else if msg[msgLen-28] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-27:msgLen-19])
-			} else if msg[msgLen-29] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-29:msgLen-19])
-			} else if msg[msgLen-30] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-30:msgLen-19])
-			} else if msg[msgLen-31] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-31:msgLen-19])
+		//{"type":"message","topic":"/market/ticker:BTC-USDT","subject":"trade.ticker","data":{"bestAsk":"41217.7","bestAskSize":"0.21545096","bestBid":"41217.6","bestBidSize":"0.0265","price":"41217.7","sequence":"1618607525224","size":"0.00043659","time":1627752855836}}
+		if msgLen > 128 {
+			if msg[2] == 't' && msg[9] == 'm' {
+				if msg[50] == '"' {
+					symbol = common.UnsafeBytesToString(msg[42:50])
+				} else if msg[51] == '"' {
+					symbol = common.UnsafeBytesToString(msg[42:51])
+				} else if msg[52] == '"' {
+					symbol = common.UnsafeBytesToString(msg[42:52])
+				} else if msg[53] == '"' {
+					symbol = common.UnsafeBytesToString(msg[42:53])
+				} else if msg[49] == '"' {
+					symbol = common.UnsafeBytesToString(msg[42:49])
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("OTHER MSG %s", msg)
+					}
+					continue
+				}
+				logger.Debugf("%s %s", symbol,msg)
+			} else if msg[2] == 'd' {
+				if msg[msgLen-27] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-26 : msgLen-19])
+				} else if msg[msgLen-28] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
+				} else if msg[msgLen-29] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
+				} else if msg[msgLen-30] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
+				} else if msg[msgLen-31] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-31 : msgLen-19])
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("OTHER MSG %s", msg)
+					}
+					continue
+				}
 			} else {
-				//if time.Now().Sub(logSilentTime) > 0 {
-				//	logSilentTime = time.Now().Add(time.Minute)
-				//	logger.Debugf("OTHER MSG %s", msg)
-				//}
+				if time.Now().Sub(logSilentTime) > 0 {
+					logSilentTime = time.Now().Add(time.Minute)
+					logger.Debugf("OTHER MSG %s", msg)
+				}
 				continue
 			}
-		} else {
-			//if time.Now().Sub(logSilentTime) > 0 {
-			//	logSilentTime = time.Now().Add(time.Minute)
-			//	logger.Debugf("OTHER MSG %s", msg)
-			//}
-			continue
-		}
-
-
-		if ch, ok = channels[symbol]; ok {
-			select {
-			case ch <- msg:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
-					logSilentTime = time.Now().Add(time.Minute)
+			if ch, ok = channels[symbol]; ok {
+				select {
+				case ch <- msg:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 			}
+		} else {
+			if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
+				logger.Debugf("%s", msg)
+			}
+			continue
 		}
 
 	}

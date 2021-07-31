@@ -91,21 +91,51 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 			go w.restart()
 			return
 		}
-		logger.Debugf("%s", msg)
-
 		msgLen = len(msg)
 		//{"data":{"asks":[["55447.5","0.00128653"],["55447.6","0.0040067"],["55447.7","5.26962769"],["55449","0.00016278"],["55451.5","0.00013396"]],"bids":[["55403.1","0.01254575"],["55402.5","0.00005319"],["55279.9","0.201"],["55268.3","0.02406837"],["55233.5","0.0004668"]],"timestamp":1618724853172},"subject":"level2","topic":"/spotMarket/level2Depth5:BTC-USDT","type":"message"}`)
+		//{"type":"message","topic":"/spotMarket/level2Depth5:ENJ-USDT","subject":"level2","data":{"asks":[["1.421","291.4019"],["1.4211","257.9855"],["1.4214","17.2666"],["1.4215","538.358"],["1.4217","2111.2333"]],"bids":[["1.4195","507.9287"],["1.4193","538.358"],["1.4191","308.6314"],["1.419","2110.5551"],["1.4188","4320.975"]],"timestamp":1627748904217}}
 		if msgLen > 128 {
-			if msg[msgLen-28] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
-			} else if msg[msgLen-29] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-28 : msgLen-19])
-			} else if msg[msgLen-30] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
-			} else if msg[msgLen-31] == ':' {
-				symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
-			} else {
-				logger.Debugf("OTHER MSG %s", msg)
+			if msg[2] == 'd' {
+				if msg[msgLen-28] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
+				} else if msg[msgLen-29] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-28 : msgLen-19])
+				} else if msg[msgLen-30] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
+				} else if msg[msgLen-31] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("OTHER MSG %s", msg)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+					continue
+				}
+			} else if msg[2] == 't' && msg[51] == ':' {
+				if msg[60] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:60])
+				} else if msg[61] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:61])
+				} else if msg[62] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:62])
+				} else if msg[63] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:63])
+				} else if msg[59] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:59])
+				} else if msg[64] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:64])
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("OTHER MSG %s", msg)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+					continue
+				}
+			}else{
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("OTHER MSG %s", msg)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
 				continue
 			}
 			if ch, ok = channels[symbol]; ok {
@@ -113,7 +143,7 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 				case ch <- msg:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- &common.DepthRawMessage failed %s len(ch) %d", symbol, len(ch))
+						logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
@@ -121,6 +151,10 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 				case w.symbolCh <- symbol:
 				default:
 				}
+			}
+		}else{
+			if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
+				logger.Debugf("%s", msg)
 			}
 		}
 	}
@@ -319,7 +353,7 @@ func (w *Depth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 						Type:           "subscribe",
 						Topic:          fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol),
 						PrivateChannel: false,
-						Response:       false,
+						Response:       true,
 					}:
 						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval * time.Duration(len(symbols)*2))
 						break loop

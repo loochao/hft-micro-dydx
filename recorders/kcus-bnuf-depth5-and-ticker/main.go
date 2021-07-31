@@ -11,65 +11,6 @@ import (
 	"time"
 )
 
-var symbolsMap = map[string]string{
-	"BTCUSDT":   "XBTUSDTM",
-	"IOSTUSDT":  "IOSTUSDTM",
-	"UNIUSDT":   "UNIUSDTM",
-	"ICPUSDT":   "ICPUSDTM",
-	"THETAUSDT": "THETAUSDTM",
-	"YFIUSDT":   "YFIUSDTM",
-	"OCEANUSDT": "OCEANUSDTM",
-	"XMRUSDT":   "XMRUSDTM",
-	"SXPUSDT":   "SXPUSDTM",
-	"BCHUSDT":   "BCHUSDTM",
-	"TRXUSDT":   "TRXUSDTM",
-	"XEMUSDT":   "XEMUSDTM",
-	"ETHUSDT":   "ETHUSDTM",
-	"MKRUSDT":   "MKRUSDTM",
-	"FTMUSDT":   "FTMUSDTM",
-	"ATOMUSDT":  "ATOMUSDTM",
-	"BANDUSDT":  "BANDUSDTM",
-	"DOTUSDT":   "DOTUSDTM",
-	"FILUSDT":   "FILUSDTM",
-	"AVAXUSDT":  "AVAXUSDTM",
-	"QTUMUSDT":  "QTUMUSDTM",
-	"COMPUSDT":  "COMPUSDTM",
-	"ZECUSDT":   "ZECUSDTM",
-	"ADAUSDT":   "ADAUSDTM",
-	"DOGEUSDT":  "DOGEUSDTM",
-	"XLMUSDT":   "XLMUSDTM",
-	"EOSUSDT":   "EOSUSDTM",
-	"LTCUSDT":   "LTCUSDTM",
-	"VETUSDT":   "VETUSDTM",
-	"ONTUSDT":   "ONTUSDTM",
-	"RVNUSDT":   "RVNUSDTM",
-	"MATICUSDT": "MATICUSDTM",
-	"1INCHUSDT": "1INCHUSDTM",
-	"XRPUSDT":   "XRPUSDTM",
-	"NEOUSDT":   "NEOUSDTM",
-	"ALGOUSDT":  "ALGOUSDTM",
-	"MANAUSDT":  "MANAUSDTM",
-	"WAVESUSDT": "WAVESUSDTM",
-	"KSMUSDT":   "KSMUSDTM",
-	"AAVEUSDT":  "AAVEUSDTM",
-	"LINKUSDT":  "LINKUSDTM",
-	"BATUSDT":   "BATUSDTM",
-	"DENTUSDT":  "DENTUSDTM",
-	"LUNAUSDT":  "LUNAUSDTM",
-	"ETCUSDT":   "ETCUSDTM",
-	"CHZUSDT":   "CHZUSDTM",
-	"CRVUSDT":   "CRVUSDTM",
-	"DASHUSDT":  "DASHUSDTM",
-	"SNXUSDT":   "SNXUSDTM",
-	"GRTUSDT":   "GRTUSDTM",
-	"BTTUSDT":   "BTTUSDTM",
-	"SUSHIUSDT": "SUSHIUSDTM",
-	"ENJUSDT":   "ENJUSDTM",
-	"XTZUSDT":   "XTZUSDTM",
-	"DGBUSDT":   "DGBUSDTM",
-	"SOLUSDT":   "SOLUSDTM",
-	"BNBUSDT":   "BNBUSDTM",
-}
 
 func main() {
 
@@ -78,6 +19,7 @@ func main() {
 	proxyAddress := flag.String("proxy", "", "symbols group batch size")
 	symbolsStr := flag.String("symbols", "1INCH-USDT,ADA-USDT,ALGO-USDT,ANKR-USDT,ATOM-USDT,AVAX-USDT,BAT-USDT,BCH-USDT,BNB-USDT,BTC-USDT,BTT-USDT,DASH-USDT,DGB-USDT,DODO-USDT,DOGE-USDT,EOS-USDT,ETC-USDT,ETH-USDT,FIL-USDT,FTM-USDT,GRT-USDT,ICP-USDT,IOST-USDT,LRC-USDT,LTC-USDT,LUNA-USDT,MATIC-USDT,NEAR-USDT,NEO-USDT,OGN-USDT,OMG-USDT,ONE-USDT,ONT-USDT,STMX-USDT,SXP-USDT,TOMO-USDT,TRX-USDT,VET-USDT,XEM-USDT,XLM-USDT,XMR-USDT,XRP-USDT,XTZ-USDT,ZEC-USDT,ZEN-USDT,ZIL-USDT", "symbols, separate by comma")
 	savePath := flag.String("path", "/root/kcus-bnus-depth5-and-ticker", "data save folder")
+
 	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
 	//symbolsStr := flag.String("symbols", "BTC-USDT", "symbols, separate by comma")
 	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")

@@ -100,7 +100,6 @@ type Depth5 struct {
 	Symbol    string        `json:"-"`
 	Bids      [5][2]float64 `json:"-"`
 	Asks      [5][2]float64 `json:"_"`
-	ParseTime time.Time     `json:"-"`
 	EventTime time.Time     `json:"-"`
 }
 
@@ -163,7 +162,6 @@ func (depth *Depth5) UnmarshalJSON(data []byte) error {
 		depth.Asks[i][1] = size
 	}
 	depth.EventTime = time.Unix(0, aux.Data.EventTime*1000000)
-	depth.ParseTime = time.Now()
 	segs := strings.Split(aux.Topic, ":")
 	if len(segs) == 2 {
 		depth.Symbol = segs[1]

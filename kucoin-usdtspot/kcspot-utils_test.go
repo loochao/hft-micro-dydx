@@ -2,7 +2,6 @@ package kucoin_usdtspot
 
 import (
 	"encoding/json"
-	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
@@ -40,13 +39,14 @@ func BenchmarkParseDepth50(t *testing.B) {
 }
 
 func TestParseDepth5(t *testing.T) {
-	bytes := []byte(`{"data":{"asks":[["55447.5","0.00128653"],["55447.6","0.0040067"],["55447.7","5.26962769"],["55449","0.00016278"],["55451.5","0.00013396"]],"bids":[["55403.1","0.01254575"],["55402.5","0.00005319"],["55279.9","0.201"],["55268.3","0.02406837"],["55233.5","0.0004668"]],"timestamp":1618724853172},"subject":"level2","topic":"/spotMarket/level2Depth5:BTC-USDT","type":"message"}`)
+	//bytes := []byte(`{"data":{"asks":[["55447.5","0.00128653"],["55447.6","0.0040067"],["55447.7","5.26962769"],["55449","0.00016278"],["55451.5","0.00013396"]],"bids":[["55403.1","0.01254575"],["55402.5","0.00005319"],["55279.9","0.201"],["55268.3","0.02406837"],["55233.5","0.0004668"]],"timestamp":1618724853172},"subject":"level2","topic":"/spotMarket/level2Depth5:BTC-USDT","type":"message"}`)
+	bytes := []byte(`{"type":"message","topic":"/spotMarket/level2Depth5:ENJ-USDT","subject":"level2","data":{"asks":[["1.421","291.4019"],["1.4211","257.9855"],["1.4214","17.2666"],["1.4215","538.358"],["1.4217","2111.2333"]],"bids":[["1.4195","507.9287"],["1.4193","538.358"],["1.4191","308.6314"],["1.419","2110.5551"],["1.4188","4320.975"]],"timestamp":1627748904217}}`)
+
 	jsonD := Depth5{}
 	err := json.Unmarshal(bytes, &jsonD)
 	if err != nil {
 		t.Fatal(err)
 	}
-	logger.Debugf("%v", jsonD)
 	depth5 := Depth5{}
 	err = ParseDepth5(bytes, &depth5)
 	if err != nil {
