@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestNewTickerWS(t *testing.T) {
+func TestNewBookTickerWS(t *testing.T) {
 	var api *API
 	var ctx = context.Background()
 	symbols := []string{"BTCF0:USTF0"}
@@ -16,7 +16,7 @@ func TestNewTickerWS(t *testing.T) {
 	for _, symbol := range symbols {
 		channels[symbol] = outputCh
 	}
-	_ = NewTickerWS(
+	_ = NewBookTickerWS(
 		ctx, api,
 		"socks5://127.0.0.1:1081",
 		channels,

@@ -18,4 +18,5 @@ const (
 	MexcUsdtFuture
 	BybitUsdtFuture
 	HoubiUsdtFuture
+	BitfinexUsdtFuture
 )

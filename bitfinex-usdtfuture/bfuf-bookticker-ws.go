@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-type TickerWS struct {
+type BookTickerWS struct {
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
@@ -24,7 +24,7 @@ type TickerWS struct {
 	stopped     int32
 }
 
-func (w *TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *BookTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer func() {
 		logger.Debugf("EXIT writeLoop")
@@ -67,7 +67,7 @@ func (w *TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *TickerWS) readLoop(
+func (w *BookTickerWS) readLoop(
 	conn *websocket.Conn,
 	channels map[string]chan []byte,
 ) {
@@ -103,6 +103,8 @@ outerLoop:
 			go w.restart()
 			return
 		}
+		logger.Debugf("%s", msg)
+		continue
 		msgLen := len(msg)
 		if msgLen < 20 {
 			select {
@@ -161,7 +163,7 @@ outerLoop:
 	}
 }
 
-func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
+func (w *BookTickerWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 512)
 	for {
 		if len(b) == cap(b) {
@@ -179,7 +181,7 @@ func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *BookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %d %s", counter, wsUrl)
@@ -224,7 +226,7 @@ func (w *TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, co
 	return conn, nil
 }
 
-func (w *TickerWS) mainLoop(
+func (w *BookTickerWS) mainLoop(
 	ctx context.Context, api *API,
 	proxy string,
 	channels map[string]chan []byte,
@@ -290,7 +292,7 @@ func (w *TickerWS) mainLoop(
 	}
 }
 
-func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *BookTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 
 	logger.Debugf("START heartbeatLoop")
 
@@ -347,10 +349,13 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 						return
 					case <-time.After(time.Millisecond):
 						logger.Debugf("send msg to writeCh timeout in 1m, ticker %s", symbol)
-					case w.writeCh <- WSRequest{
+					case w.writeCh <- WSRequestBook{
 						Symbol:  symbol,
-						Channel: "ticker",
+						Channel: "book",
 						Event:   "subscribe",
+						Freq: "F0",
+						Prec: "P0",
+						Len: "1",
 					}:
 						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval * time.Duration(len(symbols)*2))
 						break loop
@@ -364,14 +369,14 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 
 }
 
-func (w *TickerWS) Stop() {
+func (w *BookTickerWS) Stop() {
 	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (w *TickerWS) restart() {
+func (w *BookTickerWS) restart() {
 	select {
 	case <-w.done:
 		return
@@ -386,7 +391,7 @@ func (w *TickerWS) restart() {
 	}
 }
 
-func (w *TickerWS) parseTicker(msg []byte, ticker *Ticker) (err error) {
+func (w *BookTickerWS) parseTicker(msg []byte, ticker *Ticker) (err error) {
 	//[
 	//  BID,
 	//  BID_SIZE,
@@ -433,7 +438,7 @@ func (w *TickerWS) parseTicker(msg []byte, ticker *Ticker) (err error) {
 	return fmt.Errorf("not get all info %s", msg)
 }
 
-func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Ticker) {
+func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Ticker) {
 
 	logSilentTime := time.Now()
 	var err error
@@ -492,17 +497,17 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	}
 }
 
-func (w *TickerWS) Done() chan interface{} {
+func (w *BookTickerWS) Done() chan interface{} {
 	return w.done
 }
 
-func NewTickerWS(
+func NewBookTickerWS(
 	ctx context.Context,
 	api *API,
 	proxy string,
 	channels map[string]chan common.Ticker,
-) *TickerWS {
-	ws := TickerWS{
+) *BookTickerWS {
+	ws := BookTickerWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
 		writeCh:     make(chan interface{}, 4*len(channels)),

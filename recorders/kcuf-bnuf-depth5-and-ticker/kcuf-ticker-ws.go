@@ -86,6 +86,7 @@ func (w *KcufTickerWS) readLoop(
 			Source: []byte{'K', 'T'},
 		}
 	}
+	var msgLen int
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -105,52 +106,77 @@ func (w *KcufTickerWS) readLoop(
 			go w.restart()
 			return
 		}
-		//logger.Debugf("%s", msg)
 		//{"data":{"symbol":"XBTUSDTM","sequence":1624824090150,"side":"sell","size":2,"price":33590,"bestBidSize":47,"bestBidPrice":"33590.0","bestAskPrice":"33591.0","tradeId":"60e92c8c3c7feb289d2ab154","ts":1625894028299209614,"bestAskSize":463},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"} 317
-		if msg[2] == 'd' {
-			if msg[27] == '"' {
-				symbol = common.UnsafeBytesToString(msg[19:27])
-			} else if msg[28] == '"' {
-				symbol = common.UnsafeBytesToString(msg[19:28])
-			} else if msg[29] == '"' {
-				symbol = common.UnsafeBytesToString(msg[19:29])
-			} else if msg[30] == '"' {
-				symbol = common.UnsafeBytesToString(msg[19:30])
-			} else if msg[31] == '"' {
-				symbol = common.UnsafeBytesToString(msg[19:31])
+		//{"type":"message","topic":"/contractMarket/ticker:1INCHUSDTM","subject":"ticker","data":{"symbol":"1INCHUSDTM","sequence":1627371661456,"side":"buy","size":21,"price":2.379,"bestBidSize":203,"bestBidPrice":"2.377","bestAskPrice":"2.38","tradeId":"6105178a991e1303211759d8","ts":1627723658671236584,"bestAskSize":251}}
+		msgLen = len(msg)
+		if msgLen > 128 {
+			if msg[2] == 't' {
+				if msg[59] == ',' {
+					symbol = common.UnsafeBytesToString(msg[50:58])
+				} else if msg[60] == ',' {
+					symbol = common.UnsafeBytesToString(msg[50:59])
+				} else if msg[61] == ',' {
+					symbol = common.UnsafeBytesToString(msg[50:60])
+				} else if msg[58] == ',' {
+					symbol = common.UnsafeBytesToString(msg[50:57])
+				} else if msg[62] == ',' {
+					symbol = common.UnsafeBytesToString(msg[50:61])
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("OTHER MSG %s", msg)
+					}
+					continue
+				}
+			} else if msg[2] == 'd' {
+				if msg[27] == '"' {
+					symbol = common.UnsafeBytesToString(msg[19:27])
+				} else if msg[28] == '"' {
+					symbol = common.UnsafeBytesToString(msg[19:28])
+				} else if msg[29] == '"' {
+					symbol = common.UnsafeBytesToString(msg[19:29])
+				} else if msg[30] == '"' {
+					symbol = common.UnsafeBytesToString(msg[19:30])
+				} else if msg[31] == '"' {
+					symbol = common.UnsafeBytesToString(msg[19:31])
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("OTHER MSG %s", msg)
+					}
+					continue
+				}
 			} else {
-				//if time.Now().Sub(logSilentTime) > 0 {
-				//	logSilentTime = time.Now().Add(time.Minute)
-				//	logger.Debugf("OTHER MSG %s", msg)
-				//}
+				if time.Now().Sub(logSilentTime) > 0 {
+					logSilentTime = time.Now().Add(time.Minute)
+					logger.Debugf("OTHER MSG %s", msg)
+				}
 				continue
 			}
-		} else {
-			//if time.Now().Sub(logSilentTime) > 0 {
-			//	logSilentTime = time.Now().Add(time.Minute)
-			//	logger.Debugf("OTHER MSG %s", msg)
-			//}
-			continue
-		}
 
-		if ch, ok = channels[symbol]; ok {
-			index++
-			if index == 4096 {
-				index = 0
-			}
-			message = pool[index]
-			message.Time = time.Now().UnixNano()
-			message.Data = msg
-			select {
-			case ch <- message:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("ch <- message failed %s len(ch) = %d", symbol, len(ch))
-					logSilentTime = time.Now().Add(time.Minute)
+			//logger.Debugf("%s %s", symbol, msg)
+			if ch, ok = channels[symbol]; ok {
+				index++
+				if index == 4096 {
+					index = 0
+				}
+				message = pool[index]
+				message.Time = time.Now().UnixNano()
+				message.Data = msg
+				select {
+				case ch <- message:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("ch <- message failed %s len(ch) = %d", symbol, len(ch))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 			}
+		} else {
+			if len(msg) > 3 && msg[2] == 'i' && msg[len(msg)-3] == 'k' {
+				logger.Debugf("%s", msg)
+			}
 		}
-
 	}
 }
 
@@ -224,7 +250,6 @@ func (w *KcufTickerWS) mainLoop(
 ) {
 
 	logger.Debugf("START mainLoop")
-
 
 	api, err := kucoin_usdtfuture.NewAPI("", "", "", proxy)
 	if err != nil {
@@ -428,7 +453,7 @@ func NewKcufTickerWS(
 		symbolCh:    make(chan string, 4*len(channels)),
 		stopped:     0,
 	}
-	go ws.mainLoop(ctx,  proxy, channels)
+	go ws.mainLoop(ctx, proxy, channels)
 	ws.reconnectCh <- nil
 	return &ws
 }
