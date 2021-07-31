@@ -143,7 +143,7 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *Mess
 					}
 					continue
 				}
-			}else{
+			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("OTHER MSG %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
@@ -171,8 +171,11 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *Mess
 				default:
 				}
 			}
+		} else {
+			if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
+				logger.Debugf("%s", msg)
+			}
 		}
-
 	}
 }
 
@@ -239,7 +242,7 @@ func (w *Depth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, co
 	return conn, nil
 }
 
-func (w *Depth5WS) mainLoop(ctx context.Context,  proxy string, channels map[string]chan *Message) {
+func (w *Depth5WS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *Message) {
 	logger.Debugf("START mainLoop")
 
 	api, err := kucoin_usdtspot.NewAPI("", "", "", proxy)
@@ -431,7 +434,7 @@ func NewKcusDepth5WS(
 		symbolCh:    make(chan string, 4*len(channels)),
 		stopped:     0,
 	}
-	go ws.mainLoop(ctx,  proxy, channels)
+	go ws.mainLoop(ctx, proxy, channels)
 	ws.reconnectCh <- nil
 	return &ws
 }
