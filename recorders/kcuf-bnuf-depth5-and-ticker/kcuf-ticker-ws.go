@@ -171,6 +171,14 @@ func (w *KcufTickerWS) readLoop(
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
+				select {
+				case w.symbolCh <- symbol:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.symbolCh <- symbol failed %s len(ch) = %d", symbol, len(w.symbolCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
 			}
 		} else {
 			if len(msg) > 3 && msg[2] == 'i' && msg[len(msg)-3] == 'k' {
