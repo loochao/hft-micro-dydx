@@ -372,7 +372,7 @@ func (w *Depth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 						Type:           "subscribe",
 						Topic:          fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol),
 						PrivateChannel: false,
-						Response:       false,
+						Response:       true,
 					}:
 						symbolUpdatedTimes[symbol] = time.Now().Add(symbolCheckInterval * time.Duration(len(symbols)*2))
 						break loop
