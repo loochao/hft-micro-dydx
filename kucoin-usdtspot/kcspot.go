@@ -228,7 +228,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 				}
 			}
 		case price := <-kcsPriceCh:
-			logger.Debugf("kcs price %f", price)
+			logger.Debugf("kcs price %f %v", price, kcsBalance)
 			if k.settings.AutoAddCommissionDiscountAsset && price > 0{
 				if kcsBalance != nil {
 					select {
@@ -253,6 +253,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 				}
 			}
 		case balance := <-userWS.BalanceCh:
+			logger.Debugf("%s", balance.Currency)
 			if balance.Currency == "USDT" {
 				usdtAccount = &Account{
 					Currency:  balance.Currency,
