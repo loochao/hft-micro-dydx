@@ -97,3 +97,14 @@ func (cp *CancelAllOrdersParam) ToUrlValues() url.Values {
 	values.Set("symbol", cp.Symbol)
 	return values
 }
+
+
+type TickerParam struct {
+	Symbol string
+}
+
+func (tp *TickerParam) ToUrlValues() url.Values {
+	values := url.Values{}
+	values.Set("symbol", tp.Symbol)
+	return values
+}

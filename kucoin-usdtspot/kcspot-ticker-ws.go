@@ -119,7 +119,6 @@ func (w *TickerWS) readLoop(
 					}
 					continue
 				}
-				logger.Debugf("%s %s", symbol,msg)
 			} else if msg[2] == 'd' {
 				if msg[msgLen-27] == ':' {
 					symbol = common.UnsafeBytesToString(msg[msgLen-26 : msgLen-19])

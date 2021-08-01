@@ -216,7 +216,7 @@ func ParseDepth5(msg []byte, depth5 *Depth5) (err error) {
 				}
 				depth5.EventTime = time.Unix(0, timestamp*1000000)
 				return nil
-			}else{
+			} else {
 				return fmt.Errorf("bad timestamp, out of range %s", msg)
 			}
 		}
@@ -330,31 +330,60 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 
 	ticker.ParseTime = time.Now()
 
-	//{"data":{"sequence":"1618200193317","bestAsk":"32704.5","size":"0.0017491","bestBidSize":"0.06093004","price":"32704.4","time":1626290933804,"bestAskSize":"0.02047287","bestBid":"32704.4"},"subject":"trade.ticker","topic":"/market/ticker:BTC-USDT","type":"message"}
+	//{"data":{"sequence":"1618200194453","bestAsk":"32704.5","size":"0.00058862","bestBidSize":"0.06704767","price":"32704.5","time":1626290937603,"bestAskSize":"0.01955972","bestBid":"32704.4"},"subject":"trade.ticker","topic":"/market/ticker:BTC-USDT","type":"message"}
+	//{"type":"message","topic":"/market/ticker:BTC-USDT","subject":"trade.ticker","data":{"bestAsk":"41217.7","bestAskSize":"0.21545096","bestBid":"41217.6","bestBidSize":"0.0265","price":"41217.7","sequence":"1618607525224","size":"0.00043659","time":1627752855836}}
 	msgLen := len(msg)
-	if msg[msgLen-27] == ':' {
-		ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-26 : msgLen-19])
-	} else if msg[msgLen-28] == ':' {
-		ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
-	} else if msg[msgLen-29] == ':' {
-		ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-28 : msgLen-19])
-	} else if msg[msgLen-30] == ':' {
-		ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
-	} else if msg[msgLen-31] == ':' {
-		ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
+	end := 0
+	if msgLen > 128 {
+		if msg[2] == 't' && msg[9] == 'm' {
+			if msg[50] == '"' {
+				end = 85
+				ticker.Symbol = common.UnsafeBytesToString(msg[42:50])
+			} else if msg[51] == '"' {
+				end = 86
+				ticker.Symbol = common.UnsafeBytesToString(msg[42:51])
+			} else if msg[52] == '"' {
+				end = 87
+				ticker.Symbol = common.UnsafeBytesToString(msg[42:52])
+			} else if msg[53] == '"' {
+				end = 88
+				ticker.Symbol = common.UnsafeBytesToString(msg[42:53])
+			} else if msg[49] == '"' {
+				end = 84
+				ticker.Symbol = common.UnsafeBytesToString(msg[42:49])
+			} else {
+				return fmt.Errorf("bad msg, symbol not found %s", msg)
+			}
+		} else if msg[2] == 'd' {
+			if msg[msgLen-27] == ':' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-26 : msgLen-19])
+			} else if msg[msgLen-28] == ':' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
+			} else if msg[msgLen-29] == ':' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-28 : msgLen-19])
+			} else if msg[msgLen-30] == ':' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
+			} else if msg[msgLen-31] == ':' {
+				ticker.Symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
+			} else {
+				return fmt.Errorf("bad msg, symbol not found %s", msg)
+			}
+			end = 37
+		}else{
+			return fmt.Errorf("bad msg, symbol not found %s", msg)
+		}
 	} else {
-		return fmt.Errorf("bad msg, symbol not found %s", msg)
+		return fmt.Errorf("msg len less than 128, %s", msg)
 	}
 
-	offset := 37
-	collectStart := offset
+	start := end
 	counter := 0
 	currentKey := common.JsonKeyUnknown
-	for offset < msgLen-23 {
+	for end < msgLen-23 {
 		switch currentKey {
 		case common.JsonKeyBidSize:
-			if msg[offset] == '"' {
-				ticker.BestBidSize, err = common.ParseDecimal(msg[collectStart:offset])
+			if msg[end] == '"' {
+				ticker.BestBidSize, err = common.ParseDecimal(msg[start:end])
 				if err != nil {
 					return
 				}
@@ -363,8 +392,8 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 			}
 			break
 		case common.JsonKeyAskSize:
-			if msg[offset] == '"' {
-				ticker.BestAskSize, err = common.ParseDecimal(msg[collectStart:offset])
+			if msg[end] == '"' {
+				ticker.BestAskSize, err = common.ParseDecimal(msg[start:end])
 				if err != nil {
 					return
 				}
@@ -373,8 +402,8 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 			}
 			break
 		case common.JsonKeyBidPrice:
-			if msg[offset] == '"' {
-				ticker.BestBidPrice, err = common.ParseDecimal(msg[collectStart:offset])
+			if msg[end] == '"' {
+				ticker.BestBidPrice, err = common.ParseDecimal(msg[start:end])
 				if err != nil {
 					return
 				}
@@ -386,8 +415,8 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 			}
 			break
 		case common.JsonKeyAskPrice:
-			if msg[offset] == '"' {
-				ticker.BestAskPrice, err = common.ParseDecimal(msg[collectStart:offset])
+			if msg[end] == '"' {
+				ticker.BestAskPrice, err = common.ParseDecimal(msg[start:end])
 				if err != nil {
 					return
 				}
@@ -396,29 +425,29 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 			}
 			break
 		case common.JsonKeyUnknown:
-			if msg[offset] == 'b' && msg[offset+4] == 'B' && msg[offset+10] == 'e' {
+			if msg[end] == 'b' && msg[end+4] == 'B' && msg[end+10] == 'e' {
 				currentKey = common.JsonKeyBidSize
-				offset += 14
-				collectStart = offset
+				end += 14
+				start = end
 				break
-			} else if msg[offset] == 'b' && msg[offset+4] == 'B' && msg[offset+7] == '"' {
+			} else if msg[end] == 'b' && msg[end+4] == 'B' && msg[end+7] == '"' {
 				currentKey = common.JsonKeyBidPrice
-				offset += 10
-				collectStart = offset
+				end += 10
+				start = end
 				break
-			} else if msg[offset] == 'b' && msg[offset+4] == 'A' && msg[offset+10] == 'e' {
+			} else if msg[end] == 'b' && msg[end+4] == 'A' && msg[end+10] == 'e' {
 				currentKey = common.JsonKeyAskSize
-				offset += 14
-				collectStart = offset
+				end += 14
+				start = end
 				break
-			} else if msg[offset] == 'b' && msg[offset+4] == 'A' && msg[offset+7] == '"' {
+			} else if msg[end] == 'b' && msg[end+4] == 'A' && msg[end+7] == '"' {
 				currentKey = common.JsonKeyAskPrice
-				offset += 10
-				collectStart = offset
+				end += 10
+				start = end
 				break
 			}
 		}
-		offset += 1
+		end += 1
 	}
 	if counter != 4 {
 		err = fmt.Errorf("bad msg, %d miss fileds %s", counter, msg)

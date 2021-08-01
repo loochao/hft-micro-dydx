@@ -146,6 +146,27 @@ func TestAPI_GetLimits(t *testing.T) {
 	fmt.Printf(str)
 }
 
+func TestAPI_GetTicker(t *testing.T) {
+	var api *API
+	var ctx = context.Background()
+	var err error
+	api, err = NewAPI(
+		os.Getenv("KCSPOT_KEY"),
+		os.Getenv("KCSPOT_SECRET"),
+		os.Getenv("KCSPOT_PASSPHRASE"),
+		"socks5://127.0.0.1:1081")
+	if err != nil {
+		log.Fatal(err)
+	}
+	ticker, err := api.GetTicker(ctx, TickerParam{
+		Symbol: "KCS-USDT",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%v", *ticker)
+}
+
 func TestAPI_GetCandles(t *testing.T) {
 	var api *API
 	var ctx = context.Background()

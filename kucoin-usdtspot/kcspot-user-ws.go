@@ -69,39 +69,34 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 func (w *UserWebsocket) readLoop(conn *websocket.Conn, pingInterval time.Duration) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
-	//totalCount := 0
-	//totalLen := 0
+	logSilentTime := time.Time{}
 	pingInterval *= 10
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(pingInterval))
 		if err != nil {
-			logger.Debugf("conn.SetReadDeadline error %v", err)
+			logger.Debugf("conn.SetReadDeadline error %v, restart", err)
 			w.restart()
 			return
 		}
 		_, r, err := conn.NextReader()
 		if err != nil {
-			logger.Debugf("conn.NextReader error %v", err)
+			logger.Debugf("conn.NextReader error %v, restart", err)
 			w.restart()
 			return
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
-			logger.Debugf("w.readAll error %v", err)
+			logger.Debugf("w.readAll error %v, restart", err)
 			w.restart()
 			return
 		}
-		//totalCount += 1
-		//totalLen += len(msg)
-		//if totalCount > 10000 {
-		//	logger.Debugf("AVERAGE MESSAGE LENGTH %d/%d = %d", totalLen, totalCount, totalLen/totalCount)
-		//	totalLen = 0
-		//	totalCount = 0
-		//}
 		select {
-		case <-time.After(time.Second):
-			logger.Debugf("w.messageCh <- msg timeout in 1s")
 		case w.messageCh <- msg:
+		default:
+			if time.Now().Sub(logSilentTime) > 0{
+				logSilentTime = time.Now().Add(time.Minute)
+				logger.Debugf("w.messageCh <- msg failed, ch len %d", len(w.messageCh))
+			}
 		}
 	}
 
@@ -125,9 +120,9 @@ func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *UserWebsocket) dataHandleLoop(ctx context.Context, id int) {
-	logger.Debugf("START dataHandleLoop %d", id)
-	defer logger.Debugf("EXIT dataHandleLoop %d", id)
+func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
+	logger.Debugf("START dataHandleLoop")
+	defer logger.Debugf("EXIT dataHandleLoop")
 	for {
 		select {
 		case <-ctx.Done():
@@ -437,10 +432,7 @@ func NewUserWebsocket(
 		stopped:     0,
 	}
 	go ws.mainLoop(ctx, api, []string{"/account/balance", "/spotMarket/tradeOrders"}, proxy)
-	go ws.dataHandleLoop(ctx, 1)
-	//go ws.dataHandleLoop(ctx, 2)
-	//go ws.dataHandleLoop(ctx, 3)
-	//go ws.dataHandleLoop(ctx, 4)
+	go ws.dataHandleLoop(ctx)
 	ws.reconnectCh <- nil
 	return &ws
 }

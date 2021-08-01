@@ -132,6 +132,11 @@ func (api *API) GetSymbols(ctx context.Context) ([]Symbol, error) {
 	return symbols, api.SendHTTPRequest(ctx, http.MethodGet, "/api/v1/symbols", nil, &symbols)
 }
 
+func (api *API) GetTicker(ctx context.Context, param TickerParam) (*Ticker, error) {
+	ticker := &Ticker{}
+	return ticker, api.SendHTTPRequest(ctx, http.MethodGet, "/api/v1/market/orderbook/level1", &param, ticker)
+}
+
 func (api *API) GetSystemStatus(ctx context.Context) (*SystemStatus, error) {
 	status := &SystemStatus{}
 	return status, api.SendHTTPRequest(ctx, http.MethodGet, "/api/v1/status", nil, &status)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"math/rand"
 	"strings"
 	"sync/atomic"
@@ -17,6 +18,22 @@ type KucoinUsdtSpot struct {
 	stopped  int32
 	api      *API
 	settings common.ExchangeSettings
+}
+
+func (k *KucoinUsdtSpot) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (k *KucoinUsdtSpot) GetMultiplier(symbol string) (float64, error) {
+	return 1.0, nil
+}
+
+func (k *KucoinUsdtSpot) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	panic("implement me")
+}
+
+func (k *KucoinUsdtSpot) StartSideLoop() {
+	panic("implement me")
 }
 
 func (k *KucoinUsdtSpot) IsSpot() bool {
@@ -91,7 +108,7 @@ func (k *KucoinUsdtSpot) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, positionMapCh map[string]chan common.Position, orderChs map[string]chan common.Order) {
+func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan common.Position, orderChMap map[string]chan common.Order) {
 	defer k.Stop()
 	settings := k.settings
 	var err error
@@ -104,7 +121,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 		k.api,
 		settings.Proxy,
 	)
-	go k.systemStatusLoop(ctx, statusCh)
+	go k.StreamSystemStatus(ctx, statusCh)
 	httpAccountsCh := make(chan []Account, 100)
 	go k.accountLoop(ctx, httpAccountsCh)
 	logSilentTime := time.Now()
@@ -112,6 +129,11 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 	defer restartResetTimer.Stop()
 	var usdtAccount *Account
 	accountsMap := make(map[string]Account)
+	kcsPriceCh := make(chan float64, 4)
+	go k.watchKcsPrice(ctx, kcsPriceCh)
+	var kcsBalance *float64
+	var rebalancedKcsSilentTime = time.Now()
+
 	for {
 		select {
 		case <-userWS.Done():
@@ -146,6 +168,12 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 						}
 					}
 					continue
+				} else if account.Currency == "KCS" {
+					if kcsBalance == nil {
+						kcsBalance = new(float64)
+					}
+					*kcsBalance = account.Available
+					continue
 				}
 				symbol := account.Currency + "-USDT"
 				lastBalance, ok := accountsMap[symbol]
@@ -156,7 +184,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 			}
 			hasBalances := make(map[string]bool)
 			for symbol, account := range accountsMap {
-				if ch, ok := positionMapCh[symbol]; ok {
+				if ch, ok := positionChMap[symbol]; ok {
 					hasBalances[symbol] = true
 					account := account
 					select {
@@ -169,7 +197,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					}
 				}
 			}
-			for symbol, ch := range positionMapCh {
+			for symbol, ch := range positionChMap {
 				if _, ok := hasBalances[symbol]; !ok {
 					select {
 					case ch <- &Account{
@@ -196,6 +224,30 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+		case price := <-kcsPriceCh:
+			if k.settings.AutoAddCommissionDiscountAsset {
+				if kcsBalance != nil {
+					select {
+					case commissionAssetValueCh <- *kcsBalance * price:
+					default:
+						logger.Debugf("commissionAssetValueCh <- *kcsBalance * price failed ch len %d", len(commissionAssetValueCh))
+					}
+					logger.Debugf("KCS %f %f", *kcsBalance, price)
+					if !k.settings.DryRun &&
+						k.settings.MinimalCommissionDiscountAssetValue*0.5 > *kcsBalance*price &&
+						time.Now().Sub(rebalancedKcsSilentTime) > 0 {
+						deltaValue := k.settings.MinimalCommissionDiscountAssetValue - *kcsBalance*price
+						go k.buyKcs(ctx, deltaValue, price)
+						rebalancedKcsSilentTime = time.Now().Add(time.Hour)
+					}
+				}
+			} else {
+				select {
+				case commissionAssetValueCh <- 0.0:
+				default:
+					logger.Debugf("commissionAssetValueCh <- 0.0 failed ch len %d", len(commissionAssetValueCh))
+				}
+			}
 		case balance := <-userWS.BalanceCh:
 			if balance.Currency == "USDT" {
 				usdtAccount = &Account{
@@ -214,8 +266,13 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
+			} else if balance.Currency == "KCS" {
+				if kcsBalance == nil {
+					kcsBalance = new(float64)
+				}
+				*kcsBalance = balance.Available
 			} else {
-				if ch, ok := positionMapCh[balance.Currency+"-USDT"]; ok {
+				if ch, ok := positionChMap[balance.Currency+"-USDT"]; ok {
 					select {
 					case ch <- &Account{
 						Currency:  balance.Currency,
@@ -232,24 +289,9 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 						}
 					}
 				}
-
 			}
 		case order := <-userWS.OrderCh:
-			//DEBUG 2021/05/22 01:21:54.774559 kucoin-usdtfuture.go:606: 	k.api.SubmitOrder {"clientOid":"16216465147940","side":"buy","symbol":"BNBUSDTM","type":"market","leverage":3,"size":24,"reduceOnly":true}
-			//DEBUG 2021/05/22 01:21:54.774573 kucoin-usdtfuture-api.go:77: 	{"clientOid":"16216465147940","side":"buy","symbol":"BNBUSDTM","type":"market","leverage":3,"size":24,"reduceOnly":true}
-			//DEBUG 2021/05/22 01:21:54.824218 kucoin-usdtfuture.go:608: 	k.api.SubmitOrder &{60a85cb28833a40006067120} <nil>
-			//DEBUG 2021/05/22 01:21:54.833944 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"1","matchPrice":"325.7","matchSize":"1","tradeId":"60a85cb2b87b911178425c71","remainSize":"23","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
-			//DEBUG 2021/05/22 01:21:54.834155 main.go:326: 	x order filled BNBUSDTM FILLED size 1.000000 price 325.700000
-			//DEBUG 2021/05/22 01:21:54.839608 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","type":"filled","orderTime":1621646514806444042,"size":"24","filledSize":"24","price":"","remainSize":"0","clientOid":"16216465147940","status":"done","ts":1621646514814245799}
-			//DEBUG 2021/05/22 01:21:54.839661 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"24","matchPrice":"325.94","matchSize":"21","tradeId":"60a85cb2b87b911178425c73","remainSize":"0","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
-			//DEBUG 2021/05/22 01:21:54.839676 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"3","matchPrice":"325.73","matchSize":"2","tradeId":"60a85cb2b87b911178425c72","remainSize":"21","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
-			//滤掉没有价格的事件
-			//if order.EventType == "filled" || order.EventType == "match" {
-			//	if order.FilledSize == 0 || order.MatchPrice == 0 {
-			//		continue
-			//	}
-			//}
-			if ch, ok := orderChs[order.Symbol]; ok {
+			if ch, ok := orderChMap[order.Symbol]; ok {
 				select {
 				case ch <- order:
 				default:
@@ -264,66 +306,6 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 }
 
 func (k *KucoinUsdtSpot) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
-	//checkInterval := time.Second * 5
-	//startTime := time.Now()
-	//updateTimes := make(map[string]time.Time)
-	//for symbol := range channels {
-	//	updateTimes[symbol] = startTime
-	//	startTime = startTime.Add(checkInterval)
-	//}
-	//loopTimer := time.NewTimer(time.Second)
-	//k.mu.Lock()
-	//leverage := int(k.settings.Leverage)
-	//k.mu.Unlock()
-	//for {
-	//	select {
-	//	case <-ctx.Done():
-	//		return
-	//	case <-k.done:
-	//		return
-	//	case <-loopTimer.C:
-	//		for symbol, ch := range channels {
-	//			if time.Now().Sub(updateTimes[symbol]) > 0 {
-	//				status := common.SymbolStatusReady
-	//				ticker, err := k.api.GetTicker(ctx, TickerParam{
-	//					Symbol: symbol,
-	//				})
-	//				if err != nil {
-	//					logger.Debugf("%s k.api.GetTicker error %v", symbol, err)
-	//					status = common.SymbolStatusNotReady
-	//				} else {
-	//					size := LotSizes[symbol]
-	//					price := ticker.BestAskPrice * 1.05
-	//					price = math.Ceil(price/TickSizes[symbol]) * TickSizes[symbol]
-	//					_, err := k.api.SubmitOrder(ctx, NewOrderParam{
-	//						Symbol:      symbol,
-	//						Side:        OrderSideSell,
-	//						TimeInForce: OrderTimeInForceIOC,
-	//						Price:       common.Float64(price),
-	//						Size:        int64(size),
-	//						Leverage:    leverage,
-	//					})
-	//					if err != nil {
-	//						logger.Debugf("k.api.SubmitOrder error %v", err)
-	//						status = common.SymbolStatusNotReady
-	//					}
-	//				}
-	//				select {
-	//				case ch <- status:
-	//				default:
-	//					logger.Debugf("%s ch <- status failed, ch len %d", symbol, len(ch))
-	//				}
-	//				if time.Now().Sub(startTime) > 0 {
-	//					startTime = time.Now().Add(checkInterval)
-	//				} else {
-	//					startTime = startTime.Add(checkInterval)
-	//				}
-	//				updateTimes[symbol] = startTime.Add(checkInterval)
-	//			}
-	//		}
-	//		loopTimer.Reset(time.Second)
-	//	}
-	//}
 }
 
 func (k *KucoinUsdtSpot) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
@@ -345,6 +327,7 @@ func (k *KucoinUsdtSpot) StreamDepth(ctx context.Context, channels map[string]ch
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
+			defer k.Stop()
 			ws := NewDepth5WS(ctx, k.api, proxy, channels)
 			for {
 				select {
@@ -389,6 +372,7 @@ func (k *KucoinUsdtSpot) StreamTicker(ctx context.Context, channels map[string]c
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			defer k.Stop()
 			ws := NewTickerWS(ctx, k.api, proxy, channels)
 			for {
 				select {
@@ -468,7 +452,34 @@ func (k *KucoinUsdtSpot) GenerateClientID() string {
 	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 }
 
-func (k *KucoinUsdtSpot) systemStatusLoop(
+func (k *KucoinUsdtSpot) watchKcsPrice(
+	ctx context.Context,
+	priceCh chan float64,
+) {
+	pullTimer := time.NewTimer(time.Second * 30)
+	defer pullTimer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-pullTimer.C:
+			ticker, err := k.api.GetTicker(ctx, TickerParam{Symbol: "BNBUSDT"})
+			if err != nil {
+				logger.Debugf("spotApi.GetTicker BNBUSDT error %v", err)
+				pullTimer.Reset(time.Minute)
+			} else {
+				select {
+				case priceCh <- (ticker.BestAskPrice + ticker.BestBidPrice) * 0.5:
+				default:
+					logger.Debugf("priceCh <- ticker.Price failed ch len %d", len(priceCh))
+				}
+				pullTimer.Reset(time.Minute * 5)
+			}
+		}
+	}
+}
+
+func (k *KucoinUsdtSpot) StreamSystemStatus(
 	ctx context.Context, output chan common.SystemStatus,
 ) {
 	pullInterval := k.settings.PullInterval
@@ -622,6 +633,31 @@ func (k *KucoinUsdtSpot) cancelOrder(ctx context.Context, param common.CancelOrd
 				logger.Debugf("errCh <- common.OrderError failed, ch len %d", len(errCh))
 			}
 		}
+	}
+}
+
+func (k *KucoinUsdtSpot) buyKcs(
+	ctx context.Context,
+	deltaValue float64,
+	price float64,
+) {
+	size := math.Round(deltaValue/price/StepSizes["KCS-USDT"]) * StepSizes["KCS-USDT"]
+	if size*price < MinNotionals["KCS-USDT"] {
+		return
+	}
+	childCtx, _ := context.WithTimeout(ctx, time.Minute)
+	order, err := k.api.SubmitOrder(childCtx, NewOrderParam{
+		Symbol:    "KCS-USDT",
+		Side:      OrderSideBuy,
+		Type:      OrderTypeMarket,
+		Size:      common.Float64(size),
+		ClientOid: k.GenerateClientID(),
+	})
+	if err != nil {
+		logger.Debugf("KCS k.api.SubmitOrder buy %f kcs error %v", size, err)
+		return
+	} else {
+		logger.Debugf("KCS k.api.SubmitOrder buy %f kcs success, %v", size, order)
 	}
 }
 
