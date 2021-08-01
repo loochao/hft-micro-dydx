@@ -229,7 +229,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 			}
 		case price := <-kcsPriceCh:
 			logger.Debugf("kcs price %f", price)
-			if k.settings.AutoAddCommissionDiscountAsset {
+			if k.settings.AutoAddCommissionDiscountAsset && price > 0{
 				if kcsBalance != nil {
 					select {
 					case commissionAssetValueCh <- *kcsBalance * price:
@@ -469,9 +469,9 @@ func (k *KucoinUsdtSpot) watchKcsPrice(
 		case <-ctx.Done():
 			return
 		case <-pullTimer.C:
-			ticker, err := k.api.GetTicker(ctx, TickerParam{Symbol: "BNBUSDT"})
+			ticker, err := k.api.GetTicker(ctx, TickerParam{Symbol: "KCS-USDT"})
 			if err != nil {
-				logger.Debugf("spotApi.GetTicker BNBUSDT error %v", err)
+				logger.Debugf("k.api.GetTicker KCS-USDT error %v", err)
 				pullTimer.Reset(time.Minute)
 			} else {
 				select {
