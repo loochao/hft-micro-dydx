@@ -226,7 +226,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 				}
 			}
 		case price := <-kcsPriceCh:
-			logger.Debugf("kcs price %f %v", price, kcsBalance)
+			//logger.Debugf("kcs price %f %v", price, kcsBalance)
 			if k.settings.AutoAddCommissionDiscountAsset && price > 0{
 				if kcsBalance != nil {
 					select {
@@ -234,7 +234,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					default:
 						logger.Debugf("commissionAssetValueCh <- *kcsBalance * price failed ch len %d", len(commissionAssetValueCh))
 					}
-					logger.Debugf("KCS %f %f", *kcsBalance, price)
+					//logger.Debugf("KCS %f %f", *kcsBalance, price)
 					if !k.settings.DryRun &&
 						k.settings.MinimalCommissionDiscountAssetValue*0.5 > *kcsBalance*price &&
 						time.Now().Sub(rebalancedKcsSilentTime) > 0 {
@@ -251,7 +251,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 				}
 			}
 		case balance := <-userWS.BalanceCh:
-			logger.Debugf("%s %f", balance.Currency, balance.Total)
+			//logger.Debugf("%s %f", balance.Currency, balance.Total)
 			if balance.Currency == "USDT" {
 				usdtAccount = &Account{
 					Currency:  balance.Currency,
@@ -261,7 +261,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					EventTime: balance.EventTime,
 					ParseTime: balance.ParseTime,
 				}
-				logger.Debugf("ws balance %v", balance)
+				//logger.Debugf("ws balance %v", balance)
 				select {
 				case accountCh <- usdtAccount:
 				default:
