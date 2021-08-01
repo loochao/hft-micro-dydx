@@ -441,10 +441,10 @@ mainLoop:
 			break
 		case xcv := <-xCommissionAssetValueCh:
 			xCommissionAssetValue = &xcv
-			logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
+			//logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
 		case ycv := <-yCommissionAssetValueCh:
 			yCommissionAssetValue = &ycv
-			logger.Debugf("yCommissionAssetValue %f", *yCommissionAssetValue)
+			//logger.Debugf("yCommissionAssetValue %f", *yCommissionAssetValue)
 		case account := <-xAccountCh:
 			if xAccount == account {
 				logger.Debugf("bad xAccount == account pass same pointer")

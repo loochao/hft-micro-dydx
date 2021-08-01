@@ -3,5 +3,5 @@ package main
 import "github.com/geometrybase/hft-micro/logger"
 
 func init() {
-	logger.Debug("####  BUILD @ 20210801 14:53:50  ####")
+	logger.Debug("####  BUILD @ 20210801 15:15:36  ####")
 }
