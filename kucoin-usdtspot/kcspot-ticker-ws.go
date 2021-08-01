@@ -407,7 +407,7 @@ func (w *TickerWS) restart() {
 	}
 	select {
 	case w.reconnectCh <- nil:
-		logger.Infof("KCPERP WS RESTART")
+		logger.Debugf("restart w.reconnectCh <- nil")
 	default:
 		w.Stop()
 		logger.Debugf("w.reconnectCh <- nil timeout failed, ch len %d, stop ws", len(w.reconnectCh))
