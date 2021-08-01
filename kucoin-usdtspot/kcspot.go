@@ -275,7 +275,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					kcsBalance = new(float64)
 				}
 				*kcsBalance = balance.Available
-				logger.Debugf("kcs %f", *kcsBalance)
+				//logger.Debugf("kcs %f", *kcsBalance)
 			} else {
 				if ch, ok := positionChMap[balance.Currency+"-USDT"]; ok {
 					select {
