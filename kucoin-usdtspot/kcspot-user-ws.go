@@ -175,6 +175,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 				}
 				break
 			case "/account/balance":
+				logger.Debugf("%s", wsCap.Data)
 				balance := WsBalance{}
 				err = json.Unmarshal(wsCap.Data, &balance)
 				if err != nil {

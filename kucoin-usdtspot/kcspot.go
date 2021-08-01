@@ -158,6 +158,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 				if account.Currency == "USDT" {
 					if usdtAccount == nil || account.EventTime.Sub(usdtAccount.EventTime) > 0 {
 						usdtAccount = &account
+						logger.Debugf("http account %v", account)
 						select {
 						case accountCh <- &account:
 						default:
@@ -258,6 +259,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					EventTime: balance.EventTime,
 					ParseTime: balance.ParseTime,
 				}
+				logger.Debugf("ws balance %v", balance)
 				select {
 				case accountCh <- usdtAccount:
 				default:
