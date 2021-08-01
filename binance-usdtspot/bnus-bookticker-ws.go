@@ -295,7 +295,7 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 			ticker = pool[index]
 			err = ParseTicker(msg, ticker)
 			if err != nil {
-				logger.Debugf("%s ParseDepth5 error %v %s", symbol, err, msg)
+				logger.Debugf("%s ParseTicker error %v %s", symbol, err, msg)
 				continue
 			}
 			select {
@@ -326,7 +326,7 @@ func NewBookTickerWS(
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[strings.ToLower(symbol)] = make(chan []byte, 64)
+		messageChs[strings.ToLower(symbol)] = make(chan []byte, 128)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[strings.ToLower(symbol)], ch)
 	}
 	go ws.mainLoop(ctx, messageChs, proxy)
