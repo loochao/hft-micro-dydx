@@ -154,7 +154,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 			}
 		case accounts := <-httpAccountsCh:
 			for _, account := range accounts {
-
+				logger.Debugf("%s %f", account.Currency, account.Balance)
 				account := account
 				if account.Currency == "USDT" {
 					if usdtAccount == nil || account.EventTime.Sub(usdtAccount.EventTime) > 0 {
