@@ -664,6 +664,10 @@ type BinanceBusdFutureWidthDepth5 struct {
 	BinanceBusdFuture
 }
 
+func (b BinanceBusdFutureWidthDepth5) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	panic("implement me")
+}
+
 type BinanceBusdFutureWidthDepth20 struct {
 	BinanceBusdFuture
 }
