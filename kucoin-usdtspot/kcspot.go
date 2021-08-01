@@ -541,7 +541,7 @@ func (k *KucoinUsdtSpot) accountLoop(
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
 			account, err := k.api.GetAccounts(subCtx, AccountsParam{
-				Currency: "USDT",
+				//Currency: "USDT",
 				Type: "trade",
 			})
 			if err != nil {
