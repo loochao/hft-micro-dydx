@@ -31,23 +31,24 @@ ssh hk07 "rsync -avx --progress /usr/local/bin//usd-tk-tt-q.amd64.$dt hk06:/usr/
 #echo "vc001"
 #rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" vc001:/usr/local/bin/
 
-echo "arm1"
+echo "" && echo "" && echo "arm1"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm1:/usr/local/bin/
 rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" arm1:/usr/local/bin/
 
-echo "arm2"
-rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm2:/usr/local/bin/
 
-echo "tk01"
+echo "" && echo "" && echo "tk01"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt tk01:/usr/local/bin/"
 
-echo "tk02"
+echo "" && echo "" && echo "tk02"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt tk02:/usr/local/bin/"
 
-echo "vc01"
+echo "" && echo "" && echo "vc01"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt vc01:/usr/local/bin/"
 
-echo "arm3"
+echo "" && echo "" && echo "arm2"
+rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm2:/usr/local/bin/
+
+echo "" && echo "" && echo "arm3"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm3:/usr/local/bin/
 
 echo "vcarm01"
