@@ -253,7 +253,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 				}
 			}
 		case balance := <-userWS.BalanceCh:
-			logger.Debugf("%s", balance.Currency)
+			logger.Debugf("%s %f", balance.Currency, balance.Total)
 			if balance.Currency == "USDT" {
 				usdtAccount = &Account{
 					Currency:  balance.Currency,
