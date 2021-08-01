@@ -22,12 +22,12 @@ git tag "usd-ll-mt-q.$dt"
 git push origin "usd-ll-mt-q.$dt" --force
 
 echo ""
-echo "vcarm02"
-rsync -avx --progress "./dist/usd-ll-mt-q.arm64.$dt" vcarm02:/usr/local/bin/
-
-echo ""
 echo "arm1"
 rsync -avx --progress "./dist/usd-ll-mt-q.arm64.$dt" arm1:/usr/local/bin/
+rsync -avx --progress "./dist/usd-ll-mt-q.amd64.$dt" arm1:/usr/local/bin/
+
+echo "" && echo "" && echo "vc02"
+ssh arm2 "rsync -avx --progress /usr/local/bin/usd-ll-mt-q.amd64.$dt vc02:/usr/local/bin/"
 
 echo ""
 echo "arm2"
