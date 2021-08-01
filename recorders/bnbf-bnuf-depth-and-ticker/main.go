@@ -16,7 +16,7 @@ func main() {
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
 
 	proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	symbolsStr := flag.String("symbols", "BTCBUSD,ETHBUSD", "symbols, separate by comma")
+	symbolsStr := flag.String("symbols", "BTCBUSD,ETHBUSD,BNBBUSD", "symbols, separate by comma")
 	savePath := flag.String("path", "/root/bnbf-bnuf-depth-and-ticker", "data save folder")
 
 	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
