@@ -159,7 +159,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 				if account.Currency == "USDT" {
 					if usdtAccount == nil || account.EventTime.Sub(usdtAccount.EventTime) > 0 {
 						usdtAccount = &account
-						logger.Debugf("http account %v", account)
+						//logger.Debugf("http account %v", account)
 						select {
 						case accountCh <- &account:
 						default:
@@ -175,6 +175,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 						kcsBalance = new(float64)
 					}
 					*kcsBalance = account.Available
+					logger.Debugf("kcs %f", *kcsBalance)
 					continue
 				}
 				symbol := account.Currency + "-USDT"
@@ -227,6 +228,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 				}
 			}
 		case price := <-kcsPriceCh:
+			logger.Debugf("kcs price %f", price)
 			if k.settings.AutoAddCommissionDiscountAsset {
 				if kcsBalance != nil {
 					select {
@@ -274,6 +276,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					kcsBalance = new(float64)
 				}
 				*kcsBalance = balance.Available
+				logger.Debugf("kcs %f", *kcsBalance)
 			} else {
 				if ch, ok := positionChMap[balance.Currency+"-USDT"]; ok {
 					select {
