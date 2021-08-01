@@ -42,11 +42,14 @@ ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt tk01:/usr/l
 echo "" && echo "" && echo "tk02"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt tk02:/usr/local/bin/"
 
+echo "" && echo "" && echo "tk03"
+ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt tk03:/usr/local/bin/"
+
 echo "" && echo "" && echo "vc01"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt vc01:/usr/local/bin/"
 
-echo "" && echo "" && echo "vc02"
-ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt vc02:/usr/local/bin/"
+#echo "" && echo "" && echo "vc02"
+#ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt vc02:/usr/local/bin/"
 
 echo "" && echo "" && echo "arm2"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm2:/usr/local/bin/

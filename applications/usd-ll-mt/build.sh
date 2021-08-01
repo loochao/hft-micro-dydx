@@ -30,6 +30,9 @@ rsync -avx --progress "./dist/usd-ll-mt.amd64.$dt" arm1:/usr/local/bin/
 echo "" && echo "" && echo "vc02"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-ll-mt.amd64.$dt vc02:/usr/local/bin/"
 
+echo "" && echo "" && echo "vc03"
+ssh arm1 "rsync -avx --progress /usr/local/bin/usd-ll-mt.amd64.$dt vc03:/usr/local/bin/"
+
 
 #echo ""
 #echo "vcarm01"
