@@ -412,7 +412,7 @@ func (wsOrder *WSOrder) GetFilledPrice() float64 {
 }
 
 func (wsOrder *WSOrder) GetSide() common.OrderSide {
-	switch wsOrder.Status {
+	switch wsOrder.Side {
 	case OrderSideBuy:
 		return common.OrderSideBuy
 	case OrderSideSell:
