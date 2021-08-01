@@ -613,7 +613,7 @@ type Ticker struct {
 	BestBidPrice float64   `json:"bestBid,string"`
 	BestAskSize  float64   `json:"bestAskSize,string"`
 	BestAskPrice float64   `json:"bestAsk,string"`
-	ParseTime    time.Time `json:"-"`
+	EventTime    time.Time `json:"-"`
 }
 
 func (ticker *Ticker) GetSymbol() string {
@@ -621,7 +621,7 @@ func (ticker *Ticker) GetSymbol() string {
 }
 
 func (ticker *Ticker) GetTime() time.Time {
-	return ticker.ParseTime
+	return ticker.EventTime
 }
 
 func (ticker *Ticker) GetBidPrice() float64 {
@@ -648,6 +648,7 @@ func (ticker *Ticker) UnmarshalJSON(data []byte) error {
 	type Alias Ticker
 	aux := struct {
 		*Alias
+		Time int64 `json:"time"`
 	}{
 		Alias: (*Alias)(ticker),
 	}
@@ -655,7 +656,7 @@ func (ticker *Ticker) UnmarshalJSON(data []byte) error {
 		logger.Debugf("json.Unmarshal error %v", err)
 		return err
 	}
-	ticker.ParseTime = time.Now()
+	ticker.EventTime = time.Unix(0, aux.Time*1000000)
 	return nil
 }
 

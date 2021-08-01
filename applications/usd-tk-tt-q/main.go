@@ -441,13 +441,15 @@ mainLoop:
 			break
 		case xcv := <-xCommissionAssetValueCh:
 			xCommissionAssetValue = &xcv
-			//logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
+			logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
 		case ycv := <-yCommissionAssetValueCh:
 			yCommissionAssetValue = &ycv
+			logger.Debugf("yCommissionAssetValue %f", *yCommissionAssetValue)
 		case account := <-xAccountCh:
 			if xAccount == account {
 				logger.Debugf("bad xAccount == account pass same pointer")
 			}
+			logger.Debugf("xAccount %f %f", account.GetBalance(), account.GetFree())
 			if xAccount == nil || account.GetTime().Sub(xAccount.GetTime()) >= 0 {
 				xAccount = account
 				for xSymbol, ch := range xAccountChMap {
@@ -463,6 +465,7 @@ mainLoop:
 			if yAccount == account {
 				logger.Debugf("bad  yAccount == account pass same pointer")
 			}
+			logger.Debugf("yAccount %f %f", account.GetBalance(), account.GetFree())
 			if yAccount == nil || account.GetTime().Sub(yAccount.GetTime()) >= 0 {
 				yAccount = account
 				for ySymbol, ch := range yAccountChMap {

@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestParseDepth50(t *testing.T) {
@@ -121,6 +122,7 @@ func TestParseTicker(t *testing.T) {
 			t.Fatal(err)
 		}
 		assert.Equal(t, jTicker.Data.Symbol, ticker.Symbol)
+		assert.Equal(t, time.Duration(0), jTicker.Data.EventTime.Sub(ticker.EventTime))
 		assert.Equal(t, jTicker.Data.BestBidSize, ticker.BestBidSize)
 		assert.Equal(t, jTicker.Data.BestBidPrice, ticker.BestBidPrice)
 		assert.Equal(t, jTicker.Data.BestAskSize, ticker.BestAskSize)

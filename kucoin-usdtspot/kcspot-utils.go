@@ -328,8 +328,6 @@ func WatchSystemStatusHttp(
 
 func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 
-	ticker.ParseTime = time.Now()
-
 	//{"data":{"sequence":"1618200194453","bestAsk":"32704.5","size":"0.00058862","bestBidSize":"0.06704767","price":"32704.5","time":1626290937603,"bestAskSize":"0.01955972","bestBid":"32704.4"},"subject":"trade.ticker","topic":"/market/ticker:BTC-USDT","type":"message"}
 	//{"type":"message","topic":"/market/ticker:BTC-USDT","subject":"trade.ticker","data":{"bestAsk":"41217.7","bestAskSize":"0.21545096","bestBid":"41217.6","bestBidSize":"0.0265","price":"41217.7","sequence":"1618607525224","size":"0.00043659","time":1627752855836}}
 	msgLen := len(msg)
@@ -379,7 +377,8 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 	start := end
 	counter := 0
 	currentKey := common.JsonKeyUnknown
-	for end < msgLen-23 {
+	var t int64
+	for end < msgLen-10 {
 		switch currentKey {
 		case common.JsonKeyBidSize:
 			if msg[end] == '"' {
@@ -409,9 +408,6 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 				}
 				currentKey = common.JsonKeyUnknown
 				counter++
-				if counter == 4 {
-					return
-				}
 			}
 			break
 		case common.JsonKeyAskPrice:
@@ -445,11 +441,24 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 				end += 10
 				start = end
 				break
+			}else if msg[end] == 'm' && msg[end+1] == 'e' && msg[end+2] == '"' {
+				end += 4
+				start = end
+				end += 13
+				if end < msgLen {
+					t, err = common.ParseInt(msg[start:end])
+					if err != nil {
+						return
+					}
+					ticker.EventTime = time.Unix(0, t*1000000)
+					counter ++
+				}
+				break
 			}
 		}
-		end += 1
+		end ++
 	}
-	if counter != 4 {
+	if counter != 5 {
 		err = fmt.Errorf("bad msg, %d miss fileds %s", counter, msg)
 	}
 	return
