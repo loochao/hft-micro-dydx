@@ -154,6 +154,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 			}
 		case accounts := <-httpAccountsCh:
 			for _, account := range accounts {
+
 				account := account
 				if account.Currency == "USDT" {
 					if usdtAccount == nil || account.EventTime.Sub(usdtAccount.EventTime) > 0 {
@@ -535,7 +536,10 @@ func (k *KucoinUsdtSpot) accountLoop(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			account, err := k.api.GetAccounts(subCtx, AccountsParam{Currency: "USDT"})
+			account, err := k.api.GetAccounts(subCtx, AccountsParam{
+				Currency: "USDT",
+				Type: "trade",
+			})
 			if err != nil {
 				logger.Debugf("k.api.GetAccounts error %v", err)
 			} else {
