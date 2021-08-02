@@ -8,51 +8,53 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/rand"
-	"sync"
 	"time"
 )
 
-type FtxUsdSpot struct {
+type FtxUsdFuture struct {
 	api      *API
 	done     chan interface{}
 	stopped  bool
-	mu       sync.Mutex
 	settings common.ExchangeSettings
 }
 
-func (ftx *FtxUsdSpot) GetExchange() common.ExchangeID {
+func (ftx *FtxUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	panic("implement me")
+}
+
+func (ftx *FtxUsdFuture) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (ftx *FtxUsdSpot) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+func (ftx *FtxUsdFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	panic("implement me")
 }
 
-func (ftx *FtxUsdSpot) StartSideLoop() {
+func (ftx *FtxUsdFuture) StartSideLoop() {
 	panic("implement me")
 }
 
-func (ftx *FtxUsdSpot) GetMultiplier(symbol string) (float64, error) {
+func (ftx *FtxUsdFuture) GetMultiplier(symbol string) (float64, error) {
 	return 1.0, nil
 }
 
-func (ftx *FtxUsdSpot) IsSpot() bool {
+func (ftx *FtxUsdFuture) IsSpot() bool {
 	return false
 }
 
-func (ftx *FtxUsdSpot) GenerateClientID() string {
+func (ftx *FtxUsdFuture) GenerateClientID() string {
 	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 }
 
-func (ftx *FtxUsdSpot) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
+func (ftx *FtxUsdFuture) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	panic("implement me")
 }
 
-func (ftx *FtxUsdSpot) GetMinNotional(symbol string) (float64, error) {
+func (ftx *FtxUsdFuture) GetMinNotional(symbol string) (float64, error) {
 	return 0.0, nil
 }
 
-func (ftx *FtxUsdSpot) GetMinSize(symbol string) (float64, error) {
+func (ftx *FtxUsdFuture) GetMinSize(symbol string) (float64, error) {
 	if value, ok := SizeIncrements[symbol]; ok {
 		return value, nil
 	} else {
@@ -60,7 +62,7 @@ func (ftx *FtxUsdSpot) GetMinSize(symbol string) (float64, error) {
 	}
 }
 
-func (ftx *FtxUsdSpot) GetStepSize(symbol string) (float64, error) {
+func (ftx *FtxUsdFuture) GetStepSize(symbol string) (float64, error) {
 	if value, ok := SizeIncrements[symbol]; ok {
 		return value, nil
 	} else {
@@ -68,7 +70,7 @@ func (ftx *FtxUsdSpot) GetStepSize(symbol string) (float64, error) {
 	}
 }
 
-func (ftx *FtxUsdSpot) GetTickSize(symbol string) (float64, error) {
+func (ftx *FtxUsdFuture) GetTickSize(symbol string) (float64, error) {
 	if value, ok := PriceIncrements[symbol]; ok {
 		return value, nil
 	} else {
@@ -76,7 +78,7 @@ func (ftx *FtxUsdSpot) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (ftx *FtxUsdSpot) StreamBasic(
+func (ftx *FtxUsdFuture) StreamBasic(
 	ctx context.Context,
 	statusCh chan common.SystemStatus,
 	accountCh chan common.Balance,
@@ -86,13 +88,11 @@ func (ftx *FtxUsdSpot) StreamBasic(
 ) {
 	defer ftx.Stop()
 
-	ftx.mu.Lock()
 	userWS := NewUserWS(
 		ftx.settings.ApiKey,
 		ftx.settings.ApiSecret,
 		ftx.settings.Proxy,
 	)
-	ftx.mu.Unlock()
 	go userWS.Start(ctx)
 	defer userWS.Stop()
 	internalOrders := make(map[int64]Order)
@@ -282,7 +282,7 @@ func (ftx *FtxUsdSpot) StreamBasic(
 	}
 }
 
-func (ftx *FtxUsdSpot) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
+func (ftx *FtxUsdFuture) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
 	logger.Debugf("START StreamTrade")
 	defer logger.Debugf("STOP StreamTrade")
 	defer ftx.Stop()
@@ -292,9 +292,7 @@ func (ftx *FtxUsdSpot) StreamTrade(ctx context.Context, channels map[string]chan
 		markets = append(markets, market)
 	}
 
-	ftx.mu.Lock()
 	proxy := ftx.settings.Proxy
-	ftx.mu.Unlock()
 
 	for start := 0; start < len(markets); start += batchSize {
 		end := start + batchSize
@@ -327,7 +325,7 @@ func (ftx *FtxUsdSpot) StreamTrade(ctx context.Context, channels map[string]chan
 	}
 }
 
-func (ftx *FtxUsdSpot) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (ftx *FtxUsdFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")
 	defer logger.Debugf("STOP StreamTicker")
 	defer ftx.Stop()
@@ -337,9 +335,7 @@ func (ftx *FtxUsdSpot) StreamTicker(ctx context.Context, channels map[string]cha
 		markets = append(markets, market)
 	}
 
-	ftx.mu.Lock()
 	proxy := ftx.settings.Proxy
-	ftx.mu.Unlock()
 
 	for start := 0; start < len(markets); start += batchSize {
 		end := start + batchSize
@@ -372,14 +368,12 @@ func (ftx *FtxUsdSpot) StreamTicker(ctx context.Context, channels map[string]cha
 	}
 }
 
-func (ftx *FtxUsdSpot) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
+func (ftx *FtxUsdFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
 	panic("implement me")
 }
 
-func (ftx *FtxUsdSpot) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
-	ftx.mu.Lock()
+func (ftx *FtxUsdFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
 	pullInterval := ftx.settings.PullInterval + time.Duration(len(channels))*time.Second
-	ftx.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	pullTimes := make(map[string]time.Time)
@@ -420,7 +414,7 @@ func (ftx *FtxUsdSpot) StreamFundingRate(ctx context.Context, channels map[strin
 	}
 }
 
-func (ftx *FtxUsdSpot) WatchOrders(
+func (ftx *FtxUsdFuture) WatchOrders(
 	ctx context.Context,
 	requestChannels map[string]chan common.OrderRequest,
 	responseChannels map[string]chan common.Order,
@@ -450,7 +444,7 @@ func (ftx *FtxUsdSpot) WatchOrders(
 	}
 }
 
-func (ftx *FtxUsdSpot) Setup(ctx context.Context, settings common.ExchangeSettings) error {
+func (ftx *FtxUsdFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
 	var err error
 	if settings.PullInterval == 0 {
 		settings.PullInterval = time.Minute
@@ -462,7 +456,6 @@ func (ftx *FtxUsdSpot) Setup(ctx context.Context, settings common.ExchangeSettin
 	if err != nil {
 		return err
 	}
-	ftx.mu = sync.Mutex{}
 	if settings.ChangeLeverage {
 		_, err = ftx.api.ChangeLeverage(ctx, LeverageParam{
 			Leverage: int(settings.Leverage),
@@ -474,7 +467,7 @@ func (ftx *FtxUsdSpot) Setup(ctx context.Context, settings common.ExchangeSettin
 	return nil
 }
 
-func (ftx *FtxUsdSpot) watchOrder(
+func (ftx *FtxUsdFuture) watchOrder(
 	ctx context.Context,
 	market string,
 	requestCh chan common.OrderRequest,
@@ -508,24 +501,20 @@ func (ftx *FtxUsdSpot) watchOrder(
 	}
 }
 
-func (ftx *FtxUsdSpot) Stop() {
-	ftx.mu.Lock()
+func (ftx *FtxUsdFuture) Stop() {
 	if !ftx.stopped {
 		ftx.stopped = true
 		close(ftx.done)
 		logger.Debugf("stopped")
 	}
-	ftx.mu.Unlock()
 }
 
-func (ftx *FtxUsdSpot) Done() chan interface{} {
+func (ftx *FtxUsdFuture) Done() chan interface{} {
 	return ftx.done
 }
 
-func (ftx *FtxUsdSpot) positionsLoop(ctx context.Context, markets []string, positionsCh chan []Position) {
-	ftx.mu.Lock()
+func (ftx *FtxUsdFuture) positionsLoop(ctx context.Context, markets []string, positionsCh chan []Position) {
 	pullInterval := ftx.settings.PullInterval
-	ftx.mu.Unlock()
 	pullTimer := time.NewTimer(pullInterval)
 	defer pullTimer.Stop()
 	for {
@@ -566,10 +555,8 @@ func (ftx *FtxUsdSpot) positionsLoop(ctx context.Context, markets []string, posi
 	}
 }
 
-func (ftx *FtxUsdSpot) accountLoop(ctx context.Context, accountCh chan *Account) {
-	ftx.mu.Lock()
+func (ftx *FtxUsdFuture) accountLoop(ctx context.Context, accountCh chan *Account) {
 	pullInterval := ftx.settings.PullInterval
-	ftx.mu.Unlock()
 	pullTimer := time.NewTimer(pullInterval)
 	defer pullTimer.Stop()
 	for {
@@ -595,7 +582,7 @@ func (ftx *FtxUsdSpot) accountLoop(ctx context.Context, accountCh chan *Account)
 	}
 }
 
-func (ftx *FtxUsdSpot) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
+func (ftx *FtxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParam{}
 	newOrderParam.Market = param.Symbol
 	newOrderParam.Size = param.Size
@@ -638,7 +625,7 @@ func (ftx *FtxUsdSpot) submitOrder(ctx context.Context, param common.NewOrderPar
 	}
 }
 
-func (ftx *FtxUsdSpot) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
+func (ftx *FtxUsdFuture) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
 	if param.ClientID != "" {
 		_, err := ftx.api.CancelOrderByClientID(ctx, param.ClientID)
 		if err != nil {
@@ -668,7 +655,7 @@ func (ftx *FtxUsdSpot) cancelOrder(ctx context.Context, param common.CancelOrder
 	}
 }
 
-func (ftx *FtxUsdSpot) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
+func (ftx *FtxUsdFuture) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")
 	defer ftx.Stop()
@@ -678,9 +665,7 @@ func (ftx *FtxUsdSpot) StreamDepth(ctx context.Context, channels map[string]chan
 		markets = append(markets, market)
 	}
 
-	ftx.mu.Lock()
 	proxy := ftx.settings.Proxy
-	ftx.mu.Unlock()
 
 	for start := 0; start < len(markets); start += batchSize {
 		end := start + batchSize

@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func TestAPI_GetMarkets(t *testing.T) {
+func TestAPI_GetFutures(t *testing.T) {
 	api, err := NewAPI(os.Getenv("FTX_TEST_KEY"), os.Getenv("FTX_TEST_SECRET"), os.Getenv("FTX_TEST_PROXY"))
 	if err != nil {
 		t.Fatal(err)
@@ -22,10 +22,12 @@ func TestAPI_GetMarkets(t *testing.T) {
 	}
 	sizeIncrements := make(map[string]float64)
 	priceIncrements := make(map[string]float64)
+	minProvideSizes := make(map[string]float64)
 	for _, market := range markets {
 		if market.Type == "spot" && market.Enabled && market.QuoteCurrency == "USD"{
 			sizeIncrements[market.Name] = market.SizeIncrement
 			priceIncrements[market.Name] = market.PriceIncrement
+			minProvideSizes[market.Name] = market.MinProvideSize
 		}
 	}
 	fmt.Printf("var SizeIncrements = map[string]float64{\n")
@@ -35,6 +37,11 @@ func TestAPI_GetMarkets(t *testing.T) {
 	fmt.Printf("}\n\n")
 	fmt.Printf("var PriceIncrements = map[string]float64{\n")
 	for name, value := range priceIncrements {
+		fmt.Printf("  \"%s\":%s,\n", name, strconv.FormatFloat(value, 'f', -1, 64))
+	}
+	fmt.Printf("}\n\n")
+	fmt.Printf("var MinProvideSizes = map[string]float64{\n")
+	for name, value := range minProvideSizes {
 		fmt.Printf("  \"%s\":%s,\n", name, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	fmt.Printf("}\n\n")

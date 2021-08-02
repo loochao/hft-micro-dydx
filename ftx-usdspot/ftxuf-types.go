@@ -16,50 +16,54 @@ type Response struct {
 	Error   string          `json:"error"`
 }
 
-//    {
-//      "name": "1INCH/USD",
+//  {
+//      "name": "AAVE/USD",
 //      "enabled": true,
 //      "postOnly": false,
-//      "priceIncrement": 0.0001,
-//      "sizeIncrement": 1.0,
-//      "minProvideSize": 1.0,
-//      "last": 2.2855,
-//      "bid": 2.2802,
-//      "ask": 2.2831,
-//      "price": 2.2831,
+//      "priceIncrement": 0.01,
+//      "sizeIncrement": 0.01,
+//      "minProvideSize": 0.01,
+//      "last": 329.0,
+//      "bid": 329.34,
+//      "ask": 329.44,
+//      "price": 329.34,
 //      "type": "spot",
-//      "baseCurrency": "1INCH",
+//      "baseCurrency": "AAVE",
 //      "quoteCurrency": "USD",
 //      "underlying": null,
 //      "restricted": false,
 //      "highLeverageFeeExempt": true,
-//      "change1h": 0.001535357080189507,
-//      "change24h": -0.06545231273024969,
-//      "changeBod": -0.01709144136387119,
-//      "quoteVolume24h": 112464.7293,
-//      "volumeUsd24h": 112464.7293
+//      "change1h": 0.0029845291752954076,
+//      "change24h": 0.026748971193415638,
+//      "changeBod": -0.0017882581153578032,
+//      "quoteVolume24h": 7081249.2787,
+//      "volumeUsd24h": 7081249.2787
 //    }
 
 type Market struct {
-	Type                  string  `json:"type"`
 	Name                  string  `json:"name"`
-	Underlying            string  `json:"underlying"`
-	BaseCurrency          string  `json:"baseCurrency"`
-	QuoteCurrency         string  `json:"quoteCurrency"`
 	Enabled               bool    `json:"enabled"`
-	Ask                   float64 `json:"ask"`
-	Bid                   float64 `json:"bid"`
-	Last                  float64 `json:"last"`
 	PostOnly              bool    `json:"postOnly"`
 	PriceIncrement        float64 `json:"priceIncrement"`
 	SizeIncrement         float64 `json:"sizeIncrement"`
-	Restricted            bool  `json:"restricted"`
+	MinProvideSize        float64 `json:"minProvideSize"`
+	Last                  float64 `json:"last"`
+	Ask                   float64 `json:"ask"`
+	Bid                   float64 `json:"bid"`
 	Price                 float64 `json:"price"`
+	Type                  string  `json:"type"`
+	BaseCurrency          string  `json:"baseCurrency"`
+	QuoteCurrency         string  `json:"quoteCurrency"`
+	Underlying            string  `json:"underlying"`
+	Restricted            bool    `json:"restricted"`
 	HighLeverageFeeExempt bool    `json:"highLeverageFeeExempt"`
-	Change24h             float64 `json:"change24h"`
-	ChangeBod             float64 `json:"changeBod"`
-	QuoteVolume24h        float64 `json:"quoteVolume24h"`
-	VolumeUsd24h          float64 `json:"volumeUsd24h"`
+
+	Change1h            float64 `json:"change1h"`
+	Change24h           float64 `json:"change24h"`
+	ChangeBod           float64 `json:"changeBod"`
+
+	VolumeUSD24h        float64 `json:"volumeUsd24h"`
+	Volume              float64 `json:"volume"`
 }
 
 type FundingRate struct {
@@ -306,11 +310,7 @@ func (position *Position) GetSize() float64 {
 	return position.NetSize
 }
 func (position *Position) GetPrice() float64 {
-	if position.NetSize == 0 {
-		return 0.0
-	} else {
-		return (position.Cost - position.RealizedPnl) / position.NetSize
-	}
+	return position.EntryPrice
 }
 func (position *Position) GetTime() time.Time {
 	return position.ParseTime
@@ -558,7 +558,7 @@ type UserDataCap struct {
 type Fill struct {
 	ID     int64  `json:"id"`
 	Market string `json:"market"`
-	//Future        string    `json:"future"`
+	//Market        string    `json:"future"`
 	BaseCurrency  string    `json:"baseCurrency"`
 	QuoteCurrency string    `json:"quoteCurrency"`
 	Type          string    `json:"type"`

@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "result": [
+    {
+      "future": "DOGE-PERP",
+      "size": 184.0,
+      "side": "sell",
+      "netSize": -184.0,
+      "longOrderSize": 0.0,
+      "shortOrderSize": 0.0,
+      "cost": -97.672628,
+      "entryPrice": 0.5308295,
+      "unrealizedPnl": 0.0,
+      "realizedPnl": -0.02857,
+      "initialMarginRequirement": 0.33333333,
+      "maintenanceMarginRequirement": 0.03,
+      "openSize": 184.0,
+      "collateralUsed": 32.55754234109124,
+      "estimatedLiquidationPrice": 3.47169418045141
+    }
+  ]
+}

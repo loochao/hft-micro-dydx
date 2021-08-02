@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
 	"io"
 	"io/ioutil"
 	"net"
@@ -45,7 +44,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, method, path string, param 
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%s", contents)
+	//logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
@@ -145,8 +144,8 @@ func (api *API) ChangeLeverage(ctx context.Context, param LeverageParam) (*Lever
 }
 
 func (api *API) GetMarkets(ctx context.Context) ([]Market, error) {
-	markets := make([]Market, 0)
-	return markets, api.SendHTTPRequest(ctx, http.MethodGet, "/markets", nil, &markets)
+	futures := make([]Market, 0)
+	return futures, api.SendHTTPRequest(ctx, http.MethodGet, "/markets", nil, &futures)
 }
 
 func (api *API) GetFundingRates(ctx context.Context, param FundingRateParam) ([]FundingRate, error) {
