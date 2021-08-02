@@ -85,8 +85,8 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.ShortMedianLeave < strat.shortBot &&
 		strat.spread.ShortLastLeave < strat.spread.ShortMedianLeave &&
 		*strat.xyFundingRate < strat.config.MinimalKeepFundingRate &&
-		strat.xSize >= strat.xStepSize*strat.xMultiplier &&
-		strat.xSize*strat.xTicker.GetBidPrice()*strat.xMultiplier > 1.2*strat.xMinNotional {
+		strat.xSize >= strat.xStepSize*strat.xMultiplier {
+
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), math.Min(strat.xAbsValue, strat.yAbsValue))
 		if *strat.xyFundingRate > strat.config.MinimalKeepFundingRate*0.5 {
 			strat.enterValue = math.Min(math.Max(2*strat.enterStep, strat.xAbsValue*0.25), math.Min(strat.xAbsValue, strat.yAbsValue))
@@ -108,6 +108,7 @@ func (strat *XYStrategy) updateXPosition() {
 			//两种情况都把x全平，间接y全平
 			strat.size = strat.xSize
 		}
+		strat.enterValue = strat.size * strat.midPrice
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
 
@@ -181,6 +182,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.size > -strat.xSize {
 			strat.size = -strat.xSize
 		}
+		strat.enterValue = strat.size * strat.midPrice
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
 			strat.price = strat.xTicker.GetAskPrice()
