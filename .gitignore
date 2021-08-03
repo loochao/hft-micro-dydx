@@ -2,3 +2,4 @@ dist
 .idea
 *.yaml
 configs
+outputs

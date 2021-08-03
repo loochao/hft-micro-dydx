@@ -6,12 +6,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
+	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
+	"github.com/geometrybase/hft-micro/tdigest"
+	"math"
 	"os"
 	"path"
 	"sort"
@@ -33,22 +35,21 @@ func main() {
 		panic(err)
 	}
 	defer iw.Stop()
-
 	symbols := make([]string, 0)
 	for symbol := range binance_usdtspot.TickSizes {
-		if _, ok := binance_usdtfuture.TickSizes[symbol]; ok {
+		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(symbol, "USDC", "USDT", -1)]; ok {
 			symbols = append(symbols, symbol)
 		}
 	}
 	sort.Strings(symbols)
-
-	symbols = symbols[:1]
-
-	startTime, err := time.Parse("20060102", "20210708")
+	//symbols = symbols[:1]
+	//logger.Debugf("%s", symbols)
+	//return
+	startTime, err := time.Parse("20060102", "20210712")
 	if err != nil {
 		logger.Fatal(err)
 	}
-	endTime, err := time.Parse("20060102", "20210710")
+	endTime, err := time.Parse("20060102", "20210713")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -60,23 +61,40 @@ func main() {
 
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/bnus-bnuf-quantiles"
-	dataPath := "/Volumes/MarketData/MarketData/bnus-bnuf-depth5-and-ticker"
+	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/bn-csuf-quantiles"
+
+	bidTDs := make(map[string]*tdigest.TDigest)
+	askTDs := make(map[string]*tdigest.TDigest)
 
 	for _, xSymbol := range symbols {
-		ySymbol := xSymbol
+		ySymbol := strings.Replace(xSymbol, "USDC", "USDT", -1)
+		//if _, err := os.Stat(path.Join(quantilePath, xSymbol+"-"+ySymbol+".json")); err == nil {
+		//	logger.Debugf("Exists %s %s %v", ySymbol, xSymbol, err)
+		//	continue
+		//} else if !os.IsNotExist(err) {
+		//	logger.Debugf("Error %s %s %v", ySymbol, xSymbol, err)
+		//	continue
+		//}
 		counter := 0
 		timedTDigest := stream_stats.NewTimedTDigest(quantileLookback, quantileSubInterval)
+
+		bidTD, _ := tdigest.New()
+		askTD, _ := tdigest.New()
 
 		shortLastEnter := 0.0
 		longLastEnter := 0.0
 
 		xDepth := &binance_usdtspot.Depth5{}
+		xTicker := &binance_usdtspot.BookTicker{}
 		yDepth := &binance_usdtfuture.Depth5{}
+		yTicker := &binance_usdtfuture.BookTicker{}
+
+
+		var xTD, yTD common.Ticker
 		for _, dateStr := range strings.Split(dateStrs, ",") {
-			logger.Debugf("%s/%s/%s-%s,%s.jl.gz", dataPath, dateStr, dateStr, xSymbol, ySymbol)
+			logger.Debugf("%s %s %s", xSymbol, dateStr, fmt.Sprintf("/Users/chenjilin/MarketData/bncs-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol))
 			file, err := os.Open(
-				fmt.Sprintf("%s/%s/%s-%s,%s.jl.gz", dataPath, dateStr, dateStr, xSymbol, ySymbol),
+				fmt.Sprintf("/Users/chenjilin/MarketData/bncs-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -98,26 +116,45 @@ func main() {
 			for scanner.Scan() {
 				counter++
 				msg = scanner.Bytes()
-				if msg[0] == 'S' && msg[1] == 'T' {
+				if msg[0] == 'S' && msg[1] == 'D' {
 					err = binance_usdtspot.ParseDepth5(msg[21:], xDepth)
 					if err != nil {
 						logger.Debugf("%v", err)
 						continue
 					}
-				} else if msg[0] == 'F' {
-					err = binance_usdtfuture.ParseDepth5(msg[1:], yDepth)
+					xTD = xDepth
+				} else if msg[0] == 'S' && msg[1] == 'T' {
+					err = binance_usdtspot.ParseTicker(msg[21:], xTicker)
 					if err != nil {
 						logger.Debugf("%v", err)
 						continue
 					}
+					xTD = xTicker
+				} else if msg[0] == 'F' && msg[1] == 'D' {
+					err = binance_usdtfuture.ParseDepth5(msg[21:], yDepth)
+					if err != nil {
+						logger.Debugf("%v", err)
+						continue
+					}
+					yTD = yDepth
+				} else if msg[0] == 'F' && msg[1] == 'T' {
+					err = binance_usdtfuture.ParseBookTicker(msg[21:], yTicker)
+					if err != nil {
+						logger.Debugf("%v", err)
+						continue
+					}
+					yTD = yTicker
 				} else {
 					continue
 				}
 
-				if xDepth.Symbol != "" && yDepth.Symbol != "" {
-
-					shortLastEnter = (yDepth.Bids[0][0] - xDepth.Asks[0][0]) / xDepth.Asks[0][0]
-					longLastEnter = (yDepth.Asks[0][0] - xDepth.Bids[0][0]) / xDepth.Bids[0][0]
+				if yTD != nil && xTD != nil {
+					bidValue := math.Min(xTD.GetBidSize()*xTD.GetBidPrice(), yTD.GetBidSize()*yTD.GetBidPrice())
+					askValue := math.Min(xTD.GetAskSize()*xTD.GetAskPrice(), yTD.GetAskSize()*yTD.GetAskPrice())
+					_ = bidTD.Add(bidValue)
+					_ = askTD.Add(askValue)
+					shortLastEnter = (yTD.GetBidPrice() - xTD.GetAskPrice()) / xTD.GetAskPrice()
+					longLastEnter = (yTD.GetAskPrice() - xTD.GetBidPrice()) / xTD.GetBidPrice()
 					_ = timedTDigest.Insert(yDepth.EventTime, (shortLastEnter+longLastEnter)*0.5)
 					if counter%1000 == 0 {
 						fields := make(map[string]interface{})
@@ -125,7 +162,7 @@ func main() {
 						fields["shortLastEnter"] = shortLastEnter
 						fields["longLastEnter"] = longLastEnter
 						pt, err := client.NewPoint(
-							"usd-tk-tt-q-bn-usuf",
+							"bncs-bnuf-depth5-and-ticker",
 							map[string]string{
 								"xSymbol": xSymbol,
 							},
@@ -140,6 +177,8 @@ func main() {
 			}
 			_ = gr.Close()
 			_ = file.Close()
+			bidTDs[xSymbol] = bidTD
+			askTDs[xSymbol] = askTD
 		}
 		data, err := json.Marshal(timedTDigest)
 		if err != nil {
@@ -161,5 +200,13 @@ func main() {
 			logger.Debugf("%v", err)
 			continue
 		}
+	}
+	fmt.Printf("\n\nmaxBuyValues:\n")
+	for xSymbol, td := range askTDs {
+		fmt.Printf("  %s: %.2f\n", xSymbol, td.Quantile(0.2))
+	}
+	fmt.Printf("\n\nmaxSellValues:\n")
+	for xSymbol, td := range bidTDs {
+		fmt.Printf("  %s: %.2f\n", xSymbol, td.Quantile(0.2))
 	}
 }

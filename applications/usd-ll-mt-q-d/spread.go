@@ -78,29 +78,15 @@ func (strat *XYStrategy) walkSpread() {
 }
 
 func (strat *XYStrategy) walkXDepth() {
-
-	//x做为挂单边不用walk
-
-	strat.xWalkedDepth.Symbol = strat.xDepth.GetSymbol()
-	strat.xWalkedDepth.Time = strat.xDepth.GetTime()
-	strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
-	strat.xWalkedDepth.BestBidPrice = strat.xDepth.GetBids()[0][0]
-	strat.xWalkedDepth.BestAskPrice = strat.xDepth.GetAsks()[0][0]
-	strat.xWalkedDepth.BidPrice = strat.xDepth.GetBids()[0][0]
-	strat.xWalkedDepth.AskPrice = strat.xDepth.GetAsks()[0][0]
-	strat.xWalkedDepth.MidPrice = (strat.xDepth.GetBids()[0][0] + strat.xDepth.GetAsks()[0][0]) * 0.5
-	strat.xWalkedDepth.MircoPrice =
-		(strat.xDepth.GetBids()[0][0]*strat.xDepth.GetAsks()[0][1] + strat.xDepth.GetAsks()[0][0]*strat.xDepth.GetBids()[0][0])/(strat.xDepth.GetBids()[0][1] + strat.xDepth.GetAsks()[0][1])
-
-	//strat.error = common.WalkDepthBBMAA(strat.xDepth, strat.xMultiplier, strat.config.DepthTakerImpact, &strat.xWalkedDepth)
-	//if strat.error != nil {
-	//	if time.Now().Sub(strat.logSilentTime) > 0 {
-	//		logger.Debugf("x common.WalkDepthBMA error %v %s", strat.error, strat.xSymbol)
-	//		strat.logSilentTime = time.Now().Add(time.Minute)
-	//	}
-	//} else {
-	//	strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
-	//}
+	strat.error = common.WalkDepthBBMAA(strat.xDepth, strat.xMultiplier, strat.config.DepthTakerImpact, &strat.xWalkedDepth)
+	if strat.error != nil {
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			logger.Debugf("x common.WalkDepthBMA error %v %s", strat.error, strat.xSymbol)
+			strat.logSilentTime = time.Now().Add(time.Minute)
+		}
+	} else {
+		strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
+	}
 }
 
 func (strat *XYStrategy) walkYDepth() {
