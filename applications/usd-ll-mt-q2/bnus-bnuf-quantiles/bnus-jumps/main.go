@@ -61,8 +61,8 @@ func main() {
 
 	enterThreshold := 0.001
 	offsets := make(map[string]string)
-	qAddInterval := time.Millisecond*50
-	jumpLookback := time.Second*3
+	qAddInterval := time.Millisecond*1000
+	jumpLookback := time.Second
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
 	outputPath := fmt.Sprintf(
@@ -349,13 +349,22 @@ func main() {
 					return
 				}
 			}
+			//offsets[xSymbol] = fmt.Sprintf(
+			//	"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+			//	bidJumpTD.Quantile(0.05),
+			//	bidJumpTD.Quantile(0.20),
+			//	bidJumpTD.Quantile(0.50),
+			//	askJumpTD.Quantile(0.50),
+			//	askJumpTD.Quantile(0.80),
+			//	askJumpTD.Quantile(0.95),
+			//)
 			offsets[xSymbol] = fmt.Sprintf(
 				"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
 				bidJumpTD.Quantile(0.05),
-				bidJumpTD.Quantile(0.20),
 				bidJumpTD.Quantile(0.50),
+				bidJumpTD.Quantile(0.80),
+				askJumpTD.Quantile(0.20),
 				askJumpTD.Quantile(0.50),
-				askJumpTD.Quantile(0.80),
 				askJumpTD.Quantile(0.95),
 			)
 			fmt.Printf("\n\n%s %s\n\n", xSymbol, offsets[xSymbol])

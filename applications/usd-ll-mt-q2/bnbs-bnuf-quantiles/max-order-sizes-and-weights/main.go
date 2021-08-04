@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"compress/gzip"
 	"fmt"
+	binance_busdspot "github.com/geometrybase/hft-micro/binance-busdspot"
 	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
-	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/tdigest"
 	"io/ioutil"
@@ -13,25 +13,24 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 )
 
 func main() {
 	symbols := make([]string, 0)
-	for symbol := range binance_usdtspot.TickSizes {
-		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(symbol, "USDT", "USDT", -1)]; ok {
+	for symbol := range binance_busdspot.TickSizes {
+		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(symbol, "BUSD", "USDT", -1)]; ok {
 			symbols = append(symbols, symbol)
 		}
 	}
 	sort.Strings(symbols)
 
 	//symbols = symbols[:1]
-	startTime, err := time.Parse("20060102", "20210716")
+	startTime, err := time.Parse("20060102", "20210720")
 	if err != nil {
 		logger.Fatal(err)
 	}
-	endTime, err := time.Parse("20060102", "20210801")
+	endTime, err := time.Parse("20060102", "20210803")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -43,13 +42,12 @@ func main() {
 	quantileAddInterval := time.Millisecond * 100
 	quantile := 0.8
 
-	dataPath := "/Volumes/MarketData/MarketData/bnus-bnuf-depth5-and-ticker"
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-ll-mt-q/bnus-bnuf-quantiles/outputs/size-quantiles"
+	dataPath := "/Volumes/MarketData/MarketData/bnbs-bnuf-depth5-and-ticker"
+	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-ll-mt-q2/bnbs-bnuf-quantiles/outputs/size-quantiles"
 	sizeTDs := make(map[string]*tdigest.TDigest)
 
 	parallelCh := make(chan interface{}, 16)
 	doneCh := make(chan string)
-	mu := sync.Mutex{}
 
 	for _, xSymbol := range symbols {
 		go func(xSymbol string) {
@@ -58,9 +56,10 @@ func main() {
 				<-parallelCh
 				doneCh <- xSymbol
 			}()
-			ySymbol := strings.Replace(xSymbol, "USDT", "USDT", -1)
+			ySymbol := strings.Replace(xSymbol, "BUSD", "USDT", -1)
 			sizeTD, _ := tdigest.New()
 			lastQuantileAddTime := time.Time{}
+
 			data, err := ioutil.ReadFile(quantilePath + "/" + xSymbol + "," + ySymbol)
 			if err == nil {
 				err = sizeTD.FromBytes(data)
@@ -131,9 +130,7 @@ func main() {
 					_ = file.Close()
 				}
 			}
-			mu.Lock()
 			sizeTDs[xSymbol] = sizeTD
-			mu.Unlock()
 			data, err = sizeTD.AsBytes()
 			if err != nil {
 				logger.Debugf("sizeTD.AsBytes() error %v", err)
@@ -146,9 +143,26 @@ func main() {
 			fmt.Printf("\n\n  %s: %.0f\n\n", xSymbol, sizeTD.Quantile(quantile))
 		}(xSymbol)
 	}
+	checkMaps := make(map[string]string)
+	for _, xSymbol := range symbols {
+		checkMaps[xSymbol] = xSymbol
+	}
+outerLoop:
+	for {
+		select {
+		case xSymbol := <-doneCh:
+			delete(checkMaps, xSymbol)
+			if len(checkMaps) == 0 {
+				break outerLoop
+			}
+		case <-time.After(time.Hour):
+			logger.Debugf("timeout after 1h")
+			break outerLoop
+		}
+	}
 	fmt.Printf("\n\nxyPairs:\n")
 	for _, xSymbol := range symbols {
-		fmt.Printf("  %s: %s\n", xSymbol, xSymbol)
+		fmt.Printf("  %s: %s\n", xSymbol, strings.Replace(xSymbol, "BUSD", "USDT", -1))
 	}
 	fmt.Printf("\n\nmaxOrderValues:\n")
 	sumValue := 0.0

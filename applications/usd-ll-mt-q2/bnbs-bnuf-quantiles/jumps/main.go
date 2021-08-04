@@ -63,7 +63,7 @@ func main() {
 	enterThreshold := 0.001
 	offsets := make(map[string]string)
 	qAddInterval := time.Second
-	jumpLookback := time.Second * 3
+	jumpLookback := time.Second * 1
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
 	outputPath := fmt.Sprintf(
