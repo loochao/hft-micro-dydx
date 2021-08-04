@@ -50,7 +50,6 @@ type Config struct {
 	DepthXDecay          float64       `yaml:"depthXDecay"`
 	DepthYBias           time.Duration `yaml:"depthYBias"`
 	DepthXBias           time.Duration `yaml:"depthXBias"`
-	DepthTakerImpact     float64       `yaml:"depthTakerImpact"`
 	DepthMaxAgeDiffBias  time.Duration `yaml:"depthMaxAgeDiffBias"`
 	DepthReportCount     int           `yaml:"depthReportCount"`
 	SpreadTimeToCancel   time.Duration `yaml:"spreadTimeToCancel"`
@@ -73,6 +72,7 @@ type Config struct {
 	XCancelSilent       time.Duration `yaml:"xCancelSilent"`
 	XOrderCheckInterval time.Duration `yaml:"xOrderCheckInterval"`
 	EnterSilent         time.Duration `yaml:"enterSilent"`
+	RealisedLogDelay    time.Duration `yaml:"realisedLogDelay"`
 	RestartSilent       time.Duration `yaml:"restartSilent"`
 	RestartInterval     time.Duration `yaml:"restartInterval"`
 
@@ -89,6 +89,9 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.BalancePositionMaxAge == 0 {
 		config.BalancePositionMaxAge = time.Minute * 3
 	}
+	if config.RealisedLogDelay == 0 {
+		config.RealisedLogDelay = time.Second
+	}
 	if config.OrderTimeout == 0 {
 		config.OrderTimeout = time.Second * 5
 	}
@@ -100,9 +103,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.BatchSize <= 0 {
 		config.BatchSize = 20
-	}
-	if config.DepthTakerImpact <= 0 {
-		config.DepthTakerImpact = 1000
 	}
 	if config.DepthMaxAgeDiffBias == 0 {
 		config.DepthMaxAgeDiffBias = time.Millisecond * 100
