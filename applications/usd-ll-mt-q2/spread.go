@@ -215,11 +215,11 @@ func (strat *XYStrategy) handleYDepth() {
 			//taker已经过期
 			strat.xyDepthMatchSum.Insert(0.0)
 			strat.yDepthExpireCount++
-			//} else {
-			//	strat.yWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
+		} else {
+			strat.yWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
 		}
 		//怎么都walk一下,  以便做xOpenOrder的价格check
-		strat.yWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
+		//strat.yWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
 	} else {
 		strat.xyDepthMatchSum.Insert(0.0)
 	}
