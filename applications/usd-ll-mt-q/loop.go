@@ -27,19 +27,19 @@ func (strat *XYStrategy) handleXOrder() {
 		strat.xOrder.GetStatus() == common.OrderStatusFilled ||
 		strat.xOrder.GetStatus() == common.OrderStatusPartiallyFilled {
 
-		if strat.xOpenOrder != nil && strat.xOpenOrder.ClientID == strat.xOrder.GetClientID() {
-			if strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled {
-				if strat.xOrder.GetStatus() == common.OrderStatusFilled &&
-					strat.xOrder.GetFilledSize() != strat.xOpenOrder.Size {
-					logger.Debugf("%s, NOT FULLY FILLED CANCEL", strat.xSymbol)
-					strat.tryCancelXOpenOrder("not fully filled")
-				} else {
-					strat.xOpenOrder = nil
-				}
+		if strat.xOpenOrder != nil && strat.xOpenOrder.ClientID == strat.xOrder.GetClientID() &&
+			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled {
+			if strat.xOrder.GetStatus() == common.OrderStatusFilled &&
+				strat.xOrder.GetFilledSize() != strat.xOpenOrder.Size {
+				logger.Debugf("%s, NOT FULLY FILLED CANCEL", strat.xSymbol)
+				strat.tryCancelXOpenOrder("not fully filled")
+			} else {
+				strat.xOpenOrder = nil
 			}
 		}
 
-		if strat.xOrder.GetStatus() != common.OrderStatusFilled {
+		if strat.xOrder.GetStatus() != common.OrderStatusFilled &&
+			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled {
 			//logger.Debugf("x order ended %s %s %s", strat.xOrder.GetSymbol(), strat.xOrder.GetStatus(), strat.xOrder.GetSide())
 			strat.xPositionUpdateTime = time.Unix(0, 0)
 		} else {
