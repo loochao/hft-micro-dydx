@@ -24,11 +24,12 @@ func (strat *XYStrategy) handleXOrder() {
 	if strat.xOrder.GetStatus() == common.OrderStatusExpired ||
 		strat.xOrder.GetStatus() == common.OrderStatusReject ||
 		strat.xOrder.GetStatus() == common.OrderStatusCancelled ||
-		strat.xOrder.GetStatus() == common.OrderStatusFilled {
+		strat.xOrder.GetStatus() == common.OrderStatusFilled ||
+		strat.xOrder.GetStatus() == common.OrderStatusPartiallyFilled {
 
 		if strat.xOpenOrder != nil &&
 			strat.xOpenOrder.ClientID == strat.xOrder.GetClientID() &&
-			(strat.xOrder.GetStatus() != common.OrderStatusFilled || strat.xOrder.GetSize() == strat.xOpenOrder.Size) {
+			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled {
 			strat.xOpenOrder = nil
 		}
 
@@ -63,6 +64,7 @@ func (strat *XYStrategy) handleYOrder() {
 		strat.yOrder.GetStatus() == common.OrderStatusReject ||
 		strat.yOrder.GetStatus() == common.OrderStatusCancelled ||
 		strat.yOrder.GetStatus() == common.OrderStatusFilled {
+
 		if strat.yOrder.GetStatus() != common.OrderStatusFilled {
 			logger.Debugf("y order ended %s %s %s", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide())
 			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
