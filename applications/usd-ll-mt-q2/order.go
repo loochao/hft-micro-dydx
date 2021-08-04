@@ -157,10 +157,12 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.shortBotCloseOrderCount.Insert(time.Now(), 1.0)
 			logger.Debugf(
-				"%s SHORT BOT REDUCE %f < %f, %f < %f QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
+				"%s SHORT BOT REDUCE %f < %f, %f < %f QM %f, ES %f EV %f,SIZE %f PRICE %f, X %v Y %v M %f",
 				strat.xSymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
+				strat.enterStep,
+				strat.enterValue,
 				*strat.quantileMiddle,
 				strat.size,
 				strat.price,
@@ -232,6 +234,8 @@ func (strat *XYStrategy) updateXOrder() {
 				strat.xSymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
+				strat.enterStep,
+				strat.enterValue,
 				*strat.quantileMiddle,
 				strat.size,
 				strat.price,
@@ -323,10 +327,13 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.shortTopOpenOrderCount.Insert(time.Now(), 1.0)
 		logger.Debugf(
-			"%s SHORT TOP OPEN %f > %f, %f > %f, QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
+			"%s SHORT TOP OPEN %f > %f, %f > %f,  ES %f EV %f YI %f, QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
 			strat.xSymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
+			strat.enterStep,
+			strat.enterValue,
+			strat.yImpactValue,
 			*strat.quantileMiddle,
 			strat.size,
 			strat.price,
@@ -416,10 +423,13 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.longBotOpenOrderCount.Insert(time.Now(), 1.0)
 		logger.Debugf(
-			"%s LONG BOT OPEN %f < %f, %f < %f, QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
+			"%s LONG BOT OPEN %f < %f, %f < %f, ES %f EV %f YI %f, QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
 			strat.xSymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
+			strat.enterStep,
+			strat.enterValue,
+			strat.yImpactValue,
 			*strat.quantileMiddle,
 			strat.size,
 			strat.price,
