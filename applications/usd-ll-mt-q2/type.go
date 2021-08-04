@@ -45,9 +45,6 @@ type XYStrategy struct {
 	xPositionUpdateTime time.Time
 	yPositionUpdateTime time.Time
 
-	xyDepthMatchRatio  float64
-	xyDepthMatchWindow float64
-	xyDepthMatchSum    *common.RollingSum
 
 	xDepth       common.Depth
 	yDepth       common.Depth
@@ -100,7 +97,6 @@ type XYStrategy struct {
 	yTimedPositionChange *common.TimedSum
 
 	expectedChanSendingTime time.Duration
-	depthMatchCount         int
 	depthCount              int
 	xDepthExpireCount       int
 	yDepthExpireCount       int

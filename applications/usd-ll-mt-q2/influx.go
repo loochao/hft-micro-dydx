@@ -115,7 +115,6 @@ func handleSave(
 			fields["yBidPrice"] = st.yWalkedDepth.BidPrice
 			fields["yAskPrice"] = st.yWalkedDepth.AskPrice
 			fields["yMidPrice"] = st.yWalkedDepth.MidPrice
-			fields["xyDepthMatchRatio"] = st.xyDepthMatchRatio
 
 			if st.spreadReport != nil {
 				fields["matchRatio"] = st.spreadReport.MatchRatio

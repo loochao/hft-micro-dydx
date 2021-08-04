@@ -57,7 +57,6 @@ type Config struct {
 	SpreadLookback       time.Duration `yaml:"spreadLookback"`
 	YDepthTimeToCancel   time.Duration `yaml:"yDepthTimeToCancel"`
 	SpreadMinDepthCount  int           `yaml:"spreadMinDepthCount"`
-	EnterDepthMatchRatio float64       `yaml:"enterDepthMatchRatio"`
 	BatchSize            int           `yaml:"batchSize"`
 
 	StartValue        float64            `yaml:"startValue"`

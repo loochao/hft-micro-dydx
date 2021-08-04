@@ -10,5 +10,5 @@
   
 ---
 - [x] Dynamic Y order impact
-- [x] X order offset based on constant time 
-  interval 
+- [x] X order offset based on constant time interval
+- [x] remove match ratio

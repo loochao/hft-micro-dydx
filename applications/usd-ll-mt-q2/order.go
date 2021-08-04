@@ -71,13 +71,6 @@ func (strat *XYStrategy) updateXOrder() {
 		return
 	}
 
-	if strat.config.EnterDepthMatchRatio > strat.xyDepthMatchRatio {
-		strat.xOrderSilentTime = time.Now().Add(strat.config.EnterSilent)
-		strat.tryCancelXOpenOrder("small match ratio")
-		logger.Debugf("%s match ratio %f < %f, silent %v", strat.xSymbol, strat.xyDepthMatchRatio, strat.config.EnterDepthMatchRatio, strat.config.EnterSilent)
-		return
-	}
-
 	if math.Abs(strat.xValue+strat.yValue) > strat.enterStep*0.8 {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
@@ -157,7 +150,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.shortBotCloseOrderCount.Insert(time.Now(), 1.0)
 			logger.Debugf(
-				"%s SHORT BOT REDUCE %f < %f, %f < %f QM %f, ES %f EV %f,SIZE %f PRICE %f, X %v Y %v M %f",
+				"%s SHORT BOT REDUCE %f < %f, %f < %f QM %f, ES %f EV %f,SIZE %f PRICE %f, X %v Y %v",
 				strat.xSymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
@@ -168,7 +161,6 @@ func (strat *XYStrategy) updateXOrder() {
 				strat.price,
 				time.Now().Sub(strat.xDepthTime),
 				time.Now().Sub(strat.yDepthTime),
-				strat.xyDepthMatchRatio,
 			)
 		}
 		return
@@ -230,7 +222,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.longTopCloseOrderCount.Insert(time.Now(), 1.0)
 			logger.Debugf(
-				"%s LONG TOP REDUCE %f > %f, %f > %f, QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
+				"%s LONG TOP REDUCE %f > %f, %f > %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
 				strat.xSymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
@@ -241,7 +233,6 @@ func (strat *XYStrategy) updateXOrder() {
 				strat.price,
 				time.Now().Sub(strat.xDepthTime),
 				time.Now().Sub(strat.yDepthTime),
-				strat.xyDepthMatchRatio,
 			)
 		}
 		return
@@ -327,7 +318,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.shortTopOpenOrderCount.Insert(time.Now(), 1.0)
 		logger.Debugf(
-			"%s SHORT TOP OPEN %f > %f, %f > %f,  ES %f EV %f YI %f, QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
+			"%s SHORT TOP OPEN %f > %f, %f > %f,  ES %f EV %f YI %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
 			strat.xSymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
@@ -339,7 +330,6 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.price,
 			time.Now().Sub(strat.xDepthTime),
 			time.Now().Sub(strat.yDepthTime),
-			strat.xyDepthMatchRatio,
 		)
 	} else if !strat.config.ReduceOnly &&
 		!strat.isXSpot &&
@@ -423,7 +413,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.longBotOpenOrderCount.Insert(time.Now(), 1.0)
 		logger.Debugf(
-			"%s LONG BOT OPEN %f < %f, %f < %f, ES %f EV %f YI %f, QM %f, SIZE %f PRICE %f, X %v Y %v M %f",
+			"%s LONG BOT OPEN %f < %f, %f < %f, ES %f EV %f YI %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
 			strat.xSymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
@@ -435,7 +425,6 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.price,
 			time.Now().Sub(strat.xDepthTime),
 			time.Now().Sub(strat.yDepthTime),
-			strat.xyDepthMatchRatio,
 		)
 
 	}
