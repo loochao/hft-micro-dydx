@@ -114,6 +114,7 @@ func (strat *XYStrategy) walkYDepth() {
 		strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 	}
 }
+
 func (strat *XYStrategy) handleDepth() {
 	switch strat.nextDepth.GetExchange() {
 	case strat.xExchangeID:
@@ -217,12 +218,12 @@ func (strat *XYStrategy) handleYDepth() {
 			//} else {
 			//	strat.yWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
 		}
+		//怎么都walk一下,  以便做xOpenOrder的价格check
+		strat.yWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
 	} else {
 		strat.xyDepthMatchSum.Insert(0.0)
 	}
 
-	//怎么都walk一下,  以便做xOpenOrder的价格check
-	strat.yWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
 	strat.xyDepthMatchRatio = strat.xyDepthMatchSum.Sum() / strat.xyDepthMatchWindow
 	strat.depthCount++
 	if strat.depthCount > strat.config.DepthReportCount {
