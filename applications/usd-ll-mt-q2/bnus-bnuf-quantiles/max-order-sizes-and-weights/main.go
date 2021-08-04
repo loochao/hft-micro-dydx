@@ -133,6 +133,10 @@ func main() {
 		}
 		fmt.Printf("\n\n  %s: %.0f\n\n", xSymbol, sizeTD.Quantile(quantile))
 	}
+	fmt.Printf("\n\nxyPairs:\n")
+	for _, xSymbol := range symbols {
+		fmt.Printf("  %s: %s\n", xSymbol, xSymbol)
+	}
 	fmt.Printf("\n\nmaxOrderValues:\n")
 	sumValue := 0.0
 	for _, xSymbol := range symbols {
