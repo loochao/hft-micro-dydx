@@ -89,7 +89,8 @@ func (strat *XYStrategy) walkXDepth() {
 	strat.xWalkedDepth.AskPrice = strat.xDepth.GetAsks()[0][0]
 	strat.xWalkedDepth.MidPrice = (strat.xDepth.GetBids()[0][0] + strat.xDepth.GetAsks()[0][0]) * 0.5
 	strat.xWalkedDepth.MircoPrice =
-		(strat.xDepth.GetBids()[0][0]*strat.xDepth.GetAsks()[0][1] + strat.xDepth.GetAsks()[0][0]*strat.xDepth.GetBids()[0][0])/(strat.xDepth.GetBids()[0][1] + strat.xDepth.GetAsks()[0][1])
+		(strat.xDepth.GetBids()[0][0]*strat.xDepth.GetAsks()[0][1] + strat.xDepth.GetAsks()[0][0]*strat.xDepth.GetBids()[0][0]) / (strat.xDepth.GetBids()[0][1] + strat.xDepth.GetAsks()[0][1])
+	strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 
 	//strat.error = common.WalkDepthBBMAA(strat.xDepth, strat.xMultiplier, strat.config.DepthTakerImpact, &strat.xWalkedDepth)
 	//if strat.error != nil {
@@ -213,8 +214,8 @@ func (strat *XYStrategy) handleYDepth() {
 			//taker已经过期
 			strat.xyDepthMatchSum.Insert(0.0)
 			strat.yDepthExpireCount++
-		//} else {
-		//	strat.yWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
+			//} else {
+			//	strat.yWalkDepthTimer.Reset(strat.config.DepthWalkDelay)
 		}
 	} else {
 		strat.xyDepthMatchSum.Insert(0.0)
