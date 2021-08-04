@@ -436,8 +436,8 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		logger.Debugf("%s CANCEL, SPREAD IS OUT OF DATE %v", strat.xSymbol, strat.config.SpreadTimeToCancel)
 		return false
 	}
-	if time.Now().Sub(strat.xWalkedDepth.Time) > strat.config.XOrderCheckInterval {
-		logger.Debugf("%s CANCEL,Y WALKED DEPTH IS OUT OF DATE %v", strat.xSymbol, strat.config.XOrderCheckInterval)
+	if time.Now().Sub(strat.xWalkedDepth.Time) > strat.config.YDepthTimeToCancel {
+		logger.Debugf("%s CANCEL,Y WALKED DEPTH IS OUT OF DATE %v", strat.xSymbol, strat.config.YDepthTimeToCancel)
 		return false
 	}
 	//检查价格有没有在OFFSET范围内，不在撤掉
