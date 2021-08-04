@@ -30,7 +30,13 @@ func (strat *XYStrategy) handleXOrder() {
 		if strat.xOpenOrder != nil &&
 			strat.xOpenOrder.ClientID == strat.xOrder.GetClientID() &&
 			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled {
-			strat.xOpenOrder = nil
+			if strat.xOrder.GetStatus() == common.OrderStatusFilled &&
+				strat.xOpenOrder.Size != strat.xOrder.GetFilledSize() {
+				logger.Debugf("%s NOT FULLY FILLED, CANCEL", strat.xSymbol)
+				strat.tryCancelXOpenOrder("cancel partially filled")
+			} else {
+				strat.xOpenOrder = nil
+			}
 		}
 
 		if strat.xOrder.GetStatus() != common.OrderStatusFilled {
