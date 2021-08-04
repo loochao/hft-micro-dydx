@@ -18,6 +18,7 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -80,6 +81,7 @@ func main() {
 	save := false
 	parallelCh := make(chan interface{}, 16)
 	doneCh := make(chan string)
+	mu := sync.Mutex{}
 
 	if _, err := os.Stat(outputPath); os.IsNotExist(err) {
 		err = os.MkdirAll(outputPath, 0755)
@@ -349,6 +351,7 @@ func main() {
 					return
 				}
 			}
+			mu.Lock()
 			offsets[xSymbol] = fmt.Sprintf(
 				"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
 				bidJumpTD.Quantile(0.05),
@@ -359,6 +362,7 @@ func main() {
 				askJumpTD.Quantile(0.95),
 			)
 			fmt.Printf("\n\n%s %s\n\n", xSymbol, offsets[xSymbol])
+			mu.Unlock()
 		}(xSymbol)
 	}
 

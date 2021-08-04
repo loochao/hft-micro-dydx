@@ -26,7 +26,9 @@ func (strat *XYStrategy) handleXOrder() {
 		strat.xOrder.GetStatus() == common.OrderStatusCancelled ||
 		strat.xOrder.GetStatus() == common.OrderStatusFilled {
 
-		if strat.xOpenOrder != nil && strat.xOpenOrder.ClientID == strat.xOrder.GetClientID() {
+		if strat.xOpenOrder != nil &&
+			strat.xOpenOrder.ClientID == strat.xOrder.GetClientID() &&
+			(strat.xOrder.GetStatus() != common.OrderStatusFilled || strat.xOrder.GetSize() == strat.xOpenOrder.Size) {
 			strat.xOpenOrder = nil
 		}
 
@@ -66,7 +68,7 @@ func (strat *XYStrategy) handleYOrder() {
 			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 			strat.yPositionUpdateTime = time.Time{}
 		} else {
-			logger.Debugf("y order filled %s %s %s size %f price %f value %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice(),strat.yOrder.GetFilledSize()*strat.yOrder.GetFilledPrice())
+			logger.Debugf("y order filled %s %s %s size %f price %f value %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice(), strat.yOrder.GetFilledSize()*strat.yOrder.GetFilledPrice())
 			if strat.yOrder.GetSide() == common.OrderSideBuy {
 				if strat.yLastFilledBuyPrice == nil {
 					strat.yLastFilledBuyPrice = new(float64)
