@@ -103,7 +103,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.spread.ShortLastLeave < strat.spread.ShortMedianLeave &&
 		*strat.xyFundingRate < strat.config.MinimalKeepFundingRate &&
 		strat.xSize >= strat.xStepSize*strat.xMultiplier &&
-		strat.xSize*strat.xMultiplier*strat.midPrice > 1.2*strat.xMinNotional {
+		strat.xSize*strat.midPrice > 1.2*strat.xMinNotional {
 
 		//平一半或者平4个entryStep, 钱多优先平一半
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), math.Min(strat.xAbsValue, strat.yAbsValue))

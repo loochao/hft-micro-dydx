@@ -39,8 +39,8 @@ func (strat *XYStrategy) walkSpread() {
 
 	//假定挂单基于MiroPrice, 考虑挂单的下界偏移进Spread
 	//如果想挂得远，成交少，吃大Spread, 可以orderOffsets参数，推NearBot NearTop, 反之亦然
-	strat.shortLastEnter = (strat.yWalkedDepth.BidPrice - strat.xWalkedDepth.MidPrice) / strat.xWalkedDepth.MidPrice
-	strat.longLastEnter = (strat.yWalkedDepth.AskPrice - strat.xWalkedDepth.MidPrice) / strat.xWalkedDepth.MidPrice
+	strat.shortLastEnter = (strat.yWalkedDepth.BidPrice - strat.xWalkedDepth.BestBidPrice) / strat.xWalkedDepth.BestBidPrice
+	strat.longLastEnter = (strat.yWalkedDepth.AskPrice - strat.xWalkedDepth.BestAskPrice) / strat.xWalkedDepth.BestAskPrice
 	strat.shortEnterTimedMedian.Insert(strat.spreadTime, strat.shortLastEnter)
 	strat.longEnterTimedMedian.Insert(strat.spreadTime, strat.longLastEnter)
 
@@ -80,7 +80,6 @@ func (strat *XYStrategy) walkSpread() {
 func (strat *XYStrategy) walkXDepth() {
 
 	//x做为挂单边不用walk
-
 	strat.xWalkedDepth.Symbol = strat.xDepth.GetSymbol()
 	strat.xWalkedDepth.Time = strat.xDepth.GetTime()
 	strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
@@ -104,7 +103,7 @@ func (strat *XYStrategy) walkXDepth() {
 }
 
 func (strat *XYStrategy) walkYDepth() {
-	strat.error = common.WalkDepthBBMAA(strat.yDepth, strat.yMultiplier, strat.config.DepthTakerImpact, &strat.yWalkedDepth)
+	strat.error = common.WalkDepthBBMAA(strat.yDepth, strat.yMultiplier, strat.yImpactValue, &strat.yWalkedDepth)
 	if strat.error != nil {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			logger.Debugf("y common.WalkDepthBMA error %v %s", strat.error, strat.ySymbol)

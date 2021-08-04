@@ -110,6 +110,8 @@ type XYStrategy struct {
 	spreadReport            *common.XYSpreadReport
 	stateOutputCh           chan XYStrategy
 
+	yImpactValue float64
+
 	xTickSize            float64
 	yTickSize            float64
 	xStepSize            float64

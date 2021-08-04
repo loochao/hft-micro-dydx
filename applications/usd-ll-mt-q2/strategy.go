@@ -145,6 +145,7 @@ func startXYStrategy(
 		xTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
 		yTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
 		expectedChanSendingTime: time.Nanosecond * 300,
+		yImpactValue:            config.MaxOrderValues[xSymbol],
 		depthMatchCount:         0,
 		depthCount:              0,
 		xDepthExpireCount:       0,
@@ -442,6 +443,7 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 	if strat.enterStep < strat.config.EnterMinimalStep {
 		strat.enterStep = strat.config.EnterMinimalStep
 	}
+	strat.yImpactValue = math.Min(4*strat.enterStep, strat.maxOrderValue)
 	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.targetWeight
 	strat.usdAvailable = math.Min(strat.xAccount.GetFree()*strat.xLeverage, strat.yAccount.GetFree()*strat.yLeverage)
 }
