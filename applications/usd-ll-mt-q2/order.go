@@ -28,8 +28,8 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.quantileMiddle == nil ||
 		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter ||
 		strat.fundingRateSettleSilent {
-		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
-			strat.tryCancelXOpenOrder("spread time out")
+		if time.Now().Sub(strat.yWalkedDepth.Time) > strat.config.YDepthTimeToCancel {
+			strat.tryCancelXOpenOrder("y walked depth time out in")
 		} else if strat.fundingRateSettleSilent {
 			strat.tryCancelXOpenOrder("funding rate silent")
 		}
@@ -431,10 +431,6 @@ func (strat *XYStrategy) updateXOrder() {
 }
 
 func (strat *XYStrategy) isXOpenOrderOk() bool {
-	if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
-		logger.Debugf("%s CANCEL, SPREAD IS OUT OF DATE %v", strat.xSymbol, strat.config.SpreadTimeToCancel)
-		return false
-	}
 	if time.Now().Sub(strat.xWalkedDepth.Time) > strat.config.YDepthTimeToCancel {
 		logger.Debugf("%s CANCEL,Y WALKED DEPTH IS OUT OF DATE %v", strat.xSymbol, strat.config.YDepthTimeToCancel)
 		return false
