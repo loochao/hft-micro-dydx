@@ -430,5 +430,67 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.yTicker.GetAskPrice(),
 		)
 
+	} else if time.Now().Sub(strat.lastSpreadEnterTime) > strat.config.HedgeXTimeout {
+
+		//如果已经没有信号对冲，重新检查x y的仓位，对冲较小的
+		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) < math.Abs(strat.yPosition.GetSize()*strat.yMultiplier) {
+			//X的size比Y小，不用操作X
+			return
+		}
+		strat.size = -strat.yPosition.GetSize()*strat.yMultiplier/strat.xMultiplier - strat.xPosition.GetSize()
+		strat.size = math.Round(strat.size/strat.xStepSize) * strat.xStepSize
+		if math.Abs(strat.size) <= strat.xStepSize || math.Abs(strat.size) > math.Abs(strat.xPosition.GetSize()){
+			return
+		}
+		if strat.size < 0 {
+			strat.orderSide = common.OrderSideSell
+			strat.size = -strat.size
+			strat.price = strat.xTicker.GetBidPrice()
+			//防止TickSize太大
+			if strat.xTickSize/strat.price < strat.config.EnterSlippage {
+				strat.price = strat.price * (1.0 - strat.config.EnterSlippage)
+				strat.price = math.Floor(strat.price/strat.xTickSize) * strat.xTickSize
+			}
+		} else {
+			strat.orderSide = common.OrderSideBuy
+			strat.price = strat.xTicker.GetAskPrice()
+			//防止TickSize太大
+			if strat.xTickSize/strat.price < strat.config.EnterSlippage {
+				strat.price = strat.price * (1.0 + strat.config.EnterSlippage)
+				strat.price = math.Ceil(strat.price/strat.xTickSize) * strat.xTickSize
+			}
+		}
+		strat.xNewOrderParam = common.NewOrderParam{
+			Symbol:      strat.xSymbol,
+			Side:        strat.orderSide,
+			Type:        common.OrderTypeLimit,
+			Price:       strat.price,
+			TimeInForce: strat.config.XOrderTimeInForce,
+			Size:        strat.size,
+			PostOnly:    false,
+			ReduceOnly:  true,
+			ClientID:    strat.xExchange.GenerateClientID(),
+		}
+		if !strat.config.DryRun {
+			select {
+			case strat.xOrderRequestCh <- common.OrderRequest{
+				New: &strat.xNewOrderParam,
+			}:
+			}
+		}
+		strat.xLastFilledBuyPrice = nil
+		strat.xLastFilledSellPrice = nil
+		strat.yLastFilledBuyPrice = nil
+		strat.yLastFilledSellPrice = nil
+		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+		logger.Debugf(
+			"%s %s REVERSE HEDGE X BY Y, SIZE X %f Y %f, ORDER SIDE %s SIZE %f PRICE %f",
+			strat.xSymbol, strat.ySymbol,
+			strat.xPosition.GetSize()*strat.xMultiplier,
+			strat.yPosition.GetSize()*strat.yMultiplier,
+			strat.orderSide,
+			strat.size,
+			strat.price,
+		)
 	}
 }

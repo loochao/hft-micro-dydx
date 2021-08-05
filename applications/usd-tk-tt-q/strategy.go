@@ -170,7 +170,7 @@ func startXYStrategy(
 		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
 		quantileLastSampleTime:  time.Time{},
 		quantileMiddle:          quantileMiddle,
-		lastSpreadEnterTime: time.Time{},
+		lastSpreadEnterTime:     time.Time{},
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
@@ -214,7 +214,7 @@ func startXYStrategy(
 func (strat *XYStrategy) Stop() {
 	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
 		strat.handleQuantileSave()
-		logger.Debugf("stopped %s %s",strat.xSymbol, strat.ySymbol)
+		logger.Debugf("stopped %s %s", strat.xSymbol, strat.ySymbol)
 	}
 }
 
@@ -343,7 +343,17 @@ func (strat *XYStrategy) hedgeYPosition() {
 		//}
 		return
 	}
-	strat.ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
+	if time.Now().Sub(strat.lastSpreadEnterTime) < strat.config.HedgeXTimeout {
+		strat.ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
+	} else {
+		//其他时间对冲小的size, 防止出现一边爆仓的情况
+		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) > math.Abs(strat.yPosition.GetSize()*strat.yMultiplier) {
+			//Y的size比X小，不用操作Y
+			return
+		} else {
+			strat.ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
+		}
+	}
 	if math.Abs(strat.ySizeDiff) < strat.yStepSize {
 		return
 	}
@@ -439,14 +449,14 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 				strat.xPosition = nextPos
 				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 					strat.hedgeYPosition()
-				}else{
+				} else {
 					strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 				}
 			} else {
 				strat.xPosition = nextPos
 				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 					strat.hedgeYPosition()
-				}else{
+				} else {
 					strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 				}
 			}
