@@ -18,6 +18,7 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -43,7 +44,7 @@ func main() {
 	}
 	sort.Strings(symbols)
 
-	symbols = symbols[:1]
+	//symbols = symbols[:1]
 
 	startTime, err := time.Parse("20060102", "20210730")
 	if err != nil {
@@ -114,6 +115,7 @@ func main() {
 	dataPath := "/Volumes/MarketData/MarketData/bnus-bnuf-depth5-and-ticker"
 	parallelCh := make(chan interface{}, 16)
 	doneCh := make(chan string)
+	mu := sync.Mutex{}
 
 	for _, xSymbol := range symbols {
 
@@ -358,16 +360,18 @@ func main() {
 			//	askJumpTD.Quantile(0.80),
 			//	askJumpTD.Quantile(0.95),
 			//)
+			mu.Lock()
 			offsets[xSymbol] = fmt.Sprintf(
 				"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-				bidJumpTD.Quantile(0.05),
-				bidJumpTD.Quantile(0.50),
+				bidJumpTD.Quantile(0.005),
+				bidJumpTD.Quantile(0.20),
 				bidJumpTD.Quantile(0.80),
 				askJumpTD.Quantile(0.20),
-				askJumpTD.Quantile(0.50),
-				askJumpTD.Quantile(0.95),
+				askJumpTD.Quantile(0.80),
+				askJumpTD.Quantile(0.995),
 			)
 			fmt.Printf("\n\n%s %s\n\n", xSymbol, offsets[xSymbol])
+			mu.Unlock()
 		}(xSymbol)
 	}
 
