@@ -44,19 +44,20 @@ type Config struct {
 	FundingRateSilentTime   time.Duration `yaml:"fundingRateSilentTime"`
 	FundingInterval         time.Duration `yaml:"fundingInterval"`
 
-	DepthMaxTimeDelta    time.Duration `yaml:"depthTimeDeltaMax"`
-	DepthMinTimeDelta    time.Duration `yaml:"depthTimeDeltaMin"`
-	DepthYDecay          float64       `yaml:"depthYDecay"`
-	DepthXDecay          float64       `yaml:"depthXDecay"`
-	DepthYBias           time.Duration `yaml:"depthYBias"`
-	DepthXBias           time.Duration `yaml:"depthXBias"`
-	DepthMaxAgeDiffBias  time.Duration `yaml:"depthMaxAgeDiffBias"`
-	DepthReportCount     int           `yaml:"depthReportCount"`
-	SpreadTimeToEnter    time.Duration `yaml:"spreadTimeToEnter"`
-	SpreadLookback       time.Duration `yaml:"spreadLookback"`
-	YDepthTimeToCancel   time.Duration `yaml:"yDepthTimeToCancel"`
-	SpreadMinDepthCount  int           `yaml:"spreadMinDepthCount"`
-	BatchSize            int           `yaml:"batchSize"`
+	DepthMaxTimeDelta   time.Duration `yaml:"depthTimeDeltaMax"`
+	DepthMinTimeDelta   time.Duration `yaml:"depthTimeDeltaMin"`
+	DepthYDecay         float64       `yaml:"depthYDecay"`
+	DepthXDecay         float64       `yaml:"depthXDecay"`
+	DepthYBias          time.Duration `yaml:"depthYBias"`
+	DepthXBias          time.Duration `yaml:"depthXBias"`
+	DepthMaxAgeDiffBias time.Duration `yaml:"depthMaxAgeDiffBias"`
+	DepthReportCount    int           `yaml:"depthReportCount"`
+	SpreadTimeToEnter   time.Duration `yaml:"spreadTimeToEnter"`
+	SpreadLookback      time.Duration `yaml:"spreadLookback"`
+	YDepthTimeToCancel  time.Duration `yaml:"yDepthTimeToCancel"`
+	YDepthImpactFactor  time.Duration `yaml:"yDepthImpactFactor"`
+	SpreadMinDepthCount int           `yaml:"spreadMinDepthCount"`
+	BatchSize           int           `yaml:"batchSize"`
 
 	StartValue        float64            `yaml:"startValue"`
 	EnterFreePct      float64            `yaml:"enterFreePct"`
@@ -134,6 +135,9 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.FundingInterval == 0 {
 		config.FundingInterval = time.Hour * 4
+	}
+	if config.YDepthImpactFactor == 0 {
+		config.YDepthImpactFactor = 4
 	}
 	config.XExchange.DryRun = config.DryRun
 	config.YExchange.DryRun = config.DryRun
