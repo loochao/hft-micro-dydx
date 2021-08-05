@@ -462,7 +462,7 @@ func (order NewOrderResponse) GetStatus() common.OrderStatus {
 	case OrderStatusExpired:
 		return common.OrderStatusExpired
 	case OrderStatusPartiallyFilled:
-		return common.OrderStatusFilled
+		return common.OrderStatusPartiallyFilled
 	default:
 		return common.OrderStatusUnknown
 	}
