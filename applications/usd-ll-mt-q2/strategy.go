@@ -439,7 +439,7 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 	if strat.enterStep < strat.config.EnterMinimalStep {
 		strat.enterStep = strat.config.EnterMinimalStep
 	}
-	strat.yImpactValue = math.Min(4*strat.enterStep, strat.maxOrderValue)
+	strat.yImpactValue = strat.config.YDepthImpactFactor*math.Min(4*strat.enterStep, strat.maxOrderValue)
 	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.targetWeight
 	strat.usdAvailable = math.Min(strat.xAccount.GetFree()*strat.xLeverage, strat.yAccount.GetFree()*strat.yLeverage)
 }
