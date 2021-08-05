@@ -28,7 +28,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.quantileMiddle == nil ||
 		strat.fundingRateSettleSilent ||
 		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter ||
-		strat.spread.EventTime.Sub(strat.lastSpreadEnterTime) <= 0 {
+		strat.spread.EventTime.Sub(strat.lastEnterTime) <= 0 {
 		//if time.Now().Sub(strat.logSilentTime) > 0 {
 		//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 		//	logger.Debugf("time.Now().Sub(strat.spread.EventTime) %v", time.Now().Sub(strat.spread.EventTime))
@@ -144,7 +144,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
-			strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
+			strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
 				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
 				strat.xSymbol, strat.ySymbol,
@@ -156,7 +156,6 @@ func (strat *XYStrategy) updateXPosition() {
 				time.Now().Sub(strat.yTickerTime),
 			)
 		}
-		return
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
 		strat.spread.LongLastLeave > strat.spread.LongMedianLeave &&
@@ -215,7 +214,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
-			strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
+			strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
 				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 				strat.xSymbol, strat.ySymbol,
@@ -231,7 +230,6 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.yTicker.GetAskPrice(),
 			)
 		}
-		return
 	} else if !strat.config.ReduceOnly &&
 		!strat.isYSpot &&
 		strat.spread.ShortLastEnter > strat.shortTop &&
@@ -268,7 +266,7 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.size,
 				)
 			}
-			return
+			goto hedgeSmall
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
@@ -283,7 +281,7 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.size,
 				)
 			}
-			return
+			goto hedgeSmall
 		}
 		strat.price = strat.xTicker.GetAskPrice()
 		if strat.xTickSize/strat.price < strat.config.EnterSlippage {
@@ -315,7 +313,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
-		strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
+		strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 			strat.xSymbol, strat.ySymbol,
@@ -366,7 +364,7 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.size,
 				)
 			}
-			return
+			goto hedgeSmall
 		}
 		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
@@ -381,7 +379,7 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.size,
 				)
 			}
-			return
+			goto hedgeSmall
 		}
 		strat.price = strat.xTicker.GetBidPrice()
 		//防止TickSize太大
@@ -414,7 +412,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
-		strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
+		strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 			strat.xSymbol, strat.ySymbol,
@@ -430,7 +428,11 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.yTicker.GetAskPrice(),
 		)
 
-	} else if time.Now().Sub(strat.lastSpreadEnterTime) > strat.config.HedgeXTimeout {
+	}
+
+	//如果lastSpreadEnterTime没有更新，说明没有信号触发，就需要检查对冲的情况
+hedgeSmall:
+	if time.Now().Sub(strat.lastEnterTime) > strat.config.HedgeXTimeout {
 
 		//如果已经没有信号对冲，重新检查x y的仓位，对冲较小的
 		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) < math.Abs(strat.yPosition.GetSize()*strat.yMultiplier) {
@@ -439,7 +441,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.size = -strat.yPosition.GetSize()*strat.yMultiplier/strat.xMultiplier - strat.xPosition.GetSize()
 		strat.size = math.Round(strat.size/strat.xStepSize) * strat.xStepSize
-		if math.Abs(strat.size) <= strat.xStepSize || math.Abs(strat.size) > math.Abs(strat.xPosition.GetSize()){
+		if math.Abs(strat.size) <= strat.xStepSize || math.Abs(strat.size) > math.Abs(strat.xPosition.GetSize()) {
 			return
 		}
 		if strat.size < 0 {

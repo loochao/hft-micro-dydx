@@ -170,7 +170,7 @@ func startXYStrategy(
 		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
 		quantileLastSampleTime:  time.Time{},
 		quantileMiddle:          quantileMiddle,
-		lastSpreadEnterTime:     time.Time{},
+		lastEnterTime:           time.Time{},
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
@@ -343,7 +343,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		//}
 		return
 	}
-	if time.Now().Sub(strat.lastSpreadEnterTime) < strat.config.HedgeXTimeout {
+	if time.Now().Sub(strat.lastEnterTime) < strat.config.HedgeXTimeout {
 		strat.ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
 	} else {
 		//其他时间对冲小的size, 防止出现一边爆仓的情况

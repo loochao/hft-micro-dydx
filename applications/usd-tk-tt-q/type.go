@@ -160,7 +160,7 @@ type XYStrategy struct {
 	hedgeCheckTimer    *time.Timer
 	hedgeCheckStopTime time.Time
 
-	lastSpreadEnterTime time.Time
+	lastEnterTime time.Time
 
 	timedTDigest           *stream_stats.TimedTDigest
 	quantileSaveTimer      *time.Timer
