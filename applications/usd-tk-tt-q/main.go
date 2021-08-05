@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	bnbf "github.com/geometrybase/hft-micro/binance-busdfuture"
 	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
 	bncs "github.com/geometrybase/hft-micro/binance-usdcspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
@@ -102,6 +103,9 @@ func main() {
 	case "binanceUsdtFutureWithMergedTicker":
 		xExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
 		break
+	case "binanceBusdFutureWithMergedTicker":
+		xExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
+		break
 	case "binanceUsdtSpot":
 		xExchange = &bnus.BinanceUsdtSpot{}
 		break
@@ -172,6 +176,9 @@ func main() {
 		break
 	case "kucoinUsdtSpotWithMergedTicker":
 		yExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
+		break
+	case "binanceBusdFutureWithMergedTicker":
+		yExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
 		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)

@@ -660,13 +660,15 @@ func (bn *BinanceBusdFuture) StartSideLoop() {
 	panic("implement me")
 }
 
+
+func (bn *BinanceBusdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	panic("implement me")
+}
+
 type BinanceBusdFutureWidthDepth5 struct {
 	BinanceBusdFuture
 }
 
-func (b BinanceBusdFutureWidthDepth5) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
-	panic("implement me")
-}
 
 type BinanceBusdFutureWidthDepth20 struct {
 	BinanceBusdFuture
@@ -702,6 +704,57 @@ func (bn *BinanceBusdFutureWidthDepth20) StreamDepth(ctx context.Context, channe
 				case <-ctx.Done():
 					return
 				case <-ws.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-bn.done:
+			return
+		}
+	}
+}
+
+type BinanceBusdFutureWidthMergedTicker struct {
+	BinanceBusdFuture
+}
+
+func (bn *BinanceBusdFutureWidthMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+	logger.Debugf("START StreamMergedTicker")
+	defer logger.Debugf("STOP StreamMergedTicker")
+	defer bn.Stop()
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+
+	bn.mu.Lock()
+	proxy := bn.settings.Proxy
+	bn.mu.Unlock()
+
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			ws1 := NewBookTickerWS(ctx, proxy, channels)
+			ws2 := NewDepth5TickerWS(ctx, proxy, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws1.Done():
+					return
+				case <-ws2.Done():
 					return
 				}
 			}

@@ -403,8 +403,8 @@ func (bn *BinanceUsdtFuture) StreamTrade(ctx context.Context, channels map[strin
 }
 
 func (bn *BinanceUsdtFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
-	logger.Debugf("START StreamDepth")
-	defer logger.Debugf("STOP StreamDepth")
+	logger.Debugf("START StreamTicker")
+	defer logger.Debugf("STOP StreamTicker")
 	defer bn.Stop()
 
 	symbols := make([]string, 0)
@@ -1068,8 +1068,8 @@ type BinanceUsdtFutureWithMergedTicker struct {
 
 
 func (bn *BinanceUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
-	logger.Debugf("START StreamDepth")
-	defer logger.Debugf("STOP StreamDepth")
+	logger.Debugf("START StreamMergedTicker")
+	defer logger.Debugf("STOP StreamMergedTicker")
 	defer bn.Stop()
 
 	symbols := make([]string, 0)
