@@ -6,19 +6,32 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	binance_busdspot "github.com/geometrybase/hft-micro/binance-busdspot"
+	binance_busdfuture "github.com/geometrybase/hft-micro/binance-busdfuture"
 	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
+	"github.com/geometrybase/hft-micro/tdigest"
+	"math"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"time"
 )
 
 func main() {
+
+	symbols := make([]string, 0)
+	for symbol := range binance_busdfuture.TickSizes {
+		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(symbol, "BUSD", "USDT", -1)]; ok {
+			symbols = append(symbols, symbol)
+		}
+	}
+	sort.Strings(symbols)
+	logger.Debugf("%s", symbols)
+
 	ctx := context.Background()
 	iw, err := common.NewInfluxWriter(
 		ctx,
@@ -32,19 +45,12 @@ func main() {
 		panic(err)
 	}
 	defer iw.Stop()
-	symbols := make([]string, 0)
-	for symbol := range binance_busdspot.TickSizes {
-		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(symbol, "BUSD", "USDT", -1)]; ok {
-			symbols = append(symbols, symbol)
-		}
-	}
-	//logger.Debugf("%s", symbols)
-	//return
-	startTime, err := time.Parse("20060102", "20210712")
+
+	startTime, err := time.Parse("20060102", "20210716")
 	if err != nil {
 		logger.Fatal(err)
 	}
-	endTime, err := time.Parse("20060102", "20210712")
+	endTime, err := time.Parse("20060102", "20210803")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -56,11 +62,16 @@ func main() {
 
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/bn-csuf-quantiles"
+	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q-t/bnbf-bnuf-quantiles/outputs"
+	dataPath := "/Volumes/MarketData/MarketData/bnbf-bnuf-depth-and-ticker"
+
+	sizeTDs := make(map[string]*tdigest.TDigest)
+	quantileMiddle := 0.0
+	enterThreshold := 0.0002
 
 	for _, xSymbol := range symbols {
 		ySymbol := strings.Replace(xSymbol, "BUSD", "USDT", -1)
-		//if _, err := os.Stat(path.Join(quantilePath, xSymbol+"-"+ySymbol+".json")); err == nil {
+		//if _, err := os.Stat(path.Join(quantilePath, xSymbol+"-"+ySymbol+"-long-td.json")); err == nil {
 		//	logger.Debugf("Exists %s %s %v", ySymbol, xSymbol, err)
 		//	continue
 		//} else if !os.IsNotExist(err) {
@@ -73,16 +84,19 @@ func main() {
 		shortLastEnter := 0.0
 		longLastEnter := 0.0
 
-		xDepth := &binance_busdspot.Depth5{}
-		xTicker := &binance_busdspot.BookTicker{}
+		xDepth := &binance_busdfuture.Depth5{}
+		xTicker := &binance_busdfuture.BookTicker{}
 		yDepth := &binance_usdtfuture.Depth5{}
 		yTicker := &binance_usdtfuture.BookTicker{}
 
 		var xTD, yTD common.Ticker
+
+		sizeTD, _ := tdigest.New()
+
 		for _, dateStr := range strings.Split(dateStrs, ",") {
-			logger.Debugf("%s %s %s", xSymbol, dateStr, fmt.Sprintf("/Users/chenjilin/MarketData/bnbs-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol))
+			logger.Debugf("%s/%s/%s-%s,%s.jl.gz", dataPath, dateStr, dateStr, xSymbol, ySymbol)
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bnbs-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
+				fmt.Sprintf("%s/%s/%s-%s,%s.jl.gz", dataPath, dateStr, dateStr, xSymbol, ySymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -104,28 +118,28 @@ func main() {
 			for scanner.Scan() {
 				counter++
 				msg = scanner.Bytes()
-				if msg[0] == 'S' && msg[1] == 'D' {
-					err = binance_busdspot.ParseDepth5(msg[21:], xDepth)
+				if msg[0] == 'X' && msg[1] == 'D' {
+					err = binance_busdfuture.ParseDepth5(msg[21:], xDepth)
 					if err != nil {
 						logger.Debugf("%v", err)
 						continue
 					}
 					xTD = xDepth
-				} else if msg[0] == 'S' && msg[1] == 'T' {
-					err = binance_busdspot.ParseBookTicker(msg[21:], xTicker)
+				} else if msg[0] == 'X' && msg[1] == 'T' {
+					err = binance_busdfuture.ParseBookTicker(msg[21:], xTicker)
 					if err != nil {
 						logger.Debugf("%v", err)
 						continue
 					}
 					xTD = xTicker
-				} else if msg[0] == 'F' && msg[1] == 'D' {
+				} else if msg[0] == 'Y' && msg[1] == 'D' {
 					err = binance_usdtfuture.ParseDepth5(msg[21:], yDepth)
 					if err != nil {
 						logger.Debugf("%v", err)
 						continue
 					}
 					yTD = yDepth
-				} else if msg[0] == 'F' && msg[1] == 'T' {
+				} else if msg[0] == 'Y' && msg[1] == 'T' {
 					err = binance_usdtfuture.ParseBookTicker(msg[21:], yTicker)
 					if err != nil {
 						logger.Debugf("%v", err)
@@ -137,16 +151,23 @@ func main() {
 				}
 
 				if yTD != nil && xTD != nil {
+
 					shortLastEnter = (yTD.GetBidPrice() - xTD.GetAskPrice()) / xTD.GetAskPrice()
 					longLastEnter = (yTD.GetAskPrice() - xTD.GetBidPrice()) / xTD.GetBidPrice()
 					_ = timedTDigest.Insert(yDepth.EventTime, (shortLastEnter+longLastEnter)*0.5)
+					quantileMiddle = timedTDigest.Quantile(0.5)
+					if shortLastEnter > quantileMiddle+enterThreshold {
+						_ = sizeTD.Add(math.Min(yTD.GetBidPrice()*yTD.GetBidSize(), xTD.GetAskPrice()*xTD.GetAskSize()))
+					} else if longLastEnter < quantileMiddle-enterThreshold {
+						_ = sizeTD.Add(math.Min(yTD.GetAskPrice()*yTD.GetAskSize(), xTD.GetBidPrice()*xTD.GetBidSize()))
+					}
 					if counter%1000 == 0 {
 						fields := make(map[string]interface{})
 						fields["enterMiddle"] = timedTDigest.Quantile(0.5)
 						fields["shortLastEnter"] = shortLastEnter
 						fields["longLastEnter"] = longLastEnter
 						pt, err := client.NewPoint(
-							"bnbs-bnuf-depth5-and-ticker",
+							"bnbf-bnuf-depth-and-ticker",
 							map[string]string{
 								"xSymbol": xSymbol,
 							},
@@ -167,20 +188,36 @@ func main() {
 			logger.Debugf("%v", err)
 			continue
 		}
-		file, err := os.OpenFile(path.Join(quantilePath, xSymbol+"-"+ySymbol+".json"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+		err = os.WriteFile(path.Join(quantilePath, xSymbol+"-"+ySymbol+".json"), data, 0755)
 		if err != nil {
 			logger.Debugf("%v", err)
 			continue
 		}
-		_, err = file.Write(data)
-		if err != nil {
-			logger.Debugf("%v", err)
-			continue
-		}
-		err = file.Close()
-		if err != nil {
-			logger.Debugf("%v", err)
-			continue
-		}
+		sizeTDs[xSymbol] = sizeTD
+		fmt.Printf("  %s: %.0f\n", xSymbol, sizeTD.Quantile(0.8))
 	}
+	fmt.Printf("\n\nxyPairs:\n")
+	for _, xSymbol := range symbols {
+		fmt.Printf("  %s: %s\n", xSymbol, strings.Replace(xSymbol, "BUSD", "USDT", -1))
+	}
+
+	qSum := 0.0
+	fmt.Printf("\n\nmaxOrderValues:\n")
+	for _, xSymbol := range symbols {
+		td := sizeTDs[xSymbol]
+		qSum += td.Quantile(0.8)
+		fmt.Printf("  %s: %.0f\n", xSymbol, td.Quantile(0.8))
+	}
+	qMean := qSum / float64(len(sizeTDs))
+	fmt.Printf("\ntargetWeights:\n")
+	for _, xSymbol := range symbols {
+		td := sizeTDs[xSymbol]
+		weight := td.Quantile(0.8) / qMean
+		weight = math.Sqrt(weight)
+		if weight > 1.0 {
+			weight = 1.0
+		}
+		fmt.Printf("  %s: %.5f\n", xSymbol, weight)
+	}
+	fmt.Printf("\n\n")
 }
