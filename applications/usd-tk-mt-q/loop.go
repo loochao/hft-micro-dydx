@@ -24,30 +24,36 @@ func (strat *XYStrategy) handleXOrder() {
 	if strat.xOrder.GetStatus() == common.OrderStatusExpired ||
 		strat.xOrder.GetStatus() == common.OrderStatusReject ||
 		strat.xOrder.GetStatus() == common.OrderStatusCancelled ||
-		strat.xOrder.GetStatus() == common.OrderStatusFilled {
+		strat.xOrder.GetStatus() == common.OrderStatusFilled ||
+		strat.xOrder.GetStatus() == common.OrderStatusPartiallyFilled {
 
-		if strat.xOpenOrder != nil && strat.xOpenOrder.ClientID == strat.xOrder.GetClientID() {
+		if strat.xOrder.GetStatus() == common.OrderStatusFilled &&
+			strat.xOpenOrder.Size != strat.xOrder.GetFilledSize() {
+			logger.Debugf("%s FILLED BUY NOT ALL SIZE, CANCEL", strat.xSymbol)
+			strat.tryCancelXOpenOrder("cancel partially filled")
+		} else {
 			strat.xOpenOrder = nil
 		}
 
-		if strat.xOrder.GetStatus() != common.OrderStatusFilled {
+		if strat.xOrder.GetStatus() != common.OrderStatusFilled &&
+			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled {
 			//logger.Debugf("x order ended %s %s %s", strat.xOrder.GetSymbol(), strat.xOrder.GetStatus(), strat.xOrder.GetSide())
 			strat.xPositionUpdateTime = time.Unix(0, 0)
 		} else {
 			logger.Debugf("x order filled %s %s %s size %f price %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice())
-			strat.realisedSpreadTimer.Reset(time.Second*5)
+			strat.realisedSpreadTimer.Reset(time.Second * 5)
 			if strat.xOrder.GetSide() == common.OrderSideBuy {
 				if strat.xLastFilledBuyPrice == nil {
 					strat.xLastFilledBuyPrice = new(float64)
 				}
 				*strat.xLastFilledBuyPrice = strat.xOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second*5)
+				strat.realisedSpreadTimer.Reset(time.Second * 5)
 			} else if strat.xOrder.GetSide() == common.OrderSideSell {
 				if strat.xLastFilledSellPrice == nil {
 					strat.xLastFilledSellPrice = new(float64)
 				}
 				*strat.xLastFilledSellPrice = strat.xOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second*5)
+				strat.realisedSpreadTimer.Reset(time.Second * 5)
 			}
 		}
 	}
@@ -72,13 +78,13 @@ func (strat *XYStrategy) handleYOrder() {
 					strat.yLastFilledBuyPrice = new(float64)
 				}
 				*strat.yLastFilledBuyPrice = strat.yOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second*5)
+				strat.realisedSpreadTimer.Reset(time.Second * 5)
 			} else if strat.yOrder.GetSide() == common.OrderSideSell {
 				if strat.yLastFilledSellPrice == nil {
 					strat.yLastFilledSellPrice = new(float64)
 				}
 				*strat.yLastFilledSellPrice = strat.yOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second*5)
+				strat.realisedSpreadTimer.Reset(time.Second * 5)
 			}
 		}
 	}
@@ -127,6 +133,3 @@ func (strat *XYStrategy) handleYOrderError() {
 		strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 	}
 }
-
-
-

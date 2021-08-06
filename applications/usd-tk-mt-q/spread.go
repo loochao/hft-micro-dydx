@@ -9,14 +9,6 @@ func (strat *XYStrategy) walkSpread() {
 
 	//需要用ema time delta 对age diff进行修正
 	strat.adjustedAgeDiff = strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
-	//取新一点的时间为spread time
-	if strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) < 0 {
-		//需要对时间进行补偿
-		strat.spreadTime = strat.yTicker.GetTime().Add(time.Millisecond * time.Duration(strat.yTickerFilter.TimeDeltaEma))
-	} else {
-		//需要对时间进行补偿
-		strat.spreadTime = strat.xTicker.GetTime().Add(time.Millisecond * time.Duration(strat.xTickerFilter.TimeDeltaEma))
-	}
 	if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
 		strat.yTickerExpireCount++
 		//logger.Debugf("%s x expire y %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
@@ -26,12 +18,20 @@ func (strat *XYStrategy) walkSpread() {
 		strat.xTickerExpireCount++
 		return
 	}
+
+	//取新一点的时间为spread time
+	if strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) < 0 {
+		//需要对时间进行补偿
+		strat.spreadTime = strat.yTicker.GetTime().Add(time.Millisecond * time.Duration(strat.yTickerFilter.TimeDeltaEma))
+	} else {
+		//需要对时间进行补偿
+		strat.spreadTime = strat.xTicker.GetTime().Add(time.Millisecond * time.Duration(strat.xTickerFilter.TimeDeltaEma))
+	}
 	strat.tickerMatchCount++
 
-	//假定挂单基于MidPrice, 考虑挂单的下界偏移进Spread
-	//如果想挂得远，成交少，吃大Spread, 可以orderOffsets参数，推NearBot NearTop, 反之亦然
-	strat.shortLastEnter = (strat.yTicker.GetBidPrice()-strat.xTicker.GetBidPrice())/strat.xTicker.GetBidPrice() + strat.orderOffset.NearTop
-	strat.longLastEnter = (strat.yTicker.GetAskPrice()-strat.xTicker.GetAskPrice())/strat.xTicker.GetAskPrice() + strat.orderOffset.NearBot
+	//假定挂单基于MidPrice
+	strat.shortLastEnter = (strat.yTicker.GetBidPrice()-strat.xMidPrice)/strat.xMidPrice
+	strat.longLastEnter = (strat.yTicker.GetAskPrice()-strat.xMidPrice)/strat.xMidPrice
 
 	strat.shortEnterTimedMedian.Insert(strat.spreadTime, strat.shortLastEnter)
 	strat.longEnterTimedMedian.Insert(strat.spreadTime, strat.longLastEnter)
@@ -57,6 +57,15 @@ func (strat *XYStrategy) walkSpread() {
 	}
 	strat.hedgeYPosition()
 	strat.updateXOrder()
+
+	if strat.spreadTime.Sub(strat.quantileLastSampleTime) > strat.config.QuantileSampleInterval {
+		strat.quantileLastSampleTime = strat.spreadTime
+		_ = strat.timedTDigest.Insert(strat.spreadTime, (strat.shortLastEnter+strat.longLastEnter)*0.5)
+		if strat.quantileMiddle == nil {
+			strat.quantileMiddle = new(float64)
+		}
+		*strat.quantileMiddle = strat.timedTDigest.Quantile(0.5)
+	}
 }
 
 func (strat *XYStrategy) handleXTicker() {
@@ -70,18 +79,7 @@ func (strat *XYStrategy) handleXTicker() {
 	strat.xMidPrice = 0.5*(strat.xTicker.GetAskPrice()+strat.xTicker.GetBidPrice())
 	strat.xTickerTime = strat.xTicker.GetTime()
 	if !strat.xTickerFilter.Filter(strat.xTicker) && strat.yTicker != nil {
-		strat.adjustedAgeDiff = strat.xTickerTime.Sub(strat.yTickerTime) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
-		if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
-			//taker已经过期
-			strat.yTickerExpireCount++
-			//logger.Debugf("%s x expire y %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
-		} else if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
-			//maker已经过期
-			strat.xTickerExpireCount++
-			//logger.Debugf("%s y expire x %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
-		} else {
-			strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
-		}
+		strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 	}
 	strat.tickerCount++
 	if strat.tickerCount > strat.config.TickerReportCount {
@@ -118,18 +116,7 @@ func (strat *XYStrategy) handleYTicker() {
 	strat.yMidPrice = 0.5*(strat.yTicker.GetAskPrice()+strat.yTicker.GetBidPrice())
 	strat.yTickerTime = strat.yTicker.GetTime()
 	if !strat.yTickerFilter.Filter(strat.yTicker) && strat.xTicker != nil {
-		strat.adjustedAgeDiff = strat.xTickerTime.Sub(strat.yTickerTime) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
-		if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
-			//maker已经过期
-			//logger.Debugf("%s y expire x %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
-			strat.xTickerExpireCount++
-		} else if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
-			//logger.Debugf("%s x expire y %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
-			//taker已经过期
-			strat.yTickerExpireCount++
-		} else {
-			strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
-		}
+		strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 	}
 	strat.tickerCount++
 	if strat.tickerCount > strat.config.TickerReportCount {

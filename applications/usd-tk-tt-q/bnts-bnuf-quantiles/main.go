@@ -199,7 +199,7 @@ func main() {
 	}
 	fmt.Printf("\n\nxyPairs:\n")
 	for _, xSymbol := range symbols {
-		fmt.Printf("  %s: %s\n", xSymbol, strings.Replace(xSymbol, "BUSD", "USDT", -1))
+		fmt.Printf("  %s: %s\n", xSymbol, strings.Replace(xSymbol, "TUSD", "USDT", -1))
 	}
 
 	qSum := 0.0

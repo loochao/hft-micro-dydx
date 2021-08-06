@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -14,7 +16,7 @@ type XYStrategy struct {
 	xSymbol string
 	ySymbol string
 
-	config      Config
+	config Config
 
 	xAccountCh      chan common.Balance
 	yAccountCh      chan common.Balance
@@ -42,8 +44,6 @@ type XYStrategy struct {
 
 	xTicker       common.Ticker
 	yTicker       common.Ticker
-	xMidPrice     float64
-	yMidPrice     float64
 	xNextTicker   common.Ticker
 	yNextTicker   common.Ticker
 	xTickerTime   time.Time
@@ -116,6 +116,11 @@ type XYStrategy struct {
 	xSizeDiff float64
 	ySizeDiff float64
 
+	xMidPrice     float64
+	yMidPrice     float64
+	orderOffset   Offset
+	lastEnterTime time.Time
+
 	offsetFactor   float64
 	offsetStep     float64
 	shortTop       float64
@@ -166,4 +171,36 @@ type XYStrategy struct {
 	longBotOpenOrderCount   *common.TimedSum
 	longTopCloseOrderCount  *common.TimedSum
 	realisedOrderCount      *common.TimedSum
+}
+
+type Offset struct {
+	FarTop  float64
+	Top     float64
+	NearTop float64
+	NearBot float64
+	Bot     float64
+	FarBot  float64
+}
+
+func NewOffset(msg string) (Offset, error) {
+	splits := strings.Split(msg, ",")
+	if len(splits) != 6 {
+		return Offset{}, fmt.Errorf("bad offsets %s", msg)
+	}
+	offsets := [6]float64{}
+	var err error
+	for i, s := range splits {
+		offsets[i], err = common.ParseFloat([]byte(s))
+		if err != nil {
+			return Offset{}, err
+		}
+	}
+	return Offset{
+		FarTop:  offsets[5],
+		Top:     offsets[4],
+		NearTop: offsets[3],
+		NearBot: offsets[2],
+		Bot:     offsets[1],
+		FarBot:  offsets[0],
+	}, nil
 }

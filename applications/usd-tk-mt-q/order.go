@@ -8,11 +8,12 @@ import (
 )
 
 func (strat *XYStrategy) updateXOrder() {
+
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("updateXOrder xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
+			logger.Debugf("updateXOrder %s xSystemStatus %v ySystemStatus %v", strat.xSymbol, strat.xSystemStatus, strat.ySystemStatus)
 		}
 		return
 	}
@@ -27,8 +28,8 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xyFundingRate == nil ||
 		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter ||
 		strat.fundingRateSettleSilent {
-		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
-			strat.tryCancelXOpenOrder("spread time out")
+		if time.Now().Sub(strat.yTickerTime) > strat.config.YTickerTimeToCancel {
+			strat.tryCancelXOpenOrder("ticker time out")
 		} else if strat.fundingRateSettleSilent {
 			strat.tryCancelXOpenOrder("funding rate silent")
 		}
@@ -137,18 +138,21 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.yLastFilledBuyPrice = nil
 			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+			strat.lastEnterTime = strat.xOrderSilentTime
 			logger.Debugf(
-				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
-				strat.xSymbol, strat.ySymbol,
+				"%s SHORT BOT REDUCE %f < %f, %f < %f QM %f, ES %f EV %f,SIZE %f PRICE %f, X %v Y %v",
+				strat.xSymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
-				strat.price,
+				strat.enterStep,
+				strat.enterValue,
+				*strat.quantileMiddle,
 				strat.size,
+				strat.price,
 				time.Now().Sub(strat.xTickerTime),
 				time.Now().Sub(strat.yTickerTime),
 			)
 		}
-		return
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
 		strat.spread.LongLastLeave > strat.spread.LongMedianLeave &&
@@ -203,22 +207,21 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.yLastFilledBuyPrice = nil
 			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+			strat.lastEnterTime = strat.xOrderSilentTime
 			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
-				strat.xSymbol, strat.ySymbol,
+				"%s LONG TOP REDUCE %f > %f, %f > %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
+				strat.xSymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
-				strat.price,
+				strat.enterStep,
+				strat.enterValue,
+				*strat.quantileMiddle,
 				strat.size,
+				strat.price,
 				time.Now().Sub(strat.xTickerTime),
 				time.Now().Sub(strat.yTickerTime),
-				strat.xTicker.GetBidPrice(),
-				strat.xTicker.GetAskPrice(),
-				strat.yTicker.GetBidPrice(),
-				strat.yTicker.GetAskPrice(),
 			)
 		}
-		return
 	} else if !strat.config.ReduceOnly &&
 		!strat.isYSpot &&
 		strat.spread.ShortLastEnter > strat.shortTop &&
@@ -302,19 +305,19 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+		strat.lastEnterTime = strat.xOrderSilentTime
 		logger.Debugf(
-			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
-			strat.xSymbol, strat.ySymbol,
+			"%s SHORT TOP OPEN %f > %f, %f > %f,  ES %f EV %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
+			strat.xSymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
-			strat.price,
+			strat.enterStep,
+			strat.enterValue,
+			*strat.quantileMiddle,
 			strat.size,
+			strat.price,
 			time.Now().Sub(strat.xTickerTime),
 			time.Now().Sub(strat.yTickerTime),
-			strat.xTicker.GetBidPrice(),
-			strat.xTicker.GetAskPrice(),
-			strat.yTicker.GetBidPrice(),
-			strat.yTicker.GetAskPrice(),
 		)
 	} else if !strat.config.ReduceOnly &&
 		!strat.isXSpot &&
@@ -399,27 +402,26 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+		strat.lastEnterTime = strat.xOrderSilentTime
 		logger.Debugf(
-			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
-			strat.xSymbol, strat.ySymbol,
+			"%s LONG BOT OPEN %f < %f, %f < %f, ES %f EV %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
+			strat.xSymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
-			strat.price,
+			strat.enterStep,
+			strat.enterValue,
+			*strat.quantileMiddle,
 			strat.size,
+			strat.price,
 			time.Now().Sub(strat.xTickerTime),
 			time.Now().Sub(strat.yTickerTime),
-			strat.xTicker.GetBidPrice(),
-			strat.xTicker.GetAskPrice(),
-			strat.yTicker.GetBidPrice(),
-			strat.yTicker.GetAskPrice(),
 		)
-
 	}
 }
 
 func (strat *XYStrategy) isXOpenOrderOk() bool {
-	if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
-		logger.Debugf("%s SPREAD IS OUT OF DATE, CANCEL", strat.xSymbol)
+	if time.Now().Sub(strat.yTickerTime) > strat.config.YTickerTimeToCancel {
+		logger.Debugf("%s Y TICKER IS OUT OF DATE, CANCEL", strat.xSymbol)
 		return false
 	}
 	//检查价格有没有在OFFSET范围内，不在撤掉

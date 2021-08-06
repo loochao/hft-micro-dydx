@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"flag"
+	binance_busdfuture "github.com/geometrybase/hft-micro/binance-busdfuture"
+	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"os/signal"
@@ -14,19 +16,26 @@ import (
 func main() {
 
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
-
 	proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	symbolsStr := flag.String("symbols", "BTCBUSD,ETHBUSD", "symbols, separate by comma")
 	savePath := flag.String("path", "/root/bnbf-bnuf-depth-and-ticker", "data save folder")
 
 	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	//symbolsStr := flag.String("symbols", "BTCBUSD,ETHBUSD", "symbols, separate by comma")
 	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 
 	flag.Parse()
-	symbols := strings.Split(*symbolsStr, ",")
+
+	symbols := make([]string, 0)
+	for xSymbol := range binance_busdfuture.TickSizes {
+		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(xSymbol, "BUSD", "USDT", -1)]; ok {
+			symbols = append(symbols, xSymbol)
+		}
+	}
+
+	logger.Debugf("SYMBOLS %s", symbols)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	fileSavedCh := make(chan string, len(symbols))
+
 	for start := 0; start < len(symbols); start += *batchSize {
 		end := start + *batchSize
 		if end > len(symbols) {

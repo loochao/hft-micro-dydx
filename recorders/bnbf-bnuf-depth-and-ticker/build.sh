@@ -14,6 +14,6 @@ git push origin master
 
 chmod 755 "./dist/bnbf-bnuf-depth-and-ticker.$dt"
 
-echo "hk01"
+echo "hk03"
 rsync -avx --progress "./dist/bnbf-bnuf-depth-and-ticker.$dt" hk03:/usr/local/bin/
 

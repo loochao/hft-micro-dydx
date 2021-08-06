@@ -24,7 +24,6 @@ type Config struct {
 	QuantilePath           string        `yaml:"quantilePath"`
 	QuantileSaveInterval   time.Duration `yaml:"quantileSaveInterval"`
 
-
 	SpreadWalkDelay       time.Duration `yaml:"spreadWalkDelay"`
 	LogInterval           time.Duration `yaml:"logInterval"`
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
@@ -51,8 +50,8 @@ type Config struct {
 	TickerXBias          time.Duration `yaml:"tickerXBias"`
 	TickerMaxAgeDiffBias time.Duration `yaml:"tickerMaxAgeDiffBias"`
 	TickerReportCount    int           `yaml:"tickerReportCount"`
-	SpreadTimeToCancel   time.Duration `yaml:"spreadTimeToCancel"`
 	SpreadTimeToEnter    time.Duration `yaml:"spreadTimeToEnter"`
+	YTickerTimeToCancel  time.Duration `yaml:"yDepthTimeToCancel"`
 	SpreadLookback       time.Duration `yaml:"spreadLookback"`
 	SpreadMinTickerCount int           `yaml:"spreadMinTickerCount"`
 	BatchSize            int           `yaml:"batchSize"`
@@ -68,6 +67,7 @@ type Config struct {
 	XErrorSilent        time.Duration `yaml:"xErrorSilent"`
 	YOrderSilent        time.Duration `yaml:"yOrderSilent"`
 	XCancelSilent       time.Duration `yaml:"xCancelSilent"`
+	RealisedLogDelay    time.Duration `yaml:"realisedLogDelay"`
 	XOrderCheckInterval time.Duration `yaml:"xOrderCheckInterval"`
 	EnterSilent         time.Duration `yaml:"enterSilent"`
 	RestartSilent       time.Duration `yaml:"restartSilent"`
@@ -76,6 +76,7 @@ type Config struct {
 	XYPairs        map[string]string  `yaml:"xyPairs"`
 	TargetWeights  map[string]float64 `yaml:"targetWeights,omitempty"`
 	MaxOrderValues map[string]float64 `yaml:"maxOrderValues,omitempty"`
+	OrderOffsets   map[string]string  `yaml:"orderOffsets,omitempty"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -84,6 +85,9 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.BalancePositionMaxAge == 0 {
 		config.BalancePositionMaxAge = time.Minute * 3
+	}
+	if config.RealisedLogDelay == 0 {
+		config.RealisedLogDelay = time.Millisecond*10
 	}
 	if config.OrderTimeout == 0 {
 		config.OrderTimeout = time.Second * 5
@@ -103,8 +107,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.TickerReportCount == 0 {
 		config.RestartSilent = 1000
 	}
-	if config.SpreadTimeToCancel == 0 {
-		config.SpreadTimeToCancel = time.Second * 3
+	if config.YTickerTimeToCancel == 0 {
+		config.YTickerTimeToCancel = time.Second * 3
 	}
 	if config.SpreadLookback == 0 {
 		config.SpreadLookback = time.Second

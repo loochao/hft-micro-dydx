@@ -19,6 +19,7 @@ func startXYStrategy(
 	config Config,
 	xExchange common.UsdExchange,
 	yExchange common.UsdExchange,
+	orderOffset Offset,
 	xAccountCh chan common.Balance,
 	yAccountCh chan common.Balance,
 	xPositionCh chan common.Position,
@@ -78,6 +79,7 @@ func startXYStrategy(
 		targetWeight:            config.TargetWeights[xSymbol],
 		maxOrderValue:           config.MaxOrderValues[xSymbol],
 		config:                  config,
+		orderOffset:             orderOffset,
 		xAccountCh:              xAccountCh,
 		yAccountCh:              yAccountCh,
 		xPositionCh:             xPositionCh,
@@ -179,7 +181,6 @@ func startXYStrategy(
 		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
 		quantileLastSampleTime:  time.Time{},
 		quantileMiddle:          quantileMiddle,
-
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
