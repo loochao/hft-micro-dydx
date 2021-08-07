@@ -13,9 +13,9 @@ func TestGetExchange(t *testing.T) {
 	var balance common.Balance = &Balance{}
 	var depth5 common.Depth = &Depth5{}
 	var depth20 common.Depth = &Depth20{}
-	assert.Equal(t, common.BinanceBusdSpot, fr.GetExchange())
-	assert.Equal(t, common.BinanceBusdSpot, wsOrder.GetExchange())
-	assert.Equal(t, common.BinanceBusdSpot, balance.GetExchange())
-	assert.Equal(t, common.BinanceBusdSpot, depth5.GetExchange())
-	assert.Equal(t, common.BinanceBusdSpot, depth20.GetExchange())
+	assert.Equal(t, common.BinanceTusdSpot, fr.GetExchange())
+	assert.Equal(t, common.BinanceTusdSpot, wsOrder.GetExchange())
+	assert.Equal(t, common.BinanceTusdSpot, balance.GetExchange())
+	assert.Equal(t, common.BinanceTusdSpot, depth5.GetExchange())
+	assert.Equal(t, common.BinanceTusdSpot, depth20.GetExchange())
 }
