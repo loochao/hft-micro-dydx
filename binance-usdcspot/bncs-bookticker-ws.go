@@ -1,4 +1,4 @@
-package binance_busdfuture
+package binance_usdcspot
 
 import (
 	"context"
@@ -24,9 +24,9 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
+	var symbol string
 	var ch chan []byte
 	var ok bool
-	var symbol string
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -42,48 +42,36 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
-			logger.Warnf("w.readAl error %v", err)
+			logger.Warnf("w.readAll error %v", err)
 			w.restart()
 			return
 		}
-		if len(msg) < 128 {
-			continue
-		}
-		//{"stream":"scusdt@bookTicker","data":{"e":"bookTicker","u":552297398961,"s":"SCUSDT","b":"0.012805","B":"46556","a":"0.012816","A":"90351","T":1624971386657,"E":1624971386662}}
-		if msg[18] == '@' {
-			symbol = common.UnsafeBytesToString(msg[11:18])
-		}else if msg[19] == '@' {
-			symbol = common.UnsafeBytesToString(msg[11:19])
-		} else if msg[20] == '@' {
-			symbol = common.UnsafeBytesToString(msg[11:20])
-		} else if msg[21] == '@' {
-			symbol = common.UnsafeBytesToString(msg[11:21])
-		} else if msg[22] == '@' {
-			symbol = common.UnsafeBytesToString(msg[11:22])
-		} else if msg[17] == '@' {
-			symbol = common.UnsafeBytesToString(msg[11:17])
-		} else if msg[23] == '@' {
-			symbol = common.UnsafeBytesToString(msg[11:23])
-		} else if msg[24] == '@' {
-			symbol = common.UnsafeBytesToString(msg[11:24])
-		} else if msg[25] == '@' {
-			symbol = common.UnsafeBytesToString(msg[11:25])
-		} else if msg[26] == '@' {
-			symbol = common.UnsafeBytesToString(msg[11:26])
-		} else {
-			if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("bad msg, can't find symbol: %s", msg)
-				logSilentTime = time.Now().Add(time.Minute)
-			}
-			continue
-		}
-		if ch, ok = channels[symbol]; ok {
-			select {
-			case ch <- msg:
-			default:
+		if len(msg) > 128 {
+			if msg[18] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:18])
+			} else if msg[19] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:19])
+			} else if msg[20] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:20])
+			} else if msg[21] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:21])
+			} else if msg[17] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:17])
+			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
+					logger.Debugf("other msg %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
+				}
+				continue
+			}
+			if ch, ok = channels[symbol]; ok {
+				select {
+				case ch <- msg:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
 			}
 		}
@@ -91,7 +79,7 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 }
 
 func (w *BookTickerWS) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 1024)
+	b := make([]byte, 0, 512)
 	for {
 		if len(b) == cap(b) {
 			// Add more capacity (let append pick how much).
@@ -111,7 +99,7 @@ func (w *BookTickerWS) readAll(r io.Reader) ([]byte, error) {
 func (w *BookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
-		logger.Debugf("RECONNECT %s, %d RETRIES", wsUrl, counter)
+		logger.Debugf("reconnect %s, %d retries", wsUrl, counter)
 	}
 
 	var dialer *websocket.Dialer
@@ -119,7 +107,7 @@ func (w *BookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
 		if err != nil {
-			return nil, fmt.Errorf("url.Parse error %v", err)
+			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
 		}
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
@@ -140,7 +128,7 @@ func (w *BookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string
 		},
 	)
 	if err != nil {
-		logger.Warnf("dialer.DialContext ERROR %v", err)
+		logger.Warnf("dialer.DialContext error %v", err)
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("reconnect error: context is done")
@@ -153,29 +141,25 @@ func (w *BookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string
 	return conn, nil
 }
 
-func (w *BookTickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
-	urlStr := "wss://fstream.binance.com/stream?streams="
-	symbols := make([]string, 0)
+func (w *BookTickerWS) mainLoop(ctx context.Context, channels map[string]chan []byte, proxy string) {
+	logger.Debugf("START mainLoop")
+	urlStr := "wss://stream.binance.com:9443/stream?streams="
 	for symbol := range channels {
-		symbols = append(symbols, symbol)
 		urlStr += fmt.Sprintf(
 			"%s@bookTicker/",
 			strings.ToLower(symbol),
 		)
 	}
 	urlStr = urlStr[:len(urlStr)-1]
-	logger.Debugf("START mainLoop %s", urlStr)
 
+	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 
 	defer func() {
-		if internalCancel != nil {
-			internalCancel()
-			internalCancel = nil
-		}
+		cancel()
 		w.Stop()
-		logger.Debugf("EXIT mainLoop %s", symbols)
+		logger.Debugf("EXIT mainLoop")
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
 	defer reconnectTimer.Stop()
@@ -187,12 +171,18 @@ func (w *BookTickerWS) mainLoop(ctx context.Context, proxy string, channels map[
 				internalCancel = nil
 			}
 			return
+		case <-w.done:
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
+			return
 		case <-w.reconnectCh:
 			if internalCancel != nil {
 				internalCancel()
 				internalCancel = nil
 			}
-			reconnectTimer.Reset(time.Second * 15)
+			reconnectTimer.Reset(time.Second * 5)
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
 				internalCancel()
@@ -206,28 +196,26 @@ func (w *BookTickerWS) mainLoop(ctx context.Context, proxy string, channels map[
 					internalCancel()
 					internalCancel = nil
 				}
-				w.Stop()
 				return
 			}
 			go w.readLoop(conn, channels)
-			go w.heartbeatLoop(internalCtx, conn, symbols)
+			go w.heartbeatLoop(internalCtx, conn)
 			reconnectTimer.Reset(time.Hour * 9999)
 		}
 	}
 }
 
-func (w *BookTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
-	logger.Debugf("START heartbeatLoop %s", symbols)
+func (w *BookTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) {
+	logger.Debugf("START heartbeatLoop")
 	defer func() {
-		logger.Debugf("EXIT heartbeatLoop %s", symbols)
+		logger.Debugf("EXIT heartbeatLoop")
 		err := conn.Close()
 		if err != nil {
-			logger.Debugf("conn.Close() error %v", err)
+			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
 
-	trafficCh := make(chan interface{})
-
+	trafficCh := make(chan interface{}, 100)
 	conn.SetPingHandler(func(msg string) error {
 		select {
 		case trafficCh <- nil:
@@ -235,19 +223,13 @@ func (w *BookTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, 
 		}
 		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
-			select {
-			case <-ctx.Done():
-				return nil
-			default:
-				w.restart()
-			}
-			return nil
+			w.restart()
+			return err
 		}
 		return nil
 	})
 
 	timer := time.NewTimer(time.Minute * 15)
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -275,16 +257,11 @@ func (w *BookTickerWS) Stop() {
 func (w *BookTickerWS) restart() {
 	select {
 	case <-w.done:
-		return
-	default:
-	}
-	select {
-	case <-time.After(time.Second):
-		w.Stop()
-		logger.Debugf("w.reconnectCh <- nil timeout in 1s, stop ws")
 	case w.reconnectCh <- nil:
-		logger.Debugf("restart ws")
-		return
+		logger.Debugf("restart")
+	default:
+		logger.Debugf("w.reconnectCh <- nil failed, stop ws")
+		w.Stop()
 	}
 }
 
@@ -295,13 +272,15 @@ func (w *BookTickerWS) Done() chan interface{} {
 func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Ticker) {
 	logSilentTime := time.Now()
 	var err error
-	var msg []byte
-	var bookTicker *BookTicker
+	var ticker *BookTicker
 	index := -1
 	pool := [4]*BookTicker{}
 	for i := 0; i < 4; i++ {
 		pool[i] = &BookTicker{}
 	}
+	var parseTimer = time.NewTimer(time.Hour * 9999)
+	defer parseTimer.Stop()
+	var msg []byte
 	for {
 		select {
 		case <-ctx.Done():
@@ -309,24 +288,24 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 		case <-w.done:
 			return
 		case msg = <-inputCh:
+			parseTimer.Reset(time.Millisecond)
+			break
+		case <-parseTimer.C:
 			index++
 			if index == 4 {
 				index = 0
 			}
-			bookTicker = pool[index]
-			err = ParseBookTicker(msg, bookTicker)
+			ticker = pool[index]
+			err = ParseTicker(msg, ticker)
 			if err != nil {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("ParseBookTicker(msg) error %s %v", msg, err)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-				break
+				logger.Debugf("%s ParseDepth5 error %v %s", symbol, err, msg)
+				continue
 			}
 			select {
-			case outputCh <- bookTicker:
+			case outputCh <- ticker:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("ch <- bookTicker failed ch len %d", len(outputCh))
+					logger.Debugf("outputCh <- ticker failed, %s ch len %d", symbol, len(outputCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -347,10 +326,10 @@ func NewBookTickerWS(
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[strings.ToLower(symbol)] = make(chan []byte, 128)
+		messageChs[strings.ToLower(symbol)] = make(chan []byte, 16)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[strings.ToLower(symbol)], ch)
 	}
-	go ws.mainLoop(ctx, proxy, messageChs)
+	go ws.mainLoop(ctx, messageChs, proxy)
 	ws.reconnectCh <- nil
 	return &ws
 }

@@ -52,7 +52,7 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 		//{"stream":"scusdt@bookTicker","data":{"e":"bookTicker","u":552297398961,"s":"SCUSDT","b":"0.012805","B":"46556","a":"0.012816","A":"90351","T":1624971386657,"E":1624971386662}}
 		if msg[18] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:18])
-		}else if msg[19] == '@' {
+		} else if msg[19] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:19])
 		} else if msg[20] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:20])
@@ -302,13 +302,15 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 	for i := 0; i < 4; i++ {
 		pool[i] = &BookTicker{}
 	}
+	var parseTimer = time.NewTimer(time.Hour * 9999)
+	defer parseTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case msg = <-inputCh:
+		case <-parseTimer.C:
 			index++
 			if index == 4 {
 				index = 0
@@ -330,6 +332,9 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+			break
+		case msg = <-inputCh:
+			parseTimer.Reset(time.Millisecond)
 			break
 		}
 	}
