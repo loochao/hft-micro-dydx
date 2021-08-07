@@ -117,7 +117,8 @@ func handleSave(
 
 		} else {
 			logger.Debugf(
-				"%s %s save failed, okXPosition %v okYPosition %v okSpread %v",
+				"%s %s %s save failed, okXPosition %v okYPosition %v okSpread %v",
+				*st.config.Name,
 				xSymbol, ySymbol, st.xPosition != nil, st.yPosition != nil, st.spread != nil,
 			)
 			hasAllSymbols = false

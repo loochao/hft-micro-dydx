@@ -71,7 +71,6 @@ func main() {
 	config.SetDefaultIfNotSet()
 	xyConfig = &config
 
-
 	if xyConfig.CpuProfile != "" {
 		f, err := os.Create(xyConfig.CpuProfile)
 		if err != nil {
@@ -521,7 +520,7 @@ mainLoop:
 			break
 		}
 	}
-	logger.Debugf("stop waiting 15s")
+	logger.Debugf("%s stop waiting 15s", *xyConfig.Name)
 	<-time.After(time.Second * 15)
-	logger.Debugf("exit 0")
+	logger.Debugf("%s exit 0", *xyConfig.Name)
 }
