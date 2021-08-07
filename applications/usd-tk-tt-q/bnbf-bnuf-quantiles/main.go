@@ -62,7 +62,7 @@ func main() {
 
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q-t/bnbf-bnuf-quantiles/outputs"
+	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/bnbf-bnuf-quantiles/outputs"
 	dataPath := "/Volumes/MarketData/bnbf-bnuf-depth-and-ticker"
 
 	sizeTDs := make(map[string]*tdigest.TDigest)
