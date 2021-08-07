@@ -88,7 +88,9 @@ func (strat *XYStrategy) updateXOrder() {
 		if !strat.isXOpenOrderOk() {
 			strat.tryCancelXOpenOrder("open order not ok")
 		}
-		goto hedgeSmall
+		//只要有OpenOrder, 说明X还在挂单，这个时候不用X对Y
+		strat.lastXActiveTime = time.Now()
+		return
 	}
 
 	if strat.spread.ShortMedianLeave <= strat.shortBot &&

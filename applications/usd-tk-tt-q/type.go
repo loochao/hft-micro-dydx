@@ -145,8 +145,7 @@ type XYStrategy struct {
 	xOrderError    common.OrderError
 	yOrderError    common.OrderError
 
-	size       float64
-	price      float64
+	xPrice     float64
 	reduceOnly bool
 	orderSide  common.OrderSide
 

@@ -94,38 +94,38 @@ func (strat *XYStrategy) updateXPosition() {
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
 		}
-		strat.size = strat.enterValue / strat.midPrice
+		strat.xSizeDiff = strat.enterValue / strat.midPrice
 
 		//限开仓大小限制到best bid ask size
-		strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
-		strat.size = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
-		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
+		strat.xSizeDiff = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.xSizeDiff)
+		strat.xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.xSizeDiff)
+		strat.xSizeDiff = math.Round(strat.xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 
-		strat.enterValue = strat.size * strat.midPrice
+		strat.enterValue = strat.xSizeDiff * strat.midPrice
 		if strat.xAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
 			strat.yAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
-			strat.size > strat.xSize {
+			strat.xSizeDiff > strat.xSize {
 			//两种情况都把x全平，间接y全平
-			strat.size = strat.xSize
+			strat.xSizeDiff = strat.xSize
 		}
-		strat.enterValue = strat.size * strat.midPrice
-		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
+		strat.enterValue = strat.xSizeDiff * strat.midPrice
+		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
+		if strat.xSizeDiff > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
 
-			strat.price = strat.xTicker.GetBidPrice()
+			strat.xPrice = strat.xTicker.GetBidPrice()
 			//防止TickSize太大
-			if strat.xTickSize/strat.price < strat.config.EnterSlippage {
-				strat.price = strat.price * (1.0 - strat.config.EnterSlippage)
-				strat.price = math.Floor(strat.price/strat.xTickSize) * strat.xTickSize
+			if strat.xTickSize/strat.xPrice < strat.config.EnterSlippage {
+				strat.xPrice = strat.xPrice * (1.0 - strat.config.EnterSlippage)
+				strat.xPrice = math.Floor(strat.xPrice/strat.xTickSize) * strat.xTickSize
 			}
 
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
 				Side:        common.OrderSideSell,
 				Type:        common.OrderTypeLimit,
-				Price:       strat.price,
+				Price:       strat.xPrice,
 				TimeInForce: strat.config.XOrderTimeInForce,
-				Size:        strat.size,
+				Size:        strat.xSizeDiff,
 				PostOnly:    false,
 				ReduceOnly:  true,
 				ClientID:    strat.xExchange.GenerateClientID(),
@@ -150,8 +150,8 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.xSymbol, strat.ySymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
-				strat.price,
-				strat.size,
+				strat.xPrice,
+				strat.xSizeDiff,
 				time.Now().Sub(strat.xTickerTime),
 				time.Now().Sub(strat.yTickerTime),
 			)
@@ -169,33 +169,33 @@ func (strat *XYStrategy) updateXPosition() {
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
 		}
-		strat.size = strat.enterValue / strat.midPrice
+		strat.xSizeDiff = strat.enterValue / strat.midPrice
 		//限开仓大小限制到best bid ask size
-		strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
-		strat.size = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
+		strat.xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.xSizeDiff)
+		strat.xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.xSizeDiff)
 
-		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
-		strat.enterValue = strat.size * strat.midPrice
+		strat.xSizeDiff = math.Round(strat.xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
+		strat.enterValue = strat.xSizeDiff * strat.midPrice
 		if strat.xAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
 			strat.yAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
-			strat.size > -strat.xSize {
-			strat.size = -strat.xSize
+			strat.xSizeDiff > -strat.xSize {
+			strat.xSizeDiff = -strat.xSize
 		}
-		strat.enterValue = strat.size * strat.midPrice
-		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
-			strat.price = strat.xTicker.GetAskPrice()
-			if strat.xTickSize/strat.price < strat.config.EnterSlippage {
-				strat.price = strat.price * (1.0 + strat.config.EnterSlippage)
-				strat.price = math.Ceil(strat.price/strat.xTickSize) * strat.xTickSize
+		strat.enterValue = strat.xSizeDiff * strat.midPrice
+		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
+		if strat.xSizeDiff > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
+			strat.xPrice = strat.xTicker.GetAskPrice()
+			if strat.xTickSize/strat.xPrice < strat.config.EnterSlippage {
+				strat.xPrice = strat.xPrice * (1.0 + strat.config.EnterSlippage)
+				strat.xPrice = math.Ceil(strat.xPrice/strat.xTickSize) * strat.xTickSize
 			}
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
 				Side:        common.OrderSideBuy,
 				Type:        common.OrderTypeLimit,
-				Price:       strat.price,
+				Price:       strat.xPrice,
 				TimeInForce: strat.config.XOrderTimeInForce,
-				Size:        strat.size,
+				Size:        strat.xSizeDiff,
 				PostOnly:    false,
 				ReduceOnly:  true,
 				ClientID:    strat.xExchange.GenerateClientID(),
@@ -220,8 +220,8 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.xSymbol, strat.ySymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
-				strat.price,
-				strat.size,
+				strat.xPrice,
+				strat.xSizeDiff,
 				time.Now().Sub(strat.xTickerTime),
 				time.Now().Sub(strat.yTickerTime),
 				strat.xTicker.GetBidPrice(),
@@ -246,12 +246,12 @@ func (strat *XYStrategy) updateXPosition() {
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
 		}
-		strat.size = strat.enterValue / strat.midPrice
-		strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
-		strat.size = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
+		strat.xSizeDiff = strat.enterValue / strat.midPrice
+		strat.xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.xSizeDiff)
+		strat.xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.xSizeDiff)
 
-		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
-		strat.enterValue = strat.size * strat.midPrice
+		strat.xSizeDiff = math.Round(strat.xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
+		strat.enterValue = strat.xSizeDiff * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
@@ -263,13 +263,13 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.usdAvailable,
 					strat.spread.ShortLastEnter, strat.shortTop,
 					strat.spread.ShortMedianEnter, strat.shortTop,
-					strat.size,
+					strat.xSizeDiff,
 				)
 			}
 			goto hedgeSmall
 		}
-		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
+		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
+		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -278,23 +278,23 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.enterValue,
 					strat.spread.ShortLastEnter, strat.shortTop,
 					strat.spread.ShortMedianEnter, strat.shortTop,
-					strat.size,
+					strat.xSizeDiff,
 				)
 			}
 			goto hedgeSmall
 		}
-		strat.price = strat.xTicker.GetAskPrice()
-		if strat.xTickSize/strat.price < strat.config.EnterSlippage {
-			strat.price = strat.price * (1.0 + strat.config.EnterSlippage)
-			strat.price = math.Ceil(strat.price/strat.xTickSize) * strat.xTickSize
+		strat.xPrice = strat.xTicker.GetAskPrice()
+		if strat.xTickSize/strat.xPrice < strat.config.EnterSlippage {
+			strat.xPrice = strat.xPrice * (1.0 + strat.config.EnterSlippage)
+			strat.xPrice = math.Ceil(strat.xPrice/strat.xTickSize) * strat.xTickSize
 		}
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideBuy,
 			Type:        common.OrderTypeLimit,
-			Price:       strat.price,
+			Price:       strat.xPrice,
 			TimeInForce: strat.config.XOrderTimeInForce,
-			Size:        strat.size,
+			Size:        strat.xSizeDiff,
 			PostOnly:    false,
 			ReduceOnly:  false,
 			ClientID:    strat.xExchange.GenerateClientID(),
@@ -319,8 +319,8 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
-			strat.price,
-			strat.size,
+			strat.xPrice,
+			strat.xSizeDiff,
 			time.Now().Sub(strat.xTickerTime),
 			time.Now().Sub(strat.yTickerTime),
 			strat.xTicker.GetBidPrice(),
@@ -344,12 +344,12 @@ func (strat *XYStrategy) updateXPosition() {
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
 		}
-		strat.size = strat.enterValue / strat.midPrice
-		strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
-		strat.size = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.size)
+		strat.xSizeDiff = strat.enterValue / strat.midPrice
+		strat.xSizeDiff = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.xSizeDiff)
+		strat.xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, strat.xSizeDiff)
 
-		strat.size = math.Round(strat.size/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
-		strat.enterValue = strat.size * strat.midPrice
+		strat.xSizeDiff = math.Round(strat.xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
+		strat.enterValue = strat.xSizeDiff * strat.midPrice
 		if strat.enterValue > strat.usdAvailable {
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
@@ -361,13 +361,13 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.usdAvailable,
 					strat.spread.LongLastEnter, strat.longBot,
 					strat.spread.LongMedianEnter, strat.longBot,
-					strat.size,
+					strat.xSizeDiff,
 				)
 			}
 			goto hedgeSmall
 		}
-		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
+		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
+		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -376,24 +376,24 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.enterValue,
 					strat.spread.LongLastEnter, strat.longBot,
 					strat.spread.LongMedianEnter, strat.longBot,
-					strat.size,
+					strat.xSizeDiff,
 				)
 			}
 			goto hedgeSmall
 		}
-		strat.price = strat.xTicker.GetBidPrice()
+		strat.xPrice = strat.xTicker.GetBidPrice()
 		//防止TickSize太大
-		if strat.xTickSize/strat.price < strat.config.EnterSlippage {
-			strat.price = strat.price * (1.0 - strat.config.EnterSlippage)
-			strat.price = math.Floor(strat.price/strat.xTickSize) * strat.xTickSize
+		if strat.xTickSize/strat.xPrice < strat.config.EnterSlippage {
+			strat.xPrice = strat.xPrice * (1.0 - strat.config.EnterSlippage)
+			strat.xPrice = math.Floor(strat.xPrice/strat.xTickSize) * strat.xTickSize
 		}
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideSell,
 			Type:        common.OrderTypeLimit,
-			Price:       strat.price,
+			Price:       strat.xPrice,
 			TimeInForce: strat.config.XOrderTimeInForce,
-			Size:        strat.size,
+			Size:        strat.xSizeDiff,
 			PostOnly:    false,
 			ReduceOnly:  false,
 			ClientID:    strat.xExchange.GenerateClientID(),
@@ -418,8 +418,8 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
-			strat.price,
-			strat.size,
+			strat.xPrice,
+			strat.xSizeDiff,
 			time.Now().Sub(strat.xTickerTime),
 			time.Now().Sub(strat.yTickerTime),
 			strat.xTicker.GetBidPrice(),
@@ -439,36 +439,39 @@ hedgeSmall:
 			//X的size比Y小，不用操作X
 			return
 		}
-		strat.size = -strat.yPosition.GetSize()*strat.yMultiplier/strat.xMultiplier - strat.xPosition.GetSize()
-		strat.size = math.Round(strat.size/strat.xStepSize) * strat.xStepSize
-		if math.Abs(strat.size) <= strat.xStepSize || math.Abs(strat.size) > math.Abs(strat.xPosition.GetSize()) {
+		strat.xSizeDiff = -strat.yPosition.GetSize()*strat.yMultiplier/strat.xMultiplier - strat.xPosition.GetSize()
+		strat.xSizeDiff = math.Round(strat.xSizeDiff/strat.xStepSize) * strat.xStepSize
+		if math.Abs(strat.xSizeDiff) <= strat.xStepSize || math.Abs(strat.xSizeDiff) > math.Abs(strat.xPosition.GetSize()) {
 			return
 		}
-		if strat.size < 0 {
+		if math.Abs(strat.xSizeDiff*strat.xMidPrice*strat.xMultiplier) < 1.2*strat.xMinNotional {
+			return
+		}
+		if strat.xSizeDiff < 0 {
 			strat.orderSide = common.OrderSideSell
-			strat.size = -strat.size
-			strat.price = strat.xTicker.GetBidPrice()
+			strat.xSizeDiff = -strat.xSizeDiff
+			strat.xPrice = strat.xTicker.GetBidPrice()
 			//防止TickSize太大
-			if strat.xTickSize/strat.price < strat.config.EnterSlippage {
-				strat.price = strat.price * (1.0 - strat.config.EnterSlippage)
-				strat.price = math.Floor(strat.price/strat.xTickSize) * strat.xTickSize
+			if strat.xTickSize/strat.xPrice < strat.config.EnterSlippage {
+				strat.xPrice = strat.xPrice * (1.0 - strat.config.EnterSlippage)
+				strat.xPrice = math.Floor(strat.xPrice/strat.xTickSize) * strat.xTickSize
 			}
 		} else {
 			strat.orderSide = common.OrderSideBuy
-			strat.price = strat.xTicker.GetAskPrice()
+			strat.xPrice = strat.xTicker.GetAskPrice()
 			//防止TickSize太大
-			if strat.xTickSize/strat.price < strat.config.EnterSlippage {
-				strat.price = strat.price * (1.0 + strat.config.EnterSlippage)
-				strat.price = math.Ceil(strat.price/strat.xTickSize) * strat.xTickSize
+			if strat.xTickSize/strat.xPrice < strat.config.EnterSlippage {
+				strat.xPrice = strat.xPrice * (1.0 + strat.config.EnterSlippage)
+				strat.xPrice = math.Ceil(strat.xPrice/strat.xTickSize) * strat.xTickSize
 			}
 		}
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        strat.orderSide,
 			Type:        common.OrderTypeLimit,
-			Price:       strat.price,
+			Price:       strat.xPrice,
 			TimeInForce: strat.config.XOrderTimeInForce,
-			Size:        strat.size,
+			Size:        strat.xSizeDiff,
 			PostOnly:    false,
 			ReduceOnly:  true,
 			ClientID:    strat.xExchange.GenerateClientID(),
@@ -491,8 +494,8 @@ hedgeSmall:
 			strat.xPosition.GetSize()*strat.xMultiplier,
 			strat.yPosition.GetSize()*strat.yMultiplier,
 			strat.orderSide,
-			strat.size,
-			strat.price,
+			strat.xSizeDiff,
+			strat.xPrice,
 		)
 	}
 }

@@ -144,7 +144,6 @@ func startXYStrategy(
 		spreadReport:            nil,
 		stateOutputCh:           nil,
 		error:                   nil,
-		xSizeDiff:               0,
 		ySizeDiff:               0,
 		offsetFactor:            0,
 		shortTop:                0,
@@ -160,7 +159,7 @@ func startXYStrategy(
 		midPrice:                0,
 		enterValue:              0,
 		targetValue:             0,
-		size:                    0,
+		xSizeDiff:               0,
 		orderSide:               common.OrderSideUnknown,
 		stopped:                 0,
 		fundingRateSettleSilent: false,
@@ -225,6 +224,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
 	strat.xOrderSilentTime = time.Now().Add(strat.config.RestartSilent)
+	strat.lastEnterTime = strat.xOrderSilentTime
 	for {
 		select {
 		case <-ctx.Done():
@@ -368,18 +368,18 @@ func (strat *XYStrategy) hedgeYPosition() {
 	if strat.isYSpot {
 		if math.Abs(strat.ySizeDiff) < strat.yStepSize {
 			return
-		} else if strat.ySizeDiff < 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice() < strat.yMinNotional {
+		} else if strat.ySizeDiff < 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice() < 1.2*strat.yMinNotional {
 			return
-		} else if strat.ySizeDiff > 0 && strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetAskPrice() < strat.yMinNotional {
+		} else if strat.ySizeDiff > 0 && strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetAskPrice() < 1.2*strat.yMinNotional {
 			return
 		}
 	} else {
 		//期货以close仓位，没有minNotional限制
 		if math.Abs(strat.ySizeDiff) < strat.yStepSize {
 			return
-		} else if strat.ySizeDiff < 0 && strat.yPosition.GetSize() <= 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice() < strat.yMinNotional {
+		} else if strat.ySizeDiff < 0 && strat.yPosition.GetSize() <= 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice() < 1.2*strat.yMinNotional {
 			return
-		} else if strat.ySizeDiff > 0 && strat.yPosition.GetSize() >= 0 && strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetAskPrice() < strat.yMinNotional {
+		} else if strat.ySizeDiff > 0 && strat.yPosition.GetSize() >= 0 && strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetAskPrice() < 1.2*strat.yMinNotional {
 			return
 		}
 	}
