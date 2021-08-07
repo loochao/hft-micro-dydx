@@ -343,7 +343,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		//}
 		return
 	}
-	if time.Now().Sub(strat.lastEnterTime) < strat.config.HedgeXTimeout {
+	if time.Now().Sub(strat.lastEnterTime) < strat.config.XEnterTimeout {
 		strat.ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
 	} else {
 		//其他时间对冲小的size, 防止出现一边爆仓的情况

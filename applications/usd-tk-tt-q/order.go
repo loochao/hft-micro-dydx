@@ -438,7 +438,7 @@ func (strat *XYStrategy) updateXPosition() {
 
 func (strat *XYStrategy) hedgeXPosition() {
 	//如果lastSpreadEnterTime没有更新，说明没有信号触发，就需要检查对冲的情况
-	if time.Now().Sub(strat.lastEnterTime) > strat.config.HedgeXTimeout {
+	if time.Now().Sub(strat.lastEnterTime) > strat.config.XEnterTimeout {
 		//如果已经没有信号对冲，重新检查x y的仓位，对冲较小的
 		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) < math.Abs(strat.yPosition.GetSize()*strat.yMultiplier) {
 			//X的size比Y小，不用操作X

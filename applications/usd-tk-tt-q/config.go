@@ -67,7 +67,7 @@ type Config struct {
 	XOrderSilent           time.Duration           `yaml:"xOrderSilent"`
 	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
 	YOrderSilent           time.Duration           `yaml:"yOrderSilent"`
-	HedgeXTimeout          time.Duration           `yaml:"hedgeXTimeout"`
+	XEnterTimeout          time.Duration           `yaml:"xEnterTimeout"`
 	HedgeDelay             time.Duration           `yaml:"hedgeDelay"`
 	HedgeCheckDuration     time.Duration           `yaml:"hedgeCheckDuration"`
 	HedgeCheckInterval     time.Duration           `yaml:"hedgeCheckInterval"`
@@ -134,7 +134,7 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.XOrderTimeInForce == "" {
 		config.XOrderTimeInForce = common.OrderTimeInForceFOK
 	}
-	if config.HedgeXTimeout == 0 {
-		config.HedgeXTimeout = time.Minute
+	if config.XEnterTimeout == 0 {
+		config.XEnterTimeout = time.Minute
 	}
 }
