@@ -42,7 +42,7 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
-			logger.Warnf("w.readAl error %v", err)
+			logger.Warnf("w.readAll error %v", err)
 			w.restart()
 			return
 		}
