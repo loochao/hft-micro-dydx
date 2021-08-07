@@ -283,15 +283,15 @@ func main() {
 	yTickerChMap := make(map[string]chan common.Ticker)
 
 	for _, xSymbol := range xSymbols {
-		xPositionChMap[xSymbol] = make(chan common.Position, 4)
+		xPositionChMap[xSymbol] = make(chan common.Position, 16)
 		xOrderChMap[xSymbol] = make(chan common.Order, 32)
-		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 1)
+		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 4)
 		xTickerChMap[xSymbol] = make(chan common.Ticker, 256)
 		yTickerChMap[config.XYPairs[xSymbol]] = xTickerChMap[xSymbol]
-		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 1)
-		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 1)
-		xAccountChMap[xSymbol] = make(chan common.Balance, 4)
-		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 1)
+		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 4)
+		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 4)
+		xAccountChMap[xSymbol] = make(chan common.Balance, 16)
+		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 4)
 	}
 
 	yPositionChMap := make(map[string]chan common.Position)
@@ -301,13 +301,13 @@ func main() {
 	yAccountChMap := make(map[string]chan common.Balance)
 	ySystemStatusChMap := make(map[string]chan common.SystemStatus)
 	for _, ySymbol := range ySymbols {
-		yPositionChMap[ySymbol] = make(chan common.Position, 4)
+		yPositionChMap[ySymbol] = make(chan common.Position, 16)
 		yOrderChMap[ySymbol] = make(chan common.Order, 32)
-		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 1)
-		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 1)
-		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 1)
-		yAccountChMap[ySymbol] = make(chan common.Balance, 4)
-		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 1)
+		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 4)
+		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 4)
+		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 4)
+		yAccountChMap[ySymbol] = make(chan common.Balance, 16)
+		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 4)
 	}
 
 	saveCh := make(chan *XYStrategy, 2048)
