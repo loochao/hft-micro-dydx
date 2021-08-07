@@ -11,7 +11,7 @@ type Logger log.Logger
 func getLogger(prefix string) *log.Logger {
 	isProduction := os.Getenv("LOG_SHORT") != ""
 	if os.Getenv("LOG_PREFIX") != "" {
-		prefix += os.Getenv("LOG_PREFIX") + " " + prefix
+		prefix = os.Getenv("LOG_PREFIX") + " " + prefix
 	}
 	if isProduction {
 		return log.New(os.Stdout, prefix, log.Lshortfile)
