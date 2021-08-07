@@ -116,8 +116,8 @@ func handleSave(
 
 		} else {
 			logger.Debugf(
-				"%s %s %s save failed, okXPosition %v okYPosition %v okSpread %v midPrice %v",
-				*st.config.Name, xSymbol, ySymbol, st.xPosition != nil, st.yPosition != nil, st.spread != nil, st.midPrice,
+				"%s %s save failed, okXPosition %v okYPosition %v okSpread %v midPrice %v",
+				 xSymbol, ySymbol, st.xPosition != nil, st.yPosition != nil, st.spread != nil, st.midPrice,
 			)
 			hasAllSymbols = false
 		}

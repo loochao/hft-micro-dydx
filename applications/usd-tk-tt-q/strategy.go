@@ -48,18 +48,18 @@ func startXYStrategy(
 
 		longBytes, err := os.ReadFile(path.Join(config.QuantilePath, xSymbol+"-"+ySymbol+".json"))
 		if err != nil {
-			logger.Debugf("%s os.ReadFile error %v", *config.Name,err)
+			logger.Debugf("os.ReadFile error %v", err)
 		} else {
 			err = json.Unmarshal(longBytes, &timedTDigest)
 			if err != nil {
-				logger.Debugf("%s json.Unmarshal error %v",*config.Name, err)
+				logger.Debugf("json.Unmarshal error %v", err)
 				timedTDigest = stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
 			} else {
 				timedTDigest.Lookback = config.QuantileLookback
 				timedTDigest.SubInterval = config.QuantileSubInterval
 				quantileMiddle = new(float64)
 				*quantileMiddle = timedTDigest.Quantile(0.5)
-				logger.Debugf("%s %s - %s QUANTILE MIDDLE %f", *config.Name,xSymbol, ySymbol, *quantileMiddle)
+				logger.Debugf("%s - %s QUANTILE MIDDLE %f", xSymbol, ySymbol, *quantileMiddle)
 			}
 		}
 	}
@@ -213,7 +213,7 @@ func startXYStrategy(
 func (strat *XYStrategy) Stop() {
 	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
 		strat.handleQuantileSave()
-		logger.Debugf("%s stopped %s %s", *strat.config.Name, strat.xSymbol, strat.ySymbol)
+		logger.Debugf("stopped %s %s", strat.xSymbol, strat.ySymbol)
 	}
 }
 
@@ -241,7 +241,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			break
 		case <-strat.fundingRateSettleTimer.C:
 			if time.Now().Truncate(strat.config.FundingInterval).Add(strat.config.FundingInterval).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
-				logger.Debugf("%s %s fundingRate Silent true %v", *strat.config.Name,strat.xSymbol, time.Now().Truncate(strat.config.FundingInterval).Add(strat.config.FundingInterval).Sub(time.Now()))
+				logger.Debugf("%s fundingRate Silent true %v", strat.xSymbol, time.Now().Truncate(strat.config.FundingInterval).Add(strat.config.FundingInterval).Sub(time.Now()))
 				strat.fundingRateSettleSilent = true
 				strat.fundingRateSettleTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
 			} else {
@@ -319,7 +319,7 @@ func (strat *XYStrategy) handleSave() {
 	select {
 	case strat.saveCh <- strat:
 	default:
-		logger.Debugf("%s strat.saveCh <- strat failed %s %s ch len %d", *strat.config.Name,strat.xSymbol, strat.ySymbol, len(strat.saveCh))
+		logger.Debugf("strat.saveCh <- strat failed %s %s ch len %d", strat.xSymbol, strat.ySymbol, len(strat.saveCh))
 	}
 }
 
@@ -328,7 +328,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		strat.ySystemStatus != common.SystemStatusReady {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("%s hedgeYPosition xSystemStatus %v ySystemStatus %v", *strat.config.Name,strat.xSystemStatus, strat.ySystemStatus)
+			logger.Debugf("hedgeYPosition xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
 		}
 		return
 	}
@@ -429,12 +429,12 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 
 func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 	if nextPos.GetSymbol() != strat.xSymbol {
-		logger.Debugf("%s bad next position, symbol %s %s not match %v", *strat.config.Name, nextPos.GetSymbol(), strat.xSymbol, nextPos)
+		logger.Debugf("bad next position, symbol %s %s not match %v", nextPos.GetSymbol(), strat.xSymbol, nextPos)
 		return
 	}
 	if strat.xPosition != nil {
 		if strat.xPosition == nextPos {
-			logger.Debugf("%s bad strat.xPosition == nextPos pass same pointer", *strat.config.Name)
+			logger.Debugf("bad strat.xPosition == nextPos pass same pointer")
 			return
 		}
 		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= 0 {
@@ -445,7 +445,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 				if strat.xTicker != nil {
 					strat.xTimedPositionChange.Insert(time.Now(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize())*strat.xMidPrice*strat.xMultiplier)
 				}
-				logger.Debugf("%s %s x position change %f -> %f %f %v", *strat.config.Name, nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
+				logger.Debugf("%s x position change %f -> %f %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
 				strat.xPosition = nextPos
 				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 					strat.hedgeYPosition()
@@ -465,18 +465,18 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 	} else {
 		strat.xPosition = nextPos
 		strat.xPositionUpdateTime = nextPos.GetParseTime()
-		logger.Debugf("%s %s x position change nil -> %f %f", *strat.config.Name, nextPos.GetSymbol(), nextPos.GetSize(), nextPos.GetPrice())
+		logger.Debugf("%s x position change nil -> %f %f",  nextPos.GetSymbol(), nextPos.GetSize(), nextPos.GetPrice())
 	}
 }
 
 func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 	if nextPos.GetSymbol() != strat.ySymbol {
-		logger.Debugf("%s bad next position, symbol %s %s not match %v", *strat.config.Name, nextPos.GetSymbol(), strat.ySymbol, nextPos)
+		logger.Debugf("bad next position, symbol %s %s not match %v",  nextPos.GetSymbol(), strat.ySymbol, nextPos)
 		return
 	}
 	if strat.yPosition != nil {
 		if strat.yPosition == nextPos {
-			logger.Debugf("%s bad strat.yPosition == nextPos pass same pointer", *strat.config.Name)
+			logger.Debugf("bad strat.yPosition == nextPos pass same pointer")
 			return
 		}
 		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= -time.Second {
@@ -484,7 +484,7 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 				if strat.yTicker != nil {
 					strat.yTimedPositionChange.Insert(time.Now(), math.Abs(strat.yPosition.GetSize()-nextPos.GetSize())*strat.yMidPrice*strat.yMultiplier)
 				}
-				logger.Debugf("%s %s y position change %f -> %f %f %v", *strat.config.Name, nextPos.GetSymbol(), strat.yPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
+				logger.Debugf("%s y position change %f -> %f %f %v",  nextPos.GetSymbol(), strat.yPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
 			}
 			strat.yPosition = nextPos
 		}
@@ -492,7 +492,7 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 	} else {
 		strat.yPosition = nextPos
 		strat.yPositionUpdateTime = nextPos.GetParseTime()
-		logger.Debugf("%s %s y position change nil -> %f %f", *strat.config.Name, nextPos.GetSymbol(), nextPos.GetSize(), nextPos.GetPrice())
+		logger.Debugf("%s y position change nil -> %f %f", nextPos.GetSymbol(), nextPos.GetSize(), nextPos.GetPrice())
 	}
 }
 
@@ -500,19 +500,19 @@ func (strat *XYStrategy) handleQuantileSave() {
 	if strat.config.QuantilePath != "" {
 		strat.quantileBytes, strat.error = json.Marshal(strat.timedTDigest)
 		if strat.error != nil {
-			logger.Debugf("%s json.Marshal(strat.timedTDigest) error %v", *strat.config.Name, strat.error)
+			logger.Debugf("json.Marshal(strat.timedTDigest) error %v",  strat.error)
 		} else {
 			strat.quantileFile, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+".json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 			if strat.error != nil {
-				logger.Debugf("%s os.OpenFile error %v", *strat.config.Name, strat.error)
+				logger.Debugf("os.OpenFile error %v", strat.error)
 			} else {
 				_, strat.error = strat.quantileFile.Write(strat.quantileBytes)
 				if strat.error != nil {
-					logger.Debugf("%s strat.file.Write error %v", *strat.config.Name, strat.error)
+					logger.Debugf("strat.file.Write error %v", strat.error)
 				} else {
 					strat.error = strat.quantileFile.Close()
 					if strat.error != nil {
-						logger.Debugf("%s strat.file.Close() error %v", *strat.config.Name, strat.error)
+						logger.Debugf("strat.file.Close() error %v", strat.error)
 					}
 				}
 			}

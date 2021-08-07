@@ -18,7 +18,7 @@ func (strat *XYStrategy) handleFundingRate() {
 
 func (strat *XYStrategy) handleXOrder() {
 	if strat.xOrder.GetSymbol() != strat.xSymbol {
-		logger.Debugf("%s bad x order symbol not match %s %s %v", *strat.config.Name, strat.xOrder.GetSymbol(), strat.xSymbol, strat.xOrder)
+		logger.Debugf("bad x order symbol not match %s %s %v", strat.xOrder.GetSymbol(), strat.xSymbol, strat.xOrder)
 		return
 	}
 	if strat.xOrder.GetStatus() == common.OrderStatusExpired ||
@@ -32,7 +32,7 @@ func (strat *XYStrategy) handleXOrder() {
 			//logger.Debugf("x order ended %s %s %s", strat.xOrder.GetSymbol(), strat.xOrder.GetStatus(), strat.xOrder.GetSide())
 			strat.xPositionUpdateTime = time.Unix(0, 0)
 		} else {
-			logger.Debugf("%s x order filled %s %s %s size %f price %f value %f", *strat.config.Name, strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice()*strat.xMultiplier)
+			logger.Debugf("x order filled %s %s %s size %f price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice()*strat.xMultiplier)
 			strat.realisedSpreadTimer.Reset(time.Second * 5)
 			if strat.xOrder.GetSide() == common.OrderSideBuy {
 				if strat.xLastFilledBuyPrice == nil {
@@ -53,7 +53,7 @@ func (strat *XYStrategy) handleXOrder() {
 
 func (strat *XYStrategy) handleYOrder() {
 	if strat.yOrder.GetSymbol() != strat.ySymbol {
-		logger.Debugf("%s bad y order symbol not match %s %s %v", *strat.config.Name, strat.yOrder.GetSymbol(), strat.ySymbol, strat.yOrder)
+		logger.Debugf("bad y order symbol not match %s %s %v", strat.yOrder.GetSymbol(), strat.ySymbol, strat.yOrder)
 	}
 	if strat.yOrder.GetStatus() == common.OrderStatusExpired ||
 		strat.yOrder.GetStatus() == common.OrderStatusReject ||
@@ -63,11 +63,11 @@ func (strat *XYStrategy) handleYOrder() {
 
 		if strat.yOrder.GetStatus() != common.OrderStatusFilled &&
 			strat.yOrder.GetStatus() != common.OrderStatusPartiallyFilled {
-			logger.Debugf("%s y order ended %s %s %s", *strat.config.Name, strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide())
+			logger.Debugf("y order ended %s %s %s", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide())
 			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 			strat.yPositionUpdateTime = time.Time{}
 		} else {
-			logger.Debugf("%s y order filled %s %s %s size %f price %f value %f", *strat.config.Name, strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice(), strat.yOrder.GetFilledPrice()*strat.yOrder.GetFilledSize()*strat.yMultiplier)
+			logger.Debugf("y order filled %s %s %s size %f price %f value %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice(), strat.yOrder.GetFilledPrice()*strat.yOrder.GetFilledSize()*strat.yMultiplier)
 			if strat.yOrder.GetSide() == common.OrderSideBuy {
 				if strat.yLastFilledBuyPrice == nil {
 					strat.yLastFilledBuyPrice = new(float64)
@@ -102,9 +102,9 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledSellPrice = nil
 		if strat.quantileMiddle != nil {
-			logger.Debugf("%s %s - %s realised short abs spread %f quantile middle %f adjusted spread %f", *strat.config.Name, strat.ySymbol, strat.xSymbol, *strat.realisedSpread, *strat.quantileMiddle, *strat.realisedSpread-*strat.quantileMiddle)
+			logger.Debugf("%s - %s realised short abs spread %f quantile middle %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, *strat.quantileMiddle, *strat.realisedSpread-*strat.quantileMiddle)
 		} else {
-			logger.Debugf("%s %s - %s realised short abs spread %f", *strat.config.Name, strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
+			logger.Debugf("%s - %s realised short abs spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
 		}
 	} else if strat.xLastFilledSellPrice != nil && strat.yLastFilledBuyPrice != nil {
 		if strat.realisedSpread == nil {
@@ -122,29 +122,29 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledSellPrice = nil
 		if strat.quantileMiddle != nil {
-			logger.Debugf("%s %s - %s realised long abs spread %f quantile middle %f adjusted spread %f", *strat.config.Name, strat.ySymbol, strat.xSymbol, *strat.realisedSpread, *strat.quantileMiddle, *strat.realisedSpread-*strat.quantileMiddle)
+			logger.Debugf("%s - %s realised long abs spread %f quantile middle %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, *strat.quantileMiddle, *strat.realisedSpread-*strat.quantileMiddle)
 		} else {
-			logger.Debugf("%s %s - %s realised long abs spread %f", *strat.config.Name, strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
+			logger.Debugf("%s - %s realised long abs spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
 		}
 	}
 }
 
 func (strat *XYStrategy) handleXOrderError() {
 	if strat.xOrderError.Cancel != nil {
-		logger.Debugf("%s cancel %v error %v", *strat.config.Name, *strat.xOrderError.Cancel, strat.xOrderError.Error)
+		logger.Debugf("cancel %v error %v", *strat.xOrderError.Cancel, strat.xOrderError.Error)
 		//strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 	} else if strat.xOrderError.New != nil {
-		logger.Debugf("%s new %v error %v", *strat.config.Name, *strat.xOrderError.New, strat.xOrderError.Error)
+		logger.Debugf("new %v error %v", *strat.xOrderError.New, strat.xOrderError.Error)
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 	}
 }
 
 func (strat *XYStrategy) handleYOrderError() {
 	if strat.yOrderError.Cancel != nil {
-		logger.Debugf("%s cancel %v error %v", *strat.config.Name, *strat.yOrderError.Cancel, strat.yOrderError.Error)
+		logger.Debugf("cancel %v error %v", *strat.yOrderError.Cancel, strat.yOrderError.Error)
 		strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 	} else if strat.yOrderError.New != nil {
-		logger.Debugf("%s new %v error %v", *strat.config.Name, *strat.yOrderError.New, strat.yOrderError.Error)
+		logger.Debugf("new %v error %v",  *strat.yOrderError.New, strat.yOrderError.Error)
 		strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 	}
 }

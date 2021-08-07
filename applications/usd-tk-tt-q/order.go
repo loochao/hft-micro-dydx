@@ -146,8 +146,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
-				"%s %s %s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
-				*strat.config.Name,
+				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
 				strat.xSymbol, strat.ySymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
@@ -217,8 +216,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
-				"%s %s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
-				*strat.config.Name,
+				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 				strat.xSymbol, strat.ySymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
@@ -258,8 +256,7 @@ func (strat *XYStrategy) updateXPosition() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
-					*strat.config.Name,
+					"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
 					strat.xSymbol,
 					strat.ySymbol,
 					strat.enterValue,
@@ -277,8 +274,7 @@ func (strat *XYStrategy) updateXPosition() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
-					*strat.config.Name,
+					"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
 					strat.xSymbol, strat.ySymbol,
 					strat.enterValue,
 					strat.spread.ShortLastEnter, strat.shortTop,
@@ -321,8 +317,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
-			*strat.config.Name,
+			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
@@ -361,8 +356,7 @@ func (strat *XYStrategy) updateXPosition() {
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
-					*strat.config.Name,
+					"%s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
 					strat.xSymbol,
 					strat.ySymbol,
 					strat.enterValue,
@@ -380,8 +374,7 @@ func (strat *XYStrategy) updateXPosition() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s %s FAILED LONG BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
-					*strat.config.Name,
+					"%s %s FAILED LONG BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
 					strat.xSymbol, strat.ySymbol,
 					strat.enterValue,
 					strat.spread.LongLastEnter, strat.longBot,
@@ -425,8 +418,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
-			*strat.config.Name,
+			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
@@ -523,8 +515,7 @@ func (strat *XYStrategy) hedgeXPosition() {
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s %s REVERSE HEDGE X BY Y, SIZE X %f Y %f, ORDER SIDE %s SIZE %f PRICE %f",
-			*strat.config.Name,
+			"%s %s REVERSE HEDGE X BY Y, SIZE X %f Y %f, ORDER SIDE %s SIZE %f PRICE %f",
 			strat.xSymbol, strat.ySymbol,
 			strat.xPosition.GetSize()*strat.xMultiplier,
 			strat.yPosition.GetSize()*strat.yMultiplier,
