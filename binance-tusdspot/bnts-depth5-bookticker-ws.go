@@ -151,6 +151,7 @@ func (w *Depth5BookTickerWS) mainLoop(ctx context.Context, channels map[string]c
 		)
 	}
 	urlStr = urlStr[:len(urlStr)-1]
+	logger.Debugf("%s", urlStr)
 
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
