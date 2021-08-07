@@ -69,6 +69,9 @@ func handleSave(
 			fields["shortBot"] = st.shortBot
 			fields["longBot"] = st.longBot
 			fields["longTop"] = st.longTop
+			if st.quantileMiddle != nil {
+				fields["quantileMiddle"] = *st.quantileMiddle
+			}
 			fields["enterTarget"] = st.enterTarget
 			fields["enterStep"] = st.enterStep
 			fields["enterValue"] = st.enterValue
@@ -130,6 +133,9 @@ func handleSave(
 		}
 		if st.realisedSpread != nil {
 			fields["realisedSpread"] = *st.realisedSpread
+		}
+		if st.adjustedRealisedSpread != nil {
+			fields["adjustedRealisedSpread"] = *st.adjustedRealisedSpread
 		}
 		if xSystemStatus == common.SystemStatusReady {
 			fields["xSystemStatus"] = 1.0

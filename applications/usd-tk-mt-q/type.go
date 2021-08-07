@@ -116,10 +116,10 @@ type XYStrategy struct {
 	xSizeDiff float64
 	ySizeDiff float64
 
-	xMidPrice     float64
-	yMidPrice     float64
-	orderOffset   Offset
-	lastEnterTime time.Time
+	xMidPrice       float64
+	yMidPrice       float64
+	orderOffset     Offset
+	lastXActiveTime time.Time
 
 	offsetFactor   float64
 	offsetStep     float64
@@ -147,10 +147,10 @@ type XYStrategy struct {
 	xOrderError    common.OrderError
 	yOrderError    common.OrderError
 
-	size       float64
-	price      float64
+	xPrice     float64
 	reduceOnly bool
 	orderSide  common.OrderSide
+	adjustedRealisedSpread *float64
 
 	xOpenOrder        *common.NewOrderParam
 	xCancelOrderParam common.CancelOrderParam

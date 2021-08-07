@@ -361,13 +361,23 @@ func main() {
 			//	askJumpTD.Quantile(0.95),
 			//)
 			mu.Lock()
+			//offsets[xSymbol] = fmt.Sprintf(
+			//	"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+			//	bidJumpTD.Quantile(0.05),
+			//	bidJumpTD.Quantile(0.20),
+			//	bidJumpTD.Quantile(0.80),
+			//	askJumpTD.Quantile(0.20),
+			//	askJumpTD.Quantile(0.80),
+			//	askJumpTD.Quantile(0.995),
+			//)
+			//fmt.Printf("\n\n%s %s\n\n", xSymbol, offsets[xSymbol])
 			offsets[xSymbol] = fmt.Sprintf(
 				"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
 				bidJumpTD.Quantile(0.005),
-				bidJumpTD.Quantile(0.20),
 				bidJumpTD.Quantile(0.80),
+				bidJumpTD.Quantile(0.95),
+				askJumpTD.Quantile(0.05),
 				askJumpTD.Quantile(0.20),
-				askJumpTD.Quantile(0.80),
 				askJumpTD.Quantile(0.995),
 			)
 			fmt.Printf("\n\n%s %s\n\n", xSymbol, offsets[xSymbol])

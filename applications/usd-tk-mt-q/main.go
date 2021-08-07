@@ -3,9 +3,18 @@ package main
 import (
 	"context"
 	"flag"
+	bnbf "github.com/geometrybase/hft-micro/binance-busdfuture"
+	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
+	binance_tusdspot "github.com/geometrybase/hft-micro/binance-tusdspot"
+	bncs "github.com/geometrybase/hft-micro/binance-usdcspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
+	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
+	bbuf "github.com/geometrybase/hft-micro/bybit-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
+	hbuf "github.com/geometrybase/hft-micro/huobi-usdtfuture"
+	kcut "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
+	kcus "github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	okut "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"gopkg.in/yaml.v2"
@@ -87,6 +96,45 @@ func main() {
 	case "okexUsdtSpot":
 		xExchange = &okut.OkexUsdtSpot{}
 		break
+	case "kucoinUsdtFuture":
+		xExchange = &kcut.KucoinUsdtFuture{}
+		break
+	case "kucoinUsdtFutureWithMergedTicker":
+		xExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
+		break
+	case "binanceUsdtFutureWithMergedTicker":
+		xExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
+		break
+	case "binanceBusdFutureWithMergedTicker":
+		xExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
+		break
+	case "binanceUsdtSpot":
+		xExchange = &bnus.BinanceUsdtSpot{}
+		break
+	case "binanceUsdtSpotWithMergedTicker":
+		xExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
+		break
+	case "binanceTusdSpotWithMergedTicker":
+		xExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
+		break
+	case "binanceBusdSpot":
+		xExchange = &bnbs.BinanceBusdSpot{}
+		break
+	case "binanceBusdSpotWithMergedTicker":
+		xExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
+		break
+	case "binanceUsdcSpotWithMergedTicker":
+		xExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
+		break
+	case "huobiUsdtFutureWithMergedTicker":
+		xExchange = &hbuf.HuobiUsdtFutureWithMergedTicker{}
+		break
+	case "bybitUsdtFuture":
+		xExchange = &bbuf.BybitUsdtFuture{}
+		break
+	case "kucoinUsdtSpotWithMergedTicker":
+		xExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
+		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -100,6 +148,45 @@ func main() {
 		break
 	case "okexUsdtSpot":
 		yExchange = &okut.OkexUsdtSpot{}
+		break
+	case "kucoinUsdtFuture":
+		yExchange = &kcut.KucoinUsdtFuture{}
+		break
+	case "kucoinUsdtFutureWithMergedTicker":
+		yExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
+		break
+	case "binanceUsdtFutureWithMergedTicker":
+		yExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
+		break
+	case "binanceUsdtSpot":
+		yExchange = &bnus.BinanceUsdtSpot{}
+		break
+	case "binanceUsdtSpotWithMergedTicker":
+		yExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
+		break
+	case "binanceBusdSpot":
+		yExchange = &bnbs.BinanceBusdSpot{}
+		break
+	case "binanceBusdSpotWithMergedTicker":
+		yExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
+		break
+	case "binanceUsdcSpotWithMergedTicker":
+		yExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
+		break
+	case "huobiUsdtFutureWithMergedTicker":
+		yExchange = &hbuf.HuobiUsdtFutureWithMergedTicker{}
+		break
+	case "bybitUsdtFuture":
+		yExchange = &bbuf.BybitUsdtFuture{}
+		break
+	case "kucoinUsdtSpotWithMergedTicker":
+		yExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
+		break
+	case "binanceBusdFutureWithMergedTicker":
+		yExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
+		break
+	case "binanceTusdSpotWithMergedTicker":
+		yExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
 		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
@@ -202,12 +289,12 @@ func main() {
 	for _, xSymbol := range xSymbols {
 		xPositionChMap[xSymbol] = make(chan common.Position, 4)
 		xOrderChMap[xSymbol] = make(chan common.Order, 32)
-		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 1)
+		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 4)
 		xTickerChMap[xSymbol] = make(chan common.Ticker, 128)
-		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 1)
-		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 1)
-		xAccountChMap[xSymbol] = make(chan common.Balance, 4)
-		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 1)
+		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 4)
+		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 4)
+		xAccountChMap[xSymbol] = make(chan common.Balance, 128)
+		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 4)
 	}
 
 	yPositionChMap := make(map[string]chan common.Position)
@@ -220,12 +307,12 @@ func main() {
 	for _, ySymbol := range ySymbols {
 		yPositionChMap[ySymbol] = make(chan common.Position, 4)
 		yOrderChMap[ySymbol] = make(chan common.Order, 32)
-		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 1)
+		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 4)
 		yTickerChMap[ySymbol] = make(chan common.Ticker, 128)
-		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 1)
-		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 1)
-		yAccountChMap[ySymbol] = make(chan common.Balance, 4)
-		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 1)
+		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 4)
+		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 4)
+		yAccountChMap[ySymbol] = make(chan common.Balance, 128)
+		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 4)
 	}
 
 	saveCh := make(chan *XYStrategy, 2048)
@@ -434,7 +521,7 @@ mainLoop:
 			break
 		}
 	}
-	logger.Debugf("stop waiting 5s")
-	<-time.After(time.Second * 5)
+	logger.Debugf("stop waiting 15s")
+	<-time.After(time.Second * 15)
 	logger.Debugf("exit 0")
 }

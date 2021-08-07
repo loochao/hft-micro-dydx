@@ -35,7 +35,6 @@ type Config struct {
 	ShortEnterDelta         float64       `yaml:"shortEnterDelta"`
 	LongExitDelta           float64       `yaml:"longExitDelta"`
 	ShortExitDelta          float64       `yaml:"shortExitDelta"`
-	CancelOffsetFactor      float64       `yaml:"cancelOffsetFactor"`
 	MinimalEnterFundingRate float64       `yaml:"minimalEnterFundingRate"`
 	MinimalKeepFundingRate  float64       `yaml:"minimalKeepFundingRate"`
 	FrOffsetFactor          float64       `yaml:"frOffsetFactor"`
@@ -51,7 +50,7 @@ type Config struct {
 	TickerMaxAgeDiffBias time.Duration `yaml:"tickerMaxAgeDiffBias"`
 	TickerReportCount    int           `yaml:"tickerReportCount"`
 	SpreadTimeToEnter    time.Duration `yaml:"spreadTimeToEnter"`
-	YTickerTimeToCancel  time.Duration `yaml:"yDepthTimeToCancel"`
+	YTickerTimeToCancel  time.Duration `yaml:"yTickerTimeToCancel"`
 	SpreadLookback       time.Duration `yaml:"spreadLookback"`
 	SpreadMinTickerCount int           `yaml:"spreadMinTickerCount"`
 	BatchSize            int           `yaml:"batchSize"`
@@ -62,12 +61,14 @@ type Config struct {
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
 	StartValues       map[string]float64 `yaml:"startValues"`
 
-	OrderTimeout        time.Duration `yaml:"orderTimeout"`
-	XOrderSilent        time.Duration `yaml:"xOrderSilent"`
-	XErrorSilent        time.Duration `yaml:"xErrorSilent"`
-	YOrderSilent        time.Duration `yaml:"yOrderSilent"`
-	XCancelSilent       time.Duration `yaml:"xCancelSilent"`
-	RealisedLogDelay    time.Duration `yaml:"realisedLogDelay"`
+	OrderTimeout     time.Duration `yaml:"orderTimeout"`
+	XOrderSilent     time.Duration `yaml:"xOrderSilent"`
+	XErrorSilent     time.Duration `yaml:"xErrorSilent"`
+	YOrderSilent     time.Duration `yaml:"yOrderSilent"`
+	XCancelSilent    time.Duration `yaml:"xCancelSilent"`
+	RealisedLogDelay time.Duration `yaml:"realisedLogDelay"`
+	HedgeXTimeout    time.Duration `yaml:"hedgeXTimeout"`
+
 	XOrderCheckInterval time.Duration `yaml:"xOrderCheckInterval"`
 	EnterSilent         time.Duration `yaml:"enterSilent"`
 	RestartSilent       time.Duration `yaml:"restartSilent"`
@@ -83,11 +84,14 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.LogInterval == 0 {
 		config.LogInterval = time.Minute
 	}
+	if config.HedgeXTimeout == 0 {
+		config.HedgeXTimeout = time.Minute * 3
+	}
 	if config.BalancePositionMaxAge == 0 {
 		config.BalancePositionMaxAge = time.Minute * 3
 	}
 	if config.RealisedLogDelay == 0 {
-		config.RealisedLogDelay = time.Millisecond*10
+		config.RealisedLogDelay = time.Millisecond * 10
 	}
 	if config.OrderTimeout == 0 {
 		config.OrderTimeout = time.Second * 5

@@ -5,24 +5,15 @@ cd ../../
 dt=$(date -u +%Y%m%d)
 version=" BUILD @ $(date -u '+%Y%m%d %H:%M:%S') "
 echo "$version"
-sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/usd-tk-mt/init.go
+sed -i "" -E "s/####.+####/#### $version ####/g" ./applications/usd-tk-mt-q/init.go
 
-env GOOS=linux GOARCH=arm64 go build -o "./dist/usd-tk-mt.arm64.$dt" ./applications/usd-tk-mt
-env GOOS=linux GOARCH=amd64 go build -o "./dist/usd-tk-mt.amd64.$dt" ./applications/usd-tk-mt
+env GOOS=linux GOARCH=amd64 go build -o "./dist/usd-tk-mt-q.amd64.$dt" ./applications/usd-tk-mt-q
 
-git add -A
-git commit -m "build usd-tk-mt.$dt"
-git push origin master
-git tag -d "usd-tk-mt.$dt"
-git tag "usd-tk-mt.$dt"
-git push origin "usd-tk-mt.$dt" --force
+chmod 755 "./dist/usd-tk-mt-q.amd64.$dt"
 
-chmod 755 "./dist/usd-tk-mt.amd64.$dt"
+echo "" && echo "" && echo "arm1"
+rsync -avx --progress "./dist/usd-tk-mt-q.amd64.$dt" arm1:/usr/local/bin/
 
-echo "vc001"
-rsync -avx --progress "./dist/usd-tk-mt.amd64.$dt" vc001:/usr/local/bin/
-
-echo "hk05"
-rsync -avx --progress "./dist/usd-tk-mt.amd64.$dt" hk05:/usr/local/bin/
-
+echo "" && echo "" && echo "vc06"
+ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-mt-q.amd64.$dt vc06:/usr/local/bin/"
 

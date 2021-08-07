@@ -165,7 +165,6 @@ func startXYStrategy(
 		midPrice:                0,
 		enterValue:              0,
 		targetValue:             0,
-		size:                    0,
 		orderSide:               common.OrderSideUnknown,
 		xCancelOrderParam:       common.CancelOrderParam{Symbol: xSymbol},
 		stopped:                 0,
@@ -181,6 +180,7 @@ func startXYStrategy(
 		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
 		quantileLastSampleTime:  time.Time{},
 		quantileMiddle:          quantileMiddle,
+		lastXActiveTime:         time.Now(), //程序启运还是Y主动去对冲X比较经济
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
@@ -224,8 +224,15 @@ func startXYStrategy(
 func (strat *XYStrategy) Stop() {
 	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
 		logger.Debugf("stopped")
+		if strat.xOpenOrder != nil && !strat.config.DryRun {
+			strat.xCancelOrderParam.ClientID = strat.xOpenOrder.ClientID
+			select {
+			case strat.xOrderRequestCh <- common.OrderRequest{
+				Cancel: &strat.xCancelOrderParam,
+			}:
+			}
+		}
 		strat.handleQuantileSave()
-		strat.tryCancelXOpenOrder("end")
 	}
 }
 
@@ -360,10 +367,21 @@ func (strat *XYStrategy) hedgeYPosition() {
 		//}
 		return
 	}
-	strat.ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
+	if time.Now().Sub(strat.lastXActiveTime) < strat.config.HedgeXTimeout {
+		strat.ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
+	} else {
+		//其他时间对冲小的size, 防止出现一边爆仓的情况
+		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) > math.Abs(strat.yPosition.GetSize()*strat.yMultiplier) {
+			//Y的size比X小，不用操作Y
+			return
+		} else {
+			strat.ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
+		}
+	}
 	if math.Abs(strat.ySizeDiff) < strat.yStepSize {
 		return
 	}
+
 	//如y下单也加上控制，以限下单太大，造成市场冲击
 	if strat.ySizeDiff*strat.yMultiplier < -strat.maxOrderValue/strat.yTicker.GetBidPrice() {
 		strat.ySizeDiff = -strat.maxOrderValue / strat.yTicker.GetBidPrice() / strat.yMultiplier
@@ -416,11 +434,11 @@ func (strat *XYStrategy) hedgeYPosition() {
 		}:
 			//logger.Debugf("sent strat.yOrderRequestCh <- common.OrderRequest %s", strat.yNewOrderParam.Symbol)
 			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
-			strat.yPositionUpdateTime = time.Unix(0, 0)
+			strat.yPositionUpdateTime = time.Time{}
 		}
 	} else {
 		strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
-		strat.yPositionUpdateTime = time.Unix(0, 0)
+		strat.yPositionUpdateTime = time.Time{}
 	}
 }
 
@@ -476,6 +494,7 @@ func (strat *XYStrategy) tryCancelXOpenOrder(reason string) {
 		return
 	}
 	strat.xCancelSilentTime = time.Now().Add(strat.config.XCancelSilent)
+	strat.lastXActiveTime = strat.xCancelSilentTime
 	if !strat.config.DryRun {
 		strat.xCancelOrderParam.ClientID = strat.xOpenOrder.ClientID
 		select {

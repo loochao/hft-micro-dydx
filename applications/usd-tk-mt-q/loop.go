@@ -27,12 +27,15 @@ func (strat *XYStrategy) handleXOrder() {
 		strat.xOrder.GetStatus() == common.OrderStatusFilled ||
 		strat.xOrder.GetStatus() == common.OrderStatusPartiallyFilled {
 
-		if strat.xOrder.GetStatus() == common.OrderStatusFilled &&
-			strat.xOpenOrder.Size != strat.xOrder.GetFilledSize() {
-			logger.Debugf("%s FILLED BUY NOT ALL SIZE, CANCEL", strat.xSymbol)
-			strat.tryCancelXOpenOrder("cancel partially filled")
-		} else {
-			strat.xOpenOrder = nil
+		if strat.xOpenOrder != nil &&
+			strat.xOpenOrder.ClientID == strat.xOrder.GetClientID() {
+			if strat.xOrder.GetStatus() == common.OrderStatusFilled &&
+				strat.xOpenOrder.Size != strat.xOrder.GetFilledSize() {
+				logger.Debugf("%s FILLED BUY NOT ALL SIZE, CANCEL", strat.xSymbol)
+				strat.tryCancelXOpenOrder("cancel partially filled")
+			} else {
+				strat.xOpenOrder = nil
+			}
 		}
 
 		if strat.xOrder.GetStatus() != common.OrderStatusFilled &&
@@ -40,20 +43,20 @@ func (strat *XYStrategy) handleXOrder() {
 			//logger.Debugf("x order ended %s %s %s", strat.xOrder.GetSymbol(), strat.xOrder.GetStatus(), strat.xOrder.GetSide())
 			strat.xPositionUpdateTime = time.Unix(0, 0)
 		} else {
-			logger.Debugf("x order filled %s %s %s size %f price %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice())
+			logger.Debugf("x order %s %s %s xSizeDiff %f xPrice %f xValue %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice())
 			strat.realisedSpreadTimer.Reset(time.Second * 5)
 			if strat.xOrder.GetSide() == common.OrderSideBuy {
 				if strat.xLastFilledBuyPrice == nil {
 					strat.xLastFilledBuyPrice = new(float64)
 				}
 				*strat.xLastFilledBuyPrice = strat.xOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second * 5)
+				strat.realisedSpreadTimer.Reset(strat.config.RealisedLogDelay)
 			} else if strat.xOrder.GetSide() == common.OrderSideSell {
 				if strat.xLastFilledSellPrice == nil {
 					strat.xLastFilledSellPrice = new(float64)
 				}
 				*strat.xLastFilledSellPrice = strat.xOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second * 5)
+				strat.realisedSpreadTimer.Reset(strat.config.RealisedLogDelay)
 			}
 		}
 	}
@@ -72,19 +75,19 @@ func (strat *XYStrategy) handleYOrder() {
 			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 			strat.yPositionUpdateTime = time.Time{}
 		} else {
-			logger.Debugf("y order filled %s %s %s size %f price %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice())
+			logger.Debugf("y order %s %s %s ySizeDiff %f yPrice %f yValue %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice(), strat.yOrder.GetFilledPrice()*strat.yOrder.GetFilledSize())
 			if strat.yOrder.GetSide() == common.OrderSideBuy {
 				if strat.yLastFilledBuyPrice == nil {
 					strat.yLastFilledBuyPrice = new(float64)
 				}
 				*strat.yLastFilledBuyPrice = strat.yOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second * 5)
+				strat.realisedSpreadTimer.Reset(strat.config.RealisedLogDelay)
 			} else if strat.yOrder.GetSide() == common.OrderSideSell {
 				if strat.yLastFilledSellPrice == nil {
 					strat.yLastFilledSellPrice = new(float64)
 				}
 				*strat.yLastFilledSellPrice = strat.yOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(time.Second * 5)
+				strat.realisedSpreadTimer.Reset(strat.config.RealisedLogDelay)
 			}
 		}
 	}
@@ -95,24 +98,47 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		if strat.realisedSpread == nil {
 			strat.realisedSpread = new(float64)
 		}
+		strat.realisedOrderCount.Insert(time.Now(), 1.0)
 		*strat.realisedSpread = (*strat.yLastFilledSellPrice - *strat.xLastFilledBuyPrice) / *strat.yLastFilledSellPrice
+		if strat.quantileMiddle != nil {
+			if strat.adjustedRealisedSpread == nil {
+				strat.adjustedRealisedSpread = new(float64)
+			}
+			*strat.adjustedRealisedSpread = *strat.realisedSpread - *strat.quantileMiddle
+		}
 		strat.xLastFilledBuyPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledSellPrice = nil
-		logger.Debugf("%s - %s realised short spread %f", strat.xSymbol, strat.ySymbol, *strat.realisedSpread)
+		if strat.quantileMiddle != nil {
+			logger.Debugf("%s - %s realised short abs spread %f quantile middle %f adjust spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, *strat.quantileMiddle, *strat.realisedSpread-*strat.quantileMiddle)
+		} else {
+			logger.Debugf("%s - %s realised short abs spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
+		}
 	} else if strat.xLastFilledSellPrice != nil && strat.yLastFilledBuyPrice != nil {
 		if strat.realisedSpread == nil {
 			strat.realisedSpread = new(float64)
 		}
+		strat.realisedOrderCount.Insert(time.Now(), 1.0)
 		*strat.realisedSpread = (*strat.yLastFilledBuyPrice - *strat.xLastFilledSellPrice) / *strat.yLastFilledBuyPrice
+		if strat.quantileMiddle != nil {
+			if strat.adjustedRealisedSpread == nil {
+				strat.adjustedRealisedSpread = new(float64)
+			}
+			*strat.adjustedRealisedSpread = *strat.realisedSpread - *strat.quantileMiddle
+		}
 		strat.xLastFilledBuyPrice = nil
 		strat.yLastFilledBuyPrice = nil
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledSellPrice = nil
-		logger.Debugf("%s - %s realised long spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
+		if strat.quantileMiddle != nil {
+			logger.Debugf("%s - %s realised long abs spread %f quantile middle %f adjust spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, *strat.quantileMiddle, *strat.realisedSpread-*strat.quantileMiddle)
+		} else {
+			logger.Debugf("%s - %s realised long abs spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
+		}
 	}
 }
+
 
 func (strat *XYStrategy) handleXOrderError() {
 	if strat.xOrderError.Cancel != nil {
