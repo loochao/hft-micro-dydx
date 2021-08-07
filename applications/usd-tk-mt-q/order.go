@@ -13,7 +13,9 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.ySystemStatus != common.SystemStatusReady {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("updateXOrder %s xSystemStatus %v ySystemStatus %v", strat.xSymbol, strat.xSystemStatus, strat.ySystemStatus)
+			logger.Debugf("%s updateXOrder %s xSystemStatus %v ySystemStatus %v",
+				*strat.config.Name,
+				strat.xSymbol, strat.xSystemStatus, strat.ySystemStatus)
 		}
 		return
 	}
@@ -60,7 +62,9 @@ func (strat *XYStrategy) updateXOrder() {
 	strat.midPrice = (strat.xMidPrice + strat.yMidPrice) * 0.5
 	if math.IsNaN(strat.longBot) && time.Now().Sub(strat.logSilentTime) > 0 {
 		strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-		logger.Debugf("%s enterTarget %f targetWeight %f EnterTargetFactor %f", strat.xSymbol, strat.enterTarget, strat.targetWeight, strat.config.EnterTargetFactor)
+		logger.Debugf("%s %s enterTarget %f targetWeight %f EnterTargetFactor %f",
+			*strat.config.Name,
+			strat.xSymbol, strat.enterTarget, strat.targetWeight, strat.config.EnterTargetFactor)
 	}
 
 	if time.Now().Sub(strat.xOrderSilentTime) < 0 {
@@ -75,7 +79,8 @@ func (strat *XYStrategy) updateXOrder() {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 			logger.Debugf(
-				"%s %s unhedged value %f > 0.8*enterStep %f",
+				"%s %s %s unhedged value %f > 0.8*enterStep %f",
+				*strat.config.Name,
 				strat.xSymbol, strat.ySymbol, math.Abs(strat.xValue+strat.yValue), strat.enterStep*0.8,
 			)
 		}
@@ -149,7 +154,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.lastXActiveTime = strat.xOrderSilentTime
 			logger.Debugf(
 				"%s %s SHORT BOT REDUCE %f < %f, %f < %f QM %f, ES %f EV %f,SIZE %f PRICE %f, X %v Y %v",
-				strat.config.Name,
+				*strat.config.Name,
 				strat.xSymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
@@ -218,7 +223,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.lastXActiveTime = strat.xOrderSilentTime
 			logger.Debugf(
 				"%s %s LONG TOP REDUCE %f > %f, %f > %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
-				strat.config.Name,
+				*strat.config.Name,
 				strat.xSymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
@@ -254,7 +259,8 @@ func (strat *XYStrategy) updateXOrder() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
+					"%s %s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
+					*strat.config.Name,
 					strat.xSymbol,
 					strat.ySymbol,
 					strat.enterValue,
@@ -273,7 +279,7 @@ func (strat *XYStrategy) updateXOrder() {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
 					"%s %s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
-					strat.config.Name,
+					*strat.config.Name,
 					strat.xSymbol, strat.ySymbol,
 					strat.enterValue,
 					strat.spread.ShortLastEnter, strat.shortTop,
@@ -317,7 +323,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.lastXActiveTime = strat.xOrderSilentTime
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f,  ES %f EV %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
-			strat.config.Name,
+			*strat.config.Name,
 			strat.xSymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
@@ -353,7 +359,7 @@ func (strat *XYStrategy) updateXOrder() {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
 					"%s %s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
-					strat.config.Name,
+					*strat.config.Name,
 					strat.xSymbol,
 					strat.ySymbol,
 					strat.enterValue,
@@ -372,7 +378,7 @@ func (strat *XYStrategy) updateXOrder() {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
 					"%s %s %s FAILED LONG BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
-					strat.config.Name,
+					*strat.config.Name,
 					strat.xSymbol, strat.ySymbol,
 					strat.enterValue,
 					strat.spread.LongLastEnter, strat.longBot,
@@ -416,7 +422,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.lastXActiveTime = strat.xOrderSilentTime
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, ES %f EV %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
-			strat.config.Name,
+			*strat.config.Name,
 			strat.xSymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
@@ -499,7 +505,7 @@ hedgeSmall:
 		strat.xPositionUpdateTime = time.Time{}
 		logger.Debugf(
 			"%s %s %s REVERSE HEDGE X BY Y, SIZE X %f Y %f, ORDER SIDE %s SIZE %f",
-			strat.config.Name,
+			*strat.config.Name,
 			strat.xSymbol, strat.ySymbol,
 			strat.xPosition.GetSize()*strat.xMultiplier,
 			strat.yPosition.GetSize()*strat.yMultiplier,
