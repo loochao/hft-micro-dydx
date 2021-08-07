@@ -144,7 +144,7 @@ func (bn *BinanceBusdFuture) StreamBasic(
 					case outputCh <- &nextPos:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("outputCh <- &nextPos failed, ch len %d", len(outputCh))
+							logger.Debugf("outputCh <- &nextPos failed, %s ch len %d", nextPos.Symbol, len(outputCh))
 							logSilentTime = time.Now().Add(time.Minute)
 						}
 					}
@@ -160,7 +160,7 @@ func (bn *BinanceBusdFuture) StreamBasic(
 						case accountCh <- &outputAccount:
 						default:
 							if time.Now().Sub(logSilentTime) > 0 {
-								logger.Debugf("accountCh <- &asset failed, ch len %d", len(accountCh))
+								logger.Debugf("accountCh <- &asset failed, %s ch len %d", outputAccount.Asset, len(accountCh))
 								logSilentTime = time.Now().Add(time.Minute)
 							}
 						}
@@ -175,7 +175,7 @@ func (bn *BinanceBusdFuture) StreamBasic(
 				case ch <- &wsOrder.Order:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- &wsOrder.Order failed, ch len %d", len(ch))
+						logger.Debugf("ch <- &wsOrder.Order failed, %s ch len %d", wsOrder.Order.Symbol, len(ch))
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
@@ -190,7 +190,7 @@ func (bn *BinanceBusdFuture) StreamBasic(
 					case accountCh <- usdtAsset:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("accountCh <- &asset failed, ch len %d", len(accountCh))
+							logger.Debugf("accountCh <- &asset failed, BUSD ch len %d", len(accountCh))
 							logSilentTime = time.Now().Add(time.Minute)
 						}
 					}
@@ -210,7 +210,7 @@ func (bn *BinanceBusdFuture) StreamBasic(
 					case outputCh <- &nextPos:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("outputCh <- &nextPos failed, ch len %d", len(outputCh))
+							logger.Debugf("outputCh <- &nextPos failed, %s ch len %d", nextPos.Symbol, len(outputCh))
 							logSilentTime = time.Now().Add(time.Minute)
 						}
 					}
@@ -660,7 +660,6 @@ func (bn *BinanceBusdFuture) StartSideLoop() {
 	panic("implement me")
 }
 
-
 func (bn *BinanceBusdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	panic("implement me")
 }
@@ -668,7 +667,6 @@ func (bn *BinanceBusdFuture) StreamSystemStatus(ctx context.Context, statusCh ch
 type BinanceBusdFutureWidthDepth5 struct {
 	BinanceBusdFuture
 }
-
 
 type BinanceBusdFutureWidthDepth20 struct {
 	BinanceBusdFuture
@@ -769,4 +767,3 @@ func (bn *BinanceBusdFutureWidthMergedTicker) StreamTicker(ctx context.Context, 
 		}
 	}
 }
-
