@@ -266,7 +266,8 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.xSizeDiff,
 				)
 			}
-			goto hedgeSmall
+			strat.hedgeXPosition()
+			return
 		}
 		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
@@ -281,7 +282,8 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.xSizeDiff,
 				)
 			}
-			goto hedgeSmall
+			strat.hedgeXPosition()
+			return
 		}
 		strat.xPrice = strat.xTicker.GetAskPrice()
 		if strat.xTickSize/strat.xPrice < strat.config.EnterSlippage {
@@ -364,7 +366,8 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.xSizeDiff,
 				)
 			}
-			goto hedgeSmall
+			strat.hedgeXPosition()
+			return
 		}
 		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
@@ -379,7 +382,8 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.xSizeDiff,
 				)
 			}
-			goto hedgeSmall
+			strat.hedgeXPosition()
+			return
 		}
 		strat.xPrice = strat.xTicker.GetBidPrice()
 		//防止TickSize太大
@@ -430,16 +434,24 @@ func (strat *XYStrategy) updateXPosition() {
 
 	}
 
-	//如果lastSpreadEnterTime没有更新，说明没有信号触发，就需要检查对冲的情况
-hedgeSmall:
-	if time.Now().Sub(strat.lastEnterTime) > strat.config.HedgeXTimeout {
+}
 
+func (strat *XYStrategy) hedgeXPosition() {
+	//如果lastSpreadEnterTime没有更新，说明没有信号触发，就需要检查对冲的情况
+	if time.Now().Sub(strat.lastEnterTime) > strat.config.HedgeXTimeout {
 		//如果已经没有信号对冲，重新检查x y的仓位，对冲较小的
 		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) < math.Abs(strat.yPosition.GetSize()*strat.yMultiplier) {
 			//X的size比Y小，不用操作X
 			return
 		}
 		strat.xSizeDiff = -strat.yPosition.GetSize()*strat.yMultiplier/strat.xMultiplier - strat.xPosition.GetSize()
+		//如y下单也加上控制，以限下单太大，造成市场冲击
+		if strat.xSizeDiff*strat.xMultiplier < -strat.maxOrderValue/strat.xTicker.GetBidPrice() {
+			strat.xSizeDiff = -strat.maxOrderValue / strat.xTicker.GetBidPrice() / strat.xMultiplier
+		} else if strat.xSizeDiff*strat.xMultiplier > strat.maxOrderValue/strat.xTicker.GetAskPrice() {
+			strat.xSizeDiff = strat.maxOrderValue / strat.xTicker.GetAskPrice() / strat.xMultiplier
+		}
+
 		strat.xSizeDiff = math.Round(strat.xSizeDiff/strat.xStepSize) * strat.xStepSize
 
 		if strat.isXSpot {
@@ -460,7 +472,6 @@ hedgeSmall:
 				return
 			}
 		}
-
 
 		if strat.xSizeDiff < 0 {
 			strat.orderSide = common.OrderSideSell
