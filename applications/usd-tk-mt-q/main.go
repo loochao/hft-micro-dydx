@@ -520,7 +520,7 @@ mainLoop:
 			break
 		}
 	}
-	logger.Debugf("%s stop waiting 15s", *xyConfig.Name)
+	logger.Debugf("stop waiting 15s")
 	<-time.After(time.Second * 15)
-	logger.Debugf("%s exit 0", *xyConfig.Name)
+	logger.Debugf("exit 0")
 }
