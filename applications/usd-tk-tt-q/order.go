@@ -441,12 +441,27 @@ hedgeSmall:
 		}
 		strat.xSizeDiff = -strat.yPosition.GetSize()*strat.yMultiplier/strat.xMultiplier - strat.xPosition.GetSize()
 		strat.xSizeDiff = math.Round(strat.xSizeDiff/strat.xStepSize) * strat.xStepSize
-		if math.Abs(strat.xSizeDiff) <= strat.xStepSize || math.Abs(strat.xSizeDiff) > math.Abs(strat.xPosition.GetSize()) {
-			return
+
+		if strat.isXSpot {
+			if math.Abs(strat.xSizeDiff) < strat.xStepSize {
+				return
+			} else if strat.xSizeDiff < 0 && -strat.xSizeDiff*strat.xMultiplier*strat.xTicker.GetBidPrice() < 1.2*strat.xMinNotional {
+				return
+			} else if strat.xSizeDiff > 0 && strat.xSizeDiff*strat.xMultiplier*strat.xTicker.GetAskPrice() < 1.2*strat.xMinNotional {
+				return
+			}
+		} else {
+			//期货以close仓位，没有minNotional限制
+			if math.Abs(strat.xSizeDiff) < strat.xStepSize {
+				return
+			} else if strat.xSizeDiff < 0 && strat.xPosition.GetSize() <= 0 && -strat.xSizeDiff*strat.xMultiplier*strat.xTicker.GetBidPrice() < 1.2*strat.xMinNotional {
+				return
+			} else if strat.xSizeDiff > 0 && strat.xPosition.GetSize() >= 0 && strat.xSizeDiff*strat.xMultiplier*strat.xTicker.GetAskPrice() < 1.2*strat.xMinNotional {
+				return
+			}
 		}
-		if math.Abs(strat.xSizeDiff*strat.xMidPrice*strat.xMultiplier) < 1.2*strat.xMinNotional {
-			return
-		}
+
+
 		if strat.xSizeDiff < 0 {
 			strat.orderSide = common.OrderSideSell
 			strat.xSizeDiff = -strat.xSizeDiff
