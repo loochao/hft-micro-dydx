@@ -183,6 +183,9 @@ func main() {
 			_ = gr.Close()
 			_ = file.Close()
 		}
+		sizeTDs[xSymbol] = sizeTD
+		fmt.Printf("  %s: %.0f\n", xSymbol, sizeTD.Quantile(0.8))
+
 		data, err := json.Marshal(timedTDigest)
 		if err != nil {
 			logger.Debugf("%v", err)
@@ -193,8 +196,6 @@ func main() {
 			logger.Debugf("%v", err)
 			continue
 		}
-		sizeTDs[xSymbol] = sizeTD
-		fmt.Printf("  %s: %.0f\n", xSymbol, sizeTD.Quantile(0.8))
 	}
 	fmt.Printf("\n\nxyPairs:\n")
 	for _, xSymbol := range symbols {
