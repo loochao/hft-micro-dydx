@@ -104,6 +104,8 @@ type XYStrategy struct {
 	yTickSize            float64
 	xStepSize            float64
 	yStepSize            float64
+	xMinSize             float64
+	yMinSize             float64
 	xMultiplier          float64
 	yMultiplier          float64
 	xMinNotional         float64

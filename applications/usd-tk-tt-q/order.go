@@ -110,7 +110,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.enterValue = strat.xSizeDiff * strat.midPrice
 		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.xSizeDiff > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
+		if strat.xSizeDiff > 0 && (!strat.isXSpot || (strat.enterValue >= 1.2*strat.xMinNotional && strat.xSizeDiff >= strat.xMinSize)) {
 
 			strat.xPrice = strat.xTicker.GetBidPrice()
 			//防止TickSize太大
@@ -183,7 +183,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.enterValue = strat.xSizeDiff * strat.midPrice
 		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.xSizeDiff > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
+		if strat.xSizeDiff > 0 && (!strat.isXSpot || (strat.enterValue >= 1.2*strat.xMinNotional && strat.xSizeDiff >= strat.xMinSize)) {
 			strat.xPrice = strat.xTicker.GetAskPrice()
 			if strat.xTickSize/strat.xPrice < strat.config.EnterSlippage {
 				strat.xPrice = strat.xPrice * (1.0 + strat.config.EnterSlippage)
@@ -270,7 +270,7 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
+		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional ||  strat.xSizeDiff < strat.xMinSize {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -370,7 +370,7 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional {
+		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional ||   strat.xSizeDiff < strat.xMinSize{
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
