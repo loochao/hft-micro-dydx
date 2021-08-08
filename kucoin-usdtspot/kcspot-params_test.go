@@ -15,4 +15,12 @@ func TestNewOrderParams(t *testing.T) {
 		t.Fatal(err)
 	}
 	logger.Debugf("%s", d)
+	o = NewOrderParam{
+		Price: Float64(62),
+	}
+	d, err = json.Marshal(o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%s", d)
 }

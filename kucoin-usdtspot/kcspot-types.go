@@ -692,16 +692,21 @@ func (f Float64) MarshalJSON() ([]byte, error) {
 	for i := 0; i < len(price); i++ {
 		if price[i] == '.' {
 			dot = i
+			break
 		}
 	}
 	if dot > -1 {
-		for i := len(price) - 1; i > dot; i-- {
+		for i := len(price) - 1; i >= dot; i-- {
 			if price[i] != '0' {
-				logger.Debugf("%v %s", f, price[:i+1])
-				return price[:i+1], nil
+				if i == dot {
+					logger.Debugf("%v %s", f, price[:i])
+					return price[:i], nil
+				}else{
+					logger.Debugf("%v %s", f, price[:i+1])
+					return price[:i+1], nil
+				}
 			}
 		}
 	}
-	logger.Debugf("%v %s", f, price)
 	return price, nil
 }
