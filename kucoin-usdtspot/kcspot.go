@@ -336,7 +336,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					if order.Side != OrderSideBuy {
 						size = -order.MatchSize
 					}
-					logger.Debugf("ORDER %s %s %v POS %f -> %f %v", order.Symbol, order.Type, order.EventTime, pos.Balance, pos.Balance+size, pos.EventTime)
+					logger.Debugf("ORDER %s %s %v MatchSize %f MatchPrice %f POS %f -> %f %v", order.Symbol, order.Type, order.EventTime, order.MatchSize, order.MatchPrice, pos.Balance, pos.Balance+size, pos.EventTime)
 					pos.Balance += size
 					if pos.Balance < 0 {
 						pos.Balance = 0
