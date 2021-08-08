@@ -61,7 +61,6 @@ func (strat *XYStrategy) updateXPosition() {
 		return
 	}
 
-
 	if strat.spread.ShortLastLeave < strat.shortBot &&
 		strat.spread.ShortMedianLeave < strat.shortBot &&
 		strat.spread.ShortLastLeave < strat.spread.ShortMedianLeave &&
@@ -126,7 +125,6 @@ func (strat *XYStrategy) updateXPosition() {
 				time.Now().Sub(strat.yTickerTime),
 			)
 		}
-		return
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
 		strat.spread.LongLastLeave > strat.spread.LongMedianLeave &&
@@ -191,7 +189,6 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.yTicker.GetAskPrice(),
 			)
 		}
-		return
 	} else if !strat.config.ReduceOnly &&
 		!strat.isYSpot &&
 		strat.spread.ShortLastEnter > strat.shortTop &&
@@ -199,6 +196,11 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
 		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
 		strat.xSize > -strat.xStepSize*strat.xMultiplier {
+
+		if strat.xPosition.GetSize() > strat.xStepSize && strat.xPosition.GetPrice() > 0 && strat.xPosition.GetPrice() > strat.xMidPrice {
+			//有多仓，已亏损
+			return
+		}
 
 		strat.targetValue = strat.xAbsValue + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
@@ -289,6 +291,11 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
 		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
 		strat.xSize < strat.xStepSize*strat.xMultiplier {
+
+		if strat.xPosition.GetSize() < -strat.xStepSize && strat.xPosition.GetPrice() > 0 && strat.xPosition.GetPrice() < strat.xMidPrice {
+			//有空仓，已亏损
+			return
+		}
 
 		strat.targetValue = strat.xAbsValue + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
