@@ -20,10 +20,10 @@ func getLogger(prefix string) *log.Logger {
 	}
 }
 
-var debug = getLogger("DEBUG ")
-var info = getLogger("INFO  ")
-var warn = getLogger("WARN  ")
-var err = getLogger("ERROR ")
+var debug = getLogger("D ")
+var info = getLogger("I ")
+var warn = getLogger("W ")
+var err = getLogger("E ")
 var logLevel = os.Getenv("LOG_LEVEL")
 
 func Debugf(format string, v ...interface{}) {

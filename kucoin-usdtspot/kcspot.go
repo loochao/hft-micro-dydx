@@ -130,6 +130,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 	var usdtAccount *Account
 	accountsMap := make(map[string]Account)
 	kcsPriceCh := make(chan float64, 4)
+	matchedOrders := make(map[string]*WSOrder)
 	go k.watchKcsPrice(ctx, kcsPriceCh)
 	var kcsBalance *float64
 	var rebalancedKcsSilentTime = time.Now()
@@ -227,7 +228,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 			}
 		case price := <-kcsPriceCh:
 			//logger.Debugf("kcs price %f %v", price, kcsBalance)
-			if k.settings.AutoAddCommissionDiscountAsset && price > 0{
+			if k.settings.AutoAddCommissionDiscountAsset && price > 0 {
 				if kcsBalance != nil {
 					select {
 					case commissionAssetValueCh <- *kcsBalance * price:
@@ -278,24 +279,86 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 				//logger.Debugf("kcs %f", *kcsBalance)
 			} else {
 				if ch, ok := positionChMap[balance.Currency+"-USDT"]; ok {
-					select {
-					case ch <- &Account{
-						Currency:  balance.Currency,
-						Available: balance.Available,
-						Balance:   balance.Total,
-						Holds:     balance.Hold,
-						EventTime: balance.EventTime,
-						ParseTime: balance.ParseTime,
-					}:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("ch <- &Account{ failed, %s ch len %d", balance.Currency+"-USDT", len(ch))
-							logSilentTime = time.Now().Add(time.Minute)
+					if lastBalance, ok := accountsMap[balance.Currency+"-USDT"]; !ok || balance.EventTime.Sub(lastBalance.EventTime) > 0 {
+						accountsMap[balance.Currency+"-USDT"] = Account{
+							Currency:  balance.Currency,
+							Available: balance.Available,
+							Balance:   balance.Total,
+							Holds:     balance.Hold,
+							EventTime: balance.EventTime,
+							ParseTime: balance.ParseTime,
+						}
+						select {
+						case ch <- &Account{
+							Currency:  balance.Currency,
+							Available: balance.Available,
+							Balance:   balance.Total,
+							Holds:     balance.Hold,
+							EventTime: balance.EventTime,
+							ParseTime: balance.ParseTime,
+						}:
+						default:
+							if time.Now().Sub(logSilentTime) > 0 {
+								logger.Debugf("ch <- &Account{ failed, %s ch len %d", balance.Currency+"-USDT", len(ch))
+								logSilentTime = time.Now().Add(time.Minute)
+							}
 						}
 					}
 				}
 			}
+			break
+
 		case order := <-userWS.OrderCh:
+
+			if order.Status == OrderStatusDone {
+				if oldOrder, ok := matchedOrders[order.ClientOid]; ok {
+					if order.Type == "filled" {
+						order.FilledPrice = oldOrder.FilledPrice
+					}
+					delete(matchedOrders, order.ClientOid)
+				}
+			}
+
+			//滤掉没有价格的事件
+			if order.MatchSize != 0 && order.MatchPrice != 0 {
+				if oldOrder, ok := matchedOrders[order.ClientOid]; ok {
+					if oldOrder.FilledSize+order.MatchSize != 0 {
+						order.FilledPrice = (order.MatchPrice*order.MatchSize + oldOrder.FilledSize*oldOrder.FilledPrice) / (oldOrder.FilledSize + order.MatchSize)
+					} else {
+						order.FilledPrice = order.MatchPrice
+					}
+				} else {
+					order.FilledPrice = order.MatchPrice
+				}
+				matchedOrders[order.ClientOid] = order
+				if pos, ok := accountsMap[order.Symbol]; ok {
+					size := order.MatchSize
+					if order.Side != OrderSideBuy {
+						size = -order.MatchSize
+					}
+					logger.Debugf("ORDER %s %s %v POS %f -> %f %v", order.Symbol, order.Type, order.EventTime, pos.Balance, pos.Balance+size, pos.EventTime)
+					pos.Balance += size
+					if pos.Balance < 0 {
+						pos.Balance = 0
+					}
+					//这儿需要防止和order更新的仓位挨得太近, 重复变更仓位的问题，所以ws的仓位默认需要有一个delay
+					//一分钟内不要更新仓位
+					pos.ParseTime = order.ParseTime.Add(time.Second * 5)
+					pos.EventTime = order.EventTime.Add(time.Second * 5)
+					accountsMap[order.Symbol] = pos
+					if ch, ok := positionChMap[order.Symbol]; ok {
+						select {
+						case ch <- &pos:
+						default:
+							if time.Now().Sub(logSilentTime) > 0 {
+								logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
+								logSilentTime = time.Now().Add(time.Minute)
+							}
+						}
+					}
+				}
+			}
+
 			if ch, ok := orderChMap[order.Symbol]; ok {
 				select {
 				case ch <- order:
@@ -306,6 +369,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					}
 				}
 			}
+			break
 		}
 	}
 }

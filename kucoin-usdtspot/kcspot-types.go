@@ -374,21 +374,25 @@ func (wsCap *WsBalance) UnmarshalJSON(data []byte) error {
 }
 
 type WSOrder struct {
-	Symbol     string    `json:"symbol"`
-	OrderType  string    `json:"orderType"`
-	Side       string    `json:"side"`
-	OrderId    string    `json:"orderId"`
-	Type       string    `json:"type"`
-	OldSize    float64   `json:"oldSize,string"`
-	OrderTime  time.Time `json:"-`
-	Size       float64   `json:"size,string"`
-	FilledSize float64   `json:"filledSize,string"`
-	Price      float64   `json:"price,string"`
-	ClientOid  string    `json:"clientOid"`
-	RemainSize float64   `json:"remainSize,string"`
-	Status     string    `json:"status"`
-	EventTime  time.Time `json:"-"`
-	ParseTime  time.Time `json:"-"`
+	Symbol    string `json:"symbol"`
+	OrderType string `json:"orderType"`
+	Side      string `json:"side"`
+	OrderId   string `json:"orderId"`
+	Type      string `json:"type"`
+	//OldSize    float64   `json:"oldSize,string"`
+	OrderTime   time.Time `json:"-`
+	Size        float64   `json:"size,string"`
+	FilledSize  float64   `json:"filledSize,string"`
+	FilledPrice float64   `json:"-"`
+	MatchPrice  float64   `json:"matchPrice,string"`
+	MatchSize   float64   `json:"matchSize,string"`
+	TradeId     string    `json:"tradeId"`
+	Price       float64   `json:"price,string"`
+	ClientOid   string    `json:"clientOid"`
+	RemainSize  float64   `json:"remainSize,string"`
+	Status      string    `json:"status"`
+	EventTime   time.Time `json:"-"`
+	ParseTime   time.Time `json:"-"`
 }
 
 func (wsOrder *WSOrder) GetSymbol() string {
@@ -408,7 +412,7 @@ func (wsOrder *WSOrder) GetFilledSize() float64 {
 }
 
 func (wsOrder *WSOrder) GetFilledPrice() float64 {
-	return wsOrder.Price
+	return wsOrder.FilledPrice
 }
 
 func (wsOrder *WSOrder) GetSide() common.OrderSide {
@@ -431,12 +435,12 @@ func (wsOrder *WSOrder) GetID() string {
 }
 
 func (wsOrder *WSOrder) GetStatus() common.OrderStatus {
-	switch wsOrder.Status {
-	case OrderStatusOpen:
+	switch wsOrder.Type {
+	case OrderTypeOpen:
 		return common.OrderStatusOpen
-	case OrderStatusMatch:
+	case OrderTypeMatch:
 		return common.OrderStatusFilled
-	case OrderStatusDone:
+	case OrderTypeFilled:
 		return common.OrderStatusFilled
 	default:
 		return common.OrderStatusUnknown
