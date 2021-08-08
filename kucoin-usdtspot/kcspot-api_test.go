@@ -73,7 +73,7 @@ func TestAPI_GetLimits(t *testing.T) {
 		os.Getenv("KCSPOT_KEY"),
 		os.Getenv("KCSPOT_SECRET"),
 		os.Getenv("KCSPOT_PASSPHRASE"),
-		"socks5://127.0.0.1:1080")
+		"socks5://127.0.0.1:1083")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -98,7 +98,7 @@ func TestAPI_GetLimits(t *testing.T) {
 	for _, s := range symbols {
 		if s.QuoteCurrency == "USDT" && s.Market == "USDS" && s.EnableTrading {
 			stepSizes[s.Symbol] = s.BaseIncrement
-			tickSizes[s.Symbol] = s.BaseMinSize
+			tickSizes[s.Symbol] = s.PriceIncrement
 			minSizes[s.Symbol] = s.BaseMinSize
 			maxSizes[s.Symbol] = s.BaseMaxSize
 			minNotionals[s.Symbol] = s.QuoteMinSize
