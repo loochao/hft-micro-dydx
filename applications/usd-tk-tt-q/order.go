@@ -75,6 +75,7 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.xSymbol, strat.ySymbol, math.Abs(strat.xValue+strat.yValue), strat.enterStep*0.8,
 			)
 		}
+		strat.hedgeXPosition()
 		if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 			strat.hedgeYPosition()
 		}

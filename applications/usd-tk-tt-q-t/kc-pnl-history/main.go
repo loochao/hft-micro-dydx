@@ -39,7 +39,7 @@ type Response struct {
 func main() {
 	pnls := map[string]float64{}
 	pnlDetails := map[string][]float64{}
-	contents, err := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q-t/kc-pnl-history/pd03.json")
+	contents, err := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q-t/kc-pnl-history/outputs/kccjl.json")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -57,14 +57,21 @@ func main() {
 			pnlDetails[h.Symbol] = []float64{pnls[h.Symbol]}
 		}
 	}
-	for s, pnl := range pnls {
-		if pnl < 0 {
-			fmt.Printf("%s: %.f %.0f\n", s, pnl, pnlDetails[s])
-		}
+	symbols := make([]string, 0)
+	for s := range pnls {
+		symbols = append(symbols, s)
+	}
+	sort.Strings(symbols)
+	for _, s := range symbols {
+		pnl := pnls[s]
+		//if pnl < 0 {
+			fmt.Printf("%s: %.f %.2f\n", s, pnl, pnlDetails[s])
+		//}
 	}
 	fmt.Printf("\n\n")
 	total := 0.0
-	for s, pnl := range pnls {
+	for _, s := range symbols {
+		pnl := pnls[s]
 		total += pnl
 		fmt.Printf("%s: %.2f\n", s, pnl)
 		if pnl < 0 {
@@ -75,15 +82,16 @@ func main() {
 	fmt.Printf("\n\nTOTAL: %f", total)
 
 	sum := 0.0
-	symbols := make([]string, 0)
 	count := 0
-	for s, pnl := range pnls {
+	for _, s := range symbols {
+		pnl := pnls[s]
 		sum += pnl
-		symbols = append(symbols, s)
 		count += len(pnlDetails[s])
 	}
+	sort.Strings(symbols)
 	mean := sum / float64(len(symbols))
 	meanCount := count/len(symbols)
+
 
 	fmt.Printf("\nsharpeRatios:\n")
 	sharpeRatios := make(map[string]float64)
@@ -108,7 +116,6 @@ func main() {
 		sharpeRatioSum += sharpeRatios[s]
 	}
 
-	sort.Strings(symbols)
 	fmt.Printf("\nMEAN %.2f\n\n", mean)
 	fmt.Printf("\nxyPairs:\n")
 	for _, s := range symbols {
