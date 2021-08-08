@@ -27,8 +27,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xyFundingRate == nil ||
 		strat.quantileMiddle == nil ||
 		strat.fundingRateSettleSilent ||
-		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter ||
-		strat.spread.EventTime.Sub(strat.lastEnterTime) <= 0 {
+		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter {
 		//if time.Now().Sub(strat.logSilentTime) > 0 {
 		//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 		//	logger.Debugf("time.Now().Sub(strat.spread.EventTime) %v", time.Now().Sub(strat.spread.EventTime))
