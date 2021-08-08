@@ -653,7 +653,7 @@ func (k *KucoinUsdtSpot) watchOrder(
 func (k *KucoinUsdtSpot) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParam{}
 	newOrderParam.Symbol = param.Symbol
-	newOrderParam.Size = common.Float64(param.Size)
+	newOrderParam.Size = Float64(param.Size)
 	if param.Side == common.OrderSideBuy {
 		newOrderParam.Side = OrderSideBuy
 	} else {
@@ -674,7 +674,7 @@ func (k *KucoinUsdtSpot) submitOrder(ctx context.Context, param common.NewOrderP
 	}
 	newOrderParam.PostOnly = param.PostOnly
 	if param.Price != 0 {
-		newOrderParam.Price = common.Float64(param.Price)
+		newOrderParam.Price = Float64(param.Price)
 	}
 	newOrderParam.ClientOid = param.ClientID
 	_, err := k.api.SubmitOrder(ctx, newOrderParam)
@@ -722,7 +722,7 @@ func (k *KucoinUsdtSpot) buyKcs(
 		Symbol:    "KCS-USDT",
 		Side:      OrderSideBuy,
 		Type:      OrderTypeMarket,
-		Size:      common.Float64(size),
+		Size:      Float64(size),
 		ClientOid: k.GenerateClientID(),
 	})
 	if err != nil {

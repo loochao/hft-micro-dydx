@@ -683,3 +683,25 @@ func (f FundingRate) GetFundingRate() float64 {
 func (f FundingRate) GetNextFundingTime() time.Time {
 	return time.Time{}
 }
+
+type Float64 float64
+
+func (f Float64) MarshalJSON() ([]byte, error) {
+	price := []byte(fmt.Sprintf("%.8f", f))
+	dot := -1
+	for i := 0; i < len(price); i++ {
+		if price[i] == '.' {
+			dot = i
+		}
+	}
+	if dot > -1 {
+		for i := len(price) - 1; i > dot; i-- {
+			if price[i] != '0' {
+				logger.Debugf("%v %s", f, price[:i+1])
+				return price[:i+1], nil
+			}
+		}
+	}
+	logger.Debugf("%v %s", f, price)
+	return price, nil
+}

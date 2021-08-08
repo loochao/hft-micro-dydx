@@ -2,14 +2,13 @@ package kucoin_usdtspot
 
 import (
 	"encoding/json"
-	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"testing"
 )
 
 func TestNewOrderParams(t *testing.T) {
 	o := NewOrderParam{
-		Price: common.Float64(62.181000000000004),
+		Price: Float64(62.181000000000004),
 	}
 	d, err := json.Marshal(o)
 	if err != nil {

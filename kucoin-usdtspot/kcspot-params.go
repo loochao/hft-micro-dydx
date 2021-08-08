@@ -2,7 +2,6 @@ package kucoin_usdtspot
 
 import (
 	"fmt"
-	"github.com/geometrybase/hft-micro/common"
 	"net/url"
 )
 
@@ -75,17 +74,17 @@ func (cp *AccountParam) ToUrlValues() url.Values {
 }
 
 type NewOrderParam struct {
-	ClientOid   string         `json:"clientOid,omitempty"`
-	Side        string         `json:"side,omitempty"`
-	Symbol      string         `json:"symbol,omitempty"`
-	Type        string         `json:"type,omitempty"`
-	Remark      string         `json:"remark,omitempty"`
-	Price       common.Float64 `json:"price,omitempty"`
-	Size        common.Float64 `json:"size,omitempty"`
-	TimeInForce string         `json:"timeInForce,omitempty"`
-	CancelAfter int            `json:"cancelAfter,omitempty"`
-	PostOnly    bool           `json:"postOnly,omitempty"`
-	Hidden      bool           `json:"hidden,omitempty"`
+	ClientOid   string  `json:"clientOid,omitempty"`
+	Side        string  `json:"side,omitempty"`
+	Symbol      string  `json:"symbol,omitempty"`
+	Type        string  `json:"type,omitempty"`
+	Remark      string  `json:"remark,omitempty"`
+	Price       Float64 `json:"price,omitempty"`
+	Size        Float64 `json:"size,omitempty"`
+	TimeInForce string  `json:"timeInForce,omitempty"`
+	CancelAfter int     `json:"cancelAfter,omitempty"`
+	PostOnly    bool    `json:"postOnly,omitempty"`
+	Hidden      bool    `json:"hidden,omitempty"`
 }
 
 type CancelAllOrdersParam struct {
@@ -97,7 +96,6 @@ func (cp *CancelAllOrdersParam) ToUrlValues() url.Values {
 	values.Set("symbol", cp.Symbol)
 	return values
 }
-
 
 type TickerParam struct {
 	Symbol string
