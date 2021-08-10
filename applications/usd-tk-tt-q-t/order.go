@@ -206,6 +206,10 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 
+		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
+			logger.Debugf("%s 1 + strat.offsetFactor*strat.config.AddTargetOffset %f", strat.xSymbol, 1 - strat.offsetFactor*strat.config.AddTargetOffset)
+		}
+
 		strat.targetValue = strat.xAbsValue + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
 			strat.targetValue = strat.enterTarget
@@ -301,6 +305,10 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset) < strat.xMidPrice {
 			//有空仓，没赚钱
 			return
+		}
+
+		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
+			logger.Debugf("%s 1 - strat.offsetFactor*strat.config.AddTargetOffset %f", strat.xSymbol, 1 - strat.offsetFactor*strat.config.AddTargetOffset)
 		}
 
 		strat.targetValue = strat.xAbsValue + strat.enterStep
