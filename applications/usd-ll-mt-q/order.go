@@ -26,9 +26,9 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
 		strat.quantileMiddle == nil ||
-		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter ||
+		time.Now().Sub(strat.spread.EventTime) > strat.config.TimeToEnter ||
 		strat.fundingRateSettleSilent {
-		if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
+		if time.Now().Sub(strat.spread.EventTime) > strat.config.TimeToCancel {
 			strat.tryCancelXOpenOrder("spread time out")
 		} else if strat.fundingRateSettleSilent {
 			strat.tryCancelXOpenOrder("funding rate silent")
@@ -44,6 +44,11 @@ func (strat *XYStrategy) updateXOrder() {
 	strat.yAbsValue = math.Abs(strat.yValue)
 	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
 	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
+
+	//限制开仓大小在1以内，防止钱变少之后这个值变得超大
+	if strat.offsetFactor > 1.0 {
+		strat.offsetFactor = 1.0
+	}
 
 	if strat.xSize >= 0 {
 		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta + strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
@@ -432,7 +437,7 @@ func (strat *XYStrategy) updateXOrder() {
 }
 
 func (strat *XYStrategy) isXOpenOrderOk() bool {
-	if time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToCancel {
+	if time.Now().Sub(strat.spread.EventTime) > strat.config.TimeToCancel {
 		logger.Debugf("%s CANCEL, SPREAD IS OUT OF DATE", strat.xSymbol)
 		return false
 	}

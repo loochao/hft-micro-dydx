@@ -49,22 +49,22 @@ type XYStrategy struct {
 
 	xLeverage float64
 
-	xAccount             common.Balance
-	xPosition            common.Position
-	xOrderSilentTime     time.Time
-	xFundingRate         common.FundingRate
-	yFundingRate         common.FundingRate
-	xyFundingRate        *float64
+	xAccount         common.Balance
+	xPosition        common.Position
+	xOrderSilentTime time.Time
+	xFundingRate     common.FundingRate
+	yFundingRate     common.FundingRate
+	xyFundingRate    *float64
 
 	enterStep    float64
 	enterTarget  float64
 	usdAvailable float64
 
-	logSilentTime       time.Time
-	spreadWalkTimer     *time.Timer
-	saveTimer           *time.Timer
-	spreadTime          time.Time
-	spread              *common.XYSpread
+	logSilentTime   time.Time
+	spreadWalkTimer *time.Timer
+	saveTimer       *time.Timer
+	spreadTime      time.Time
+	spread          *common.XYSpread
 
 	shortEnterTimedMedian *common.TimedMedian
 	longEnterTimedMedian  *common.TimedMedian
@@ -82,10 +82,10 @@ type XYStrategy struct {
 	spreadReport            *common.XYSpreadReport
 	stateOutputCh           chan XYStrategy
 
-	xTickSize            float64
-	xStepSize            float64
-	xMultiplier          float64
-	xMinNotional         float64
+	xTickSize    float64
+	xStepSize    float64
+	xMultiplier  float64
+	xMinNotional float64
 
 	error error
 
@@ -97,8 +97,10 @@ type XYStrategy struct {
 	offsetFactor           float64
 	offsetStep             float64
 	shortTop               float64
+	shortHalfTop           float64
 	shortBot               float64
 	longBot                float64
+	longHalfBot            float64
 	longTop                float64
 	xSize                  float64
 	xValue                 float64
@@ -136,4 +138,3 @@ type XYStrategy struct {
 	quantileFile           *os.File
 	quantileMiddle         *float64
 }
-
