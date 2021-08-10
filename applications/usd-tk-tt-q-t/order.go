@@ -205,7 +205,6 @@ func (strat *XYStrategy) updateXPosition() {
 		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
 		strat.xSize > -strat.xStepSize*strat.xMultiplier {
 
-
 		if strat.xPosition.GetSize() > strat.xStepSize &&
 			strat.xPosition.GetPrice() > 0 &&
 			strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset) > strat.xMidPrice {
@@ -436,19 +435,6 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 
-		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
-			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			if strat.xPosition.GetSize() > strat.xStepSize &&
-				strat.xPosition.GetPrice() > 0 {
-				logger.Debugf(
-					"SHORT HALF TOP %s 1 + strat.offsetFactor*strat.config.AddTargetOffset %f MinPrice %f MidPrice %f",
-					strat.xSymbol,
-					1-strat.offsetFactor*strat.config.AddTargetOffset,
-					strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset),
-					strat.xMidPrice,
-				)
-			}
-		}
 
 		strat.targetValue = strat.xAbsValue + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
@@ -498,6 +484,13 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.price = strat.price * (1.0 + strat.config.EnterSlippage)
 			strat.price = math.Ceil(strat.price/strat.xTickSize) * strat.xTickSize
 		}
+		logger.Debugf(
+			"SHORT HALF TOP %s 1 + strat.offsetFactor*strat.config.AddTargetOffset %f MinPrice %f MidPrice %f",
+			strat.xSymbol,
+			1-strat.offsetFactor*strat.config.AddTargetOffset,
+			strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset),
+			strat.xMidPrice,
+		)
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideBuy,
@@ -547,18 +540,6 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 
-		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
-			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			if strat.xPosition.GetSize() < -strat.xStepSize &&
-				strat.xPosition.GetPrice() > 0 {
-				logger.Debugf("LONG HALF BOT %s 1 - strat.offsetFactor*strat.config.AddTargetOffset %f MaxPrice %f MidPrice %f",
-					strat.xSymbol,
-					1-strat.offsetFactor*strat.config.AddTargetOffset,
-					strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset),
-					strat.xMidPrice,
-				)
-			}
-		}
 
 		strat.targetValue = strat.xAbsValue + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
@@ -609,6 +590,12 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.price = strat.price * (1.0 - strat.config.EnterSlippage)
 			strat.price = math.Floor(strat.price/strat.xTickSize) * strat.xTickSize
 		}
+		logger.Debugf("LONG HALF BOT %s 1 - strat.offsetFactor*strat.config.AddTargetOffset %f MaxPrice %f MidPrice %f",
+			strat.xSymbol,
+			1-strat.offsetFactor*strat.config.AddTargetOffset,
+			strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset),
+			strat.xMidPrice,
+		)
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideSell,

@@ -19,9 +19,9 @@ git push origin "usd-tk-tt-q-t.$dt" --force
 
 chmod 755 "./dist/usd-tk-tt-q-t.amd64.$dt"
 
-echo "hk07"
-rsync -avx --progress "./dist/usd-tk-tt-q-t.amd64.$dt" hk07:/usr/local/bin/
+echo "" && echo "" && echo "arm1"
+rsync -avx --progress "./dist/usd-tk-tt-q-t.amd64.$dt" arm1:/usr/local/bin/
 
-echo "hk06"
-ssh hk07 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q-t.amd64.$dt hk06:/usr/local/bin/"
+echo "" && echo "" && echo "tk03"
+ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q-t.amd64.$dt tk03:/usr/local/bin/"
 
