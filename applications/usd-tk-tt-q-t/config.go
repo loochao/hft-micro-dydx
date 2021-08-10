@@ -59,9 +59,9 @@ type Config struct {
 	EnterFreePct      float64            `yaml:"enterFreePct"`
 	BestSizeFactor    float64            `yaml:"bestSizeFactor"`
 	EnterSlippage     float64            `yaml:"enterSlippage"`
-	AddOffsetStep     float64            `yaml:"addOffsetStep"`
 	EnterMinimalStep  float64            `yaml:"enterMinimalStep"`
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
+	AddTargetOffset    float64            `yaml:"addTargetOffset"`
 	StartValues       map[string]float64 `yaml:"startValues"`
 
 	OrderTimeout      time.Duration           `yaml:"orderTimeout"`
