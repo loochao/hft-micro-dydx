@@ -59,16 +59,17 @@ type Config struct {
 	EnterFreePct      float64            `yaml:"enterFreePct"`
 	BestSizeFactor    float64            `yaml:"bestSizeFactor"`
 	EnterSlippage     float64            `yaml:"enterSlippage"`
+	AddOffsetStep     float64            `yaml:"addOffsetStep"`
 	EnterMinimalStep  float64            `yaml:"enterMinimalStep"`
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
 	StartValues       map[string]float64 `yaml:"startValues"`
 
-	OrderTimeout           time.Duration           `yaml:"orderTimeout"`
-	XOrderSilent           time.Duration           `yaml:"xOrderSilent"`
-	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
+	OrderTimeout      time.Duration           `yaml:"orderTimeout"`
+	XOrderSilent      time.Duration           `yaml:"xOrderSilent"`
+	XOrderTimeInForce common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
 
-	RestartSilent          time.Duration           `yaml:"restartSilent"`
-	RestartInterval        time.Duration           `yaml:"restartInterval"`
+	RestartSilent   time.Duration `yaml:"restartSilent"`
+	RestartInterval time.Duration `yaml:"restartInterval"`
 
 	XYPairs        map[string]string  `yaml:"xyPairs"`
 	TargetWeights  map[string]float64 `yaml:"targetWeights,omitempty"`

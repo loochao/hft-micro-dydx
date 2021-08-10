@@ -36,9 +36,11 @@ func (strat *XYStrategy) updateXPosition() {
 	strat.xSize = strat.xPosition.GetSize() * strat.xMultiplier
 	strat.xValue = strat.xSize * strat.xMidPrice
 	strat.xAbsValue = math.Abs(strat.xValue)
-	strat.offsetFactor = strat.xAbsValue * 0.5 / strat.enterTarget
+	strat.offsetFactor = strat.xAbsValue / strat.enterTarget
 	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
-
+	if strat.offsetFactor > 1 {
+		strat.offsetFactor = 1
+	}
 	if strat.xSize >= 0 {
 		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta + strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
 		strat.shortBot = *strat.quantileMiddle + strat.config.ShortExitDelta + strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
@@ -197,7 +199,9 @@ func (strat *XYStrategy) updateXPosition() {
 		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
 		strat.xSize > -strat.xStepSize*strat.xMultiplier {
 
-		if strat.xPosition.GetSize() > strat.xStepSize && strat.xPosition.GetPrice() > 0 && strat.xPosition.GetPrice() > strat.xMidPrice {
+		if strat.xPosition.GetSize() > strat.xStepSize &&
+			strat.xPosition.GetPrice() > 0 &&
+			strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddOffsetStep) > strat.xMidPrice {
 			//有多仓，已亏损
 			return
 		}
@@ -292,7 +296,9 @@ func (strat *XYStrategy) updateXPosition() {
 		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
 		strat.xSize < strat.xStepSize*strat.xMultiplier {
 
-		if strat.xPosition.GetSize() < -strat.xStepSize && strat.xPosition.GetPrice() > 0 && strat.xPosition.GetPrice() < strat.xMidPrice {
+		if strat.xPosition.GetSize() < -strat.xStepSize &&
+			strat.xPosition.GetPrice() > 0 &&
+			strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddOffsetStep) < strat.xMidPrice {
 			//有空仓，已亏损
 			return
 		}

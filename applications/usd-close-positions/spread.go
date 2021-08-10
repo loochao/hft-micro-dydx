@@ -1,0 +1,14 @@
+package main
+
+func (strat *XYStrategy) handleXTicker() {
+	if strat.xTicker == strat.xNextTicker {
+		return
+	}
+	if strat.xNextTicker.GetTime().Sub(strat.xTickerTime) < 0 {
+		return
+	}
+	strat.xTicker = strat.xNextTicker
+	strat.xMidPrice = 0.5 * (strat.xTicker.GetAskPrice() + strat.xTicker.GetBidPrice())
+	strat.xTickerTime = strat.xTicker.GetTime()
+}
+
