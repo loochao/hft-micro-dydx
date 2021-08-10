@@ -199,15 +199,16 @@ func (strat *XYStrategy) updateXPosition() {
 		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
 		strat.xSize > -strat.xStepSize*strat.xMultiplier {
 
+		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
+			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+			logger.Debugf("SHORT %s 1 + strat.offsetFactor*strat.config.AddTargetOffset %f", strat.xSymbol, 1 - strat.offsetFactor*strat.config.AddTargetOffset)
+		}
+
 		if strat.xPosition.GetSize() > strat.xStepSize &&
 			strat.xPosition.GetPrice() > 0 &&
 			strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset) > strat.xMidPrice {
 			//有多仓，已亏损
 			return
-		}
-
-		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
-			logger.Debugf("%s 1 + strat.offsetFactor*strat.config.AddTargetOffset %f", strat.xSymbol, 1 - strat.offsetFactor*strat.config.AddTargetOffset)
 		}
 
 		strat.targetValue = strat.xAbsValue + strat.enterStep
@@ -300,15 +301,17 @@ func (strat *XYStrategy) updateXPosition() {
 		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
 		strat.xSize < strat.xStepSize*strat.xMultiplier {
 
+
+		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
+			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+			logger.Debugf("LONG %s 1 - strat.offsetFactor*strat.config.AddTargetOffset %f", strat.xSymbol, 1 - strat.offsetFactor*strat.config.AddTargetOffset)
+		}
+
 		if strat.xPosition.GetSize() < -strat.xStepSize &&
 			strat.xPosition.GetPrice() > 0 &&
 			strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset) < strat.xMidPrice {
 			//有空仓，没赚钱
 			return
-		}
-
-		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
-			logger.Debugf("%s 1 - strat.offsetFactor*strat.config.AddTargetOffset %f", strat.xSymbol, 1 - strat.offsetFactor*strat.config.AddTargetOffset)
 		}
 
 		strat.targetValue = strat.xAbsValue + strat.enterStep
