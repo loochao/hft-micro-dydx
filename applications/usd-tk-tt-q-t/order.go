@@ -201,7 +201,13 @@ func (strat *XYStrategy) updateXPosition() {
 
 		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("SHORT %s 1 + strat.offsetFactor*strat.config.AddTargetOffset %f", strat.xSymbol, 1 - strat.offsetFactor*strat.config.AddTargetOffset)
+			logger.Debugf(
+				"SHORT %s 1 + strat.offsetFactor*strat.config.AddTargetOffset %f MaxPrice %f MidPrice %f",
+				strat.xSymbol,
+				1-strat.offsetFactor*strat.config.AddTargetOffset,
+				strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset),
+				strat.xMidPrice,
+			)
 		}
 
 		if strat.xPosition.GetSize() > strat.xStepSize &&
@@ -301,10 +307,14 @@ func (strat *XYStrategy) updateXPosition() {
 		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
 		strat.xSize < strat.xStepSize*strat.xMultiplier {
 
-
 		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("LONG %s 1 - strat.offsetFactor*strat.config.AddTargetOffset %f", strat.xSymbol, 1 - strat.offsetFactor*strat.config.AddTargetOffset)
+			logger.Debugf("LONG %s 1 - strat.offsetFactor*strat.config.AddTargetOffset %f MinPrice %f MidPrice %f",
+				strat.xSymbol,
+				1-strat.offsetFactor*strat.config.AddTargetOffset,
+				strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset),
+				strat.xMidPrice,
+			)
 		}
 
 		if strat.xPosition.GetSize() < -strat.xStepSize &&
