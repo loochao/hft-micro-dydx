@@ -201,7 +201,7 @@ func (strat *XYStrategy) updateXPosition() {
 
 		if strat.xPosition.GetSize() > strat.xStepSize &&
 			strat.xPosition.GetPrice() > 0 &&
-			strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddOffsetStep) > strat.xMidPrice {
+			strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset) > strat.xMidPrice {
 			//有多仓，已亏损
 			return
 		}
@@ -298,7 +298,7 @@ func (strat *XYStrategy) updateXPosition() {
 
 		if strat.xPosition.GetSize() < -strat.xStepSize &&
 			strat.xPosition.GetPrice() > 0 &&
-			strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddOffsetStep) < strat.xMidPrice {
+			strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset) < strat.xMidPrice {
 			//有空仓，没赚钱
 			return
 		}
