@@ -27,7 +27,17 @@ func (strat *XYStrategy) updatePosition() {
 		strat.yAccount == nil {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("updatePosition xSystemStatus %v ySystemStatus %v", strat.xSystemStatus, strat.ySystemStatus)
+			logger.Debugf("%s %v %v %v %v %v %v %v %v",
+				strat.xSymbol,
+				time.Now().Sub(strat.xPositionUpdateTime) > strat.config.BalancePositionMaxAge,
+				time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge,
+				strat.xTicker == nil,
+				strat.yTicker == nil,
+				strat.xPosition == nil,
+				strat.yPosition == nil,
+				strat.xAccount == nil,
+				strat.yAccount == nil,
+			)
 		}
 		return
 	}

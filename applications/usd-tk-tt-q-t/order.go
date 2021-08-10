@@ -201,19 +201,22 @@ func (strat *XYStrategy) updateXPosition() {
 
 		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf(
-				"SHORT %s 1 + strat.offsetFactor*strat.config.AddTargetOffset %f MaxPrice %f MidPrice %f",
-				strat.xSymbol,
-				1-strat.offsetFactor*strat.config.AddTargetOffset,
-				strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset),
-				strat.xMidPrice,
-			)
+			if strat.xPosition.GetSize() > strat.xStepSize &&
+				strat.xPosition.GetPrice() > 0 {
+				logger.Debugf(
+					"SHORT %s 1 + strat.offsetFactor*strat.config.AddTargetOffset %f MinPrice %f MidPrice %f",
+					strat.xSymbol,
+					1-strat.offsetFactor*strat.config.AddTargetOffset,
+					strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset),
+					strat.xMidPrice,
+				)
+			}
 		}
 
 		if strat.xPosition.GetSize() > strat.xStepSize &&
 			strat.xPosition.GetPrice() > 0 &&
 			strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset) > strat.xMidPrice {
-			//有多仓，已亏损
+			//有多仓，没赚钱
 			return
 		}
 
@@ -309,12 +312,15 @@ func (strat *XYStrategy) updateXPosition() {
 
 		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("LONG %s 1 - strat.offsetFactor*strat.config.AddTargetOffset %f MinPrice %f MidPrice %f",
-				strat.xSymbol,
-				1-strat.offsetFactor*strat.config.AddTargetOffset,
-				strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset),
-				strat.xMidPrice,
-			)
+			if strat.xPosition.GetSize() < -strat.xStepSize &&
+				strat.xPosition.GetPrice() > 0 {
+				logger.Debugf("LONG %s 1 - strat.offsetFactor*strat.config.AddTargetOffset %f MaxPrice %f MidPrice %f",
+					strat.xSymbol,
+					1-strat.offsetFactor*strat.config.AddTargetOffset,
+					strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset),
+					strat.xMidPrice,
+				)
+			}
 		}
 
 		if strat.xPosition.GetSize() < -strat.xStepSize &&

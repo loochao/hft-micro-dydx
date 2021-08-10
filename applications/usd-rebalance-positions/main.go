@@ -10,6 +10,7 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
 	kcut "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
+	kcus "github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	okut "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"gopkg.in/yaml.v2"
@@ -105,6 +106,9 @@ func main() {
 	case "binanceUsdcSpotWithMergedTicker":
 		xExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
 		break
+	case "kucoinUsdtSpotWithMergedTicker":
+		xExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
+		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -142,6 +146,9 @@ func main() {
 		break
 	case "binanceUsdcSpotWithMergedTicker":
 		yExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
+		break
+	case "kucoinUsdtSpotWithMergedTicker":
+		yExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
 		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
@@ -376,6 +383,7 @@ mainLoop:
 		case _ = <-yCommissionAssetValueCh:
 			break
 		case account := <-xAccountCh:
+			//logger.Debugf("xAccount %v", account)
 			if xAccount == account {
 				logger.Debugf("bad xAccount == account pass same pointer")
 			}
@@ -391,6 +399,7 @@ mainLoop:
 			}
 			break
 		case account := <-yAccountCh:
+			//logger.Debugf("yAccount %v", account)
 			if yAccount == account {
 				logger.Debugf("bad yAccount == account pass same pointer")
 			}
