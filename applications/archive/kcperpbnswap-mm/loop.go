@@ -294,7 +294,7 @@ func updateMakerNewOrders() {
 			}
 		} else if spread.ShortLastEnter > quantile.ShortTop &&
 			spread.ShortMedianEnter > quantile.ShortTop &&
-			//fundingRate > *mtConfig.MinimalEnterFundingRate &&
+			//fundingRate > *mtConfig.MaximalHoldFundingRate &&
 			makerPosition.CurrentQty >= 0 {
 			makerSize := makerPosition.CurrentQty * makerMultiplier
 			price := math.Floor(makerDepth.MidPrice/makerTickSize) * makerTickSize
@@ -390,7 +390,7 @@ func updateMakerNewOrders() {
 			mtLimitHedgeTimeouts[takerSymbol] = time.Now().Add(*mtConfig.HedgeTimeout)
 		} else if spread.LongLastEnter < quantile.LongBot &&
 			spread.LongMedianEnter < quantile.LongBot &&
-			//fundingRate < -*mtConfig.MinimalEnterFundingRate &&
+			//fundingRate < -*mtConfig.MaximalHoldFundingRate &&
 			makerPosition.CurrentQty <= 0 {
 
 			makerSize := -makerPosition.CurrentQty * makerMultiplier

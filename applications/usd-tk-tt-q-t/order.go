@@ -66,17 +66,137 @@ func (strat *XYStrategy) updateXPosition() {
 	if time.Now().Sub(strat.xOrderSilentTime) < 0 {
 		return
 	}
+	if math.Abs(*strat.xyFundingRate) > strat.config.MaximalHoldFundingRate ||
+		math.Abs(strat.xFundingRate.GetFundingRate()) > strat.config.MaximalHoldFundingRate ||
+		math.Abs(strat.yFundingRate.GetFundingRate()) > strat.config.MaximalHoldFundingRate {
 
-	if strat.spread.ShortLastLeave < strat.shortBot &&
+		if strat.xSize >= strat.xStepSize*strat.xMultiplier &&
+			strat.xSize*strat.xTicker.GetBidPrice()*strat.xMultiplier > 1.2*strat.xMinNotional {
+			//有多仓
+
+			strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), strat.xAbsValue)
+			if strat.enterValue > strat.maxOrderValue {
+				strat.enterValue = strat.maxOrderValue
+			}
+			strat.size = strat.enterValue / strat.midPrice
+
+			//限开仓大小限制到best bid ask size
+			strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor*2.0, strat.size)
+
+			strat.enterValue = strat.size * strat.midPrice
+			if strat.xAbsValue-strat.enterValue < strat.xStepSize*1.005 ||
+				strat.size > strat.xSize {
+				//两种情况都把x全平
+				strat.size = strat.xSize
+			}
+			strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
+			if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
+
+				strat.price = strat.xTicker.GetBidPrice()
+				//防止TickSize太大
+				if strat.xTickSize/strat.price < strat.config.EnterSlippage*2.0 {
+					strat.price = strat.price * (1.0 - strat.config.EnterSlippage*2.0)
+					strat.price = math.Floor(strat.price/strat.xTickSize) * strat.xTickSize
+				}
+				strat.xNewOrderParam = common.NewOrderParam{
+					Symbol:      strat.xSymbol,
+					Side:        common.OrderSideSell,
+					Type:        common.OrderTypeLimit,
+					Price:       strat.price,
+					TimeInForce: strat.config.XOrderTimeInForce,
+					Size:        strat.size,
+					PostOnly:    false,
+					ReduceOnly:  true,
+					ClientID:    strat.xExchange.GenerateClientID(),
+				}
+				if !strat.config.DryRun {
+					select {
+					case strat.xOrderRequestCh <- common.OrderRequest{
+						New: &strat.xNewOrderParam,
+					}:
+					}
+				}
+				strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+				strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
+				logger.Debugf(
+					"%s %s FR CLOSE XY %f X %f Y %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
+					strat.xSymbol, strat.ySymbol,
+					*strat.xyFundingRate,
+					strat.xFundingRate.GetFundingRate(),
+					strat.yFundingRate.GetFundingRate(),
+					strat.price,
+					strat.size,
+					time.Now().Sub(strat.xTickerTime),
+					time.Now().Sub(strat.yTickerTime),
+				)
+			}
+
+		} else if strat.xSize <= -strat.xStepSize*strat.xMultiplier {
+			//有空仓
+
+			strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), strat.xAbsValue)
+			if strat.enterValue > strat.maxOrderValue {
+				strat.enterValue = strat.maxOrderValue
+			}
+			strat.size = strat.enterValue / strat.midPrice
+			//限开仓大小限制到best bid ask size
+			strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor*2.0, strat.size)
+
+			strat.enterValue = strat.size * strat.midPrice
+			if strat.xAbsValue-strat.enterValue < strat.xStepSize*1.005 ||
+				strat.size > -strat.xSize {
+				strat.size = -strat.xSize
+			}
+			strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
+			if strat.size > 0 && (!strat.isXSpot || strat.enterValue > 1.2*strat.xMinNotional) {
+				strat.price = strat.xTicker.GetAskPrice()
+				if strat.xTickSize/strat.price < strat.config.EnterSlippage*2.0 {
+					strat.price = strat.price * (1.0 + strat.config.EnterSlippage*2.0)
+					strat.price = math.Ceil(strat.price/strat.xTickSize) * strat.xTickSize
+				}
+				strat.xNewOrderParam = common.NewOrderParam{
+					Symbol:      strat.xSymbol,
+					Side:        common.OrderSideBuy,
+					Type:        common.OrderTypeLimit,
+					Price:       strat.price,
+					TimeInForce: strat.config.XOrderTimeInForce,
+					Size:        strat.size,
+					PostOnly:    false,
+					ReduceOnly:  true,
+					ClientID:    strat.xExchange.GenerateClientID(),
+				}
+				if !strat.config.DryRun {
+					select {
+					case strat.xOrderRequestCh <- common.OrderRequest{
+						New: &strat.xNewOrderParam,
+					}:
+					}
+				}
+				strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+				strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
+				logger.Debugf(
+					"%s %s FR CLOSE XY %f X %f Y %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
+					strat.xSymbol, strat.ySymbol,
+					*strat.xyFundingRate,
+					strat.xFundingRate.GetFundingRate(),
+					strat.yFundingRate.GetFundingRate(),
+					strat.price,
+					strat.size,
+					time.Now().Sub(strat.xTickerTime),
+					time.Now().Sub(strat.yTickerTime),
+				)
+			}
+		}
+
+		return
+
+	} else if strat.spread.ShortLastLeave < strat.shortBot &&
 		strat.spread.ShortMedianLeave < strat.shortBot &&
 		strat.spread.ShortLastLeave < strat.spread.ShortMedianLeave &&
-		*strat.xyFundingRate < strat.config.MinimalKeepFundingRate &&
 		strat.xSize >= strat.xStepSize*strat.xMultiplier &&
 		strat.xSize*strat.xTicker.GetBidPrice()*strat.xMultiplier > 1.2*strat.xMinNotional {
+
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), strat.xAbsValue)
-		if *strat.xyFundingRate > strat.config.MinimalKeepFundingRate*0.5 {
-			strat.enterValue = math.Min(math.Max(2*strat.enterStep, strat.xAbsValue*0.25), strat.xAbsValue)
-		}
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
 		}
@@ -135,13 +255,9 @@ func (strat *XYStrategy) updateXPosition() {
 	} else if strat.spread.LongLastLeave > strat.longTop &&
 		strat.spread.LongMedianLeave > strat.longTop &&
 		strat.spread.LongLastLeave > strat.spread.LongMedianLeave &&
-		*strat.xyFundingRate > -strat.config.MinimalKeepFundingRate &&
 		strat.xSize <= -strat.xStepSize*strat.xMultiplier {
 
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), strat.xAbsValue)
-		if *strat.xyFundingRate < -strat.config.MinimalKeepFundingRate*0.5 {
-			strat.enterValue = math.Min(math.Max(2*strat.enterStep, strat.xAbsValue*0.25), strat.xAbsValue)
-		}
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
 		}
@@ -202,7 +318,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.ShortLastEnter > strat.shortTop &&
 		strat.spread.ShortMedianEnter > strat.shortTop &&
 		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
-		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
+		*strat.xyFundingRate > strat.config.MaximalHoldFundingRate &&
 		strat.xSize > -strat.xStepSize*strat.xMultiplier {
 
 		if strat.xPosition.GetSize() > strat.xStepSize &&
@@ -314,7 +430,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.LongLastEnter < strat.longBot &&
 		strat.spread.LongMedianEnter < strat.longBot &&
 		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
-		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
+		*strat.xyFundingRate < -strat.config.MaximalHoldFundingRate &&
 		strat.xSize < strat.xStepSize*strat.xMultiplier {
 
 		if strat.xPosition.GetSize() < -strat.xStepSize &&
@@ -426,7 +542,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.ShortLastEnter > strat.shortHalfTop &&
 		strat.spread.ShortMedianEnter > strat.shortHalfTop &&
 		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
-		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
+		*strat.xyFundingRate > strat.config.MaximalHoldFundingRate &&
 		strat.xSize > strat.xStepSize*strat.xMultiplier {
 		//盈利加多X
 
@@ -434,7 +550,6 @@ func (strat *XYStrategy) updateXPosition() {
 			//有多仓，没赚钱
 			return
 		}
-
 
 		strat.targetValue = strat.xAbsValue + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
@@ -530,7 +645,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.LongLastEnter < strat.longHalfBot &&
 		strat.spread.LongMedianEnter < strat.longHalfBot &&
 		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
-		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
+		*strat.xyFundingRate < -strat.config.MaximalHoldFundingRate &&
 		strat.xSize < -strat.xStepSize*strat.xMultiplier {
 
 		//盈利加空X
@@ -539,7 +654,6 @@ func (strat *XYStrategy) updateXPosition() {
 			//有空仓，没赚钱
 			return
 		}
-
 
 		strat.targetValue = strat.xAbsValue + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
