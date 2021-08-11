@@ -318,7 +318,6 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.ShortLastEnter > strat.shortTop &&
 		strat.spread.ShortMedianEnter > strat.shortTop &&
 		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
-		*strat.xyFundingRate > strat.config.MaximalHoldFundingRate &&
 		strat.xSize > -strat.xStepSize*strat.xMultiplier {
 
 		if strat.xPosition.GetSize() > strat.xStepSize &&
@@ -430,7 +429,6 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.LongLastEnter < strat.longBot &&
 		strat.spread.LongMedianEnter < strat.longBot &&
 		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
-		*strat.xyFundingRate < -strat.config.MaximalHoldFundingRate &&
 		strat.xSize < strat.xStepSize*strat.xMultiplier {
 
 		if strat.xPosition.GetSize() < -strat.xStepSize &&
@@ -542,7 +540,6 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.ShortLastEnter > strat.shortHalfTop &&
 		strat.spread.ShortMedianEnter > strat.shortHalfTop &&
 		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
-		*strat.xyFundingRate > strat.config.MaximalHoldFundingRate &&
 		strat.xSize > strat.xStepSize*strat.xMultiplier {
 		//盈利加多X
 
@@ -645,7 +642,6 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.LongLastEnter < strat.longHalfBot &&
 		strat.spread.LongMedianEnter < strat.longHalfBot &&
 		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
-		*strat.xyFundingRate < -strat.config.MaximalHoldFundingRate &&
 		strat.xSize < -strat.xStepSize*strat.xMultiplier {
 
 		//盈利加空X
