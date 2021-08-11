@@ -56,6 +56,12 @@ type Config struct {
 	BatchSize         int           `yaml:"batchSize"`
 
 	StartValue        float64            `yaml:"startValue"`
+
+	MinimalXFree      float64            `yaml:"minimalXFree"`
+	MinimalYFree      float64            `yaml:"minimalYFree"`
+	MaximalXPosValue  float64            `yaml:"maximalXPosValue"`
+	MaximalYPosValue  float64            `yaml:"maximalYPosValue"`
+
 	EnterFreePct      float64            `yaml:"enterFreePct"`
 	BestSizeFactor    float64            `yaml:"bestSizeFactor"`
 	EnterSlippage     float64            `yaml:"enterSlippage"`

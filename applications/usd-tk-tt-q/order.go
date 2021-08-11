@@ -81,8 +81,7 @@ func (strat *XYStrategy) updateXPosition() {
 		return
 	}
 
-	if strat.spread.ShortLastLeave < strat.shortBot &&
-		strat.spread.ShortMedianLeave < strat.shortBot &&
+	if strat.spread.ShortMedianLeave < strat.shortBot &&
 		strat.spread.ShortLastLeave < strat.spread.ShortMedianLeave &&
 		*strat.xyFundingRate < strat.config.MinimalKeepFundingRate &&
 		strat.xSize >= strat.xStepSize*strat.xMultiplier {
@@ -156,8 +155,7 @@ func (strat *XYStrategy) updateXPosition() {
 				time.Now().Sub(strat.yTickerTime),
 			)
 		}
-	} else if strat.spread.LongLastLeave > strat.longTop &&
-		strat.spread.LongMedianLeave > strat.longTop &&
+	} else if strat.spread.LongMedianLeave > strat.longTop &&
 		strat.spread.LongLastLeave > strat.spread.LongMedianLeave &&
 		*strat.xyFundingRate > -strat.config.MinimalKeepFundingRate &&
 		strat.xSize <= -strat.xStepSize*strat.xMultiplier {
@@ -232,11 +230,14 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 	} else if !strat.config.ReduceOnly &&
 		!strat.isYSpot &&
-		strat.spread.ShortLastEnter > strat.shortTop &&
 		strat.spread.ShortMedianEnter > strat.shortTop &&
 		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
 		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
-		strat.xSize > -strat.xStepSize*strat.xMultiplier {
+		strat.xSize > -strat.xStepSize*strat.xMultiplier &&
+		strat.xAccount.GetFree() > strat.config.MinimalXFree &&
+		strat.yAccount.GetFree() > strat.config.MinimalYFree &&
+		strat.xAbsValue < strat.config.MaximalXPosValue &&
+		strat.yAbsValue < strat.config.MaximalYPosValue {
 
 		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
@@ -270,7 +271,7 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional ||  strat.xSizeDiff < strat.xMinSize {
+		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional || strat.xSizeDiff < strat.xMinSize {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
@@ -332,11 +333,14 @@ func (strat *XYStrategy) updateXPosition() {
 		)
 	} else if !strat.config.ReduceOnly &&
 		!strat.isXSpot &&
-		strat.spread.LongLastEnter < strat.longBot &&
 		strat.spread.LongMedianEnter < strat.longBot &&
 		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
 		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
-		strat.xSize < strat.xStepSize*strat.xMultiplier {
+		strat.xSize < strat.xStepSize*strat.xMultiplier &&
+		strat.xAccount.GetFree() > strat.config.MinimalXFree &&
+		strat.yAccount.GetFree() > strat.config.MinimalYFree &&
+		strat.xAbsValue < strat.config.MaximalXPosValue &&
+		strat.yAbsValue < strat.config.MaximalYPosValue {
 
 		strat.targetValue = math.Max(strat.xAbsValue, strat.yAbsValue) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
@@ -370,7 +374,7 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional ||   strat.xSizeDiff < strat.xMinSize{
+		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional || strat.xSizeDiff < strat.xMinSize {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
