@@ -43,6 +43,16 @@ func (strat *XYStrategy) updateXPosition() {
 	strat.yAbsValue = math.Abs(strat.yValue)
 	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
 	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
+	if strat.offsetFactor > 1.0 {
+		strat.offsetFactor = 1.0
+	}
+	if strat.offsetStep > 1.0 {
+		strat.offsetStep = 1.0
+	}
+
+	//easeInQuart
+	strat.offsetFactor *= strat.offsetFactor
+	strat.offsetStep *= strat.offsetStep
 
 	if strat.xSize >= 0 {
 		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta + strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
