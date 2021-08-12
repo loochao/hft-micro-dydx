@@ -23,12 +23,13 @@ type Config struct {
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
 
-	EnterOffsetDelta float64 `yaml:"enterOffsetDelta"`
-	ExitOffsetDelta  float64 `yaml:"exitOffsetDelta"`
-	LongEnterDelta   float64 `yaml:"longEnterDelta"`
-	ShortEnterDelta  float64 `yaml:"shortEnterDelta"`
-	LongExitDelta    float64 `yaml:"longExitDelta"`
-	ShortExitDelta   float64 `yaml:"shortExitDelta"`
+	OffsetExponential float64 `yaml:"offsetExponential"`
+	EnterOffsetDelta  float64 `yaml:"enterOffsetDelta"`
+	ExitOffsetDelta   float64 `yaml:"exitOffsetDelta"`
+	LongEnterDelta    float64 `yaml:"longEnterDelta"`
+	ShortEnterDelta   float64 `yaml:"shortEnterDelta"`
+	LongExitDelta     float64 `yaml:"longExitDelta"`
+	ShortExitDelta    float64 `yaml:"shortExitDelta"`
 
 	QuantileLookback       time.Duration `yaml:"quantileLookback"`
 	QuantileSubInterval    time.Duration `yaml:"quantileSubInterval"`
@@ -55,12 +56,12 @@ type Config struct {
 	SpreadLookback    time.Duration `yaml:"spreadLookback"`
 	BatchSize         int           `yaml:"batchSize"`
 
-	StartValue        float64            `yaml:"startValue"`
+	StartValue float64 `yaml:"startValue"`
 
-	MinimalXFree      float64            `yaml:"minimalXFree"`
-	MinimalYFree      float64            `yaml:"minimalYFree"`
-	MaximalXPosValue  float64            `yaml:"maximalXPosValue"`
-	MaximalYPosValue  float64            `yaml:"maximalYPosValue"`
+	MinimalXFree     float64 `yaml:"minimalXFree"`
+	MinimalYFree     float64 `yaml:"minimalYFree"`
+	MaximalXPosValue float64 `yaml:"maximalXPosValue"`
+	MaximalYPosValue float64 `yaml:"maximalYPosValue"`
 
 	EnterFreePct      float64            `yaml:"enterFreePct"`
 	BestSizeFactor    float64            `yaml:"bestSizeFactor"`
@@ -142,5 +143,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.XEnterTimeout == 0 {
 		config.XEnterTimeout = time.Minute
+	}
+	if config.OffsetExponential <= 0 {
+		config.OffsetExponential = 1.0
 	}
 }

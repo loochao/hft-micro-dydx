@@ -51,8 +51,8 @@ func (strat *XYStrategy) updateXPosition() {
 	}
 
 	//easeInQuart
-	strat.offsetFactor *= strat.offsetFactor
-	strat.offsetStep *= strat.offsetStep
+	strat.offsetFactor = math.Pow(strat.offsetFactor, strat.config.OffsetExponential)
+	strat.offsetStep = math.Pow(strat.offsetStep, strat.config.OffsetExponential)
 
 	if strat.xSize >= 0 {
 		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta + strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor

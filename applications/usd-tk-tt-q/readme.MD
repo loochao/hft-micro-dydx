@@ -4,3 +4,4 @@
 - [x] cancel all when exit
 - [x] add funding rate offset factor for spread
 - [ ] collect order trade ratio 
+- [x] ease in quart offset factor
