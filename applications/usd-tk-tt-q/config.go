@@ -23,7 +23,6 @@ type Config struct {
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
 
-	OffsetExponential float64 `yaml:"offsetExponential"`
 	EnterOffsetDelta  float64 `yaml:"enterOffsetDelta"`
 	ExitOffsetDelta   float64 `yaml:"exitOffsetDelta"`
 	LongEnterDelta    float64 `yaml:"longEnterDelta"`
@@ -143,8 +142,5 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.XEnterTimeout == 0 {
 		config.XEnterTimeout = time.Minute
-	}
-	if config.OffsetExponential <= 0 {
-		config.OffsetExponential = 1.0
 	}
 }
