@@ -76,6 +76,8 @@ func handleSave(
 				fields["quantile05"] = st.quantile05
 				fields["quantile95"] = st.quantile95
 				fields["quantile995"] = st.quantile995
+				fields["quantile80"] = st.quantile80
+				fields["quantile20"] = st.quantile20
 			}
 
 			if st.xPosition.GetPrice() != 0 {
