@@ -145,6 +145,12 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.XEnterTimeout == 0 {
 		config.XEnterTimeout = time.Minute
 	}
+	if config.EnterOffsets == nil {
+		config.EnterOffsets = make(map[string]float64)
+	}
+	if config.ExitOffsets == nil {
+		config.ExitOffsets = make(map[string]float64)
+	}
 	for xSymbol := range config.XYPairs {
 		if _, ok := config.EnterOffsets[xSymbol]; !ok {
 			config.EnterOffsets[xSymbol] = config.EnterOffsetDelta
