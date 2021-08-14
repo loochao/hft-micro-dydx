@@ -80,7 +80,7 @@ func (strat *XYStrategy) updateXPosition() {
 		return
 	}
 
-	if math.Abs(strat.xValue+strat.yValue) > strat.enterStep*0.8 {
+	if math.Abs(strat.xSize+strat.ySize)*strat.midPrice > strat.enterStep*0.8 {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 			logger.Debugf(
