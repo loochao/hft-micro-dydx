@@ -72,8 +72,8 @@ func handleSave(
 			fields["offsetFactor"] = st.offsetFactor
 			if st.quantileMiddle != nil {
 				fields["quantileMiddle"] = *st.quantileMiddle
-				fields["enterOffset"] = *st.enterOffset
-				fields["exitOffset"] = *st.exitOffset
+				fields["enterOffsetDelta"] = *st.enterOffset
+				fields["exitOffsetDelta"] = *st.exitOffset
 			}
 
 			if st.xPosition.GetPrice() != 0 {
