@@ -37,8 +37,16 @@ func (strat *XYStrategy) updateXPosition() {
 
 	strat.xSize = strat.xPosition.GetSize() * strat.xMultiplier
 	strat.ySize = strat.yPosition.GetSize() * strat.yMultiplier
-	strat.xValue = strat.xSize * strat.xMidPrice
-	strat.yValue = strat.ySize * strat.yMidPrice
+	if strat.isXSpot {
+		strat.xValue = strat.xSize * strat.xPosition.GetPrice()
+	}else{
+		strat.xValue = strat.xSize * strat.xMidPrice
+	}
+	if strat.isYSpot {
+		strat.yValue = strat.ySize * strat.yMidPrice
+	}else{
+		strat.yValue = strat.ySize * strat.yPosition.GetPrice()
+	}
 	strat.xAbsValue = math.Abs(strat.xValue)
 	strat.yAbsValue = math.Abs(strat.yValue)
 	strat.offsetFactor = (strat.xAbsValue + strat.yAbsValue) * 0.5 / strat.enterTarget
