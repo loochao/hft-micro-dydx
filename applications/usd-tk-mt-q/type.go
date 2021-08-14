@@ -108,6 +108,9 @@ type XYStrategy struct {
 	yMinNotional         float64
 	xyMergedSpotStepSize float64
 
+	enterOffset float64
+	exitOffset  float64
+
 	error error
 
 	isXSpot bool
@@ -147,9 +150,9 @@ type XYStrategy struct {
 	xOrderError    common.OrderError
 	yOrderError    common.OrderError
 
-	xPrice     float64
-	reduceOnly bool
-	orderSide  common.OrderSide
+	xPrice                 float64
+	reduceOnly             bool
+	orderSide              common.OrderSide
 	adjustedRealisedSpread *float64
 
 	xOpenOrder        *common.NewOrderParam

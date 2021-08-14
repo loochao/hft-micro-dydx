@@ -84,6 +84,8 @@ type Config struct {
 	XYPairs        map[string]string  `yaml:"xyPairs"`
 	TargetWeights  map[string]float64 `yaml:"targetWeights,omitempty"`
 	MaxOrderValues map[string]float64 `yaml:"maxOrderValues,omitempty"`
+	EnterOffsets   map[string]float64  `yaml:"enterOffsets,omitempty"`
+	ExitOffsets    map[string]float64  `yaml:"exitOffsets,omitempty"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -142,5 +144,13 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.XEnterTimeout == 0 {
 		config.XEnterTimeout = time.Minute
+	}
+	for xSymbol := range config.XYPairs {
+		if _, ok := config.EnterOffsets[xSymbol]; !ok {
+			config.EnterOffsets[xSymbol] = config.EnterOffsetDelta
+		}
+		if _, ok := config.ExitOffsets[xSymbol]; !ok {
+			config.ExitOffsets[xSymbol] = config.ExitOffsetDelta
+		}
 	}
 }

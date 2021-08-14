@@ -51,21 +51,21 @@ func (strat *XYStrategy) updateXPosition() {
 	}
 
 	if strat.xSize >= 0 {
-		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta + strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
-		strat.shortBot = *strat.quantileMiddle + strat.config.ShortExitDelta + strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta + strat.enterOffset*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.shortBot = *strat.quantileMiddle + strat.config.ShortExitDelta + strat.exitOffset*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
 		strat.longBot = *strat.quantileMiddle + strat.config.LongEnterDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
 		strat.longTop = *strat.quantileMiddle + strat.config.LongExitDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
 	} else {
 		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
 		strat.shortBot = *strat.quantileMiddle + strat.config.ShortExitDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
-		strat.longBot = *strat.quantileMiddle + strat.config.LongEnterDelta - strat.config.EnterOffsetDelta*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
-		strat.longTop = *strat.quantileMiddle + strat.config.LongExitDelta - strat.config.ExitOffsetDelta*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.longBot = *strat.quantileMiddle + strat.config.LongEnterDelta - strat.enterOffset*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.longTop = *strat.quantileMiddle + strat.config.LongExitDelta - strat.exitOffset*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
 	}
 
 	strat.midPrice = (strat.xMidPrice + strat.yMidPrice) * 0.5
 	if math.IsNaN(strat.longBot) && time.Now().Sub(strat.logSilentTime) > 0 {
 		strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-		logger.Debugf("%s enterTarget %f targetWeight %f EnterTargetFactor %f", strat.xSymbol, strat.enterTarget, strat.targetWeight, strat.config.EnterTargetFactor)
+		logger.Debugf("%s enterTarget %f targetWeight %f enterTargetFactor %f", strat.xSymbol, strat.enterTarget, strat.targetWeight, strat.config.EnterTargetFactor)
 	}
 
 	if time.Now().Sub(strat.xOrderSilentTime) < 0 {

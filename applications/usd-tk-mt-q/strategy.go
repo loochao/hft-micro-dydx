@@ -67,6 +67,15 @@ func startXYStrategy(
 		}
 	}
 
+	enterOffset := config.EnterOffsetDelta
+	exitOffset := config.ExitOffsetDelta
+	if _, ok := config.EnterOffsets[xSymbol]; ok {
+		enterOffset = config.EnterOffsets[xSymbol]
+	}
+	if _, ok := config.ExitOffsets[xSymbol]; ok {
+		exitOffset = config.ExitOffsets[xSymbol]
+	}
+
 	strat := XYStrategy{
 		xExchange:               xExchange,
 		yExchange:               yExchange,
@@ -76,6 +85,8 @@ func startXYStrategy(
 		yLeverage:               config.YExchange.Leverage,
 		xSymbol:                 xSymbol,
 		ySymbol:                 ySymbol,
+		enterOffset:             enterOffset,
+		exitOffset:              exitOffset,
 		targetWeight:            config.TargetWeights[xSymbol],
 		maxOrderValue:           config.MaxOrderValues[xSymbol],
 		config:                  config,

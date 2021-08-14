@@ -78,6 +78,8 @@ type Config struct {
 	TargetWeights  map[string]float64 `yaml:"targetWeights,omitempty"`
 	MaxOrderValues map[string]float64 `yaml:"maxOrderValues,omitempty"`
 	OrderOffsets   map[string]string  `yaml:"orderOffsets,omitempty"`
+	EnterOffsets   map[string]float64  `yaml:"enterOffsets,omitempty"`
+	ExitOffsets    map[string]float64  `yaml:"exitOffsets,omitempty"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -146,4 +148,12 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	config.XExchange.DryRun = config.DryRun
 	config.YExchange.DryRun = config.DryRun
+	for xSymbol := range config.XYPairs {
+		if _, ok := config.EnterOffsets[xSymbol]; !ok {
+			config.EnterOffsets[xSymbol] = config.EnterOffsetDelta
+		}
+		if _, ok := config.ExitOffsets[xSymbol]; !ok {
+			config.ExitOffsets[xSymbol] = config.ExitOffsetDelta
+		}
+	}
 }

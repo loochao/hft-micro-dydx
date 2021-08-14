@@ -140,6 +140,10 @@ type XYStrategy struct {
 	realisedSpread         *float64
 	adjustedRealisedSpread *float64
 
+	enterOffset float64
+	exitOffset  float64
+
+
 	xOrder         common.Order
 	yOrder         common.Order
 	xNewOrderParam common.NewOrderParam
