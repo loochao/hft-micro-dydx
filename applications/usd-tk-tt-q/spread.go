@@ -69,6 +69,8 @@ func (strat *XYStrategy) updateSpread() {
 		strat.quantile005 = strat.timedTDigest.Quantile(.005)
 		strat.quantile95 = strat.timedTDigest.Quantile(.95)
 		strat.quantile995 = strat.timedTDigest.Quantile(.995)
+		strat.quantile80 = strat.timedTDigest.Quantile(.8)
+		strat.quantile20 = strat.timedTDigest.Quantile(.2)
 	}
 }
 
