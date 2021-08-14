@@ -69,6 +69,7 @@ func (strat *XYStrategy) updateSpread() {
 			strat.quantile995 = new(float64)
 		}
 		*strat.quantileMiddle = strat.timedTDigest.Quantile(0.5)
+		logger.Debugf("%s %s",strat.xSymbol, *strat.quantileMiddle)
 		*strat.quantile05 = strat.timedTDigest.Quantile(.05)
 		*strat.quantile005 = strat.timedTDigest.Quantile(.005)
 		*strat.quantile95 = strat.timedTDigest.Quantile(.95)
