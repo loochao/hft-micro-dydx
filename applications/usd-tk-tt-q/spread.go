@@ -79,6 +79,9 @@ func (strat *XYStrategy) updateSpread() {
 		if *strat.exitOffset < strat.config.ExitOffset {
 			*strat.exitOffset = strat.config.ExitOffset
 		}
+		if *strat.exitOffset > *strat.enterOffset*0.25 {
+			*strat.exitOffset = *strat.enterOffset*0.25
+		}
 	}
 }
 
