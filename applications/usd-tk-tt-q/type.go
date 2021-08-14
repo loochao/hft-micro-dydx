@@ -172,10 +172,10 @@ type XYStrategy struct {
 	quantileBytes          []byte
 	quantileFile           *os.File
 	quantileMiddle         *float64
-	quantile995            *float64
-	quantile95             *float64
-	quantile05             *float64
-	quantile005            *float64
+	quantile995            float64
+	quantile95             float64
+	quantile05             float64
+	quantile005            float64
 }
 
 type Offset struct {

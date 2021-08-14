@@ -72,10 +72,10 @@ func handleSave(
 			fields["offsetFactor"] = st.offsetFactor
 			if st.quantileMiddle != nil {
 				fields["quantileMiddle"] = *st.quantileMiddle
-				fields["quantile005"] = *st.quantile005
-				fields["quantile05"] = *st.quantile05
-				fields["quantile95"] = *st.quantile95
-				fields["quantile995"] = *st.quantile995
+				fields["quantile005"] = st.quantile005
+				fields["quantile05"] = st.quantile05
+				fields["quantile95"] = st.quantile95
+				fields["quantile995"] = st.quantile995
 			}
 
 			if st.xPosition.GetPrice() != 0 {
