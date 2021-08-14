@@ -63,14 +63,22 @@ func (strat *XYStrategy) updateSpread() {
 		_ = strat.timedTDigest.Insert(strat.spreadTime, (strat.shortLastEnter+strat.longLastEnter)*0.5)
 		if strat.quantileMiddle == nil {
 			strat.quantileMiddle = new(float64)
+			strat.enterOffset = new(float64)
+			strat.exitOffset = new(float64)
 		}
 		*strat.quantileMiddle = strat.timedTDigest.Quantile(0.5)
-		strat.quantile05 = strat.timedTDigest.Quantile(.05)
 		strat.quantile005 = strat.timedTDigest.Quantile(.005)
-		strat.quantile95 = strat.timedTDigest.Quantile(.95)
 		strat.quantile995 = strat.timedTDigest.Quantile(.995)
 		strat.quantile80 = strat.timedTDigest.Quantile(.8)
 		strat.quantile20 = strat.timedTDigest.Quantile(.2)
+		*strat.enterOffset = strat.quantile995 - strat.quantile005
+		*strat.exitOffset = strat.quantile80 - strat.quantile20
+		if *strat.enterOffset < strat.config.EnterOffset {
+			*strat.enterOffset = strat.config.EnterOffset
+		}
+		if *strat.exitOffset < strat.config.ExitOffset {
+			*strat.exitOffset = strat.config.ExitOffset
+		}
 	}
 }
 

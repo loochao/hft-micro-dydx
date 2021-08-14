@@ -23,12 +23,12 @@ type Config struct {
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
 
-	EnterOffsetDelta  float64 `yaml:"enterOffsetDelta"`
-	ExitOffsetDelta   float64 `yaml:"exitOffsetDelta"`
-	LongEnterDelta    float64 `yaml:"longEnterDelta"`
-	ShortEnterDelta   float64 `yaml:"shortEnterDelta"`
-	LongExitDelta     float64 `yaml:"longExitDelta"`
-	ShortExitDelta    float64 `yaml:"shortExitDelta"`
+	EnterOffset     float64 `yaml:"enterOffset"`
+	ExitOffset      float64 `yaml:"exitOffset"`
+	LongEnterDelta  float64 `yaml:"longEnterDelta"`
+	ShortEnterDelta float64 `yaml:"shortEnterDelta"`
+	LongExitDelta   float64 `yaml:"longExitDelta"`
+	ShortExitDelta  float64 `yaml:"shortExitDelta"`
 
 	QuantileLookback       time.Duration `yaml:"quantileLookback"`
 	QuantileSubInterval    time.Duration `yaml:"quantileSubInterval"`
@@ -83,8 +83,6 @@ type Config struct {
 	XYPairs        map[string]string  `yaml:"xyPairs"`
 	TargetWeights  map[string]float64 `yaml:"targetWeights,omitempty"`
 	MaxOrderValues map[string]float64 `yaml:"maxOrderValues,omitempty"`
-	EnterOffsets   map[string]float64  `yaml:"enterOffsets,omitempty"`
-	ExitOffsets    map[string]float64  `yaml:"exitOffsets,omitempty"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -143,19 +141,5 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.XEnterTimeout == 0 {
 		config.XEnterTimeout = time.Minute
-	}
-	if config.EnterOffsets == nil {
-		config.EnterOffsets = make(map[string]float64)
-	}
-	if config.ExitOffsets == nil {
-		config.ExitOffsets = make(map[string]float64)
-	}
-	for xSymbol := range config.XYPairs {
-		if _, ok := config.EnterOffsets[xSymbol]; !ok {
-			config.EnterOffsets[xSymbol] = config.EnterOffsetDelta
-		}
-		if _, ok := config.ExitOffsets[xSymbol]; !ok {
-			config.ExitOffsets[xSymbol] = config.ExitOffsetDelta
-		}
 	}
 }

@@ -26,6 +26,8 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread == nil ||
 		strat.xyFundingRate == nil ||
 		strat.quantileMiddle == nil ||
+		strat.enterOffset == nil ||
+		strat.exitOffset == nil ||
 		strat.fundingRateSettleSilent ||
 		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter {
 		//if time.Now().Sub(strat.logSilentTime) > 0 {
@@ -39,12 +41,12 @@ func (strat *XYStrategy) updateXPosition() {
 	strat.ySize = strat.yPosition.GetSize() * strat.yMultiplier
 	if strat.isXSpot {
 		strat.xValue = strat.xSize * strat.xPosition.GetPrice()
-	}else{
+	} else {
 		strat.xValue = strat.xSize * strat.xMidPrice
 	}
 	if strat.isYSpot {
 		strat.yValue = strat.ySize * strat.yMidPrice
-	}else{
+	} else {
 		strat.yValue = strat.ySize * strat.yPosition.GetPrice()
 	}
 	strat.xAbsValue = math.Abs(strat.xValue)
@@ -59,15 +61,15 @@ func (strat *XYStrategy) updateXPosition() {
 	}
 
 	if strat.xSize >= 0 {
-		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta + strat.enterOffset*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
-		strat.shortBot = *strat.quantileMiddle + strat.config.ShortExitDelta + strat.exitOffset*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta + *strat.enterOffset*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.shortBot = *strat.quantileMiddle + strat.config.ShortExitDelta + *strat.exitOffset*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
 		strat.longBot = *strat.quantileMiddle + strat.config.LongEnterDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
 		strat.longTop = *strat.quantileMiddle + strat.config.LongExitDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
 	} else {
 		strat.shortTop = *strat.quantileMiddle + strat.config.ShortEnterDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
 		strat.shortBot = *strat.quantileMiddle + strat.config.ShortExitDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
-		strat.longBot = *strat.quantileMiddle + strat.config.LongEnterDelta - strat.enterOffset*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
-		strat.longTop = *strat.quantileMiddle + strat.config.LongExitDelta - strat.exitOffset*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.longBot = *strat.quantileMiddle + strat.config.LongEnterDelta - *strat.enterOffset*strat.offsetFactor - *strat.xyFundingRate*strat.config.FrOffsetFactor
+		strat.longTop = *strat.quantileMiddle + strat.config.LongExitDelta - *strat.exitOffset*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate*strat.config.FrOffsetFactor
 	}
 
 	strat.midPrice = (strat.xMidPrice + strat.yMidPrice) * 0.5

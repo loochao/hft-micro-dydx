@@ -48,11 +48,11 @@ func startXYStrategy(
 
 		longBytes, err := os.ReadFile(path.Join(config.QuantilePath, xSymbol+"-"+ySymbol+".json"))
 		if err != nil {
-			logger.Debugf("%s os.ReadFile error %v", xSymbol,err)
+			logger.Debugf("%s os.ReadFile error %v", xSymbol, err)
 		} else {
 			err = json.Unmarshal(longBytes, &timedTDigest)
 			if err != nil {
-				logger.Debugf("%s json.Unmarshal error %v", xSymbol,  err)
+				logger.Debugf("%s json.Unmarshal error %v", xSymbol, err)
 				timedTDigest = stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
 			} else {
 				timedTDigest.Lookback = config.QuantileLookback
@@ -64,14 +64,6 @@ func startXYStrategy(
 		}
 	}
 
-	enterOffset := config.EnterOffsetDelta
-	exitOffset := config.ExitOffsetDelta
-	if _, ok := config.EnterOffsets[xSymbol]; ok {
-		enterOffset = config.EnterOffsets[xSymbol]
-	}
-	if _, ok := config.ExitOffsets[xSymbol]; ok {
-		exitOffset = config.ExitOffsets[xSymbol]
-	}
 
 	strat := XYStrategy{
 		xExchange:               xExchange,
@@ -82,8 +74,6 @@ func startXYStrategy(
 		yLeverage:               config.YExchange.Leverage,
 		xSymbol:                 xSymbol,
 		ySymbol:                 ySymbol,
-		enterOffset:             enterOffset,
-		exitOffset:              exitOffset,
 		targetWeight:            config.TargetWeights[xSymbol],
 		maxOrderValue:           config.MaxOrderValues[xSymbol],
 		config:                  config,
@@ -179,7 +169,7 @@ func startXYStrategy(
 		timedTDigest:            timedTDigest,
 		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
 		quantileLastSampleTime:  time.Time{},
-		quantileMiddle:          quantileMiddle,
+		quantileMiddle:          nil,
 		lastEnterTime:           time.Time{},
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
@@ -357,7 +347,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		strat.ySystemStatus != common.SystemStatusReady {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("%s hedgeYPosition xSystemStatus %v ySystemStatus %v",  strat.xSymbol, strat.xSystemStatus, strat.ySystemStatus)
+			logger.Debugf("%s hedgeYPosition xSystemStatus %v ySystemStatus %v", strat.xSymbol, strat.xSystemStatus, strat.ySystemStatus)
 		}
 		return
 	}
@@ -395,7 +385,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 	strat.ySizeDiff = math.Floor(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
 
 	if strat.isYSpot {
-		if math.Abs(strat.ySizeDiff) < strat.yStepSize || math.Abs(strat.ySizeDiff) < strat.yMinSize{
+		if math.Abs(strat.ySizeDiff) < strat.yStepSize || math.Abs(strat.ySizeDiff) < strat.yMinSize {
 			return
 		} else if strat.ySizeDiff < 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice() < 1.2*strat.yMinNotional {
 			return
@@ -404,7 +394,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 		}
 	} else {
 		//期货以close仓位，没有minNotional限制
-		if math.Abs(strat.ySizeDiff) < strat.yStepSize || math.Abs(strat.ySizeDiff) < strat.yMinSize{
+		if math.Abs(strat.ySizeDiff) < strat.yStepSize || math.Abs(strat.ySizeDiff) < strat.yMinSize {
 			return
 		} else if strat.ySizeDiff < 0 && strat.yPosition.GetSize() <= 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice() < 1.2*strat.yMinNotional {
 			return

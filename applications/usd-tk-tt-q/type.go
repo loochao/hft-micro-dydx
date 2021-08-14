@@ -140,8 +140,8 @@ type XYStrategy struct {
 	realisedSpread         *float64
 	adjustedRealisedSpread *float64
 
-	enterOffset float64
-	exitOffset  float64
+	enterOffset *float64
+	exitOffset  *float64
 
 	xOrder         common.Order
 	yOrder         common.Order
@@ -173,11 +173,11 @@ type XYStrategy struct {
 	quantileFile           *os.File
 	quantileMiddle         *float64
 	quantile995            float64
-	quantile95             float64
-	quantile05             float64
 	quantile005            float64
+	//quantile95             float64
+	//quantile05             float64
 	quantile80             float64
-	quantile20           float64
+	quantile20             float64
 }
 
 type Offset struct {
