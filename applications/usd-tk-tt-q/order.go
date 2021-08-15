@@ -158,7 +158,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
-				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f",
+				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f Fr %f",
 				strat.xSymbol, strat.ySymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
@@ -172,6 +172,7 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.yTicker.GetAskPrice(),
 				*strat.enterOffset,
 				*strat.exitOffset,
+				*strat.fundingRateFactor,
 			)
 		}
 	} else if strat.spread.LongMedianLeave > strat.longTop &&
@@ -229,7 +230,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f",
+				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
 				strat.xSymbol, strat.ySymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
@@ -243,6 +244,7 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.yTicker.GetAskPrice(),
 				*strat.enterOffset,
 				*strat.exitOffset,
+				*strat.fundingRateFactor,
 			)
 		}
 	} else if !strat.config.ReduceOnly &&
@@ -335,7 +337,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f",
+			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
@@ -349,6 +351,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.yTicker.GetAskPrice(),
 			*strat.enterOffset,
 			*strat.exitOffset,
+			*strat.fundingRateFactor,
 		)
 	} else if !strat.config.ReduceOnly &&
 		!strat.isXSpot &&
@@ -441,7 +444,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f",
+			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
@@ -455,6 +458,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.yTicker.GetAskPrice(),
 			*strat.enterOffset,
 			*strat.exitOffset,
+			*strat.fundingRateFactor,
 		)
 
 	}
