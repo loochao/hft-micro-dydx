@@ -35,6 +35,10 @@ type Config struct {
 	QuantilePath           string        `yaml:"quantilePath"`
 	QuantileSaveInterval   time.Duration `yaml:"quantileSaveInterval"`
 	QuantileSampleInterval time.Duration `yaml:"quantileSampleInterval"`
+	QuantileEnterTop       float64       `yaml:"quantileEnterTop"`
+	QuantileEnterBot       float64       `yaml:"quantileEnterBot"`
+	QuantileExitTop        float64       `yaml:"quantileExitTop"`
+	QuantileExitBot        float64       `yaml:"quantileExitBot"`
 
 	MinimalEnterFundingRate float64       `yaml:"minimalEnterFundingRate"`
 	FundingRateOffsetMin    float64       `yaml:"fundingRateOffsetMin"`
@@ -143,5 +147,17 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.XEnterTimeout == 0 {
 		config.XEnterTimeout = time.Minute
+	}
+	if config.QuantileEnterBot == 0 {
+		config.QuantileEnterBot = 0.005
+	}
+	if config.QuantileEnterTop == 0 {
+		config.QuantileEnterTop = 0.995
+	}
+	if config.QuantileExitBot == 0 {
+		config.QuantileExitBot = 0.2
+	}
+	if config.QuantileExitTop == 0 {
+		config.QuantileExitTop = 0.8
 	}
 }

@@ -172,12 +172,12 @@ type XYStrategy struct {
 	quantileBytes          []byte
 	quantileFile           *os.File
 	quantileMiddle         *float64
-	quantile995            float64
-	quantile005            float64
+	quantileEnterTop       float64
+	quantileEnterBot       float64
 	//quantile95             float64
 	//quantile05             float64
-	quantile80 float64
-	quantile20 float64
+	quantileExitTop float64
+	quantileExitBot float64
 
 	fundingRateFactor *float64
 }
