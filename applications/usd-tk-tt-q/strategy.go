@@ -269,7 +269,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 				if strat.fundingRateFactor == nil {
 					strat.fundingRateFactor = new(float64)
 				}
-				*strat.fundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*time.Now().Add(strat.config.FundingRateTimeOffset).Truncate(strat.config.FundingRateInterval).Add(strat.config.FundingRateTimeOffset).Sub(time.Now()).Seconds()/strat.config.FundingRateInterval.Seconds()
+				*strat.fundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*(1.0 - time.Now().Add(strat.config.FundingRateTimeOffset).Truncate(strat.config.FundingRateInterval).Add(strat.config.FundingRateTimeOffset).Sub(time.Now()).Seconds()/strat.config.FundingRateInterval.Seconds())
 			}
 			break
 		case <-strat.saveTimer.C:
