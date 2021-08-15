@@ -177,6 +177,7 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 					*kcsBalance = account.Available
 					continue
 				}
+				logger.Debugf("%v", account)
 				symbol := account.Currency + "-USDT"
 				lastBalance, ok := accountsMap[symbol]
 				if ok && account.EventTime.Sub(lastBalance.EventTime) < 0 {
