@@ -72,6 +72,10 @@ func handleSave(
 			fields["offsetFactor"] = st.offsetFactor
 			if st.quantileMiddle != nil {
 				fields["quantileMiddle"] = *st.quantileMiddle
+				fields["quantileEnterTop"] = st.quantileEnterTop
+				fields["quantileEnterBot"] = st.quantileEnterBot
+				fields["quantileExitTop"] = st.quantileExitTop
+				fields["quantileExitBot"] = st.quantileExitBot
 				fields["enterOffsetDelta"] = *st.enterOffset
 				fields["exitOffsetDelta"] = *st.exitOffset
 			}
