@@ -40,8 +40,8 @@ type Config struct {
 	FundingRateOffsetMin    float64       `yaml:"fundingRateOffsetMin"`
 	FundingRateOffsetMax    float64       `yaml:"fundingRateOffsetMax"`
 	FundingRateSilentTime   time.Duration `yaml:"fundingRateSilentTime"`
-	FundingInterval         time.Duration `yaml:"fundingInterval"`
-	FundingTimeOffset       time.Duration `yaml:"fundingTimeOffset"`
+	FundingRateInterval     time.Duration `yaml:"fundingRateInterval"`
+	FundingRateTimeOffset   time.Duration `yaml:"fundingRateTimeOffset"`
 
 	TickerMaxTimeDelta   time.Duration `yaml:"tickerTimeDeltaMax"`
 	TickerMinTimeDelta   time.Duration `yaml:"tickerTimeDeltaMin"`
@@ -130,8 +130,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.FundingRateSilentTime == 0 {
 		config.FundingRateSilentTime = time.Minute
 	}
-	if config.FundingInterval == 0 {
-		config.FundingInterval = time.Hour * 4
+	if config.FundingRateInterval == 0 {
+		config.FundingRateInterval = time.Hour * 4
 	}
 	config.XExchange.DryRun = config.DryRun
 	config.YExchange.DryRun = config.DryRun
