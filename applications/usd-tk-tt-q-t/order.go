@@ -535,211 +535,211 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.yTicker.GetAskPrice(),
 		)
 		return
-	} else if !strat.config.ReduceOnly &&
-		!strat.isYSpot &&
-		strat.spread.ShortLastEnter > strat.shortHalfTop &&
-		strat.spread.ShortMedianEnter > strat.shortHalfTop &&
-		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
-		strat.xSize > strat.xStepSize*strat.xMultiplier {
-		//盈利加多X
-
-		if strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset) > strat.xMidPrice {
-			//有多仓，没赚钱
-			return
-		}
-
-		strat.targetValue = strat.xAbsValue + strat.enterStep
-		if strat.targetValue > strat.enterTarget {
-			strat.targetValue = strat.enterTarget
-		}
-		strat.enterValue = strat.targetValue - strat.xAbsValue
-		if strat.enterValue > strat.maxOrderValue {
-			strat.enterValue = strat.maxOrderValue
-		}
-		strat.size = strat.enterValue / strat.midPrice
-		strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
-
-		strat.enterValue = strat.size * strat.midPrice
-		if strat.enterValue > strat.usdAvailable {
-			if time.Now().Sub(strat.logSilentTime) > 0 {
-				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-				logger.Debugf(
-					"%s %s FAILED SHORT HALF TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
-					strat.xSymbol,
-					strat.ySymbol,
-					strat.enterValue,
-					strat.usdAvailable,
-					strat.spread.ShortLastEnter, strat.shortHalfTop,
-					strat.spread.ShortMedianEnter, strat.shortHalfTop,
-					strat.size,
-				)
-			}
-			return
-		}
-		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size <= 0 || strat.enterValue < 1.2*strat.xMinNotional {
-			if time.Now().Sub(strat.logSilentTime) > 0 {
-				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-				logger.Debugf(
-					"%s %s FAILED SHORT HALF TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
-					strat.xSymbol, strat.ySymbol,
-					strat.enterValue,
-					strat.spread.ShortLastEnter, strat.shortHalfTop,
-					strat.spread.ShortMedianEnter, strat.shortHalfTop,
-					strat.size,
-				)
-			}
-			return
-		}
-		strat.price = strat.xTicker.GetAskPrice()
-		if strat.xTickSize/strat.price < strat.config.EnterSlippage {
-			strat.price = strat.price * (1.0 + strat.config.EnterSlippage)
-			strat.price = math.Ceil(strat.price/strat.xTickSize) * strat.xTickSize
-		}
-		logger.Debugf(
-			"SHORT HALF TOP %s 1 + strat.offsetFactor*strat.config.AddTargetOffset %f MinPrice %f MidPrice %f",
-			strat.xSymbol,
-			1-strat.offsetFactor*strat.config.AddTargetOffset,
-			strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset),
-			strat.xMidPrice,
-		)
-		strat.xNewOrderParam = common.NewOrderParam{
-			Symbol:      strat.xSymbol,
-			Side:        common.OrderSideBuy,
-			Type:        common.OrderTypeLimit,
-			Price:       strat.price,
-			TimeInForce: strat.config.XOrderTimeInForce,
-			Size:        strat.size,
-			PostOnly:    false,
-			ReduceOnly:  false,
-			ClientID:    strat.xExchange.GenerateClientID(),
-		}
-		if !strat.config.DryRun {
-			select {
-			case strat.xOrderRequestCh <- common.OrderRequest{
-				New: &strat.xNewOrderParam,
-			}:
-			}
-		}
-		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-		strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
-		logger.Debugf(
-			"%s %s SHORT HALF TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
-			strat.xSymbol, strat.ySymbol,
-			strat.spread.ShortLastEnter, strat.shortHalfTop,
-			strat.spread.ShortMedianEnter, strat.shortHalfTop,
-			strat.price,
-			strat.size,
-			time.Now().Sub(strat.xTickerTime),
-			time.Now().Sub(strat.yTickerTime),
-			strat.xTicker.GetBidPrice(),
-			strat.xTicker.GetAskPrice(),
-			strat.yTicker.GetBidPrice(),
-			strat.yTicker.GetAskPrice(),
-		)
-	} else if !strat.config.ReduceOnly &&
-		!strat.isXSpot &&
-		strat.spread.LongLastEnter < strat.longHalfBot &&
-		strat.spread.LongMedianEnter < strat.longHalfBot &&
-		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
-		strat.xSize < -strat.xStepSize*strat.xMultiplier {
-
-		//盈利加空X
-
-		if strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset) < strat.xMidPrice {
-			//有空仓，没赚钱
-			return
-		}
-
-		strat.targetValue = strat.xAbsValue + strat.enterStep
-		if strat.targetValue > strat.enterTarget {
-			strat.targetValue = strat.enterTarget
-		}
-		strat.enterValue = strat.targetValue - strat.xAbsValue
-		if strat.enterValue > strat.maxOrderValue {
-			strat.enterValue = strat.maxOrderValue
-		}
-		strat.size = strat.enterValue / strat.midPrice
-		strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
-
-		strat.enterValue = strat.size * strat.midPrice
-		if strat.enterValue > strat.usdAvailable {
-			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
-				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-				logger.Debugf(
-					"%s %s FAILED LONG HALF BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
-					strat.xSymbol,
-					strat.ySymbol,
-					strat.enterValue,
-					strat.usdAvailable,
-					strat.spread.LongLastEnter, strat.longHalfBot,
-					strat.spread.LongMedianEnter, strat.longHalfBot,
-					strat.size,
-				)
-			}
-			return
-		}
-		strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
-		if strat.size <= 0 || strat.enterValue < 1.2*strat.xMinNotional {
-			if time.Now().Sub(strat.logSilentTime) > 0 {
-				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-				logger.Debugf(
-					"%s %s FAILED LONG HALF BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
-					strat.xSymbol, strat.ySymbol,
-					strat.enterValue,
-					strat.spread.LongLastEnter, strat.longHalfBot,
-					strat.spread.LongMedianEnter, strat.longHalfBot,
-					strat.size,
-				)
-			}
-			return
-		}
-		strat.price = strat.xTicker.GetBidPrice()
-		//防止TickSize太大
-		if strat.xTickSize/strat.price < strat.config.EnterSlippage {
-			strat.price = strat.price * (1.0 - strat.config.EnterSlippage)
-			strat.price = math.Floor(strat.price/strat.xTickSize) * strat.xTickSize
-		}
-		logger.Debugf("LONG HALF BOT %s 1 - strat.offsetFactor*strat.config.AddTargetOffset %f MaxPrice %f MidPrice %f",
-			strat.xSymbol,
-			1-strat.offsetFactor*strat.config.AddTargetOffset,
-			strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset),
-			strat.xMidPrice,
-		)
-		strat.xNewOrderParam = common.NewOrderParam{
-			Symbol:      strat.xSymbol,
-			Side:        common.OrderSideSell,
-			Type:        common.OrderTypeLimit,
-			Price:       strat.price,
-			TimeInForce: strat.config.XOrderTimeInForce,
-			Size:        strat.size,
-			PostOnly:    false,
-			ReduceOnly:  false,
-			ClientID:    strat.xExchange.GenerateClientID(),
-		}
-		if !strat.config.DryRun {
-			select {
-			case strat.xOrderRequestCh <- common.OrderRequest{
-				New: &strat.xNewOrderParam,
-			}:
-			}
-		}
-		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-		strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
-		logger.Debugf(
-			"%s %s LONG HALF BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
-			strat.xSymbol, strat.ySymbol,
-			strat.spread.LongLastEnter, strat.longHalfBot,
-			strat.spread.LongMedianEnter, strat.longHalfBot,
-			strat.price,
-			strat.size,
-			time.Now().Sub(strat.xTickerTime),
-			time.Now().Sub(strat.yTickerTime),
-			strat.xTicker.GetBidPrice(),
-			strat.xTicker.GetAskPrice(),
-			strat.yTicker.GetBidPrice(),
-			strat.yTicker.GetAskPrice(),
-		)
-
 	}
+	//} else if !strat.config.ReduceOnly &&
+	//	!strat.isYSpot &&
+	//	strat.spread.ShortLastEnter > strat.shortHalfTop &&
+	//	strat.spread.ShortMedianEnter > strat.shortHalfTop &&
+	//	strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
+	//	strat.xSize > strat.xStepSize*strat.xMultiplier {
+	//	//盈利加多X
+	//
+	//	if strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset) > strat.xMidPrice {
+	//		//有多仓，没赚钱
+	//		return
+	//	}
+	//
+	//	strat.targetValue = strat.xAbsValue + strat.enterStep
+	//	if strat.targetValue > strat.enterTarget {
+	//		strat.targetValue = strat.enterTarget
+	//	}
+	//	strat.enterValue = strat.targetValue - strat.xAbsValue
+	//	if strat.enterValue > strat.maxOrderValue {
+	//		strat.enterValue = strat.maxOrderValue
+	//	}
+	//	strat.size = strat.enterValue / strat.midPrice
+	//	strat.size = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
+	//
+	//	strat.enterValue = strat.size * strat.midPrice
+	//	if strat.enterValue > strat.usdAvailable {
+	//		if time.Now().Sub(strat.logSilentTime) > 0 {
+	//			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+	//			logger.Debugf(
+	//				"%s %s FAILED SHORT HALF TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
+	//				strat.xSymbol,
+	//				strat.ySymbol,
+	//				strat.enterValue,
+	//				strat.usdAvailable,
+	//				strat.spread.ShortLastEnter, strat.shortHalfTop,
+	//				strat.spread.ShortMedianEnter, strat.shortHalfTop,
+	//				strat.size,
+	//			)
+	//		}
+	//		return
+	//	}
+	//	strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
+	//	if strat.size <= 0 || strat.enterValue < 1.2*strat.xMinNotional {
+	//		if time.Now().Sub(strat.logSilentTime) > 0 {
+	//			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+	//			logger.Debugf(
+	//				"%s %s FAILED SHORT HALF TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
+	//				strat.xSymbol, strat.ySymbol,
+	//				strat.enterValue,
+	//				strat.spread.ShortLastEnter, strat.shortHalfTop,
+	//				strat.spread.ShortMedianEnter, strat.shortHalfTop,
+	//				strat.size,
+	//			)
+	//		}
+	//		return
+	//	}
+	//	strat.price = strat.xTicker.GetAskPrice()
+	//	if strat.xTickSize/strat.price < strat.config.EnterSlippage {
+	//		strat.price = strat.price * (1.0 + strat.config.EnterSlippage)
+	//		strat.price = math.Ceil(strat.price/strat.xTickSize) * strat.xTickSize
+	//	}
+	//	logger.Debugf(
+	//		"SHORT HALF TOP %s 1 + strat.offsetFactor*strat.config.AddTargetOffset %f MinPrice %f MidPrice %f",
+	//		strat.xSymbol,
+	//		1-strat.offsetFactor*strat.config.AddTargetOffset,
+	//		strat.xPosition.GetPrice()*(1.0+strat.offsetFactor*strat.config.AddTargetOffset),
+	//		strat.xMidPrice,
+	//	)
+	//	strat.xNewOrderParam = common.NewOrderParam{
+	//		Symbol:      strat.xSymbol,
+	//		Side:        common.OrderSideBuy,
+	//		Type:        common.OrderTypeLimit,
+	//		Price:       strat.price,
+	//		TimeInForce: strat.config.XOrderTimeInForce,
+	//		Size:        strat.size,
+	//		PostOnly:    false,
+	//		ReduceOnly:  false,
+	//		ClientID:    strat.xExchange.GenerateClientID(),
+	//	}
+	//	if !strat.config.DryRun {
+	//		select {
+	//		case strat.xOrderRequestCh <- common.OrderRequest{
+	//			New: &strat.xNewOrderParam,
+	//		}:
+	//		}
+	//	}
+	//	strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+	//	strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
+	//	logger.Debugf(
+	//		"%s %s SHORT HALF TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
+	//		strat.xSymbol, strat.ySymbol,
+	//		strat.spread.ShortLastEnter, strat.shortHalfTop,
+	//		strat.spread.ShortMedianEnter, strat.shortHalfTop,
+	//		strat.price,
+	//		strat.size,
+	//		time.Now().Sub(strat.xTickerTime),
+	//		time.Now().Sub(strat.yTickerTime),
+	//		strat.xTicker.GetBidPrice(),
+	//		strat.xTicker.GetAskPrice(),
+	//		strat.yTicker.GetBidPrice(),
+	//		strat.yTicker.GetAskPrice(),
+	//	)
+	//} else if !strat.config.ReduceOnly &&
+	//	!strat.isXSpot &&
+	//	strat.spread.LongLastEnter < strat.longHalfBot &&
+	//	strat.spread.LongMedianEnter < strat.longHalfBot &&
+	//	strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
+	//	strat.xSize < -strat.xStepSize*strat.xMultiplier {
+	//
+	//	//盈利加空X
+	//
+	//	if strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset) < strat.xMidPrice {
+	//		//有空仓，没赚钱
+	//		return
+	//	}
+	//
+	//	strat.targetValue = strat.xAbsValue + strat.enterStep
+	//	if strat.targetValue > strat.enterTarget {
+	//		strat.targetValue = strat.enterTarget
+	//	}
+	//	strat.enterValue = strat.targetValue - strat.xAbsValue
+	//	if strat.enterValue > strat.maxOrderValue {
+	//		strat.enterValue = strat.maxOrderValue
+	//	}
+	//	strat.size = strat.enterValue / strat.midPrice
+	//	strat.size = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, strat.size)
+	//
+	//	strat.enterValue = strat.size * strat.midPrice
+	//	if strat.enterValue > strat.usdAvailable {
+	//		if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
+	//			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+	//			logger.Debugf(
+	//				"%s %s FAILED LONG HALF BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
+	//				strat.xSymbol,
+	//				strat.ySymbol,
+	//				strat.enterValue,
+	//				strat.usdAvailable,
+	//				strat.spread.LongLastEnter, strat.longHalfBot,
+	//				strat.spread.LongMedianEnter, strat.longHalfBot,
+	//				strat.size,
+	//			)
+	//		}
+	//		return
+	//	}
+	//	strat.size = math.Floor(strat.size/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
+	//	if strat.size <= 0 || strat.enterValue < 1.2*strat.xMinNotional {
+	//		if time.Now().Sub(strat.logSilentTime) > 0 {
+	//			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+	//			logger.Debugf(
+	//				"%s %s FAILED LONG HALF BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
+	//				strat.xSymbol, strat.ySymbol,
+	//				strat.enterValue,
+	//				strat.spread.LongLastEnter, strat.longHalfBot,
+	//				strat.spread.LongMedianEnter, strat.longHalfBot,
+	//				strat.size,
+	//			)
+	//		}
+	//		return
+	//	}
+	//	strat.price = strat.xTicker.GetBidPrice()
+	//	//防止TickSize太大
+	//	if strat.xTickSize/strat.price < strat.config.EnterSlippage {
+	//		strat.price = strat.price * (1.0 - strat.config.EnterSlippage)
+	//		strat.price = math.Floor(strat.price/strat.xTickSize) * strat.xTickSize
+	//	}
+	//	logger.Debugf("LONG HALF BOT %s 1 - strat.offsetFactor*strat.config.AddTargetOffset %f MaxPrice %f MidPrice %f",
+	//		strat.xSymbol,
+	//		1-strat.offsetFactor*strat.config.AddTargetOffset,
+	//		strat.xPosition.GetPrice()*(1.0-strat.offsetFactor*strat.config.AddTargetOffset),
+	//		strat.xMidPrice,
+	//	)
+	//	strat.xNewOrderParam = common.NewOrderParam{
+	//		Symbol:      strat.xSymbol,
+	//		Side:        common.OrderSideSell,
+	//		Type:        common.OrderTypeLimit,
+	//		Price:       strat.price,
+	//		TimeInForce: strat.config.XOrderTimeInForce,
+	//		Size:        strat.size,
+	//		PostOnly:    false,
+	//		ReduceOnly:  false,
+	//		ClientID:    strat.xExchange.GenerateClientID(),
+	//	}
+	//	if !strat.config.DryRun {
+	//		select {
+	//		case strat.xOrderRequestCh <- common.OrderRequest{
+	//			New: &strat.xNewOrderParam,
+	//		}:
+	//		}
+	//	}
+	//	strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+	//	strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
+	//	logger.Debugf(
+	//		"%s %s LONG HALF BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
+	//		strat.xSymbol, strat.ySymbol,
+	//		strat.spread.LongLastEnter, strat.longHalfBot,
+	//		strat.spread.LongMedianEnter, strat.longHalfBot,
+	//		strat.price,
+	//		strat.size,
+	//		time.Now().Sub(strat.xTickerTime),
+	//		time.Now().Sub(strat.yTickerTime),
+	//		strat.xTicker.GetBidPrice(),
+	//		strat.xTicker.GetAskPrice(),
+	//		strat.yTicker.GetBidPrice(),
+	//		strat.yTicker.GetAskPrice(),
+	//	)
+	//}
 }
