@@ -64,7 +64,6 @@ func startXYStrategy(
 		}
 	}
 
-
 	strat := XYStrategy{
 		xExchange:               xExchange,
 		yExchange:               yExchange,
@@ -127,7 +126,7 @@ func startXYStrategy(
 		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
 		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
 		saveTimer:               time.NewTimer(config.RestartSilent),
-		fundingRateSettleTimer:  time.NewTimer(time.Now().Truncate(config.FundingInterval).Add(config.FundingInterval - time.Second).Sub(time.Now())),
+		fundingRateSettleTimer:  time.NewTimer(time.Second),
 		spreadTime:              time.Time{},
 		spread:                  nil,
 		shortEnterTimedMedian:   common.NewTimedMedian(config.SpreadLookback),
@@ -259,13 +258,18 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 			}
 			break
 		case <-strat.fundingRateSettleTimer.C:
-			if time.Now().Truncate(strat.config.FundingInterval).Add(strat.config.FundingInterval).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
-				logger.Debugf("%s fundingRate Silent true %v", strat.xSymbol, time.Now().Truncate(strat.config.FundingInterval).Add(strat.config.FundingInterval).Sub(time.Now()))
+			if time.Now().Add(strat.config.FundingTimeOffset).Truncate(strat.config.FundingInterval).Add(strat.config.FundingTimeOffset).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
+				logger.Debugf("%s fundingRate Silent true %v", strat.xSymbol, time.Now().Add(strat.config.FundingTimeOffset).Truncate(strat.config.FundingInterval).Add(strat.config.FundingTimeOffset).Sub(time.Now()))
 				strat.fundingRateSettleSilent = true
 				strat.fundingRateSettleTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
 			} else {
 				strat.fundingRateSettleSilent = false
-				strat.fundingRateSettleTimer.Reset(time.Now().Truncate(strat.config.FundingInterval).Add(strat.config.FundingInterval - time.Second).Sub(time.Now()))
+				//strat.fundingRateSettleTimer.Reset(time.Now().Add(strat.config.FundingTimeOffset).Truncate(strat.config.FundingInterval).Add(strat.config.FundingTimeOffset - strat.config.FundingRateSilentTime - time.Second).Sub(time.Now()))
+				strat.fundingRateSettleTimer.Reset(time.Second)
+				if strat.fundingRateFactor == nil {
+					strat.fundingRateFactor = new(float64)
+				}
+				*strat.fundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*time.Now().Add(strat.config.FundingTimeOffset).Truncate(strat.config.FundingInterval).Add(strat.config.FundingTimeOffset).Sub(time.Now()).Seconds()/strat.config.FundingInterval.Seconds()
 			}
 			break
 		case <-strat.saveTimer.C:

@@ -75,6 +75,9 @@ func handleSave(
 				fields["enterOffsetDelta"] = *st.enterOffset
 				fields["exitOffsetDelta"] = *st.exitOffset
 			}
+			if st.fundingRateFactor != nil {
+				fields["fundingRateFactor"] = *st.fundingRateFactor
+			}
 
 			if st.xPosition.GetPrice() != 0 {
 				xURPnl += st.xValue * (st.xMidPrice - st.xPosition.GetPrice())/st.xPosition.GetPrice()

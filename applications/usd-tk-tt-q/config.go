@@ -37,9 +37,11 @@ type Config struct {
 	QuantileSampleInterval time.Duration `yaml:"quantileSampleInterval"`
 
 	MinimalEnterFundingRate float64       `yaml:"minimalEnterFundingRate"`
-	FrOffsetFactor          float64       `yaml:"frOffsetFactor"`
+	FundingRateOffsetMin    float64       `yaml:"fundingRateOffsetMin"`
+	FundingRateOffsetMax    float64       `yaml:"fundingRateOffsetMax"`
 	FundingRateSilentTime   time.Duration `yaml:"fundingRateSilentTime"`
 	FundingInterval         time.Duration `yaml:"fundingInterval"`
+	FundingTimeOffset       time.Duration `yaml:"fundingTimeOffset"`
 
 	TickerMaxTimeDelta   time.Duration `yaml:"tickerTimeDeltaMax"`
 	TickerMinTimeDelta   time.Duration `yaml:"tickerTimeDeltaMin"`
