@@ -40,12 +40,12 @@ func (strat *XYStrategy) updateXPosition() {
 
 	strat.xSize = strat.xPosition.GetSize() * strat.xMultiplier
 	strat.ySize = strat.yPosition.GetSize() * strat.yMultiplier
-	if strat.isXSpot {
+	if strat.isXSpot || strat.xPosition.GetPrice() == 0 {
 		strat.xValue = strat.xSize * strat.xMidPrice
 	} else {
 		strat.xValue = strat.xSize * strat.xPosition.GetPrice()
 	}
-	if strat.isYSpot {
+	if strat.isYSpot || strat.yPosition.GetPrice() == 0 {
 		strat.yValue = strat.ySize * strat.yMidPrice
 	} else {
 		strat.yValue = strat.ySize * strat.yPosition.GetPrice()
