@@ -38,8 +38,7 @@ func main() {
 			symbolsMap[key] = strings.Replace(key, "USDTM", "USDT", -1)
 		}
 	}
-	symbols = symbols[:1]
-	symbols = symbols[:1]
+	//symbols = symbols[:1]
 	sort.Strings(symbols)
 	ctx, cancel := context.WithCancel(context.Background())
 	fileSavedCh := make(chan string, len(symbols))
