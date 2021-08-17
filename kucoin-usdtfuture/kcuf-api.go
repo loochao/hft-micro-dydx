@@ -24,6 +24,41 @@ type API struct {
 	mu     sync.Mutex
 }
 
+
+func (api *API) GetRawData(ctx context.Context, method, path string, params common.Params) ([]byte, error) {
+	path = "https://api-futures.kucoin.com" + path
+	values := url.Values{}
+	var err error
+	if params != nil {
+		values = params.ToUrlValues()
+	}
+	path = common.EncodeURLValues(path, values)
+	req, err := http.NewRequest(method, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.client.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+	reader := resp.Body
+	contents, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	var dataCap DataCap
+	if err := json.Unmarshal(contents, &dataCap); err != nil {
+		return nil, err
+	} else if dataCap.Code != 200000 {
+		return nil, errors.New(dataCap.Msg)
+	}
+	return dataCap.Data, nil
+}
+
 func (api *API) SendHTTPRequest(ctx context.Context, method, path string, params common.Params, result interface{}) error {
 	path = "https://api-futures.kucoin.com" + path
 	values := url.Values{}

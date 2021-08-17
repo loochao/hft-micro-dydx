@@ -29,6 +29,11 @@ func main() {
 
 	flag.Parse()
 
+	kcufApi, err := kucoin_usdtfuture.NewAPI("", "", "", *proxyAddress)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	symbolsMap := make(map[string]string)
 	symbols := []string{"XBTUSDTM"}
 	symbolsMap["XBTUSDTM"] = "BTCUSDT"
@@ -42,6 +47,7 @@ func main() {
 	sort.Strings(symbols)
 	ctx, cancel := context.WithCancel(context.Background())
 	fileSavedCh := make(chan string, len(symbols))
+	kcufAllChMap := make(map[string]chan *Message)
 	for start := 0; start < len(symbols); start += *batchSize {
 		end := start + *batchSize
 		if end > len(symbols) {
@@ -52,6 +58,7 @@ func main() {
 		for _, xSymbol := range symbols[start:end] {
 			ySymbol := symbolsMap[xSymbol]
 			kcufChMap[xSymbol] = make(chan *Message, 1024)
+			kcufAllChMap[xSymbol] = kcufChMap[xSymbol]
 			bnusChMap[strings.ToLower(ySymbol)] = kcufChMap[xSymbol]
 			go saveLoop(ctx, cancel, *savePath, xSymbol, ySymbol, kcufChMap[xSymbol], fileSavedCh)
 		}
@@ -78,6 +85,7 @@ func main() {
 			}
 		}(ctx, cancel, *proxyAddress, kcufChMap)
 	}
+	go streamFundingRate(context.Background(), kcufApi, kcufAllChMap)
 	go archiveFiles(context.Background(), *savePath)
 	go func() {
 		sigs := make(chan os.Signal, 1)

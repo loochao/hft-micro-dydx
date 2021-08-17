@@ -451,7 +451,7 @@ func NewKcufDepth5WS(
 		reconnectCh: make(chan interface{}),
 		RestartCh:   make(chan interface{}, 4),
 		writeCh:     make(chan interface{}, 4*len(channels)),
-		symbolCh:    make(chan string, 4*len(channels)),
+		symbolCh:    make(chan string, 64*len(channels)),
 		stopped:     0,
 	}
 	go ws.mainLoop(ctx, proxy, channels)
