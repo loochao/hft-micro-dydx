@@ -3,29 +3,44 @@ package main
 import (
 	"context"
 	"flag"
+	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
+	kucoin_usdtfuture "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
 )
+
+
 
 func main() {
 
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
 
 	proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	symbolsStr := flag.String("symbols", "MANA-USD,RLC-USD,GRT-USD,UNI-USD,ENJ-USD,ALGO-USD,BCH-USD,MATIC-USD,KEEP-USD,LTC-USD,FIL-USD,BTC-USD,XTZ-USD,DOGE-USD,OMG-USD,LRC-USD,ETC-USD,REN-USD,ZRX-USD,SUSHI-USD,BAT-USD,BAND-USD,LINK-USD,ANKR-USD,MKR-USD,ATOM-USD,SOL-USD,CRV-USD,CHZ-USD,NKN-USD,KNC-USD,DOT-USD,OGN-USD,EOS-USD,ICP-USD,GTC-USD,ZEC-USD,SNX-USD,BAL-USD,AAVE-USD,STORJ-USD,DASH-USD,XLM-USD,TRB-USD,YFI-USD,COMP-USD,ETH-USD,ADA-USD,1INCH-USD,SKL-USD", "symbols, separate by comma")
-	savePath := flag.String("path", "/root/cbus-bnuf-ticker", "data save folder")
+	savePath := flag.String("path", "/root/kcuf-bnus-depth5-and-ticker", "data save folder")
 
 	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	//symbolsStr := flag.String("symbols", "MATIC-USD", "symbols, separate by comma")
 	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
+
 
 	flag.Parse()
 
-	symbols := strings.Split(*symbolsStr, ",")
+	symbolsMap := make(map[string]string)
+	symbols := []string{"XBTUSDTM"}
+	symbolsMap["XBTUSDTM"] = "BTCUSDT"
+	for key := range kucoin_usdtfuture.TickSizes{
+		if _, ok := binance_usdtspot.TickSizes[strings.Replace(key, "USDTM", "USDT", -1)]; ok {
+			symbols = append(symbols, key)
+			symbolsMap[key] = strings.Replace(key, "USDTM", "USDT", -1)
+		}
+	}
+	symbols = symbols[:1]
+	symbols = symbols[:1]
+	sort.Strings(symbols)
 	ctx, cancel := context.WithCancel(context.Background())
 	fileSavedCh := make(chan string, len(symbols))
 	for start := 0; start < len(symbols); start += *batchSize {
@@ -33,30 +48,36 @@ func main() {
 		if end > len(symbols) {
 			end = len(symbols)
 		}
-		cbusChMap := make(map[string]chan *Message)
-		bnufChMap := make(map[string]chan *Message)
+		kcufChMap := make(map[string]chan *Message)
+		bnusChMap := make(map[string]chan *Message)
 		for _, xSymbol := range symbols[start:end] {
-			ySymbol := strings.Replace(xSymbol, "-USD", "USDT", -1)
-			cbusChMap[xSymbol] = make(chan *Message, 1024)
-			bnufChMap[strings.ToLower(ySymbol)] = cbusChMap[xSymbol]
-			go saveLoop(ctx, cancel, *savePath, xSymbol, ySymbol, cbusChMap[xSymbol], fileSavedCh)
+			ySymbol := symbolsMap[xSymbol]
+			kcufChMap[xSymbol] = make(chan *Message, 1024)
+			bnusChMap[strings.ToLower(ySymbol)] = kcufChMap[xSymbol]
+			go saveLoop(ctx, cancel, *savePath, xSymbol, ySymbol, kcufChMap[xSymbol], fileSavedCh)
 		}
 		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan *Message) {
-			ws2 := NewBnufBookTickerWS(ctx, proxy, outputChMap)
-			select {
-			case <-ctx.Done():
-			case <-ws2.Done():
-				cancel()
-			}
-		}(ctx, cancel, *proxyAddress, bnufChMap)
-		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan *Message) {
-			ws1 := NewCbusTickerWS(ctx, proxy, outputChMap)
+			ws1 := NewBnusDepth5WS(ctx, proxy, outputChMap)
+			ws2 := NewBnusBookTickerWS(ctx, proxy, outputChMap)
 			select {
 			case <-ctx.Done():
 			case <-ws1.Done():
 				cancel()
+			case <-ws2.Done():
+				cancel()
 			}
-		}(ctx, cancel, *proxyAddress, cbusChMap)
+		}(ctx, cancel, *proxyAddress, bnusChMap)
+		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan *Message) {
+			ws1 := NewKcufTickerWS(ctx, proxy, outputChMap)
+			ws2 := NewKcufDepth5WS(ctx, proxy, outputChMap)
+			select {
+			case <-ctx.Done():
+			case <-ws1.Done():
+				cancel()
+			case <-ws2.Done():
+				cancel()
+			}
+		}(ctx, cancel, *proxyAddress, kcufChMap)
 	}
 	go archiveFiles(context.Background(), *savePath)
 	go func() {
