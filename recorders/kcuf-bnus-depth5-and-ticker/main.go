@@ -85,8 +85,8 @@ func main() {
 			}
 		}(ctx, cancel, *proxyAddress, kcufChMap)
 	}
-	go streamFundingRate(context.Background(), kcufApi, kcufAllChMap)
-	go archiveFiles(context.Background(), *savePath)
+	go streamFundingRate(ctx, kcufApi, kcufAllChMap)
+	go archiveFiles(ctx, *savePath)
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
