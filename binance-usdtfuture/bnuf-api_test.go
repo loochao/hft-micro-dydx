@@ -57,7 +57,7 @@ func TestAPI_GetPositions(t *testing.T) {
 }
 
 func TestAPI_GetExchangeInfo(t *testing.T) {
-	proxy := "socks5://127.0.0.1:1080"
+	proxy := "socks5://127.0.0.1:1083"
 
 	api, err := NewAPI(&common.Credentials{}, proxy)
 	if err != nil {
