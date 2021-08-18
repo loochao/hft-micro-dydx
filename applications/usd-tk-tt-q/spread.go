@@ -88,7 +88,7 @@ func (strat *XYStrategy) updateSpread() {
 func (strat *XYStrategy) handleTicker() {
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady ||
-		time.Now().Sub(strat.nextTicker.GetTime()) > strat.config.TickerMaxAgeDiffBias {
+		time.Now().Sub(strat.nextTicker.GetTime()) > strat.config.TickerMaxTimeDelta {
 		return
 	} else if strat.nextTicker.GetExchange() == strat.xExchangeID {
 		strat.xNextTicker = strat.nextTicker
