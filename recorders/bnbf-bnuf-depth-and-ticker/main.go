@@ -5,9 +5,11 @@ import (
 	"flag"
 	binance_busdfuture "github.com/geometrybase/hft-micro/binance-busdfuture"
 	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -15,12 +17,13 @@ import (
 
 func main() {
 
-	batchSize := flag.Int("batch", 30, "symbols group batch size")
-	proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	savePath := flag.String("path", "/root/bnbf-bnuf-depth-and-ticker", "data save folder")
+	batchSize := flag.Int("batch", 30, "batch size")
 
-	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
+	//proxyAddress := flag.String("proxy", "", "proxy address")
+	//savePath := flag.String("path", "/root/bnbf-bnuf-depth-and-ticker", "data save folder")
+
+	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "proxy address")
 
 	flag.Parse()
 
@@ -30,11 +33,25 @@ func main() {
 			symbols = append(symbols, xSymbol)
 		}
 	}
+	sort.Strings(symbols)
 
+	symbols = symbols[:1]
 	logger.Debugf("SYMBOLS %s", symbols)
+
+	bnufApi, err := binance_usdtfuture.NewAPI(&common.Credentials{}, *proxyAddress)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	bnbfApi, err := binance_busdfuture.NewAPI(&common.Credentials{}, *proxyAddress)
+	if err != nil {
+		logger.Fatal(err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	fileSavedCh := make(chan string, len(symbols))
+
+	bnbfAllChMap := make(map[string]chan *Message)
+	bnufAllChMap := make(map[string]chan *Message)
 
 	for start := 0; start < len(symbols); start += *batchSize {
 		end := start + *batchSize
@@ -47,6 +64,10 @@ func main() {
 			ySymbol := strings.Replace(xSymbol, "BUSD", "USDT", -1)
 			bnbfChMap[strings.ToLower(xSymbol)] = make(chan *Message, 1024)
 			bnufChMap[strings.ToLower(ySymbol)] = bnbfChMap[strings.ToLower(xSymbol)]
+
+			bnbfAllChMap[strings.ToLower(xSymbol)] = bnbfChMap[strings.ToLower(xSymbol)]
+			bnufAllChMap[strings.ToLower(ySymbol)] = bnbfChMap[strings.ToLower(xSymbol)]
+
 			go saveLoop(ctx, cancel, *savePath, xSymbol, ySymbol, bnbfChMap[strings.ToLower(xSymbol)], fileSavedCh)
 		}
 		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan *Message) {
@@ -73,6 +94,8 @@ func main() {
 		}(ctx, cancel, *proxyAddress, bnbfChMap)
 	}
 	go archiveFiles(context.Background(), *savePath)
+	go streamBnbfFundingRate(ctx, bnbfApi, bnbfAllChMap)
+	go streamBnufFundingRate(ctx, bnufApi, bnufAllChMap)
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)

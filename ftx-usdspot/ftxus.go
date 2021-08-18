@@ -11,50 +11,50 @@ import (
 	"time"
 )
 
-type FtxUsdFuture struct {
+type FtxUsdSpot struct {
 	api      *API
 	done     chan interface{}
 	stopped  bool
 	settings common.ExchangeSettings
 }
 
-func (ftx *FtxUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+func (ftx *FtxUsdSpot) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	panic("implement me")
 }
 
-func (ftx *FtxUsdFuture) GetExchange() common.ExchangeID {
+func (ftx *FtxUsdSpot) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (ftx *FtxUsdFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+func (ftx *FtxUsdSpot) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	panic("implement me")
 }
 
-func (ftx *FtxUsdFuture) StartSideLoop() {
+func (ftx *FtxUsdSpot) StartSideLoop() {
 	panic("implement me")
 }
 
-func (ftx *FtxUsdFuture) GetMultiplier(symbol string) (float64, error) {
+func (ftx *FtxUsdSpot) GetMultiplier(symbol string) (float64, error) {
 	return 1.0, nil
 }
 
-func (ftx *FtxUsdFuture) IsSpot() bool {
+func (ftx *FtxUsdSpot) IsSpot() bool {
 	return false
 }
 
-func (ftx *FtxUsdFuture) GenerateClientID() string {
+func (ftx *FtxUsdSpot) GenerateClientID() string {
 	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 }
 
-func (ftx *FtxUsdFuture) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
+func (ftx *FtxUsdSpot) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	panic("implement me")
 }
 
-func (ftx *FtxUsdFuture) GetMinNotional(symbol string) (float64, error) {
+func (ftx *FtxUsdSpot) GetMinNotional(symbol string) (float64, error) {
 	return 0.0, nil
 }
 
-func (ftx *FtxUsdFuture) GetMinSize(symbol string) (float64, error) {
+func (ftx *FtxUsdSpot) GetMinSize(symbol string) (float64, error) {
 	if value, ok := SizeIncrements[symbol]; ok {
 		return value, nil
 	} else {
@@ -62,7 +62,7 @@ func (ftx *FtxUsdFuture) GetMinSize(symbol string) (float64, error) {
 	}
 }
 
-func (ftx *FtxUsdFuture) GetStepSize(symbol string) (float64, error) {
+func (ftx *FtxUsdSpot) GetStepSize(symbol string) (float64, error) {
 	if value, ok := SizeIncrements[symbol]; ok {
 		return value, nil
 	} else {
@@ -70,7 +70,7 @@ func (ftx *FtxUsdFuture) GetStepSize(symbol string) (float64, error) {
 	}
 }
 
-func (ftx *FtxUsdFuture) GetTickSize(symbol string) (float64, error) {
+func (ftx *FtxUsdSpot) GetTickSize(symbol string) (float64, error) {
 	if value, ok := PriceIncrements[symbol]; ok {
 		return value, nil
 	} else {
@@ -78,7 +78,7 @@ func (ftx *FtxUsdFuture) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (ftx *FtxUsdFuture) StreamBasic(
+func (ftx *FtxUsdSpot) StreamBasic(
 	ctx context.Context,
 	statusCh chan common.SystemStatus,
 	accountCh chan common.Balance,
@@ -282,7 +282,7 @@ func (ftx *FtxUsdFuture) StreamBasic(
 	}
 }
 
-func (ftx *FtxUsdFuture) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
+func (ftx *FtxUsdSpot) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
 	logger.Debugf("START StreamTrade")
 	defer logger.Debugf("STOP StreamTrade")
 	defer ftx.Stop()
@@ -325,7 +325,7 @@ func (ftx *FtxUsdFuture) StreamTrade(ctx context.Context, channels map[string]ch
 	}
 }
 
-func (ftx *FtxUsdFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (ftx *FtxUsdSpot) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")
 	defer logger.Debugf("STOP StreamTicker")
 	defer ftx.Stop()
@@ -368,11 +368,11 @@ func (ftx *FtxUsdFuture) StreamTicker(ctx context.Context, channels map[string]c
 	}
 }
 
-func (ftx *FtxUsdFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
+func (ftx *FtxUsdSpot) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
 	panic("implement me")
 }
 
-func (ftx *FtxUsdFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
+func (ftx *FtxUsdSpot) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
 	pullInterval := ftx.settings.PullInterval + time.Duration(len(channels))*time.Second
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
@@ -414,7 +414,7 @@ func (ftx *FtxUsdFuture) StreamFundingRate(ctx context.Context, channels map[str
 	}
 }
 
-func (ftx *FtxUsdFuture) WatchOrders(
+func (ftx *FtxUsdSpot) WatchOrders(
 	ctx context.Context,
 	requestChannels map[string]chan common.OrderRequest,
 	responseChannels map[string]chan common.Order,
@@ -444,7 +444,7 @@ func (ftx *FtxUsdFuture) WatchOrders(
 	}
 }
 
-func (ftx *FtxUsdFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
+func (ftx *FtxUsdSpot) Setup(ctx context.Context, settings common.ExchangeSettings) error {
 	var err error
 	if settings.PullInterval == 0 {
 		settings.PullInterval = time.Minute
@@ -467,7 +467,7 @@ func (ftx *FtxUsdFuture) Setup(ctx context.Context, settings common.ExchangeSett
 	return nil
 }
 
-func (ftx *FtxUsdFuture) watchOrder(
+func (ftx *FtxUsdSpot) watchOrder(
 	ctx context.Context,
 	market string,
 	requestCh chan common.OrderRequest,
@@ -501,7 +501,7 @@ func (ftx *FtxUsdFuture) watchOrder(
 	}
 }
 
-func (ftx *FtxUsdFuture) Stop() {
+func (ftx *FtxUsdSpot) Stop() {
 	if !ftx.stopped {
 		ftx.stopped = true
 		close(ftx.done)
@@ -509,11 +509,11 @@ func (ftx *FtxUsdFuture) Stop() {
 	}
 }
 
-func (ftx *FtxUsdFuture) Done() chan interface{} {
+func (ftx *FtxUsdSpot) Done() chan interface{} {
 	return ftx.done
 }
 
-func (ftx *FtxUsdFuture) positionsLoop(ctx context.Context, markets []string, positionsCh chan []Position) {
+func (ftx *FtxUsdSpot) positionsLoop(ctx context.Context, markets []string, positionsCh chan []Position) {
 	pullInterval := ftx.settings.PullInterval
 	pullTimer := time.NewTimer(pullInterval)
 	defer pullTimer.Stop()
@@ -555,7 +555,7 @@ func (ftx *FtxUsdFuture) positionsLoop(ctx context.Context, markets []string, po
 	}
 }
 
-func (ftx *FtxUsdFuture) accountLoop(ctx context.Context, accountCh chan *Account) {
+func (ftx *FtxUsdSpot) accountLoop(ctx context.Context, accountCh chan *Account) {
 	pullInterval := ftx.settings.PullInterval
 	pullTimer := time.NewTimer(pullInterval)
 	defer pullTimer.Stop()
@@ -582,7 +582,7 @@ func (ftx *FtxUsdFuture) accountLoop(ctx context.Context, accountCh chan *Accoun
 	}
 }
 
-func (ftx *FtxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
+func (ftx *FtxUsdSpot) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParam{}
 	newOrderParam.Market = param.Symbol
 	newOrderParam.Size = param.Size
@@ -625,7 +625,7 @@ func (ftx *FtxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderP
 	}
 }
 
-func (ftx *FtxUsdFuture) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
+func (ftx *FtxUsdSpot) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
 	if param.ClientID != "" {
 		_, err := ftx.api.CancelOrderByClientID(ctx, param.ClientID)
 		if err != nil {
@@ -655,7 +655,7 @@ func (ftx *FtxUsdFuture) cancelOrder(ctx context.Context, param common.CancelOrd
 	}
 }
 
-func (ftx *FtxUsdFuture) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
+func (ftx *FtxUsdSpot) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")
 	defer ftx.Stop()

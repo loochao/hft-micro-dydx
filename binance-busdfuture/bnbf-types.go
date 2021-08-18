@@ -851,6 +851,19 @@ type PremiumIndex struct {
 	ParseTime            time.Time `json:"-"`
 }
 
+func (mpu *PremiumIndex) MarshalJSON() ([]byte, error) {
+	type Alias PremiumIndex
+	return json.Marshal(&struct {
+		NextFundingTime int64 `json:"nextFundingTime,omitempty"`
+		EventTime       int64 `json:"time,omitempty"`
+		*Alias
+	}{
+		Alias:           (*Alias)(mpu),
+		NextFundingTime: mpu.NextFundingTime.UnixNano() / 1000000,
+		EventTime:       mpu.EventTime.UnixNano() / 1000000,
+	})
+}
+
 func (mpu *PremiumIndex) GetExchange() common.ExchangeID {
 	return ExchangeID
 }

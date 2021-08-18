@@ -6,11 +6,13 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
 
-func TestAPI_GetFutures(t *testing.T) {
+func TestAPI_GetMarkets(t *testing.T) {
+	os.Setenv("FTX_TEST_PROXY", "socks5://127.0.0.1:1083")
 	api, err := NewAPI(os.Getenv("FTX_TEST_KEY"), os.Getenv("FTX_TEST_SECRET"), os.Getenv("FTX_TEST_PROXY"))
 	if err != nil {
 		t.Fatal(err)
@@ -24,7 +26,13 @@ func TestAPI_GetFutures(t *testing.T) {
 	priceIncrements := make(map[string]float64)
 	minProvideSizes := make(map[string]float64)
 	for _, market := range markets {
-		if market.Type == "spot" && market.Enabled && market.QuoteCurrency == "USD"{
+		if market.Type == "spot" &&
+			market.Enabled &&
+			market.QuoteCurrency == "USD" &&
+			!strings.Contains(market.Name, "BULL") &&
+			!strings.Contains(market.Name, "BEAR") &&
+			!strings.Contains(market.Name, "HALF") &&
+			!strings.Contains(market.Name, "HEDGE") {
 			sizeIncrements[market.Name] = market.SizeIncrement
 			priceIncrements[market.Name] = market.PriceIncrement
 			minProvideSizes[market.Name] = market.MinProvideSize
@@ -32,7 +40,7 @@ func TestAPI_GetFutures(t *testing.T) {
 	}
 	fmt.Printf("var SizeIncrements = map[string]float64{\n")
 	for name, value := range sizeIncrements {
-		fmt.Printf("  \"%s\":%s,\n", name,  strconv.FormatFloat(value, 'f', -1, 64))
+		fmt.Printf("  \"%s\":%s,\n", name, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	fmt.Printf("}\n\n")
 	fmt.Printf("var PriceIncrements = map[string]float64{\n")
@@ -84,7 +92,6 @@ func TestAPI_GetAccount(t *testing.T) {
 	}
 	logger.Debugf("%v", account)
 }
-
 
 func TestAPI_GetPositions(t *testing.T) {
 	api, err := NewAPI(os.Getenv("FTX_TEST_KEY"), os.Getenv("FTX_TEST_SECRET"), os.Getenv("FTX_TEST_PROXY"))
