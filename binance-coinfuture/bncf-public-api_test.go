@@ -26,7 +26,7 @@ func TestAPI_GetServerTime(t *testing.T) {
 }
 
 func TestAPI_GetExchangeInfo(t *testing.T) {
-	api, err := NewAPI(&common.Credentials{}, os.Getenv("BN_TEST_PROXY"))
+	api, err := NewAPI(&common.Credentials{}, "socks5://127.0.0.1:1083")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	multiplierDowns := make(map[string]float64)
 	contractSizes := make(map[string]float64)
 	for _, symbol := range exchangeInfo.Symbols {
-		logger.Debugf("%v", symbol)
+		//logger.Debugf("%v", symbol)
 		if symbol.ContractStatus != "TRADING" {
 			continue
 		}
