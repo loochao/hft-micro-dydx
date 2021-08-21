@@ -16,6 +16,7 @@ require (
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab
 	github.com/leesper/go_rng v0.0.0-20190531154944-a612b043e353
 	github.com/minio/simdjson-go v0.2.2
+	github.com/montanaflynn/stats v0.6.6
 	github.com/stretchr/testify v1.7.0
 	gonum.org/v1/gonum v0.9.0
 	gopkg.in/yaml.v2 v2.4.0

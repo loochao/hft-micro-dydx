@@ -1,10 +1,11 @@
-package ftx_usdspot
+package main
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	ftx_usdfuture "github.com/geometrybase/hft-micro/ftx-usdfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -14,7 +15,7 @@ import (
 	"time"
 )
 
-type TickerWS struct {
+type FtxufTickerWS struct {
 	writeCh       chan interface{}
 	done          chan interface{}
 	reconnectCh   chan interface{}
@@ -23,7 +24,7 @@ type TickerWS struct {
 	stopped       int32
 }
 
-func (w *TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *FtxufTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -66,15 +67,23 @@ func (w *TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *FtxufTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *Message) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
 	var symbol string
 	var msg []byte
 	var err error
-	var ch chan []byte
+	var ch chan *Message
 	var ok bool
+	var message *Message
+	index := -1
+	pool := [4096]*Message{}
+	for i := 0; i < 4096; i++ {
+		pool[i] = &Message{
+			Source: []byte{'X', 'T'},
+		}
+	}
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -89,10 +98,9 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 			w.restart()
 			return
 		}
-		logger.Debugf("%s", msg)
 		msgLen := len(msg)
-		//{"channel": "ticker", "market": "DOGE-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
-		if msgLen > 128 && msg[31] == ' ' && msg[32] == '"' {
+		//{"channel": "ticker", "market": "BTC/USD", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
+		if msgLen > 128 && msg[31] == ' ' && msg[32] == '"'{
 			if msg[40] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:40])
 			} else if msg[41] == '"' {
@@ -122,11 +130,26 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 			continue
 		}
 		if ch, ok = channels[symbol]; ok {
+			index++
+			if index == 4096 {
+				index = 0
+			}
+			message = pool[index]
+			message.Time = time.Now().UnixNano()
+			message.Data = msg
 			select {
-			case ch <- msg:
+			case ch <- message:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf(" ch <- msg %s ch len %d", symbol, len(ch))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
+			select {
+			case w.marketCh <- symbol:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("w.marketCh <- symbol failed, ch len %d", len(w.marketCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -134,7 +157,7 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 	}
 }
 
-func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
+func (w *FtxufTickerWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 256)
 	for {
 		if len(b) == cap(b) {
@@ -152,7 +175,7 @@ func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *FtxufTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -197,7 +220,7 @@ func (w *TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, co
 	return conn, nil
 }
 
-func (w *TickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
+func (w *FtxufTickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *Message) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -250,7 +273,7 @@ func (w *TickerWS) mainLoop(ctx context.Context, proxy string, channels map[stri
 	}
 }
 
-func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *FtxufTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -304,7 +327,7 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 			for market, updateTime := range marketUpdatedTimes {
 				if time.Now().Sub(updateTime) > marketTimeout {
 					select {
-					case w.writeCh <- SubscribeParam{
+					case w.writeCh <- ftx_usdfuture.SubscribeParam{
 						Operation: "unsubscribe",
 						Channel:   "ticker",
 						Market:    market,
@@ -314,7 +337,7 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
 					}
 					select {
-					case w.writeCh <- SubscribeParam{
+					case w.writeCh <- ftx_usdfuture.SubscribeParam{
 						Operation: "subscribe",
 						Channel:   "ticker",
 						Market:    market,
@@ -331,7 +354,7 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 	}
 }
 
-func (w *TickerWS) Stop() {
+func (w *FtxufTickerWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -339,7 +362,7 @@ func (w *TickerWS) Stop() {
 	}
 }
 
-func (w *TickerWS) restart() {
+func (w *FtxufTickerWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -347,81 +370,24 @@ func (w *TickerWS) restart() {
 	}
 }
 
-func (w *TickerWS) Done() chan interface{} {
+func (w *FtxufTickerWS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Ticker) {
-	logger.Debugf("START dataHandleLoop %s", market)
-	defer logger.Debugf("EXIT dataHandleLoop %s", market)
-	logSilentTime := time.Now()
-	index := -1
-	pool := [4]*Ticker{}
-	for i := 0; i < 4; i++ {
-		pool[i] = &Ticker{}
-	}
-	var ticker *Ticker
-	var err error
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-w.done:
-			return
-		case msg := <-inputCh:
-			index++
-			if index == 4 {
-				index = 0
-			}
-			ticker = pool[index]
-			err = ParseTicker(msg, ticker)
-			if err != nil && time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("ParseTicker(msg, ticker) error %s %v", msg, err)
-				logSilentTime = time.Now().Add(time.Minute)
-			} else {
-				select {
-				case outputCh <- ticker:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("outputCh <- ticker failed ch len %d", len(outputCh))
-						logSilentTime = time.Now().Add(time.Minute)
-						continue
-					}
-				}
-			}
-			select {
-			case w.marketCh <- market:
-			default:
-				//if time.Now().Sub(logSilentTime) > 0 {
-				//	logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
-				//	logSilentTime = time.Now().Add(time.Minute)
-				//}
-			}
-			break
-		}
-	}
-}
-
-func NewTickerWS(
+func NewFtxusTickerWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan common.Ticker,
-) *TickerWS {
-	ws := TickerWS{
+	channels map[string]chan *Message,
+) *FtxufTickerWS {
+	ws := FtxufTickerWS{
 		done:          make(chan interface{}),
 		reconnectCh:   make(chan interface{}, 4),
 		writeCh:       make(chan interface{}, 2*len(channels)),
-		marketCh:      make(chan string, len(channels)),
+		marketCh:      make(chan string, 100*len(channels)),
 		marketResetCh: make(chan string, len(channels)),
 		stopped:       0,
 	}
-	messagesCh := make(map[string]chan []byte)
-	for market, ch := range channels {
-		messagesCh[market] = make(chan []byte, 1000)
-		go ws.dataHandleLoop(ctx, market, messagesCh[market], ch)
-	}
-	go ws.mainLoop(ctx, proxy, messagesCh)
+	go ws.mainLoop(ctx, proxy, channels)
 	ws.reconnectCh <- nil
 	return &ws
 }

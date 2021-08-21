@@ -46,11 +46,11 @@ func main() {
 	}
 	defer iw.Stop()
 
-	startTime, err := time.Parse("20060102", "20210803")
+	startTime, err := time.Parse("20060102", "20210818")
 	if err != nil {
 		logger.Fatal(err)
 	}
-	endTime, err := time.Parse("20060102", "20210806")
+	endTime, err := time.Parse("20060102", "20210820")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func main() {
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
 	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/bnbf-bnuf-quantiles/outputs"
-	dataPath := "/Volumes/MarketData/bnbf-bnuf-depth-and-ticker"
+	dataPath := "/Users/chenjilin/Downloads/bnbf-bnuf-depth-and-ticker"
 
 	sizeTDs := make(map[string]*tdigest.TDigest)
 	quantileMiddle := 0.0

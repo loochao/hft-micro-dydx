@@ -10,7 +10,7 @@ import (
 
 func TestNewTickerWS(t *testing.T) {
 	var ctx = context.Background()
-	symbols := []string{ "DOGE-PERP"}
+	symbols := []string{ "BTC/USD"}
 	channels := make(map[string]chan common.Ticker)
 	for _, symbol := range symbols {
 		channels[symbol] = make(chan common.Ticker, 100)
