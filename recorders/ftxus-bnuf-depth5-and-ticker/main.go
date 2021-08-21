@@ -33,7 +33,7 @@ func main() {
 		}
 	}
 	sort.Strings(symbols)
-	symbols = symbols[:1]
+	//symbols = symbols[:1]
 	logger.Debugf("SYMBOLS %s", symbols)
 
 	bnufApi, err := binance_usdtfuture.NewAPI(&common.Credentials{}, *proxyAddress)
