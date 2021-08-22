@@ -19,11 +19,11 @@ func main() {
 
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
 
-	//proxyAddress := flag.String("proxy", "", "proxy address")
-	//savePath := flag.String("path", "/root/ftxus-bnbf-ticker", "data save folder")
+	proxyAddress := flag.String("proxy", "", "proxy address")
+	savePath := flag.String("path", "/root/ftxus-bnbf-ticker", "data save folder")
 
-	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "proxy address")
+	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "proxy address")
 
 	flag.Parse()
 	symbols := make([]string, 0)
@@ -33,7 +33,7 @@ func main() {
 		}
 	}
 	sort.Strings(symbols)
-	symbols = symbols[:1]
+	//symbols = symbols[:1]
 	logger.Debugf("SYMBOLS %s", symbols)
 
 	bnbfApi, err := binance_busdfuture.NewAPI(&common.Credentials{}, *proxyAddress)
