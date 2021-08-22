@@ -33,7 +33,7 @@ func (w *BnbsDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 	pool := [4096]*Message{}
 	for i := 0; i < 4096; i++ {
 		pool[i] = &Message{
-			Source: []byte{'S', 'D'},
+			Source: []byte{'Y', 'D'},
 		}
 	}
 	for {

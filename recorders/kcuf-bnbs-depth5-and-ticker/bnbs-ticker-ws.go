@@ -33,7 +33,7 @@ func (w *BnbsBookTickerWS) readLoop(conn *websocket.Conn, channels map[string]ch
 	pool := [4096]*Message{}
 	for i := 0; i < 4096; i++ {
 		pool[i] = &Message{
-			Source: []byte{'S', 'T'},
+			Source: []byte{'Y', 'T'},
 		}
 	}
 	for {
