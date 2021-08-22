@@ -19,11 +19,11 @@ func main() {
 
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
 
-	//proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	//savePath := flag.String("path", "/root/ftxuf-bnuf-depth5-and-ticker", "data save folder")
+	proxyAddress := flag.String("proxy", "", "symbols group batch size")
+	savePath := flag.String("path", "/root/ftxuf-bnuf-depth5-and-ticker", "data save folder")
 
-	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
+	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 	flag.Parse()
 
 	symbols := make([]string, 0)
@@ -33,7 +33,7 @@ func main() {
 		}
 	}
 	sort.Strings(symbols)
-	symbols = symbols[:1]
+	//symbols = symbols[:1]
 	logger.Debugf("SYMBOLS %s", symbols)
 
 	ftxufApi, err := ftx_usdfuture.NewAPI("", "", *proxyAddress)
