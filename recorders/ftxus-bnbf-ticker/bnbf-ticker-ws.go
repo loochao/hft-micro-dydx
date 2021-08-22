@@ -10,18 +10,17 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
-type BnufDepth5WS struct {
+type BnbfBookTickerWS struct {
 	done        chan interface{}
 	reconnectCh chan interface{}
-	stopped     bool
-	mu          sync.Mutex
+	stopped     int32
 }
 
-func (w *BnufDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *Message) {
+func (w *BnbfBookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *Message) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -30,10 +29,10 @@ func (w *BnufDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 	var symbol string
 	var message *Message
 	index := -1
-	pool := [4096]*Message{}
-	for i := 0; i < 4096; i++ {
+	pool := [1024]*Message{}
+	for i := 0; i < 1024; i++ {
 		pool[i] = &Message{
-			Source: []byte{'Y', 'D'},
+			Source: []byte{'X', 'T'},
 		}
 	}
 	for {
@@ -58,29 +57,27 @@ func (w *BnufDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 		if len(msg) < 128 {
 			continue
 		}
-		//{"stream":"btcusdt@depth5@100ms","data":{"e":"depthUpdate","E":1623494540877,"T":1623494540870,"s":"BTCUSDT","U":510743908847,"u":510743911822,"pu":510743908726,"b":[["35701.24","2.079"],["35701.23","0.276"],["35701.22","0.001"],["35700.35","0.400"],["35699.59","0.147"]],"a":[["35701.25","0.134"],["35704.02","0.248"],["35704.03","0.272"],["35704.55","0.001"],["35704.56","0.003"]]}}
-		//{"stream":"linkusdt@depth5@100ms","data":{"e":"depthUpdate","E":1623494540955,"T":1623494540947,"s":"LINKUSDT","U":510743911258,"u":510743914224,"pu":510743910356,"b":[["21.030","12.37"],["21.029","448.68"],["21.027","2.12"],["21.024","240.12"],["21.022","47.62"]],"a":[["21.031","4.66"],["21.034","20.68"],["21.036","7.17"],["21.038","20.53"],["21.039","251.82"]]}}
-		//{"stream":"wavesusdt@depth5@100ms","data":{"e":"depthUpdate","E":1623494540937,"T":1623494540873,"s":"WAVESUSDT","U":510743910668,"u":510743911915,"pu":510743903045,"b":[["14.2300","0.4"],["14.2270","59.0"],["14.2260","112.0"],["14.2250","78.5"],["14.2240","195.9"]],"a":[["14.2310","11.0"],["14.2340","38.4"],["14.2350","105.0"],["14.2360","3.5"],["14.2370","193.0"]]}}
-		if msg[60] == 'E' {
+		//{"stream":"scusdt@bookTicker","data":{"e":"bookTicker","u":552297398961,"s":"SCUSDT","b":"0.012805","B":"46556","a":"0.012816","A":"90351","T":1624971386657,"E":1624971386662}}
+		if msg[18] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:18])
-		} else if msg[61] == 'E' {
+		} else if msg[19] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:19])
-		} else if msg[62] == 'E' {
+		} else if msg[20] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:20])
-		} else if msg[59] == 'E' {
-			symbol = common.UnsafeBytesToString(msg[11:17])
-		} else if msg[63] == 'E' {
+		} else if msg[21] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:21])
-		} else if msg[64] == 'E' {
+		} else if msg[22] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:22])
-		} else if msg[65] == 'E' {
-			symbol = common.UnsafeBytesToString(msg[11:23])
-		} else if msg[59] == 'E' {
+		} else if msg[17] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:17])
-		} else if msg[66] == 'E' {
+		} else if msg[23] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:23])
+		} else if msg[24] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:24])
-		} else if msg[67] == 'E' {
+		} else if msg[25] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:25])
+		} else if msg[26] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:26])
 		} else {
 			if time.Now().Sub(logSilentTime) > 0 {
 				logger.Debugf("bad msg, can't find symbol: %s", msg)
@@ -88,10 +85,9 @@ func (w *BnufDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 			}
 			continue
 		}
-		//logger.Debugf("%s %v", symbol, channels)
 		if ch, ok = channels[symbol]; ok {
 			index++
-			if index == 4096 {
+			if index == 1024 {
 				index = 0
 			}
 			message = pool[index]
@@ -101,7 +97,7 @@ func (w *BnufDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 			case ch <- message:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("ch <- message failed %s len(ch) = %d", symbol, len(ch))
+					logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -109,7 +105,7 @@ func (w *BnufDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 	}
 }
 
-func (w *BnufDepth5WS) readAll(r io.Reader) ([]byte, error) {
+func (w *BnbfBookTickerWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -127,7 +123,7 @@ func (w *BnufDepth5WS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *BnufDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *BnbfBookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("RECONNECT %s, %d RETRIES", wsUrl, counter)
@@ -172,26 +168,28 @@ func (w *BnufDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string
 	return conn, nil
 }
 
-func (w *BnufDepth5WS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *Message) {
+func (w *BnbfBookTickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *Message) {
 	urlStr := "wss://fstream.binance.com/stream?streams="
 	symbols := make([]string, 0)
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 		urlStr += fmt.Sprintf(
-			"%s@depth5@100ms/",
+			"%s@bookTicker/",
 			strings.ToLower(symbol),
 		)
 	}
 	urlStr = urlStr[:len(urlStr)-1]
 	logger.Debugf("START mainLoop %s", urlStr)
 
-	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 
 	defer func() {
+		if internalCancel != nil {
+			internalCancel()
+			internalCancel = nil
+		}
 		w.Stop()
-		cancel()
 		logger.Debugf("EXIT mainLoop %s", symbols)
 	}()
 	reconnectTimer := time.NewTimer(time.Hour * 9999)
@@ -227,16 +225,16 @@ func (w *BnufDepth5WS) mainLoop(ctx context.Context, proxy string, channels map[
 				return
 			}
 			go w.readLoop(conn, channels)
-			go w.heartbeatLoop(internalCtx, conn)
-
+			go w.heartbeatLoop(internalCtx, conn, symbols)
+			reconnectTimer.Reset(time.Hour * 9999)
 		}
 	}
 }
 
-func (w *BnufDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) {
-	logger.Debugf("START heartbeatLoop")
+func (w *BnbfBookTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+	logger.Debugf("START heartbeatLoop %s", symbols)
 	defer func() {
-		logger.Debugf("EXIT heartbeatLoop")
+		logger.Debugf("EXIT heartbeatLoop %s", symbols)
 		err := conn.Close()
 		if err != nil {
 			logger.Debugf("conn.Close() error %v", err)
@@ -282,16 +280,14 @@ func (w *BnufDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) 
 
 }
 
-func (w *BnufDepth5WS) Stop() {
-	w.mu.Lock()
-	if !w.stopped {
-		w.stopped = true
+func (w *BnbfBookTickerWS) Stop() {
+	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
+		logger.Debugf("stopped")
 	}
-	w.mu.Unlock()
 }
 
-func (w *BnufDepth5WS) restart() {
+func (w *BnbfBookTickerWS) restart() {
 	select {
 	case <-w.done:
 		return
@@ -307,20 +303,19 @@ func (w *BnufDepth5WS) restart() {
 	}
 }
 
-func (w *BnufDepth5WS) Done() chan interface{} {
+func (w *BnbfBookTickerWS) Done() chan interface{} {
 	return w.done
 }
 
-func NewBnufDepth5WS(
+func NewBnbfBookTickerWS(
 	ctx context.Context,
 	proxy string,
 	channels map[string]chan *Message,
-) *BnufDepth5WS {
-	ws := BnufDepth5WS{
+) *BnbfBookTickerWS {
+	ws := BnbfBookTickerWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}, 4),
-		stopped:     false,
-		mu:          sync.Mutex{},
+		stopped:     0,
 	}
 	go ws.mainLoop(ctx, proxy, channels)
 	ws.reconnectCh <- nil
