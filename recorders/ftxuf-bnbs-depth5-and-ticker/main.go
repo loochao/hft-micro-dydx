@@ -61,9 +61,12 @@ func main() {
 		}
 		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan *Message) {
 			ws1 := NewBnbsBookTickerWS(ctx, proxy, outputChMap)
+			ws2 := NewBnbsDepth5WS(ctx, proxy, outputChMap)
 			select {
 			case <-ctx.Done():
 			case <-ws1.Done():
+				cancel()
+			case <-ws2.Done():
 				cancel()
 			}
 		}(ctx, cancel, *proxyAddress, bnufChMap)
