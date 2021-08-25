@@ -39,8 +39,8 @@ rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" arm1:/usr/local/bin/
 echo "" && echo "" && echo "tk01"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt tk01:/usr/local/bin/"
 
-#echo "" && echo "" && echo "tk02"
-#ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt tk02:/usr/local/bin/"
+echo "" && echo "" && echo "tk02"
+ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt tk02:/usr/local/bin/"
 
 echo "" && echo "" && echo "tk03"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt tk03:/usr/local/bin/"
