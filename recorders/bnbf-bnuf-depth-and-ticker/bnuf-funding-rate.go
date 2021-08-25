@@ -17,11 +17,12 @@ func streamBnufFundingRate(ctx context.Context, api *bnuf.API,channels map[strin
 	defer afterFrTimer.Stop()
 
 	logSilentTime := time.Now()
+	const bufferSize = 1024
 
 	var message *Message
 	index := -1
-	pool := [4096]*Message{}
-	for i := 0; i < 4096; i++ {
+	pool := [bufferSize]*Message{}
+	for i := 0; i < bufferSize; i++ {
 		pool[i] = &Message{
 			Source: []byte{'Y', 'F'},
 		}
@@ -47,7 +48,7 @@ func streamBnufFundingRate(ctx context.Context, api *bnuf.API,channels map[strin
 						msg, err = fr.MarshalJSON()
 						if err == nil {
 							index++
-							if index == 4096 {
+							if index == bufferSize {
 								index = 0
 							}
 							message = pool[index]
