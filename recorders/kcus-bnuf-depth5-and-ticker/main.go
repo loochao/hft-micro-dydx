@@ -3,9 +3,13 @@ package main
 import (
 	"context"
 	"flag"
+	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
+	"github.com/geometrybase/hft-micro/common"
+	kucoin_usdtspot "github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -17,15 +21,31 @@ func main() {
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
 
 	proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	symbolsStr := flag.String("symbols", "1INCH-USDT,ADA-USDT,ALGO-USDT,ANKR-USDT,ATOM-USDT,AVAX-USDT,BAT-USDT,BCH-USDT,BNB-USDT,BTC-USDT,BTT-USDT,DASH-USDT,DGB-USDT,DODO-USDT,DOGE-USDT,EOS-USDT,ETC-USDT,ETH-USDT,FIL-USDT,FTM-USDT,GRT-USDT,ICP-USDT,IOST-USDT,LRC-USDT,LTC-USDT,LUNA-USDT,MATIC-USDT,NEAR-USDT,NEO-USDT,OGN-USDT,OMG-USDT,ONE-USDT,ONT-USDT,STMX-USDT,SXP-USDT,TOMO-USDT,TRX-USDT,VET-USDT,XEM-USDT,XLM-USDT,XMR-USDT,XRP-USDT,XTZ-USDT,ZEC-USDT,ZEN-USDT,ZIL-USDT", "symbols, separate by comma")
 	savePath := flag.String("path", "/root/kcus-bnuf-depth5-and-ticker", "data save folder")
 
 	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	//symbolsStr := flag.String("symbols", "BTC-USDT", "symbols, separate by comma")
 	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
 
+
+
 	flag.Parse()
-	symbols := strings.Split(*symbolsStr, ",")
+
+	bnufAllChMap := make(map[string]chan *Message)
+
+	symbols := make([]string, 0)
+	for xSymbol := range kucoin_usdtspot.TickSizes {
+		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(xSymbol, "-USDT", "USDT", -1)]; ok {
+			symbols = append(symbols, xSymbol)
+		}
+	}
+	sort.Strings(symbols)
+	logger.Debugf("SYMBOLS %s", symbols)
+
+	bnufApi, err := binance_usdtfuture.NewAPI(&common.Credentials{}, *proxyAddress)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	fileSavedCh := make(chan string, len(symbols))
 	for start := 0; start < len(symbols); start += *batchSize {
@@ -39,6 +59,7 @@ func main() {
 			ySymbol := strings.Replace(xSymbol, "-USDT", "USDT", -1)
 			kcusChMap[xSymbol] = make(chan *Message, 1024)
 			bnufChMap[strings.ToLower(ySymbol)] = kcusChMap[xSymbol]
+			bnufAllChMap[strings.ToLower(ySymbol)] = kcusChMap[xSymbol]
 			go saveLoop(ctx, cancel, *savePath, xSymbol, ySymbol, kcusChMap[xSymbol], fileSavedCh)
 		}
 		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan *Message) {
@@ -65,6 +86,7 @@ func main() {
 		}(ctx, cancel, *proxyAddress, kcusChMap)
 	}
 	go archiveFiles(context.Background(), *savePath)
+	go streamBnufFundingRate(ctx, bnufApi, bnufAllChMap)
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
