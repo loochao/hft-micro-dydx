@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"flag"
+	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
+	kucoin_usdtspot "github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -16,14 +19,21 @@ func main() {
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
 
 	proxyAddress := flag.String("proxy", "", "symbols group batch size")
-	symbolsStr := flag.String("symbols", "XEM-USDT,ZIL-USDT,ZEN-USDT,BTT-USDT,NEO-USDT,ALGO-USDT,DGB-USDT,SXP-USDT,DODO-USDT,ETC-USDT,ANKR-USDT,OMG-USDT,TOMO-USDT,XLM-USDT,ONE-USDT,BAT-USDT,FTM-USDT,ICP-USDT,XRP-USDT,DOGE-USDT,ZEC-USDT,GRT-USDT,MATIC-USDT,OGN-USDT,ADA-USDT,ETH-USDT,FIL-USDT,XMR-USDT,LUNA-USDT,XTZ-USDT,VET-USDT,1INCH-USDT,AVAX-USDT,NEAR-USDT,DASH-USDT,IOST-USDT,ONT-USDT,LRC-USDT,TRX-USDT,BTC-USDT,STMX-USDT,ATOM-USDT,BNB-USDT,EOS-USDT,BCH-USDT,LTC-USDT", "symbols, separate by comma")
 	savePath := flag.String("path", "/root/kcus-bnus-depth5-and-ticker", "data save folder")
 
 	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	//symbolsStr := flag.String("symbols", "BTC-USDT", "symbols, separate by comma")
 	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
 	flag.Parse()
-	symbols := strings.Split(*symbolsStr, ",")
+
+	symbols := make([]string, 0)
+	for xSymbol := range kucoin_usdtspot.TickSizes {
+		if _, ok := binance_usdtspot.TickSizes[strings.Replace(xSymbol, "-USDT", "USDT", -1)]; ok {
+			symbols = append(symbols, xSymbol)
+		}
+	}
+	sort.Strings(symbols)
+	logger.Debugf("SYMBOLS %s", symbols)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	fileSavedCh := make(chan string, len(symbols))
 	for start := 0; start < len(symbols); start += *batchSize {
