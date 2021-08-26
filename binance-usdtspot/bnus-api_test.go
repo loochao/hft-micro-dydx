@@ -10,6 +10,21 @@ import (
 	"testing"
 )
 
+func TestFormatByPrecision(t *testing.T) {
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 0, 64))
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 1, 64))
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 2, 64))
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 3, 64))
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 4, 64))
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 5, 64))
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 6, 64))
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 7, 64))
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 8, 64))
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 9, 64))
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 10, 64))
+	logger.Debugf("%s", strconv.FormatFloat(0.1111111111, 'f', 11, 64))
+}
+
 func TestAPI_GetExchangeInfo(t *testing.T) {
 	proxy := "socks5://127.0.0.1:1083"
 
@@ -24,6 +39,8 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	}
 
 	tickSizes := make(map[string]float64)
+	tickPrecisions := make(map[string]int)
+	stepPrecisions := make(map[string]int)
 	stepSizes := make(map[string]float64)
 	minSizes := make(map[string]float64)
 	multiplierUps := make(map[string]float64)
@@ -39,9 +56,13 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 			switch filter.FilterType {
 			case "PRICE_FILTER":
 				tickSizes[symbol.Symbol] = filter.TickSize
+				tickPrecisions[symbol.Symbol] = common.GetFloatPrecision(filter.TickSize)
+				//logger.Debugf("TICK %f %d", filter.TickSize, common.GetFloatPrecision(filter.TickSize))
 			case "LOT_SIZE":
 				stepSizes[symbol.Symbol] = filter.StepSize
+				stepPrecisions[symbol.Symbol] = common.GetFloatPrecision(filter.StepSize)
 				minSizes[symbol.Symbol] = filter.MinQty
+				//logger.Debugf("STEP %f %d", filter.StepSize, common.GetFloatPrecision(filter.StepSize))
 			case "PERCENT_PRICE":
 				multiplierUps[symbol.Symbol] = filter.MultiplierUp
 				multiplierDowns[symbol.Symbol] = filter.MultiplierDown
@@ -78,6 +99,16 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	str += "var MultiplierDowns = map[string]float64{\n"
 	for symbol, value := range multiplierDowns {
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var TickPrecisions = map[string]int{\n"
+	for symbol, value := range tickPrecisions {
+		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
+	}
+	str += "}\n\n"
+	str += "var StepPrecisions = map[string]int{\n"
+	for symbol, value := range stepPrecisions {
+		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
 	}
 	str += "}\n\n"
 	fmt.Printf("%s", str)

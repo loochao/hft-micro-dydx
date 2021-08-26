@@ -29,3 +29,12 @@ func FormatFloat(value float64, prec int) string {
 	}
 	return price
 }
+
+func GetFloatPrecision(f float64) int {
+	prec := 0
+	for f < 1.0 {
+		f *= 10
+		prec += 1
+	}
+	return prec
+}
