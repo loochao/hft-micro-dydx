@@ -101,8 +101,10 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		strat.yLastFilledBuyPrice = nil
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledSellPrice = nil
-		if strat.quantileMiddle != nil {
-			logger.Debugf("%s - %s realised short abs spread %f quantile middle %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, *strat.quantileMiddle, *strat.realisedSpread-*strat.quantileMiddle)
+		if strat.quantileMiddle != nil &&
+			strat.xyFundingRate != nil &&
+			strat.fundingRateFactor != nil {
+			logger.Debugf("%s - %s realised short abs spread %f quantile middle %f funding rate offset %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, *strat.quantileMiddle, *strat.xyFundingRate**strat.fundingRateFactor, *strat.realisedSpread-*strat.quantileMiddle-*strat.xyFundingRate**strat.fundingRateFactor)
 		} else {
 			logger.Debugf("%s - %s realised short abs spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
 		}
@@ -121,8 +123,10 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		strat.yLastFilledBuyPrice = nil
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledSellPrice = nil
-		if strat.quantileMiddle != nil {
-			logger.Debugf("%s - %s realised long abs spread %f quantile middle %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, *strat.quantileMiddle, *strat.realisedSpread-*strat.quantileMiddle)
+		if strat.quantileMiddle != nil &&
+			strat.xyFundingRate != nil &&
+			strat.fundingRateFactor != nil {
+			logger.Debugf("%s - %s realised long abs spread %f quantile middle %f funding rate offset %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, *strat.quantileMiddle, *strat.xyFundingRate**strat.fundingRateFactor, *strat.realisedSpread-*strat.quantileMiddle-*strat.xyFundingRate**strat.fundingRateFactor)
 		} else {
 			logger.Debugf("%s - %s realised long abs spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
 		}
