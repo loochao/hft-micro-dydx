@@ -315,7 +315,7 @@ func (o *NewOrderParams) ToUrlValues() url.Values {
 		values.Set("timeInForce", o.TimeInForce)
 	}
 	if o.Quantity != 0.0 {
-		values.Set("quantity", strconv.FormatFloat(o.Quantity, 'f', 8, 64))
+		values.Set("quantity", strconv.FormatFloat(o.Quantity, 'f', 6, 64))
 	}
 	if o.Price != 0.0 && o.Type != OrderTypeMarket {
 		values.Set("price", strconv.FormatFloat(o.Price, 'f', 8, 64))

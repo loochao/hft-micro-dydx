@@ -314,15 +314,15 @@ func (o *NewOrderParams) ToUrlValues() url.Values {
 		values.Set("timeInForce", o.TimeInForce)
 	}
 	if o.Quantity != 0.0 {
-		values.Set("quantity", strconv.FormatFloat(o.Quantity, 'f', 6, 64))
+		values.Set("quantity", common.FormatFloat(o.Quantity, 6))
 	}
 	if o.Price != 0.0 && o.Type != OrderTypeMarket {
-		values.Set("price", strconv.FormatFloat(o.Price, 'f', 8, 64))
+		values.Set("price", common.FormatFloat(o.Price, 8))
 	}
 	values.Set("newClientOrderId", o.NewClientOrderID)
 	values.Set("newOrderRespType", o.NewOrderRespType)
 	if o.IcebergQty != 0 {
-		values.Set("icebergQty", strconv.FormatFloat(o.IcebergQty, 'f', 8, 64))
+		values.Set("icebergQty", common.FormatFloat(o.IcebergQty, 6))
 	}
 	return values
 }
