@@ -10,7 +10,7 @@ import (
 )
 
 func TestAPI_GetExchangeInfo(t *testing.T) {
-	proxy := "socks5://127.0.0.1:1080"
+	proxy := "socks5://127.0.0.1:1083"
 
 	api, err := NewAPI(&common.Credentials{}, proxy)
 	if err != nil {
@@ -28,6 +28,8 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	multiplierUps := make(map[string]float64)
 	multiplierDowns := make(map[string]float64)
 	minNotional := make(map[string]float64)
+	tickPrecisions := make(map[string]int)
+	stepPrecisions := make(map[string]int)
 	for _, symbol := range exchangeInfo.Symbols {
 		//logger.Debugf("%s %s %s",symbol.Symbol, symbol.BaseAsset,symbol.QuoteAsset)
 		if symbol.Status != "TRADING" || symbol.QuoteAsset != "BUSD" {
@@ -38,9 +40,11 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 			switch filter.FilterType {
 			case "PRICE_FILTER":
 				tickSizes[symbol.Symbol] = filter.TickSize
+				tickPrecisions[symbol.Symbol] = common.GetFloatPrecision(filter.TickSize)
 			case "LOT_SIZE":
 				stepSizes[symbol.Symbol] = filter.StepSize
 				minSizes[symbol.Symbol] = filter.MinQty
+				stepPrecisions[symbol.Symbol] = common.GetFloatPrecision(filter.StepSize)
 			case "PERCENT_PRICE":
 				multiplierUps[symbol.Symbol] = filter.MultiplierUp
 				multiplierDowns[symbol.Symbol] = filter.MultiplierDown
@@ -77,6 +81,16 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	str += "var MultiplierDowns = map[string]float64{\n"
 	for symbol, value := range multiplierDowns {
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var TickPrecisions = map[string]int{\n"
+	for symbol, value := range tickPrecisions {
+		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
+	}
+	str += "}\n\n"
+	str += "var StepPrecisions = map[string]int{\n"
+	for symbol, value := range stepPrecisions {
+		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
 	}
 	str += "}\n\n"
 	fmt.Printf("%s", str)

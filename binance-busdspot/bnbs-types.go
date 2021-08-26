@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"net/url"
 	"strconv"
 	"time"
@@ -314,16 +315,17 @@ func (o *NewOrderParams) ToUrlValues() url.Values {
 		values.Set("timeInForce", o.TimeInForce)
 	}
 	if o.Quantity != 0.0 {
-		values.Set("quantity", common.FormatFloat(o.Quantity, 6))
+		values.Set("quantity", strconv.FormatFloat(o.Quantity, 'f', StepPrecisions[o.Symbol], 64))
 	}
 	if o.Price != 0.0 && o.Type != OrderTypeMarket {
-		values.Set("price", common.FormatFloat(o.Price, 8))
+		values.Set("price", strconv.FormatFloat(o.Price, 'f', TickPrecisions[o.Symbol], 64))
 	}
 	values.Set("newClientOrderId", o.NewClientOrderID)
 	values.Set("newOrderRespType", o.NewOrderRespType)
 	if o.IcebergQty != 0 {
-		values.Set("icebergQty", common.FormatFloat(o.IcebergQty, 6))
+		values.Set("icebergQty", strconv.FormatFloat(o.IcebergQty, 'f', StepPrecisions[o.Symbol], 64))
 	}
+	logger.Debugf("%s", values.Encode())
 	return values
 }
 
