@@ -18,7 +18,7 @@ func main() {
 
 	proxyAddress := flag.String("proxy", "", "symbols group batch size")
 	symbolsStr := flag.String("symbols", "1INCH-USDT,ADA-USDT,ALGO-USDT,ANKR-USDT,ATOM-USDT,AVAX-USDT,BAT-USDT,BCH-USDT,BNB-USDT,BTC-USDT,BTT-USDT,DASH-USDT,DGB-USDT,DODO-USDT,DOGE-USDT,EOS-USDT,ETC-USDT,ETH-USDT,FIL-USDT,FTM-USDT,GRT-USDT,ICP-USDT,IOST-USDT,LRC-USDT,LTC-USDT,LUNA-USDT,MATIC-USDT,NEAR-USDT,NEO-USDT,OGN-USDT,OMG-USDT,ONE-USDT,ONT-USDT,STMX-USDT,SXP-USDT,TOMO-USDT,TRX-USDT,VET-USDT,XEM-USDT,XLM-USDT,XMR-USDT,XRP-USDT,XTZ-USDT,ZEC-USDT,ZEN-USDT,ZIL-USDT", "symbols, separate by comma")
-	savePath := flag.String("path", "/root/kcus-bnus-depth5-and-ticker", "data save folder")
+	savePath := flag.String("path", "/root/kcus-bnuf-depth5-and-ticker", "data save folder")
 
 	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
 	//symbolsStr := flag.String("symbols", "BTC-USDT", "symbols, separate by comma")
