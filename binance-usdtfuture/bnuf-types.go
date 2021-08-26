@@ -755,7 +755,7 @@ func (no *NewOrderParams) ToUrlValues() url.Values {
 		values.Set("timeInForce", no.TimeInForce)
 	}
 	values.Set("newOrderRespType", no.NewOrderRespType)
-	logger.Debugf("%s", values.Encode())
+	//logger.Debugf("%s", values.Encode())
 	return values
 }
 
