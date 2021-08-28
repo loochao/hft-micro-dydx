@@ -60,13 +60,17 @@ func TestAPI_GetLimits(t *testing.T) {
 	tickSizes := make(map[string]float64)
 	lotSizes := make(map[string]float64)
 	maxPrices := make(map[string]float64)
+	tickPrecisions := make(map[string]int)
+	stepPrecisions := make(map[string]int)
 	ss := make([]string, 0)
 	maxOrderSizes := make(map[string]float64)
 	for _, s := range symbols {
 		if s.QuoteCurrency == "USDT" && s.Status == "Open" && s.FairMethod == "FundingRate" {
 			multipliers[s.Symbol] = s.Multiplier
 			tickSizes[s.Symbol] = s.TickSize
+			tickPrecisions[s.Symbol] = common.GetFloatPrecision(s.TickSize)
 			lotSizes[s.Symbol] = s.LotSize
+			stepPrecisions[s.Symbol] = common.GetFloatPrecision(s.LotSize)
 			maxPrices[s.Symbol] = s.MaxPrice
 			maxOrderSizes[s.Symbol] = s.MaxOrderQty
 			ss = append(ss, s.Symbol)
@@ -101,6 +105,16 @@ func TestAPI_GetLimits(t *testing.T) {
 	for _, symbol := range ss {
 		str += fmt.Sprintf(`  "%s": %s,
 `, symbol, strconv.FormatFloat(maxOrderSizes[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var TickPrecisions = map[string]int{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, tickPrecisions[symbol])
+	}
+	str += "}\n\n"
+	str += "var StepPrecisions = map[string]int{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, stepPrecisions[symbol])
 	}
 	str += "}\n\n"
 	fmt.Printf(str)

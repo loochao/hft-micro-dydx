@@ -7,6 +7,7 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -49,6 +50,12 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	for _, symbol := range exchangeInfo.Symbols {
 		//logger.Debugf(symbol.Status)
 		if symbol.Status !=  "TRADING" || symbol.QuoteAsset != "USDT"{
+			continue
+		}
+		if strings.Contains(symbol.Symbol, "DOWNUSDT") {
+			continue
+		}
+		if strings.Contains(symbol.Symbol, "UPUSDT") {
 			continue
 		}
 		for _, filter := range symbol.Filters {

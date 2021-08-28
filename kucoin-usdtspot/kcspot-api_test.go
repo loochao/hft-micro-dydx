@@ -94,11 +94,15 @@ func TestAPI_GetLimits(t *testing.T) {
 	maxSizes := make(map[string]float64)
 	minNotionals := make(map[string]float64)
 	maxNotionals := make(map[string]float64)
+	tickPrecisions := make(map[string]int)
+	stepPrecisions := make(map[string]int)
 	ss := make([]string, 0)
 	for _, s := range symbols {
 		if s.QuoteCurrency == "USDT" && s.Market == "USDS" && s.EnableTrading {
 			stepSizes[s.Symbol] = s.BaseIncrement
+			stepPrecisions[s.Symbol] = common.GetFloatPrecision(s.BaseIncrement)
 			tickSizes[s.Symbol] = s.PriceIncrement
+			tickPrecisions[s.Symbol] = common.GetFloatPrecision(s.PriceIncrement)
 			minSizes[s.Symbol] = s.BaseMinSize
 			maxSizes[s.Symbol] = s.BaseMaxSize
 			minNotionals[s.Symbol] = s.QuoteMinSize
@@ -141,6 +145,16 @@ func TestAPI_GetLimits(t *testing.T) {
 	for _, symbol := range ss {
 		str += fmt.Sprintf(`  "%s": %s,
 `, symbol, strconv.FormatFloat(maxNotionals[symbol], 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var TickPrecisions = map[string]int{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, tickPrecisions[symbol])
+	}
+	str += "}\n\n"
+	str += "var StepPrecisions = map[string]int{\n"
+	for _, symbol := range ss {
+		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, stepPrecisions[symbol])
 	}
 	str += "}\n\n"
 	fmt.Printf(str)
