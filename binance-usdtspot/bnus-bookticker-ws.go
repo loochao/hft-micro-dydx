@@ -287,6 +287,9 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 			return
 		case <-w.done:
 			return
+		case msg = <-inputCh:
+			parseTimer.Reset(time.Millisecond)
+			break
 		case <-parseTimer.C:
 			index++
 			if index == 4 {
@@ -306,9 +309,6 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
-			break
-		case msg = <-inputCh:
-			parseTimer.Reset(time.Millisecond)
 			break
 		}
 	}

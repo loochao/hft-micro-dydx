@@ -63,5 +63,8 @@ ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt vc06:/usr/l
 echo "" && echo "" && echo "hh01"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt hh01:/usr/local/bin/"
 
+echo "" && echo "" && echo "hh02"
+ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt hh02:/usr/local/bin/"
+
 echo "" && echo "" && echo "arm3"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm3:/usr/local/bin/

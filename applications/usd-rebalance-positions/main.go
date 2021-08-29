@@ -206,34 +206,34 @@ func main() {
 	var xAccount common.Balance
 	var yAccount common.Balance
 
-	var xAccountCh = make(chan common.Balance, 4)
-	var yAccountCh = make(chan common.Balance, 4)
+	var xAccountCh = make(chan common.Balance, 64)
+	var yAccountCh = make(chan common.Balance, 64)
 
 	var xOrderRequestChMap = make(map[string]chan common.OrderRequest)
 	var yOrderRequestChMap = make(map[string]chan common.OrderRequest)
 
 	for _, xSymbol := range xSymbols {
-		xAccountChMap[xSymbol] = make(chan common.Balance, 4)
-		xPositionChMap[xSymbol] = make(chan common.Position, 4)
+		xAccountChMap[xSymbol] = make(chan common.Balance, 64)
+		xPositionChMap[xSymbol] = make(chan common.Position, 64)
 		xOrderChMap[xSymbol] = make(chan common.Order, 32)
 		xTickerChMap[xSymbol] = make(chan common.Ticker, 256)
-		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 4)
+		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 64)
 		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 1)
 		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 1)
 	}
 
 	for _, ySymbol := range ySymbols {
-		yAccountChMap[ySymbol] = make(chan common.Balance, 4)
-		yPositionChMap[ySymbol] = make(chan common.Position, 4)
+		yAccountChMap[ySymbol] = make(chan common.Balance, 64)
+		yPositionChMap[ySymbol] = make(chan common.Position, 64)
 		yOrderChMap[ySymbol] = make(chan common.Order, 32)
 		yTickerChMap[ySymbol] = make(chan common.Ticker, 256)
-		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 4)
+		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 64)
 		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 1)
 		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 1)
 	}
 
-	var xCommissionAssetValueCh = make(chan float64, 4)
-	var yCommissionAssetValueCh = make(chan float64, 4)
+	var xCommissionAssetValueCh = make(chan float64, 64)
+	var yCommissionAssetValueCh = make(chan float64, 64)
 
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		err = startXYStrategy(
