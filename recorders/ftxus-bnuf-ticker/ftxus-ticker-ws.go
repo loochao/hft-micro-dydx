@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-type FtxufTickerWS struct {
+type FtxusTickerWS struct {
 	writeCh       chan interface{}
 	done          chan interface{}
 	reconnectCh   chan interface{}
@@ -24,7 +24,7 @@ type FtxufTickerWS struct {
 	stopped       int32
 }
 
-func (w *FtxufTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *FtxusTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -67,7 +67,7 @@ func (w *FtxufTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *FtxufTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *Message) {
+func (w *FtxusTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *Message) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -157,7 +157,7 @@ func (w *FtxufTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan 
 	}
 }
 
-func (w *FtxufTickerWS) readAll(r io.Reader) ([]byte, error) {
+func (w *FtxusTickerWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 256)
 	for {
 		if len(b) == cap(b) {
@@ -175,7 +175,7 @@ func (w *FtxufTickerWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *FtxufTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *FtxusTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -220,7 +220,7 @@ func (w *FtxufTickerWS) reconnect(ctx context.Context, wsUrl string, proxy strin
 	return conn, nil
 }
 
-func (w *FtxufTickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *Message) {
+func (w *FtxusTickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *Message) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -273,7 +273,7 @@ func (w *FtxufTickerWS) mainLoop(ctx context.Context, proxy string, channels map
 	}
 }
 
-func (w *FtxufTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *FtxusTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -354,7 +354,7 @@ func (w *FtxufTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 	}
 }
 
-func (w *FtxufTickerWS) Stop() {
+func (w *FtxusTickerWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -362,7 +362,7 @@ func (w *FtxufTickerWS) Stop() {
 	}
 }
 
-func (w *FtxufTickerWS) restart() {
+func (w *FtxusTickerWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -370,7 +370,7 @@ func (w *FtxufTickerWS) restart() {
 	}
 }
 
-func (w *FtxufTickerWS) Done() chan interface{} {
+func (w *FtxusTickerWS) Done() chan interface{} {
 	return w.done
 }
 
@@ -378,8 +378,8 @@ func NewFtxusTickerWS(
 	ctx context.Context,
 	proxy string,
 	channels map[string]chan *Message,
-) *FtxufTickerWS {
-	ws := FtxufTickerWS{
+) *FtxusTickerWS {
+	ws := FtxusTickerWS{
 		done:          make(chan interface{}),
 		reconnectCh:   make(chan interface{}, 4),
 		writeCh:       make(chan interface{}, 2*len(channels)),
