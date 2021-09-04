@@ -91,11 +91,11 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 		}
 		msgLen := len(msg)
 		//{"channel": "ticker", "market": "DOGE-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
-		if msgLen > 128 && msg[31] == ' ' && msg[32] == '"'{
-			if msg[40] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:40])
-			} else if msg[41] == '"' {
+		if msgLen > 128 && msg[31] == ' ' && msg[32] == '"' {
+			if msg[41] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:41])
+			} else if msg[40] == '"' {
+				symbol = common.UnsafeBytesToString(msg[33:40])
 			} else if msg[42] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:42])
 			} else if msg[43] == '"' {
@@ -367,7 +367,7 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 		case <-w.done:
 			return
 		case msg := <-inputCh:
-			index ++
+			index++
 			if index == 4 {
 				index = 0
 			}

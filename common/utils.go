@@ -16,6 +16,7 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 )
@@ -276,12 +277,17 @@ func UnsafeBytesToString(b []byte) (s string) {
 	return s
 }
 
-func RoundWidthOffset(value, offset float64) float64{
+func RoundWidthOffset(value, offset float64) float64 {
 	if math.Abs(value) < offset {
 		return 0
-	}else if value > 0 {
+	} else if value > 0 {
 		return math.Round(value - offset)
-	}else {
+	} else {
 		return math.Round(value + offset)
 	}
+}
+
+func SymbolSanitize(symbol string) string {
+	symbol = strings.Replace(symbol, "/", "_", -1)
+	return symbol
 }

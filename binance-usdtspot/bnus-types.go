@@ -54,6 +54,10 @@ const (
 	OrderStatusPendingCancel   = "PENDING_CANCEL"
 	OrderStatusReject          = "REJECTED"
 	OrderStatusExpired         = "EXPIRED"
+
+	SubAccountTypeSpot       = "SPOT"
+	SubAccountTypeUsdtFuture = "USDT_FUTURE"
+	SubAccountTypeCoinFuture = "COIN_FUTURE"
 )
 
 type Depth20 struct {
@@ -739,4 +743,105 @@ func (bt *BookTicker) UnmarshalJSON(data []byte) error {
 type BookTickerStream struct {
 	Stream string     `json:"stream"`
 	Data   BookTicker `json:"data"`
+}
+
+//{
+//            "email":"testsub@gmail.com",
+//            "isFreeze":false,
+//            "createTime":1544433328000
+//        }
+
+type SubAccount struct {
+	Email      string `json:"email"`
+	IsFreeze   bool   `json:"isFreeze"`
+	CreateTime int64  `json:"createTime"`
+}
+
+type SubAccounts struct {
+	SubAccounts []SubAccount `json:"subAccounts"`
+}
+
+type SubAccountBalance struct {
+	Asset  string  `json:"asset"`
+	Free   float64 `json:"free"`
+	Locked float64 `json:"locked"`
+}
+
+type SubAccountBalances struct {
+	Balances []SubAccountBalance `json:"balances"`
+}
+
+type SubAccountFutureAccount struct {
+	Email  string                  `json:"email"`
+	Asset  string                  `json:"asset"`
+	Assets []SubAccountFutureAsset `json:"assets"`
+}
+
+type SubAccountFutureAsset struct {
+	Asset                  string  `json:"asset"`
+	InitialMargin          float64 `json:"initialMargin,string"`
+	MaintenanceMargin      float64 `json:"maintenanceMargin,string"`
+	MarginBalance          float64 `json:"marginBalance,string"`
+	MaxWithdrawAmount      float64 `json:"maxWithdrawAmount,string"`
+	OpenOrderInitialMargin float64 `json:"openOrderInitialMargin,string"`
+	PositionInitialMargin  float64 `json:"positionInitialMargin,string"`
+	UnrealizedProfit       float64 `json:"unrealizedProfit,string"`
+	WalletBalance          float64 `json:"walletBalance,string"`
+}
+
+//{
+//    "email": "abc@test.com",
+//    "asset": "USDT",
+//    "assets":[
+//        {
+//            "asset": "USDT",
+//            "initialMargin": "0.00000000",
+//            "maintenanceMargin": "0.00000000",
+//            "marginBalance": "0.88308000",
+//            "maxWithdrawAmount": "0.88308000",
+//            "openOrderInitialMargin": "0.00000000",
+//            "positionInitialMargin": "0.00000000",
+//            "unrealizedProfit": "0.00000000",
+//            "walletBalance": "0.88308000"
+//         }
+//    ],
+//    "canDeposit": true,
+//    "canTrade": true,
+//    "canWithdraw": true,
+//    "feeTier": 2,
+//    "maxWithdrawAmount": "0.88308000",
+//    "totalInitialMargin": "0.00000000",
+//    "totalMaintenanceMargin": "0.00000000",
+//    "totalMarginBalance": "0.88308000",
+//    "totalOpenOrderInitialMargin": "0.00000000",
+//    "totalPositionInitialMargin": "0.00000000",
+//    "totalUnrealizedProfit": "0.00000000",
+//    "totalWalletBalance": "0.88308000",
+//    "updateTime": 1576756674610
+// }
+
+type UniversalTransferResp struct {
+	TranId int64 `json:"tranId"`
+}
+
+// {
+//        "entryPrice": "9975.12000",
+//        "leverage": "50",              // current initial leverage
+//        "maxNotional": "1000000",      // notional value limit of current initial leverage
+//        "liquidationPrice": "7963.54",
+//        "markPrice": "9973.50770517",
+//        "positionAmount": "0.010",
+//        "symbol": "BTCUSDT",
+//        "unrealizedProfit": "-0.01612295"
+//    }
+
+type PositionRisk struct {
+	EntryPrice       float64 `json:"entryPrice,string"`
+	Leverage         float64 `json:"leverage,string"`
+	MaxNotional      float64 `json:"maxNotional,string"`
+	LiquidationPrice float64 `json:"liquidationPrice,string"`
+	MarkPrice        float64 `json:"markPrice,string"`
+	PositionAmount   float64 `json:"positionAmount,string"`
+	Symbol           string  `json:"symbol"`
+	UnrealizedProfit float64 `json:"unrealizedProfit,string"`
 }

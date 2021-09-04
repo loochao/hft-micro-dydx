@@ -1,17 +1,25 @@
-package main
+package ftx_usdfuture
 
 import (
 	"context"
 	"fmt"
-	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"net/http"
 	"time"
 )
 
-func streamFtxufFundingRate(ctx context.Context, api *ftxuf.API,channels map[string]chan *Message) {
-
-	interval := time.Minute*5
+func StreamRawFundingRate(
+	ctx context.Context,
+	proxyAddress string,
+	source []byte,
+	channels map[string]chan *common.RawMessage,
+) {
+	api, err := NewAPI("", "", proxyAddress)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	interval := time.Minute * 5
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	afterFrTimer := time.NewTimer(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
@@ -19,15 +27,14 @@ func streamFtxufFundingRate(ctx context.Context, api *ftxuf.API,channels map[str
 
 	logSilentTime := time.Now()
 
-	var message *Message
+	var message *common.RawMessage
 	index := -1
-	pool := [4096]*Message{}
+	pool := [4096]*common.RawMessage{}
 	for i := 0; i < 4096; i++ {
-		pool[i] = &Message{
-			Source: []byte{'Y', 'F'},
+		pool[i] = &common.RawMessage{
+			Source: source,
 		}
 	}
-	var err error
 	var msg []byte
 	var subCtx context.Context
 
@@ -36,6 +43,7 @@ func streamFtxufFundingRate(ctx context.Context, api *ftxuf.API,channels map[str
 		case <-ctx.Done():
 			return
 		case <-afterFrTimer.C:
+			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
 			for symbol, ch := range channels {
 				subCtx, _ = context.WithTimeout(ctx, time.Minute)
 				msg, err = api.SendRawHTTPRequest(subCtx, http.MethodGet, fmt.Sprintf("/futures/%s/stats", symbol), nil)

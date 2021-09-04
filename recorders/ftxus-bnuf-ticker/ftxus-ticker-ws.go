@@ -100,15 +100,16 @@ func (w *FtxusTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan 
 		}
 		msgLen := len(msg)
 		//{"channel": "ticker", "market": "BTC/USD", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
+		//{"channel": "ticker", "market": "HT/USD", "type": "update", "data": {"bid": 15.45, "ask": 15.471, "bidSize": 38.1, "askSize": 18.0, "last": 15.453, "time": 1630770353.7536824}}
 		if msgLen > 128 && msg[31] == ' ' && msg[32] == '"'{
 			if msg[40] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:40])
+			} else if msg[39] == '"' {
+				symbol = common.UnsafeBytesToString(msg[33:39])
 			} else if msg[41] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:41])
 			} else if msg[42] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:42])
-			} else if msg[39] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:39])
 			} else if msg[43] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:43])
 			} else if msg[44] == '"' {

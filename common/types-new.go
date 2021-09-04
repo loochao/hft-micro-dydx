@@ -206,7 +206,6 @@ var OrderStatusFilled = OrderStatus("FILLED")
 var OrderStatusUnknown = OrderStatus("ORDER_STATUS_UNKNOWN")
 
 type Bids [][2]float64
-
 func (bids Bids) Len() int {
 	return len(bids)
 }
@@ -226,7 +225,6 @@ func (bids Bids) SearchAfter(otherBids Bids, n int, price float64) int {
 		return otherBids[i+n][0] <= price
 	}) + n
 }
-
 //otherBids need to be ordered by price descending
 func (bids Bids) UpdateBatch(otherBids Bids) Bids {
 	n := 0
@@ -253,7 +251,6 @@ func (bids Bids) UpdateBatch(otherBids Bids) Bids {
 	}
 	return bids
 }
-
 func (bids Bids) Update(bid [2]float64) Bids {
 	n := bids.Search(bid[0])
 	if bid[1] == 0 {
@@ -279,7 +276,6 @@ func (bids Bids) Update(bid [2]float64) Bids {
 }
 
 type Asks [][2]float64
-
 func (asks Asks) Len() int {
 	return len(asks)
 }
@@ -299,7 +295,6 @@ func (asks Asks) SearchAfter(otherAsks Asks, n int, price float64) int {
 		return otherAsks[i+n][0] >= price
 	}) + n
 }
-
 //otherAsks need to be ordered by price ascending
 func (asks Asks) UpdateBatch(otherAsks Asks) Asks {
 	n := 0
@@ -326,7 +321,6 @@ func (asks Asks) UpdateBatch(otherAsks Asks) Asks {
 	}
 	return asks
 }
-
 func (asks Asks) Update(ask [2]float64) Asks {
 	n := asks.Search(ask[0])
 	if ask[1] == 0 {
