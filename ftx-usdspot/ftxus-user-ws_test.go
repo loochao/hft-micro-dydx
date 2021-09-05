@@ -2,7 +2,7 @@ package ftx_usdspot
 
 import (
 	"context"
-	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"testing"
 )
@@ -10,25 +10,23 @@ import (
 func TestNewUserWS(t *testing.T) {
 
 	var ctx = context.Background()
-	symbols := []string{"LTC-PERP", "ETH-PERP", "DOGE-PERP", "WAVES-PERP"}
-	channels := make(map[string]chan common.Depth)
-	for _, symbol := range symbols {
-		channels[symbol] = make(chan common.Depth, 100)
-	}
-	ws := NewUserWS(
+	logger.Debugf("%s %s %s %s",
 		os.Getenv("FTX_TEST_KEY"),
 		os.Getenv("FTX_TEST_SECRET"),
+		os.Getenv("FTX_TEST_SUBACCOUNT"),
 		os.Getenv("FTX_TEST_PROXY"),
 	)
-	go ws.Start(ctx)
+	ws := NewUserWS(
+		ctx,
+		os.Getenv("FTX_TEST_KEY"),
+		os.Getenv("FTX_TEST_SECRET"),
+		os.Getenv("FTX_TEST_SUBACCOUNT"),
+		os.Getenv("FTX_TEST_PROXY"),
+	)
 	for {
 		select {
-		case <- ws.Done():
+		case <-ws.Done():
 			return
-		case _ = <-channels[symbols[0]]:
-		case _ = <-channels[symbols[1]]:
-		case _ = <-channels[symbols[2]]:
-		case _ = <-channels[symbols[3]]:
 		}
 	}
 }

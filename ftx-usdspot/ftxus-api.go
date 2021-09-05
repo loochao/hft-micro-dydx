@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"io"
 	"io/ioutil"
 	"net"
@@ -17,10 +18,11 @@ import (
 )
 
 type API struct {
-	client *http.Client
-	key    string
-	secret string
-	mu     sync.Mutex
+	client     *http.Client
+	key        string
+	secret     string
+	subAccount string
+	mu         sync.Mutex
 }
 
 func (api *API) SendHTTPRequest(ctx context.Context, method, path string, param common.Params, result interface{}) error {
@@ -89,6 +91,9 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	api.mu.Unlock()
 	req.Header.Set("FTX-SIGN", common.HexEncodeToString(hmacSigned))
 	req.Header.Set("FTX-TS", timestamp)
+	if api.subAccount != "" {
+		req.Header.Set("FTX-SUBACCOUNT", api.subAccount)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := api.client.Do(req.WithContext(ctx))
 	if err != nil {
@@ -99,7 +104,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err != nil {
 		return err
 	}
-	//logger.Debugf("%s", contents)
+	logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
@@ -116,9 +121,10 @@ func (api *API) GetAccount(ctx context.Context) (*Account, error) {
 	account := Account{}
 	return &account, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/account", nil, nil, &account)
 }
-func (api *API) GetPositions(ctx context.Context) ([]Position, error) {
-	positions := make([]Position, 0)
-	return positions, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/positions", nil, nil, &positions)
+
+func (api *API) GetBalances(ctx context.Context) ([]Balance, error) {
+	positions := make([]Balance, 0)
+	return positions, api.SendAuthenticatedHTTPRequest(ctx, http.MethodGet, "/wallet/balances", nil, nil, &positions)
 }
 
 func (api *API) PlaceOrder(ctx context.Context, param NewOrderParam) (*Order, error) {
@@ -163,7 +169,7 @@ func (api *API) GetFutureStats(ctx context.Context, futureName string) (*FutureS
 	return fs, nil
 }
 
-func NewAPI(key, secret, proxy string) (*API, error) {
+func NewAPI(key, secret, subAccount, proxy string) (*API, error) {
 	var client http.Client
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
@@ -203,6 +209,7 @@ func NewAPI(key, secret, proxy string) (*API, error) {
 		client: &client,
 		key:    key,
 		secret: secret,
+		subAccount: subAccount,
 	}
 	return &api, nil
 }

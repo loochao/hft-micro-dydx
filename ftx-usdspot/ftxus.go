@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"math"
 	"math/rand"
 	"time"
 )
@@ -89,11 +88,12 @@ func (ftx *FtxUsdSpot) StreamBasic(
 	defer ftx.Stop()
 
 	userWS := NewUserWS(
+		ctx,
 		ftx.settings.ApiKey,
 		ftx.settings.ApiSecret,
+		ftx.settings.ApiSubAccount,
 		ftx.settings.Proxy,
 	)
-	go userWS.Start(ctx)
 	defer userWS.Stop()
 	internalOrders := make(map[int64]Order)
 
@@ -102,8 +102,8 @@ func (ftx *FtxUsdSpot) StreamBasic(
 		positionMarkets = append(positionMarkets, market)
 	}
 
-	internalPositions := make(map[string]Position)
-	internalPositionsCh := make(chan []Position, 100)
+	internalPositions := make(map[string]Balance)
+	internalPositionsCh := make(chan []Balance, 100)
 	go ftx.positionsLoop(ctx, positionMarkets, internalPositionsCh)
 	internalAccountCh := make(chan *Account, 100)
 	go ftx.accountLoop(ctx, internalAccountCh)
@@ -182,14 +182,14 @@ func (ftx *FtxUsdSpot) StreamBasic(
 		case ps := <-internalPositionsCh:
 			for _, p := range ps {
 				p := p
-				if oldP, ok := internalPositions[p.Market]; ok {
+				if oldP, ok := internalPositions[p.Coin]; ok {
 					if oldP.ParseTime.Sub(p.ParseTime) < 0 {
-						internalPositions[p.Market] = p
+						internalPositions[p.Coin] = p
 					}
 				} else {
-					internalPositions[p.Market] = p
+					internalPositions[p.Coin] = p
 				}
-				if positionCh, ok := positionsCh[p.Market]; ok {
+				if positionCh, ok := positionsCh[p.Coin]; ok {
 					select {
 					case positionCh <- &p:
 					default:
@@ -211,23 +211,23 @@ func (ftx *FtxUsdSpot) StreamBasic(
 					if pos.ParseTime.Sub(order.ParseTime) > time.Second {
 						continue
 					}
-					size := order.FilledSize
-					if order.Side != OrderSideBuy {
-						size = -order.FilledSize
-					}
-					price := order.AvgFillPrice
-					if pos.NetSize*size < 0 {
-						if math.Abs(size) > math.Abs(pos.NetSize) {
-							pos.Cost = (pos.NetSize + size) * price
-							pos.NetSize = pos.NetSize + size
-						} else {
-							pos.Cost = pos.Cost - size*price
-							pos.NetSize = pos.NetSize + size
-						}
-					} else {
-						pos.Cost += size * price
-						pos.NetSize += size
-					}
+					//size := order.FilledSize
+					//if order.Side != OrderSideBuy {
+					//	size = -order.FilledSize
+					//}
+					//price := order.AvgFillPrice
+					//if pos.Total*size < 0 {
+					//	if math.Abs(size) > math.Abs(pos.Total) {
+					//		pos.Cost = (pos.Total + size) * price
+					//		pos.Total = pos.Total + size
+					//	} else {
+					//		pos.Cost = pos.Cost - size*price
+					//		pos.NetSize = pos.NetSize + size
+					//	}
+					//} else {
+					//	pos.Cost += size * price
+					//	pos.NetSize += size
+					//}
 					pos.ParseTime = order.ParseTime
 					//logger.Debugf("UPDATE POSITION BY FILL %v", pos)
 					internalPositions[order.Market] = pos
@@ -452,7 +452,12 @@ func (ftx *FtxUsdSpot) Setup(ctx context.Context, settings common.ExchangeSettin
 	ftx.settings = settings
 	ftx.done = make(chan interface{})
 	ftx.stopped = false
-	ftx.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.Proxy)
+	ftx.api, err = NewAPI(
+		settings.ApiKey,
+		settings.ApiSecret,
+		settings.ApiSubAccount,
+		settings.Proxy,
+	)
 	if err != nil {
 		return err
 	}
@@ -513,7 +518,7 @@ func (ftx *FtxUsdSpot) Done() chan interface{} {
 	return ftx.done
 }
 
-func (ftx *FtxUsdSpot) positionsLoop(ctx context.Context, markets []string, positionsCh chan []Position) {
+func (ftx *FtxUsdSpot) positionsLoop(ctx context.Context, markets []string, positionsCh chan []Balance) {
 	pullInterval := ftx.settings.PullInterval
 	pullTimer := time.NewTimer(pullInterval)
 	defer pullTimer.Stop()
@@ -524,21 +529,21 @@ func (ftx *FtxUsdSpot) positionsLoop(ctx context.Context, markets []string, posi
 		case <-ftx.done:
 			return
 		case <-pullTimer.C:
-			positions, err := ftx.api.GetPositions(ctx)
+			positions, err := ftx.api.GetBalances(ctx)
 			if err != nil {
 				logger.Debugf("ftx.api.GetPositions(ctx) error %v", err)
 			} else {
 				hasPositions := map[string]bool{}
-				outPositions := make([]Position, 0)
+				outPositions := make([]Balance, 0)
 				for _, position := range positions {
-					hasPositions[position.Market] = true
+					hasPositions[position.Coin] = true
 					position := position
 					outPositions = append(outPositions, position)
 				}
 				for _, market := range markets {
 					if _, ok := hasPositions[market]; !ok {
-						outPositions = append(outPositions, Position{
-							Market:    market,
+						outPositions = append(outPositions, Balance{
+							Coin:      market,
 							ParseTime: time.Now(),
 						})
 					}

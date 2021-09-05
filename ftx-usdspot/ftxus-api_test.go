@@ -12,8 +12,12 @@ import (
 )
 
 func TestAPI_GetMarkets(t *testing.T) {
-	os.Setenv("FTX_TEST_PROXY", "socks5://127.0.0.1:1083")
-	api, err := NewAPI(os.Getenv("FTX_TEST_KEY"), os.Getenv("FTX_TEST_SECRET"), os.Getenv("FTX_TEST_PROXY"))
+	api, err := NewAPI(
+		os.Getenv("FTX_TEST_KEY"),
+		os.Getenv("FTX_TEST_SECRET"),
+		os.Getenv("FTX_TEST_SUBACCOUNT"),
+		os.Getenv("FTX_TEST_PROXY"),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +60,12 @@ func TestAPI_GetMarkets(t *testing.T) {
 }
 
 func TestAPI_GetFundingRates(t *testing.T) {
-	api, err := NewAPI(os.Getenv("FTX_TEST_KEY"), os.Getenv("FTX_TEST_SECRET"), os.Getenv("FTX_TEST_PROXY"))
+	api, err := NewAPI(
+		os.Getenv("FTX_TEST_KEY"),
+		os.Getenv("FTX_TEST_SECRET"),
+		os.Getenv("FTX_TEST_SUBACCOUNT"),
+		os.Getenv("FTX_TEST_PROXY"),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +78,12 @@ func TestAPI_GetFundingRates(t *testing.T) {
 }
 
 func TestAPI_ChangeLeverage(t *testing.T) {
-	api, err := NewAPI(os.Getenv("FTX_TEST_KEY"), os.Getenv("FTX_TEST_SECRET"), os.Getenv("FTX_TEST_PROXY"))
+	api, err := NewAPI(
+		os.Getenv("FTX_TEST_KEY"),
+		os.Getenv("FTX_TEST_SECRET"),
+		os.Getenv("FTX_TEST_SUBACCOUNT"),
+		os.Getenv("FTX_TEST_PROXY"),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +95,12 @@ func TestAPI_ChangeLeverage(t *testing.T) {
 }
 
 func TestAPI_GetAccount(t *testing.T) {
-	api, err := NewAPI(os.Getenv("FTX_TEST_KEY"), os.Getenv("FTX_TEST_SECRET"), os.Getenv("FTX_TEST_PROXY"))
+	api, err := NewAPI(
+		os.Getenv("FTX_TEST_KEY"),
+		os.Getenv("FTX_TEST_SECRET"),
+		os.Getenv("FTX_TEST_SUBACCOUNT"),
+		os.Getenv("FTX_TEST_PROXY"),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,13 +112,18 @@ func TestAPI_GetAccount(t *testing.T) {
 	logger.Debugf("%v", account)
 }
 
-func TestAPI_GetPositions(t *testing.T) {
-	api, err := NewAPI(os.Getenv("FTX_TEST_KEY"), os.Getenv("FTX_TEST_SECRET"), os.Getenv("FTX_TEST_PROXY"))
+func TestAPI_GetBalances(t *testing.T) {
+	api, err := NewAPI(
+		os.Getenv("FTX_TEST_KEY"),
+		os.Getenv("FTX_TEST_SECRET"),
+		os.Getenv("FTX_TEST_SUBACCOUNT"),
+		os.Getenv("FTX_TEST_PROXY"),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute)
-	positions, err := api.GetPositions(ctx)
+	positions, err := api.GetBalances(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
-	ftxus "github.com/geometrybase/hft-micro/ftx-usdspot"
 	"github.com/geometrybase/hft-micro/influx/client"
+	kucoin_usdtfuture "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
+	kucoin_usdtspot "github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
 	"github.com/geometrybase/hft-micro/tdigest"
@@ -35,22 +35,25 @@ func main() {
 		panic(err)
 	}
 	defer iw.Stop()
-	symbolsMap := make(map[string]string, 0)
-	symbols := make([]string, 0)
-	for symbol := range ftxus.PriceIncrements {
-		if _, ok := ftxuf.PriceIncrements[strings.Replace(symbol, "/USD", "-PERP", -1)]; ok {
+	symbolsMap := map[string]string{"BTC-USDT": "XBTUSDTM"}
+	symbols := []string{"BTC-USDT"}
+	for symbol := range kucoin_usdtspot.TickSizes {
+		if _, ok := kucoin_usdtfuture.TickSizes[strings.Replace(symbol, "-USDT", "USDTM", -1)]; ok {
 			symbols = append(symbols, symbol)
-			symbolsMap[symbol] = strings.Replace(symbol, "/USD", "-PERP", -1)
+			symbolsMap[symbol] = strings.Replace(symbol, "-USDT", "USDTM", -1)
 		}
 	}
 	sort.Strings(symbols)
 	//symbols = symbols[:1]
-	logger.Debugf("SYMBOLS %s", symbols)
+	fmt.Printf("\n\nxyPairs:\n")
+	for _, xSymbol := range symbols {
+		fmt.Printf("  %s: %s\n", xSymbol, symbolsMap[xSymbol])
+	}
 	startTime, err := time.Parse("20060102", "20210831")
 	if err != nil {
 		logger.Fatal(err)
 	}
-	endTime, err := time.Parse("20060102", "20210903")
+	endTime, err := time.Parse("20060102", "20210904")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -60,14 +63,19 @@ func main() {
 	}
 	dateStrs = dateStrs[:len(dateStrs)-1]
 
-	quantileLookback := time.Hour * 120
+	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/ftxus-ftxuf-ticker"
+	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/kcus-kcuf-quantiles"
+	dataPath := "/Users/chenjilin/MarketData/kcus-kcuf-depth5-and-ticker"
 	maxTimeDiff := time.Millisecond * 1000
 	quantileAddInterval := time.Second
 
-	err = os.MkdirAll(quantilePath, 0755)
-	if err != nil {
+	if _, err := os.Stat(quantilePath); err != nil && os.IsNotExist(err) {
+		err = os.MkdirAll(quantilePath, 0775)
+		if err != nil {
+			logger.Fatal(err)
+		}
+	} else if err != nil {
 		logger.Fatal(err)
 	}
 
@@ -75,29 +83,32 @@ func main() {
 
 	for _, xSymbol := range symbols {
 		ySymbol := symbolsMap[xSymbol]
+		logger.Debugf("%s %s", xSymbol, ySymbol)
 		timedTDigest := stream_stats.NewTimedTDigest(quantileLookback, quantileSubInterval)
 
 		shortLastEnter := 0.0
 		longLastEnter := 0.0
 
-		xTicker := &ftxus.Ticker{}
-		yTicker := &ftxuf.Ticker{}
+		xDepth := &kucoin_usdtspot.Depth5{}
+		xTicker := &kucoin_usdtspot.Ticker{}
+		yDepth := &kucoin_usdtfuture.Depth5{}
+		yTicker := &kucoin_usdtfuture.Ticker{}
 
 		sizeTD, _ := tdigest.New()
 
 		var xTD, yTD common.Ticker
 		var lastAddTime = time.Time{}
 		for _, dateStr := range strings.Split(dateStrs, ",") {
-			logger.Debugf(
-				"/Users/chenjilin/MarketData/ftxus-ftxuf-ticker/%s/%s-%s,%s.jl.gz",
-				dateStr, dateStr,
-				common.SymbolSanitize(xSymbol),
-				common.SymbolSanitize(ySymbol),
-			)
+			//logger.Debugf(
+			//	"%s/%s/%s-%s,%s.jl.gz",
+			//	dataPath, dateStr, dateStr,
+			//	common.SymbolSanitize(xSymbol),
+			//	common.SymbolSanitize(ySymbol),
+			//)
 			file, err := os.Open(
 				fmt.Sprintf(
-					"/Users/chenjilin/MarketData/ftxus-ftxuf-ticker/%s/%s-%s,%s.jl.gz",
-					dateStr, dateStr,
+					"%s/%s/%s-%s,%s.jl.gz",
+					dataPath, dateStr, dateStr,
 					common.SymbolSanitize(xSymbol),
 					common.SymbolSanitize(ySymbol),
 				),
@@ -115,25 +126,31 @@ func main() {
 			var msg []byte
 			for scanner.Scan() {
 				msg = scanner.Bytes()
-				if msg[0] == 'X' && msg[1] == 'T' {
-					err = ftxus.ParseTicker(msg[21:], xTicker)
+				if msg[0] == 'X' && msg[1] == 'D' {
+					err = kucoin_usdtspot.ParseDepth5(msg[21:], xDepth)
 					if err != nil {
-						logger.Debugf("%v", err)
+						logger.Debugf("kucoin_usdtspot.ParseDepth5 error %v", err)
 						continue
 					}
-					if xTicker.Symbol != xSymbol {
-						//logger.Debugf("bad msg: %s", msg)
+					xTD = xDepth
+				} else if msg[0] == 'X' && msg[1] == 'T' {
+					err = kucoin_usdtspot.ParseTicker(msg[21:], xTicker)
+					if err != nil {
+						logger.Debugf("kucoin_usdtspot.ParseTicker error %v", err)
 						continue
 					}
 					xTD = xTicker
-				} else if msg[0] == 'Y' && msg[1] == 'T' {
-					err = ftxuf.ParseTicker(msg[21:], yTicker)
+				} else if msg[0] == 'Y' && msg[1] == 'D' {
+					err = kucoin_usdtfuture.ParseDepth5(msg[21:], yDepth)
 					if err != nil {
-						logger.Debugf("%v", err)
+						logger.Debugf("kucoin_usdtfuture.ParseDepth5 error %v", err)
 						continue
 					}
-					if yTicker.Symbol != ySymbol {
-						//logger.Debugf("bad msg: %s", msg)
+					yTD = yDepth
+				} else if msg[0] == 'Y' && msg[1] == 'T' {
+					err = kucoin_usdtfuture.ParseTicker(msg[21:], yTicker)
+					if err != nil {
+						logger.Debugf("kucoin_usdtfuture.ParseTicker error %v", err)
 						continue
 					}
 					yTD = yTicker
@@ -146,40 +163,38 @@ func main() {
 					if tDiff < maxTimeDiff &&
 						tDiff > -maxTimeDiff &&
 						xTD.GetTime().Sub(lastAddTime) >= quantileAddInterval {
-
-						shortLastEnter = (yTD.GetBidPrice() - xTD.GetAskPrice()) / xTD.GetAskPrice()
-						longLastEnter = (yTD.GetAskPrice() - xTD.GetBidPrice()) / xTD.GetBidPrice()
-						lastAddTime = xTD.GetTime()
 						_ = sizeTD.Add(
 							math.Min(
-								xTD.GetBidSize()*xTD.GetBidPrice(),
-								yTD.GetAskSize()*yTD.GetAskPrice(),
+								math.Min(xTD.GetBidSize()*xTD.GetBidPrice(), xTD.GetAskSize()*xTD.GetAskPrice()),
+								math.Min(yTD.GetBidSize()*yTD.GetBidPrice()*kucoin_usdtfuture.Multipliers[ySymbol], yTD.GetAskSize()*yTD.GetAskPrice()*kucoin_usdtfuture.Multipliers[ySymbol]),
 							),
 						)
-						_ = timedTDigest.Insert(xTD.GetTime(), (shortLastEnter+longLastEnter)*0.5)
+						lastAddTime = xTD.GetTime()
+						shortLastEnter = (yTD.GetBidPrice() - xTD.GetAskPrice()) / xTD.GetAskPrice()
+						longLastEnter = (yTD.GetAskPrice() - xTD.GetBidPrice()) / xTD.GetBidPrice()
+						_ = timedTDigest.Insert(yDepth.EventTime, (shortLastEnter+longLastEnter)*0.5)
 						fields := make(map[string]interface{})
 						fields["enterMiddle"] = timedTDigest.Quantile(0.5)
 						fields["shortLastEnter"] = shortLastEnter
 						fields["longLastEnter"] = longLastEnter
 						pt, err := client.NewPoint(
-							"ftxus-ftxuf-ticker",
+							"kcus-kcuf-quantiles",
 							map[string]string{
 								"xSymbol": xSymbol,
 							},
 							fields,
-							yTicker.GetTime(),
+							yDepth.EventTime,
 						)
 						if err == nil {
 							iw.PointCh <- pt
 						}
-
 					}
 				}
-
 			}
 			_ = gr.Close()
 			_ = file.Close()
 		}
+
 		if math.IsNaN(sizeTD.Quantile(0.5)) ||
 			math.IsNaN(timedTDigest.Quantile(0.5)) {
 			logger.Debugf("bad quantile for %s", xSymbol)
@@ -191,9 +206,10 @@ func main() {
 			logger.Debugf("%v", err)
 			continue
 		}
-		file, err := os.OpenFile(path.Join(quantilePath,
-			common.SymbolSanitize(xSymbol)+"-"+common.SymbolSanitize(ySymbol)+".json",
-		), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+		file, err := os.OpenFile(
+			path.Join(quantilePath, common.SymbolSanitize(xSymbol)+"-"+common.SymbolSanitize(ySymbol)+".json"),
+			os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755,
+		)
 		if err != nil {
 			logger.Debugf("%v", err)
 			continue
@@ -209,6 +225,7 @@ func main() {
 			continue
 		}
 	}
+
 	symbols = make([]string, 0)
 	for symbol := range sizeTDs {
 		symbols = append(symbols, symbol)

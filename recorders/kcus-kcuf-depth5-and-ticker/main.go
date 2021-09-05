@@ -21,7 +21,7 @@ func main() {
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
 
 	proxyAddress := flag.String("proxy", "", "proxy address")
-	savePath := flag.String("path", "/root/kcus-kcuf-depth5-and-ticker", "data save folder")
+	savePath := flag.String("path", "/root/kcus-kcuf-quantiles", "data save folder")
 
 	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
 	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "proxy address")

@@ -6,7 +6,7 @@ dt=$(date -u +%Y%m%d)
 version=" BUILD @ $(date -u '+%Y%m%d %H:%M:%S') "
 echo "$version"
 
-env GOOS=linux GOARCH=amd64 go build -o "./dist/kcus-kcuf-depth5-and-ticker.$dt" ./recorders/kcus-kcuf-depth5-and-ticker
+env GOOS=linux GOARCH=amd64 go build -o "./dist/kcus-kcuf-depth5-and-ticker.$dt" ./recorders/kcus-kcuf-quantiles
 
 git add -A
 git commit -m "build kcus-kcuf-depth5-and-ticker.$dt"

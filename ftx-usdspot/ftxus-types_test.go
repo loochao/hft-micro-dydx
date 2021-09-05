@@ -61,7 +61,7 @@ func TestParseTickerByStdJson(t *testing.T) {
 
 
 func TestGetExchange(t *testing.T) {
-	var position common.Position = &Position{}
+	var position common.Position = &Balance{}
 	var fr common.FundingRate = &FutureStats{}
 	var order common.Order = &Order{}
 	var fill common.Order = &Fill{}

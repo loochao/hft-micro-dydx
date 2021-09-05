@@ -27,6 +27,7 @@ type UserWS struct {
 	trafficCh   chan string
 	key         string
 	secret      string
+	subAccount  string
 	proxy       string
 }
 
@@ -96,7 +97,7 @@ func (w *UserWS) readLoop(conn *websocket.Conn) {
 			w.restart()
 			return
 		}
-		//logger.Debugf("%s", msg)
+		logger.Debugf("%s", msg)
 		select {
 		case w.messageCh <- msg:
 		default:
@@ -501,14 +502,10 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 	}
 }
 
-func (w *UserWS) Start(ctx context.Context) {
-	go w.dataHandleLoop(ctx)
-	go w.mainLoop(ctx, w.key, w.secret, w.proxy)
-	w.reconnectCh <- nil
-}
-
 func NewUserWS(
+	ctx context.Context,
 	key, secret,
+	subAccount,
 	proxy string,
 ) *UserWS {
 	ws := UserWS{
@@ -522,9 +519,13 @@ func NewUserWS(
 		stopped:     0,
 		key:         key,
 		secret:      secret,
+		subAccount:  subAccount,
 		proxy:       proxy,
 		OrderCh:     make(chan Order, 1000),
 		FillCh:      make(chan Fill, 1000),
 	}
+	go ws.dataHandleLoop(ctx)
+	go ws.mainLoop(ctx, ws.key, ws.secret, ws.proxy)
+	ws.reconnectCh <- nil
 	return &ws
 }

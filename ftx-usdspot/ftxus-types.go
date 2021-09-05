@@ -58,12 +58,12 @@ type Market struct {
 	Restricted            bool    `json:"restricted"`
 	HighLeverageFeeExempt bool    `json:"highLeverageFeeExempt"`
 
-	Change1h            float64 `json:"change1h"`
-	Change24h           float64 `json:"change24h"`
-	ChangeBod           float64 `json:"changeBod"`
+	Change1h  float64 `json:"change1h"`
+	Change24h float64 `json:"change24h"`
+	ChangeBod float64 `json:"changeBod"`
 
-	VolumeUSD24h        float64 `json:"volumeUsd24h"`
-	Volume              float64 `json:"volume"`
+	VolumeUSD24h float64 `json:"volumeUsd24h"`
+	Volume       float64 `json:"volume"`
 }
 
 type FundingRate struct {
@@ -238,58 +238,40 @@ type OrderBookData struct {
 	Type    string    `json:"type"`
 }
 
-//    {
-//      "future": "DOGE-PERP",
-//      "size": 184.0,
-//      "side": "sell",
-//      "netSize": -184.0,
-//      "longOrderSize": 0.0,
-//      "shortOrderSize": 0.0,
-//      "cost": -97.672628,
-//      "entryPrice": 0.5308295,
-//      "unrealizedPnl": 0.0,
-//      "realizedPnl": -0.02857,
-//      "initialMarginRequirement": 0.33333333,
-//      "maintenanceMarginRequirement": 0.03,
-//      "openSize": 184.0,
-//      "collateralUsed": 32.55754234109124,
-//      "estimatedLiquidationPrice": 3.47169418045141
-//    }
+//{
+//"coin": "USDTBEAR",
+//"free": 2320.2,
+//"spotBorrow": 0.0,
+//"total": 2340.2,
+//"usdValue": 2340.2,
+//"availableWithoutBorrow": 2320.2
+//}
 
-type Position struct {
-	Market                       string    `json:"future"`
-	Size                         float64   `json:"size"`
-	Side                         string    `json:"side"`
-	NetSize                      float64   `json:"netSize"`
-	LongOrderSize                float64   `json:"longOrderSize"`
-	ShortOrderSize               float64   `json:"shortOrderSize"`
-	Cost                         float64   `json:"cost"`
-	EntryPrice                   float64   `json:"entryPrice"`
-	UnrealizedPnl                float64   `json:"unrealizedPnl"`
-	RealizedPnl                  float64   `json:"realizedPnl"`
-	InitialMarginRequirement     float64   `json:"initialMarginRequirement"`
-	MaintenanceMarginRequirement float64   `json:"maintenanceMarginRequirement"`
-	OpenSize                     float64   `json:"openSize"`
-	CollateralUsed               float64   `json:"collateralUsed"`
-	EstimatedLiquidationPrice    float64   `json:"estimatedLiquidationPrice"`
-	ParseTime                    time.Time `json:"-"`
-	EventTime                    time.Time `json:"-"`
+type Balance struct {
+	Coin                   string    `json:"coin"`
+	Free                   float64   `json:"free"`
+	SpotBorrow             float64   `json:"spotBorrow"`
+	Total                  float64   `json:"total"`
+	UsdValue               float64   `json:"usdValue"`
+	AvailableWithoutBorrow float64   `json:"availableWithoutBorrow"`
+	ParseTime              time.Time `json:"-"`
+	EventTime              time.Time `json:"-"`
 }
 
-func (position *Position) GetExchange() common.ExchangeID {
+func (position *Balance) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (position *Position) GetEventTime() time.Time {
+func (position *Balance) GetEventTime() time.Time {
 	return position.EventTime
 }
 
-func (position *Position) GetParseTime() time.Time {
+func (position *Balance) GetParseTime() time.Time {
 	return position.ParseTime
 }
 
-func (position *Position) UnmarshalJSON(data []byte) error {
-	type Alias Position
+func (position *Balance) UnmarshalJSON(data []byte) error {
+	type Alias Balance
 	aux := &struct {
 		*Alias
 	}{
@@ -303,41 +285,42 @@ func (position *Position) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
-func (position *Position) GetSymbol() string {
-	return position.Market
+
+func (position *Balance) GetSymbol() string {
+	return position.Coin+"/USD"
 }
-func (position *Position) GetSize() float64 {
-	return position.NetSize
+func (position *Balance) GetSize() float64 {
+	return position.Total
 }
-func (position *Position) GetPrice() float64 {
-	return position.EntryPrice
+func (position *Balance) GetPrice() float64 {
+	return 0.0
 }
-func (position *Position) GetTime() time.Time {
+func (position *Balance) GetTime() time.Time {
 	return position.ParseTime
 }
 
-type PositionsHttpResponse struct {
-	Success bool       `json:"success"`
-	Result  []Position `json:"result"`
+type BalancesHttpResponse struct {
+	Success bool      `json:"success"`
+	Result  []Balance `json:"result"`
 }
 
 type Account struct {
-	BackstopProvider             bool       `json:"backstopProvider"`
-	Collateral                   float64    `json:"collateral"`
-	FreeCollateral               float64    `json:"freeCollateral"`
-	CollateralUsed               float64    `json:"collateralUsed"`
-	Leverage                     float64    `json:"leverage"`
-	Liquidating                  bool       `json:"liquidating"`
-	MaintenanceMarginRequirement float64    `json:"maintenanceMarginRequirement"`
-	MakerFee                     float64    `json:"makerFee"`
-	MarginFraction               float64    `json:"marginFraction"`
-	OpenMarginFraction           float64    `json:"openMarginFraction"`
-	TakerFee                     float64    `json:"takerFee"`
-	TotalAccountValue            float64    `json:"totalAccountValue"`
-	TotalPositionSize            float64    `json:"totalPositionSize"`
-	Username                     string     `json:"username"`
-	Positions                    []Position `json:"positions"`
-	ParseTime                    time.Time  `json:"-"`
+	BackstopProvider             bool      `json:"backstopProvider"`
+	Collateral                   float64   `json:"collateral"`
+	FreeCollateral               float64   `json:"freeCollateral"`
+	CollateralUsed               float64   `json:"collateralUsed"`
+	Leverage                     float64   `json:"leverage"`
+	Liquidating                  bool      `json:"liquidating"`
+	MaintenanceMarginRequirement float64   `json:"maintenanceMarginRequirement"`
+	MakerFee                     float64   `json:"makerFee"`
+	MarginFraction               float64   `json:"marginFraction"`
+	OpenMarginFraction           float64   `json:"openMarginFraction"`
+	TakerFee                     float64   `json:"takerFee"`
+	TotalAccountValue            float64   `json:"totalAccountValue"`
+	TotalPositionSize            float64   `json:"totalPositionSize"`
+	Username                     string    `json:"username"`
+	Positions                    []Balance `json:"positions"`
+	ParseTime                    time.Time `json:"-"`
 }
 
 func (account *Account) GetExchange() common.ExchangeID {

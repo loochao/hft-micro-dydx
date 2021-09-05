@@ -36,15 +36,15 @@ type LeverageParam struct {
 }
 
 type NewOrderParam struct {
-	Market     string  `json:"market,omitempty"`
-	Side       string  `json:"side,omitempty"`
+	Market     string   `json:"market,omitempty"`
+	Side       string   `json:"side,omitempty"`
 	Price      *float64 `json:"price"`
-	Type       string  `json:"type,omitempty"`
-	Size       float64 `json:"size,omitempty"`
-	ReduceOnly bool    `json:"reduceOnly,omitempty"`
-	Ioc        bool    `json:"ioc,omitempty"`
-	PostOnly   bool    `json:"postOnly,omitempty"`
-	ClientID   string  `json:"clientId,omitempty"`
+	Type       string   `json:"type,omitempty"`
+	Size       float64  `json:"size,omitempty"`
+	ReduceOnly bool     `json:"reduceOnly,omitempty"`
+	Ioc        bool     `json:"ioc,omitempty"`
+	PostOnly   bool     `json:"postOnly,omitempty"`
+	ClientID   string   `json:"clientId,omitempty"`
 }
 
 type CancelAllParam struct {
@@ -55,9 +55,10 @@ type CancelAllParam struct {
 
 type LoginParam struct {
 	Args struct {
-		Key  string `json:"key"`
-		Sign string `json:"sign"`
-		Time int64  `json:"time"`
+		Key        string `json:"key"`
+		Sign       string `json:"sign"`
+		Time       int64  `json:"time"`
+		SubAccount string `json:"subaccount,omitempty"`
 	} `json:"args"`
 	Op string `json:"op"`
 }

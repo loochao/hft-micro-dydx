@@ -14,5 +14,5 @@ const (
 	OrderStatusClosed = "closed"
 	OrderTypeLimit    = "limit"
 	OrderTypeMarket   = "market"
-	ExchangeID        = common.FtxUsdFuture
+	ExchangeID        = common.FtxUsdSpot
 )
