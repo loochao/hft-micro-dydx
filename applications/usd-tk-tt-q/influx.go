@@ -21,6 +21,7 @@ func handleSave(
 	lastExternalSaveTime *time.Time,
 ) {
 	if yCommissionAssetValue == nil || xCommissionAssetValue == nil {
+		logger.Debugf("miss commission %v %v",yCommissionAssetValue == nil,xCommissionAssetValue == nil)
 		return
 	}
 	totalUnHedgeValue := 0.0
