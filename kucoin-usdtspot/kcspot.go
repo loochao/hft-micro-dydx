@@ -184,6 +184,10 @@ func (k *KucoinUsdtSpot) StreamBasic(ctx context.Context, statusCh chan common.S
 				}
 				accountsMap[symbol] = account
 			}
+			if kcsBalance == nil {
+				kcsBalance = new(float64)
+				*kcsBalance = 0.0
+			}
 			hasBalances := make(map[string]bool)
 			for symbol, account := range accountsMap {
 				if ch, ok := positionChMap[symbol]; ok {
