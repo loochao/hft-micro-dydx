@@ -263,6 +263,11 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.targetValue = strat.enterTarget
 		}
 		strat.enterValue = strat.targetValue - math.Max(strat.xAbsValue, strat.yAbsValue)
+		if strat.enterValue < 0 {
+			//超过最大仓位了, 不操作
+			strat.hedgeXPosition()
+			return
+		}
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
 		}
@@ -289,6 +294,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.hedgeXPosition()
 			return
 		}
+
 		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional || strat.xSizeDiff < strat.xMinSize {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
@@ -369,6 +375,11 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.targetValue = strat.enterTarget
 		}
 		strat.enterValue = strat.targetValue - math.Max(strat.xAbsValue, strat.yAbsValue)
+		if strat.enterValue < 0 {
+			//超过最大仓位了, 不操作
+			strat.hedgeXPosition()
+			return
+		}
 		if strat.enterValue > strat.maxOrderValue {
 			strat.enterValue = strat.maxOrderValue
 		}
