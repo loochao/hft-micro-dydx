@@ -5,3 +5,5 @@
 - [x] add funding rate offset factor for spread
 - [ ] collect order trade ratio 
 - [x] ease in quart offset factor
+- [x] orderTimeout需要长一些，在能计算realised 
+  spread再切换成enterSilent, 防止系统异常之后重复下单.

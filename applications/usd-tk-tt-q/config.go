@@ -74,11 +74,11 @@ type Config struct {
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
 	StartValues       map[string]float64 `yaml:"startValues"`
 
-	OrderTimeout           time.Duration           `yaml:"orderTimeout"`
 	XOrderSilent           time.Duration           `yaml:"xOrderSilent"`
 	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
 	YOrderSilent           time.Duration           `yaml:"yOrderSilent"`
 	XEnterTimeout          time.Duration           `yaml:"xEnterTimeout"`
+	enterSilent            time.Duration           `yaml:"enterSilent"`
 	HedgeDelay             time.Duration           `yaml:"hedgeDelay"`
 	HedgeCheckDuration     time.Duration           `yaml:"hedgeCheckDuration"`
 	HedgeCheckInterval     time.Duration           `yaml:"hedgeCheckInterval"`
@@ -98,9 +98,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.BalancePositionMaxAge == 0 {
 		config.BalancePositionMaxAge = time.Minute * 3
 	}
-	if config.OrderTimeout == 0 {
-		config.OrderTimeout = time.Second * 5
-	}
 	if config.RealisedSpreadLogDelay == 0 {
 		config.RealisedSpreadLogDelay = time.Second
 	}
@@ -109,6 +106,9 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.BatchSize <= 0 {
 		config.BatchSize = 20
+	}
+	if config.enterSilent == 0 {
+		config.enterSilent = time.Second
 	}
 	if config.TickerMaxAgeDiffBias == 0 {
 		config.TickerMaxAgeDiffBias = time.Millisecond * 100
