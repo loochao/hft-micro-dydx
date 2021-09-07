@@ -78,7 +78,7 @@ type Config struct {
 	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
 	YOrderSilent           time.Duration           `yaml:"yOrderSilent"`
 	XEnterTimeout          time.Duration           `yaml:"xEnterTimeout"`
-	xEnterSilent           time.Duration           `yaml:"xEnterSilent"`
+	XEnterSilent           time.Duration           `yaml:"xEnterSilent"`
 	HedgeDelay             time.Duration           `yaml:"hedgeDelay"`
 	HedgeCheckDuration     time.Duration           `yaml:"hedgeCheckDuration"`
 	HedgeCheckInterval     time.Duration           `yaml:"hedgeCheckInterval"`
@@ -107,8 +107,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.BatchSize <= 0 {
 		config.BatchSize = 20
 	}
-	if config.xEnterSilent == 0 {
-		config.xEnterSilent = time.Second
+	if config.XEnterSilent == 0 {
+		config.XEnterSilent = time.Second
 	}
 	if config.TickerMaxAgeDiffBias == 0 {
 		config.TickerMaxAgeDiffBias = time.Millisecond * 100

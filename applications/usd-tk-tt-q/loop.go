@@ -108,7 +108,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		} else {
 			logger.Debugf("%s - %s realised short abs spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
 		}
-		strat.xOrderSilentTime = time.Now().Add(strat.config.xEnterSilent)
+		strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
 	} else if strat.xLastFilledSellPrice != nil && strat.yLastFilledBuyPrice != nil {
 		if strat.realisedSpread == nil {
 			strat.realisedSpread = new(float64)
@@ -131,7 +131,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		} else {
 			logger.Debugf("%s - %s realised long abs spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
 		}
-		strat.xOrderSilentTime = time.Now().Add(strat.config.xEnterSilent)
+		strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
 	}
 }
 
