@@ -246,7 +246,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	}
 	contents, err := ioutil.ReadAll(reader)
 	//if strings.Contains(path, "/api/v3/account"){
-		logger.Debugf("%s", contents)
+	//	logger.Debugf("%s", contents)
 	//}
 	if err != nil {
 		return limits, err
