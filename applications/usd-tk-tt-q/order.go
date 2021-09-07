@@ -492,7 +492,11 @@ func (strat *XYStrategy) hedgeXPosition() {
 			strat.xSizeDiff = strat.maxOrderValue / strat.xTicker.GetAskPrice() / strat.xMultiplier
 		}
 
-		strat.xSizeDiff = math.Round(strat.xSizeDiff/strat.xStepSize) * strat.xStepSize
+		if strat.xSizeDiff >= 0 {
+			strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xStepSize) * strat.xStepSize
+		}else{
+			strat.xSizeDiff = math.Ceil(strat.xSizeDiff/strat.xStepSize) * strat.xStepSize
+		}
 
 		if strat.isXSpot {
 			if math.Abs(strat.xSizeDiff) < strat.xStepSize {

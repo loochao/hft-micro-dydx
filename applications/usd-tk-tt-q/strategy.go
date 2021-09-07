@@ -402,7 +402,11 @@ func (strat *XYStrategy) hedgeYPosition() {
 	} else if strat.ySizeDiff*strat.yMultiplier > strat.maxOrderValue/strat.yTicker.GetAskPrice() {
 		strat.ySizeDiff = strat.maxOrderValue / strat.yTicker.GetAskPrice() / strat.yMultiplier
 	}
-	strat.ySizeDiff = math.Floor(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
+	if strat.ySizeDiff >= 0 {
+		strat.ySizeDiff = math.Floor(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
+	}else{
+		strat.ySizeDiff = math.Ceil(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
+	}
 
 	if strat.isYSpot {
 		if math.Abs(strat.ySizeDiff) < strat.yStepSize || math.Abs(strat.ySizeDiff) < strat.yMinSize {
