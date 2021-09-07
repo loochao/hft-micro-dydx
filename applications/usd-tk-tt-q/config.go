@@ -78,7 +78,7 @@ type Config struct {
 	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
 	YOrderSilent           time.Duration           `yaml:"yOrderSilent"`
 	XEnterTimeout          time.Duration           `yaml:"xEnterTimeout"`
-	enterSilent            time.Duration           `yaml:"enterSilent"`
+	EnterSilent            time.Duration           `yaml:"enterSilent"`
 	HedgeDelay             time.Duration           `yaml:"hedgeDelay"`
 	HedgeCheckDuration     time.Duration           `yaml:"hedgeCheckDuration"`
 	HedgeCheckInterval     time.Duration           `yaml:"hedgeCheckInterval"`
