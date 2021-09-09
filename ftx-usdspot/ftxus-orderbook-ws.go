@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"sync/atomic"
 	"time"
-	"unsafe"
 )
 
 type OrderBookWS struct {
@@ -71,7 +70,6 @@ func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
-	var symbolBytes []byte
 	var symbol string
 	var msg []byte
 	var err error
@@ -91,26 +89,21 @@ func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []
 			w.restart()
 			return
 		}
+		logger.Debugf("%s", msg)
 		msgLen := len(msg)
 		if msgLen > 128 && msg[13] == 'o' {
 			if msg[45] == ',' {
-				symbolBytes = msg[36:44]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				symbol = common.UnsafeBytesToString(msg[36:44])
 			} else if msg[46] == ',' {
-				symbolBytes = msg[36:45]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				symbol = common.UnsafeBytesToString(msg[36:45])
 			} else if msg[47] == ',' {
-				symbolBytes = msg[36:46]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				symbol = common.UnsafeBytesToString(msg[36:46])
 			} else if msg[48] == ',' {
-				symbolBytes = msg[36:47]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				symbol = common.UnsafeBytesToString(msg[36:47])
 			} else if msg[49] == ',' {
-				symbolBytes = msg[36:48]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				symbol = common.UnsafeBytesToString(msg[36:48])
 			} else if msg[50] == ',' {
-				symbolBytes = msg[36:49]
-				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+				symbol = common.UnsafeBytesToString(msg[36:49])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
