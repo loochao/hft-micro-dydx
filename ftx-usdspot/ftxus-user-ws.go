@@ -105,50 +105,6 @@ func (w *UserWS) readLoop(conn *websocket.Conn) {
 				logSilentTime = time.Now().Add(time.Minute)
 			}
 		}
-		//msgLen := len(msg)
-		//if msgLen > 128 && msg[13] == 'o' {
-		//	if msg[45] == ',' {
-		//		symbolBytes = msg[36:44]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[46] == ',' {
-		//		symbolBytes = msg[36:45]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[47] == ',' {
-		//		symbolBytes = msg[36:46]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[48] == ',' {
-		//		symbolBytes = msg[36:47]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[49] == ',' {
-		//		symbolBytes = msg[36:48]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[50] == ',' {
-		//		symbolBytes = msg[36:49]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else {
-		//		if time.Now().Sub(logSilentTime) > 0 {
-		//			logger.Debugf("other msg %s", msg)
-		//			logSilentTime = time.Now().Add(time.Minute)
-		//		}
-		//		continue
-		//	}
-		//} else {
-		//	if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
-		//		logger.Debugf("other msg %s", msg)
-		//		logSilentTime = time.Now().Add(time.Minute)
-		//	}
-		//	continue
-		//}
-		//if ch, ok = channels[symbol]; ok {
-		//	select {
-		//	case ch <- msg:
-		//	default:
-		//		if time.Now().Sub(logSilentTime) > 0 {
-		//			logger.Debugf(" ch <- msg %s ch len %d", symbol, len(ch))
-		//			logSilentTime = time.Now().Add(time.Minute)
-		//		}
-		//	}
-		//}
 	}
 }
 

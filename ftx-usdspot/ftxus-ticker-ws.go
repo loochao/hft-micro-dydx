@@ -89,7 +89,6 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 			w.restart()
 			return
 		}
-		logger.Debugf("%s", msg)
 		msgLen := len(msg)
 		//{"channel": "ticker", "market": "BTC/USD", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
 		//{"channel": "ticker", "market": "HT/USD", "type": "update", "data": {"bid": 15.45, "ask": 15.471, "bidSize": 38.1, "askSize": 18.0, "last": 15.453, "time": 1630770353.7536824}}
@@ -357,12 +356,15 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 	defer logger.Debugf("EXIT dataHandleLoop %s", market)
 	logSilentTime := time.Now()
 	index := -1
-	pool := [4]*Ticker{}
-	for i := 0; i < 4; i++ {
+	pool := [1024]*Ticker{}
+	for i := 0; i < 1024; i++ {
 		pool[i] = &Ticker{}
 	}
 	var ticker *Ticker
 	var err error
+	outputDelay := time.Millisecond
+	outputTimer := time.NewTimer(time.Hour * 999)
+	defer outputTimer.Stop()
 
 	for {
 		select {
@@ -370,17 +372,9 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 			return
 		case <-w.done:
 			return
-		case msg := <-inputCh:
-			index++
-			if index == 4 {
-				index = 0
-			}
-			ticker = pool[index]
-			err = ParseTicker(msg, ticker)
-			if err != nil && time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("ParseTicker(msg, ticker) error %s %v", msg, err)
-				logSilentTime = time.Now().Add(time.Minute)
-			} else {
+		case <-outputTimer.C:
+			if index > 0 {
+				ticker = pool[index]
 				select {
 				case outputCh <- ticker:
 				default:
@@ -390,14 +384,31 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 						continue
 					}
 				}
+				select {
+				case w.marketCh <- market:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
 			}
-			select {
-			case w.marketCh <- market:
-			default:
-				//if time.Now().Sub(logSilentTime) > 0 {
-				//	logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
-				//	logSilentTime = time.Now().Add(time.Minute)
-				//}
+			break
+		case msg := <-inputCh:
+			index++
+			if index == 1024 {
+				index = 0
+			}
+			ticker = pool[index]
+			err = ParseTicker(msg, ticker)
+			if err != nil {
+				index -= 1
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("ParseTicker(msg, ticker) error %s %v", msg, err)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			} else {
+				outputTimer.Reset(outputDelay)
 			}
 			break
 		}

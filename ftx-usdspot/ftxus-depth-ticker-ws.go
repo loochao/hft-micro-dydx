@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type OrderBookWS struct {
+type DepthTickerWS struct {
 	writeCh       chan interface{}
 	done          chan interface{}
 	reconnectCh   chan interface{}
@@ -23,7 +23,7 @@ type OrderBookWS struct {
 	stopped       int32
 }
 
-func (w *OrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *DepthTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -66,7 +66,7 @@ func (w *OrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *DepthTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -132,7 +132,7 @@ func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []
 	}
 }
 
-func (w *OrderBookWS) readAll(r io.Reader) ([]byte, error) {
+func (w *DepthTickerWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -150,7 +150,7 @@ func (w *OrderBookWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *OrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *DepthTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -195,7 +195,7 @@ func (w *OrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string,
 	return conn, nil
 }
 
-func (w *OrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
+func (w *DepthTickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -248,7 +248,7 @@ func (w *OrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[s
 	}
 }
 
-func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *DepthTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -265,6 +265,16 @@ func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 	for _, symbol := range symbols {
 		marketUpdatedTimes[symbol] = time.Unix(0, 0)
 	}
+
+	resubCheckInterval := time.Second
+	resubCheckTimer := time.NewTimer(time.Second)
+	resubInterval := time.Second*300
+
+	resubTimes := make(map[string]time.Time)
+	for i, symbol := range symbols {
+		resubTimes[symbol] = time.Now().Add(resubInterval + resubCheckInterval*time.Duration(i))
+	}
+
 	trafficTimeout := time.NewTimer(time.Minute * 5)
 	pingTimer := time.NewTimer(time.Second * 15)
 	defer trafficTimeout.Stop()
@@ -293,8 +303,36 @@ func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 			trafficTimeout.Reset(time.Second * 30)
 			marketUpdatedTimes[symbol] = time.Now()
 			break
+		case <-resubCheckTimer.C:
+			for symbol, resubTime := range resubTimes {
+				if time.Now().Sub(resubTime) > 0 {
+					resubTimes[symbol] = time.Now().Add(resubInterval)
+					logger.Debugf("RESET BY TIME %s", symbol)
+					select {
+					case w.writeCh <- SubscribeParam{
+						Operation: "unsubscribe",
+						Channel:   "orderbook",
+						Market:    symbol,
+					}:
+						marketUpdatedTimes[symbol] = time.Now().Add(marketTimeout)
+					default:
+						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+					}
+					select {
+					case w.writeCh <- SubscribeParam{
+						Operation: "subscribe",
+						Channel:   "orderbook",
+						Market:    symbol,
+					}:
+						marketUpdatedTimes[symbol] = time.Now().Add(marketTimeout)
+					default:
+						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+					}
+				}
+			}
+			resubCheckTimer.Reset(resubCheckInterval)
 		case symbol := <-w.marketResetCh:
-			logger.Debugf("RESET %s", symbol)
+			logger.Debugf("RESET BY NOT VALID DEPTH %s", symbol)
 			marketUpdatedTimes[symbol] = time.Now().Add(-marketTimeout)
 			trafficTimeout.Reset(time.Second * 30)
 			break
@@ -329,7 +367,7 @@ func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 	}
 }
 
-func (w *OrderBookWS) Stop() {
+func (w *DepthTickerWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -337,7 +375,7 @@ func (w *OrderBookWS) Stop() {
 	}
 }
 
-func (w *OrderBookWS) restart() {
+func (w *DepthTickerWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -345,30 +383,21 @@ func (w *OrderBookWS) restart() {
 	}
 }
 
-func (w *OrderBookWS) Done() chan interface{} {
+func (w *DepthTickerWS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Depth) {
+func (w *DepthTickerWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Ticker) {
 	logger.Debugf("START dataHandleLoop %s", market)
 	defer logger.Debugf("EXIT dataHandleLoop %s", market)
 	logSilentTime := time.Now()
-	orderbookData := OrderBookData{}
 	var err error
-	var orderBook = OrderBook{
-		Bids:   common.Bids{},
-		Asks:   common.Asks{},
-		Market: market,
-	}
-	checkSumTimer := time.NewTimer(time.Minute)
-	defer checkSumTimer.Stop()
-	outputInterval := time.Millisecond * 100
-	outputTimer := time.NewTimer(outputInterval)
+	outputDelay := time.Millisecond * 5
+	outputTimer := time.NewTimer(time.Hour * 999)
 	defer outputTimer.Stop()
-
-	var hasPartial = false
-	var orderBookUpdate = false
-	//var depth = &Depth{}
+	var depth = &Depth{}
+	hasPartial := false
+	symbolLen := len(market)
 	for {
 		select {
 		case <-ctx.Done():
@@ -378,9 +407,9 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 		case <-outputTimer.C:
 			if hasPartial {
 				//如果不复制，Downstream会被修改
-				orderBook := orderBook
+				outputDepth := *depth
 				select {
-				case outputCh <- &orderBook:
+				case outputCh <- &outputDepth:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
@@ -388,33 +417,43 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 					}
 				}
 			}
-			outputTimer.Reset(time.Now().Truncate(outputInterval).Add(outputInterval).Sub(time.Now()))
 			break
-		case <-checkSumTimer.C:
-			if hasPartial && orderBookUpdate {
-				if orderBook.CompareCheckSum() {
-					select {
-					case w.marketCh <- market:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
+		case msg := <-inputCh:
+			if msg[48+symbolLen] == 'p' {
+				err = UpdateDepth(msg, depth)
+				if err != nil {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("UpdateDepth(msg, depth) error %v", err)
+						logSilentTime = time.Now().Add(time.Minute)
 					}
-				} else {
-					logger.Debugf("check sum failed %s", market)
-					hasPartial = false
-					select {
-					case w.marketResetCh <- market:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("w.marketResetCh <- market failed, ch len %d", len(w.marketResetCh))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
+					continue
 				}
-			} else if time.Now().Sub(orderBook.Time) > time.Minute {
-				logger.Debugf("orderbook out of date, %s", market)
+				hasPartial = true
+			} else if msg[48+symbolLen] == 'u' {
+				if !hasPartial {
+					continue
+				}
+				err = UpdateDepth(msg, depth)
+				if err != nil {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("UpdateDepth(msg, depth) error %v", err)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+					continue
+				}
+			} else {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("UpdateDepth(msg, depth) error %v", err)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+				continue
+			}
+
+			if !depth.IsValid() {
+				logger.Debugf("%s", msg)
+				logger.Debugf("%v", depth.Bids)
+				logger.Debugf("%v", depth.Asks)
+				hasPartial = false
 				select {
 				case w.marketResetCh <- market:
 				default:
@@ -423,68 +462,38 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 						logSilentTime = time.Now().Add(time.Minute)
 					}
 				}
-			}
-			checkSumTimer.Reset(time.Second * 5)
-			break
-		case msg := <-inputCh:
-			//UpdateDepth(msg)
-			orderbookData = OrderBookData{}
-			err = json.Unmarshal(msg, &orderbookData)
-			if err != nil {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("json.Unmarshal error %v", err)
-					logSilentTime = time.Now().Add(time.Minute)
+			} else {
+				select {
+				case w.marketCh <- market:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
 				}
-				continue
-			}
-			switch orderbookData.Data.Action {
-			case "partial":
-				orderBook.Bids = orderbookData.Data.Bids
-				orderBook.Asks = orderbookData.Data.Asks
-				orderBook.Checksum = orderbookData.Data.Checksum
-				orderBook.Time = orderbookData.Data.Time
-				hasPartial = true
-				orderBookUpdate = true
-				if !orderBook.CompareCheckSum() {
-					logger.Debugf("check sum failed at partial event %s", msg)
-				}
-				break
-			case "update":
-				if hasPartial {
-					orderBook.Asks = orderBook.Asks.UpdateBatch(orderbookData.Data.Asks)
-					orderBook.Bids = orderBook.Bids.UpdateBatch(orderbookData.Data.Bids)
-					orderBook.Checksum = orderbookData.Data.Checksum
-					orderBook.Time = orderbookData.Data.Time
-					orderBookUpdate = true
-				}
-				break
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("other action %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
+				outputTimer.Reset(outputDelay)
 			}
 			break
 		}
 	}
 }
 
-func NewOrderBookWS(
+func NewDepthTickerWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan common.Depth,
-) *OrderBookWS {
-	ws := OrderBookWS{
+	channels map[string]chan common.Ticker,
+) *DepthTickerWS {
+	ws := DepthTickerWS{
 		done:          make(chan interface{}),
 		reconnectCh:   make(chan interface{}, 100),
-		writeCh:       make(chan interface{}, 100*len(channels)),
-		marketCh:      make(chan string, 100*len(channels)),
-		marketResetCh: make(chan string, 100*len(channels)),
+		writeCh:       make(chan interface{}, 4*len(channels)),
+		marketCh:      make(chan string, 16*len(channels)),
+		marketResetCh: make(chan string, 16*len(channels)),
 		stopped:       0,
 	}
 	messagesCh := make(map[string]chan []byte)
 	for market, ch := range channels {
-		messagesCh[market] = make(chan []byte, 1000)
+		messagesCh[market] = make(chan []byte, 256)
 		go ws.dataHandleLoop(ctx, market, messagesCh[market], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messagesCh)

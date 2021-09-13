@@ -287,7 +287,7 @@ func (position *Balance) UnmarshalJSON(data []byte) error {
 }
 
 func (position *Balance) GetSymbol() string {
-	return position.Coin+"/USD"
+	return position.Coin + "/USD"
 }
 func (position *Balance) GetSize() float64 {
 	return position.Total
@@ -755,4 +755,71 @@ func (t *Ticker) UnmarshalJSON(data []byte) error {
 		t.Time = time.Unix(0, int64(aux.Time*1000000000))
 	}
 	return nil
+}
+
+type Depth struct {
+	Bids      common.Bids
+	Asks      common.Asks
+	Symbol    string
+	EventTime time.Time
+	ParseTime time.Time
+}
+
+func (d *Depth) GetBidPrice() float64 {
+	if len(d.Bids) > 0 {
+		return d.Bids[0][0]
+	}else{
+		return 0.0
+	}
+}
+
+func (d *Depth) GetAskPrice() float64 {
+	if len(d.Asks) > 0 {
+		return d.Asks[0][0]
+	}else{
+		return 0.0
+	}
+}
+
+func (d *Depth) GetBidSize() float64 {
+	if len(d.Bids) > 0 {
+		return d.Bids[0][1]
+	}else{
+		return 0.0
+	}
+}
+
+func (d *Depth) GetAskSize() float64 {
+	if len(d.Asks) > 0 {
+		return d.Asks[0][1]
+	}else{
+		return 0.0
+	}
+}
+
+func (d *Depth) GetTime() time.Time {
+	return d.EventTime
+}
+
+func (d *Depth) GetAsks() common.Asks {
+	return d.Asks[:]
+}
+
+func (d *Depth) GetBids() common.Bids {
+	return d.Bids[:]
+}
+
+func (d *Depth) GetSymbol() string {
+	return d.Symbol
+}
+
+func (d *Depth) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (d *Depth) IsValid() bool {
+	if len(d.Asks) > 0 && len(d.Bids) > 0 && d.Asks[0][0] <= d.Bids[0][0] {
+		return false
+	}
+	return true
 }

@@ -10,11 +10,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"sync/atomic"
+	"testing"
 	"time"
 )
 
-type OrderBookWS struct {
+type OrderBookWSTest struct {
 	writeCh       chan interface{}
 	done          chan interface{}
 	reconnectCh   chan interface{}
@@ -23,7 +25,7 @@ type OrderBookWS struct {
 	stopped       int32
 }
 
-func (w *OrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *OrderBookWSTest) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -66,7 +68,7 @@ func (w *OrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *OrderBookWSTest) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -132,7 +134,7 @@ func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []
 	}
 }
 
-func (w *OrderBookWS) readAll(r io.Reader) ([]byte, error) {
+func (w *OrderBookWSTest) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -150,7 +152,7 @@ func (w *OrderBookWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *OrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *OrderBookWSTest) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -195,7 +197,7 @@ func (w *OrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string,
 	return conn, nil
 }
 
-func (w *OrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
+func (w *OrderBookWSTest) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -248,7 +250,7 @@ func (w *OrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[s
 	}
 }
 
-func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *OrderBookWSTest) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -295,8 +297,8 @@ func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 			break
 		case symbol := <-w.marketResetCh:
 			logger.Debugf("RESET %s", symbol)
-			marketUpdatedTimes[symbol] = time.Now().Add(-marketTimeout)
 			trafficTimeout.Reset(time.Second * 30)
+			marketUpdatedTimes[symbol] = time.Now().Add(-marketTimeout)
 			break
 		case <-marketCheckTimer.C:
 			for market, updateTime := range marketUpdatedTimes {
@@ -329,7 +331,7 @@ func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 	}
 }
 
-func (w *OrderBookWS) Stop() {
+func (w *OrderBookWSTest) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -337,7 +339,7 @@ func (w *OrderBookWS) Stop() {
 	}
 }
 
-func (w *OrderBookWS) restart() {
+func (w *OrderBookWSTest) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -345,11 +347,11 @@ func (w *OrderBookWS) restart() {
 	}
 }
 
-func (w *OrderBookWS) Done() chan interface{} {
+func (w *OrderBookWSTest) Done() chan interface{} {
 	return w.done
 }
 
-func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Depth) {
+func (w *OrderBookWSTest) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Depth) {
 	logger.Debugf("START dataHandleLoop %s", market)
 	defer logger.Debugf("EXIT dataHandleLoop %s", market)
 	logSilentTime := time.Now()
@@ -368,7 +370,7 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 
 	var hasPartial = false
 	var orderBookUpdate = false
-	//var depth = &Depth{}
+	var depth = &Depth{}
 	for {
 		select {
 		case <-ctx.Done():
@@ -427,7 +429,6 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 			checkSumTimer.Reset(time.Second * 5)
 			break
 		case msg := <-inputCh:
-			//UpdateDepth(msg)
 			orderbookData = OrderBookData{}
 			err = json.Unmarshal(msg, &orderbookData)
 			if err != nil {
@@ -445,6 +446,40 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 				orderBook.Time = orderbookData.Data.Time
 				hasPartial = true
 				orderBookUpdate = true
+				err = UpdateDepth(msg, depth)
+				if err != nil {
+					logger.Debugf("UpdateDepth(msg, depth) error %v", err)
+				}
+				if len(depth.Asks) != len(orderBook.Asks) {
+					logger.Debugf(
+						"asks len %d %d not match",
+						len(depth.Asks), len(orderBook.Asks),
+					)
+				}
+				if len(depth.Bids) != len(orderBook.Bids) {
+					logger.Debugf(
+						"bids len %d %d not match",
+						len(depth.Bids), len(orderBook.Bids),
+					)
+				}
+				for i, ask1 := range orderBook.Asks {
+					ask2 := depth.Asks[i]
+					if ask1[0] != ask2[0] {
+						logger.Debugf("ask price %d %f %f not equal", i, ask1[0], ask2[0])
+					}
+					if ask1[1] != ask2[1] {
+						logger.Debugf("ask size %d %f %f not equal", i, ask1[1], ask2[1])
+					}
+				}
+				for i, bid1 := range orderBook.Bids {
+					bid2 := depth.Bids[i]
+					if bid1[0] != bid2[0] {
+						logger.Debugf("bid price %d %f %f not equal", i, bid1[0], bid2[0])
+					}
+					if bid1[1] != bid2[1] {
+						logger.Debugf("bid size %d %f %f not equal", i, bid1[1], bid2[1])
+					}
+				}
 				if !orderBook.CompareCheckSum() {
 					logger.Debugf("check sum failed at partial event %s", msg)
 				}
@@ -456,6 +491,48 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 					orderBook.Checksum = orderbookData.Data.Checksum
 					orderBook.Time = orderbookData.Data.Time
 					orderBookUpdate = true
+					err = UpdateDepth(msg, depth)
+					if err != nil {
+						logger.Debugf("UpdateDepth(msg, depth) error %v", err)
+					}
+					if len(depth.Asks) != len(orderBook.Asks) {
+						logger.Debugf(
+							"asks len %d %d not match",
+							len(depth.Asks), len(orderBook.Asks),
+						)
+					}
+					if len(depth.Bids) != len(orderBook.Bids) {
+						logger.Debugf(
+							"bids len %d %d not match",
+							len(depth.Bids), len(orderBook.Bids),
+						)
+					}
+					for i, ask1 := range orderBook.Asks {
+						ask2 := depth.Asks[i]
+						if ask1[0] != ask2[0] {
+							logger.Debugf("%v", depth.Asks)
+							logger.Debugf("%v", orderBook.Asks)
+							logger.Fatalf("ask price %d %f %f not equal", i, ask1[0], ask2[0])
+						}
+						if ask1[1] != ask2[1] {
+							logger.Debugf("%v", depth.Asks)
+							logger.Debugf("%v", orderBook.Asks)
+							logger.Fatalf("ask size %d %f %f not equal", i, ask1[1], ask2[1])
+						}
+					}
+					for i, bid1 := range orderBook.Bids {
+						bid2 := depth.Bids[i]
+						if bid1[0] != bid2[0] {
+							logger.Debugf("%v", depth.Bids)
+							logger.Debugf("%v", orderBook.Bids)
+							logger.Fatalf("bid price %d %f %f not equal", i, bid1[0], bid2[0])
+						}
+						if bid1[1] != bid2[1] {
+							logger.Debugf("%v", depth.Bids)
+							logger.Debugf("%v", orderBook.Bids)
+							logger.Fatalf("bid size %d %f %f not equal", i, bid1[1], bid2[1])
+						}
+					}
 				}
 				break
 			default:
@@ -469,12 +546,12 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 	}
 }
 
-func NewOrderBookWS(
+func NewOrderBookWSTest(
 	ctx context.Context,
 	proxy string,
 	channels map[string]chan common.Depth,
-) *OrderBookWS {
-	ws := OrderBookWS{
+) *OrderBookWSTest {
+	ws := OrderBookWSTest{
 		done:          make(chan interface{}),
 		reconnectCh:   make(chan interface{}, 100),
 		writeCh:       make(chan interface{}, 100*len(channels)),
@@ -490,4 +567,21 @@ func NewOrderBookWS(
 	go ws.mainLoop(ctx, proxy, messagesCh)
 	ws.reconnectCh <- nil
 	return &ws
+}
+
+
+func TestNewOrderBookWSTest(t *testing.T) {
+	var ctx = context.Background()
+	symbols := []string{ "DOGE/USD"}
+	channels := make(map[string]chan common.Depth)
+	for _, symbol := range symbols {
+		channels[symbol] = make(chan common.Depth, 100)
+	}
+	_ = NewOrderBookWSTest(ctx, os.Getenv("FTX_TEST_PROXY"), channels)
+	for {
+		select {
+		case d := <-channels[symbols[0]]:
+			logger.Debugf("%v", d)
+		}
+	}
 }

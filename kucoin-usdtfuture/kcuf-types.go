@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
+	"os"
 	"strconv"
 	"time"
 )
@@ -135,11 +137,11 @@ func (depth *Depth50) UnmarshalJSON(data []byte) error {
 }
 
 type Depth5 struct {
-	Symbol    string        `json:"-"`
-	Bids      [5][2]float64 `json:"bids,omitempty"`
-	Asks      [5][2]float64 `json:"asks,omitempty"`
+	Symbol string        `json:"-"`
+	Bids   [5][2]float64 `json:"bids,omitempty"`
+	Asks   [5][2]float64 `json:"asks,omitempty"`
 	//Sequence  int64         `json:"sequence"`
-	EventTime time.Time     `json:"-"`
+	EventTime time.Time `json:"-"`
 }
 
 func (depth *Depth5) GetBidPrice() float64 {
@@ -764,7 +766,15 @@ func (fr *CurrentFundingRate) GetSymbol() string {
 }
 
 func (fr *CurrentFundingRate) GetFundingRate() float64 {
-	return fr.Value
+	if os.Getenv("KC_FR_WITH_PREDICTED") != "" {
+		if math.Abs(fr.Value) > math.Abs(fr.PredictedValue) {
+			return fr.Value
+		} else {
+			return fr.PredictedValue
+		}
+	} else {
+		return fr.Value
+	}
 }
 
 func (fr *CurrentFundingRate) GetNextFundingTime() time.Time {

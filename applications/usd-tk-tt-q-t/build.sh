@@ -22,6 +22,9 @@ chmod 755 "./dist/usd-tk-tt-q-t.amd64.$dt"
 echo "" && echo "" && echo "arm1"
 rsync -avx --progress "./dist/usd-tk-tt-q-t.amd64.$dt" arm1:/usr/local/bin/
 
+echo "" && echo "" && echo "hk01"
+rsync -avx --progress "./dist/usd-tk-tt-q-t.amd64.$dt" hk01:/usr/local/bin/
+
 echo "" && echo "" && echo "tk03"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q-t.amd64.$dt tk03:/usr/local/bin/"
 

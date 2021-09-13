@@ -39,7 +39,7 @@ type Response struct {
 func main() {
 	pnls := map[string]float64{}
 	pnlDetails := map[string][]float64{}
-	contents, err := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q-t/kc-pnl-history/outputs/kccjl.json")
+	contents, err := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q-t/kc-pnl-history/outputs/history20210911.json")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -48,6 +48,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
+	logger.Debugf("TOTAL LEN %d", len(history.Data.DataList))
 	for _, h := range history.Data.DataList {
 		if _, ok := pnls[h.Symbol]; ok {
 			pnls[h.Symbol] += h.RealisedPnl + h.FundingFee + h.DealComm

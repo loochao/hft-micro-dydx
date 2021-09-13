@@ -90,6 +90,7 @@ type OrderError struct {
 type FundingRate interface {
 	GetSymbol() string
 	GetFundingRate() float64
+	//GetPredictedFundingRate() float64
 	GetNextFundingTime() time.Time
 	GetExchange() ExchangeID
 }
