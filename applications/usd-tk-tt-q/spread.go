@@ -22,11 +22,11 @@ func (strat *XYStrategy) updateSpread() {
 	}
 
 	if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
-		logger.Debugf("%s adjustedAgeDiff %v", strat.xSymbol, strat.adjustedAgeDiff)
+		//logger.Debugf("%s adjustedAgeDiff %v", strat.xSymbol, strat.adjustedAgeDiff)
 		strat.yTickerExpireCount++
 		return
 	} else if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
-		logger.Debugf("%s adjustedAgeDiff %v", strat.xSymbol, strat.adjustedAgeDiff)
+		//logger.Debugf("%s adjustedAgeDiff %v", strat.xSymbol, strat.adjustedAgeDiff)
 		strat.xTickerExpireCount++
 		return
 	}
@@ -115,11 +115,11 @@ func (strat *XYStrategy) handleXTicker() {
 		if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
 			//taker已经过期
 			strat.yTickerExpireCount++
-			logger.Debugf("%s x expire y", strat.xSymbol)
+			//logger.Debugf("%s x expire y", strat.xSymbol)
 		} else if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
 			//maker已经过期
 			strat.xTickerExpireCount++
-			logger.Debugf("%s y expire x", strat.xSymbol)
+			//logger.Debugf("%s y expire x", strat.xSymbol)
 		} else {
 			strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 		}
@@ -162,10 +162,10 @@ func (strat *XYStrategy) handleYTicker() {
 		strat.adjustedAgeDiff = strat.xTickerTime.Sub(strat.yTickerTime) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
 		if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
 			//maker已经过期
-			logger.Debugf("%s y expire x %v", strat.xSymbol, strat.adjustedAgeDiff)
+			//logger.Debugf("%s y expire x %v", strat.xSymbol, strat.adjustedAgeDiff)
 			strat.xTickerExpireCount++
 		} else if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
-			logger.Debugf("%s x expire y", strat.xSymbol)
+			//logger.Debugf("%s x expire y", strat.xSymbol)
 			//taker已经过期
 			strat.yTickerExpireCount++
 		} else {
