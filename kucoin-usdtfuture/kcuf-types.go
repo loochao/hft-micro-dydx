@@ -749,7 +749,7 @@ func (wsCap *FundingRate) UnmarshalJSON(data []byte) error {
 //}
 
 type CurrentFundingRate struct {
-	Symbol         string    `json:"-"`
+	Symbol         string    `json:"symbol"`
 	Granularity    int       `json:"granularity"`
 	Value          float64   `json:"value"`
 	PredictedValue float64   `json:"predictedValue"`
