@@ -34,7 +34,6 @@ func (strat *XYStrategy) updateSpread() {
 	strat.tickerMatchCount++
 
 	//假定挂单基于MidPrice, 考虑挂单的下界偏移进Spread
-	//如果想挂得远，成交少，吃大Spread, 可以orderOffsets参数，推NearBot NearTop, 反之亦然
 	strat.shortLastEnter = (strat.yTicker.GetBidPrice() - strat.xTicker.GetAskPrice()) / strat.xTicker.GetAskPrice()
 	strat.longLastEnter = (strat.yTicker.GetAskPrice() - strat.xTicker.GetBidPrice()) / strat.xTicker.GetBidPrice()
 
