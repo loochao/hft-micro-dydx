@@ -162,7 +162,7 @@ func (strat *XYStrategy) handleYTicker() {
 		strat.adjustedAgeDiff = strat.xTickerTime.Sub(strat.yTickerTime) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
 		if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
 			//maker已经过期
-			logger.Debugf("%s y expire x", strat.xSymbol)
+			logger.Debugf("%s y expire x %v", strat.xSymbol, strat.adjustedAgeDiff)
 			strat.xTickerExpireCount++
 		} else if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
 			logger.Debugf("%s x expire y", strat.xSymbol)
