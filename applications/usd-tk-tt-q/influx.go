@@ -112,17 +112,6 @@ func handleSave(
 			fields["yMidPrice"] = st.yMidPrice
 
 
-			if st.spreadReport != nil {
-				fields["matchRatio"] = st.spreadReport.MatchRatio
-				fields["xTimeDeltaEma"] = st.spreadReport.XTimeDeltaEma
-				fields["yTimeDeltaEma"] = st.spreadReport.YTimeDeltaEma
-				fields["xTimeDelta"] = st.spreadReport.XTimeDelta
-				fields["yTimeDelta"] = st.spreadReport.YTimeDelta
-				fields["xTickerFilterRatio"] = st.spreadReport.XTickerFilterRatio
-				fields["yTickerFilterRatio"] = st.spreadReport.XTickerFilterRatio
-				fields["xExpireRatio"] = st.spreadReport.XExpireRatio
-				fields["yExpireRatio"] = st.spreadReport.YExpireRatio
-			}
 
 		} else {
 			logger.Debugf(
@@ -131,6 +120,20 @@ func handleSave(
 			)
 			hasAllSymbols = false
 		}
+
+		//只要有report， 存一份
+		if st.spreadReport != nil {
+			fields["matchRatio"] = st.spreadReport.MatchRatio
+			fields["xTimeDeltaEma"] = st.spreadReport.XTimeDeltaEma
+			fields["yTimeDeltaEma"] = st.spreadReport.YTimeDeltaEma
+			fields["xTimeDelta"] = st.spreadReport.XTimeDelta
+			fields["yTimeDelta"] = st.spreadReport.YTimeDelta
+			fields["xTickerFilterRatio"] = st.spreadReport.XTickerFilterRatio
+			fields["yTickerFilterRatio"] = st.spreadReport.XTickerFilterRatio
+			fields["xExpireRatio"] = st.spreadReport.XExpireRatio
+			fields["yExpireRatio"] = st.spreadReport.YExpireRatio
+		}
+
 		if st.xFundingRate != nil {
 			fields["xFundingRate"] = st.xFundingRate.GetFundingRate()
 		}
