@@ -17,20 +17,14 @@ func (strat *XYStrategy) updateXPosition() {
 		return
 	}
 
-	if time.Now().Sub(strat.xPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
-		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
-		strat.xAccount == nil ||
-		strat.yAccount == nil ||
-		strat.xPosition == nil ||
+	if strat.xPosition == nil ||
 		strat.yPosition == nil ||
 		strat.spread == nil ||
-		strat.xyFundingRate == nil ||
 		strat.quantileMiddle == nil ||
 		strat.enterOffset == nil ||
 		strat.exitOffset == nil ||
-		strat.fundingRateFactor == nil ||
-		strat.fundingRateSettleSilent ||
-		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter {
+		strat.xyFundingRate == nil ||
+		strat.fundingRateFactor == nil {
 		//if time.Now().Sub(strat.logSilentTime) > 0 {
 		//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 		//	logger.Debugf("time.Now().Sub(strat.spread.EventTime) %v", time.Now().Sub(strat.spread.EventTime))
@@ -79,6 +73,19 @@ func (strat *XYStrategy) updateXPosition() {
 		logger.Debugf("%s enterTarget %f targetWeight %f enterTargetFactor %f", strat.xSymbol, strat.enterTarget, strat.targetWeight, strat.config.EnterTargetFactor)
 	}
 
+	if time.Now().Sub(strat.xPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
+		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
+		strat.xAccount == nil ||
+		strat.yAccount == nil ||
+		strat.fundingRateSettleSilent ||
+		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter {
+		//if time.Now().Sub(strat.logSilentTime) > 0 {
+		//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+		//	logger.Debugf("time.Now().Sub(strat.spread.EventTime) %v", time.Now().Sub(strat.spread.EventTime))
+		//}
+		return
+	}
+
 	if time.Now().Sub(strat.xOrderSilentTime) < 0 {
 		return
 	}
@@ -97,6 +104,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		return
 	}
+
 
 	if strat.spread.ShortMedianLeave < strat.shortBot &&
 		strat.spread.ShortLastLeave < strat.spread.ShortMedianLeave &&
@@ -494,7 +502,7 @@ func (strat *XYStrategy) hedgeXPosition() {
 
 		if strat.xSizeDiff >= 0 {
 			strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xStepSize) * strat.xStepSize
-		}else{
+		} else {
 			strat.xSizeDiff = math.Ceil(strat.xSizeDiff/strat.xStepSize) * strat.xStepSize
 		}
 
