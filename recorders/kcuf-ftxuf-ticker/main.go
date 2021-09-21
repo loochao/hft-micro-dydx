@@ -64,9 +64,12 @@ func main() {
 		}
 		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan *common.RawMessage) {
 			ws1 := kucoin_usdtfuture.NewRawTickerWS(ctx, proxy, []byte{'X', 'T'}, outputChMap)
+			ws2 := kucoin_usdtfuture.NewRawDepth5WS(ctx, proxy, []byte{'X', 'D'}, outputChMap)
 			select {
 			case <-ctx.Done():
 			case <-ws1.Done():
+				cancel()
+			case <-ws2.Done():
 				cancel()
 			}
 		}(ctx, cancel, *proxyAddress, kcufChMap)
