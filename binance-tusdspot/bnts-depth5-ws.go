@@ -47,6 +47,7 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 			return
 		}
 		if len(msg) > 128 {
+			logger.Debugf("%s", msg)
 			if msg[18] == '@' {
 				symbol = common.UnsafeBytesToString(msg[11:18])
 			} else if msg[19] == '@' {
