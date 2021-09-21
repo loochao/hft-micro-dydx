@@ -40,7 +40,7 @@ func main() {
 		}
 	}
 	sort.Strings(symbols)
-	symbols = symbols[:1]
+	//symbols = symbols[:1]
 	logger.Debugf("SYMBOLS %s", symbols)
 
 	ctx, cancel := context.WithCancel(context.Background())
