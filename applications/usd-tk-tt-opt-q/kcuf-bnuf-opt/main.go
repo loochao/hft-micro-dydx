@@ -99,10 +99,13 @@ func optBySymbol(xSymbol, ySymbol string) error {
 }
 
 func main() {
-	err := optBySymbol("ICPUSDTM", "ICPUSDT")
+	//err := optBySymbol("ICPUSDTM", "ICPUSDT")
+	//err := optBySymbol("DOGEUSDTM", "DOGEUSDT")
+	//err := optBySymbol("SOLUSDTM", "SOLUSDT")
 	//err := optBySymbol("ADAUSDTM", "ADAUSDT")
 	//err := optBySymbol("VETUSDTM", "VETUSDT")
 	//err := optBySymbol("FTMUSDTM", "FTMUSDT")
+	err := optBySymbol("XRPUSDTM", "XRPUSDT")
 	if err != nil {
 		logger.Debugf("optBySymbol %v", err)
 	}

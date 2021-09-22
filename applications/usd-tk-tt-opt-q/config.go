@@ -76,14 +76,16 @@ type Config struct {
 	RestartSilent          time.Duration           `yaml:"restartSilent"`
 	RestartInterval        time.Duration           `yaml:"restartInterval"`
 
-	XYPairs        map[string]string  `yaml:"xyPairs"`
+	XYPairs map[string]string `yaml:"xyPairs"`
 
-	Offsets      map[string]string  `yaml:"offsets,omitempty"`
+	Offsets        map[string]string  `yaml:"offsets,omitempty"`
 	TargetWeights  map[string]float64 `yaml:"targetWeights,omitempty"`
 	MaxOrderValues map[string]float64 `yaml:"maxOrderValues,omitempty"`
 
-	EnterOffsets map[string]float64 `yaml:"enterOffsets,omitempty"`
-	LeaveOffsets map[string]float64 `yaml:"leaveOffsets,omitempty"`
+	DefaultEnterOffset float64            `yaml:"defaultEnterOffset,omitempty"`
+	DefaultLeaveOffset float64            `yaml:"defaultLeaveOffset,omitempty"`
+	EnterOffsets       map[string]float64 `yaml:"enterOffsets,omitempty"`
+	LeaveOffsets       map[string]float64 `yaml:"leaveOffsets,omitempty"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -143,13 +145,21 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.XEnterTimeout == 0 {
 		config.XEnterTimeout = time.Minute
 	}
+	if config.DefaultEnterOffset == 0 {
+		config.DefaultEnterOffset = 0.004
+	}
+	if config.DefaultLeaveOffset == 0 {
+		config.DefaultLeaveOffset = 0.001
+	}
 	config.EnterOffsets = make(map[string]float64)
 	config.LeaveOffsets = make(map[string]float64)
 	var err error
 	for xSymbol := range config.XYPairs {
 		if offset, ok := config.Offsets[xSymbol]; !ok {
-			logger.Fatal("miss offset for %s", xSymbol)
-		}else{
+			config.EnterOffsets[xSymbol] = config.DefaultEnterOffset
+			config.LeaveOffsets[xSymbol] = config.DefaultLeaveOffset
+			logger.Debugf("miss offset for %s", xSymbol)
+		} else {
 			segs := strings.Split(offset, ",")
 			if len(segs) != 2 {
 				logger.Fatalf("bad offset %s", offset)
