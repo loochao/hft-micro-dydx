@@ -12,27 +12,28 @@ func (strat *XYStrategy) updateSpread() {
 	//需要用ema time delta 对age diff进行修正
 	strat.adjustedAgeDiff = strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
 
-	//取新一点的时间为spread time
+	//取旧一点的时间为spread time
 	if strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) < 0 {
 		//需要对时间进行补偿
-		strat.spreadTime = strat.yTicker.GetTime().Add(time.Millisecond * time.Duration(strat.yTickerFilter.TimeDeltaEma))
+		strat.spreadTime = strat.xTicker.GetTime().Add(time.Millisecond * time.Duration(strat.xTickerFilter.TimeDeltaEma))
 	} else {
 		//需要对时间进行补偿
-		strat.spreadTime = strat.xTicker.GetTime().Add(time.Millisecond * time.Duration(strat.xTickerFilter.TimeDeltaEma))
+		strat.spreadTime = strat.yTicker.GetTime().Add(time.Millisecond * time.Duration(strat.yTickerFilter.TimeDeltaEma))
 	}
 
 	if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
-		//logger.Debugf("%v", strat.adjustedAgeDiff)
+		//logger.Debugf("%s adjustedAgeDiff %v", strat.xSymbol, strat.adjustedAgeDiff)
 		strat.yTickerExpireCount++
 		return
 	} else if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
-		//logger.Debugf("%v", strat.adjustedAgeDiff)
+		//logger.Debugf("%s adjustedAgeDiff %v", strat.xSymbol, strat.adjustedAgeDiff)
 		strat.xTickerExpireCount++
 		return
 	}
 
 	strat.tickerMatchCount++
 
+	//假定挂单基于MidPrice, 考虑挂单的下界偏移进Spread
 	strat.shortLastEnter = (strat.yTicker.GetBidPrice() - strat.xTicker.GetAskPrice()) / strat.xTicker.GetAskPrice()
 	strat.longLastEnter = (strat.yTicker.GetAskPrice() - strat.xTicker.GetBidPrice()) / strat.xTicker.GetBidPrice()
 
@@ -53,6 +54,9 @@ func (strat *XYStrategy) updateSpread() {
 		ParseTime:       time.Now(),
 	}
 	strat.updateXPosition()
+	if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
+		strat.hedgeYPosition()
+	}
 	if strat.spreadTime.Sub(strat.quantileLastSampleTime) > strat.config.QuantileSampleInterval {
 		strat.quantileLastSampleTime = strat.spreadTime
 		_ = strat.timedTDigest.Insert(strat.spreadTime, (strat.shortLastEnter+strat.longLastEnter)*0.5)
@@ -64,7 +68,11 @@ func (strat *XYStrategy) updateSpread() {
 }
 
 func (strat *XYStrategy) handleTicker() {
-	if strat.nextTicker.GetExchange() == strat.xExchangeID {
+	if strat.xSystemStatus != common.SystemStatusReady ||
+		strat.ySystemStatus != common.SystemStatusReady ||
+		time.Now().Sub(strat.nextTicker.GetTime()) > strat.config.TickerMaxTimeDelta {
+		return
+	} else if strat.nextTicker.GetExchange() == strat.xExchangeID {
 		strat.xNextTicker = strat.nextTicker
 		strat.handleXTicker()
 	} else if strat.nextTicker.GetExchange() == strat.yExchangeID {
@@ -90,11 +98,11 @@ func (strat *XYStrategy) handleXTicker() {
 		if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
 			//taker已经过期
 			strat.yTickerExpireCount++
-			//logger.Debugf("%s x expire y %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
+			//logger.Debugf("%s x expire y", strat.xSymbol)
 		} else if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
 			//maker已经过期
 			strat.xTickerExpireCount++
-			//logger.Debugf("%s y expire x %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
+			//logger.Debugf("%s y expire x", strat.xSymbol)
 		} else {
 			strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 		}
@@ -137,10 +145,10 @@ func (strat *XYStrategy) handleYTicker() {
 		strat.adjustedAgeDiff = strat.xTickerTime.Sub(strat.yTickerTime) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
 		if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {
 			//maker已经过期
-			//logger.Debugf("%s y expire x %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
+			//logger.Debugf("%s y expire x %v", strat.xSymbol, strat.adjustedAgeDiff)
 			strat.xTickerExpireCount++
 		} else if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
-			//logger.Debugf("%s x expire y %v %v %v", xSymbol, xTickerTime.Sub(yTickerTime), adjustedAgeDiff, -time.Duration(xTickerFilter.TimeDeltaEma-yTickerFilter.TimeDeltaEma)*time.Millisecond)
+			//logger.Debugf("%s x expire y", strat.xSymbol)
 			//taker已经过期
 			strat.yTickerExpireCount++
 		} else {

@@ -56,7 +56,7 @@ func optBySymbol(xSymbol, ySymbol string) error {
 
 	logger.Debugf("READ ALL DATA, TAKE %v", time.Now().Sub(startTime))
 
-	for fr := 0.6; fr <= 1.0; fr += 0.2 {
+	for fr := 0.8; fr <= 0.8; fr += 0.2 {
 		for j := 0.0; j <= 5.0; j += 1.0 {
 			for i := 1.0; i <= 6.0; i += 1.0 {
 				if i < j {
@@ -99,9 +99,9 @@ func optBySymbol(xSymbol, ySymbol string) error {
 }
 
 func main() {
-	//err := optBySymbol("ICPUSDTM", "ICPUSDT")
+	err := optBySymbol("ICPUSDTM", "ICPUSDT")
 	//err := optBySymbol("ADAUSDTM", "ADAUSDT")
-	err := optBySymbol("VETUSDTM", "VETUSDT")
+	//err := optBySymbol("VETUSDTM", "VETUSDT")
 	//err := optBySymbol("FTMUSDTM", "FTMUSDT")
 	if err != nil {
 		logger.Debugf("optBySymbol %v", err)

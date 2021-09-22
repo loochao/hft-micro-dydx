@@ -30,8 +30,9 @@ func main() {
 	}
 	sort.Strings(symbols)
 	//symbols = symbols[:1]
+	symbols = []string{"ADAUSDTM"}
 	startDateStr := "20210820"
-	endDateStr := "20210916"
+	endDateStr := "20210919"
 	startTime, err := time.Parse("20060102", startDateStr)
 	if err != nil {
 		logger.Fatal(err)
@@ -46,7 +47,7 @@ func main() {
 	}
 	dateStrs = dateStrs[:len(dateStrs)-1]
 
-	quantileLookback := time.Hour * 24
+	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Minute * 5
 	maxTimeDiff := time.Millisecond * 100
 	quantileAddInterval := time.Second
