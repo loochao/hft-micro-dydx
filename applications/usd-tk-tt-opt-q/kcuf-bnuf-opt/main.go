@@ -75,7 +75,7 @@ func optBySymbol(xSymbol, ySymbol string) error {
 					outputInterval: time.Minute,
 					bestSizeFactor: 2.0,
 					leverage:       5.0,
-					tradeCost:      -0.0005,
+					tradeCost:      -0.0004,
 				}, data)
 				std, err := stats.StandardDeviation(result.NetWorth)
 				if err != nil {
