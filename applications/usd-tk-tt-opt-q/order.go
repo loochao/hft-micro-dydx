@@ -280,7 +280,7 @@ func (strat *XYStrategy) updateXPosition() {
 
 		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional || strat.xSizeDiff < strat.xMinSize {
-			if time.Now().Sub(strat.logSilentTime) > 0 {
+			if time.Now().Sub(strat.logSilentTime) > 0 && strat.enterValue > 0{
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
 					"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
@@ -390,7 +390,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.xSizeDiff = math.Floor(strat.xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if strat.xSizeDiff <= 0 || strat.enterValue < 1.2*strat.yMinNotional || strat.enterValue < 1.2*strat.xMinNotional || strat.xSizeDiff < strat.xMinSize {
-			if time.Now().Sub(strat.logSilentTime) > 0 {
+			if time.Now().Sub(strat.logSilentTime) > 0 && strat.enterValue > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
 					"%s %s FAILED LONG BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
