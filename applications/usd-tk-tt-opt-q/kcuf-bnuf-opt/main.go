@@ -14,6 +14,7 @@ import (
 
 func optBySymbol(xSymbol, ySymbol string) error {
 	fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210820-20210916-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
+	//fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210820-20210919-%s-%s-72h0m0s-3s-1ms.gz", xSymbol, ySymbol)
 	f, err := os.OpenFile(fileName, os.O_RDONLY, 0600)
 	if err != nil {
 		return err
@@ -104,8 +105,9 @@ func main() {
 	//err := optBySymbol("SOLUSDTM", "SOLUSDT")
 	//err := optBySymbol("ADAUSDTM", "ADAUSDT")
 	//err := optBySymbol("VETUSDTM", "VETUSDT")
+	err := optBySymbol("LUNAUSDTM", "LUNAUSDT")
 	//err := optBySymbol("FTMUSDTM", "FTMUSDT")
-	err := optBySymbol("XRPUSDTM", "XRPUSDT")
+	//err := optBySymbol("XRPUSDTM", "XRPUSDT")
 	if err != nil {
 		logger.Debugf("optBySymbol %v", err)
 	}

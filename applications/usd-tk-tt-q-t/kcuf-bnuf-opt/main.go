@@ -26,24 +26,24 @@ func optBySymbol(xSymbol, ySymbol string) error {
 	startTime := time.Now()
 	data := make([]*common.MatchedSpread, 40000000)
 	counter := 0
-	weeks2 := time.Hour * 24 * 18
+	//weeks2 := time.Hour * 24 * 18
 	for err != io.EOF {
 		ms := &common.MatchedSpread{}
 		err = binary.Read(gr, binary.BigEndian, ms)
 		if err != nil && err != io.EOF {
 			return err
 		}
-		if time.Now().Sub(time.Unix(0, ms.EventTime)) < weeks2 {
-			if err != io.EOF {
-				data[counter] = ms
-				counter++
-				if counter == len(data) {
-					dataNew := make([]*common.MatchedSpread, len(data)+10000000)
-					copy(dataNew[:len(data)], data)
-					data = dataNew
-				}
+		//if time.Now().Sub(time.Unix(0, ms.EventTime)) < weeks2 {
+		if err != io.EOF {
+			data[counter] = ms
+			counter++
+			if counter == len(data) {
+				dataNew := make([]*common.MatchedSpread, len(data)+10000000)
+				copy(dataNew[:len(data)], data)
+				data = dataNew
 			}
 		}
+		//}
 	}
 	err = gr.Close()
 	if err != nil {
@@ -56,9 +56,11 @@ func optBySymbol(xSymbol, ySymbol string) error {
 
 	logger.Debugf("READ ALL DATA, TAKE %v", time.Now().Sub(startTime))
 
-	for fr := 0.6; fr <= 1.0; fr += 0.2 {
-		for j := 0.0; j <= 5.0; j += 1.0 {
-			for i := 1.0; i <= 6.0; i += 1.0 {
+	for fr := 0.0; fr <= 1.0; fr += 0.05 {
+		//for j := 0.0; j <= 3.0; j += 1.0 {
+		//	for i := 1.0; i <= 4.0; i += 1.0 {
+		for j := 1.0; j == 1.0; j += 1.0 {
+			for i := 2.0; i == 2.0; i += 1.0 {
 				if i < j {
 					continue
 				}
@@ -74,8 +76,8 @@ func optBySymbol(xSymbol, ySymbol string) error {
 					enterInterval:  time.Second * 5,
 					outputInterval: time.Minute,
 					bestSizeFactor: 2.0,
-					leverage:       5.0,
-					tradeCost:      -0.0005,
+					leverage:       2.0,
+					tradeCost:      -0.0006,
 				}, data)
 				std, err := stats.StandardDeviation(result.NetWorth)
 				if err != nil {
@@ -90,6 +92,7 @@ func optBySymbol(xSymbol, ySymbol string) error {
 						(result.NetWorth[len(result.NetWorth)-1]-1.0)/std,
 						result.Turnover,
 					)
+					//logger.Debugf("%f", result.Positions[len(result.Positions)-100:])
 				}
 			}
 		}
@@ -100,9 +103,10 @@ func optBySymbol(xSymbol, ySymbol string) error {
 
 func main() {
 	//err := optBySymbol("ICPUSDTM", "ICPUSDT")
-	//err := optBySymbol("ADAUSDTM", "ADAUSDT")
-	err := optBySymbol("VETUSDTM", "VETUSDT")
+	err := optBySymbol("ADAUSDTM", "ADAUSDT")
+	//err := optBySymbol("VETUSDTM", "VETUSDT")
 	//err := optBySymbol("FTMUSDTM", "FTMUSDT")
+	//err := optBySymbol("OCEANUSDTM", "OCEANUSDT")
 	if err != nil {
 		logger.Debugf("optBySymbol %v", err)
 	}

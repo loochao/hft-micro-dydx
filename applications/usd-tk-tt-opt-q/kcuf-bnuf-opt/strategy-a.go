@@ -111,8 +111,8 @@ func strategyA(
 				spread.ShortLastSpread >= spread.ShortMedianSpread &&
 				xPosition.Size >= 0 {
 				freeUSD := math.Min(
-					currentXValue+unrealisedXPnl-math.Abs(xPosition.Size*xPosition.Price/params.leverage),
-					currentYValue+unrealisedYPnl-math.Abs(yPosition.Size*yPosition.Price/params.leverage),
+					currentXValue-math.Abs(xPosition.Size*xPosition.Price/params.leverage),
+					currentYValue-math.Abs(yPosition.Size*yPosition.Price/params.leverage),
 				)
 				tradeValue := math.Min(
 					spread.XAskPrice*spread.XAskSize*params.bestSizeFactor,
@@ -133,8 +133,8 @@ func strategyA(
 				spread.LongLastSpread <= spread.LongMedianSpread &&
 				xPosition.Size <= 0 {
 				freeUSD := math.Min(
-					currentXValue+unrealisedXPnl-math.Abs(xPosition.Size*xPosition.Price/params.leverage),
-					currentYValue+unrealisedYPnl-math.Abs(yPosition.Size*yPosition.Price/params.leverage),
+					currentXValue-math.Abs(xPosition.Size*xPosition.Price/params.leverage),
+					currentYValue-math.Abs(yPosition.Size*yPosition.Price/params.leverage),
 				)
 				tradeValue := math.Min(
 					spread.XBidPrice*spread.XBidSize*params.bestSizeFactor,
