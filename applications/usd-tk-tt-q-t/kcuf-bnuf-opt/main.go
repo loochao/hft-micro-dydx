@@ -2,9 +2,11 @@ package main
 
 import (
 	"compress/gzip"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/montanaflynn/stats"
 	"io"
@@ -12,7 +14,7 @@ import (
 	"time"
 )
 
-func optBySymbol(xSymbol, ySymbol string) error {
+func optBySymbol(xSymbol, ySymbol string, writer *common.InfluxWriter, measurement string) error {
 	fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210820-20210916-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
 	f, err := os.OpenFile(fileName, os.O_RDONLY, 0600)
 	if err != nil {
@@ -93,6 +95,27 @@ func optBySymbol(xSymbol, ySymbol string) error {
 						result.Turnover,
 					)
 					//logger.Debugf("%f", result.Positions[len(result.Positions)-100:])
+
+					for t, eventTime := range result.EventTimes {
+						fields := make(map[string]interface{})
+						fields["netWorth"] = result.NetWorth[t]
+						fields["position"] = result.Positions[t]
+						pt, err := client.NewPoint(
+							measurement,
+							map[string]string{
+								"xSymbol":     xSymbol,
+								"enterOffset": fmt.Sprintf("%.4f", result.Params.enterOffset),
+								"leaveOffset": fmt.Sprintf("%.4f", result.Params.leaveOffset),
+								"frFactor":    fmt.Sprintf("%.4f", result.Params.frFactor),
+							},
+							fields,
+							eventTime,
+						)
+						if err == nil {
+							writer.PointCh <- pt
+						}
+					}
+
 				}
 			}
 		}
@@ -102,11 +125,25 @@ func optBySymbol(xSymbol, ySymbol string) error {
 }
 
 func main() {
-	//err := optBySymbol("ICPUSDTM", "ICPUSDT")
-	err := optBySymbol("ADAUSDTM", "ADAUSDT")
-	//err := optBySymbol("VETUSDTM", "VETUSDT")
-	//err := optBySymbol("FTMUSDTM", "FTMUSDT")
-	//err := optBySymbol("OCEANUSDTM", "OCEANUSDT")
+	ctx := context.Background()
+	iw, err := common.NewInfluxWriter(
+		ctx,
+		"http://localhost:8086",
+		"",
+		"",
+		"hft",
+		500,
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer iw.Stop()
+
+	//err = optBySymbol("ICPUSDTM", "ICPUSDT")
+	//err = optBySymbol("ADAUSDTM", "ADAUSDT", iw)
+	//err = optBySymbol("FTMUSDTM", "FTMUSDT")
+	//err = optBySymbol("OCEANUSDTM", "OCEANUSDT")
+	err = optBySymbol("VETUSDTM", "VETUSDT", iw, "kcuf-bnuf-opt-q-t")
 	if err != nil {
 		logger.Debugf("optBySymbol %v", err)
 	}

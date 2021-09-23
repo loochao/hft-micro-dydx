@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -24,6 +25,8 @@ type InfluxWriter struct {
 	PointsCh chan []*client.Point
 	points   []*client.Point
 	stopped  int32
+
+	mu sync.Mutex
 }
 
 func (iw *InfluxWriter) Done() chan interface{} {
@@ -85,8 +88,11 @@ func (iw *InfluxWriter) save() error {
 		if err != nil {
 			return err
 		}
-		iw.points = iw.points[100*iw.batchSize:]
-		return iw.save()
+		if len(iw.points) > 100*iw.batchSize {
+			iw.points = iw.points[100*iw.batchSize:]
+			return iw.save()
+		}
+		return nil
 	}
 }
 
@@ -172,6 +178,7 @@ func NewInfluxWriter(ctx context.Context, address, username, password, database 
 		PointsCh:     make(chan []*client.Point, 100),
 		points:       make([]*client.Point, 0),
 		stopped:      0,
+		mu: sync.Mutex{},
 	}
 	go iw.watchPoints(ctx)
 	return iw, nil

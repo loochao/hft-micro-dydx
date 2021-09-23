@@ -141,6 +141,7 @@ func strategyA(
 			//logger.Debugf("%f %f %f %f", currentXValue, currentYValue, unrealisedXPnl, unrealisedYPnl)
 			result.NetWorth = append(result.NetWorth, (currentXValue+unrealisedXPnl)/params.startValue)
 			result.Positions = append(result.Positions, xPosition.Size*xPosition.Price)
+			result.EventTimes = append(result.EventTimes, eventTime)
 			outputSilentTime = eventTime.Add(params.outputInterval)
 		}
 	}

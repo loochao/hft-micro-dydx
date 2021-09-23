@@ -18,8 +18,9 @@ type Params struct {
 }
 
 type Result struct {
-	Params    Params
-	NetWorth  []float64
-	Positions []float64
-	Turnover  float64
+	Params     Params
+	NetWorth   []float64
+	Positions  []float64
+	EventTimes []time.Time
+	Turnover   float64
 }
