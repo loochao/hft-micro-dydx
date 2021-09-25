@@ -92,7 +92,7 @@ func TestSelectParams(t *testing.T) {
 	pnlKey := "0.0020-0.2000"
 	for _, file := range files {
 		xSymbol := strings.Split(file.Name(), "-")[0]
-		if pnlsBySymbol[xSymbol][pnlKey] > 0 {
+		if pnlsBySymbol[xSymbol][pnlKey] > -0.01 {
 			fmt.Printf("  %s: %s\n", xSymbol, symbolsMap[xSymbol])
 			//fmt.Printf("  %s: %.4f\n", xSymbol, pnlsBySymbol[xSymbol][pnlKey])
 		}
