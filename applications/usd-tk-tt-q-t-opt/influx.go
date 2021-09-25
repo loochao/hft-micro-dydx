@@ -53,8 +53,20 @@ func handleSave(
 			fields["longTop"] = st.longTop
 			fields["enterStep"] = st.enterStep
 			fields["enterValue"] = st.enterValue
+			if st.quantile95 != nil {
+				fields["quantile95"] = *st.quantile95
+			}
+			if st.quantile80 != nil {
+				fields["quantile80"] = *st.quantile80
+			}
 			if st.quantile50 != nil {
 				fields["quantile50"] = *st.quantile50
+			}
+			if st.quantile20 != nil {
+				fields["quantile20"] = *st.quantile20
+			}
+			if st.quantile05 != nil {
+				fields["quantile05"] = *st.quantile05
 			}
 
 			if st.xPosition.GetPrice() != 0 {
