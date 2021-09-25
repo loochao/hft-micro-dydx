@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
+	kucoin_usdtfuture "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"io/ioutil"
 	"sort"
@@ -77,11 +79,22 @@ func TestSelectParams(t *testing.T) {
 	}
 	fmt.Printf("\n\n")
 
+
+	symbolsMap := map[string]string{
+		"XBTUSDTM": "BTCUSDT",
+	}
+	for symbol := range kucoin_usdtfuture.TickSizes {
+		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(symbol, "USDTM", "USDT", -1)]; ok {
+			symbolsMap[symbol] = strings.Replace(symbol, "USDTM", "USDT", -1)
+		}
+	}
+
 	pnlKey := "0.0020-0.2000"
 	for _, file := range files {
 		xSymbol := strings.Split(file.Name(), "-")[0]
 		if pnlsBySymbol[xSymbol][pnlKey] > 0 {
-			fmt.Printf("%s: %.4f\n", xSymbol, pnlsBySymbol[xSymbol][pnlKey])
+			fmt.Printf("  %s: %s\n", xSymbol, symbolsMap[xSymbol])
+			//fmt.Printf("  %s: %.4f\n", xSymbol, pnlsBySymbol[xSymbol][pnlKey])
 		}
 	}
 

@@ -56,8 +56,20 @@ func (strat *XYStrategy) updateSpread() {
 	if strat.spreadTime.Sub(strat.quantileLastSampleTime) > strat.config.QuantileSampleInterval {
 		strat.quantileLastSampleTime = strat.spreadTime
 		_ = strat.timedTDigest.Insert(strat.spreadTime, (strat.shortLastEnter+strat.longLastEnter)*0.5)
+		if strat.quantile95 == nil {
+			strat.quantile95 = new(float64)
+		}
+		if strat.quantile80 == nil {
+			strat.quantile80 = new(float64)
+		}
 		if strat.quantile50 == nil {
 			strat.quantile50 = new(float64)
+		}
+		if strat.quantile20 == nil {
+			strat.quantile20 = new(float64)
+		}
+		if strat.quantile05 == nil {
+			strat.quantile05 = new(float64)
 		}
 		*strat.quantile95 = strat.timedTDigest.Quantile(0.95)
 		*strat.quantile80 = strat.timedTDigest.Quantile(0.80)
