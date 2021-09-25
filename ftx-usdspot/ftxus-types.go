@@ -67,9 +67,24 @@ type Market struct {
 }
 
 type FundingRate struct {
-	Future string    `json:"future"`
-	Rate   float64   `json:"rate"`
+	Market string    `json:"market"`
 	Time   time.Time `json:"-"`
+}
+
+func (fr *FundingRate) GetSymbol() string {
+	return fr.Market
+}
+
+func (fr *FundingRate) GetFundingRate() float64 {
+	return 0.0
+}
+
+func (fr *FundingRate) GetNextFundingTime() time.Time {
+	return fr.Time
+}
+
+func (fr *FundingRate) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 func (fr *FundingRate) UnmarshalJSON(data []byte) error {
@@ -649,51 +664,6 @@ func (fill *Fill) GetStatus() common.OrderStatus {
 	return common.OrderStatusFilled
 }
 
-type FutureStats struct {
-	Future                   string    `json:"-"`
-	Volume                   float64   `json:"volume"`
-	NextFundingRate          float64   `json:"nextFundingRate"`
-	NextFundingTime          time.Time `json:"-"`
-	ExpirationPrice          float64   `json:"expirationPrice"`
-	PredictedExpirationPrice float64   `json:"predictedExpirationPrice"`
-	StrikePrice              float64   `json:"strikePrice"`
-	OpenInterest             float64   `json:"openInterest"`
-}
-
-func (fs *FutureStats) GetExchange() common.ExchangeID {
-	return ExchangeID
-}
-
-func (fs *FutureStats) GetSymbol() string {
-	return fs.Future
-}
-
-func (fs *FutureStats) GetFundingRate() float64 {
-	return fs.NextFundingRate * 8.0
-}
-
-func (fs *FutureStats) GetNextFundingTime() time.Time {
-	return fs.NextFundingTime
-}
-
-func (fs *FutureStats) UnmarshalJSON(data []byte) error {
-	type Alias FutureStats
-	aux := &struct {
-		NextFundingTime string `json:"nextFundingTime"`
-		*Alias
-	}{
-		Alias: (*Alias)(fs),
-	}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	} else {
-		fs.NextFundingTime, err = time.Parse(TimeLayout, aux.NextFundingTime)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 //{"channel": "ticker", "market": "DOGE-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
 

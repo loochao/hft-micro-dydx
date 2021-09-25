@@ -18,6 +18,7 @@ func TestNewUserWS(t *testing.T) {
 	ws := NewUserWS(
 		os.Getenv("FTX_TEST_KEY"),
 		os.Getenv("FTX_TEST_SECRET"),
+		"",
 		os.Getenv("FTX_TEST_PROXY"),
 	)
 	go ws.Start(ctx)

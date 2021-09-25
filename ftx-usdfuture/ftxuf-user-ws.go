@@ -27,6 +27,7 @@ type UserWS struct {
 	trafficCh   chan string
 	key         string
 	secret      string
+	subAccount  string
 	proxy       string
 }
 
@@ -303,6 +304,7 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 				param.Args.Key = key
 				param.Args.Time = time.Now().UnixNano() / 1000000
 				signature := fmt.Sprintf("%dwebsocket_login", param.Args.Time)
+				param.Args.SubAccount = w.subAccount
 				param.Args.Sign = common.HexEncodeToString(common.GetHMAC(common.HashSHA256, []byte(signature), []byte(secret)))
 				param.Op = "login"
 				select {
@@ -508,7 +510,7 @@ func (w *UserWS) Start(ctx context.Context) {
 }
 
 func NewUserWS(
-	key, secret,
+	key, secret, subAccount,
 	proxy string,
 ) *UserWS {
 	ws := UserWS{
@@ -522,6 +524,7 @@ func NewUserWS(
 		stopped:     0,
 		key:         key,
 		secret:      secret,
+		subAccount:  subAccount,
 		proxy:       proxy,
 		OrderCh:     make(chan Order, 1000),
 		FillCh:      make(chan Fill, 1000),

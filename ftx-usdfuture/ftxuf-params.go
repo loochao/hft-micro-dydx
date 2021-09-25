@@ -58,6 +58,7 @@ type LoginParam struct {
 		Key  string `json:"key"`
 		Sign string `json:"sign"`
 		Time int64  `json:"time"`
+		SubAccount string `json:"subaccount,omitempty"`
 	} `json:"args"`
 	Op string `json:"op"`
 }

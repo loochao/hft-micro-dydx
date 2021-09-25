@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
 	"io"
 	"io/ioutil"
 	"net"
@@ -104,7 +103,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%s", contents)
+	//logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
@@ -159,15 +158,6 @@ func (api *API) GetFundingRates(ctx context.Context, param FundingRateParam) ([]
 	return fundingRates, api.SendHTTPRequest(ctx, http.MethodGet, "/funding_rates", &param, &fundingRates)
 }
 
-func (api *API) GetFutureStats(ctx context.Context, futureName string) (*FutureStats, error) {
-	fs := &FutureStats{}
-	err := api.SendHTTPRequest(ctx, http.MethodGet, fmt.Sprintf("/futures/%s/stats", futureName), nil, &fs)
-	if err != nil {
-		return nil, err
-	}
-	fs.Future = futureName
-	return fs, nil
-}
 
 func NewAPI(key, secret, subAccount, proxy string) (*API, error) {
 	var client http.Client

@@ -20,6 +20,7 @@ type API struct {
 	client *http.Client
 	key    string
 	secret string
+	subAccount string
 	mu     sync.Mutex
 }
 
@@ -124,6 +125,9 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	api.mu.Unlock()
 	req.Header.Set("FTX-SIGN", common.HexEncodeToString(hmacSigned))
 	req.Header.Set("FTX-TS", timestamp)
+	if api.subAccount != "" {
+		req.Header.Set("FTX-SUBACCOUNT", api.subAccount)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := api.client.Do(req.WithContext(ctx))
 	if err != nil {
@@ -198,7 +202,7 @@ func (api *API) GetFutureStats(ctx context.Context, futureName string) (*FutureS
 	return fs, nil
 }
 
-func NewAPI(key, secret, proxy string) (*API, error) {
+func NewAPI(key, secret, subAccount, proxy string) (*API, error) {
 	var client http.Client
 	if proxy != "" {
 		proxyUrl, err := url.Parse(proxy)
@@ -238,6 +242,7 @@ func NewAPI(key, secret, proxy string) (*API, error) {
 		client: &client,
 		key:    key,
 		secret: secret,
+		subAccount: subAccount,
 	}
 	return &api, nil
 }

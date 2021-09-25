@@ -105,9 +105,11 @@ func main() {
 	//err := optBySymbol("SOLUSDTM", "SOLUSDT")
 	//err := optBySymbol("ADAUSDTM", "ADAUSDT")
 	//err := optBySymbol("VETUSDTM", "VETUSDT")
-	err := optBySymbol("LUNAUSDTM", "LUNAUSDT")
+	//err := optBySymbol("LUNAUSDTM", "LUNAUSDT")
 	//err := optBySymbol("FTMUSDTM", "FTMUSDT")
 	//err := optBySymbol("XRPUSDTM", "XRPUSDT")
+	//err := optBySymbol("XEMUSDTM", "XEMUSDT")
+	err := optBySymbol("OCEANUSDTM", "OCEANUSDT")
 	if err != nil {
 		logger.Debugf("optBySymbol %v", err)
 	}

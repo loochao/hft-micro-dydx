@@ -46,11 +46,11 @@ func main() {
 	sort.Strings(symbols)
 	//symbols = symbols[:1]
 	logger.Debugf("SYMBOLS %s", symbols)
-	startTime, err := time.Parse("20060102", "20210831")
+	startTime, err := time.Parse("20060102", "20210918")
 	if err != nil {
 		logger.Fatal(err)
 	}
-	endTime, err := time.Parse("20060102", "20210903")
+	endTime, err := time.Parse("20060102", "20210923")
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func main() {
 	}
 	dateStrs = dateStrs[:len(dateStrs)-1]
 
-	quantileLookback := time.Hour * 120
+	quantileLookback := time.Hour * 24
 	quantileSubInterval := time.Hour
 	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/ftxus-ftxuf-ticker"
 	maxTimeDiff := time.Millisecond * 1000
@@ -115,7 +115,7 @@ func main() {
 			var msg []byte
 			for scanner.Scan() {
 				msg = scanner.Bytes()
-				if msg[0] == 'X' && msg[1] == 'T' {
+				if msg[0] == 'X' && msg[1] == 'T' && len(msg) > 21{
 					err = ftxus.ParseTicker(msg[21:], xTicker)
 					if err != nil {
 						logger.Debugf("%v", err)
@@ -126,7 +126,7 @@ func main() {
 						continue
 					}
 					xTD = xTicker
-				} else if msg[0] == 'Y' && msg[1] == 'T' {
+				} else if msg[0] == 'Y' && msg[1] == 'T'  && len(msg) > 21{
 					err = ftxuf.ParseTicker(msg[21:], yTicker)
 					if err != nil {
 						logger.Debugf("%v", err)
@@ -224,7 +224,7 @@ func main() {
 	for _, xSymbol := range symbols {
 		td := sizeTDs[xSymbol]
 		qSum += td.Quantile(0.8)
-		fmt.Printf("  %s: %.0f\n", xSymbol, td.Quantile(0.8))
+		fmt.Printf("  %s: %.0f\n", xSymbol, td.Quantile(0.95))
 	}
 	qMean := qSum / float64(len(sizeTDs))
 	fmt.Printf("\ntargetWeights:\n")

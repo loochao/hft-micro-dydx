@@ -97,7 +97,9 @@ func (w *UserWS) readLoop(conn *websocket.Conn) {
 			w.restart()
 			return
 		}
-		logger.Debugf("%s", msg)
+		if len(msg) > 128 {
+			logger.Debugf("%s", msg)
+		}
 		select {
 		case w.messageCh <- msg:
 		default:
@@ -260,6 +262,7 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, key, secret string, conn *we
 				param.Args.Key = key
 				param.Args.Time = time.Now().UnixNano() / 1000000
 				signature := fmt.Sprintf("%dwebsocket_login", param.Args.Time)
+				param.Args.SubAccount = w.subAccount
 				param.Args.Sign = common.HexEncodeToString(common.GetHMAC(common.HashSHA256, []byte(signature), []byte(secret)))
 				param.Op = "login"
 				select {

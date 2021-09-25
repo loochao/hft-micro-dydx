@@ -7,6 +7,7 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -38,7 +39,7 @@ func (ftx *FtxUsdSpot) GetMultiplier(symbol string) (float64, error) {
 }
 
 func (ftx *FtxUsdSpot) IsSpot() bool {
-	return false
+	return true
 }
 
 func (ftx *FtxUsdSpot) GenerateClientID() string {
@@ -97,14 +98,14 @@ func (ftx *FtxUsdSpot) StreamBasic(
 	defer userWS.Stop()
 	internalOrders := make(map[int64]Order)
 
-	positionMarkets := make([]string, 0)
+	markets := make([]string, 0)
 	for market := range positionsCh {
-		positionMarkets = append(positionMarkets, market)
+		markets = append(markets, market)
 	}
 
-	internalPositions := make(map[string]Balance)
-	internalPositionsCh := make(chan []Balance, 100)
-	go ftx.positionsLoop(ctx, positionMarkets, internalPositionsCh)
+	internalBalances := make(map[string]Balance)
+	internalBalancesCh := make(chan []Balance, 100)
+	go ftx.balancesLoop(ctx, markets, internalBalancesCh)
 	internalAccountCh := make(chan *Account, 100)
 	go ftx.accountLoop(ctx, internalAccountCh)
 
@@ -179,17 +180,17 @@ func (ftx *FtxUsdSpot) StreamBasic(
 					}
 				}
 			}
-		case ps := <-internalPositionsCh:
+		case ps := <-internalBalancesCh:
 			for _, p := range ps {
 				p := p
-				if oldP, ok := internalPositions[p.Coin]; ok {
+				if oldP, ok := internalBalances[p.GetSymbol()]; ok {
 					if oldP.ParseTime.Sub(p.ParseTime) < 0 {
-						internalPositions[p.Coin] = p
+						internalBalances[p.GetSymbol()] = p
 					}
 				} else {
-					internalPositions[p.Coin] = p
+					internalBalances[p.GetSymbol()] = p
 				}
-				if positionCh, ok := positionsCh[p.Coin]; ok {
+				if positionCh, ok := positionsCh[p.GetSymbol()]; ok {
 					select {
 					case positionCh <- &p:
 					default:
@@ -207,30 +208,19 @@ func (ftx *FtxUsdSpot) StreamBasic(
 			}
 			if order.Status == OrderStatusClosed &&
 				order.FilledSize != 0 {
-				if pos, ok := internalPositions[order.Market]; ok {
+				if pos, ok := internalBalances[order.Market]; ok {
 					if pos.ParseTime.Sub(order.ParseTime) > time.Second {
 						continue
 					}
-					//size := order.FilledSize
-					//if order.Side != OrderSideBuy {
-					//	size = -order.FilledSize
-					//}
-					//price := order.AvgFillPrice
-					//if pos.Total*size < 0 {
-					//	if math.Abs(size) > math.Abs(pos.Total) {
-					//		pos.Cost = (pos.Total + size) * price
-					//		pos.Total = pos.Total + size
-					//	} else {
-					//		pos.Cost = pos.Cost - size*price
-					//		pos.NetSize = pos.NetSize + size
-					//	}
-					//} else {
-					//	pos.Cost += size * price
-					//	pos.NetSize += size
-					//}
+					size := order.FilledSize
+					if order.Side != OrderSideBuy {
+						size = -order.FilledSize
+					}
+					pos.Total += size
+					pos.Free += size
 					pos.ParseTime = order.ParseTime
-					//logger.Debugf("UPDATE POSITION BY FILL %v", pos)
-					internalPositions[order.Market] = pos
+					logger.Debugf("UPDATE POSITION BY FILL %v DELTA %f", pos, size)
+					internalBalances[order.Market] = pos
 					if positionCh, ok := positionsCh[order.Market]; ok {
 						select {
 						case positionCh <- &pos:
@@ -258,7 +248,7 @@ func (ftx *FtxUsdSpot) StreamBasic(
 			}
 			break
 		case fill := <-userWS.FillCh:
-			//logger.Debugf("FILL %d %v INTERNAL ORDER %v INTERNAL POSITION %v", fill.OrderId, fill, internalOrders[fill.OrderId], internalPositions[fill.Market])
+			//logger.Debugf("FILL %d %v INTERNAL ORDER %v INTERNAL POSITION %v", fill.OrderId, fill, internalOrders[fill.OrderId], internalBalances[fill.Market])
 			if order, ok := internalOrders[fill.OrderId]; ok {
 				fill.PostOnly = order.PostOnly
 				fill.ReduceOnly = order.ReduceOnly
@@ -391,23 +381,17 @@ func (ftx *FtxUsdSpot) StreamFundingRate(ctx context.Context, channels map[strin
 				if time.Now().Sub(pullTime) < 0 {
 					continue
 				}
-				subCtx, cancel := context.WithTimeout(ctx, time.Minute)
-				fs, err := ftx.api.GetFutureStats(subCtx, market)
-				if err != nil {
-					logger.Debugf("ftx.api.GetFutureStats(subCtx, %s) error %v", market, err)
-					pullTimes[market] = time.Now().Add(time.Second)
-				} else {
-					if ch, ok := channels[fs.Future]; ok {
-						select {
-						case ch <- fs:
-							pullTimes[market] = time.Now().Add(pullInterval)
-						default:
-							logger.Debugf("ch <- fs failed ch len %d", len(ch))
-							pullTimes[market] = time.Now().Add(time.Second)
-						}
+				if ch, ok := channels[market]; ok {
+					select {
+					case ch <- &FundingRate{
+						Market: market,
+					}:
+						pullTimes[market] = time.Now().Add(pullInterval)
+					default:
+						logger.Debugf("ch <- fs failed ch len %d", len(ch))
+						pullTimes[market] = time.Now().Add(time.Second)
 					}
 				}
-				cancel()
 			}
 			timer.Reset(time.Second)
 		}
@@ -518,7 +502,7 @@ func (ftx *FtxUsdSpot) Done() chan interface{} {
 	return ftx.done
 }
 
-func (ftx *FtxUsdSpot) positionsLoop(ctx context.Context, markets []string, positionsCh chan []Balance) {
+func (ftx *FtxUsdSpot) balancesLoop(ctx context.Context, markets []string, balancesCh chan []Balance) {
 	pullInterval := ftx.settings.PullInterval
 	pullTimer := time.NewTimer(pullInterval)
 	defer pullTimer.Stop()
@@ -529,29 +513,30 @@ func (ftx *FtxUsdSpot) positionsLoop(ctx context.Context, markets []string, posi
 		case <-ftx.done:
 			return
 		case <-pullTimer.C:
-			positions, err := ftx.api.GetBalances(ctx)
+			balances, err := ftx.api.GetBalances(ctx)
 			if err != nil {
-				logger.Debugf("ftx.api.GetPositions(ctx) error %v", err)
+				logger.Debugf("ftx.api.GetBalances(ctx) error %v", err)
 			} else {
-				hasPositions := map[string]bool{}
-				outPositions := make([]Balance, 0)
-				for _, position := range positions {
-					hasPositions[position.Coin] = true
-					position := position
-					outPositions = append(outPositions, position)
+				hasBalances := map[string]bool{}
+				outBalances := make([]Balance, 0)
+				for _, balance := range balances {
+					hasBalances[balance.Coin] = true
+					balance := balance
+					outBalances = append(outBalances, balance)
 				}
 				for _, market := range markets {
-					if _, ok := hasPositions[market]; !ok {
-						outPositions = append(outPositions, Balance{
-							Coin:      market,
+					if _, ok := hasBalances[market]; !ok {
+						outBalances = append(outBalances, Balance{
+							Coin:      strings.Replace(market, "/USD", "", -1),
 							ParseTime: time.Now(),
 						})
 					}
 				}
+				//logger.Debugf("%v", outBalances)
 				select {
-				case positionsCh <- outPositions:
+				case balancesCh <- outBalances:
 				default:
-					logger.Debugf("positionsCh <- positions failed, ch len %d", len(positionsCh))
+					logger.Debugf("balancesCh <- balances failed, ch len %d", len(balancesCh))
 				}
 			}
 			pullTimer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))

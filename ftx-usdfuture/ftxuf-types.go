@@ -6,6 +6,7 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"hash/crc32"
 	"math"
+	"os"
 	"strconv"
 	"time"
 )
@@ -664,7 +665,11 @@ func (fs *FutureStats) GetSymbol() string {
 }
 
 func (fs *FutureStats) GetFundingRate() float64 {
-	return fs.NextFundingRate * 8.0
+	if os.Getenv("FTX_FUNDING_RATE_1H") != "" {
+		return fs.NextFundingRate
+	}else{
+		return fs.NextFundingRate * 8.0
+	}
 }
 
 func (fs *FutureStats) GetNextFundingTime() time.Time {

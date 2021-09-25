@@ -3,19 +3,13 @@ package main
 import (
 	"context"
 	"flag"
-	bnbf "github.com/geometrybase/hft-micro/binance-busdfuture"
 	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
-	binance_tusdspot "github.com/geometrybase/hft-micro/binance-tusdspot"
 	bncs "github.com/geometrybase/hft-micro/binance-usdcspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
-	bbuf "github.com/geometrybase/hft-micro/bybit-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
-	ftxus "github.com/geometrybase/hft-micro/ftx-usdspot"
-	hbuf "github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	kcut "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
-	kcus "github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
 	okut "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"gopkg.in/yaml.v2"
@@ -40,9 +34,6 @@ func main() {
 	var xAccount common.Balance
 	var xAccountCh = make(chan common.Balance, 4)
 	var xOrderRequestChMap = make(map[string]chan common.OrderRequest)
-	var yAccount common.Balance
-	var yAccountCh = make(chan common.Balance, 4)
-	var yOrderRequestChMap = make(map[string]chan common.OrderRequest)
 
 	var xyConfig *Config
 	var xExchange common.UsdExchange
@@ -90,11 +81,8 @@ func main() {
 	case "binanceUsdtFuture":
 		xExchange = &bnuf.BinanceUsdtFuture{}
 		break
-	case "ftxUsdFuture":
+	case "ftxUsdtFuture":
 		xExchange = &ftxuf.FtxUsdFuture{}
-		break
-	case "ftxUsdSpot":
-		xExchange = &ftxus.FtxUsdSpot{}
 		break
 	case "okexUsdtSpot":
 		xExchange = &okut.OkexUsdtSpot{}
@@ -108,17 +96,11 @@ func main() {
 	case "binanceUsdtFutureWithMergedTicker":
 		xExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
 		break
-	case "binanceBusdFutureWithMergedTicker":
-		xExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
-		break
 	case "binanceUsdtSpot":
 		xExchange = &bnus.BinanceUsdtSpot{}
 		break
 	case "binanceUsdtSpotWithMergedTicker":
 		xExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
-		break
-	case "binanceTusdSpotWithMergedTicker":
-		xExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
 		break
 	case "binanceBusdSpot":
 		xExchange = &bnbs.BinanceBusdSpot{}
@@ -129,15 +111,6 @@ func main() {
 	case "binanceUsdcSpotWithMergedTicker":
 		xExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
 		break
-	case "huobiUsdtFutureWithMergedTicker":
-		xExchange = &hbuf.HuobiUsdtFutureWithMergedTicker{}
-		break
-	case "bybitUsdtFuture":
-		xExchange = &bbuf.BybitUsdtFuture{}
-		break
-	case "kucoinUsdtSpotWithMergedTicker":
-		xExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
-		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
 	}
@@ -146,11 +119,8 @@ func main() {
 	case "binanceUsdtFuture":
 		yExchange = &bnuf.BinanceUsdtFuture{}
 		break
-	case "ftxUsdFuture":
+	case "ftxUsdtFuture":
 		yExchange = &ftxuf.FtxUsdFuture{}
-		break
-	case "ftxUsdSpot":
-		yExchange = &ftxus.FtxUsdSpot{}
 		break
 	case "okexUsdtSpot":
 		yExchange = &okut.OkexUsdtSpot{}
@@ -179,21 +149,6 @@ func main() {
 	case "binanceUsdcSpotWithMergedTicker":
 		yExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
 		break
-	case "huobiUsdtFutureWithMergedTicker":
-		yExchange = &hbuf.HuobiUsdtFutureWithMergedTicker{}
-		break
-	case "bybitUsdtFuture":
-		yExchange = &bbuf.BybitUsdtFuture{}
-		break
-	case "kucoinUsdtSpotWithMergedTicker":
-		yExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
-		break
-	case "binanceBusdFutureWithMergedTicker":
-		yExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
-		break
-	case "binanceTusdSpotWithMergedTicker":
-		yExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
-		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
 	}
@@ -201,14 +156,6 @@ func main() {
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)
-		if _, ok := xyConfig.TargetWeights[xSymbol]; !ok {
-			logger.Debugf("miss target weight for %s", xSymbol)
-			return
-		}
-		if _, ok := xyConfig.MaxOrderValues[xSymbol]; !ok {
-			logger.Debugf("miss max order value for %s", xSymbol)
-			return
-		}
 	}
 	xyConfig.XExchange.Symbols = xSymbols
 	xyConfig.YExchange.Symbols = ySymbols
@@ -290,39 +237,29 @@ func main() {
 	yTickerChMap := make(map[string]chan common.Ticker)
 
 	for _, xSymbol := range xSymbols {
-		xPositionChMap[xSymbol] = make(chan common.Position, 16)
+		xPositionChMap[xSymbol] = make(chan common.Position, 4)
 		xOrderChMap[xSymbol] = make(chan common.Order, 32)
-		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 4)
+		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 1)
 		xTickerChMap[xSymbol] = make(chan common.Ticker, 256)
 		yTickerChMap[config.XYPairs[xSymbol]] = xTickerChMap[xSymbol]
-		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 4)
-		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 4)
-		xAccountChMap[xSymbol] = make(chan common.Balance, 16)
-		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 4)
+		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 1)
+		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 1)
+		xAccountChMap[xSymbol] = make(chan common.Balance, 4)
+		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 1)
 	}
 
-	yPositionChMap := make(map[string]chan common.Position)
-	yOrderChMap := make(map[string]chan common.Order)
 	yFundingRateChMap := make(map[string]chan common.FundingRate)
-	yNewOrderErrorChMap := make(map[string]chan common.OrderError)
-	yAccountChMap := make(map[string]chan common.Balance)
 	ySystemStatusChMap := make(map[string]chan common.SystemStatus)
 	for _, ySymbol := range ySymbols {
-		yPositionChMap[ySymbol] = make(chan common.Position, 16)
-		yOrderChMap[ySymbol] = make(chan common.Order, 32)
-		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 4)
-		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 4)
-		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 4)
-		yAccountChMap[ySymbol] = make(chan common.Balance, 16)
-		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 4)
+		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 1)
+		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 1)
 	}
 
 	saveCh := make(chan *XYStrategy, 2048)
 	strategiesMap := make(map[string]*XYStrategy)
 
-	var xCommissionAssetValue, yCommissionAssetValue *float64
+	var xCommissionAssetValue *float64
 	var xCommissionAssetValueCh = make(chan float64, 4)
-	var yCommissionAssetValueCh = make(chan float64, 4)
 
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		err = startXYStrategy(
@@ -332,17 +269,12 @@ func main() {
 			xExchange,
 			yExchange,
 			xAccountChMap[xSymbol],
-			yAccountChMap[ySymbol],
 			xPositionChMap[xSymbol],
-			yPositionChMap[ySymbol],
 			xFundingRateChMap[xSymbol],
 			yFundingRateChMap[ySymbol],
 			xOrderRequestChMap[xSymbol],
-			yOrderRequestChMap[ySymbol],
 			xOrderChMap[xSymbol],
-			yOrderChMap[ySymbol],
 			xNewOrderErrorChMap[xSymbol],
-			yNewOrderErrorChMap[ySymbol],
 			xSystemStatusChMap[xSymbol],
 			ySystemStatusChMap[ySymbol],
 			xTickerChMap[xSymbol],
@@ -379,13 +311,9 @@ func main() {
 		xNewOrderErrorChMap,
 	)
 
-	go yExchange.StreamBasic(
+	go yExchange.StreamSystemStatus(
 		xyGlobalCtx,
 		ySystemStatusCh,
-		yAccountCh,
-		yCommissionAssetValueCh,
-		yPositionChMap,
-		yOrderChMap,
 	)
 	go yExchange.StreamFundingRate(
 		xyGlobalCtx,
@@ -396,12 +324,6 @@ func main() {
 		xyGlobalCtx,
 		yTickerChMap,
 		xyConfig.BatchSize,
-	)
-	go yExchange.WatchOrders(
-		xyGlobalCtx,
-		yOrderRequestChMap,
-		yOrderChMap,
-		yNewOrderErrorChMap,
 	)
 
 	sigs := make(chan os.Signal, 1)
@@ -463,14 +385,10 @@ mainLoop:
 		case xcv := <-xCommissionAssetValueCh:
 			xCommissionAssetValue = &xcv
 			//logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
-		case ycv := <-yCommissionAssetValueCh:
-			yCommissionAssetValue = &ycv
-			//logger.Debugf("yCommissionAssetValue %f", *yCommissionAssetValue)
 		case account := <-xAccountCh:
 			if xAccount == account {
 				logger.Debugf("bad xAccount == account pass same pointer")
 			}
-			//logger.Debugf("xAccount %f %f", account.GetBalance(), account.GetFree())
 			if xAccount == nil || account.GetTime().Sub(xAccount.GetTime()) >= 0 {
 				xAccount = account
 				for xSymbol, ch := range xAccountChMap {
@@ -482,36 +400,19 @@ mainLoop:
 				}
 			}
 			break
-		case account := <-yAccountCh:
-			if yAccount == account {
-				logger.Debugf("bad  yAccount == account pass same pointer")
-			}
-			//logger.Debugf("yAccount %f %f", account.GetBalance(), account.GetFree())
-			if yAccount == nil || account.GetTime().Sub(yAccount.GetTime()) >= 0 {
-				yAccount = account
-				for ySymbol, ch := range yAccountChMap {
-					select {
-					case ch <- yAccount:
-					default:
-						logger.Debugf("ch <- yAccount failed %s ch len %d", ySymbol, len(ch))
-					}
-				}
-			}
-			break
 		case st := <-saveCh:
 			strategiesMap[st.xSymbol] = st
 			break
 		case <-influxSaveTimer.C:
 			if xyConfig.InternalInflux.Address != "" {
-
 				handleSave(
-					xAccount, yAccount,
-					xExchange, yExchange,
+					xAccount,
+					xExchange,
 					strategiesMap,
 					xSymbols,
 					xSystemStatus, ySystemStatus,
 					xyConfig,
-					xCommissionAssetValue, yCommissionAssetValue,
+					xCommissionAssetValue,
 					xyInternalInfluxWriter, xyExternalInfluxWriter,
 					lastExternalSaveTime,
 				)

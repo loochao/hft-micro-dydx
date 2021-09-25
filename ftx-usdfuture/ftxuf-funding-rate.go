@@ -15,7 +15,7 @@ func StreamRawFundingRate(
 	source []byte,
 	channels map[string]chan *common.RawMessage,
 ) {
-	api, err := NewAPI("", "", proxyAddress)
+	api, err := NewAPI("", "", "",proxyAddress)
 	if err != nil {
 		logger.Fatal(err)
 	}

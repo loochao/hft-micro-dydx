@@ -110,6 +110,8 @@ func TestAPI_GetAccount(t *testing.T) {
 		t.Fatal(err)
 	}
 	logger.Debugf("%v", account)
+	logger.Debugf("Balance %f", account.GetBalance())
+	logger.Debugf("Free %v", account.GetFree())
 }
 
 func TestAPI_GetBalances(t *testing.T) {
@@ -124,6 +126,29 @@ func TestAPI_GetBalances(t *testing.T) {
 	}
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute)
 	positions, err := api.GetBalances(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%v", positions)
+}
+
+func TestAPI_PlaceOrder(t *testing.T) {
+	api, err := NewAPI(
+		os.Getenv("FTX_TEST_KEY"),
+		os.Getenv("FTX_TEST_SECRET"),
+		os.Getenv("FTX_TEST_SUBACCOUNT"),
+		os.Getenv("FTX_TEST_PROXY"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), time.Minute)
+	positions, err := api.PlaceOrder(ctx, NewOrderParam{
+		Market: "FTT/USD",
+		Size: 0.1,
+		Type: OrderTypeMarket,
+		Side: OrderSideSell,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -16,12 +16,14 @@ func strategyA(
 	result := &Result{
 		NetWorth:  make([]float64, 0),
 		Positions: make([]float64, 0),
+		Costs:     make([]float64, 0),
+		MidPrices: make([]float64, 0),
 		Params:    params,
 	}
 
 	enterSilentTime := time.Time{}
 	outputSilentTime := time.Time{}
-	currentXValue := params.startValue
+	currentXValue := params.StartValue
 	xPosition := &backtests.Position{}
 	eventTime := time.Time{}
 
@@ -49,79 +51,94 @@ func strategyA(
 		unrealisedXPnl := xPosition.GetUnrealisedPnl((spread.XBidPrice + spread.XAskPrice) * 0.5)
 
 		if eventTime.Sub(enterSilentTime) > 0 {
-			shortTop := spread.SpreadQuantile50 + params.enterOffset - params.frFactor*(spread.YFundingRate-spread.XFundingRate)
-			shortBot := spread.SpreadQuantile50 - params.leaveOffset - params.frFactor*(spread.YFundingRate-spread.XFundingRate)
-			longTop := spread.SpreadQuantile50 + params.leaveOffset - params.frFactor*(spread.YFundingRate-spread.XFundingRate)
-			longBot := spread.SpreadQuantile50 - params.enterOffset - params.frFactor*(spread.YFundingRate-spread.XFundingRate)
+			shortTop := spread.SpreadQuantile50 + params.EnterOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
+			shortBot := spread.SpreadQuantile50 + params.LeaveOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
 
-			if spread.ShortMedianSpread < shortBot &&
-				spread.ShortLastSpread <= spread.ShortMedianSpread &&
-				xPosition.Size > 0 {
+			longTop := spread.SpreadQuantile50 - params.LeaveOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
+			longBot := spread.SpreadQuantile50 - params.EnterOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
+
+			frClose := math.Abs(spread.XFundingRate) > params.MaxFundingRate ||
+				math.Abs(spread.YFundingRate) > params.MaxFundingRate ||
+				math.Abs(spread.XFundingRate-spread.YFundingRate) > params.MaxFundingRate
+
+			shortBotClose := spread.ShortMedianSpread < shortBot &&
+				spread.ShortMedianSpread < spread.SpreadQuantile20 &&
+				spread.ShortLastSpread <= spread.ShortMedianSpread
+
+			longTopClose := spread.LongMedianSpread > longTop &&
+				spread.LongMedianSpread > spread.SpreadQuantile80 &&
+				spread.LongLastSpread >= spread.LongMedianSpread
+
+			shortTopOpen := spread.ShortMedianSpread > shortTop &&
+				spread.ShortMedianSpread > spread.SpreadQuantile95 &&
+				spread.ShortLastSpread >= spread.ShortMedianSpread
+
+			longBotOpen := spread.LongMedianSpread < longBot &&
+				spread.LongMedianSpread < spread.SpreadQuantile05 &&
+				spread.LongLastSpread <= spread.LongMedianSpread
+
+			if xPosition.Size > 0 &&
+				(frClose || shortBotClose) {
 				tradeValue := math.Min(
-					spread.XBidPrice*spread.XBidSize*params.bestSizeFactor,
-					spread.YAskPrice*spread.YAskSize*params.bestSizeFactor,
+					spread.XBidPrice*spread.XBidSize*params.BestSizeFactor,
+					spread.YAskPrice*spread.YAskSize*params.BestSizeFactor,
 				)
 				tradeXSize := math.Min(
 					tradeValue/spread.XBidPrice,
 					xPosition.Size,
 				)
 				tradeVolume += math.Abs(tradeXSize * spread.XBidPrice)
-				currentXValue += tradeXSize * spread.XBidPrice * params.tradeCost
+				currentXValue += tradeXSize * spread.XBidPrice * params.TradeCost
 				currentXValue += xPosition.Add(-tradeXSize, spread.XBidPrice)
 				enterSilentTime = eventTime.Add(params.enterInterval)
-				//logger.Debugf("%v SHORT CLOSE %f %f", eventTime, spread.ShortLastSpread-spread.SpreadQuantile50, spread.ShortMedianSpread-spread.SpreadQuantile50)
-			} else if spread.LongMedianSpread > longTop &&
-				spread.LongLastSpread >= spread.LongMedianSpread &&
-				xPosition.Size < 0 {
+			} else if xPosition.Size < 0 &&
+				(frClose || longTopClose) {
 				tradeValue := math.Min(
-					spread.XAskPrice*spread.XAskSize*params.bestSizeFactor,
-					spread.YBidPrice*spread.YBidSize*params.bestSizeFactor,
+					spread.XAskPrice*spread.XAskSize*params.BestSizeFactor,
+					spread.YBidPrice*spread.YBidSize*params.BestSizeFactor,
 				)
 				tradeXSize := math.Min(
 					tradeValue/spread.XAskPrice,
 					-xPosition.Size,
 				)
 				tradeVolume += math.Abs(tradeXSize * spread.XAskPrice)
-				currentXValue += tradeXSize * spread.XAskPrice * params.tradeCost
+				currentXValue += tradeXSize * spread.XAskPrice * params.TradeCost
 				currentXValue += xPosition.Add(tradeXSize, spread.XAskPrice)
 				enterSilentTime = eventTime.Add(params.enterInterval)
-				//logger.Debugf("%v LONG CLOSE %f %f", eventTime, spread.LongLastSpread-spread.SpreadQuantile50, spread.LongMedianSpread-spread.SpreadQuantile50)
-			} else if spread.ShortMedianSpread > shortTop &&
-				spread.ShortLastSpread >= spread.ShortMedianSpread &&
+			} else if shortTopOpen &&
+				!frClose &&
 				xPosition.Size >= 0 &&
 				unrealisedXPnl >= 0 {
-				freeUSD := currentXValue - math.Abs(xPosition.Size*xPosition.Price/params.leverage)
+				freeUSD := currentXValue - math.Abs(xPosition.Size*xPosition.Price/params.Leverage)
 				tradeValue := math.Min(
-					spread.XAskPrice*spread.XAskSize*params.bestSizeFactor,
-					spread.YBidPrice*spread.YBidSize*params.bestSizeFactor,
+					spread.XAskPrice*spread.XAskSize*params.BestSizeFactor,
+					spread.YBidPrice*spread.YBidSize*params.BestSizeFactor,
 				)
-				tradeValue = math.Min(freeUSD*params.enterStep, tradeValue)
-				if freeUSD < tradeValue/params.leverage {
+				tradeValue = math.Min(freeUSD*params.EnterStep, tradeValue)
+				if freeUSD < tradeValue/params.Leverage {
 					continue
 				}
 				tradeVolume += tradeValue * 2
-				currentXValue += tradeValue * params.tradeCost
+				currentXValue += tradeValue * params.TradeCost
 				currentXValue += xPosition.Add(tradeValue/spread.XAskPrice, spread.XAskPrice)
 				enterSilentTime = eventTime.Add(params.enterInterval)
-				//logger.Debugf("%v SHORT OPEN %f %f", eventTime,spread.ShortLastSpread-spread.SpreadQuantile50, spread.ShortMedianSpread-spread.SpreadQuantile50)
-			} else if spread.LongMedianSpread < longBot &&
-				spread.LongLastSpread <= spread.LongMedianSpread &&
+			} else if longBotOpen &&
+				!frClose &&
 				xPosition.Size <= 0 &&
 				unrealisedXPnl >= 0 {
-				freeUSD := currentXValue - math.Abs(xPosition.Size*xPosition.Price/params.leverage)
+				freeUSD := currentXValue - math.Abs(xPosition.Size*xPosition.Price/params.Leverage)
 				tradeValue := math.Min(
-					spread.XBidPrice*spread.XBidSize*params.bestSizeFactor,
-					spread.YAskPrice*spread.YAskSize*params.bestSizeFactor,
+					spread.XBidPrice*spread.XBidSize*params.BestSizeFactor,
+					spread.YAskPrice*spread.YAskSize*params.BestSizeFactor,
 				)
-				tradeValue = math.Min(freeUSD*params.enterStep, tradeValue)
-				if freeUSD < tradeValue/params.leverage {
+				tradeValue = math.Min(freeUSD*params.EnterStep, tradeValue)
+				if freeUSD < tradeValue/params.Leverage {
 					continue
 				}
 				tradeVolume += tradeValue * 2
-				currentXValue += tradeValue * params.tradeCost
+				currentXValue += tradeValue * params.TradeCost
 				currentXValue += xPosition.Add(-tradeValue/spread.XBidPrice, spread.XBidPrice)
 				enterSilentTime = eventTime.Add(params.enterInterval)
-				//logger.Debugf("%v LONG OPEN %f %f", eventTime,spread.LongLastSpread-spread.SpreadQuantile50, spread.LongMedianSpread-spread.SpreadQuantile50)
 			}
 		}
 
@@ -139,12 +156,19 @@ func strategyA(
 
 		if eventTime.Sub(outputSilentTime) > 0 {
 			//logger.Debugf("%f %f %f %f", currentXValue, currentYValue, unrealisedXPnl, unrealisedYPnl)
-			result.NetWorth = append(result.NetWorth, (currentXValue+unrealisedXPnl)/params.startValue)
+			result.NetWorth = append(result.NetWorth, (currentXValue+unrealisedXPnl)/params.StartValue)
 			result.Positions = append(result.Positions, xPosition.Size*xPosition.Price)
 			result.EventTimes = append(result.EventTimes, eventTime)
-			outputSilentTime = eventTime.Add(params.outputInterval)
+			if xPosition.Size != 0 {
+				result.Costs = append(result.Costs, xPosition.Price)
+			} else {
+				result.Costs = append(result.Costs, (spread.XBidPrice+spread.XAskPrice)/2)
+			}
+			result.MidPrices = append(result.MidPrices, (spread.XBidPrice+spread.XAskPrice)/2)
+			result.FundingRates = append(result.FundingRates, spread.YFundingRate-spread.XFundingRate)
+			outputSilentTime = eventTime.Add(params.OutputInterval)
 		}
 	}
-	result.Turnover = tradeVolume / params.startValue / float64(endTime.Sub(startTime)/(time.Hour*24))
+	result.Turnover = tradeVolume / params.StartValue / float64(endTime.Sub(startTime)/(time.Hour*24))
 	return result
 }

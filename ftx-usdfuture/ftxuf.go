@@ -91,6 +91,7 @@ func (ftx *FtxUsdFuture) StreamBasic(
 	userWS := NewUserWS(
 		ftx.settings.ApiKey,
 		ftx.settings.ApiSecret,
+		ftx.settings.ApiSubAccount,
 		ftx.settings.Proxy,
 	)
 	go userWS.Start(ctx)
@@ -452,7 +453,7 @@ func (ftx *FtxUsdFuture) Setup(ctx context.Context, settings common.ExchangeSett
 	ftx.settings = settings
 	ftx.done = make(chan interface{})
 	ftx.stopped = false
-	ftx.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.Proxy)
+	ftx.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.ApiSubAccount, settings.Proxy)
 	if err != nil {
 		return err
 	}

@@ -46,7 +46,7 @@ func startXYStrategy(
 	timedTDigest := stream_stats.NewTimedTDigest(config.QuantileLookback, config.QuantileSubInterval)
 	if config.QuantilePath != "" {
 
-		longBytes, err := os.ReadFile(path.Join(config.QuantilePath, xSymbol+"-"+ySymbol+".json"))
+		longBytes, err := os.ReadFile(path.Join(config.QuantilePath, common.SymbolSanitize(xSymbol)+"-"+common.SymbolSanitize(ySymbol)+".json"))
 		if err != nil {
 			logger.Debugf("%s os.ReadFile error %v", xSymbol, err)
 		} else {
@@ -199,6 +199,7 @@ func startXYStrategy(
 
 	strat.xTickSize, err = xExchange.GetTickSize(xSymbol)
 	if err != nil {
+		logger.Debugf("%v", xExchange)
 		logger.Debugf("%v", err)
 		return
 	}
@@ -270,9 +271,9 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 					if strat.fundingRateFactor == nil {
 						strat.fundingRateFactor = new(float64)
 					}
-					*strat.fundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*(1.0 - time.Now().Add(strat.config.FundingRateInterval).Truncate(strat.config.FundingRateInterval).Sub(time.Now()).Seconds()/strat.config.FundingRateInterval.Seconds())
+					*strat.fundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*(1.0-time.Now().Add(strat.config.FundingRateInterval).Truncate(strat.config.FundingRateInterval).Sub(time.Now()).Seconds()/strat.config.FundingRateInterval.Seconds())
 				}
-			}else{
+			} else {
 				if time.Now().Add(strat.config.FundingRateTimeOffset).Truncate(strat.config.FundingRateInterval).Add(strat.config.FundingRateTimeOffset).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
 					logger.Debugf("%s fundingRate Silent true %v", strat.xSymbol, time.Now().Add(strat.config.FundingRateTimeOffset).Truncate(strat.config.FundingRateInterval).Add(strat.config.FundingRateTimeOffset).Sub(time.Now()))
 					strat.fundingRateSettleSilent = true
@@ -284,7 +285,7 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 					if strat.fundingRateFactor == nil {
 						strat.fundingRateFactor = new(float64)
 					}
-					*strat.fundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*(1.0 - time.Now().Add(strat.config.FundingRateTimeOffset).Truncate(strat.config.FundingRateInterval).Add(strat.config.FundingRateTimeOffset).Sub(time.Now()).Seconds()/strat.config.FundingRateInterval.Seconds())
+					*strat.fundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*(1.0-time.Now().Add(strat.config.FundingRateTimeOffset).Truncate(strat.config.FundingRateInterval).Add(strat.config.FundingRateTimeOffset).Sub(time.Now()).Seconds()/strat.config.FundingRateInterval.Seconds())
 				}
 			}
 			break
@@ -404,7 +405,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 	}
 	if strat.ySizeDiff >= 0 {
 		strat.ySizeDiff = math.Floor(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
-	}else{
+	} else {
 		strat.ySizeDiff = math.Ceil(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
 	}
 
@@ -545,7 +546,7 @@ func (strat *XYStrategy) handleQuantileSave() {
 		if strat.error != nil {
 			logger.Debugf("%s json.Marshal(strat.timedTDigest) error %v", strat.xSymbol, strat.error)
 		} else {
-			strat.quantileFile, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, strat.xSymbol+"-"+strat.ySymbol+".json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+			strat.quantileFile, strat.error = os.OpenFile(path.Join(strat.config.QuantilePath, common.SymbolSanitize(strat.xSymbol)+"-"+common.SymbolSanitize(strat.ySymbol)+".json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 			if strat.error != nil {
 				logger.Debugf("%s os.OpenFile error %v", strat.xSymbol, strat.error)
 			} else {
