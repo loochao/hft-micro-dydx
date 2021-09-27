@@ -121,8 +121,6 @@ type XYStrategy struct {
 	xExchangeID common.ExchangeID
 	yExchangeID common.ExchangeID
 
-	lastSpreadEnterTime time.Time
-
 	timedTDigest           *stream_stats.TimedTDigest
 	quantileSaveTimer      *time.Timer
 	quantileLastSampleTime time.Time

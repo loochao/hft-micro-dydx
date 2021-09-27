@@ -136,7 +136,6 @@ func startXYStrategy(
 		quantileSaveTimer:       time.NewTimer(config.QuantileSaveInterval),
 		quantileLastSampleTime:  time.Time{},
 		quantile50:              quantileMiddle,
-		lastSpreadEnterTime:     time.Time{},
 	}
 
 	strat.xTickSize, err = xExchange.GetTickSize(xSymbol)

@@ -24,12 +24,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xyFundingRate == nil ||
 		strat.quantile50 == nil ||
 		strat.fundingRateSettleSilent ||
-		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter ||
-		strat.spread.EventTime.Sub(strat.lastSpreadEnterTime) <= 0 {
-		//if time.Now().Sub(strat.logSilentTime) > 0 {
-		//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-		//	logger.Debugf("time.Now().Sub(strat.spread.EventTime) %v", time.Now().Sub(strat.spread.EventTime))
-		//}
+		time.Now().Sub(strat.spread.EventTime) > strat.config.SpreadTimeToEnter {
 		return
 	}
 
@@ -116,7 +111,6 @@ func (strat *XYStrategy) updateXPosition() {
 				}
 			}
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-			strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
 				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
 				strat.xSymbol, strat.ySymbol,
@@ -167,7 +161,6 @@ func (strat *XYStrategy) updateXPosition() {
 				}
 			}
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-			strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
 				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 				strat.xSymbol, strat.ySymbol,
@@ -255,7 +248,6 @@ func (strat *XYStrategy) updateXPosition() {
 			}
 		}
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-		strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 			strat.xSymbol, strat.ySymbol,
@@ -343,7 +335,6 @@ func (strat *XYStrategy) updateXPosition() {
 			}
 		}
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-		strat.lastSpreadEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
 			strat.xSymbol, strat.ySymbol,
