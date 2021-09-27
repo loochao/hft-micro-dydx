@@ -62,11 +62,11 @@ func strategyB(
 				math.Abs(spread.XFundingRate-spread.YFundingRate) > params.MaxFundingRate
 
 			shortBotClose := spread.ShortMedianSpread < shortBot &&
-				spread.ShortMedianSpread < spread.SpreadQuantile20 &&
+				spread.ShortMedianSpread < spread.SpreadQuantile05 &&
 				spread.ShortLastSpread <= spread.ShortMedianSpread
 
 			longTopClose := spread.LongMedianSpread > longTop &&
-				spread.LongMedianSpread > spread.SpreadQuantile80 &&
+				spread.LongMedianSpread > spread.SpreadQuantile95 &&
 				spread.LongLastSpread >= spread.LongMedianSpread
 
 			shortTopOpen := spread.ShortMedianSpread > shortTop &&
