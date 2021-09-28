@@ -72,7 +72,7 @@ func optBySymbol(xSymbol, ySymbol string, writer *common.InfluxWriter, measureme
 				XSymbol:        xSymbol,
 				YSymbol:        ySymbol,
 				EnterOffset:    0.0005 * i,
-				LeaveOffset:    0.000,
+				LeaveOffset:    0.001,
 				FrFactor:       0.8,
 				StartValue:     10000,
 				EnterStep:      0.1*j,
@@ -159,7 +159,7 @@ func main() {
 		}
 	}
 	sort.Strings(symbols)
-	//symbols = []string{"XRPUSDTM"}
+	symbols = []string{"VETUSDTM"}
 	for _, xSymbol := range symbols {
 		ySymbol := symbolsMap[xSymbol]
 		outputPath := fmt.Sprintf("%s%s-%s.json", dataPath, xSymbol, ySymbol)

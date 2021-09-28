@@ -21,7 +21,8 @@ import (
 )
 
 func optBySymbol(xSymbol, ySymbol string, writer *common.InfluxWriter, measurement string) (map[string]Result, error) {
-	fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210910-20210919-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
+	//fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210910-20210919-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
+	fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210910-20210915-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
 	f, err := os.OpenFile(fileName, os.O_RDONLY, 0600)
 	if err != nil {
 		return nil, err
@@ -157,7 +158,7 @@ func main() {
 		}
 	}
 	sort.Strings(symbols)
-	symbols = []string{"ADAUSDT"}
+	symbols = []string{"VETUSDT"}
 	for _, xSymbol := range symbols {
 		ySymbol := symbolsMap[xSymbol]
 		outputPath := fmt.Sprintf("%s%s-%s.json", dataPath, xSymbol, ySymbol)

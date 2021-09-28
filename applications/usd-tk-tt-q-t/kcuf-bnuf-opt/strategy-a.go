@@ -52,9 +52,9 @@ func strategyA(
 
 		if eventTime.Sub(enterSilentTime) > 0 {
 			shortTop := spread.SpreadQuantile50 + params.EnterOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
-			shortBot := spread.SpreadQuantile50 + params.LeaveOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
+			shortBot := spread.SpreadQuantile50 + params.LeaveOffset  //- params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
 
-			longTop := spread.SpreadQuantile50 - params.LeaveOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
+			longTop := spread.SpreadQuantile50 - params.LeaveOffset  //- params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
 			longBot := spread.SpreadQuantile50 - params.EnterOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
 
 			frClose := math.Abs(spread.XFundingRate) > params.MaxFundingRate ||

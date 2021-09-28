@@ -33,9 +33,9 @@ func (strat *XYStrategy) updateXPosition() {
 	strat.xAbsValue = math.Abs(strat.xValue)
 
 	strat.shortTop = *strat.quantile50 + strat.config.ShortEnterDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
-	strat.shortBot = *strat.quantile50 + strat.config.ShortExitDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
+	strat.shortBot = *strat.quantile50 + strat.config.ShortExitDelta //- *strat.xyFundingRate*strat.config.FrOffsetFactor
 	strat.longBot = *strat.quantile50 + strat.config.LongEnterDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
-	strat.longTop = *strat.quantile50 + strat.config.LongExitDelta - *strat.xyFundingRate*strat.config.FrOffsetFactor
+	strat.longTop = *strat.quantile50 + strat.config.LongExitDelta //- *strat.xyFundingRate*strat.config.FrOffsetFactor
 
 	strat.midPrice = (strat.xMidPrice + strat.yMidPrice) * 0.5
 	if math.IsNaN(strat.longBot) && time.Now().Sub(strat.logSilentTime) > 0 {

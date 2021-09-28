@@ -50,7 +50,7 @@ func main() {
 	maxTimeDiff := time.Millisecond * 100
 	quantileAddInterval := time.Second
 	spreadLookback := time.Second * 3
-	outputInterval := time.Millisecond
+	outputInterval := time.Millisecond*25
 
 	workerCh := make(chan interface{}, 8)
 	doneSymbolCh := make(chan string, 100)
@@ -126,6 +126,9 @@ func main() {
 				var msg []byte
 				for scanner.Scan() {
 					msg = scanner.Bytes()
+					if len(msg) < 128 {
+						continue
+					}
 					if msg[0] == 'S' && msg[1] == 'T' {
 						err = binance_usdtspot.ParseTicker(msg[21:], xTicker)
 						if err != nil {
