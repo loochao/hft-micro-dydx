@@ -130,7 +130,7 @@ func (strat *XYStrategy) updateXPosition() {
 			}
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			logger.Debugf(
-				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v",
+				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v PnlPct %f",
 				strat.xSymbol, strat.ySymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
@@ -138,6 +138,7 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.size,
 				time.Now().Sub(strat.xTickerTime),
 				time.Now().Sub(strat.yTickerTime),
+				pnlPct,
 			)
 		}
 	} else if (frClose || longTopClose || stopLoss) &&
@@ -180,7 +181,7 @@ func (strat *XYStrategy) updateXPosition() {
 			}
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
+				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, PnlPct %f",
 				strat.xSymbol, strat.ySymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
@@ -192,6 +193,7 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.xTicker.GetAskPrice(),
 				strat.yTicker.GetBidPrice(),
 				strat.yTicker.GetAskPrice(),
+				pnlPct,
 			)
 		}
 	} else if !strat.config.ReduceOnly &&
@@ -227,12 +229,13 @@ func (strat *XYStrategy) updateXPosition() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
+					"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f, PnlPct %f",
 					strat.xSymbol, strat.ySymbol,
 					strat.enterValue,
 					strat.spread.ShortLastEnter, strat.shortTop,
 					strat.spread.ShortMedianEnter, strat.shortTop,
 					strat.size,
+					pnlPct,
 				)
 			}
 			return
@@ -262,7 +265,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
+			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f PnlPct %f",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
@@ -274,6 +277,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.xTicker.GetAskPrice(),
 			strat.yTicker.GetBidPrice(),
 			strat.yTicker.GetAskPrice(),
+			pnlPct,
 		)
 	} else if !strat.config.ReduceOnly &&
 		!strat.isXSpot &&
@@ -291,7 +295,7 @@ func (strat *XYStrategy) updateXPosition() {
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
+					"%s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f, PnlPct %f",
 					strat.xSymbol,
 					strat.ySymbol,
 					strat.enterValue,
@@ -299,6 +303,7 @@ func (strat *XYStrategy) updateXPosition() {
 					strat.spread.LongLastEnter, strat.longBot,
 					strat.spread.LongMedianEnter, strat.longBot,
 					strat.size,
+					pnlPct,
 				)
 			}
 			return
@@ -344,7 +349,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		logger.Debugf(
-			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f",
+			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f PnlPct %f",
 			strat.xSymbol, strat.ySymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
@@ -356,6 +361,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.xTicker.GetAskPrice(),
 			strat.yTicker.GetBidPrice(),
 			strat.yTicker.GetAskPrice(),
+			pnlPct,
 		)
 	}
 }
