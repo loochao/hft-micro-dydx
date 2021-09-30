@@ -28,8 +28,8 @@ func main() {
 		}
 	}
 	sort.Strings(symbols)
-	symbols = []string{"ETHUSDT","VETUSDT", "BNBUSDT", "BTCUSDT"}
-	startDateStr := "20210910"
+	//symbols = []string{"VETUSDT"}
+	startDateStr := "20210820"
 	endDateStr := "20210926"
 	startTime, err := time.Parse("20060102", startDateStr)
 	if err != nil {
@@ -47,10 +47,15 @@ func main() {
 
 	quantileLookback := time.Hour * 24
 	quantileSubInterval := time.Minute * 5
-	maxTimeDiff := time.Millisecond * 100
+	maxTimeDiff := time.Millisecond * 150
 	quantileAddInterval := time.Second
 	spreadLookback := time.Second * 3
 	outputInterval := time.Millisecond*25
+	parseInterval := time.Millisecond*5
+	minimalDays := 1
+
+	outputIntervalNum := int64(outputInterval)
+	parseIntervalNum := int64(parseInterval)
 
 	workerCh := make(chan interface{}, 8)
 	doneSymbolCh := make(chan string, 100)
@@ -86,8 +91,8 @@ func main() {
 			matchedSpread := &common.MatchedSpread{}
 			dayCounter := 0
 			serverTime := int64(0)
-			lastOutputTime := int64(0)
-			outputIntervalNum := int64(outputInterval)
+			outputSilentTime := int64(0)
+			parseSilentTime := int64(0)
 
 			//counter := 0
 			outputFileName := fmt.Sprintf("/Users/chenjilin/Downloads/%s-%s-%s-%s-%v-%v-%v.gz", startDateStr, endDateStr, xSymbol, ySymbol, quantileLookback, spreadLookback, outputInterval)
@@ -129,6 +134,14 @@ func main() {
 					if len(msg) < 128 {
 						continue
 					}
+					serverTime, err = common.ParseInt(msg[2:21])
+					if err != nil {
+						logger.Debugf("%v", err)
+						continue
+					}
+					if serverTime < parseSilentTime && msg[1] != 'F'{
+						continue
+					}
 					if msg[0] == 'S' && msg[1] == 'T' {
 						err = binance_usdtspot.ParseTicker(msg[21:], xTicker)
 						if err != nil {
@@ -140,12 +153,8 @@ func main() {
 							continue
 
 						}
-						serverTime, err = common.ParseInt(msg[2:21])
-						if err != nil {
-							logger.Debugf("%v", err)
-							continue
-						}
 						xTicker.ParseTime = time.Unix(0, serverTime)
+						parseSilentTime = serverTime + parseIntervalNum
 						xTD = xTicker
 					} else if msg[0] == 'S' && msg[1] == 'D' {
 						err = binance_usdtspot.ParseDepth5(msg[21:], xDepth)
@@ -157,12 +166,8 @@ func main() {
 							//logger.Debugf("bad msg: %s", msg)
 							continue
 						}
-						serverTime, err = common.ParseInt(msg[2:21])
-						if err != nil {
-							logger.Debugf("%v", err)
-							continue
-						}
 						xDepth.ParseTime = time.Unix(0, serverTime)
+						parseSilentTime = serverTime + parseIntervalNum
 						xTD = xDepth
 					} else if msg[0] == 'F' && msg[1] == 'D' {
 						err = binance_usdtfuture.ParseDepth5(msg[21:], yDepth)
@@ -174,11 +179,7 @@ func main() {
 							//logger.Debugf("bad msg: %s", msg)
 							continue
 						}
-						serverTime, err = common.ParseInt(msg[2:21])
-						if err != nil {
-							logger.Debugf("%v", err)
-							continue
-						}
+						parseSilentTime = serverTime + parseIntervalNum
 						yTD = yDepth
 					} else if msg[0] == 'F' && msg[1] == 'T' {
 						err = binance_usdtfuture.ParseBookTicker(msg[21:], yTicker)
@@ -190,11 +191,7 @@ func main() {
 							//logger.Debugf("bad msg: %s", msg)
 							continue
 						}
-						serverTime, err = common.ParseInt(msg[2:21])
-						if err != nil {
-							logger.Debugf("%v", err)
-							continue
-						}
+						parseSilentTime = serverTime + parseIntervalNum
 						yTD = yTicker
 						continue
 					} else if msg[0] == 'F' && msg[1] == 'F' {
@@ -235,10 +232,10 @@ func main() {
 								}
 							}
 
-							if  yFr != nil && dayCounter > 1 && serverTime-lastOutputTime >= outputIntervalNum {
+							if  yFr != nil && dayCounter > minimalDays && serverTime >= outputSilentTime {
 
 								matchedSpread.ServerTime = serverTime
-								lastOutputTime = serverTime
+								outputSilentTime = serverTime + outputIntervalNum
 								if tDiff > 0 {
 									matchedSpread.EventTime = xTD.GetTime().UnixNano()
 								} else {

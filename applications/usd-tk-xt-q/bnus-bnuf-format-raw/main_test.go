@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 )
 
 func BenchmarkRead(b *testing.B) {
@@ -42,7 +43,8 @@ func BenchmarkRead(b *testing.B) {
 }
 
 func TestRead(t *testing.T) {
-	f, err := os.OpenFile("/Users/chenjilin/Downloads/20210910-20210915-1INCHUSDT-1INCHUSDT-24h0m0s-3s-1ms.gz", os.O_RDONLY, 0600)
+	f, err := os.OpenFile("/Users/chenjilin/Downloads/20210820-20210826-VETUSDT-VETUSDT-24h0m0s-3s-25ms.gz", os.O_RDONLY, 0600)
+	//f, err := os.OpenFile("/Users/chenjilin/Downloads/20210820-20210916-VETUSDTM-VETUSDT-24h0m0s-3s-1ms.gz", os.O_RDONLY, 0600)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,13 +56,26 @@ func TestRead(t *testing.T) {
 	defer gr.Close()
 	outputData := &common.MatchedSpread{}
 	counter := 0
+	var startTime *int64
+	totalTime := int64(0)
 	for err != io.EOF {
 		err = binary.Read(gr, binary.BigEndian, outputData)
 		if err != nil && err != io.EOF {
 			t.Fatal(err)
 		}
+		if startTime == nil {
+			startTime = new(int64)
+			*startTime = outputData.EventTime
+		} else {
+			totalTime += outputData.EventTime - *startTime
+			if outputData.EventTime - *startTime < 0 {
+				logger.Debugf("bad time start %d end %d", *startTime, outputData.EventTime)
+			}
+			*startTime = outputData.EventTime
+		}
 		counter++
 	}
+	logger.Debugf("%v",  time.Duration(totalTime)/time.Duration(counter))
 	logger.Debugf("%d", counter)
 }
 

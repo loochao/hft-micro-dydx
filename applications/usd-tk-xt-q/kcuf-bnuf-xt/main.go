@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
-	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/influx/client"
+	kucoin_usdtfuture "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/montanaflynn/stats"
 	"io"
@@ -21,8 +21,7 @@ import (
 )
 
 func optBySymbol(xSymbol, ySymbol string, writer *common.InfluxWriter, measurement string) (map[string]Result, error) {
-	//fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210910-20210919-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
-	fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210910-20210915-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
+	fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210820-20210916-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
 	f, err := os.OpenFile(fileName, os.O_RDONLY, 0600)
 	if err != nil {
 		return nil, err
@@ -67,24 +66,26 @@ func optBySymbol(xSymbol, ySymbol string, writer *common.InfluxWriter, measureme
 
 	outputMap := make(map[string]Result)
 
-	for i := 0.0; i <= 4.0; i += 1.0 {
-		for j := 1.0; j <= 1.0; j += 1.0 {
+	for i := 1.0; i <= 3.0; i += 1.0 {
+		for j := 1.0; j <= 3.0; j += 1.0 {
 			params := Params{
 				XSymbol:        xSymbol,
 				YSymbol:        ySymbol,
-				EnterOffset:    0.0005 * i,
-				LeaveOffset:    -0.000,
+				EnterOffset:    0.001 * i,
+				LeaveOffset:    0.000,
+				StopLoss:       -0.01 * j,
 				FrFactor:       0.8,
 				StartValue:     10000,
-				EnterStep:      0.1 * j,
-				enterInterval:  time.Second * 5,
+				EnterStep:      0.1,
+				enterInterval:  time.Second,
 				OutputInterval: time.Minute,
 				BestSizeFactor: 8.0,
 				Leverage:       1.0,
 				TradeCost:      -0.0006,
 				MaxFundingRate: 0.003,
 			}
-			result := strategyB(params, data)
+			var result *Result
+			result = strategyA(params, data)
 			std, err := stats.StandardDeviation(result.NetWorth)
 			if err != nil {
 				logger.Debugf("error %v", err)
@@ -95,10 +96,10 @@ func optBySymbol(xSymbol, ySymbol string, writer *common.InfluxWriter, measureme
 			} else {
 				outputMap[string(paramsContent)] = *result
 			}
-			fmt.Printf("%s ENTER OFFSET %.4f STEP %.4f MFR %.4f NW %.4f SR %.4f TV %.2f\n",
+			fmt.Printf("%s ENTER %.4f STOP %.2f MFR %.4f NW %.4f SR %.4f TV %.2f\n",
 				result.Params.XSymbol,
 				result.Params.EnterOffset,
-				result.Params.EnterStep,
+				result.Params.StopLoss,
 				result.Params.MaxFundingRate,
 				result.NetWorth[len(result.NetWorth)-1],
 				(result.NetWorth[len(result.NetWorth)-1]-1.0)/std,
@@ -117,8 +118,8 @@ func optBySymbol(xSymbol, ySymbol string, writer *common.InfluxWriter, measureme
 						measurement,
 						map[string]string{
 							"xSymbol":     xSymbol,
-							"enterOffset": fmt.Sprintf("%.4f", result.Params.EnterOffset),
-							"enterStep":   fmt.Sprintf("%.4f", result.Params.EnterStep),
+							"enterOffset": fmt.Sprintf("%.3f", result.Params.EnterOffset),
+							"stopLoss":    fmt.Sprintf("%.2f", result.Params.StopLoss),
 						},
 						fields,
 						eventTime,
@@ -148,20 +149,22 @@ func main() {
 	}
 	defer iw.Stop()
 
-	dataPath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q-t-opt/configs/bnus-bnuf-opt/"
-	symbolsMap := map[string]string{}
-	symbols := make([]string, 0)
-	for symbol := range binance_usdtspot.TickSizes {
-		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(symbol, "USDT", "USDT", -1)]; ok {
+	outputPath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-xt-q/configs/kcuf-bnuf-xt/"
+	symbolsMap := map[string]string{
+		"XBTUSDTM": "BTCUSDT",
+	}
+	symbols := []string{"XBTUSDTM"}
+	for symbol := range kucoin_usdtfuture.TickSizes {
+		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(symbol, "USDTM", "USDT", -1)]; ok {
 			symbols = append(symbols, symbol)
-			symbolsMap[symbol] = strings.Replace(symbol, "USDT", "USDT", -1)
+			symbolsMap[symbol] = strings.Replace(symbol, "USDTM", "USDT", -1)
 		}
 	}
 	sort.Strings(symbols)
-	symbols = []string{"VETUSDT"}
+	//symbols = []string{"VETUSDTM"}
 	for _, xSymbol := range symbols {
 		ySymbol := symbolsMap[xSymbol]
-		outputPath := fmt.Sprintf("%s%s-%s.json", dataPath, xSymbol, ySymbol)
+		outputPath := fmt.Sprintf("%s%s-%s.json", outputPath, xSymbol, ySymbol)
 
 		_, err := os.Stat(outputPath)
 		if err != nil && !os.IsNotExist(err) {
@@ -171,7 +174,7 @@ func main() {
 			continue
 		}
 
-		output, err := optBySymbol(xSymbol, ySymbol, iw, "bnus-bnuf-opt-q-t")
+		output, err := optBySymbol(xSymbol, ySymbol, iw, "kcuf-bnuf-xt")
 		if err != nil {
 			logger.Debugf("optBySymbol error %v", err)
 		} else {

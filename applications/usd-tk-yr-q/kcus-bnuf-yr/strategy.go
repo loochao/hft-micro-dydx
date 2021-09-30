@@ -34,6 +34,8 @@ func strategyA(
 	endTime := startTime
 
 	//logger.Debugf("%v", endTime)
+	var lastXAskPrice, lastXBidPrice *float64
+	var lastYAskPrice, lastYBidPrice *float64
 
 	for _, spread := range data {
 		if spread == nil {
@@ -48,25 +50,77 @@ func strategyA(
 		eventTime = time.Unix(0, spread.EventTime)
 		endTime = eventTime
 
+		if lastXAskPrice == nil {
+			lastXAskPrice = new(float64)
+			*lastXAskPrice = spread.XAskPrice
+		}
+		if lastXBidPrice == nil {
+			lastXBidPrice = new(float64)
+			*lastXBidPrice = spread.XBidPrice
+		}
+		if lastYAskPrice == nil {
+			lastYAskPrice = new(float64)
+			*lastYAskPrice = spread.YAskPrice
+		}
+		if lastYBidPrice == nil {
+			lastYBidPrice = new(float64)
+			*lastYBidPrice = spread.YBidPrice
+		}
+
+		ignore := false
+		if math.Abs(*lastXAskPrice-spread.XAskPrice) / *lastXAskPrice > 0.5 {
+			//fmt.Printf("%v %s bad XAskPrice %f -> %f\n", eventTime, params.XSymbol, *lastXAskPrice, spread.XAskPrice)
+			ignore = true
+		}
+		if math.Abs(*lastXBidPrice-spread.XBidPrice) / *lastXBidPrice > 0.5 {
+			//fmt.Printf("%v %s bad XBidPrice %f -> %f\n", eventTime,params.XSymbol, *lastXBidPrice, spread.XBidPrice)
+			ignore = true
+		}
+		if math.Abs(*lastYAskPrice-spread.YAskPrice) / *lastYAskPrice > 0.5 {
+			//fmt.Printf("%v %s bad YAskPrice %f -> %f\n", eventTime,params.YSymbol, *lastYAskPrice, spread.YAskPrice)
+			ignore = true
+		}
+		if math.Abs(*lastYBidPrice-spread.YBidPrice) / *lastYBidPrice > 0.5 {
+			//fmt.Printf("%v %s bad YBidPrice %f -> %f\n", eventTime,params.YSymbol, *lastYBidPrice, spread.YBidPrice)
+			ignore = true
+		}
+		if ignore {
+			//数据有错，直接平仓
+			if yPosition.Size > 0 {
+				tradeVolume += math.Abs(yPosition.Size * *lastYBidPrice)
+				currentYValue += yPosition.Size * *lastYBidPrice * params.TradeCost
+				currentYValue += yPosition.Add(-yPosition.Size, *lastYBidPrice)
+			}else if yPosition.Size < 0 {
+				tradeVolume += math.Abs(yPosition.Size * *lastYAskPrice)
+				currentYValue += -yPosition.Size * *lastYAskPrice * params.TradeCost
+				currentYValue += yPosition.Add(-yPosition.Size, *lastYAskPrice)
+			}
+			continue
+		}
+		*lastXAskPrice = spread.XAskPrice
+		*lastXBidPrice = spread.XBidPrice
+		*lastYAskPrice = spread.YAskPrice
+		*lastYBidPrice = spread.YBidPrice
+
 		unrealisedYPnl := yPosition.GetUnrealisedPnl((spread.YBidPrice + spread.YAskPrice) * 0.5)
 
 		if eventTime.Sub(enterSilentTime) > 0 {
-			shortTop := spread.SpreadQuantile50 + params.EnterOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
-			shortBot := spread.SpreadQuantile50 + params.LeaveOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
+			shortTop := spread.SpreadQuantile50 + params.EnterOffset - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
+			shortBot := spread.SpreadQuantile50 + params.LeaveOffset - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
 
-			longTop := spread.SpreadQuantile50 - params.LeaveOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
-			longBot := spread.SpreadQuantile50 - params.EnterOffset  - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
+			longTop := spread.SpreadQuantile50 - params.LeaveOffset - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
+			longBot := spread.SpreadQuantile50 - params.EnterOffset - params.FrFactor*(spread.YFundingRate-spread.XFundingRate)
 
 			frClose := math.Abs(spread.XFundingRate) > params.MaxFundingRate ||
 				math.Abs(spread.YFundingRate) > params.MaxFundingRate ||
 				math.Abs(spread.XFundingRate-spread.YFundingRate) > params.MaxFundingRate
 
 			shortBotClose := spread.ShortMedianSpread < shortBot &&
-				spread.ShortMedianSpread < spread.SpreadQuantile05 &&
+				spread.ShortMedianSpread < spread.SpreadQuantile20 &&
 				spread.ShortLastSpread <= spread.ShortMedianSpread
 
 			longTopClose := spread.LongMedianSpread > longTop &&
-				spread.LongMedianSpread > spread.SpreadQuantile95 &&
+				spread.LongMedianSpread > spread.SpreadQuantile80 &&
 				spread.LongLastSpread >= spread.LongMedianSpread
 
 			shortTopOpen := spread.ShortMedianSpread > shortTop &&
@@ -79,7 +133,7 @@ func strategyA(
 
 			if yPosition.Size > 0 &&
 				(frClose || shortBotClose) {
-				tradeValue := spread.YBidPrice*spread.YBidSize*params.BestSizeFactor
+				tradeValue := spread.YBidPrice * spread.YBidSize * params.BestSizeFactor
 				tradeYSize := math.Min(
 					tradeValue/spread.YBidPrice,
 					yPosition.Size,
@@ -90,7 +144,7 @@ func strategyA(
 				enterSilentTime = eventTime.Add(params.enterInterval)
 			} else if yPosition.Size < 0 &&
 				(frClose || longTopClose) {
-				tradeValue := spread.YBidPrice*spread.YBidSize*params.BestSizeFactor
+				tradeValue := spread.YBidPrice * spread.YBidSize * params.BestSizeFactor
 				tradeYSize := math.Min(
 					tradeValue/spread.YAskPrice,
 					-yPosition.Size,
@@ -104,7 +158,7 @@ func strategyA(
 				yPosition.Size >= 0 &&
 				unrealisedYPnl >= 0 {
 				freeUSD := currentYValue - math.Abs(yPosition.Size*yPosition.Price/params.Leverage)
-				tradeValue := spread.YBidPrice*spread.YBidSize*params.BestSizeFactor
+				tradeValue := spread.YBidPrice * spread.YBidSize * params.BestSizeFactor
 				tradeValue = math.Min(freeUSD*params.EnterStep, tradeValue)
 				if freeUSD < tradeValue/params.Leverage {
 					continue
@@ -118,7 +172,7 @@ func strategyA(
 				yPosition.Size <= 0 &&
 				unrealisedYPnl >= 0 {
 				freeUSD := currentYValue - math.Abs(yPosition.Size*yPosition.Price/params.Leverage)
-				tradeValue := spread.YAskPrice*spread.YAskSize*params.BestSizeFactor
+				tradeValue := spread.YAskPrice * spread.YAskSize * params.BestSizeFactor
 				tradeValue = math.Min(freeUSD*params.EnterStep, tradeValue)
 				if freeUSD < tradeValue/params.Leverage {
 					continue

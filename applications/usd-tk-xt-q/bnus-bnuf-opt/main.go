@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
+	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/influx/client"
-	kucoin_usdtfuture "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/montanaflynn/stats"
 	"io"
@@ -21,7 +21,9 @@ import (
 )
 
 func optBySymbol(xSymbol, ySymbol string, writer *common.InfluxWriter, measurement string) (map[string]Result, error) {
-	fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210820-20210916-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
+	//fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210910-20210919-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
+	//fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210910-20210915-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
+	fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210820-20210926-%s-%s-24h0m0s-3s-25ms.gz", xSymbol, ySymbol)
 	f, err := os.OpenFile(fileName, os.O_RDONLY, 0600)
 	if err != nil {
 		return nil, err
@@ -66,24 +68,24 @@ func optBySymbol(xSymbol, ySymbol string, writer *common.InfluxWriter, measureme
 
 	outputMap := make(map[string]Result)
 
-	for i := 1.0; i <= 4.0; i += 1.0 {
-		for j := 1.0; j <= 2.0; j += 1.0 {
+	for i := 0.0; i <= 8.0; i += 1.0 {
+		for j := 1.0; j <= 1.0; j += 1.0 {
 			params := Params{
 				XSymbol:        xSymbol,
 				YSymbol:        ySymbol,
-				EnterOffset:    0.0005 * i,
-				LeaveOffset:    0.001,
+				EnterOffset:    0.00025 * i,
+				LeaveOffset:    -0.000,
 				FrFactor:       0.8,
 				StartValue:     10000,
-				EnterStep:      0.1*j,
+				EnterStep:      0.1 * j,
 				enterInterval:  time.Second * 5,
 				OutputInterval: time.Minute,
 				BestSizeFactor: 8.0,
 				Leverage:       1.0,
-				TradeCost:      -0.0006,
+				TradeCost:      -0.0004,
 				MaxFundingRate: 0.003,
 			}
-			result := strategyA(params, data)
+			result := strategyB(params, data)
 			std, err := stats.StandardDeviation(result.NetWorth)
 			if err != nil {
 				logger.Debugf("error %v", err)
@@ -117,7 +119,7 @@ func optBySymbol(xSymbol, ySymbol string, writer *common.InfluxWriter, measureme
 						map[string]string{
 							"xSymbol":     xSymbol,
 							"enterOffset": fmt.Sprintf("%.4f", result.Params.EnterOffset),
-							"enterStep": fmt.Sprintf("%.4f", result.Params.EnterStep),
+							"enterStep":   fmt.Sprintf("%.4f", result.Params.EnterStep),
 						},
 						fields,
 						eventTime,
@@ -147,19 +149,23 @@ func main() {
 	}
 	defer iw.Stop()
 
-	dataPath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q-t/configs/kcuf-bnuf-xt/"
-	symbolsMap := map[string]string{
-		"XBTUSDTM": "BTCUSDT",
-	}
-	symbols := []string{"XBTUSDTM"}
-	for symbol := range kucoin_usdtfuture.TickSizes {
-		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(symbol, "USDTM", "USDT", -1)]; ok {
+	dataPath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-xt-q/configs/bnus-bnuf-opt/"
+	symbolsMap := map[string]string{}
+	symbols := make([]string, 0)
+	for symbol := range binance_usdtspot.TickSizes {
+		if _, ok := binance_usdtfuture.TickSizes[strings.Replace(symbol, "USDT", "USDT", -1)]; ok {
 			symbols = append(symbols, symbol)
-			symbolsMap[symbol] = strings.Replace(symbol, "USDTM", "USDT", -1)
+			symbolsMap[symbol] = strings.Replace(symbol, "USDT", "USDT", -1)
 		}
 	}
 	sort.Strings(symbols)
-	symbols = []string{"VETUSDTM"}
+	symbols = []string{"1INCHUSDT"}
+	symbols = []string{"BNBUSDT"}
+	symbols = []string{"DOTUSDT"}
+	symbols = []string{"DOGEUSDT"}
+	symbols = []string{"BCHUSDT", "ENJUSDT", "AAVEUSDT", "DASHUSDT"}
+	symbols = []string{"ETHUSDT"}
+	symbols = []string{"BTCUSDT"}
 	for _, xSymbol := range symbols {
 		ySymbol := symbolsMap[xSymbol]
 		outputPath := fmt.Sprintf("%s%s-%s.json", dataPath, xSymbol, ySymbol)
@@ -172,7 +178,7 @@ func main() {
 			continue
 		}
 
-		output, err := optBySymbol(xSymbol, ySymbol, nil, "kcuf-bnuf-xt-q-t")
+		output, err := optBySymbol(xSymbol, ySymbol, iw, "bnus-bnuf-opt-q-t")
 		if err != nil {
 			logger.Debugf("optBySymbol error %v", err)
 		} else {
