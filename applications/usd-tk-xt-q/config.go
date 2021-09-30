@@ -58,6 +58,7 @@ type Config struct {
 	EnterSlippage    float64            `yaml:"enterSlippage"`
 	EnterMinimalStep float64            `yaml:"enterMinimalStep"`
 	StopLoss         float64            `yaml:"stopLoss"`
+	MaxPositionValue float64            `yaml:"maxPositionValue"`
 	StartValues      map[string]float64 `yaml:"startValues"`
 
 	OrderTimeout      time.Duration           `yaml:"orderTimeout"`
@@ -120,5 +121,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.XOrderTimeInForce == "" {
 		config.XOrderTimeInForce = common.OrderTimeInForceFOK
+	}
+	if config.MaxPositionValue <= 0 {
+		config.MaxPositionValue = config.StartValue
 	}
 }

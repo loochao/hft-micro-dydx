@@ -69,6 +69,7 @@ func (strat *XYStrategy) updateXPosition() {
 		)
 	}
 
+
 	shortBotClose := strat.spread.ShortMedianLeave < strat.shortBot &&
 		strat.spread.ShortMedianLeave < *strat.quantile20 &&
 		strat.spread.ShortLastLeave <= strat.spread.ShortMedianLeave
@@ -201,6 +202,7 @@ func (strat *XYStrategy) updateXPosition() {
 		!frClose &&
 		shortTopOpen &&
 		pnlPct >= 0 &&
+		strat.xAbsValue < strat.config.MaxPositionValue &&
 		strat.xSize > -strat.xStepSize*strat.xMultiplier {
 
 		strat.enterValue = strat.enterStep
@@ -284,6 +286,7 @@ func (strat *XYStrategy) updateXPosition() {
 		!frClose &&
 		longBotOpen &&
 		pnlPct >= 0 &&
+		strat.xAbsValue < strat.config.MaxPositionValue &&
 		strat.xSize < strat.xStepSize*strat.xMultiplier {
 
 		strat.enterValue = strat.enterStep
