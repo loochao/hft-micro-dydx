@@ -46,13 +46,14 @@ func maxDrawDown(values []float64) float64 {
 }
 
 func TestSelectParams(t *testing.T) {
-	dataPath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q-t/configs/kcuf-bnuf-xt/"
+	dataPath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-xt-q/configs/kcuf-bnuf-xt/"
 	files, err := ioutil.ReadDir(dataPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	pnls := make(map[string]float64)
 	pnlsBySymbol := make(map[string]map[string]float64)
+	turnoverBySymbol := make(map[string]map[string]float64)
 	sharpeRatiosBySymbol := make(map[string]map[string]float64)
 	for _, file := range files {
 		xSymbol := strings.Split(file.Name(), "-")[0]
@@ -68,20 +69,22 @@ func TestSelectParams(t *testing.T) {
 		}
 		pnlsBySymbol[xSymbol] = make(map[string]float64)
 		sharpeRatiosBySymbol[xSymbol] = make(map[string]float64)
+		turnoverBySymbol[xSymbol] = make(map[string]float64)
 		for paramStr, result := range dm {
 			param := &Params{}
 			err = json.Unmarshal([]byte(paramStr), param)
 			if err != nil {
 				t.Fatal(err)
 			}
-			pnlKey := fmt.Sprintf("%.4f-%.4f", param.EnterOffset, param.EnterStep)
+			pnlKey := fmt.Sprintf("%.4f-%.4f", param.EnterOffset, param.StopLoss)
 			pnlsBySymbol[xSymbol][pnlKey] = result.NetWorth[len(result.NetWorth)-1] - 1.0
+			turnoverBySymbol[xSymbol][pnlKey] = result.Turnover
 			std, err := stats.StandardDeviation(result.NetWorth)
 			if err != nil {
 				logger.Debugf("error %v", err)
 			}
-			md := maxDrawDown(result.NetWorth)
-			logger.Debugf("%s %s %f MD %f SR1 %f SR2 %f", xSymbol, pnlKey, result.NetWorth[len(result.NetWorth)-1], md, (result.NetWorth[len(result.NetWorth)-1]-1.0)/std, (result.NetWorth[len(result.NetWorth)-1]-1.0)/md)
+			//md := maxDrawDown(result.NetWorth)
+			//logger.Debugf("%s %s %f MD %f SR1 %f SR2 %f", xSymbol, pnlKey, result.NetWorth[len(result.NetWorth)-1], md, (result.NetWorth[len(result.NetWorth)-1]-1.0)/std, (result.NetWorth[len(result.NetWorth)-1]-1.0)/md)
 			sharpeRatiosBySymbol[xSymbol][pnlKey] = (result.NetWorth[len(result.NetWorth)-1] - 1.0) / std
 			if _, ok := pnls[pnlKey]; ok {
 				//pnls[pnlKey] += result.Turnover * (result.NetWorth[len(result.NetWorth)-1] - 1.0)
@@ -114,12 +117,12 @@ func TestSelectParams(t *testing.T) {
 		}
 	}
 
-	pnlKey := "0.0020-0.2000"
+	pnlKey := "0.0020--0.0100"
+
 	for _, file := range files {
 		xSymbol := strings.Split(file.Name(), "-")[0]
-		if pnlsBySymbol[xSymbol][pnlKey] > 0.01 || sharpeRatiosBySymbol[xSymbol][pnlKey] > 2.0 {
-			fmt.Printf("  %s: %s\n", xSymbol, symbolsMap[xSymbol])
-			//fmt.Printf("  %s: %.4f %.4f\n", xSymbol, pnlsBySymbol[xSymbol][pnlKey], sharpeRatiosBySymbol[xSymbol][pnlKey])
+		if pnlsBySymbol[xSymbol][pnlKey] > 0.00  {
+			fmt.Printf("  %s: %.4f %.4f %.2f\n", xSymbol, pnlsBySymbol[xSymbol][pnlKey], sharpeRatiosBySymbol[xSymbol][pnlKey], turnoverBySymbol[xSymbol][pnlKey])
 		}
 	}
 
@@ -128,6 +131,15 @@ func TestSelectParams(t *testing.T) {
 		xSymbol := strings.Split(file.Name(), "-")[0]
 		if pnlsBySymbol[xSymbol][pnlKey] <= -0.01 {
 			fmt.Printf("%s: %.4f\n", xSymbol, pnlsBySymbol[xSymbol][pnlKey])
+		}
+	}
+
+	fmt.Printf("\n\n")
+	for _, file := range files {
+		xSymbol := strings.Split(file.Name(), "-")[0]
+		if pnlsBySymbol[xSymbol][pnlKey] > 0.01 || sharpeRatiosBySymbol[xSymbol][pnlKey] > 1.0 {
+			fmt.Printf("  %s: %s\n", xSymbol, symbolsMap[xSymbol])
+			//fmt.Printf("  %s: %.4f %.4f\n", xSymbol, pnlsBySymbol[xSymbol][pnlKey], sharpeRatiosBySymbol[xSymbol][pnlKey])
 		}
 	}
 }

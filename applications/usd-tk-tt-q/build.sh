@@ -36,6 +36,9 @@ echo "" && echo "" && echo "arm1"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm1:/usr/local/bin/
 rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" arm1:/usr/local/bin/
 
+echo "" && echo "" && echo "arm2"
+rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm2:/usr/local/bin/
+
 echo "" && echo "" && echo "arm4"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm4:/usr/local/bin/
 
