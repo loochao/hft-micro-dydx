@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"hash/crc32"
 	"math"
 	"strconv"
@@ -354,6 +355,7 @@ func (account *Account) UnmarshalJSON(data []byte) error {
 	} else {
 		account.ParseTime = time.Now()
 	}
+	logger.Debugf("USD ACCOUNT %f %f %f", account.TotalAccountValue, account.FreeCollateral, account.CollateralUsed)
 	return nil
 }
 func (account *Account) GetTime() time.Time {

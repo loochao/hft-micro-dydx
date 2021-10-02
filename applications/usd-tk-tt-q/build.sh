@@ -19,6 +19,9 @@ git push origin "usd-tk-tt-q.$dt" --force
 
 chmod 755 "./dist/usd-tk-tt-q.amd64.$dt"
 
+echo "" && echo "" && echo "arm5"
+rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm5:/usr/local/bin/
+
 echo "hk05"
 rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" hk05:/usr/local/bin/
 
@@ -32,6 +35,7 @@ ssh hk07 "rsync -avx --progress /usr/local/bin//usd-tk-tt-q.amd64.$dt hk06:/usr/
 #rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" vc001:/usr/local/bin/
 
 
+
 echo "" && echo "" && echo "arm1"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm1:/usr/local/bin/
 rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" arm1:/usr/local/bin/
@@ -42,8 +46,6 @@ rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm2:/usr/local/bin/
 echo "" && echo "" && echo "arm4"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm4:/usr/local/bin/
 
-echo "" && echo "" && echo "arm5"
-rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm5:/usr/local/bin/
 
 
 echo "" && echo "" && echo "tk01"
