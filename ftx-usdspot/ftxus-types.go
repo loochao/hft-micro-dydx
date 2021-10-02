@@ -274,6 +274,22 @@ type Balance struct {
 	EventTime              time.Time `json:"-"`
 }
 
+func (position *Balance) GetCurrency() string {
+	return position.Coin
+}
+
+func (position *Balance) GetBalance() float64 {
+	return position.Total
+}
+
+func (position *Balance) GetFree() float64 {
+	return position.Free
+}
+
+func (position *Balance) GetUsed() float64 {
+	return position.Total - position.Free
+}
+
 func (position *Balance) GetExchange() common.ExchangeID {
 	return ExchangeID
 }

@@ -106,8 +106,8 @@ func (ftx *FtxUsdSpot) StreamBasic(
 	internalBalances := make(map[string]Balance)
 	internalBalancesCh := make(chan []Balance, 100)
 	go ftx.balancesLoop(ctx, markets, internalBalancesCh)
-	internalAccountCh := make(chan *Account, 100)
-	go ftx.accountLoop(ctx, internalAccountCh)
+	//internalAccountCh := make(chan *Account, 100)
+	//go ftx.accountLoop(ctx, internalAccountCh)
 
 	logSilentTime := time.Now()
 
@@ -168,21 +168,33 @@ func (ftx *FtxUsdSpot) StreamBasic(
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
-		case a := <-internalAccountCh:
-			if a != nil {
-				outputAccount := *a
-				select {
-				case accountCh <- &outputAccount:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("accountCh <- &internalAccount failed, ch len %d", len(accountCh))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
-				}
-			}
+		//case a := <-internalAccountCh:
+		//	if a != nil {
+		//		outputAccount := *a
+		//		select {
+		//		case accountCh <- &outputAccount:
+		//		default:
+		//			if time.Now().Sub(logSilentTime) > 0 {
+		//				logger.Debugf("accountCh <- &internalAccount failed, ch len %d", len(accountCh))
+		//				logSilentTime = time.Now().Add(time.Minute)
+		//			}
+		//		}
+		//	}
 		case ps := <-internalBalancesCh:
 			for _, p := range ps {
 				p := p
+				if p.Coin == "USD" {
+					logger.Debugf("%v", p)
+					select {
+					case accountCh <- &p:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("accountCh <- &p failed, ch len %d", len(accountCh))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
+					}
+					continue
+				}
 				if oldP, ok := internalBalances[p.GetSymbol()]; ok {
 					if oldP.ParseTime.Sub(p.ParseTime) < 0 {
 						internalBalances[p.GetSymbol()] = p
