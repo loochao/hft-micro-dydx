@@ -520,7 +520,7 @@ func (ftx *FtxUsdSpot) balancesLoop(ctx context.Context, markets []string, balan
 				hasBalances := map[string]bool{}
 				outBalances := make([]Balance, 0)
 				for _, balance := range balances {
-					hasBalances[balance.Coin] = true
+					hasBalances[balance.GetSymbol()] = true
 					balance := balance
 					outBalances = append(outBalances, balance)
 				}

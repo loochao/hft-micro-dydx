@@ -360,10 +360,11 @@ func (account *Account) GetTime() time.Time {
 	return account.ParseTime
 }
 func (account *Account) GetCurrency() string {
-	return "USDT"
+	return "USD"
 }
 func (account *Account) GetBalance() float64 {
-	return account.TotalAccountValue
+	//return account.TotalAccountValue
+	return account.FreeCollateral
 }
 func (account *Account) GetFree() float64 {
 	return account.FreeCollateral
