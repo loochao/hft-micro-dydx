@@ -184,7 +184,7 @@ func (ftx *FtxUsdSpot) StreamBasic(
 			for _, p := range ps {
 				p := p
 				if p.Coin == "USD" {
-					logger.Debugf("%v", p)
+					//logger.Debugf("%v", p)
 					select {
 					case accountCh <- &p:
 					default:
