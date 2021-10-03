@@ -283,7 +283,7 @@ func (w *RawDepth25WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, 
 	}()
 	symbolTimeout := time.Minute
 	symbolCheckInterval := time.Second * 5
-	symbolResetInterval := time.Minute * 5
+	symbolResetInterval := time.Minute * 15
 	symbolCheckTimer := time.NewTimer(time.Second)
 	defer symbolCheckTimer.Stop()
 
