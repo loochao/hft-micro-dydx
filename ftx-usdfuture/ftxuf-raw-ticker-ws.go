@@ -81,7 +81,7 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 	pool := [4096]*common.RawMessage{}
 	for i := 0; i < 4096; i++ {
 		pool[i] = &common.RawMessage{
-			Source: w.source,
+			Prefix: w.source,
 		}
 	}
 	for {

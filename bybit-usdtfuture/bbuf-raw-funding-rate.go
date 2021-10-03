@@ -1,8 +1,7 @@
-package ftx_usdfuture
+package bybit_usdtfuture
 
 import (
 	"context"
-	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"net/http"
@@ -12,10 +11,10 @@ import (
 func StreamRawFundingRate(
 	ctx context.Context,
 	proxyAddress string,
-	source []byte,
+	prefix []byte,
 	channels map[string]chan *common.RawMessage,
 ) {
-	api, err := NewAPI("", "", "",proxyAddress)
+	api, err := NewAPI("", "", "", proxyAddress)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -32,7 +31,7 @@ func StreamRawFundingRate(
 	pool := [4096]*common.RawMessage{}
 	for i := 0; i < 4096; i++ {
 		pool[i] = &common.RawMessage{
-			Prefix: source,
+			Prefix: prefix,
 		}
 	}
 	var msg []byte
@@ -46,7 +45,13 @@ func StreamRawFundingRate(
 			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
 			for symbol, ch := range channels {
 				subCtx, _ = context.WithTimeout(ctx, time.Minute)
-				msg, err = api.SendRawHTTPRequest(subCtx, http.MethodGet, fmt.Sprintf("/futures/%s/stats", symbol), nil)
+				msg, err = api.SendRawHTTPRequest(
+					subCtx,
+					http.MethodGet,
+					"/public/linear/funding/prev-funding-rate", &PrevFundingRateParam{
+						Symbol: symbol,
+					},
+				)
 				if err != nil {
 					logger.Debugf("api.GetCurrentFundingRate error %v", err)
 				} else {
@@ -72,7 +77,13 @@ func StreamRawFundingRate(
 		case <-timer.C:
 			for symbol, ch := range channels {
 				subCtx, _ = context.WithTimeout(ctx, time.Minute)
-				msg, err = api.SendRawHTTPRequest(subCtx, http.MethodGet, fmt.Sprintf("/futures/%s/stats", symbol), nil)
+				msg, err = api.SendRawHTTPRequest(
+					subCtx,
+					http.MethodGet,
+					"/public/linear/funding/prev-funding-rate", &PrevFundingRateParam{
+						Symbol: symbol,
+					},
+				)
 				if err != nil {
 					logger.Debugf("api.GetCurrentFundingRate error %v", err)
 				} else {

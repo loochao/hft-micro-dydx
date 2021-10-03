@@ -15,7 +15,7 @@ import (
 )
 
 type RawMessage struct {
-	Source []byte
+	Prefix []byte
 	Data   []byte
 	Time   int64
 }
@@ -97,7 +97,7 @@ func RawWSMessageSaveLoop(
 			)
 		case msg = <-messageInputCh:
 			if gw != nil {
-				_, err = gw.Write(msg.Source)
+				_, err = gw.Write(msg.Prefix)
 				if err != nil {
 					cancel()
 					logger.Debugf("gw.Write error %v, stop ws", err)

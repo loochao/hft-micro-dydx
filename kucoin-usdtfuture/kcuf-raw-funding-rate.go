@@ -34,7 +34,7 @@ func StreamRawFundingRate(
 	pool := [4096]*common.RawMessage{}
 	for i := 0; i < 4096; i++ {
 		pool[i] = &common.RawMessage{
-			Source: source,
+			Prefix: source,
 		}
 	}
 	var msg []byte

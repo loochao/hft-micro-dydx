@@ -10,6 +10,22 @@ import (
 	"testing"
 )
 
+func TestAPI_GetAccount(t *testing.T) {
+	api, err := NewAPI(&common.Credentials{
+		Key:    os.Getenv("BN_TEST_MASTER_KEY"),
+		Secret: os.Getenv("BN_TEST_MASTER_SECRET"),
+	}, os.Getenv("BN_TEST_MASTER_PROXY"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	account, _, err := api.GetAccount(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%v", account)
+}
+
 func TestAPI_QuerySubAccountList(t *testing.T) {
 	api, err := NewAPI(&common.Credentials{
 		Key:    os.Getenv("BN_TEST_MASTER_KEY"),
@@ -97,9 +113,32 @@ func TestAPI_SubAccountUniversalTransfer(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			logger.Debugf("%s %f transId: %d",  b.Asset, b.WalletBalance, resp.TranId)
+			logger.Debugf("%s %f transId: %d", b.Asset, b.WalletBalance, resp.TranId)
 		}
 	}
+}
+
+func TestAPI_SpotMainToSubSpot(t *testing.T) {
+	api, err := NewAPI(&common.Credentials{
+		Key:    os.Getenv("BN_TEST_MASTER_KEY"),
+		Secret: os.Getenv("BN_TEST_MASTER_SECRET"),
+	}, os.Getenv("BN_TEST_MASTER_PROXY"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	resp, _, err := api.SubAccountUniversalTransfer(ctx, SubAccountUniversalTransferParams{
+		FromEmail:       "visioncapital2021@protonmail.com",
+		ToEmail:         "fund3@vf2021.com",
+		FromAccountType: SubAccountTypeSpot,
+		ToAccountType:   SubAccountTypeSpot,
+		Asset:           "USDT",
+		Amount:          40000,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("USDT 40000 transId: %d", resp.TranId)
 }
 
 func TestAPI_SpotFund6ToFund1(t *testing.T) {
@@ -131,7 +170,7 @@ func TestAPI_SpotFund6ToFund1(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			logger.Debugf("%s %f transId: %d",  b.Asset, b.Free, resp.TranId)
+			logger.Debugf("%s %f transId: %d", b.Asset, b.Free, resp.TranId)
 		}
 	}
 }
@@ -164,7 +203,7 @@ func TestAPI_FutureFund6ToFund1(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			logger.Debugf("%s %f transId: %d",  b.Asset, b.WalletBalance, resp.TranId)
+			logger.Debugf("%s %f transId: %d", b.Asset, b.WalletBalance, resp.TranId)
 		}
 	}
 }
@@ -198,7 +237,7 @@ func TestAPI_SpotFund4ToFund10(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			logger.Debugf("%s %f transId: %d",  b.Asset, b.Free, resp.TranId)
+			logger.Debugf("%s %f transId: %d", b.Asset, b.Free, resp.TranId)
 		}
 	}
 }
@@ -232,12 +271,10 @@ func TestAPI_SpotFund11ToFund10(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			logger.Debugf("%s %f transId: %d",  b.Asset, b.Free, resp.TranId)
+			logger.Debugf("%s %f transId: %d", b.Asset, b.Free, resp.TranId)
 		}
 	}
 }
-
-
 
 func TestAPI_SpotFund10(t *testing.T) {
 	api, err := NewAPI(&common.Credentials{
@@ -297,7 +334,6 @@ func TestAPI_QuerySubAccountFuturePositionRisk2(t *testing.T) {
 	}
 	ctx := context.Background()
 
-
 	account, _, err := api.QuerySubAccountAssets(ctx, SubAccountParams{
 		"fund10@vf2021.com",
 	})
@@ -311,7 +347,6 @@ func TestAPI_QuerySubAccountFuturePositionRisk2(t *testing.T) {
 		}
 	}
 
-
 	positionRisks, _, err := api.QuerySubAccountFuturePositionRisk(ctx, SubAccountParams{
 		"fund10@vf2021.com",
 	})
@@ -322,8 +357,8 @@ func TestAPI_QuerySubAccountFuturePositionRisk2(t *testing.T) {
 		if b.PositionAmount != 0 {
 			if _, ok := spot[strings.Replace(b.Symbol, "USDT", "BUSD", -1)]; !ok {
 				logger.Debugf("%s", b.Symbol)
-			//}else if size != -b.PositionAmount {
-			//	logger.Debugf("%s %f %f", b.Symbol, size, -b.PositionAmount)
+				//}else if size != -b.PositionAmount {
+				//	logger.Debugf("%s %f %f", b.Symbol, size, -b.PositionAmount)
 			}
 		}
 	}

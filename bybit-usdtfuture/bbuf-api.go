@@ -100,6 +100,26 @@ func (api *API) SendHTTPRequest(ctx context.Context, method, path string, param 
 	return json.Unmarshal(dataCap.Result, result)
 }
 
+func (api *API) SendRawHTTPRequest(ctx context.Context, method, path string, param common.Params) ([]byte, error) {
+	path = api.url + path
+	values := url.Values{}
+	var err error
+	if param != nil {
+		values = param.ToUrlValues()
+	}
+	path = common.EncodeURLValues(path, values)
+	req, err := http.NewRequest(method, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := api.client.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+	reader := resp.Body
+	return ioutil.ReadAll(reader)
+}
+
 func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path string, param Param, result interface{}) error {
 	values := url.Values{}
 	if param != nil {
