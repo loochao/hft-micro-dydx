@@ -1,4 +1,4 @@
-package bybit_usdtfuture
+package dxdy_usdtfuture
 
 import (
 	"context"
@@ -15,16 +15,16 @@ import (
 	"time"
 )
 
-type RawDepth25WS struct {
-	writeCh       chan interface{}
-	done          chan interface{}
-	reconnectCh   chan interface{}
-	symbolCh      chan string
-	prefix        []byte
-	stopped       int32
+type RawDepthWS struct {
+	writeCh     chan interface{}
+	done        chan interface{}
+	reconnectCh chan interface{}
+	marketCh    chan string
+	prefix      []byte
+	stopped     int32
 }
 
-func (w *RawDepth25WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *RawDepthWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -66,13 +66,33 @@ func (w *RawDepth25WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 		}
 	}
 }
+func (w *RawDepthWS) findMarket(msg []byte) (string, error) {
+	collectStart := 0
+	collectEnd := 94
+	msgLen := len(msg)
+	for collectEnd < msgLen {
+		if collectStart != 0 {
+			if msg[collectEnd] == '"' {
+				return common.UnsafeBytesToString(msg[collectStart:collectEnd]), nil
+			}
+		} else if msg[collectEnd] == '"' &&
+			msg[collectEnd-1] == 'd' &&
+			msg[collectEnd-2] == 'i' &&
+			msg[collectEnd-3] == '"' {
+			collectEnd += 3
+			collectStart = collectEnd
+		}
+		collectEnd++
+	}
+	return "", fmt.Errorf("market not found")
+}
 
-func (w *RawDepth25WS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
+func (w *RawDepthWS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
 
-	var symbol string
+	var market string
 	var msg []byte
 	var err error
 	var ch chan *common.RawMessage
@@ -101,24 +121,17 @@ func (w *RawDepth25WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 			w.restart()
 			return
 		}
+		//logger.Debugf("%s", msg)
 		msgLen := len(msg)
-		if msgLen > 128 && msg[2] == 't' {
-			if msg[32] == '"' {
-				symbol = common.UnsafeBytesToString(msg[25:32])
-			} else if msg[31] == '"' {
-				symbol = common.UnsafeBytesToString(msg[25:31])
-			} else if msg[33] == '"' {
-				symbol = common.UnsafeBytesToString(msg[25:33])
-			} else if msg[34] == '"' {
-				symbol = common.UnsafeBytesToString(msg[25:34])
-			} else if msg[35] == '"' {
-				symbol = common.UnsafeBytesToString(msg[25:35])
-			} else {
-				if msgLen < 28 || msg[27] != 'p' {
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("other msg %s", msg)
-						logSilentTime = time.Now().Add(time.Minute)
-					}
+		if msgLen > 128 {
+			//if msg[9] == 's' {
+			//	logger.Debugf("%s", msg)
+			//}
+			market, err = w.findMarket(msg)
+			if err != nil {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("find market failed %s", msg)
+					logSilentTime = time.Now().Add(time.Minute)
 				}
 				continue
 			}
@@ -129,9 +142,9 @@ func (w *RawDepth25WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 			}
 			continue
 		}
-		if ch, ok = channels[symbol]; ok {
+		if ch, ok = channels[market]; ok {
 			index++
-			if index == bufferSize {
+			if index == 4096 {
 				index = 0
 			}
 			message = pool[index]
@@ -141,15 +154,15 @@ func (w *RawDepth25WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 			case ch <- message:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf(" ch <- message %s ch len %d", symbol, len(ch))
+					logger.Debugf(" ch <- message %s ch len %d", market, len(ch))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
 			select {
-			case w.symbolCh <- symbol:
+			case w.marketCh <- market:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("w.symbolCh <- symbol failed, ch len %d", len(w.symbolCh))
+					logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -157,7 +170,7 @@ func (w *RawDepth25WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 	}
 }
 
-func (w *RawDepth25WS) readAll(r io.Reader) ([]byte, error) {
+func (w *RawDepthWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -175,7 +188,7 @@ func (w *RawDepth25WS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *RawDepth25WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *RawDepthWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -220,15 +233,15 @@ func (w *RawDepth25WS) reconnect(ctx context.Context, wsUrl string, proxy string
 	return conn, nil
 }
 
-func (w *RawDepth25WS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.RawMessage) {
+func (w *RawDepthWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.RawMessage) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
-	symbols := make([]string, 0)
-	for symbol := range channels {
-		symbols = append(symbols, symbol)
+	markets := make([]string, 0)
+	for market := range channels {
+		markets = append(markets, market)
 	}
 	defer func() {
 		cancel()
@@ -258,7 +271,7 @@ func (w *RawDepth25WS) mainLoop(ctx context.Context, proxy string, channels map[
 				internalCancel()
 			}
 			internalCtx, internalCancel = context.WithCancel(ctx)
-			conn, err := w.reconnect(internalCtx, "wss://stream.bybit.com/realtime_public", proxy, 0)
+			conn, err := w.reconnect(internalCtx, "wss://api.dydx.exchange/v3/ws", proxy, 0)
 			if err != nil {
 				logger.Debugf("w.reconnect error %v", err)
 				internalCancel()
@@ -267,12 +280,12 @@ func (w *RawDepth25WS) mainLoop(ctx context.Context, proxy string, channels map[
 			}
 			go w.readLoop(conn, channels)
 			go w.writeLoop(internalCtx, conn)
-			go w.heartbeatLoop(internalCtx, conn, symbols)
+			go w.heartbeatLoop(internalCtx, conn, markets)
 		}
 	}
 }
 
-func (w *RawDepth25WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *RawDepthWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, markets []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -281,25 +294,39 @@ func (w *RawDepth25WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, 
 			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
-	symbolTimeout := time.Minute
-	symbolCheckInterval := time.Second * 5
-	symbolResetInterval := time.Minute * 15
-	symbolCheckTimer := time.NewTimer(time.Second)
-	defer symbolCheckTimer.Stop()
+	marketTimeout := time.Minute
+	marketCheckInterval := time.Second * 5
+	marketResetInterval := time.Minute * 5
+	marketCheckTimer := time.NewTimer(time.Second)
+	defer marketCheckTimer.Stop()
 
 	resetCheckTimer := time.NewTimer(time.Second)
 	defer resetCheckTimer.Stop()
 
-	symbolResetTimes := make(map[string]time.Time)
-	symbolUpdateTimes := make(map[string]time.Time)
-	for _, symbol := range symbols {
-		symbolResetTimes[symbol] = time.Now().Add(time.Duration(rand.Intn(int(symbolResetInterval/time.Second)))*time.Second + symbolCheckInterval)
-		symbolUpdateTimes[symbol] = time.Unix(0, 0)
+	marketResetTimes := make(map[string]time.Time)
+	marketUpdateTimes := make(map[string]time.Time)
+	for _, market := range markets {
+		marketResetTimes[market] = time.Now().Add(time.Duration(rand.Intn(int(marketResetInterval/time.Second)))*time.Second + marketCheckInterval)
+		marketUpdateTimes[market] = time.Unix(0, 0)
 	}
 	trafficTimeout := time.NewTimer(time.Minute * 5)
-	pingTimer := time.NewTimer(time.Second * 15)
 	defer trafficTimeout.Stop()
-	defer pingTimer.Stop()
+
+
+	conn.SetPingHandler(func(msg string) error {
+		trafficTimeout.Reset(time.Second * 30)
+		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
+		if err != nil {
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				go w.restart()
+			}
+			return nil
+		}
+		return nil
+	})
 
 	for {
 		select {
@@ -311,59 +338,43 @@ func (w *RawDepth25WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, 
 			logger.Debugf("traffic timeout in 30s, restart ws")
 			w.restart()
 			return
-		case <-pingTimer.C:
-			pingTimer.Reset(time.Second * 15)
-			select {
-			case w.writeCh <- []byte("{\"op\": \"ping\"}"):
-				break
-			default:
-				logger.Debugf("w.writeCh <- ping failed, ch len %d", len(w.writeCh))
-			}
-			break
-		case symbol := <-w.symbolCh:
+		case market := <-w.marketCh:
 			trafficTimeout.Reset(time.Second * 30)
-			symbolUpdateTimes[symbol] = time.Now().Add(symbolTimeout)
+			marketUpdateTimes[market] = time.Now().Add(marketTimeout)
 			break
-		case <-symbolCheckTimer.C:
-			args := make([]string, 0)
-			for symbol := range symbolUpdateTimes {
-				if time.Now().Sub(symbolUpdateTimes[symbol]) > 0 {
-					//logger.Debugf("%s TIMEOUT")
-					args = append(args, fmt.Sprintf("orderBookL2_25.%s", symbol))
-					symbolUpdateTimes[symbol] = time.Now().Add(symbolTimeout)
-					symbolResetTimes[symbol] = time.Now().Add(time.Duration(rand.Intn(int(symbolCheckInterval/time.Second)))*time.Second + symbolResetInterval)
-				}else if time.Now().Sub(symbolResetTimes[symbol]) > 0 {
-					//logger.Debugf("%s RESET")
-					args = append(args, fmt.Sprintf("orderBookL2_25.%s", symbol))
-					symbolUpdateTimes[symbol] = time.Now().Add(symbolTimeout)
-					symbolResetTimes[symbol] = time.Now().Add(time.Duration(rand.Intn(int(symbolCheckInterval/time.Second)))*time.Second + symbolResetInterval)
+		case <-marketCheckTimer.C:
+			for market := range marketUpdateTimes {
+				if time.Now().Sub(marketUpdateTimes[market]) > 0 ||
+					time.Now().Sub(marketResetTimes[market]) > 0 {
+					select {
+					case w.writeCh <- WSOrderBookSubscribe{
+						Id:      market,
+						Type:    "unsubscribe",
+						Channel: "v3_orderbook",
+					}:
+					default:
+						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+					}
+					select {
+					case w.writeCh <- WSOrderBookSubscribe{
+						Id:      market,
+						Type:    "subscribe",
+						Channel: "v3_orderbook",
+					}:
+					default:
+						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+					}
+					marketUpdateTimes[market] = time.Now().Add(marketTimeout)
+					marketResetTimes[market] = time.Now().Add(time.Duration(rand.Intn(int(marketCheckInterval/time.Second)))*time.Second + marketResetInterval)
 				}
 			}
-			if len(args) > 0 {
-				select {
-				case w.writeCh <- SubscribeParam{
-					Op:   "unsubscribe",
-					Args: args,
-				}:
-				default:
-					logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
-				}
-				select {
-				case w.writeCh <- SubscribeParam{
-					Op:   "subscribe",
-					Args: args,
-				}:
-				default:
-					logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
-				}
-			}
-			symbolCheckTimer.Reset(symbolCheckInterval)
+			marketCheckTimer.Reset(marketCheckInterval)
 			break
 		}
 	}
 }
 
-func (w *RawDepth25WS) Stop() {
+func (w *RawDepthWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -371,7 +382,7 @@ func (w *RawDepth25WS) Stop() {
 	}
 }
 
-func (w *RawDepth25WS) restart() {
+func (w *RawDepthWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -379,23 +390,23 @@ func (w *RawDepth25WS) restart() {
 	}
 }
 
-func (w *RawDepth25WS) Done() chan interface{} {
+func (w *RawDepthWS) Done() chan interface{} {
 	return w.done
 }
 
-func NewRawDepth25WS(
+func NewRawDepthWS(
 	ctx context.Context,
 	proxy string,
 	prefixes []byte,
 	channels map[string]chan *common.RawMessage,
-) *RawDepth25WS {
-	ws := RawDepth25WS{
-		done:          make(chan interface{}),
-		reconnectCh:   make(chan interface{}, 16),
-		writeCh:       make(chan interface{}, 16*len(channels)),
-		symbolCh:      make(chan string, 64*len(channels)),
-		prefix:        prefixes,
-		stopped:       0,
+) *RawDepthWS {
+	ws := RawDepthWS{
+		done:        make(chan interface{}),
+		reconnectCh: make(chan interface{}, 16),
+		writeCh:     make(chan interface{}, 16*len(channels)),
+		marketCh:    make(chan string, 64*len(channels)),
+		prefix:      prefixes,
+		stopped:     0,
 	}
 	go ws.mainLoop(ctx, proxy, channels)
 	ws.reconnectCh <- nil
