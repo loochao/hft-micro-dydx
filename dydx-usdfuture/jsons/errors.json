@@ -1,0 +1,15 @@
+{
+  "errors": [
+    {
+      "value": "1c69867ef434431103da0a6cc9432fe34c09d3706662ffa3729a95ac27d1ae6c",
+      "msg": "signature must be a valid string of length 44 in headers",
+      "param": "dydx-signature",
+      "location": "headers"
+    },
+    {
+      "msg": "timestamp must be a valid ISO string in headers",
+      "param": "dydx-timestamp",
+      "location": "headers"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "type": "channel_data",
+  "connection_id": "83d08710-eb85-4718-9ce1-d09ac31ebf77",
+  "message_id": 6,
+  "id": "ETH-USD",
+  "channel": "v3_orderbook",
+  "contents": {
+    "offset": "1933723364",
+    "bids": [],
+    "asks": [
+      [
+        "3569.8",
+        "7.504"
+      ]
+    ]
+  }
+}

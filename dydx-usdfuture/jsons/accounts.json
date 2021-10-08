@@ -1,0 +1,16 @@
+{
+  "accounts": [
+    {
+      "starkKey": "03e49e730c07369815e7c0418e2eb473b1326fdfb54c73564411dc5af4d4011a",
+      "positionId": "119684",
+      "equity": "558.519283",
+      "freeCollateral": "558.519283",
+      "pendingDeposits": "0.000000",
+      "pendingWithdrawals": "0.000000",
+      "openPositions": {},
+      "accountNumber": "0",
+      "id": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+      "quoteBalance": "558.519283"
+    }
+  ]
+}

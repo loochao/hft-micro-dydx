@@ -10,6 +10,7 @@ go 1.16
 
 require (
 	github.com/certifi/gocertifi v0.0.0-20200922220541-2c3bb06c6054 // indirect
+	github.com/ethereum/go-ethereum v1.10.9
 	github.com/getsentry/raven-go v0.2.0
 	github.com/go-echarts/go-echarts/v2 v2.2.4
 	github.com/gorilla/websocket v1.4.2

@@ -4,23 +4,11 @@ import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"log"
-	"os"
 	"testing"
 )
 
 func TestNewRawDepth5WS(t *testing.T) {
-	var api *API
 	var ctx = context.Background()
-	var err error
-	api, err = NewAPI(
-		os.Getenv("KCPERP_KEY"),
-		os.Getenv("KCPERP_SECRET"),
-		os.Getenv("KCPERP_PASSPHRASE"),
-		"socks5://127.0.0.1:1083")
-	if err != nil {
-		log.Fatal(err)
-	}
 	symbols := []string{"XBTUSDTM", "ATOMUSDTM", "WAVESUSDTM"}
 	channels := make(map[string]chan *common.RawMessage)
 	outputCh := make(chan *common.RawMessage, 128)
@@ -28,7 +16,7 @@ func TestNewRawDepth5WS(t *testing.T) {
 		channels[symbol] = outputCh
 	}
 	ws := NewRawDepth5WS(
-		ctx, api,
+		ctx,
 		"socks5://127.0.0.1:1083",
 		[]byte{'Y','T'},
 		channels,

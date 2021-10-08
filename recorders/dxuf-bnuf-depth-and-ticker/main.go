@@ -5,7 +5,7 @@ import (
 	"flag"
 	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
-	dxdy_usdtfuture "github.com/geometrybase/hft-micro/dxdy-usdfuture"
+	dxdy_usdtfuture "github.com/geometrybase/hft-micro/dydx-usdfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"os/signal"

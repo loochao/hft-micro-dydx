@@ -1,0 +1,40 @@
+{
+  "type": "subscribed",
+  "connection_id": "a84e2795-9712-49fb-8a72-091b6a58c39f",
+  "message_id": 2,
+  "channel": "v3_accounts",
+  "id": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+  "contents": {
+    "orders": [],
+    "account": {
+      "starkKey": "03e49e730c07369815e7c0418e2eb473b1326fdfb54c73564411dc5af4d4011a",
+      "positionId": "119684",
+      "equity": "558.519283",
+      "freeCollateral": "558.519283",
+      "pendingDeposits": "0.000000",
+      "pendingWithdrawals": "0.000000",
+      "openPositions": {},
+      "accountNumber": "0",
+      "id": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+      "quoteBalance": "558.519283"
+    },
+    "transfers": [
+      {
+        "id": "84a65826-15ef-5437-ac4a-bf1f24313a3b",
+        "type": "DEPOSIT",
+        "debitAsset": "USDC",
+        "creditAsset": "USDC",
+        "debitAmount": "558.519283",
+        "creditAmount": "558.519283",
+        "transactionHash": "0x7374397ebe39a440474795098e9f440b3225473bc0ae8dbf60a91ae471f6fe75",
+        "status": "CONFIRMED",
+        "createdAt": "2021-10-04T13:35:08.329Z",
+        "confirmedAt": null,
+        "clientId": null,
+        "fromAddress": null,
+        "toAddress": null
+      }
+    ],
+    "fundingPayments": []
+  }
+}

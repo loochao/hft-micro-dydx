@@ -8,10 +8,34 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/montanaflynn/stats"
 	"io/ioutil"
+	"math"
+	"math/rand"
 	"sort"
 	"strings"
 	"testing"
 )
+
+func BenchmarkMath (b *testing.B) {
+	a := [1000]float64{}
+	for i := 0; i < 1000; i++ {
+		a[i] = rand.Float64()*10
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		for i := 0; i < 1000; i++ {
+			_ = math.Exp(a[i])
+		}
+	}
+}
+func TestMath(t *testing.T) {
+	a := [1000]float64{}
+	for i := 0; i < 1000; i++ {
+		a[i] = rand.Float64()
+	}
+
+	logger.Debugf("%f", a)
+}
 
 func TestParamsAsMapKey(t *testing.T) {
 	paramA := Params{

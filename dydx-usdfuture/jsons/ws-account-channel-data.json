@@ -1,0 +1,39 @@
+{
+  "type": "channel_data",
+  "connection_id": "821dca2b-77cb-41c2-ae93-a7049b70045c",
+  "message_id": 4,
+  "id": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+  "channel": "v3_accounts",
+  "contents": {
+    "fills": [],
+    "positions": [],
+    "orders": [
+      {
+        "id": "66e502f95ffb9ae28ca95e89783e1f7e090b300d745ae5c656e4e7daa94d4bf",
+        "clientId": "14804069748496507",
+        "market": "FIL-USD",
+        "accountId": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+        "side": "BUY",
+        "size": "1",
+        "remainingSize": "1",
+        "limitFee": "0.001",
+        "price": "60",
+        "triggerPrice": null,
+        "trailingPercent": null,
+        "type": "LIMIT",
+        "status": "CANCELED",
+        "signature": "0341f9327a94e340289b9ddf323ead0f93ac30f0d26c6d6dcd1a2353403afebf068d7169b63ac3a053b85829415295d6615ef252fcd6cdaabce38febb24883ad",
+        "timeInForce": "GTT",
+        "postOnly": false,
+        "cancelReason": "USER_CANCELED",
+        "expiresAt": "2021-11-04T18:58:16.589Z",
+        "unfillableAt": null,
+        "updatedAt": "2021-10-07T18:58:17.335Z",
+        "createdAt": "2021-10-07T18:58:17.335Z"
+      }
+    ],
+    "accounts": [],
+    "transfers": [],
+    "fundingPayments": []
+  }
+}

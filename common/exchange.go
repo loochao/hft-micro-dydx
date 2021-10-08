@@ -20,4 +20,5 @@ const (
 	BybitUsdtFuture
 	HoubiUsdtFuture
 	BitfinexUsdtFuture
+	DydxUsdFuture
 )
