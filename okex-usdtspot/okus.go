@@ -19,6 +19,10 @@ type OkexUsdtSpot struct {
 	settings common.ExchangeSettings
 }
 
+func (okut *OkexUsdtSpot) GetPriceFactor() float64 {
+	return 1.0
+}
+
 func (okut *OkexUsdtSpot) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	panic("implement me")
 }

@@ -92,6 +92,46 @@ type Position struct {
 	NetFunding    float64    `json:"netFunding,string"`
 	SumOpen       float64    `json:"sumOpen,string"`
 	SumClose      float64    `json:"sumClose,string"`
+	ParseTime     time.Time  `json:"-"`
+}
+
+func (p *Position) UnmarshalJSON(data []byte) error {
+	type Alias Position
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(p),
+	}
+	err := json.Unmarshal(data, aux)
+	if err != nil {
+		return err
+	}
+	p.ParseTime = time.Now()
+	return nil
+}
+
+func (p Position) GetSymbol() string {
+	return p.Market
+}
+
+func (p Position) GetSize() float64 {
+	return p.Size
+}
+
+func (p Position) GetPrice() float64 {
+	return p.EntryPrice
+}
+
+func (p Position) GetEventTime() time.Time {
+	return p.ParseTime
+}
+
+func (p Position) GetParseTime() time.Time {
+	return p.ParseTime
+}
+
+func (p Position) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 type Account struct {
@@ -105,6 +145,46 @@ type Account struct {
 	OpenPositions      map[string]Position `json:"openPositions"`
 	AccountNumber      string              `json:"accountNumber"`
 	ID                 string              `json:"id"`
+	ParseTime          time.Time           `json:"-"`
+}
+
+func (a *Account) GetCurrency() string {
+	return "USDC"
+}
+
+func (a *Account) GetBalance() float64 {
+	return a.Equity
+}
+
+func (a *Account) GetFree() float64 {
+	return a.FreeCollateral
+}
+
+func (a *Account) GetUsed() float64 {
+	return a.Equity  - a.FreeCollateral
+}
+
+func (a *Account) GetTime() time.Time {
+	return a.ParseTime
+}
+
+func (a *Account) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (a *Account) UnmarshalJSON(data []byte) error {
+	type Alias Account
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(a),
+	}
+	err := json.Unmarshal(data, aux)
+	if err != nil {
+		return err
+	}
+	a.ParseTime = time.Now()
+	return nil
 }
 
 type AccountResp struct {
@@ -366,4 +446,13 @@ type WSUserCap struct {
 	Channel      string          `json:"channel"`
 	Message      string          `json:"message"`
 	Contents     json.RawMessage `json:"contents"`
+}
+
+//{
+//  "iso": "2021-02-02T18:35:45Z",
+//  "epoch": "1611965998.515",
+//}
+type ServerTime struct {
+	ISO   time.Time `json:"iso,string"`
+	Epoch float64   `json:"epoch,string"`
 }

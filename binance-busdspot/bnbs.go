@@ -14,12 +14,17 @@ import (
 )
 
 type BinanceBusdSpot struct {
-	api      *API
-	done     chan interface{}
-	stopped  bool
-	mu       sync.Mutex
-	settings common.ExchangeSettings
-	dryRun   bool
+	api         *API
+	done        chan interface{}
+	stopped     bool
+	mu          sync.Mutex
+	settings    common.ExchangeSettings
+	priceFactor *common.AtomicFloat64
+	dryRun      bool
+}
+
+func (bn *BinanceBusdSpot) GetPriceFactor() float64 {
+	return bn.priceFactor.Load()
 }
 
 func (bn *BinanceBusdSpot) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
@@ -455,11 +460,46 @@ func (bn *BinanceBusdSpot) WatchOrders(ctx context.Context, requestChannels map[
 	}
 }
 
+func (bn *BinanceBusdSpot) watchPriceFactor(ctx context.Context, settings common.ExchangeSettings) {
+
+	channels := make(map[string]chan common.Ticker)
+	ch := make(chan common.Ticker, 64)
+	channels[settings.PriceFactorPair] = ch
+	go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+		defer bn.Stop()
+		ws1 := NewBookTickerWS(ctx, proxy, channels)
+		for {
+			select {
+			case <-ws1.Done():
+				return
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(ctx, settings.Proxy, channels)
+	tm := common.NewTimedMean(time.Minute * 5)
+	for {
+		select {
+		case <-bn.done:
+			return
+		case <-ctx.Done():
+			return
+		case ticker := <-ch:
+			bn.priceFactor.Set(tm.Insert(ticker.GetTime(), (ticker.GetAskPrice()+ticker.GetBidPrice())*0.5))
+		}
+	}
+}
+
 func (bn *BinanceBusdSpot) Setup(ctx context.Context, settings common.ExchangeSettings) (err error) {
 	bn.done = make(chan interface{})
 	bn.mu = sync.Mutex{}
 	bn.stopped = false
 	bn.settings = settings
+	bn.priceFactor = common.ForAtomicFloat64(1.0)
+	if settings.PriceFactorPair != "" {
+		go bn.watchPriceFactor(ctx, settings)
+	}
+
 	bn.api, err = NewAPI(&common.Credentials{
 		Key:    settings.ApiKey,
 		Secret: settings.ApiSecret,

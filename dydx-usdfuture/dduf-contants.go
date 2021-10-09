@@ -17,6 +17,12 @@ const (
 	OrderTimeInForceFOK = "FOK"
 	OrderTimeInForceIOC = "IOC"
 
+	OrderStatusPending     = "PENDING"
+	OrderStatusOpen        = "OPEN"
+	OrderStatusFilled      = "FILLED"
+	OrderStatusCanceled    = "CANCELED"
+	OrderStatusUnTriggered = "UNTRIGGERED"
+
 	TimeLayout = "2006-01-02T15:04:05.999Z"
 
 	ExchangeID = common.BinanceUsdtFuture

@@ -18,6 +18,10 @@ type FtxUsdFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (ftx *FtxUsdFuture) GetPriceFactor() float64 {
+	return 1.0
+}
+
 func (ftx *FtxUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	panic("implement me")
 }

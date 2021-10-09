@@ -33,9 +33,8 @@ func (strat *XYStrategy) updateSpread() {
 
 	strat.tickerMatchCount++
 
-	//假定挂单基于MidPrice, 考虑挂单的下界偏移进Spread
-	strat.shortLastEnter = (strat.yTicker.GetBidPrice() - strat.xTicker.GetAskPrice()) / strat.xTicker.GetAskPrice()
-	strat.longLastEnter = (strat.yTicker.GetAskPrice() - strat.xTicker.GetBidPrice()) / strat.xTicker.GetBidPrice()
+	strat.shortLastEnter = (strat.yTicker.GetBidPrice()*strat.yExchange.GetPriceFactor() - strat.xTicker.GetAskPrice()*strat.xExchange.GetPriceFactor()) / (strat.xTicker.GetAskPrice()*strat.xExchange.GetPriceFactor())
+	strat.longLastEnter = (strat.yTicker.GetAskPrice()*strat.yExchange.GetPriceFactor() - strat.xTicker.GetBidPrice()*strat.xExchange.GetPriceFactor()) / (strat.xTicker.GetBidPrice()*strat.xExchange.GetPriceFactor())
 
 	strat.shortEnterTimedMedian.Insert(strat.spreadTime, strat.shortLastEnter)
 	strat.longEnterTimedMedian.Insert(strat.spreadTime, strat.longLastEnter)

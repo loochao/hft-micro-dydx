@@ -22,6 +22,9 @@ type BinanceUsdcSpot struct {
 	dryRun   bool
 }
 
+func (bn *BinanceUsdcSpot) GetPriceFactor() float64 {
+	return 1.0
+}
 
 func (bn *BinanceUsdcSpot) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	panic("implement me")
@@ -823,6 +826,7 @@ func (bn *BinanceUsdcSpotWithDepth20) StreamDepth(ctx context.Context, channels 
 type BinanceUsdcSpotWithMergedTicker struct {
 	BinanceUsdcSpot
 }
+
 
 func (bn *BinanceUsdcSpotWithMergedTicker) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	panic("implement me")

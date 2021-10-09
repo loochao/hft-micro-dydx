@@ -21,6 +21,10 @@ type BinanceUsdtSpot struct {
 	settings common.ExchangeSettings
 }
 
+func (bn *BinanceUsdtSpot) GetPriceFactor() float64 {
+	return 1.0
+}
+
 func (bn *BinanceUsdtSpot) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	panic("implement me")
 }

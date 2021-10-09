@@ -141,6 +141,16 @@ func (api *API) GetMarkets(ctx context.Context) (map[string]Market, error) {
 	)
 }
 
+func (api *API) GetServerTime(ctx context.Context) (*ServerTime, error) {
+	st := &ServerTime{}
+	return st, api.SendHTTPRequest(
+		ctx,
+		"/v3/time",
+		nil,
+		st,
+	)
+}
+
 func (api *API) GetAccounts(ctx context.Context) ([]Account, error) {
 	ar := &AccountsResp{}
 	return ar.Accounts, api.SendAuthenticatedHTTPRequest(

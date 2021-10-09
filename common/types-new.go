@@ -59,6 +59,8 @@ type UsdExchange interface {
 	GetExchange() ExchangeID
 	Setup(ctx context.Context, settings ExchangeSettings) error
 
+	GetPriceFactor() float64
+
 	GetMinNotional(symbol string) (float64, error)
 	GetMinSize(symbol string) (float64, error)
 	GetStepSize(symbol string) (float64, error)
@@ -78,6 +80,8 @@ type UsdExchange interface {
 	WatchBatchOrders(ctx context.Context, requestChannels map[string]chan BatchOrderRequest, responseChannels map[string]chan Order, errorChannels map[string]chan OrderError, )
 	GenerateClientID() string
 	IsSpot() bool
+
+
 	StartSideLoop()
 }
 
@@ -123,6 +127,9 @@ type ExchangeSettings struct {
 	ChangeLeverage                      bool          `yaml:"changeLeverage" json:"changeLeverage"`
 	AutoAddCommissionDiscountAsset      bool          `yaml:"autoAddCommissionDiscountAsset" json:"autoAddCommissionDiscountAsset"`
 	MinimalCommissionDiscountAssetValue float64       `yaml:"minimalCommissionDiscountAssetValue" json:"minimalCommissionDiscountAsset"`
+	AccountID                           string        `yaml:"accountID" json:"accountID"`
+	AccountNumber                       string        `yaml:"accountNumber" json:"accountNumber"`
+	PriceFactorPair                     string        `yaml:"priceFactorPair" json:"priceFactorPair"`
 }
 
 type SpotExchange interface {

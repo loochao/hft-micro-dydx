@@ -1,4 +1,4 @@
-package kucoin_usdtfuture
+package dydx_usdfuture
 
 import (
 	"context"
@@ -9,51 +9,49 @@ import (
 	"math"
 	"math/rand"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
-type KucoinUsdtFuture struct {
+type DxdyUsdFuture struct {
 	done     chan interface{}
-	stopped  bool
+	stopped  int32
 	mu       sync.Mutex
 	api      *API
 	settings common.ExchangeSettings
 }
 
-func (k *KucoinUsdtFuture) GetPriceFactor() float64 {
-	return 1.0
-}
-
-func (k *KucoinUsdtFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
-	k.mu.Lock()
-	pullInterval := k.settings.PullInterval
-	k.mu.Unlock()
+func (dd *DxdyUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+	dd.mu.Lock()
+	pullInterval := dd.settings.PullInterval
+	dd.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-k.done:
+		case <-dd.done:
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			systemStatus, err := k.api.GetSystemStatus(subCtx)
+			serverTime, err := dd.api.GetServerTime(subCtx)
 			if err != nil {
-				logger.Debugf("k.api.GetSystemStatus(subCtx) error %v", err)
+				logger.Debugf("dd.api.GetSystemStatus(subCtx) error %v", err)
 				select {
 				case statusCh <- common.SystemStatusError:
 				default:
 					logger.Debugf("statusCh <- common.SystemStatusError failed ch len %d", len(statusCh))
 				}
 			} else {
-				if systemStatus.Status == SystemStatusOpen {
+				if serverTime.ISO.Sub(time.Now()) < time.Minute {
 					select {
 					case statusCh <- common.SystemStatusReady:
 					default:
 						logger.Debugf("statusCh <- common.SystemStatusReady failed ch len %d", len(statusCh))
 					}
 				} else {
+					logger.Debugf("bad remote server time %v, local sever time %v", serverTime.ISO, time.Now())
 					select {
 					case statusCh <- common.SystemStatusNotReady:
 					default:
@@ -66,97 +64,86 @@ func (k *KucoinUsdtFuture) StreamSystemStatus(ctx context.Context, statusCh chan
 	}
 }
 
-func (k *KucoinUsdtFuture) GetExchange() common.ExchangeID {
+func (dd *DxdyUsdFuture) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (k *KucoinUsdtFuture) IsSpot() bool {
+func (dd *DxdyUsdFuture) IsSpot() bool {
 	return false
 }
 
-func (k *KucoinUsdtFuture) Done() chan interface{} {
-	return k.done
+func (dd *DxdyUsdFuture) Done() chan interface{} {
+	return dd.done
 }
 
-func (k *KucoinUsdtFuture) Stop() {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-	if !k.stopped {
-		k.stopped = true
-		close(k.done)
+func (dd *DxdyUsdFuture) Stop() {
+	if atomic.LoadInt32(&dd.stopped) == 0 {
+		atomic.StoreInt32(&dd.stopped, 1)
+		close(dd.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (k *KucoinUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
+func (dd *DxdyUsdFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
 	var err error
-	k.stopped = false
-	k.done = make(chan interface{})
-	k.settings = settings
-	k.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.ApiPassphrase, settings.Proxy)
+	dd.stopped = 0
+	dd.done = make(chan interface{})
+	dd.settings = settings
+	dd.api, err = NewAPI(Credentials{
+		ApiKey:        settings.ApiKey,
+		ApiSecret:     settings.ApiSecret,
+		ApiPassphrase: settings.ApiPassphrase,
+		AccountID:     settings.AccountID,
+		AccountNumber: settings.AccountNumber,
+	}, settings.Proxy)
 	if err != nil {
 		return err
 	}
 	for _, symbol := range settings.Symbols {
-		if _, err = k.GetStepSize(symbol); err != nil {
+		if _, err = dd.GetStepSize(symbol); err != nil {
 			return err
 		}
-		if _, err = k.GetTickSize(symbol); err != nil {
+		if _, err = dd.GetTickSize(symbol); err != nil {
 			return err
 		}
-		if _, err = k.GetMultiplier(symbol); err != nil {
+		if _, err = dd.GetMultiplier(symbol); err != nil {
 			return err
 		}
-		if _, err = k.GetMinSize(symbol); err != nil {
+		if _, err = dd.GetMinSize(symbol); err != nil {
 			return err
 		}
-		if _, err = k.GetMinNotional(symbol); err != nil {
+		if _, err = dd.GetMinNotional(symbol); err != nil {
 			return err
-		}
-		if settings.ChangeLeverage {
-			resp, err := k.api.ChangeAutoDepositStatus(ctx, AutoDepositStatusParam{
-				Symbol: symbol,
-				Status: true,
-			})
-			if err != nil {
-				return err
-			}else{
-				logger.Debugf("%v", resp)
-			}
 		}
 	}
 	return nil
 }
 
-func (k *KucoinUsdtFuture) GetMultiplier(symbol string) (float64, error) {
-	if v, ok := Multipliers[symbol]; ok {
-		return v, nil
-	} else {
-		return 0.0, fmt.Errorf(common.MultiplierNotFoundError, symbol)
-	}
+func (dd *DxdyUsdFuture) GetMultiplier(symbol string) (float64, error) {
+	return 1.0, nil
 }
 
-func (k *KucoinUsdtFuture) GetMinNotional(symbol string) (float64, error) {
+func (dd *DxdyUsdFuture) GetMinNotional(symbol string) (float64, error) {
 	return 0.0, nil
 }
 
-func (k *KucoinUsdtFuture) GetMinSize(symbol string) (float64, error) {
-	if v, ok := LotSizes[symbol]; ok {
+func (dd *DxdyUsdFuture) GetMinSize(symbol string) (float64, error) {
+	if v, ok := MinSizes[symbol]; ok {
 		return v, nil
 	} else {
 		return 0.0, fmt.Errorf(common.MinSizeNotFoundError, symbol)
 	}
 }
 
-func (k *KucoinUsdtFuture) GetStepSize(symbol string) (float64, error) {
-	if v, ok := LotSizes[symbol]; ok {
+func (dd *DxdyUsdFuture) GetStepSize(symbol string) (float64, error) {
+	if v, ok := StepSizes[symbol]; ok {
 		return v, nil
 	} else {
 		return 0.0, fmt.Errorf(common.StepSizeNotFoundError, symbol)
 	}
 }
 
-func (k *KucoinUsdtFuture) GetTickSize(symbol string) (float64, error) {
+func (dd *DxdyUsdFuture) GetTickSize(symbol string) (float64, error) {
 	if v, ok := TickSizes[symbol]; ok {
 		return v, nil
 	} else {
@@ -164,40 +151,49 @@ func (k *KucoinUsdtFuture) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
-	defer k.Stop()
-	k.mu.Lock()
-	settings := k.settings
-	symbols := k.settings.Symbols[:]
-	k.mu.Unlock()
+func (dd *DxdyUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
+	defer dd.Stop()
+	dd.mu.Lock()
+	settings := dd.settings
+	symbols := dd.settings.Symbols[:]
+	dd.mu.Unlock()
 	var err error
-	k.api, err = NewAPI(settings.ApiKey, settings.ApiSecret, settings.ApiPassphrase, settings.Proxy)
+	dd.api, err = NewAPI(Credentials{
+		ApiKey:        settings.ApiKey,
+		ApiSecret:     settings.ApiSecret,
+		ApiPassphrase: settings.ApiPassphrase,
+		AccountID:     settings.AccountID,
+		AccountNumber: settings.AccountNumber,
+	}, settings.Proxy)
 	if err != nil {
 		return
 	}
 	userWS := NewUserWebsocket(
 		ctx,
-		k.api,
-		symbols[:],
+		&Credentials{
+			ApiKey:        settings.ApiKey,
+			ApiSecret:     settings.ApiSecret,
+			ApiPassphrase: settings.ApiPassphrase,
+			AccountID:     settings.AccountID,
+			AccountNumber: settings.AccountNumber,
+		},
 		settings.Proxy,
 	)
-	go k.systemStatusLoop(ctx, statusCh)
-	httpPositionsCh := make(chan map[string]Position, 128)
-	go k.positionsLoop(ctx, symbols, httpPositionsCh)
+	go dd.systemStatusLoop(ctx, statusCh)
 	httpAccountCh := make(chan Account, 128)
-	go k.accountLoop(ctx, httpAccountCh)
+	go dd.accountLoop(ctx, httpAccountCh)
 	logSilentTime := time.Now()
 	restartResetTimer := time.NewTimer(time.Hour * 9999)
 	defer restartResetTimer.Stop()
 	var account *Account
 	positionsMap := make(map[string]Position)
 	var commissionAssetTimer = time.NewTimer(time.Second)
-	matchedOrders := make(map[string]*WSOrder)
+	matchedOrders := make(map[string]Order)
 	for {
 		select {
 		case <-userWS.Done():
 			return
-		case <-k.done:
+		case <-dd.done:
 			return
 		case <-commissionAssetTimer.C:
 			select {
@@ -206,31 +202,6 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 				logger.Debugf("commissionAssetValueCh <- 0.0 failed, ch len %d", len(commissionAssetValueCh))
 			}
 			commissionAssetTimer.Reset(time.Minute)
-			break
-		case positions := <-httpPositionsCh:
-			for symbol, pos := range positions {
-				if ch, ok := positionChMap[symbol]; ok {
-					if oldPos, ok := positionsMap[symbol]; ok {
-						if pos.EventTime.Sub(oldPos.EventTime) > 0 {
-							pos := pos
-							positionsMap[symbol] = pos
-							select {
-							case ch <- &pos:
-							default:
-								logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
-							}
-						}
-					} else {
-						pos := pos
-						positionsMap[symbol] = pos
-						select {
-						case ch <- &pos:
-						default:
-							logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
-						}
-					}
-				}
-			}
 			break
 		case <-restartResetTimer.C:
 			select {
@@ -255,6 +226,29 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+			for market, pos := range a.OpenPositions {
+				if ch, ok := positionChMap[market]; ok {
+					if oldPos, ok := positionsMap[market]; ok {
+						if pos.ParseTime.Sub(oldPos.ParseTime) > 0 {
+							pos := pos
+							positionsMap[market] = pos
+							select {
+							case ch <- &pos:
+							default:
+								logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
+							}
+						}
+					} else {
+						pos := pos
+						positionsMap[market] = pos
+						select {
+						case ch <- &pos:
+						default:
+							logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
+						}
+					}
+				}
+			}
 			break
 		case <-userWS.RestartCh:
 			select {
@@ -268,103 +262,77 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 				}
 			}
 			break
-		case balance := <-userWS.BalanceCh:
+		case newAccount := <-userWS.AccountCh:
 			if account != nil {
-				if account.EventTime.Sub(balance.EventTime) > 0 {
-					continue
-				}
-				account.EventTime = balance.EventTime
-				if balance.AvailableBalance != nil {
-					account.AvailableBalance = *balance.AvailableBalance
-				}
-				if balance.HoldBalance != nil {
-					account.FrozenFunds = *balance.HoldBalance
-				}
-				if balance.OrderMargin != nil {
-					account.OrderMargin = *balance.OrderMargin
-				}
-				outputAccount := *account
-				select {
-				case accountCh <- &outputAccount:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- &order failed, ch len %d", len(accountCh))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
-				}
+				logger.Debugf("%v", newAccount)
 			}
 			break
-		case order := <-userWS.OrderCh:
-			//DEBUG 2021/05/22 01:21:54.774559 kucoin-usdtfuture.go:606: 	k.api.SubmitOrder {"clientOid":"16216465147940","side":"buy","symbol":"BNBUSDTM","type":"market","leverage":3,"size":24,"reduceOnly":true}
-			//DEBUG 2021/05/22 01:21:54.774573 kucoin-usdtfuture-api.go:77: 	{"clientOid":"16216465147940","side":"buy","symbol":"BNBUSDTM","type":"market","leverage":3,"size":24,"reduceOnly":true}
-			//DEBUG 2021/05/22 01:21:54.824218 kucoin-usdtfuture.go:608: 	k.api.SubmitOrder &{60a85cb28833a40006067120} <nil>
-			//DEBUG 2021/05/22 01:21:54.833944 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"1","matchPrice":"325.7","matchSize":"1","tradeId":"60a85cb2b87b911178425c71","remainSize":"23","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
-			//DEBUG 2021/05/22 01:21:54.834155 main.go:326: 	x order filled BNBUSDTM FILLED size 1.000000 price 325.700000
-			//DEBUG 2021/05/22 01:21:54.839608 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","type":"filled","orderTime":1621646514806444042,"size":"24","filledSize":"24","price":"","remainSize":"0","clientOid":"16216465147940","status":"done","ts":1621646514814245799}
-			//DEBUG 2021/05/22 01:21:54.839661 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"24","matchPrice":"325.94","matchSize":"21","tradeId":"60a85cb2b87b911178425c73","remainSize":"0","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
-			//DEBUG 2021/05/22 01:21:54.839676 kucoin-usdtfuture-user-ws.go:170: 	KCPERP WS ORDER {"symbol":"BNBUSDTM","orderType":"market","side":"buy","canceledSize":"0","orderId":"60a85cb28833a40006067120","liquidity":"taker","type":"match","orderTime":1621646514806444042,"size":"24","filledSize":"3","matchPrice":"325.73","matchSize":"2","tradeId":"60a85cb2b87b911178425c72","remainSize":"21","clientOid":"16216465147940","status":"match","ts":1621646514814245799}
-			//滤掉没有价格的事件
-			if order.Status == "done" {
-				if oldOrder, ok := matchedOrders[order.ClientOid]; ok {
-					if order.EventType == "filled" {
-						order.FilledPrice = oldOrder.FilledPrice
+		case orders := <-userWS.OrdersCh:
+			for _, order := range orders{
+				//滤掉没有价格的事件
+				if order.Status == "done" {
+					if oldOrder, ok := matchedOrders[order.ClientOid]; ok {
+						if order.EventType == "filled" {
+							order.FilledPrice = oldOrder.FilledPrice
+						}
+						delete(matchedOrders, order.ClientOid)
 					}
-					delete(matchedOrders, order.ClientOid)
 				}
-			}
-			if order.MatchSize != 0 && order.MatchPrice != 0 {
-				if oldOrder, ok := matchedOrders[order.ClientOid]; ok {
-					if oldOrder.FilledSize+order.MatchSize != 0 {
-						order.FilledPrice = (order.MatchPrice*order.MatchSize + oldOrder.FilledSize*oldOrder.FilledPrice) / (oldOrder.FilledSize + order.MatchSize)
+				if order.MatchSize != 0 && order.MatchPrice != 0 {
+					if oldOrder, ok := matchedOrders[order.ClientOid]; ok {
+						if oldOrder.FilledSize+order.MatchSize != 0 {
+							order.FilledPrice = (order.MatchPrice*order.MatchSize + oldOrder.FilledSize*oldOrder.FilledPrice) / (oldOrder.FilledSize + order.MatchSize)
+						} else {
+							order.FilledPrice = order.MatchPrice
+						}
 					} else {
 						order.FilledPrice = order.MatchPrice
 					}
-				} else {
-					order.FilledPrice = order.MatchPrice
-				}
-				matchedOrders[order.ClientOid] = order
-				if pos, ok := positionsMap[order.Symbol]; ok {
-					size := order.MatchSize
-					if order.Side != OrderSideBuy {
-						size = -order.MatchSize
-					}
-					//logger.Debugf("ORDER %s %s %v POS %f -> %f %v", order.Symbol, order.EventType, order.EventTime, pos.CurrentQty, pos.CurrentQty+size, pos.EventTime)
-					price := order.MatchPrice
-					if pos.CurrentQty*size <= 0 {
-						if math.Abs(size) > math.Abs(pos.CurrentQty) {
-							pos.AvgEntryPrice = price
+					matchedOrders[order.ClientOid] = order
+					if pos, ok := positionsMap[order.Symbol]; ok {
+						size := order.MatchSize
+						if order.Side != OrderSideBuy {
+							size = -order.MatchSize
 						}
-						pos.CurrentQty += size
-					} else {
-						pos.AvgEntryPrice = (pos.CurrentQty*pos.AvgEntryPrice + size*price) / (pos.CurrentQty + size)
-						pos.CurrentQty += size
-					}
-					//这儿需要防止和order更新的仓位挨得太近, 重复变更仓位的问题，所以ws的仓位默认需要有一个delay
-					//一分钟内不要更新仓位
-					pos.ParseTime = order.ParseTime.Add(time.Second * 5)
-					pos.EventTime = order.EventTime.Add(time.Second * 5)
-					positionsMap[order.Symbol] = pos
-					if ch, ok := positionChMap[pos.Symbol]; ok {
-						select {
-						case ch <- &pos:
-						default:
-							if time.Now().Sub(logSilentTime) > 0 {
-								logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
-								logSilentTime = time.Now().Add(time.Minute)
+						//logger.Debugf("ORDER %s %s %v POS %f -> %f %v", order.Symbol, order.EventType, order.EventTime, pos.CurrentQty, pos.CurrentQty+size, pos.EventTime)
+						price := order.MatchPrice
+						if pos.CurrentQty*size <= 0 {
+							if math.Abs(size) > math.Abs(pos.CurrentQty) {
+								pos.AvgEntryPrice = price
+							}
+							pos.CurrentQty += size
+						} else {
+							pos.AvgEntryPrice = (pos.CurrentQty*pos.AvgEntryPrice + size*price) / (pos.CurrentQty + size)
+							pos.CurrentQty += size
+						}
+						//这儿需要防止和order更新的仓位挨得太近, 重复变更仓位的问题，所以ws的仓位默认需要有一个delay
+						//一分钟内不要更新仓位
+						pos.ParseTime = order.ParseTime.Add(time.Second * 5)
+						pos.EventTime = order.EventTime.Add(time.Second * 5)
+						positionsMap[order.Symbol] = pos
+						if ch, ok := positionChMap[pos.Symbol]; ok {
+							select {
+							case ch <- &pos:
+							default:
+								if time.Now().Sub(logSilentTime) > 0 {
+									logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
+									logSilentTime = time.Now().Add(time.Minute)
+								}
 							}
 						}
 					}
 				}
-			}
-			if ch, ok := orderChs[order.Symbol]; ok {
-				select {
-				case ch <- order:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- &order failed, ch len %d", len(ch))
-						logSilentTime = time.Now().Add(time.Minute)
+				if ch, ok := orderChs[order.Symbol]; ok {
+					select {
+					case ch <- order:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("ch <- &order failed, ch len %d", len(ch))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
 					}
 				}
+
 			}
 			break
 		case wsPosition := <-userWS.PositionCh:
@@ -406,7 +374,7 @@ func (k *KucoinUsdtFuture) StreamBasic(ctx context.Context, statusCh chan common
 	}
 }
 
-func (k *KucoinUsdtFuture) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
+func (dd *DxdyUsdFuture) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	checkInterval := time.Second * 5
 	startTime := time.Now()
 	updateTimes := make(map[string]time.Time)
@@ -415,30 +383,30 @@ func (k *KucoinUsdtFuture) StreamSymbolStatus(ctx context.Context, channels map[
 		startTime = startTime.Add(checkInterval)
 	}
 	loopTimer := time.NewTimer(time.Second)
-	k.mu.Lock()
-	leverage := int(k.settings.Leverage)
-	k.mu.Unlock()
+	dd.mu.Lock()
+	leverage := int(dd.settings.Leverage)
+	dd.mu.Unlock()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-k.done:
+		case <-dd.done:
 			return
 		case <-loopTimer.C:
 			for symbol, ch := range channels {
 				if time.Now().Sub(updateTimes[symbol]) > 0 {
 					status := common.SymbolStatusReady
-					ticker, err := k.api.GetTicker(ctx, TickerParam{
+					ticker, err := dd.api.GetTicker(ctx, TickerParam{
 						Symbol: symbol,
 					})
 					if err != nil {
-						logger.Debugf("%s k.api.GetTicker error %v", symbol, err)
+						logger.Debugf("%s dd.api.GetTicker error %v", symbol, err)
 						status = common.SymbolStatusNotReady
 					} else {
 						size := LotSizes[symbol]
 						price := ticker.BestAskPrice * 1.05
 						price = math.Ceil(price/TickSizes[symbol]) * TickSizes[symbol]
-						_, err := k.api.SubmitOrder(ctx, NewOrderParam{
+						_, err := dd.api.SubmitOrder(ctx, NewOrderParam{
 							Symbol:      symbol,
 							Side:        OrderSideSell,
 							TimeInForce: OrderTimeInForceIOC,
@@ -447,7 +415,7 @@ func (k *KucoinUsdtFuture) StreamSymbolStatus(ctx context.Context, channels map[
 							Leverage:    leverage,
 						})
 						if err != nil {
-							logger.Debugf("k.api.SubmitOrder error %v", err)
+							logger.Debugf("dd.api.SubmitOrder error %v", err)
 							status = common.SymbolStatusNotReady
 						}
 					}
@@ -469,17 +437,17 @@ func (k *KucoinUsdtFuture) StreamSymbolStatus(ctx context.Context, channels map[
 	}
 }
 
-func (k *KucoinUsdtFuture) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
+func (dd *DxdyUsdFuture) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")
-	defer k.Stop()
+	defer dd.Stop()
 	symbols := make([]string, 0)
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 	}
-	k.mu.Lock()
-	proxy := k.settings.Proxy
-	k.mu.Unlock()
+	dd.mu.Lock()
+	proxy := dd.settings.Proxy
+	dd.mu.Unlock()
 	for start := 0; start < len(symbols); start += batchSize {
 		end := start + batchSize
 		if end > len(symbols) {
@@ -490,8 +458,8 @@ func (k *KucoinUsdtFuture) StreamDepth(ctx context.Context, channels map[string]
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
-			defer k.Stop()
-			ws := NewDepth5WS(ctx, k.api, proxy, channels)
+			defer dd.Stop()
+			ws := NewDepth5WS(ctx, dd.api, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
@@ -506,27 +474,27 @@ func (k *KucoinUsdtFuture) StreamDepth(ctx context.Context, channels map[string]
 		select {
 		case <-ctx.Done():
 			return
-		case <-k.done:
+		case <-dd.done:
 			return
 		}
 	}
 }
 
-func (k *KucoinUsdtFuture) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
+func (dd *DxdyUsdFuture) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
 	panic("implement me")
 }
 
-func (k *KucoinUsdtFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (dd *DxdyUsdFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")
 	defer logger.Debugf("STOP StreamTicker")
-	defer k.Stop()
+	defer dd.Stop()
 	symbols := make([]string, 0)
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 	}
-	k.mu.Lock()
-	proxy := k.settings.Proxy
-	k.mu.Unlock()
+	dd.mu.Lock()
+	proxy := dd.settings.Proxy
+	dd.mu.Unlock()
 	for start := 0; start < len(symbols); start += batchSize {
 		end := start + batchSize
 		if end > len(symbols) {
@@ -537,8 +505,8 @@ func (k *KucoinUsdtFuture) StreamTicker(ctx context.Context, channels map[string
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
-			defer k.Stop()
-			ws := NewTickerWS(ctx, k.api, proxy, channels)
+			defer dd.Stop()
+			ws := NewTickerWS(ctx, dd.api, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
@@ -553,20 +521,20 @@ func (k *KucoinUsdtFuture) StreamTicker(ctx context.Context, channels map[string
 		select {
 		case <-ctx.Done():
 			return
-		case <-k.done:
+		case <-dd.done:
 			return
 		}
 	}
 }
 
-func (k *KucoinUsdtFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
+func (dd *DxdyUsdFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
 	panic("implement me")
 }
 
-func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
-	k.mu.Lock()
+func (dd *DxdyUsdFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
+	dd.mu.Lock()
 	interval := time.Minute
-	k.mu.Unlock()
+	dd.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	afterFrTimer := time.NewTimer(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
@@ -575,12 +543,12 @@ func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[s
 		select {
 		case <-ctx.Done():
 			return
-		case <-k.done:
+		case <-dd.done:
 			return
 		case <-afterFrTimer.C:
 			for symbol, ch := range channels {
 				subCtx, _ := context.WithTimeout(ctx, time.Minute)
-				fr, err := k.api.GetCurrentFundingRate(subCtx, symbol)
+				fr, err := dd.api.GetCurrentFundingRate(subCtx, symbol)
 				if err != nil {
 					logger.Debugf("api.GetCurrentFundingRate error %v", err)
 				} else {
@@ -593,7 +561,7 @@ func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[s
 				//select {
 				//case <-ctx.Done():
 				//	return
-				//case <-k.done:
+				//case <-dd.done:
 				//	return
 				//case <-time.After(time.Second):
 				//}
@@ -603,7 +571,7 @@ func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[s
 		case <-timer.C:
 			for symbol, ch := range channels {
 				subCtx, _ := context.WithTimeout(ctx, time.Minute)
-				fr, err := k.api.GetCurrentFundingRate(subCtx, symbol)
+				fr, err := dd.api.GetCurrentFundingRate(subCtx, symbol)
 				if err != nil {
 					logger.Debugf("api.GetCurrentFundingRate error %v", err)
 				} else {
@@ -616,7 +584,7 @@ func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[s
 				select {
 				case <-ctx.Done():
 					return
-				case <-k.done:
+				case <-dd.done:
 					return
 				case <-time.After(time.Second):
 				}
@@ -627,8 +595,8 @@ func (k *KucoinUsdtFuture) StreamFundingRate(ctx context.Context, channels map[s
 	}
 }
 
-func (k *KucoinUsdtFuture) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
-	defer k.Stop()
+func (dd *DxdyUsdFuture) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	defer dd.Stop()
 	for symbol, reqCh := range requestChannels {
 		respCh, ok := responseChannels[symbol]
 
@@ -641,41 +609,41 @@ func (k *KucoinUsdtFuture) WatchOrders(ctx context.Context, requestChannels map[
 			logger.Debugf("miss error ch for %s, exit", symbol)
 			return
 		}
-		go k.watchOrder(ctx, symbol, reqCh, respCh, errCh)
+		go dd.watchOrder(ctx, symbol, reqCh, respCh, errCh)
 	}
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-k.done:
+		case <-dd.done:
 			return
 		}
 	}
 }
 
-func (k *KucoinUsdtFuture) GenerateClientID() string {
+func (dd *DxdyUsdFuture) GenerateClientID() string {
 	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 }
 
-func (k *KucoinUsdtFuture) systemStatusLoop(
+func (dd *DxdyUsdFuture) systemStatusLoop(
 	ctx context.Context, output chan common.SystemStatus,
 ) {
-	k.mu.Lock()
-	pullInterval := k.settings.PullInterval
-	k.mu.Unlock()
+	dd.mu.Lock()
+	pullInterval := dd.settings.PullInterval
+	dd.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-k.done:
+		case <-dd.done:
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			systemStatus, err := k.api.GetSystemStatus(subCtx)
+			systemStatus, err := dd.api.GetSystemStatus(subCtx)
 			if err != nil {
-				logger.Debugf("k.api.GetSystemStatus(subCtx) error %v", err)
+				logger.Debugf("dd.api.GetSystemStatus(subCtx) error %v", err)
 				select {
 				case output <- common.SystemStatusError:
 				default:
@@ -701,12 +669,12 @@ func (k *KucoinUsdtFuture) systemStatusLoop(
 	}
 }
 
-func (k *KucoinUsdtFuture) accountLoop(
+func (dd *DxdyUsdFuture) accountLoop(
 	ctx context.Context, output chan Account,
 ) {
-	k.mu.Lock()
-	pullInterval := k.settings.PullInterval
-	k.mu.Unlock()
+	dd.mu.Lock()
+	pullInterval := dd.settings.PullInterval
+	dd.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
@@ -715,11 +683,11 @@ func (k *KucoinUsdtFuture) accountLoop(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			account, err := k.api.GetAccountOverView(subCtx, AccountParam{
+			account, err := dd.api.GetAccountOverView(subCtx, AccountParam{
 				Currency: "USDT",
 			})
 			if err != nil {
-				logger.Debugf("k.api.GetAccountOverView error %v", err)
+				logger.Debugf("dd.api.GetAccountOverView error %v", err)
 			} else {
 				output <- *account
 			}
@@ -728,51 +696,8 @@ func (k *KucoinUsdtFuture) accountLoop(
 	}
 }
 
-func (k *KucoinUsdtFuture) positionsLoop(
-	ctx context.Context,
-	symbols []string,
-	outputCh chan map[string]Position,
-) {
-	k.mu.Lock()
-	pullInterval := k.settings.PullInterval
-	k.mu.Unlock()
-	timer := time.NewTimer(time.Second)
-	defer timer.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			positions, err := k.api.GetPositions(subCtx)
-			if err != nil {
-				logger.Debugf("api.GetPositions error %v", err)
-			} else {
-				//有一种情况是有的合约的仓位是拉不到的, 拉不到的都是空仓
-				positionBySymbols := make(map[string]Position)
-				for _, symbol := range symbols {
-					positionBySymbols[symbol] = Position{
-						Symbol:    symbol,
-						ParseTime: time.Now(),
-						EventTime: time.Now(),
-					}
-				}
-				for _, position := range positions {
-					position := position
-					positionBySymbols[position.Symbol] = position
-				}
-				select {
-				case outputCh <- positionBySymbols:
-				default:
-					logger.Debugf("outputCh <- positionBySymbols failed, ch len %d", len(outputCh))
-				}
-			}
-			timer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
-		}
-	}
-}
 
-func (k *KucoinUsdtFuture) watchOrder(
+func (dd *DxdyUsdFuture) watchOrder(
 	ctx context.Context,
 	symbol string,
 	requestCh chan common.OrderRequest,
@@ -783,7 +708,7 @@ func (k *KucoinUsdtFuture) watchOrder(
 		select {
 		case <-ctx.Done():
 			return
-		case <-k.Done():
+		case <-dd.Done():
 			return
 		case req := <-requestCh:
 			if req.New != nil {
@@ -799,15 +724,15 @@ func (k *KucoinUsdtFuture) watchOrder(
 					}
 					continue
 				}
-				k.submitOrder(ctx, *req.New, responseCh, errorCh)
+				dd.submitOrder(ctx, *req.New, responseCh, errorCh)
 			} else if req.Cancel != nil {
-				k.cancelOrder(ctx, *req.Cancel, errorCh)
+				dd.cancelOrder(ctx, *req.Cancel, errorCh)
 			}
 		}
 	}
 }
 
-func (k *KucoinUsdtFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
+func (dd *DxdyUsdFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParam{}
 	newOrderParam.Symbol = param.Symbol
 	newOrderParam.Size = int64(math.Round(param.Size))
@@ -831,12 +756,12 @@ func (k *KucoinUsdtFuture) submitOrder(ctx context.Context, param common.NewOrde
 		newOrderParam.Price = common.Float64(param.Price)
 	}
 	newOrderParam.ClientOid = param.ClientID
-	k.mu.Lock()
-	newOrderParam.Leverage = int(k.settings.Leverage)
-	k.mu.Unlock()
-	//logger.Debugf("%s before k.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
-	_, err := k.api.SubmitOrder(ctx, newOrderParam)
-	//logger.Debugf("%s after k.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
+	dd.mu.Lock()
+	newOrderParam.Leverage = int(dd.settings.Leverage)
+	dd.mu.Unlock()
+	//logger.Debugf("%s before dd.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
+	_, err := dd.api.SubmitOrder(ctx, newOrderParam)
+	//logger.Debugf("%s after dd.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{
@@ -849,9 +774,9 @@ func (k *KucoinUsdtFuture) submitOrder(ctx context.Context, param common.NewOrde
 	}
 }
 
-func (k *KucoinUsdtFuture) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
+func (dd *DxdyUsdFuture) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
 	if param.Symbol != "" {
-		_, err := k.api.CancelAllOrders(ctx, CancelAllOrdersParam{
+		_, err := dd.api.CancelAllOrders(ctx, CancelAllOrdersParam{
 			Symbol: param.Symbol,
 		})
 		if err != nil {
@@ -867,22 +792,21 @@ func (k *KucoinUsdtFuture) cancelOrder(ctx context.Context, param common.CancelO
 	}
 }
 
-func (k *KucoinUsdtFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+func (dd *DxdyUsdFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	panic("implement me")
 }
 
-func (k *KucoinUsdtFuture) StartSideLoop() {
+func (dd *DxdyUsdFuture) StartSideLoop() {
 	panic("implement me")
 }
 
 type KucoinUsdtFutureWithDepth5 struct {
-	KucoinUsdtFuture
+	DxdyUsdFuture
 }
 
 type KucoinUsdtFutureWithMergedTicker struct {
-	KucoinUsdtFuture
+	DxdyUsdFuture
 }
-
 
 func (k *KucoinUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")

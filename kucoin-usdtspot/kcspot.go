@@ -19,6 +19,9 @@ type KucoinUsdtSpot struct {
 	api      *API
 	settings common.ExchangeSettings
 }
+func (k *KucoinUsdtSpot) GetPriceFactor() float64 {
+	return 1.0
+}
 
 func (k *KucoinUsdtSpot) GetExchange() common.ExchangeID {
 	return ExchangeID
@@ -740,6 +743,7 @@ func (k *KucoinUsdtSpot) buyKcs(
 type KucoinUsdtSpotWithMergedTicker struct {
 	KucoinUsdtSpot
 }
+
 
 func (k *KucoinUsdtSpotWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")

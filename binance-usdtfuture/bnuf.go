@@ -22,6 +22,10 @@ type BinanceUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (bn *BinanceUsdtFuture) GetPriceFactor() float64 {
+	return 1.0
+}
+
 func (bn *BinanceUsdtFuture) StreamSystemStatus(ctx context.Context, output chan common.SystemStatus) {
 	bn.mu.Lock()
 	updateInterval := bn.settings.PullInterval

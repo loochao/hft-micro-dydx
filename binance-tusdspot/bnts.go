@@ -22,6 +22,10 @@ type BinanceTusdSpot struct {
 	dryRun   bool
 }
 
+func (bn *BinanceTusdSpot) GetPriceFactor() float64 {
+	return 1.0
+}
+
 func (bn *BinanceTusdSpot) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	panic("implement me")
 }
@@ -808,6 +812,7 @@ func (bn *BinanceTusdSpotWithDepth20) StreamDepth(ctx context.Context, channels 
 type BinanceTusdSpotWithMergedTicker struct {
 	BinanceTusdSpot
 }
+
 
 func (bn *BinanceTusdSpotWithMergedTicker) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	panic("implement me")

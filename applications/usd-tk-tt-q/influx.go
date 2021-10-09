@@ -21,7 +21,7 @@ func handleSave(
 	lastExternalSaveTime *time.Time,
 ) {
 	if yCommissionAssetValue == nil || xCommissionAssetValue == nil {
-		logger.Debugf("miss commission %v %v",yCommissionAssetValue == nil,xCommissionAssetValue == nil)
+		logger.Debugf("miss commission %v %v", yCommissionAssetValue == nil, xCommissionAssetValue == nil)
 		return
 	}
 	totalUnHedgeValue := 0.0
@@ -85,10 +85,10 @@ func handleSave(
 			}
 
 			if st.xPosition.GetPrice() != 0 {
-				xURPnl += st.xValue * (st.xMidPrice - st.xPosition.GetPrice())/st.xPosition.GetPrice()
+				xURPnl += st.xValue * (st.xMidPrice - st.xPosition.GetPrice()) / st.xPosition.GetPrice()
 			}
 			if st.yPosition.GetPrice() != 0 {
-				yURPnl += st.yValue * (st.yMidPrice - st.yPosition.GetPrice())/st.yPosition.GetPrice()
+				yURPnl += st.yValue * (st.yMidPrice - st.yPosition.GetPrice()) / st.yPosition.GetPrice()
 			}
 
 			fields["spreadTimeDelta"] = st.spread.ParseTime.Sub(st.spread.EventTime).Seconds()
@@ -111,12 +111,10 @@ func handleSave(
 			fields["yAskPrice"] = st.yTicker.GetAskPrice()
 			fields["yMidPrice"] = st.yMidPrice
 
-
-
 		} else {
 			logger.Debugf(
 				"%s %s save failed, okXPosition %v okYPosition %v okSpread %v midPrice %v",
-				 xSymbol, ySymbol, st.xPosition != nil, st.yPosition != nil, st.spread != nil, st.midPrice,
+				xSymbol, ySymbol, st.xPosition != nil, st.yPosition != nil, st.spread != nil, st.midPrice,
 			)
 			hasAllSymbols = false
 		}
@@ -209,6 +207,8 @@ func handleSave(
 		fields["xyURPnl"] = totalURPnl
 		fields["netWorth"] = netWorth
 		fields["startValue"] = xyConfig.StartValue
+		fields["xPriceFactor"] = xExchange.GetPriceFactor()
+		fields["yPriceFactor"] = yExchange.GetPriceFactor()
 		pt, err := client.NewPoint(
 			xyConfig.InternalInflux.Measurement,
 			map[string]string{

@@ -18,6 +18,10 @@ type BybitUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (h *BybitUsdtFuture) GetPriceFactor() float64 {
+	return 1.0
+}
+
 func (h *BybitUsdtFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	panic("implement me")
 }

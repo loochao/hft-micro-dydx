@@ -19,6 +19,10 @@ type HuobiUsdtFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (k *HuobiUsdtFuture) GetPriceFactor() float64 {
+	return 1.0
+}
+
 func (h *HuobiUsdtFuture) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
@@ -719,6 +723,7 @@ type HuobiUsdtFutureWithDepth5 struct {
 type HuobiUsdtFutureWithMergedTicker struct {
 	HuobiUsdtFuture
 }
+
 
 func (k *HuobiUsdtFutureWithMergedTicker) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	panic("implement me")

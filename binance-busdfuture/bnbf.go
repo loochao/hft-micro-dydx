@@ -19,6 +19,10 @@ type BinanceBusdFuture struct {
 	settings common.ExchangeSettings
 }
 
+func (bn *BinanceBusdFuture) GetPriceFactor() float64 {
+	return 1.0
+}
+
 func (bn *BinanceBusdFuture) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
@@ -720,6 +724,7 @@ func (bn *BinanceBusdFutureWidthDepth20) StreamDepth(ctx context.Context, channe
 type BinanceBusdFutureWidthMergedTicker struct {
 	BinanceBusdFuture
 }
+
 
 func (bn *BinanceBusdFutureWidthMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamMergedTicker")
