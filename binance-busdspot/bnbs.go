@@ -489,7 +489,6 @@ func (bn *BinanceBusdSpot) watchPriceFactor(ctx context.Context, settings common
 			return
 		case ticker := <-ch:
 			bn.priceFactor.Set(tm.Insert(ticker.GetTime(), (ticker.GetAskPrice()+ticker.GetBidPrice())*0.5))
-			logger.Debugf("%f",bn.priceFactor.Load())
 		}
 	}
 }
