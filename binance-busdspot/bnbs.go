@@ -461,7 +461,10 @@ func (bn *BinanceBusdSpot) WatchOrders(ctx context.Context, requestChannels map[
 }
 
 func (bn *BinanceBusdSpot) watchPriceFactor(ctx context.Context, settings common.ExchangeSettings) {
-
+	logger.Debugf("watchPriceFactor for %s", settings.PriceFactorPair)
+	defer func() {
+		logger.Debugf("stop watchPriceFactor for %s", settings.PriceFactorPair)
+	}()
 	channels := make(map[string]chan common.Ticker)
 	ch := make(chan common.Ticker, 64)
 	channels[settings.PriceFactorPair] = ch
@@ -477,7 +480,7 @@ func (bn *BinanceBusdSpot) watchPriceFactor(ctx context.Context, settings common
 			}
 		}
 	}(ctx, settings.Proxy, channels)
-	tm := common.NewTimedMean(time.Minute * 5)
+	tm := common.NewTimedMean(time.Second * 5)
 	for {
 		select {
 		case <-bn.done:
@@ -486,6 +489,7 @@ func (bn *BinanceBusdSpot) watchPriceFactor(ctx context.Context, settings common
 			return
 		case ticker := <-ch:
 			bn.priceFactor.Set(tm.Insert(ticker.GetTime(), (ticker.GetAskPrice()+ticker.GetBidPrice())*0.5))
+			logger.Debugf("%f",bn.priceFactor.Load())
 		}
 	}
 }
