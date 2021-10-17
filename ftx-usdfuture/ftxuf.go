@@ -23,7 +23,22 @@ func (ftx *FtxUsdFuture) GetPriceFactor() float64 {
 }
 
 func (ftx *FtxUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
-	panic("implement me")
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	for {
+		select {
+		case <-timer.C:
+			select {
+			case statusCh <- common.SystemStatusReady:
+				timer.Reset(time.Minute)
+			default:
+				timer.Reset(time.Second*3)
+				logger.Debugf("statusCh <- common.SystemStatusReady failed, ch len %d", len(statusCh))
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (ftx *FtxUsdFuture) GetExchange() common.ExchangeID {

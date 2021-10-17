@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"math"
 	"math/rand"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-type DxdyUsdFuture struct {
+type DydxUsdFuture struct {
 	done     chan interface{}
 	stopped  int32
 	mu       sync.Mutex
@@ -21,7 +20,11 @@ type DxdyUsdFuture struct {
 	settings common.ExchangeSettings
 }
 
-func (dd *DxdyUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+func (dd *DydxUsdFuture) GetPriceFactor() float64 {
+	return 1.0
+}
+
+func (dd *DydxUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	dd.mu.Lock()
 	pullInterval := dd.settings.PullInterval
 	dd.mu.Unlock()
@@ -64,19 +67,19 @@ func (dd *DxdyUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan c
 	}
 }
 
-func (dd *DxdyUsdFuture) GetExchange() common.ExchangeID {
+func (dd *DydxUsdFuture) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (dd *DxdyUsdFuture) IsSpot() bool {
+func (dd *DydxUsdFuture) IsSpot() bool {
 	return false
 }
 
-func (dd *DxdyUsdFuture) Done() chan interface{} {
+func (dd *DydxUsdFuture) Done() chan interface{} {
 	return dd.done
 }
 
-func (dd *DxdyUsdFuture) Stop() {
+func (dd *DydxUsdFuture) Stop() {
 	if atomic.LoadInt32(&dd.stopped) == 0 {
 		atomic.StoreInt32(&dd.stopped, 1)
 		close(dd.done)
@@ -84,7 +87,7 @@ func (dd *DxdyUsdFuture) Stop() {
 	}
 }
 
-func (dd *DxdyUsdFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
+func (dd *DydxUsdFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
 	var err error
 	dd.stopped = 0
 	dd.done = make(chan interface{})
@@ -119,15 +122,15 @@ func (dd *DxdyUsdFuture) Setup(ctx context.Context, settings common.ExchangeSett
 	return nil
 }
 
-func (dd *DxdyUsdFuture) GetMultiplier(symbol string) (float64, error) {
+func (dd *DydxUsdFuture) GetMultiplier(symbol string) (float64, error) {
 	return 1.0, nil
 }
 
-func (dd *DxdyUsdFuture) GetMinNotional(symbol string) (float64, error) {
+func (dd *DydxUsdFuture) GetMinNotional(symbol string) (float64, error) {
 	return 0.0, nil
 }
 
-func (dd *DxdyUsdFuture) GetMinSize(symbol string) (float64, error) {
+func (dd *DydxUsdFuture) GetMinSize(symbol string) (float64, error) {
 	if v, ok := MinSizes[symbol]; ok {
 		return v, nil
 	} else {
@@ -135,7 +138,7 @@ func (dd *DxdyUsdFuture) GetMinSize(symbol string) (float64, error) {
 	}
 }
 
-func (dd *DxdyUsdFuture) GetStepSize(symbol string) (float64, error) {
+func (dd *DydxUsdFuture) GetStepSize(symbol string) (float64, error) {
 	if v, ok := StepSizes[symbol]; ok {
 		return v, nil
 	} else {
@@ -143,7 +146,7 @@ func (dd *DxdyUsdFuture) GetStepSize(symbol string) (float64, error) {
 	}
 }
 
-func (dd *DxdyUsdFuture) GetTickSize(symbol string) (float64, error) {
+func (dd *DydxUsdFuture) GetTickSize(symbol string) (float64, error) {
 	if v, ok := TickSizes[symbol]; ok {
 		return v, nil
 	} else {
@@ -151,11 +154,11 @@ func (dd *DxdyUsdFuture) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (dd *DxdyUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
+func (dd *DydxUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, accountCh chan common.Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan common.Position, orderChs map[string]chan common.Order) {
 	defer dd.Stop()
 	dd.mu.Lock()
 	settings := dd.settings
-	symbols := dd.settings.Symbols[:]
+	//symbols := dd.settings.Symbols[:]
 	dd.mu.Unlock()
 	var err error
 	dd.api, err = NewAPI(Credentials{
@@ -188,7 +191,7 @@ func (dd *DxdyUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 	var account *Account
 	positionsMap := make(map[string]Position)
 	var commissionAssetTimer = time.NewTimer(time.Second)
-	matchedOrders := make(map[string]Order)
+	//matchedOrders := make(map[string]Order)
 	for {
 		select {
 		case <-userWS.Done():
@@ -226,8 +229,10 @@ func (dd *DxdyUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
+			hasPositions := make(map[string]bool)
 			for market, pos := range a.OpenPositions {
 				if ch, ok := positionChMap[market]; ok {
+					hasPositions[market] = true
 					if oldPos, ok := positionsMap[market]; ok {
 						if pos.ParseTime.Sub(oldPos.ParseTime) > 0 {
 							pos := pos
@@ -246,6 +251,19 @@ func (dd *DxdyUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 						default:
 							logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
 						}
+					}
+				}
+			}
+			for market, ch := range positionChMap {
+				if _, ok := hasPositions[market]; !ok {
+					pos := Position{
+						Market: market,
+						ParseTime: time.Now(),
+					}
+					select {
+					case ch <- &pos:
+					default:
+						logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
 					}
 				}
 			}
@@ -268,63 +286,11 @@ func (dd *DxdyUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 			}
 			break
 		case orders := <-userWS.OrdersCh:
-			for _, order := range orders{
-				//滤掉没有价格的事件
-				if order.Status == "done" {
-					if oldOrder, ok := matchedOrders[order.ClientOid]; ok {
-						if order.EventType == "filled" {
-							order.FilledPrice = oldOrder.FilledPrice
-						}
-						delete(matchedOrders, order.ClientOid)
-					}
-				}
-				if order.MatchSize != 0 && order.MatchPrice != 0 {
-					if oldOrder, ok := matchedOrders[order.ClientOid]; ok {
-						if oldOrder.FilledSize+order.MatchSize != 0 {
-							order.FilledPrice = (order.MatchPrice*order.MatchSize + oldOrder.FilledSize*oldOrder.FilledPrice) / (oldOrder.FilledSize + order.MatchSize)
-						} else {
-							order.FilledPrice = order.MatchPrice
-						}
-					} else {
-						order.FilledPrice = order.MatchPrice
-					}
-					matchedOrders[order.ClientOid] = order
-					if pos, ok := positionsMap[order.Symbol]; ok {
-						size := order.MatchSize
-						if order.Side != OrderSideBuy {
-							size = -order.MatchSize
-						}
-						//logger.Debugf("ORDER %s %s %v POS %f -> %f %v", order.Symbol, order.EventType, order.EventTime, pos.CurrentQty, pos.CurrentQty+size, pos.EventTime)
-						price := order.MatchPrice
-						if pos.CurrentQty*size <= 0 {
-							if math.Abs(size) > math.Abs(pos.CurrentQty) {
-								pos.AvgEntryPrice = price
-							}
-							pos.CurrentQty += size
-						} else {
-							pos.AvgEntryPrice = (pos.CurrentQty*pos.AvgEntryPrice + size*price) / (pos.CurrentQty + size)
-							pos.CurrentQty += size
-						}
-						//这儿需要防止和order更新的仓位挨得太近, 重复变更仓位的问题，所以ws的仓位默认需要有一个delay
-						//一分钟内不要更新仓位
-						pos.ParseTime = order.ParseTime.Add(time.Second * 5)
-						pos.EventTime = order.EventTime.Add(time.Second * 5)
-						positionsMap[order.Symbol] = pos
-						if ch, ok := positionChMap[pos.Symbol]; ok {
-							select {
-							case ch <- &pos:
-							default:
-								if time.Now().Sub(logSilentTime) > 0 {
-									logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
-									logSilentTime = time.Now().Add(time.Minute)
-								}
-							}
-						}
-					}
-				}
-				if ch, ok := orderChs[order.Symbol]; ok {
+			for _, order := range orders {
+				if ch, ok := orderChs[order.Market]; ok {
+					order := order
 					select {
-					case ch <- order:
+					case ch <- &order:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logger.Debugf("ch <- &order failed, ch len %d", len(ch))
@@ -335,30 +301,10 @@ func (dd *DxdyUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 
 			}
 			break
-		case wsPosition := <-userWS.PositionCh:
-			if position, ok := positionsMap[wsPosition.Symbol]; ok {
-				//logger.Debugf("POSITION %s %s %v", position.Symbol, position.EventTime)
-				if wsPosition.EventTime.Sub(position.EventTime) < 0 {
-					continue
-				}
-				position.EventTime = wsPosition.EventTime
-				if wsPosition.AvgEntryPrice != nil {
-					position.AvgEntryPrice = *wsPosition.AvgEntryPrice
-				}
-				if wsPosition.UnrealisedPnl != nil {
-					position.UnrealisedPnl = *wsPosition.UnrealisedPnl
-				}
-				if wsPosition.CurrentQty != nil {
-					position.CurrentQty = *wsPosition.CurrentQty
-				}
-				if wsPosition.UnrealisedPnlPcnt != nil {
-					position.UnrealisedPnlPcnt = *wsPosition.UnrealisedPnlPcnt
-				}
-				if wsPosition.UnrealisedRoePcnt != nil {
-					position.UnrealisedRoePcnt = *wsPosition.UnrealisedRoePcnt
-				}
-				positionsMap[wsPosition.Symbol] = position
-				if ch, ok := positionChMap[position.Symbol]; ok {
+		case wsPositions := <-userWS.PositionsCh:
+			for _, wsPosition := range wsPositions {
+				if ch, ok := positionChMap[wsPosition.Market]; ok {
+					position := wsPosition
 					select {
 					case ch <- &position:
 					default:
@@ -374,7 +320,7 @@ func (dd *DxdyUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 	}
 }
 
-func (dd *DxdyUsdFuture) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
+func (dd *DydxUsdFuture) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	checkInterval := time.Second * 5
 	startTime := time.Now()
 	updateTimes := make(map[string]time.Time)
@@ -383,9 +329,9 @@ func (dd *DxdyUsdFuture) StreamSymbolStatus(ctx context.Context, channels map[st
 		startTime = startTime.Add(checkInterval)
 	}
 	loopTimer := time.NewTimer(time.Second)
-	dd.mu.Lock()
-	leverage := int(dd.settings.Leverage)
-	dd.mu.Unlock()
+	//dd.mu.Lock()
+	//leverage := int(dd.settings.Leverage)
+	//dd.mu.Unlock()
 	for {
 		select {
 		case <-ctx.Done():
@@ -396,29 +342,29 @@ func (dd *DxdyUsdFuture) StreamSymbolStatus(ctx context.Context, channels map[st
 			for symbol, ch := range channels {
 				if time.Now().Sub(updateTimes[symbol]) > 0 {
 					status := common.SymbolStatusReady
-					ticker, err := dd.api.GetTicker(ctx, TickerParam{
-						Symbol: symbol,
-					})
-					if err != nil {
-						logger.Debugf("%s dd.api.GetTicker error %v", symbol, err)
-						status = common.SymbolStatusNotReady
-					} else {
-						size := LotSizes[symbol]
-						price := ticker.BestAskPrice * 1.05
-						price = math.Ceil(price/TickSizes[symbol]) * TickSizes[symbol]
-						_, err := dd.api.SubmitOrder(ctx, NewOrderParam{
-							Symbol:      symbol,
-							Side:        OrderSideSell,
-							TimeInForce: OrderTimeInForceIOC,
-							Price:       common.Float64(price),
-							Size:        int64(size),
-							Leverage:    leverage,
-						})
-						if err != nil {
-							logger.Debugf("dd.api.SubmitOrder error %v", err)
-							status = common.SymbolStatusNotReady
-						}
-					}
+					//ticker, err := dd.api.GetTicker(ctx, TickerParam{
+					//	Symbol: symbol,
+					//})
+					//if err != nil {
+					//	logger.Debugf("%s dd.api.GetTicker error %v", symbol, err)
+					//	status = common.SymbolStatusNotReady
+					//} else {
+					//	size := LotSizes[symbol]
+					//	price := ticker.BestAskPrice * 1.05
+					//	price = math.Ceil(price/TickSizes[symbol]) * TickSizes[symbol]
+					//	_, err := dd.api.SubmitOrder(ctx, NewOrderParam{
+					//		Symbol:      symbol,
+					//		Side:        OrderSideSell,
+					//		TimeInForce: OrderTimeInForceIOC,
+					//		Price:       common.Float64(price),
+					//		Size:        int64(size),
+					//		Leverage:    leverage,
+					//	})
+					//	if err != nil {
+					//		logger.Debugf("dd.api.SubmitOrder error %v", err)
+					//		status = common.SymbolStatusNotReady
+					//	}
+					//}
 					select {
 					case ch <- status:
 					default:
@@ -437,7 +383,7 @@ func (dd *DxdyUsdFuture) StreamSymbolStatus(ctx context.Context, channels map[st
 	}
 }
 
-func (dd *DxdyUsdFuture) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
+func (dd *DydxUsdFuture) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")
 	defer dd.Stop()
@@ -459,7 +405,7 @@ func (dd *DxdyUsdFuture) StreamDepth(ctx context.Context, channels map[string]ch
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
 			defer dd.Stop()
-			ws := NewDepth5WS(ctx, dd.api, proxy, channels)
+			ws := NewDepthWS(ctx, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
@@ -480,11 +426,11 @@ func (dd *DxdyUsdFuture) StreamDepth(ctx context.Context, channels map[string]ch
 	}
 }
 
-func (dd *DxdyUsdFuture) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
+func (dd *DydxUsdFuture) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
 	panic("implement me")
 }
 
-func (dd *DxdyUsdFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (dd *DydxUsdFuture) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")
 	defer logger.Debugf("STOP StreamTicker")
 	defer dd.Stop()
@@ -506,7 +452,7 @@ func (dd *DxdyUsdFuture) StreamTicker(ctx context.Context, channels map[string]c
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
 			defer dd.Stop()
-			ws := NewTickerWS(ctx, dd.api, proxy, channels)
+			ws := NewTickerWS(ctx, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
@@ -527,11 +473,11 @@ func (dd *DxdyUsdFuture) StreamTicker(ctx context.Context, channels map[string]c
 	}
 }
 
-func (dd *DxdyUsdFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
+func (dd *DydxUsdFuture) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
 	panic("implement me")
 }
 
-func (dd *DxdyUsdFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
+func (dd *DydxUsdFuture) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
 	dd.mu.Lock()
 	interval := time.Minute
 	dd.mu.Unlock()
@@ -546,47 +492,37 @@ func (dd *DxdyUsdFuture) StreamFundingRate(ctx context.Context, channels map[str
 		case <-dd.done:
 			return
 		case <-afterFrTimer.C:
-			for symbol, ch := range channels {
-				subCtx, _ := context.WithTimeout(ctx, time.Minute)
-				fr, err := dd.api.GetCurrentFundingRate(subCtx, symbol)
-				if err != nil {
-					logger.Debugf("api.GetCurrentFundingRate error %v", err)
-				} else {
-					select {
-					case ch <- fr:
-					default:
-						logger.Debugf("ch <- fr failed, %s ch len %d", symbol, len(ch))
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			markets, err := dd.api.GetMarkets(subCtx)
+			if err != nil {
+				logger.Debugf("dd.api.GetMarkets error %v", err)
+			} else {
+				for symbol, ch := range channels {
+					if fr, ok := markets[symbol]; ok {
+						select {
+						case ch <- &fr:
+						default:
+							logger.Debugf("ch <- fr failed, %s ch len %d", symbol, len(ch))
+						}
 					}
 				}
-				//select {
-				//case <-ctx.Done():
-				//	return
-				//case <-dd.done:
-				//	return
-				//case <-time.After(time.Second):
-				//}
 			}
 			afterFrTimer.Reset(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
 			break
 		case <-timer.C:
-			for symbol, ch := range channels {
-				subCtx, _ := context.WithTimeout(ctx, time.Minute)
-				fr, err := dd.api.GetCurrentFundingRate(subCtx, symbol)
-				if err != nil {
-					logger.Debugf("api.GetCurrentFundingRate error %v", err)
-				} else {
-					select {
-					case ch <- fr:
-					default:
-						logger.Debugf("ch <- fr failed, %s ch len %d", symbol, len(ch))
+			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			markets, err := dd.api.GetMarkets(subCtx)
+			if err != nil {
+				logger.Debugf("dd.api.GetMarkets error %v", err)
+			} else {
+				for symbol, ch := range channels {
+					if fr, ok := markets[symbol]; ok {
+						select {
+						case ch <- &fr:
+						default:
+							logger.Debugf("ch <- fr failed, %s ch len %d", symbol, len(ch))
+						}
 					}
-				}
-				select {
-				case <-ctx.Done():
-					return
-				case <-dd.done:
-					return
-				case <-time.After(time.Second):
 				}
 			}
 			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
@@ -595,7 +531,7 @@ func (dd *DxdyUsdFuture) StreamFundingRate(ctx context.Context, channels map[str
 	}
 }
 
-func (dd *DxdyUsdFuture) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+func (dd *DydxUsdFuture) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	defer dd.Stop()
 	for symbol, reqCh := range requestChannels {
 		respCh, ok := responseChannels[symbol]
@@ -621,11 +557,11 @@ func (dd *DxdyUsdFuture) WatchOrders(ctx context.Context, requestChannels map[st
 	}
 }
 
-func (dd *DxdyUsdFuture) GenerateClientID() string {
+func (dd *DydxUsdFuture) GenerateClientID() string {
 	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 }
 
-func (dd *DxdyUsdFuture) systemStatusLoop(
+func (dd *DydxUsdFuture) systemStatusLoop(
 	ctx context.Context, output chan common.SystemStatus,
 ) {
 	dd.mu.Lock()
@@ -640,36 +576,17 @@ func (dd *DxdyUsdFuture) systemStatusLoop(
 		case <-dd.done:
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			systemStatus, err := dd.api.GetSystemStatus(subCtx)
-			if err != nil {
-				logger.Debugf("dd.api.GetSystemStatus(subCtx) error %v", err)
-				select {
-				case output <- common.SystemStatusError:
-				default:
-					logger.Debugf("output <- common.SystemStatusError failed ch len %d", len(output))
-				}
-			} else {
-				if systemStatus.Status == SystemStatusOpen {
-					select {
-					case output <- common.SystemStatusReady:
-					default:
-						logger.Debugf("output <- common.SystemStatusReady failed ch len %d", len(output))
-					}
-				} else {
-					select {
-					case output <- common.SystemStatusNotReady:
-					default:
-						logger.Debugf("output <- common.SystemStatusNotReady failed ch len %d", len(output))
-					}
-				}
+			select {
+			case output <- common.SystemStatusReady:
+			default:
+				logger.Debugf("output <- common.SystemStatusError failed ch len %d", len(output))
 			}
 			timer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
 		}
 	}
 }
 
-func (dd *DxdyUsdFuture) accountLoop(
+func (dd *DydxUsdFuture) accountLoop(
 	ctx context.Context, output chan Account,
 ) {
 	dd.mu.Lock()
@@ -683,9 +600,7 @@ func (dd *DxdyUsdFuture) accountLoop(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			account, err := dd.api.GetAccountOverView(subCtx, AccountParam{
-				Currency: "USDT",
-			})
+			account, err := dd.api.GetAccount(subCtx)
 			if err != nil {
 				logger.Debugf("dd.api.GetAccountOverView error %v", err)
 			} else {
@@ -696,8 +611,7 @@ func (dd *DxdyUsdFuture) accountLoop(
 	}
 }
 
-
-func (dd *DxdyUsdFuture) watchOrder(
+func (dd *DydxUsdFuture) watchOrder(
 	ctx context.Context,
 	symbol string,
 	requestCh chan common.OrderRequest,
@@ -732,10 +646,10 @@ func (dd *DxdyUsdFuture) watchOrder(
 	}
 }
 
-func (dd *DxdyUsdFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
-	newOrderParam := NewOrderParam{}
-	newOrderParam.Symbol = param.Symbol
-	newOrderParam.Size = int64(math.Round(param.Size))
+func (dd *DydxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
+	newOrderParam := NewOrderParams{}
+	newOrderParam.Market = param.Symbol
+	newOrderParam.Size = param.Size
 	if param.Side == common.OrderSideBuy {
 		newOrderParam.Side = OrderSideBuy
 	} else {
@@ -746,22 +660,22 @@ func (dd *DxdyUsdFuture) submitOrder(ctx context.Context, param common.NewOrderP
 	} else {
 		newOrderParam.Type = OrderTypeLimit
 	}
-	if param.TimeInForce == common.OrderTimeInForceIOC ||
-		param.TimeInForce == common.OrderTimeInForceFOK {
+	if param.TimeInForce == common.OrderTimeInForceFOK {
+		newOrderParam.TimeInForce = OrderTimeInForceFOK
+	}else if param.TimeInForce == common.OrderTimeInForceIOC {
 		newOrderParam.TimeInForce = OrderTimeInForceIOC
+	}else{
+		newOrderParam.TimeInForce = OrderTimeInForceGTT
 	}
 	newOrderParam.PostOnly = param.PostOnly
-	newOrderParam.ReduceOnly = param.ReduceOnly
 	if param.Price != 0 {
-		newOrderParam.Price = common.Float64(param.Price)
+		newOrderParam.Price = param.Price
 	}
-	newOrderParam.ClientOid = param.ClientID
+	newOrderParam.ClientId = param.ClientID
 	dd.mu.Lock()
-	newOrderParam.Leverage = int(dd.settings.Leverage)
+	newOrderParam.PositionID = dd.settings.PositionID
 	dd.mu.Unlock()
-	//logger.Debugf("%s before dd.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
-	_, err := dd.api.SubmitOrder(ctx, newOrderParam)
-	//logger.Debugf("%s after dd.api.SubmitOrder(ctx, newOrderParam)", newOrderParam.Symbol)
+	_, err := dd.api.CreateOrder(ctx, &newOrderParam)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{
@@ -774,10 +688,10 @@ func (dd *DxdyUsdFuture) submitOrder(ctx context.Context, param common.NewOrderP
 	}
 }
 
-func (dd *DxdyUsdFuture) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
+func (dd *DydxUsdFuture) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
 	if param.Symbol != "" {
-		_, err := dd.api.CancelAllOrders(ctx, CancelAllOrdersParam{
-			Symbol: param.Symbol,
+		_, err := dd.api.CancelOrders(ctx, &CancelOrdersParam{
+			Market: param.Symbol,
 		})
 		if err != nil {
 			select {
@@ -792,20 +706,20 @@ func (dd *DxdyUsdFuture) cancelOrder(ctx context.Context, param common.CancelOrd
 	}
 }
 
-func (dd *DxdyUsdFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+func (dd *DydxUsdFuture) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	panic("implement me")
 }
 
-func (dd *DxdyUsdFuture) StartSideLoop() {
+func (dd *DydxUsdFuture) StartSideLoop() {
 	panic("implement me")
 }
 
 type KucoinUsdtFutureWithDepth5 struct {
-	DxdyUsdFuture
+	DydxUsdFuture
 }
 
 type KucoinUsdtFutureWithMergedTicker struct {
-	DxdyUsdFuture
+	DydxUsdFuture
 }
 
 func (k *KucoinUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
@@ -830,15 +744,12 @@ func (k *KucoinUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, cha
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
 			defer k.Stop()
-			ws1 := NewTickerWS(ctx, k.api, proxy, channels)
-			ws2 := NewDepth5TickerWS(ctx, k.api, proxy, channels)
+			ws1 := NewTickerWS(ctx,  proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
 					return
 				case <-ws1.Done():
-					return
-				case <-ws2.Done():
 					return
 				}
 			}

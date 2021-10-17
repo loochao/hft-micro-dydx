@@ -66,6 +66,7 @@ func (strat *XYStrategy) updateSpread() {
 func (strat *XYStrategy) handleTicker() {
 	if strat.nextTicker.GetExchange() == strat.xExchangeID {
 		strat.xNextTicker = strat.nextTicker
+		logger.Debugf("%v", strat.nextTicker)
 		strat.handleXTicker()
 	} else if strat.nextTicker.GetExchange() == strat.yExchangeID {
 		strat.yNextTicker = strat.nextTicker

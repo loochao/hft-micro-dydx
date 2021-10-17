@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/geometrybase/hft-micro/common"
 	"net/url"
+	"os"
 	"strconv"
 	"time"
 )
@@ -59,6 +60,26 @@ type Market struct {
 	OpenInterest                     float64   `json:"openInterest,string"`
 	MaxPositionSize                  float64   `json:"maxPositionSize,string"`
 	AssetResolution                  float64   `json:"assetResolution,string"`
+}
+
+func (m *Market) GetSymbol() string {
+	return m.Market
+}
+
+func (m *Market) GetFundingRate() float64 {
+	if os.Getenv("DYDX_FUNDING_RATE_1H") != "" {
+		return m.NextFundingRate
+	} else {
+		return m.NextFundingRate * 8.0
+	}
+}
+
+func (m *Market) GetNextFundingTime() time.Time {
+	return m.NextFundingAt
+}
+
+func (m Market) GetExchange() common.ExchangeID {
+	return ExchangeID
 }
 
 //{
@@ -161,7 +182,7 @@ func (a *Account) GetFree() float64 {
 }
 
 func (a *Account) GetUsed() float64 {
-	return a.Equity  - a.FreeCollateral
+	return a.Equity - a.FreeCollateral
 }
 
 func (a *Account) GetTime() time.Time {
@@ -253,6 +274,76 @@ type Order struct {
 	CancelReason    *string    `json:"cancelReason"`
 }
 
+func (o *Order) GetSymbol() string {
+	return o.Market
+}
+
+func (o *Order) GetSize() float64 {
+	return o.Size
+}
+
+func (o *Order) GetPrice() float64 {
+	return o.Price
+}
+
+func (o *Order) GetFilledSize() float64 {
+	return o.Size - o.RemainingSize
+}
+
+func (o *Order) GetFilledPrice() float64 {
+	return o.Price
+}
+
+func (o *Order) GetSide() common.OrderSide {
+	switch o.Side {
+	case OrderSideBuy:
+		return common.OrderSideBuy
+	case OrderSideSell:
+		return common.OrderSideSell
+	default:
+		return common.OrderSideUnknown
+	}
+}
+
+func (o *Order) GetClientID() string {
+	return o.ClientID
+}
+
+func (o *Order) GetID() string {
+	return o.ID
+}
+
+func (o *Order) GetStatus() common.OrderStatus {
+	switch o.Status {
+	case OrderStatusCanceled:
+		return common.OrderStatusCancelled
+	case OrderStatusFilled:
+		return common.OrderStatusFilled
+	case OrderStatusOpen:
+		return common.OrderStatusOpen
+	case OrderStatusPending:
+		return common.OrderStatusNew
+	default:
+		return common.OrderStatusUnknown
+	}
+}
+
+func (o *Order) GetType() common.OrderType {
+	return common.OrderTypeLimit
+}
+
+func (o *Order) GetPostOnly() bool {
+	return o.PostOnly
+}
+
+func (o *Order) GetReduceOnly() bool {
+	return false
+}
+
+func (o *Order) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
 type OrdersResp struct {
 	Orders []Order `json:"orders"`
 }
@@ -274,16 +365,17 @@ type CancelOrdersResp struct {
 }
 
 type NewOrderParams struct {
-	PositionID string  `json:"position_id,omitempty"`
-	Market     string  `json:"market,omitempty"`
-	Side       string  `json:"side,omitempty"`
-	Type       string  `json:"order_type,omitempty"`
-	PostOnly   bool    `json:"post_only,omitempty"`
-	Size       float64 `json:"size,string,omitempty"`
-	Price      float64 `json:"price,string,omitempty"`
-	LimitFee   float64 `json:"limit_fee,string,omitempty"`
-	Expiration string  `json:"expiration,omitempty"`
-	ClientId   string  `json:"client_id,omitempty"`
+	PositionID  string  `json:"position_id,omitempty"`
+	Market      string  `json:"market,omitempty"`
+	Side        string  `json:"side,omitempty"`
+	Type        string  `json:"order_type,omitempty"`
+	PostOnly    bool    `json:"post_only,omitempty"`
+	Size        float64 `json:"size,string,omitempty"`
+	Price       float64 `json:"price,string,omitempty"`
+	LimitFee    float64 `json:"limit_fee,string,omitempty"`
+	Expiration  string  `json:"expiration,omitempty"`
+	ClientId    string  `json:"client_id,omitempty"`
+	TimeInForce string  `json:"time_in_force"`
 }
 
 type CreateOrderResp struct {
@@ -300,7 +392,9 @@ type Depth struct {
 }
 
 func (d *Depth) GetBidPrice() float64 {
-	if len(d.Bids) > 0 {
+	if len(d.Bids) > 1 {
+		return d.Bids[1][0]
+	} else if len(d.Bids) > 0 {
 		return d.Bids[0][0]
 	} else {
 		return 0.0
@@ -308,7 +402,9 @@ func (d *Depth) GetBidPrice() float64 {
 }
 
 func (d *Depth) GetAskPrice() float64 {
-	if len(d.Asks) > 0 {
+	if len(d.Asks) > 1 {
+		return d.Asks[1][0]
+	} else if len(d.Asks) > 0 {
 		return d.Asks[0][0]
 	} else {
 		return 0.0

@@ -11,6 +11,7 @@ import (
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
 	bbuf "github.com/geometrybase/hft-micro/bybit-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
+	dydx_usdfuture "github.com/geometrybase/hft-micro/dydx-usdfuture"
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
 	ftxus "github.com/geometrybase/hft-micro/ftx-usdspot"
 	hbuf "github.com/geometrybase/hft-micro/huobi-usdtfuture"
@@ -87,6 +88,8 @@ func main() {
 	}
 
 	switch xyConfig.XExchange.Name {
+	case "dydxUsdFuture":
+		xExchange = &dydx_usdfuture.DydxUsdFuture{}
 	case "binanceUsdtFuture":
 		xExchange = &bnuf.BinanceUsdtFuture{}
 		break
@@ -143,6 +146,8 @@ func main() {
 	}
 
 	switch xyConfig.YExchange.Name {
+	case "dydxUsdFuture":
+		yExchange = &dydx_usdfuture.DydxUsdFuture{}
 	case "binanceUsdtFuture":
 		yExchange = &bnuf.BinanceUsdtFuture{}
 		break

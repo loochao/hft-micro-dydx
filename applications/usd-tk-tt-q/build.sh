@@ -19,6 +19,11 @@ git push origin "usd-tk-tt-q.$dt" --force
 
 chmod 755 "./dist/usd-tk-tt-q.amd64.$dt"
 
+echo "" && echo "" && echo "way-new"
+rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" way-new:/usr/local/bin/
+
+exit 0
+
 echo "" && echo "" && echo "arm5"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm5:/usr/local/bin/
 

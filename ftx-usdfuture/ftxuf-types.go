@@ -350,7 +350,7 @@ func (account *Account) GetFree() float64 {
 	return account.FreeCollateral
 }
 func (account *Account) GetUsed() float64 {
-	return account.CollateralUsed
+	return account.TotalAccountValue - account.CollateralUsed
 }
 
 type AccountHttpResponse struct {

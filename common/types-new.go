@@ -81,7 +81,6 @@ type UsdExchange interface {
 	GenerateClientID() string
 	IsSpot() bool
 
-
 	StartSideLoop()
 }
 
@@ -118,6 +117,7 @@ type ExchangeSettings struct {
 	ApiPassphrase                       string        `yaml:"apiPassphrase" json:"apiPassphrase"`
 	ApiSubAccount                       string        `yaml:"apiSubAccount" json:"apiSubAccount"`
 	ApiUrl                              string        `yaml:"apiUrl" json:"apiUrl"`
+	PositionID                          string        `yaml:"positionID" json:"positionID"`
 	Symbols                             []string      `yaml:"symbols" json:"symbols"`
 	PullInterval                        time.Duration `yaml:"pullInterval" json:"httpPullInterval"`
 	HttpRequestInterval                 time.Duration `yaml:"httpRequestInterval" json:"httpRequestInterval"`

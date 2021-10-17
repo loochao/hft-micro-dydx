@@ -9,6 +9,7 @@ import (
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
+	ftxus "github.com/geometrybase/hft-micro/ftx-usdspot"
 	kcut "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	kcus "github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
@@ -76,8 +77,11 @@ func main() {
 	case "binanceUsdtFuture":
 		xExchange = &bnuf.BinanceUsdtFuture{}
 		break
-	case "ftxUsdtFuture":
+	case "ftxUsdFuture":
 		xExchange = &ftxuf.FtxUsdFuture{}
+		break
+	case "ftxUsdSpot":
+		xExchange = &ftxus.FtxUsdSpot{}
 		break
 	case "okexUsdtSpot":
 		xExchange = &okut.OkexUsdtSpot{}
@@ -117,8 +121,11 @@ func main() {
 	case "binanceUsdtFuture":
 		yExchange = &bnuf.BinanceUsdtFuture{}
 		break
-	case "ftxUsdtFuture":
+	case "ftxUsdFuture":
 		yExchange = &ftxuf.FtxUsdFuture{}
+		break
+	case "ftxUsdSpot":
+		yExchange = &ftxus.FtxUsdSpot{}
 		break
 	case "okexUsdtSpot":
 		yExchange = &okut.OkexUsdtSpot{}
@@ -219,8 +226,10 @@ func main() {
 		xTickerChMap[xSymbol] = make(chan common.Ticker, 256)
 		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 64)
 		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 1)
-		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 1)
+		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 64)
 	}
+
+
 
 	for _, ySymbol := range ySymbols {
 		yAccountChMap[ySymbol] = make(chan common.Balance, 64)
@@ -229,7 +238,7 @@ func main() {
 		yTickerChMap[ySymbol] = make(chan common.Ticker, 256)
 		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 64)
 		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 1)
-		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 1)
+		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 64)
 	}
 
 	var xCommissionAssetValueCh = make(chan float64, 64)

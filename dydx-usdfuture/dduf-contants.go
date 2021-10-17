@@ -25,7 +25,7 @@ const (
 
 	TimeLayout = "2006-01-02T15:04:05.999Z"
 
-	ExchangeID = common.BinanceUsdtFuture
+	ExchangeID = common.DydxUsdFuture
 )
 
 const (

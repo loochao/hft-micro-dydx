@@ -81,7 +81,12 @@ func TestAPI_ChangeLeverage(t *testing.T) {
 }
 
 func TestAPI_GetAccount(t *testing.T) {
-	api, err := NewAPI(os.Getenv("FTX_TEST_KEY"), os.Getenv("FTX_TEST_SECRET"), os.Getenv("FTX_TEST_PROXY"), "")
+
+	//api, err := NewAPI(os.Getenv("FTX_TEST_KEY"), os.Getenv("FTX_TEST_SECRET"), os.Getenv("FTX_TEST_PROXY"), "")
+	api, err := NewAPI(
+		"4Rd-hge6CBCZNKRPb71oYlQeBaM4Osbrqf_hDeEp",
+		"sAXPBuuNE47gE5AyNjRRoznp57Or9s7liogIOaYN",
+		"ff01", "socks5://127.0.0.1:1084")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,6 +96,7 @@ func TestAPI_GetAccount(t *testing.T) {
 		t.Fatal(err)
 	}
 	logger.Debugf("%v", account)
+	logger.Debugf("TA %f CU %f CF %f C %f", account.TotalAccountValue, account.CollateralUsed, account.FreeCollateral, account.Collateral)
 }
 
 
