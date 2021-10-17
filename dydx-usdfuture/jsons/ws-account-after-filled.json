@@ -1,0 +1,94 @@
+{
+  "type": "channel_data",
+  "connection_id": "02727f72-0d93-4784-8c52-d24aaea1c35a",
+  "message_id": 5,
+  "id": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+  "channel": "v3_accounts",
+  "contents": {
+    "fills": [
+      {
+        "market": "XMR-USD",
+        "transactionId": "16751938",
+        "quoteAmount": "70.632",
+        "price": "261.600000",
+        "size": "0.27",
+        "liquidity": "TAKER",
+        "accountId": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+        "side": "SELL",
+        "orderId": "0daf20004ef1575e32840cb83fc1cf396aa1dd0c4cfa53481fb2f53bfa63b9a",
+        "fee": "0.070632",
+        "type": "LIMIT",
+        "id": "8f9cf97d-f472-569b-84f4-c8b162256f75",
+        "nonce": null,
+        "forcePositionId": null,
+        "updatedAt": "2021-10-17T14:39:29.506Z",
+        "createdAt": "2021-10-17T14:39:29.506Z",
+        "orderClientId": "16344815692096"
+      }
+    ],
+    "positions": [
+      {
+        "id": "39a559e3-34b8-5128-87e9-4b5a29f48895",
+        "accountId": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+        "market": "XMR-USD",
+        "side": "SHORT",
+        "status": "OPEN",
+        "size": "-0.27",
+        "maxSize": "-0.27",
+        "entryPrice": "261.600000",
+        "exitPrice": "0.000000",
+        "realizedPnl": "0.000000",
+        "openTransactionId": "16751938",
+        "closeTransactionId": null,
+        "lastTransactionId": "16751938",
+        "closedAt": null,
+        "updatedAt": "2021-10-17T14:39:29.506Z",
+        "createdAt": "2021-10-17T14:39:29.506Z",
+        "sumOpen": "0.27",
+        "sumClose": "0",
+        "netFunding": "0"
+      }
+    ],
+    "orders": [
+      {
+        "id": "0daf20004ef1575e32840cb83fc1cf396aa1dd0c4cfa53481fb2f53bfa63b9a",
+        "clientId": "16344815692096",
+        "market": "XMR-USD",
+        "accountId": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+        "side": "SELL",
+        "size": "0.27",
+        "remainingSize": "0",
+        "limitFee": "0.0015",
+        "price": "261.6",
+        "triggerPrice": null,
+        "trailingPercent": null,
+        "type": "LIMIT",
+        "status": "FILLED",
+        "signature": "0516affb1d5e9b2939a16da3188db875a323a1758ea364f6445471a49725ff9f021a22f9c906cbedb238aae34b65b1f4d95220ecd9a84aa343bc3f7bfebfaea7",
+        "timeInForce": "FOK",
+        "postOnly": false,
+        "cancelReason": null,
+        "expiresAt": "2021-10-18T14:39:29.227Z",
+        "unfillableAt": null,
+        "updatedAt": "2021-10-17T14:39:29.489Z",
+        "createdAt": "2021-10-17T14:39:29.489Z"
+      }
+    ],
+    "accounts": [
+      {
+        "id": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+        "userId": "e3e2eac2-1ae8-5ed2-b425-7e1d7ea9f300",
+        "accountNumber": 0,
+        "starkKey": "03e49e730c07369815e7c0418e2eb473b1326fdfb54c73564411dc5af4d4011a",
+        "quoteBalance": "633.094868",
+        "lastTransactionId": "16751938",
+        "updatedAt": "2021-10-17T14:39:29.506Z",
+        "createdAt": "2021-10-04T11:40:26.063Z",
+        "positionId": "119684",
+        "starkKeyYCoordinate": "01c4ab2ed0e45e5bffec0ca4435d9feac6e2accb720e55a47a038ad1208ca97f"
+      }
+    ],
+    "transfers": [],
+    "fundingPayments": []
+  }
+}

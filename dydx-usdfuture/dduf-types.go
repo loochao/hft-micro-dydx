@@ -164,7 +164,7 @@ type Account struct {
 	PendingDeposits    float64             `json:"pendingDeposits,string"`
 	PendingWithdrawals float64             `json:"pendingWithdrawals,string"`
 	OpenPositions      map[string]Position `json:"openPositions"`
-	AccountNumber      string              `json:"accountNumber"`
+	AccountNumber      json.RawMessage     `json:"accountNumber"`
 	ID                 string              `json:"id"`
 	ParseTime          time.Time           `json:"-"`
 }
