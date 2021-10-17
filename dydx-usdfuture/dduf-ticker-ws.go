@@ -445,12 +445,12 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 					resubTimer.Reset(resubDelay)
 					msgCounter = -20
 					//直接去掉best bid ask
-					logger.Debugf("BAD MSG %s %d %v %v", market, msgCounter, depth.Bids[0], depth.Bids[1])
+					//logger.Debugf("BAD MSG %s %d %v %v", market, msgCounter, depth.Bids[0], depth.Bids[1])
 					depth.Bids = depth.Bids.Update([2]float64{depth.Bids[0][0], 0.0})
 					depth.Asks = depth.Asks.Update([2]float64{depth.Asks[0][0], 0.0})
 				}else{
 					msgCounter -= 20
-					logger.Debugf("BAD MSG %s %d %v %v", market, msgCounter, depth.Bids[0], depth.Bids[1])
+					//logger.Debugf("BAD MSG %s %d %v %v", market, msgCounter, depth.Bids[0], depth.Bids[1])
 					depth.Bids = depth.Bids.Update([2]float64{depth.Bids[0][0], 0.0})
 					depth.Asks = depth.Asks.Update([2]float64{depth.Asks[0][0], 0.0})
 				}
