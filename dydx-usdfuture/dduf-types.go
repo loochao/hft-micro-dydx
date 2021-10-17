@@ -392,9 +392,10 @@ type Depth struct {
 }
 
 func (d *Depth) GetBidPrice() float64 {
-	if len(d.Bids) > 1 {
-		return d.Bids[1][0]
-	} else if len(d.Bids) > 0 {
+	//if len(d.Bids) > 1 {
+	//	return d.Bids[1][0]
+	//} else
+	if len(d.Bids) > 0 {
 		return d.Bids[0][0]
 	} else {
 		return 0.0
@@ -402,9 +403,10 @@ func (d *Depth) GetBidPrice() float64 {
 }
 
 func (d *Depth) GetAskPrice() float64 {
-	if len(d.Asks) > 1 {
-		return d.Asks[1][0]
-	} else if len(d.Asks) > 0 {
+	//if len(d.Asks) > 1 {
+	//	return d.Asks[1][0]
+	//} else
+	if len(d.Asks) > 0 {
 		return d.Asks[0][0]
 	} else {
 		return 0.0
