@@ -107,7 +107,7 @@ func (strat *XYStrategy) updateXPosition() {
 
 	if strat.spread.ShortMedianLeave < strat.shortBot &&
 		strat.spread.ShortLastLeave < strat.spread.ShortMedianLeave &&
-		strat.xSize >= strat.xStepSize*strat.xMultiplier {
+		strat.xSize >= strat.xMinSize*strat.xMultiplier {
 
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), math.Min(strat.xAbsValue, strat.yAbsValue))
 		if strat.enterValue > strat.maxOrderValue {
@@ -184,7 +184,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 	} else if strat.spread.LongMedianLeave > strat.longTop &&
 		strat.spread.LongLastLeave > strat.spread.LongMedianLeave &&
-		strat.xSize <= -strat.xStepSize*strat.xMultiplier {
+		strat.xSize <= -strat.xMinSize*strat.xMultiplier {
 
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, strat.xAbsValue*0.5), math.Min(strat.xAbsValue, strat.yAbsValue))
 		if strat.enterValue > strat.maxOrderValue {
@@ -259,7 +259,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.ShortMedianEnter > strat.shortTop &&
 		strat.spread.ShortLastEnter > strat.spread.ShortMedianEnter &&
 		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
-		strat.xSize > -strat.xStepSize*strat.xMultiplier &&
+		strat.xSize > -strat.xMinSize*strat.xMultiplier &&
 		strat.xAccount.GetFree() > strat.config.MinimalXFree &&
 		strat.yAccount.GetFree() > strat.config.MinimalYFree &&
 		strat.xAbsValue < strat.config.MaximalXPosValue &&
@@ -371,7 +371,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spread.LongMedianEnter < strat.longBot &&
 		strat.spread.LongLastEnter < strat.spread.LongMedianEnter &&
 		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
-		strat.xSize < strat.xStepSize*strat.xMultiplier &&
+		strat.xSize < strat.xMinSize*strat.xMultiplier &&
 		strat.xAccount.GetFree() > strat.config.MinimalXFree &&
 		strat.yAccount.GetFree() > strat.config.MinimalYFree &&
 		strat.xAbsValue < strat.config.MaximalXPosValue &&
