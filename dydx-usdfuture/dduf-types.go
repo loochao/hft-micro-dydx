@@ -382,11 +382,12 @@ type NewOrderParams struct {
 
 func (nop *NewOrderParams) MarshalJSON() ([]byte, error) {
 	jsonStr := fmt.Sprintf(
-		`{"position_id": "%s", "market": "%s", "side": "%s", "order_type": "%s", "size": "%s", "price": "%s", "limit_fee": "%.4f", "expiration": "%s", "client_id": "%s", "time_in_force": "%s"}`,
+		`{"position_id": "%s", "market": "%s", "side": "%s", "order_type": "%s", "post_only": %v, "size": "%s", "price": "%s", "limit_fee": "%.4f", "expiration": "%s", "client_id": "%s", "time_in_force": "%s"}`,
 		nop.PositionID,
 		nop.Market,
 		nop.Side,
 		nop.Type,
+		nop.PostOnly,
 		common.FormatByPrecision(nop.Size, StepPrecisions[nop.Market]),
 		common.FormatByPrecision(nop.Price, TickPrecisions[nop.Market]),
 		nop.LimitFee,
