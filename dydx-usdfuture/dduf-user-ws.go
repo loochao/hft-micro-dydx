@@ -83,7 +83,7 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(time.Minute * 10))
+		err := conn.SetReadDeadline(time.Now().Add(time.Hour * 999))
 		if err != nil {
 			logger.Warnf("SetReadDeadline error %v", err)
 			go w.restart()
