@@ -333,7 +333,7 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn)
 			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
-	subscribeInterval := time.Minute * 5
+	subscribeInterval := time.Minute * 15
 	subscribeTime := time.Now()
 
 	checkInterval := time.Second
