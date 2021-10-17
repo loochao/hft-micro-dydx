@@ -266,7 +266,7 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, mark
 	}()
 	marketTimeout := time.Minute
 	marketCheckInterval := time.Second * 5
-	marketResetInterval := time.Minute * 5
+	marketResetInterval := time.Minute * 30
 	marketCheckTimer := time.NewTimer(time.Second)
 	defer marketCheckTimer.Stop()
 
