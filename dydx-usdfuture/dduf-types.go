@@ -2,6 +2,7 @@ package dydx_usdfuture
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"net/url"
 	"os"
@@ -376,6 +377,23 @@ type NewOrderParams struct {
 	Expiration  string  `json:"expiration,omitempty"`
 	ClientId    string  `json:"client_id,omitempty"`
 	TimeInForce string  `json:"time_in_force"`
+}
+
+func (nop *NewOrderParams) MarshalJSON() ([]byte, error) {
+	jsonStr := fmt.Sprintf(
+		`{"position_id": "%s", "market": "%s", "side": "%s", "order_type": "%s", "size": "%s", "price": "%s", "limit_fee": "%.4f", "expiration": "%s", "client_id": "%s", "time_in_force": "%s"}`,
+		nop.PositionID,
+		nop.Market,
+		nop.Side,
+		nop.Type,
+		common.FormatByPrecision(nop.Size, StepPrecisions[nop.Market]),
+		common.FormatByPrecision(nop.Price, TickPrecisions[nop.Market]),
+		nop.LimitFee,
+		nop.Expiration,
+		nop.ClientId,
+		nop.TimeInForce,
+	)
+	return []byte(jsonStr), nil
 }
 
 type CreateOrderResp struct {
