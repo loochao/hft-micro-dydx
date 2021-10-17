@@ -282,7 +282,37 @@ func (dd *DydxUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 			break
 		case newAccount := <-userWS.AccountCh:
 			if account != nil {
-				logger.Debugf("%v", newAccount)
+				select {
+				case accountCh <- &newAccount:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("accountCh <- account failed, ch len %d", len(accountCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
+				for market, pos := range newAccount.OpenPositions {
+					if ch, ok := positionChMap[market]; ok {
+						if oldPos, ok := positionsMap[market]; ok {
+							if pos.ParseTime.Sub(oldPos.ParseTime) > 0 {
+								pos := pos
+								positionsMap[market] = pos
+								select {
+								case ch <- &pos:
+								default:
+									logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
+								}
+							}
+						} else {
+							pos := pos
+							positionsMap[market] = pos
+							select {
+							case ch <- &pos:
+							default:
+								logger.Debugf("ch <- &pos failed, ch len %d", len(ch))
+							}
+						}
+					}
+				}
 			}
 			break
 		case orders := <-userWS.OrdersCh:
@@ -672,6 +702,8 @@ func (dd *DydxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderP
 		newOrderParam.Price = param.Price
 	}
 	newOrderParam.ClientId = param.ClientID
+	newOrderParam.Expiration = time.Now().UTC().Add(time.Hour*24).Format(TimeLayout)
+	newOrderParam.LimitFee = 0.0015
 	dd.mu.Lock()
 	newOrderParam.PositionID = dd.settings.PositionID
 	dd.mu.Unlock()
