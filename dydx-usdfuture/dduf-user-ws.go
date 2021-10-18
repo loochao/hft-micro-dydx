@@ -101,7 +101,7 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 			go w.restart()
 			return
 		}
-		logger.Debugf("%s", msg)
+		//logger.Debugf("%s", msg)
 		select {
 		case w.messageCh <- msg:
 		default:
