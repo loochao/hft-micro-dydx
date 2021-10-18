@@ -192,6 +192,8 @@ func (dd *DydxUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 	positionsMap := make(map[string]Position)
 	var commissionAssetTimer = time.NewTimer(time.Second)
 	//matchedOrders := make(map[string]Order)
+	accountNumber := dd.settings.AccountNumber
+	accountNumberWithQuote :=  fmt.Sprintf("\"%s\"", accountNumber)
 	for {
 		select {
 		case <-userWS.Done():
@@ -220,6 +222,10 @@ func (dd *DydxUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 			}
 			break
 		case a := <-httpAccountCh:
+			if string(a.AccountNumber) != accountNumberWithQuote &&
+				string(a.AccountNumber) != accountNumber {
+				continue
+			}
 			account = &a
 			select {
 			case accountCh <- account:
@@ -257,7 +263,7 @@ func (dd *DydxUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 			for market, ch := range positionChMap {
 				if _, ok := hasPositions[market]; !ok {
 					pos := Position{
-						Market: market,
+						Market:    market,
 						ParseTime: time.Now(),
 					}
 					select {
@@ -281,9 +287,23 @@ func (dd *DydxUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 			}
 			break
 		case newAccount := <-userWS.AccountCh:
+			if string(newAccount.AccountNumber) != accountNumberWithQuote &&
+				string(newAccount.AccountNumber) != accountNumber {
+				continue
+			}
 			if account != nil {
+				if newAccount.QuoteBalance != 0 {
+					account.QuoteBalance = newAccount.QuoteBalance
+				}
+				if newAccount.Equity != 0 {
+					account.Equity = newAccount.Equity
+				}
+				if newAccount.FreeCollateral != 0 {
+					account.FreeCollateral = newAccount.FreeCollateral
+				}
+				outAccount := *account
 				select {
-				case accountCh <- &newAccount:
+				case accountCh <- &outAccount:
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("accountCh <- account failed, ch len %d", len(accountCh))
@@ -692,9 +712,9 @@ func (dd *DydxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderP
 	}
 	if param.TimeInForce == common.OrderTimeInForceFOK {
 		newOrderParam.TimeInForce = OrderTimeInForceFOK
-	}else if param.TimeInForce == common.OrderTimeInForceIOC {
+	} else if param.TimeInForce == common.OrderTimeInForceIOC {
 		newOrderParam.TimeInForce = OrderTimeInForceIOC
-	}else{
+	} else {
 		newOrderParam.TimeInForce = OrderTimeInForceGTT
 	}
 	newOrderParam.PostOnly = param.PostOnly
@@ -702,7 +722,7 @@ func (dd *DydxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderP
 		newOrderParam.Price = param.Price
 	}
 	newOrderParam.ClientId = param.ClientID
-	newOrderParam.Expiration = time.Now().UTC().Add(time.Hour*24).Format(TimeLayout)
+	newOrderParam.Expiration = time.Now().UTC().Add(time.Hour * 24).Format(TimeLayout)
 	newOrderParam.LimitFee = 0.0015
 	dd.mu.Lock()
 	newOrderParam.PositionID = dd.settings.PositionID
@@ -776,7 +796,7 @@ func (k *KucoinUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, cha
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
 			defer k.Stop()
-			ws1 := NewTickerWS(ctx,  proxy, channels)
+			ws1 := NewTickerWS(ctx, proxy, channels)
 			for {
 				select {
 				case <-ctx.Done():
