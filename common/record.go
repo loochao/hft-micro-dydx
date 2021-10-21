@@ -186,3 +186,110 @@ func ArchiveDailyJlGzFiles(ctx context.Context,  savePath string) {
 		}
 	}
 }
+
+func RawWSMessageSaveLoopForSingleSymbol(
+	ctx context.Context, cancel context.CancelFunc,
+	savePath, xSymbol string,
+	messageInputCh chan *RawMessage,
+	fileSavedCh chan string,
+) {
+	logger.Debugf("START RawWSMessageSaveLoopForSingleSymbol %s", xSymbol)
+	hourUpdateTimer := time.NewTimer(time.Second)
+	var dayTime time.Time
+	var outPath string
+	var file *os.File
+	var gw *gzip.Writer
+	var msg *RawMessage
+	var err error
+	var nextLine = []byte{'\n'}
+	defer func() {
+		if gw != nil {
+			_ = gw.Flush()
+			_ = gw.Close()
+			logger.Debugf("close gzip writer for %s", xSymbol)
+			gw = nil
+		}
+		if file != nil {
+			logger.Debugf("close file writer for %s", xSymbol)
+			_ = file.Close()
+			file = nil
+		}
+		fileSavedCh <- xSymbol
+		logger.Debugf("EXIT saveLoop %s", xSymbol)
+		cancel()
+	}()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-hourUpdateTimer.C:
+			if gw != nil {
+				_ = gw.Flush()
+				_ = gw.Close()
+				gw = nil
+			}
+			if file != nil {
+				_ = file.Close()
+				file = nil
+			}
+			time.Sleep(time.Second * 5)
+			dayTime = time.Now().Truncate(time.Hour * 24)
+			outPath = fmt.Sprintf(
+				"%s/%s-%s.jl.gz",
+				savePath,
+				dayTime.Format("20060102"),
+				SymbolSanitize(xSymbol),
+			)
+			file, err = os.OpenFile(outPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0755)
+			if err != nil {
+				cancel()
+				logger.Debugf("os.OpenFile error %v, stop ws", err)
+				return
+			}
+			gw, err = gzip.NewWriterLevel(file, gzip.BestCompression)
+			if err != nil {
+				cancel()
+				logger.Debugf("gzip.NewWriterLevel error %v, stop ws", err)
+				return
+			}
+			hourUpdateTimer.Reset(
+				time.Now().Truncate(
+					time.Hour * 24,
+				).Add(
+					time.Hour * 24,
+				).Add(
+					time.Duration(rand.Intn(60)) * time.Second,
+				).Sub(time.Now()),
+			)
+		case msg = <-messageInputCh:
+			if gw != nil {
+				_, err = gw.Write(msg.Prefix)
+				if err != nil {
+					cancel()
+					logger.Debugf("gw.Write error %v, stop ws", err)
+					return
+				}
+				_, err = gw.Write([]byte(strconv.FormatInt(msg.Time, 10)))
+				if err != nil {
+					cancel()
+					logger.Debugf("gw.Write error %v, stop ws", err)
+					return
+				}
+				_, err = gw.Write(msg.Data)
+				if err != nil {
+					cancel()
+					logger.Debugf("gw.Write error %v, stop ws", err)
+					return
+				}
+				_, err = gw.Write(nextLine)
+				if err != nil {
+					cancel()
+					logger.Debugf("gw.Write error %v, stop ws", err)
+					return
+				}
+			}
+
+		}
+	}
+}
+

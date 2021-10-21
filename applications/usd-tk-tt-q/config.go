@@ -46,6 +46,8 @@ type Config struct {
 	FundingRateSilentTime   time.Duration `yaml:"fundingRateSilentTime"`
 	FundingRateInterval     time.Duration `yaml:"fundingRateInterval"`
 	FundingRateTimeOffset   time.Duration `yaml:"fundingRateTimeOffset"`
+	XFundingRateFactor      float64       `yaml:"xFundingRateFactor"`
+	YFundingRateFactor      float64       `yaml:"yFundingRateFactor"`
 
 	TickerMaxTimeDelta   time.Duration `yaml:"tickerTimeDeltaMax"`
 	TickerMinTimeDelta   time.Duration `yaml:"tickerTimeDeltaMin"`
@@ -141,6 +143,12 @@ func (config *Config) SetDefaultIfNotSet() {
 	config.YExchange.DryRun = config.DryRun
 	if config.BestSizeFactor == 0 {
 		config.BestSizeFactor = 1.0
+	}
+	if config.XFundingRateFactor == 0 {
+		config.XFundingRateFactor = 1.0
+	}
+	if config.YFundingRateFactor == 0 {
+		config.YFundingRateFactor = 1.0
 	}
 	if config.XOrderTimeInForce == "" {
 		config.XOrderTimeInForce = common.OrderTimeInForceFOK
