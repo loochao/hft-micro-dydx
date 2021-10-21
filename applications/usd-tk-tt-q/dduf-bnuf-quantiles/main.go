@@ -64,7 +64,7 @@ func main() {
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
 	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/dduf-bnuf-quantiles/outputs"
-	dataPath := "/Users/chenjilin/MarketData/dxuf-bnuf-depth-and-ticker"
+	dataPath := "/Users/chenjilin/MarketData/dduf-bnuf-depth-and-ticker"
 
 	sizeTDs := make(map[string]*tdigest.TDigest)
 	quantileMiddle := 0.0

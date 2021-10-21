@@ -1,0 +1,17 @@
+{
+  "type": "channel_data",
+  "connection_id": "e36b4ee1-d78d-4069-b328-3b4a6447eba0",
+  "message_id": 8,
+  "id": "ETH-USD",
+  "channel": "v3_trades",
+  "contents": {
+    "trades": [
+      {
+        "size": "5",
+        "side": "SELL",
+        "price": "4204.7",
+        "createdAt": "2021-10-21T08:47:40.085Z"
+      }
+    ]
+  }
+}

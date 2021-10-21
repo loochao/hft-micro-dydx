@@ -28,8 +28,9 @@ func StreamRawFundingRate(
 
 	var message *common.RawMessage
 	index := -1
-	pool := [4096]*common.RawMessage{}
-	for i := 0; i < 4096; i++ {
+	const bufferSize = 4096
+	pool := [bufferSize]*common.RawMessage{}
+	for i := 0; i < bufferSize; i++ {
 		pool[i] = &common.RawMessage{
 			Prefix: prefix,
 		}
@@ -53,7 +54,7 @@ func StreamRawFundingRate(
 						logger.Debugf("api.GetCurrentFundingRate error %v", err)
 					} else {
 						index++
-						if index == 4096 {
+						if index == bufferSize {
 							index = 0
 						}
 						message = pool[index]
@@ -82,7 +83,7 @@ func StreamRawFundingRate(
 						logger.Debugf("api.GetCurrentFundingRate error %v", err)
 					} else {
 						index++
-						if index == 4096 {
+						if index == bufferSize {
 							index = 0
 						}
 						message = pool[index]

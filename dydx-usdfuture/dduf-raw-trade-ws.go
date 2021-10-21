@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-type RawDepthWS struct {
+type RawTradeWS struct {
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
@@ -24,7 +24,7 @@ type RawDepthWS struct {
 	stopped     int32
 }
 
-func (w *RawDepthWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *RawTradeWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -66,7 +66,7 @@ func (w *RawDepthWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 		}
 	}
 }
-func (w *RawDepthWS) findMarket(msg []byte) (string, error) {
+func (w *RawTradeWS) findMarket(msg []byte) (string, error) {
 	collectStart := 0
 	collectEnd := 94
 	msgLen := len(msg)
@@ -87,7 +87,7 @@ func (w *RawDepthWS) findMarket(msg []byte) (string, error) {
 	return "", fmt.Errorf("market not found")
 }
 
-func (w *RawDepthWS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
+func (w *RawTradeWS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -121,7 +121,6 @@ func (w *RawDepthWS) readLoop(conn *websocket.Conn, channels map[string]chan *co
 			w.restart()
 			return
 		}
-		//logger.Debugf("%s", msg)
 		msgLen := len(msg)
 		if msgLen > 128 {
 			//if msg[9] == 's' {
@@ -170,7 +169,7 @@ func (w *RawDepthWS) readLoop(conn *websocket.Conn, channels map[string]chan *co
 	}
 }
 
-func (w *RawDepthWS) readAll(r io.Reader) ([]byte, error) {
+func (w *RawTradeWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -188,7 +187,7 @@ func (w *RawDepthWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *RawDepthWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *RawTradeWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -235,7 +234,7 @@ func (w *RawDepthWS) reconnect(ctx context.Context, wsUrl string, proxy string, 
 	return conn, nil
 }
 
-func (w *RawDepthWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.RawMessage) {
+func (w *RawTradeWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.RawMessage) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -287,7 +286,7 @@ func (w *RawDepthWS) mainLoop(ctx context.Context, proxy string, channels map[st
 	}
 }
 
-func (w *RawDepthWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, markets []string) {
+func (w *RawTradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, markets []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -352,7 +351,7 @@ func (w *RawDepthWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, ma
 					case w.writeCh <- WSOrderBookSubscribe{
 						Id:      market,
 						Type:    "unsubscribe",
-						Channel: "v3_orderbook",
+						Channel: "v3_trades",
 					}:
 					default:
 						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
@@ -361,7 +360,7 @@ func (w *RawDepthWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, ma
 					case w.writeCh <- WSOrderBookSubscribe{
 						Id:      market,
 						Type:    "subscribe",
-						Channel: "v3_orderbook",
+						Channel: "v3_trades",
 					}:
 					default:
 						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
@@ -376,7 +375,7 @@ func (w *RawDepthWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, ma
 	}
 }
 
-func (w *RawDepthWS) Stop() {
+func (w *RawTradeWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -384,7 +383,7 @@ func (w *RawDepthWS) Stop() {
 	}
 }
 
-func (w *RawDepthWS) restart() {
+func (w *RawTradeWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -392,17 +391,17 @@ func (w *RawDepthWS) restart() {
 	}
 }
 
-func (w *RawDepthWS) Done() chan interface{} {
+func (w *RawTradeWS) Done() chan interface{} {
 	return w.done
 }
 
-func NewRawDepthWS(
+func NewRawTradeWS(
 	ctx context.Context,
 	proxy string,
 	prefixes []byte,
 	channels map[string]chan *common.RawMessage,
-) *RawDepthWS {
-	ws := RawDepthWS{
+) *RawTradeWS {
+	ws := RawTradeWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}, 16),
 		writeCh:     make(chan interface{}, 16*len(channels)),
