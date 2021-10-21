@@ -124,9 +124,9 @@ func (w *RawDepthWS) readLoop(conn *websocket.Conn, channels map[string]chan *co
 		//logger.Debugf("%s", msg)
 		msgLen := len(msg)
 		if msgLen > 128 {
-			//if msg[9] == 's' {
-			//	logger.Debugf("%s", msg)
-			//}
+			if msg[9] != 's' && msg[9] != 'c' {
+				continue
+			}
 			market, err = w.findMarket(msg)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
@@ -298,12 +298,9 @@ func (w *RawDepthWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, ma
 	}()
 	marketTimeout := time.Minute
 	marketCheckInterval := time.Second * 5
-	marketResetInterval := time.Minute * 5
+	marketResetInterval := time.Minute * 15
 	marketCheckTimer := time.NewTimer(time.Second)
 	defer marketCheckTimer.Stop()
-
-	resetCheckTimer := time.NewTimer(time.Second)
-	defer resetCheckTimer.Stop()
 
 	marketResetTimes := make(map[string]time.Time)
 	marketUpdateTimes := make(map[string]time.Time)

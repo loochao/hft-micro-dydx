@@ -8,7 +8,6 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"sync/atomic"
@@ -123,9 +122,9 @@ func (w *RawTradeWS) readLoop(conn *websocket.Conn, channels map[string]chan *co
 		}
 		msgLen := len(msg)
 		if msgLen > 128 {
-			//if msg[9] == 's' {
-			//	logger.Debugf("%s", msg)
-			//}
+			if msg[9] != 's' && msg[9] != 'c' {
+				continue
+			}
 			market, err = w.findMarket(msg)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
@@ -295,27 +294,21 @@ func (w *RawTradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, ma
 			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
-	marketTimeout := time.Minute
+	marketTimeout := time.Minute*5
 	marketCheckInterval := time.Second * 5
-	marketResetInterval := time.Minute * 5
 	marketCheckTimer := time.NewTimer(time.Second)
 	defer marketCheckTimer.Stop()
 
-	resetCheckTimer := time.NewTimer(time.Second)
-	defer resetCheckTimer.Stop()
-
-	marketResetTimes := make(map[string]time.Time)
 	marketUpdateTimes := make(map[string]time.Time)
 	for _, market := range markets {
-		marketResetTimes[market] = time.Now().Add(time.Duration(rand.Intn(int(marketResetInterval/time.Second)))*time.Second + marketCheckInterval)
 		marketUpdateTimes[market] = time.Unix(0, 0)
 	}
-	trafficTimeout := time.NewTimer(time.Minute * 5)
+	trafficTimeout := time.NewTimer(marketTimeout)
 	defer trafficTimeout.Stop()
 
 
 	conn.SetPingHandler(func(msg string) error {
-		trafficTimeout.Reset(time.Second * 30)
+		trafficTimeout.Reset(marketTimeout)
 		err := conn.WriteControl(websocket.PongMessage, []byte(msg), time.Now().Add(time.Minute))
 		if err != nil {
 			select {
@@ -340,13 +333,12 @@ func (w *RawTradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, ma
 			w.restart()
 			return
 		case market := <-w.marketCh:
-			trafficTimeout.Reset(time.Second * 30)
+			trafficTimeout.Reset(marketTimeout)
 			marketUpdateTimes[market] = time.Now().Add(marketTimeout)
 			break
 		case <-marketCheckTimer.C:
 			for market := range marketUpdateTimes {
-				if time.Now().Sub(marketUpdateTimes[market]) > 0 ||
-					time.Now().Sub(marketResetTimes[market]) > 0 {
+				if time.Now().Sub(marketUpdateTimes[market]) > 0 {
 					select {
 					case w.writeCh <- WSOrderBookSubscribe{
 						Id:      market,
@@ -366,7 +358,6 @@ func (w *RawTradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, ma
 						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
 					}
 					marketUpdateTimes[market] = time.Now().Add(marketTimeout)
-					marketResetTimes[market] = time.Now().Add(time.Duration(rand.Intn(int(marketCheckInterval/time.Second)))*time.Second + marketResetInterval)
 				}
 			}
 			marketCheckTimer.Reset(marketCheckInterval)
