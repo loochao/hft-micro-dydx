@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	ftx_usdspot "github.com/geometrybase/hft-micro/ftx-usdspot"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/rand"
@@ -12,14 +13,15 @@ import (
 )
 
 type FtxUsdFuture struct {
-	api      *API
-	done     chan interface{}
-	stopped  bool
-	settings common.ExchangeSettings
+	api         *API
+	done        chan interface{}
+	stopped     bool
+	priceFactor *common.AtomicFloat64
+	settings    common.ExchangeSettings
 }
 
 func (ftx *FtxUsdFuture) GetPriceFactor() float64 {
-	return 1.0
+	return ftx.priceFactor.Load()
 }
 
 func (ftx *FtxUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
@@ -32,7 +34,7 @@ func (ftx *FtxUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan c
 			case statusCh <- common.SystemStatusReady:
 				timer.Reset(time.Minute)
 			default:
-				timer.Reset(time.Second*3)
+				timer.Reset(time.Second * 3)
 				logger.Debugf("statusCh <- common.SystemStatusReady failed, ch len %d", len(statusCh))
 			}
 		case <-ctx.Done():
@@ -464,6 +466,41 @@ func (ftx *FtxUsdFuture) WatchOrders(
 	}
 }
 
+
+func (ftx *FtxUsdFuture) watchPriceFactor(ctx context.Context, settings common.ExchangeSettings) {
+	logger.Debugf("watchPriceFactor for %s", settings.PriceFactorPair)
+	defer func() {
+		logger.Debugf("stop watchPriceFactor for %s", settings.PriceFactorPair)
+	}()
+	channels := make(map[string]chan common.Ticker)
+	ch := make(chan common.Ticker, 64)
+	channels["USDT/USD"] = ch
+	go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+		defer ftx.Stop()
+		ws1 := ftx_usdspot.NewTickerWS(ctx, proxy, channels)
+		for {
+			select {
+			case <-ws1.Done():
+				return
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(ctx, settings.Proxy, channels)
+	tm := common.NewTimedMean(time.Second * 5)
+	for {
+		select {
+		case <-ftx.done:
+			return
+		case <-ctx.Done():
+			return
+		case ticker := <-ch:
+			ftx.priceFactor.Set(tm.Insert(ticker.GetTime(), 1.0/(ticker.GetAskPrice()+ticker.GetBidPrice())*0.5))
+			logger.Debugf("%f", tm.Mean())
+		}
+	}
+}
+
 func (ftx *FtxUsdFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
 	var err error
 	if settings.PullInterval == 0 {
@@ -483,6 +520,10 @@ func (ftx *FtxUsdFuture) Setup(ctx context.Context, settings common.ExchangeSett
 		if err != nil {
 			return err
 		}
+	}
+	ftx.priceFactor = common.ForAtomicFloat64(1.0)
+	if settings.PriceFactorPair != "" {
+		go ftx.watchPriceFactor(ctx, settings)
 	}
 	return nil
 }
