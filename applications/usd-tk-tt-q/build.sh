@@ -22,6 +22,13 @@ chmod 755 "./dist/usd-tk-tt-q.amd64.$dt"
 echo "" && echo "" && echo "way-new"
 rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" way-new:/usr/local/bin/
 
+echo "" && echo "" && echo "arm1"
+rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm1:/usr/local/bin/
+rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" arm1:/usr/local/bin/
+
+echo "" && echo "" && echo "vc05"
+ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt vc05:/usr/local/bin/"
+
 exit 0
 
 echo "" && echo "" && echo "arm5"
@@ -41,16 +48,12 @@ ssh hk07 "rsync -avx --progress /usr/local/bin//usd-tk-tt-q.amd64.$dt hk06:/usr/
 
 
 
-echo "" && echo "" && echo "arm1"
-rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm1:/usr/local/bin/
-rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" arm1:/usr/local/bin/
 
 echo "" && echo "" && echo "arm2"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm2:/usr/local/bin/
 
 echo "" && echo "" && echo "arm4"
 rsync -avx --progress "./dist/usd-tk-tt-q.arm64.$dt" arm4:/usr/local/bin/
-
 
 
 echo "" && echo "" && echo "tk01"
@@ -74,8 +77,6 @@ ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt vc03:/usr/l
 echo "" && echo "" && echo "vc04"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt vc04:/usr/local/bin/"
 
-echo "" && echo "" && echo "vc05"
-ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt vc05:/usr/local/bin/"
 
 echo "" && echo "" && echo "hh01"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt hh01:/usr/local/bin/"

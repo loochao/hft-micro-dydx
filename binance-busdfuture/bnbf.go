@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	binance_busdspot "github.com/geometrybase/hft-micro/binance-busdspot"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math/rand"
@@ -12,15 +13,16 @@ import (
 )
 
 type BinanceBusdFuture struct {
-	api      *API
-	done     chan interface{}
-	stopped  bool
-	mu       sync.Mutex
-	settings common.ExchangeSettings
+	api         *API
+	done        chan interface{}
+	stopped     bool
+	mu          sync.Mutex
+	priceFactor *common.AtomicFloat64
+	settings    common.ExchangeSettings
 }
 
 func (bn *BinanceBusdFuture) GetPriceFactor() float64 {
-	return 1.0
+	return bn.priceFactor.Load()
 }
 
 func (bn *BinanceBusdFuture) GetExchange() common.ExchangeID {
@@ -29,6 +31,39 @@ func (bn *BinanceBusdFuture) GetExchange() common.ExchangeID {
 
 func (bn *BinanceBusdFuture) IsSpot() bool {
 	return false
+}
+
+func (bn *BinanceBusdFuture) watchPriceFactor(ctx context.Context, settings common.ExchangeSettings) {
+	logger.Debugf("watchPriceFactor for %s", settings.PriceFactorPair)
+	defer func() {
+		logger.Debugf("stop watchPriceFactor for %s", settings.PriceFactorPair)
+	}()
+	channels := make(map[string]chan common.Ticker)
+	ch := make(chan common.Ticker, 64)
+	channels[settings.PriceFactorPair] = ch
+	go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+		defer bn.Stop()
+		ws1 := binance_busdspot.NewBookTickerWS(ctx, proxy, channels)
+		for {
+			select {
+			case <-ws1.Done():
+				return
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(ctx, settings.Proxy, channels)
+	tm := common.NewTimedMean(time.Second * 5)
+	for {
+		select {
+		case <-bn.done:
+			return
+		case <-ctx.Done():
+			return
+		case ticker := <-ch:
+			bn.priceFactor.Set(tm.Insert(ticker.GetTime(), (ticker.GetAskPrice()+ticker.GetBidPrice())*0.5))
+		}
+	}
 }
 
 func (bn *BinanceBusdFuture) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
@@ -368,6 +403,10 @@ func (bn *BinanceBusdFuture) Setup(ctx context.Context, settings common.Exchange
 	}, settings.Proxy)
 	if err != nil {
 		return
+	}
+	bn.priceFactor = common.ForAtomicFloat64(1.0)
+	if settings.PriceFactorPair != "" {
+		go bn.watchPriceFactor(ctx, settings)
 	}
 	for _, symbol := range settings.Symbols {
 		if _, ok := TickSizes[symbol]; !ok {
@@ -724,7 +763,6 @@ func (bn *BinanceBusdFutureWidthDepth20) StreamDepth(ctx context.Context, channe
 type BinanceBusdFutureWidthMergedTicker struct {
 	BinanceBusdFuture
 }
-
 
 func (bn *BinanceBusdFutureWidthMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamMergedTicker")
