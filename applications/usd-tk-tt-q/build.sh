@@ -29,6 +29,9 @@ rsync -avx --progress "./dist/usd-tk-tt-q.amd64.$dt" arm1:/usr/local/bin/
 echo "" && echo "" && echo "vc05"
 ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt vc05:/usr/local/bin/"
 
+echo "" && echo "" && echo "vc01"
+ssh arm1 "rsync -avx --progress /usr/local/bin/usd-tk-tt-q.amd64.$dt vc01:/usr/local/bin/"
+
 exit 0
 
 echo "" && echo "" && echo "arm5"
