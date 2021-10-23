@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"math/rand"
@@ -17,11 +18,12 @@ type DydxUsdFuture struct {
 	stopped  int32
 	mu       sync.Mutex
 	api      *API
+	priceFactor *common.AtomicFloat64
 	settings common.ExchangeSettings
 }
 
 func (dd *DydxUsdFuture) GetPriceFactor() float64 {
-	return 1.0
+	return dd.priceFactor.Load()
 }
 
 func (dd *DydxUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
@@ -87,6 +89,39 @@ func (dd *DydxUsdFuture) Stop() {
 	}
 }
 
+func (dd *DydxUsdFuture) watchPriceFactor(ctx context.Context, settings common.ExchangeSettings) {
+	logger.Debugf("watchPriceFactor for %s", settings.PriceFactorPair)
+	defer func() {
+		logger.Debugf("stop watchPriceFactor for %s", settings.PriceFactorPair)
+	}()
+	channels := make(map[string]chan common.Ticker)
+	ch := make(chan common.Ticker, 64)
+	channels[settings.PriceFactorPair] = ch
+	go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+		defer dd.Stop()
+		ws1 := binance_usdtspot.NewBookTickerWS(ctx, proxy, channels)
+		for {
+			select {
+			case <-ws1.Done():
+				return
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(ctx, settings.Proxy, channels)
+	tm := common.NewTimedMean(time.Second * 5)
+	for {
+		select {
+		case <-dd.done:
+			return
+		case <-ctx.Done():
+			return
+		case ticker := <-ch:
+			dd.priceFactor.Set(tm.Insert(ticker.GetTime(), (ticker.GetAskPrice()+ticker.GetBidPrice())*0.5))
+		}
+	}
+}
+
 func (dd *DydxUsdFuture) Setup(ctx context.Context, settings common.ExchangeSettings) error {
 	var err error
 	dd.stopped = 0
@@ -101,6 +136,10 @@ func (dd *DydxUsdFuture) Setup(ctx context.Context, settings common.ExchangeSett
 	}, settings.Proxy)
 	if err != nil {
 		return err
+	}
+	dd.priceFactor = common.ForAtomicFloat64(1.0)
+	if settings.PriceFactorPair != "" {
+		go dd.watchPriceFactor(ctx, settings)
 	}
 	for _, symbol := range settings.Symbols {
 		if _, err = dd.GetStepSize(symbol); err != nil {
