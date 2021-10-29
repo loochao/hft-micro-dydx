@@ -14,14 +14,14 @@ import (
 	"time"
 )
 
-type RawDepth5WS struct {
+type RawDepth20WS struct {
 	done        chan interface{}
 	reconnectCh chan interface{}
 	prefix      []byte
 	stopped     int32
 }
 
-func (w *RawDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
+func (w *RawDepth20WS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -119,7 +119,7 @@ func (w *RawDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 	}
 }
 
-func (w *RawDepth5WS) readAll(r io.Reader) ([]byte, error) {
+func (w *RawDepth20WS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -137,7 +137,7 @@ func (w *RawDepth5WS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *RawDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *RawDepth20WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("RECONNECT %s, %d RETRIES", wsUrl, counter)
@@ -184,13 +184,13 @@ func (w *RawDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string,
 	return conn, nil
 }
 
-func (w *RawDepth5WS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.RawMessage) {
+func (w *RawDepth20WS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.RawMessage) {
 	urlStr := "wss://fstream.binance.com/stream?streams="
 	symbols := make([]string, 0)
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 		urlStr += fmt.Sprintf(
-			"%s@depth5@100ms/",
+			"%s@depth20@100ms/",
 			strings.ToLower(symbol),
 		)
 	}
@@ -247,7 +247,7 @@ func (w *RawDepth5WS) mainLoop(ctx context.Context, proxy string, channels map[s
 	}
 }
 
-func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *RawDepth20WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop %s", symbols)
 	defer func() {
 		logger.Debugf("EXIT heartbeatLoop %s", symbols)
@@ -296,14 +296,14 @@ func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 
 }
 
-func (w *RawDepth5WS) Stop() {
+func (w *RawDepth20WS) Stop() {
 	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (w *RawDepth5WS) restart() {
+func (w *RawDepth20WS) restart() {
 	select {
 	case <-w.done:
 		return
@@ -319,18 +319,18 @@ func (w *RawDepth5WS) restart() {
 	}
 }
 
-func (w *RawDepth5WS) Done() chan interface{} {
+func (w *RawDepth20WS) Done() chan interface{} {
 	return w.done
 }
 
 
-func NewRawDepth5WS(
+func NewRawDepth20WS(
 	ctx context.Context,
 	proxy string,
 	prefix []byte,
 	channels map[string]chan *common.RawMessage,
-) *RawDepth5WS {
-	ws := RawDepth5WS{
+) *RawDepth20WS {
+	ws := RawDepth20WS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}, 4),
 		prefix: prefix,

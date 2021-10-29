@@ -147,7 +147,7 @@ func main() {
 	}
 	defer iw.Stop()
 
-	dataPath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q-t/configs/kcuf-bnuf-xt/"
+	dataPath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-xt-basic/configs/kcuf-bnuf-xt/"
 	symbolsMap := map[string]string{
 		"XBTUSDTM": "BTCUSDT",
 	}

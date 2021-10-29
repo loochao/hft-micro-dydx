@@ -84,6 +84,10 @@ func (w *RawTradeWS) readLoop(conn *websocket.Conn, channels map[string]chan *co
 			symbol = common.UnsafeBytesToString(msg[11:25])
 		} else if msg[26] == '@' {
 			symbol = common.UnsafeBytesToString(msg[11:26])
+		} else if msg[27] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:27])
+		} else if msg[28] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:28])
 		} else {
 			if time.Now().Sub(logSilentTime) > 0 {
 				logger.Debugf("bad msg, can't find symbol: %s", msg)

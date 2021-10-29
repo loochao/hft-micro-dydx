@@ -24,7 +24,7 @@ package main
 //func main() {
 //	pnls := map[string]float64{}
 //	for i := 0; i < 1; i++ {
-//		contents, err := ioutil.ReadFile(fmt.Sprintf("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q-t/kc-pnl-history/盈亏历史 (%d).csv", i))
+//		contents, err := ioutil.ReadFile(fmt.Sprintf("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-xt-basic/kc-pnl-history/盈亏历史 (%d).csv", i))
 //		if err != nil {
 //			logger.Fatal(err)
 //		}
