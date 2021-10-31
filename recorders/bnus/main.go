@@ -54,7 +54,7 @@ func main() {
 
 	sort.Strings(symbols)
 	logger.Debugf("SYMBOLS %s", symbols)
-	symbols = symbols[:5]
+	//symbols = symbols[:5]
 
 	err = os.MkdirAll(path.Join(*savePath, "/archive"), 0777)
 	if err != nil {
