@@ -197,12 +197,12 @@ func (w *RawOrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy stri
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
 			HandshakeTimeout: 60 * time.Second,
-			EnableCompression: true,
+			//EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
 			HandshakeTimeout: 10 * time.Second,
-			EnableCompression: true,
+			//EnableCompression: true,
 		}
 	}
 	conn, _, err := dialer.DialContext(
