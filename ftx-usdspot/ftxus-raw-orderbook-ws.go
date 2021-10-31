@@ -14,17 +14,16 @@ import (
 	"time"
 )
 
-type RawTickerWS struct {
-	writeCh       chan interface{}
-	done          chan interface{}
-	reconnectCh   chan interface{}
-	marketCh      chan string
-	marketResetCh chan string
-	stopped       int32
-	source        []byte
+type RawOrderBookWS struct {
+	writeCh     chan interface{}
+	done        chan interface{}
+	reconnectCh chan interface{}
+	marketCh    chan string
+	source      []byte
+	stopped     int32
 }
 
-func (w *RawTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *RawOrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -67,7 +66,7 @@ func (w *RawTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
+func (w *RawOrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -78,9 +77,10 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 	var ok bool
 	var msgLen int
 	var message *common.RawMessage
+	const bufferLen = 8192
 	index := -1
-	pool := [4096]*common.RawMessage{}
-	for i := 0; i < 4096; i++ {
+	pool := [bufferLen]*common.RawMessage{}
+	for i := 0; i < bufferLen; i++ {
 		pool[i] = &common.RawMessage{
 			Prefix: w.source,
 		}
@@ -100,23 +100,21 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 			return
 		}
 		msgLen = len(msg)
-		//{"channel": "ticker", "market": "BTC/USD", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
-		//{"channel": "ticker", "market": "HT/USD", "type": "update", "data": {"bid": 15.45, "ask": 15.471, "bidSize": 38.1, "askSize": 18.0, "last": 15.453, "time": 1630770353.7536824}}
-		if len(msg) > 128 && msg[31] == ' ' && msg[32] == '"' {
-			if msg[40] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:40])
-			} else if msg[39] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:39])
-			} else if msg[41] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:41])
-			} else if msg[42] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:42])
-			} else if msg[43] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:43])
-			} else if msg[44] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:44])
-			} else if msg[45] == ',' {
-				symbol = common.UnsafeBytesToString(msg[33:45])
+		if msgLen > 128 && msg[13] == 'o' {
+			if msg[45] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:44])
+			} else if msg[44] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:43])
+			} else if msg[46] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:45])
+			} else if msg[47] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:46])
+			} else if msg[48] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:47])
+			} else if msg[49] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:48])
+			} else if msg[50] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:49])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
@@ -133,7 +131,7 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 		}
 		if ch, ok = channels[symbol]; ok {
 			index++
-			if index == 4096 {
+			if index == bufferLen {
 				index = 0
 			}
 			message = pool[index]
@@ -159,8 +157,8 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 	}
 }
 
-func (w *RawTickerWS) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 256)
+func (w *RawOrderBookWS) readAll(r io.Reader) ([]byte, error) {
+	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
 			// Add more capacity (let append pick how much).
@@ -177,7 +175,7 @@ func (w *RawTickerWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *RawTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *RawOrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -193,10 +191,12 @@ func (w *RawTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string,
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
 			HandshakeTimeout: 60 * time.Second,
+			//EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
 			HandshakeTimeout: 10 * time.Second,
+			//EnableCompression: true,
 		}
 	}
 	conn, _, err := dialer.DialContext(
@@ -222,7 +222,7 @@ func (w *RawTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string,
 	return conn, nil
 }
 
-func (w *RawTickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.RawMessage) {
+func (w *RawOrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.RawMessage) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -275,7 +275,7 @@ func (w *RawTickerWS) mainLoop(ctx context.Context, proxy string, channels map[s
 	}
 }
 
-func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *RawOrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -292,6 +292,15 @@ func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 	for _, symbol := range symbols {
 		marketUpdatedTimes[symbol] = time.Unix(0, 0)
 	}
+
+	marketResetInterval := time.Minute * 10
+	marketResetTimes := make(map[string]time.Time)
+	for i, symbol := range symbols {
+		marketResetTimes[symbol] = time.Now().Add(time.Second*5*time.Duration(i) + marketResetInterval)
+	}
+	marketResetCheckInterval := time.Second
+	marketResetCheckTimer := time.NewTimer(marketResetInterval / 2)
+
 	trafficTimeout := time.NewTimer(time.Minute * 5)
 	pingTimer := time.NewTimer(time.Second * 15)
 	defer trafficTimeout.Stop()
@@ -320,10 +329,33 @@ func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 			trafficTimeout.Reset(time.Second * 30)
 			marketUpdatedTimes[symbol] = time.Now()
 			break
-		case symbol := <-w.marketResetCh:
-			logger.Debugf("RESET %s", symbol)
-			trafficTimeout.Reset(time.Second * 30)
-			marketUpdatedTimes[symbol] = time.Now().Add(-marketTimeout)
+		case <-marketResetCheckTimer.C:
+			for market, resetTime := range marketResetTimes {
+				if time.Now().Sub(resetTime) > 0 {
+					marketResetTimes[market] = time.Now().Add(marketResetInterval)
+					logger.Debugf("RESET %s", market)
+					select {
+					case w.writeCh <- SubscribeParam{
+						Operation: "unsubscribe",
+						Channel:   "orderbook",
+						Market:    market,
+					}:
+					default:
+						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+					}
+					select {
+					case w.writeCh <- SubscribeParam{
+						Operation: "subscribe",
+						Channel:   "orderbook",
+						Market:    market,
+					}:
+						marketUpdatedTimes[market] = time.Now().Add(marketTimeout)
+					default:
+						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
+					}
+				}
+			}
+			marketResetCheckTimer.Reset(marketResetCheckInterval)
 			break
 		case <-marketCheckTimer.C:
 			for market, updateTime := range marketUpdatedTimes {
@@ -331,17 +363,16 @@ func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 					select {
 					case w.writeCh <- SubscribeParam{
 						Operation: "unsubscribe",
-						Channel:   "ticker",
+						Channel:   "orderbook",
 						Market:    market,
 					}:
-						marketUpdatedTimes[market] = time.Now().Add(marketTimeout)
 					default:
 						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
 					}
 					select {
 					case w.writeCh <- SubscribeParam{
 						Operation: "subscribe",
-						Channel:   "ticker",
+						Channel:   "orderbook",
 						Market:    market,
 					}:
 						marketUpdatedTimes[market] = time.Now().Add(marketTimeout)
@@ -356,7 +387,7 @@ func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 	}
 }
 
-func (w *RawTickerWS) Stop() {
+func (w *RawOrderBookWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -364,7 +395,7 @@ func (w *RawTickerWS) Stop() {
 	}
 }
 
-func (w *RawTickerWS) restart() {
+func (w *RawOrderBookWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -372,24 +403,23 @@ func (w *RawTickerWS) restart() {
 	}
 }
 
-func (w *RawTickerWS) Done() chan interface{} {
+func (w *RawOrderBookWS) Done() chan interface{} {
 	return w.done
 }
 
-func NewRawTickerWS(
+func NewRawOrderBookWS(
 	ctx context.Context,
 	proxy string,
 	source []byte,
 	channels map[string]chan *common.RawMessage,
-) *RawTickerWS {
-	ws := RawTickerWS{
-		done:          make(chan interface{}),
-		reconnectCh:   make(chan interface{}, 4),
-		writeCh:       make(chan interface{}, 2*len(channels)),
-		marketCh:      make(chan string, 128*len(channels)),
-		marketResetCh: make(chan string, len(channels)),
-		stopped:       0,
-		source:        source,
+) *RawOrderBookWS {
+	ws := RawOrderBookWS{
+		done:        make(chan interface{}),
+		reconnectCh: make(chan interface{}, 100),
+		writeCh:     make(chan interface{}, 100*len(channels)),
+		marketCh:    make(chan string, 100*len(channels)),
+		source:      source,
+		stopped:     0,
 	}
 	go ws.mainLoop(ctx, proxy, channels)
 	ws.reconnectCh <- nil

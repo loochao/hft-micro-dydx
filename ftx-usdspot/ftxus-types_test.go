@@ -2,7 +2,6 @@ package ftx_usdspot
 
 import (
 	"encoding/json"
-	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/stretchr/testify/assert"
 	"hash/crc32"
@@ -60,19 +59,19 @@ func TestParseTickerByStdJson(t *testing.T) {
 }
 
 
-func TestGetExchange(t *testing.T) {
-	var position common.Position = &Balance{}
-	var fr common.FundingRate = &FutureStats{}
-	var order common.Order = &Order{}
-	var fill common.Order = &Fill{}
-	var balance common.Balance = &Account{}
-	var depth common.Depth = &OrderBook{}
-	var ticker common.Ticker = &Ticker{}
-	assert.Equal(t, common.FtxUsdFuture, fr.GetExchange())
-	assert.Equal(t, common.FtxUsdFuture, fill.GetExchange())
-	assert.Equal(t, common.FtxUsdFuture, position.GetExchange())
-	assert.Equal(t, common.FtxUsdFuture, order.GetExchange())
-	assert.Equal(t, common.FtxUsdFuture, depth.GetExchange())
-	assert.Equal(t, common.FtxUsdFuture, balance.GetExchange())
-	assert.Equal(t, common.FtxUsdFuture, ticker.GetExchange())
-}
+//func TestGetExchange(t *testing.T) {
+//	var position common.Position = &Balance{}
+//	var fr common.FundingRate = &FutureStats{}
+//	var order common.Order = &Order{}
+//	var fill common.Order = &Fill{}
+//	var balance common.Balance = &Account{}
+//	var depth common.Depth = &OrderBook{}
+//	var ticker common.Ticker = &Ticker{}
+//	assert.Equal(t, common.FtxUsdFuture, fr.GetExchange())
+//	assert.Equal(t, common.FtxUsdFuture, fill.GetExchange())
+//	assert.Equal(t, common.FtxUsdFuture, position.GetExchange())
+//	assert.Equal(t, common.FtxUsdFuture, order.GetExchange())
+//	assert.Equal(t, common.FtxUsdFuture, depth.GetExchange())
+//	assert.Equal(t, common.FtxUsdFuture, balance.GetExchange())
+//	assert.Equal(t, common.FtxUsdFuture, ticker.GetExchange())
+//}
