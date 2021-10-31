@@ -70,6 +70,10 @@ func (w *RawBookTickerWS) readLoop(conn *websocket.Conn, channels map[string]cha
 				symbol = common.UnsafeBytesToString(msg[11:20])
 			} else if msg[21] == '@' {
 				symbol = common.UnsafeBytesToString(msg[11:21])
+			} else if msg[22] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:22])
+			} else if msg[23] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:23])
 			} else if msg[17] == '@' {
 				symbol = common.UnsafeBytesToString(msg[11:17])
 			} else {
