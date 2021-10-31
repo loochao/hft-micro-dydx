@@ -101,12 +101,14 @@ func (w *RawOrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan
 		}
 		msgLen = len(msg)
 		if msgLen > 128 && msg[13] == 'o' {
-			if msg[45] == ',' {
-				symbol = common.UnsafeBytesToString(msg[36:44])
-			} else if msg[44] == ',' {
+			if msg[44] == ',' {
 				symbol = common.UnsafeBytesToString(msg[36:43])
+			} else if msg[43] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:42])
 			} else if msg[46] == ',' {
 				symbol = common.UnsafeBytesToString(msg[36:45])
+			} else if msg[45] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:44])
 			} else if msg[47] == ',' {
 				symbol = common.UnsafeBytesToString(msg[36:46])
 			} else if msg[48] == ',' {
