@@ -112,6 +112,8 @@ func (w *RawOrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan
 				symbol = common.UnsafeBytesToString(msg[36:48])
 			} else if msg[50] == ',' {
 				symbol = common.UnsafeBytesToString(msg[36:49])
+			} else if msg[44] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:43])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
