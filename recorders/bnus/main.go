@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
@@ -26,12 +27,30 @@ func main() {
 	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 	flag.Parse()
 
-	api, err := binance_usdtspot.NewAPI(&common.Credentials{}, *proxyAddress)
+	fapi, err := binance_usdtfuture.NewAPI(&common.Credentials{}, *proxyAddress)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	ctx := context.Background()
+	fExchangeInfo, err := fapi.GetExchangeInfo(ctx)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	futuresMap := make(map[string]string)
+	for _, symbol := range fExchangeInfo.Symbols {
+		if symbol.Status != "TRADING" {
+			continue
+		}
+		futuresMap[symbol.Symbol] = symbol.Symbol
+	}
+
+	api, err := binance_usdtspot.NewAPI(&common.Credentials{}, *proxyAddress)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	exchangeInfo, err := api.GetExchangeInfo(ctx)
 	if err != nil {
 		logger.Fatal(err)
@@ -39,7 +58,7 @@ func main() {
 
 	symbols := make([]string, 0)
 	for _, symbol := range exchangeInfo.Symbols {
-		if symbol.Status !=  "TRADING" || (symbol.QuoteAsset != "USDT" && symbol.QuoteAsset != "BUSD"){
+		if symbol.Status != "TRADING" || (symbol.QuoteAsset != "USDT" && symbol.QuoteAsset != "BUSD") {
 			continue
 		}
 		if strings.Contains(symbol.Symbol, "DOWNUSDT") {
@@ -48,13 +67,27 @@ func main() {
 		if strings.Contains(symbol.Symbol, "UPUSDT") {
 			continue
 		}
-		symbols = append(symbols, symbol.Symbol)
+		if symbol.BaseAsset == "USDC" ||
+			symbol.BaseAsset == "TUSD" ||
+			symbol.BaseAsset == "USDP" ||
+			symbol.BaseAsset == "FTT" {
+			symbols = append(symbols, symbol.Symbol)
+		} else if symbol.QuoteAsset == "USDT" {
+			if _, ok := futuresMap[symbol.Symbol]; ok {
+				symbols = append(symbols, symbol.Symbol)
+			}
+		} else if symbol.QuoteAsset == "BUSD" {
+			if _, ok := futuresMap[symbol.Symbol]; ok {
+				symbols = append(symbols, symbol.Symbol)
+			} else if _, ok := futuresMap[strings.Replace(symbol.Symbol, "BUSD", "USDT", -1)]; ok {
+				symbols = append(symbols, symbol.Symbol)
+			}
+		}
 	}
-
 
 	sort.Strings(symbols)
 	logger.Debugf("SYMBOLS %s", symbols)
-	//symbols = symbols[:5]
+	logger.Debugf("SYMBOLS LEN %d", len(symbols))
 
 	err = os.MkdirAll(path.Join(*savePath, "/archive"), 0777)
 	if err != nil {

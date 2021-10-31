@@ -74,7 +74,7 @@ func main() {
 			}
 		}(ctx, cancel, *proxyAddress, kcufChMap)
 		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan *common.RawMessage) {
-			ws1 := ftx_usdfuture.NewRawTickerWS(ctx, proxy, []byte{'Y', 'T'}, outputChMap)
+			ws1 := ftx_usdfuture.NewRawBookTickerWS(ctx, proxy, []byte{'Y', 'T'}, outputChMap)
 			select {
 			case <-ctx.Done():
 			case <-ws1.Done():

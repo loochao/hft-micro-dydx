@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type RawTickerWS struct {
+type RawTradeWS struct {
 	writeCh       chan interface{}
 	done          chan interface{}
 	reconnectCh   chan interface{}
@@ -24,7 +24,7 @@ type RawTickerWS struct {
 	source        []byte
 }
 
-func (w *RawTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *RawTradeWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -48,15 +48,13 @@ func (w *RawTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 					continue
 				}
 			}
-			if len(msgBytes) != 14 {
-				logger.Debugf("%s", msgBytes)
-			}
 			err = conn.SetWriteDeadline(time.Now().Add(time.Minute))
 			if err != nil {
 				logger.Debugf("conn.SetWriteDeadline error %v", err)
 				w.restart()
 				return
 			}
+
 			err = conn.WriteMessage(websocket.TextMessage, msgBytes)
 			if err != nil {
 				logger.Debugf("conn.WriteMessage error %v", err)
@@ -67,7 +65,7 @@ func (w *RawTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
+func (w *RawTradeWS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -85,6 +83,7 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 			Prefix: w.source,
 		}
 	}
+
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -99,22 +98,16 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 			w.restart()
 			return
 		}
-		msgLen := len(msg)
-		//{"channel": "ticker", "market": "DOGE-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
-		//{"channel": "ticker", "market": "HT-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
-		if msgLen > 128 && msg[31] == ' ' && msg[32] == '"' {
+		if len(msg) > 128 && msg[13] == 't' {
 			if msg[41] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:41])
-			} else if msg[40] == '"' {
-				//需要在41后边，不然会串
-				symbol = common.UnsafeBytesToString(msg[33:40])
 			} else if msg[42] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:42])
 			} else if msg[43] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:43])
 			} else if msg[44] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:44])
-			} else if msg[45] == ',' {
+			} else if msg[45] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:45])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
@@ -124,9 +117,11 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 				continue
 			}
 		} else {
-			if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
-				logger.Debugf("other msg %s", msg)
-				logSilentTime = time.Now().Add(time.Minute)
+			if len(msg) > 128 {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("other msg %s", msg)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
 			}
 			continue
 		}
@@ -158,8 +153,8 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 	}
 }
 
-func (w *RawTickerWS) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 256)
+func (w *RawTradeWS) readAll(r io.Reader) ([]byte, error) {
+	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
 			// Add more capacity (let append pick how much).
@@ -176,7 +171,7 @@ func (w *RawTickerWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *RawTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *RawTradeWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -221,15 +216,15 @@ func (w *RawTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string,
 	return conn, nil
 }
 
-func (w *RawTickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.RawMessage) {
+func (w *RawTradeWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.RawMessage) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
-	symbols := make([]string, 0)
+	markets := make([]string, 0)
 	for symbol := range channels {
-		symbols = append(symbols, symbol)
+		markets = append(markets, symbol)
 	}
 
 	defer func() {
@@ -269,12 +264,12 @@ func (w *RawTickerWS) mainLoop(ctx context.Context, proxy string, channels map[s
 			}
 			go w.readLoop(conn, channels)
 			go w.writeLoop(internalCtx, conn)
-			go w.heartbeatLoop(internalCtx, conn, symbols)
+			go w.heartbeatLoop(internalCtx, conn, markets)
 		}
 	}
 }
 
-func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *RawTradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -283,10 +278,10 @@ func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
-	marketTimeout := time.Minute
-	marketCheckInterval := time.Second
-	marketCheckTimer := time.NewTimer(time.Second)
-	defer marketCheckTimer.Stop()
+	symbolTimeout := time.Minute * 5
+	symbolCheckInterval := time.Second
+	symbolCheckTimer := time.NewTimer(time.Second)
+	defer symbolCheckTimer.Stop()
 	marketUpdatedTimes := make(map[string]time.Time)
 	for _, symbol := range symbols {
 		marketUpdatedTimes[symbol] = time.Unix(0, 0)
@@ -310,7 +305,6 @@ func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 			pingTimer.Reset(time.Second * 15)
 			select {
 			case w.writeCh <- []byte("{\"op\": \"ping\"}"):
-				break
 			default:
 				logger.Debugf("w.writeCh <- ping failed, ch len %d", len(w.writeCh))
 			}
@@ -319,43 +313,28 @@ func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 			trafficTimeout.Reset(time.Second * 30)
 			marketUpdatedTimes[symbol] = time.Now()
 			break
-		case symbol := <-w.marketResetCh:
-			logger.Debugf("RESET %s", symbol)
-			trafficTimeout.Reset(time.Second * 30)
-			marketUpdatedTimes[symbol] = time.Now().Add(-marketTimeout)
-			break
-		case <-marketCheckTimer.C:
-			for market, updateTime := range marketUpdatedTimes {
-				if time.Now().Sub(updateTime) > marketTimeout {
-					select {
-					case w.writeCh <- SubscribeParam{
-						Operation: "unsubscribe",
-						Channel:   "ticker",
-						Market:    market,
-					}:
-						marketUpdatedTimes[market] = time.Now().Add(marketTimeout)
-					default:
-						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
-					}
+		case <-symbolCheckTimer.C:
+			for symbol, updateTime := range marketUpdatedTimes {
+				if time.Now().Sub(updateTime) > symbolTimeout {
 					select {
 					case w.writeCh <- SubscribeParam{
 						Operation: "subscribe",
-						Channel:   "ticker",
-						Market:    market,
+						Channel:   "trades",
+						Market:    symbol,
 					}:
-						marketUpdatedTimes[market] = time.Now().Add(marketTimeout)
+						marketUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
 					default:
 						logger.Debugf("w.writeCh <- Subscription failed, ch len %d", len(w.writeCh))
 					}
 				}
 			}
-			marketCheckTimer.Reset(marketCheckInterval)
+			symbolCheckTimer.Reset(symbolCheckInterval)
 			break
 		}
 	}
 }
 
-func (w *RawTickerWS) Stop() {
+func (w *RawTradeWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -363,7 +342,7 @@ func (w *RawTickerWS) Stop() {
 	}
 }
 
-func (w *RawTickerWS) restart() {
+func (w *RawTradeWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -371,24 +350,24 @@ func (w *RawTickerWS) restart() {
 	}
 }
 
-func (w *RawTickerWS) Done() chan interface{} {
+
+func (w *RawTradeWS) Done() chan interface{} {
 	return w.done
 }
 
-func NewRawBookTickerWS(
+func NewRawTradeWS(
 	ctx context.Context,
 	proxy string,
 	source []byte,
 	channels map[string]chan *common.RawMessage,
-) *RawTickerWS {
-	ws := RawTickerWS{
-		done:          make(chan interface{}),
-		reconnectCh:   make(chan interface{}, 4),
-		writeCh:       make(chan interface{}, 2*len(channels)),
-		marketCh:      make(chan string, 100*len(channels)),
-		marketResetCh: make(chan string, len(channels)),
-		stopped:       0,
-		source:        source,
+) *RawTradeWS {
+	ws := RawTradeWS{
+		done:        make(chan interface{}),
+		reconnectCh: make(chan interface{}, 100),
+		writeCh:     make(chan interface{}, 100*len(channels)),
+		marketCh:    make(chan string, 100*len(channels)),
+		source:      source,
+		stopped:     0,
 	}
 	go ws.mainLoop(ctx, proxy, channels)
 	ws.reconnectCh <- nil

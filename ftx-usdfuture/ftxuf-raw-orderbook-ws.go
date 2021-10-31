@@ -12,19 +12,19 @@ import (
 	"net/url"
 	"sync/atomic"
 	"time"
+	"unsafe"
 )
 
-type RawTickerWS struct {
+type RawOrderBookWS struct {
 	writeCh       chan interface{}
 	done          chan interface{}
 	reconnectCh   chan interface{}
 	marketCh      chan string
 	marketResetCh chan string
 	stopped       int32
-	source        []byte
 }
 
-func (w *RawTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *RawOrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -67,24 +67,16 @@ func (w *RawTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
+func (w *RawOrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
+	var symbolBytes []byte
 	var symbol string
 	var msg []byte
 	var err error
-	var ch chan *common.RawMessage
+	var ch chan []byte
 	var ok bool
-	var message *common.RawMessage
-	const bufferLen = 8192
-	index := -1
-	pool := [bufferLen]*common.RawMessage{}
-	for i := 0; i < bufferLen; i++ {
-		pool[i] = &common.RawMessage{
-			Prefix: w.source,
-		}
-	}
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -100,22 +92,25 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 			return
 		}
 		msgLen := len(msg)
-		//{"channel": "ticker", "market": "DOGE-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
-		//{"channel": "ticker", "market": "HT-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
-		if msgLen > 128 && msg[31] == ' ' && msg[32] == '"' {
-			if msg[41] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:41])
-			} else if msg[40] == '"' {
-				//需要在41后边，不然会串
-				symbol = common.UnsafeBytesToString(msg[33:40])
-			} else if msg[42] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:42])
-			} else if msg[43] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:43])
-			} else if msg[44] == '"' {
-				symbol = common.UnsafeBytesToString(msg[33:44])
-			} else if msg[45] == ',' {
-				symbol = common.UnsafeBytesToString(msg[33:45])
+		if msgLen > 128 && msg[13] == 'o' {
+			if msg[45] == ',' {
+				symbolBytes = msg[36:44]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+			} else if msg[46] == ',' {
+				symbolBytes = msg[36:45]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+			} else if msg[47] == ',' {
+				symbolBytes = msg[36:46]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+			} else if msg[48] == ',' {
+				symbolBytes = msg[36:47]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+			} else if msg[49] == ',' {
+				symbolBytes = msg[36:48]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
+			} else if msg[50] == ',' {
+				symbolBytes = msg[36:49]
+				symbol = *(*string)(unsafe.Pointer(&symbolBytes))
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
@@ -131,26 +126,11 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 			continue
 		}
 		if ch, ok = channels[symbol]; ok {
-			index++
-			if index == bufferLen {
-				index = 0
-			}
-			message = pool[index]
-			message.Time = time.Now().UnixNano()
-			message.Data = msg
 			select {
-			case ch <- message:
+			case ch <- msg:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf(" ch <- msg %s ch len %d", symbol, len(ch))
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-			}
-			select {
-			case w.marketCh <- symbol:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("w.marketCh <- symbol failed, ch len %d", len(w.marketCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -158,8 +138,8 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 	}
 }
 
-func (w *RawTickerWS) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 256)
+func (w *RawOrderBookWS) readAll(r io.Reader) ([]byte, error) {
+	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
 			// Add more capacity (let append pick how much).
@@ -176,7 +156,7 @@ func (w *RawTickerWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *RawTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *RawOrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -221,7 +201,7 @@ func (w *RawTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string,
 	return conn, nil
 }
 
-func (w *RawTickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan *common.RawMessage) {
+func (w *RawOrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -274,7 +254,7 @@ func (w *RawTickerWS) mainLoop(ctx context.Context, proxy string, channels map[s
 	}
 }
 
-func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *RawOrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -330,7 +310,7 @@ func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 					select {
 					case w.writeCh <- SubscribeParam{
 						Operation: "unsubscribe",
-						Channel:   "ticker",
+						Channel:   "orderbook",
 						Market:    market,
 					}:
 						marketUpdatedTimes[market] = time.Now().Add(marketTimeout)
@@ -340,7 +320,7 @@ func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 					select {
 					case w.writeCh <- SubscribeParam{
 						Operation: "subscribe",
-						Channel:   "ticker",
+						Channel:   "orderbook",
 						Market:    market,
 					}:
 						marketUpdatedTimes[market] = time.Now().Add(marketTimeout)
@@ -355,7 +335,7 @@ func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 	}
 }
 
-func (w *RawTickerWS) Stop() {
+func (w *RawOrderBookWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -363,7 +343,7 @@ func (w *RawTickerWS) Stop() {
 	}
 }
 
-func (w *RawTickerWS) restart() {
+func (w *RawOrderBookWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -371,26 +351,148 @@ func (w *RawTickerWS) restart() {
 	}
 }
 
-func (w *RawTickerWS) Done() chan interface{} {
+func (w *RawOrderBookWS) Done() chan interface{} {
 	return w.done
 }
 
-func NewRawBookTickerWS(
+func (w *RawOrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Depth) {
+	logger.Debugf("START dataHandleLoop %s", market)
+	defer logger.Debugf("EXIT dataHandleLoop %s", market)
+	logSilentTime := time.Now()
+	orderbookData := OrderBookData{}
+	var err error
+	var orderBook = OrderBook{
+		Bids:   common.Bids{},
+		Asks:   common.Asks{},
+		Market: market,
+	}
+	checkSumTimer := time.NewTimer(time.Minute)
+	defer checkSumTimer.Stop()
+	outputInterval := time.Millisecond * 100
+	outputTimer := time.NewTimer(outputInterval)
+	defer outputTimer.Stop()
+
+	var hasPartial = false
+	var orderBookUpdate = false
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-w.done:
+			return
+		case <-outputTimer.C:
+			if hasPartial {
+				//如果不复制，Downstream会被修改
+				orderBook := orderBook
+				select {
+				case outputCh <- &orderBook:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
+			}
+			outputTimer.Reset(time.Now().Truncate(outputInterval).Add(outputInterval).Sub(time.Now()))
+			break
+		case <-checkSumTimer.C:
+			if hasPartial && orderBookUpdate {
+				if orderBook.CompareCheckSum() {
+					select {
+					case w.marketCh <- market:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("w.marketCh <- market failed, ch len %d", len(w.marketCh))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
+					}
+				} else {
+					logger.Debugf("check sum failed %s", market)
+					hasPartial = false
+					select {
+					case w.marketResetCh <- market:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("w.marketResetCh <- market failed, ch len %d", len(w.marketResetCh))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
+					}
+				}
+			} else if time.Now().Sub(orderBook.Time) > time.Minute {
+				logger.Debugf("orderbook out of date, %s", market)
+				select {
+				case w.marketResetCh <- market:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("w.marketResetCh <- market failed, ch len %d", len(w.marketResetCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
+			}
+			checkSumTimer.Reset(time.Second * 5)
+			break
+		case msg := <-inputCh:
+			orderbookData = OrderBookData{}
+			err = json.Unmarshal(msg, &orderbookData)
+			if err != nil {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("json.Unmarshal error %v", err)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+				continue
+			}
+			switch orderbookData.Data.Action {
+			case "partial":
+				orderBook.Bids = orderbookData.Data.Bids
+				orderBook.Asks = orderbookData.Data.Asks
+				orderBook.Checksum = orderbookData.Data.Checksum
+				orderBook.Time = orderbookData.Data.Time
+				hasPartial = true
+				orderBookUpdate = true
+				if !orderBook.CompareCheckSum() {
+					logger.Debugf("check sum failed at partial event %s", msg)
+				}
+				break
+			case "update":
+				if hasPartial {
+					orderBook.Asks = orderBook.Asks.UpdateBatch(orderbookData.Data.Asks)
+					orderBook.Bids = orderBook.Bids.UpdateBatch(orderbookData.Data.Bids)
+					orderBook.Checksum = orderbookData.Data.Checksum
+					orderBook.Time = orderbookData.Data.Time
+					orderBookUpdate = true
+				}
+				break
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("other action %s", msg)
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
+			break
+		}
+	}
+}
+
+func NewRawOrderBookWS(
 	ctx context.Context,
 	proxy string,
 	source []byte,
-	channels map[string]chan *common.RawMessage,
-) *RawTickerWS {
-	ws := RawTickerWS{
+	channels map[string]chan common.Depth,
+) *RawOrderBookWS {
+	ws := RawOrderBookWS{
 		done:          make(chan interface{}),
-		reconnectCh:   make(chan interface{}, 4),
-		writeCh:       make(chan interface{}, 2*len(channels)),
+		reconnectCh:   make(chan interface{}, 100),
+		writeCh:       make(chan interface{}, 100*len(channels)),
 		marketCh:      make(chan string, 100*len(channels)),
-		marketResetCh: make(chan string, len(channels)),
+		marketResetCh: make(chan string, 100*len(channels)),
 		stopped:       0,
-		source:        source,
 	}
-	go ws.mainLoop(ctx, proxy, channels)
+	messagesCh := make(map[string]chan []byte)
+	for market, ch := range channels {
+		messagesCh[market] = make(chan []byte, 1000)
+		go ws.dataHandleLoop(ctx, market, messagesCh[market], ch)
+	}
+	go ws.mainLoop(ctx, proxy, messagesCh)
 	ws.reconnectCh <- nil
 	return &ws
 }
