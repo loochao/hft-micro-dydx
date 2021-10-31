@@ -114,8 +114,10 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 				symbol = common.UnsafeBytesToString(msg[33:43])
 			} else if msg[44] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:44])
-			} else if msg[45] == ',' {
+			} else if msg[45] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:45])
+			} else if msg[46] == '"' {
+				symbol = common.UnsafeBytesToString(msg[33:46])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
