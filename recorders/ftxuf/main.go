@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
 	ftx_usdfuture "github.com/geometrybase/hft-micro/ftx-usdfuture"
 	"github.com/geometrybase/hft-micro/logger"
@@ -19,11 +18,11 @@ func main() {
 
 	batchSize := flag.Int("batch", 30, "symbols group batch size")
 
-	//proxyAddress := flag.String("proxy", "", "proxy address")
-	//savePath := flag.String("path", "/root/ftxuf", "data save folder")
+	proxyAddress := flag.String("proxy", "", "proxy address")
+	savePath := flag.String("path", "/root/ftxuf", "data save folder")
 
-	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
+	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 	flag.Parse()
 
 	api, err := ftx_usdfuture.NewAPI("", "", "", *proxyAddress)
@@ -46,7 +45,8 @@ func main() {
 
 	sort.Strings(symbols)
 	logger.Debugf("SYMBOLS %s", symbols)
-	symbols = symbols[:1]
+	logger.Debugf("SYMBOLS LEN %d", len(symbols))
+	//symbols = symbols[:1]
 
 	err = os.MkdirAll(path.Join(*savePath, "/archive"), 0777)
 	if err != nil {
@@ -68,7 +68,7 @@ func main() {
 			go common.RawWSMessageSaveLoopForSingleSymbol(ctx, cancel, *savePath, xSymbol, ftxufChMap[xSymbol], fileSavedCh)
 		}
 		go func(ctx context.Context, cancel context.CancelFunc, proxy string, outputChMap map[string]chan *common.RawMessage) {
-			ws1 := binance_usdtfuture.NewRawDepth20WS(ctx, proxy, []byte{'D'}, outputChMap)
+			ws1 := ftx_usdfuture.NewRawOrderBookWS(ctx, proxy, []byte{'D'}, outputChMap)
 			ws2 := ftx_usdfuture.NewRawBookTickerWS(ctx, proxy, []byte{'B'}, outputChMap)
 			ws3 := ftx_usdfuture.NewRawTradeWS(ctx, proxy, []byte{'T'}, outputChMap)
 			select {
@@ -83,7 +83,7 @@ func main() {
 		}(ctx, cancel, *proxyAddress, ftxufChMap)
 	}
 	go common.ArchiveDailyJlGzFiles(ctx, *savePath)
-	go binance_usdtfuture.StreamRawFundingRate(ctx, *proxyAddress, []byte{'F'}, ftxufAllChMap)
+	go ftx_usdfuture.StreamRawFundingRate(ctx, *proxyAddress, []byte{'F'}, ftxufAllChMap)
 	go func() {
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
