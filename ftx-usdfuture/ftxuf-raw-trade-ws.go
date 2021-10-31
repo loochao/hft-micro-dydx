@@ -104,6 +104,9 @@ func (w *RawTradeWS) readLoop(conn *websocket.Conn, channels map[string]chan *co
 		if len(msg) > 128 && msg[13] == 't' {
 			if msg[41] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:41])
+			} else if msg[40] == '"' {
+				//fang chuan
+				symbol = common.UnsafeBytesToString(msg[33:40])
 			} else if msg[42] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:42])
 			} else if msg[43] == '"' {
@@ -112,6 +115,10 @@ func (w *RawTradeWS) readLoop(conn *websocket.Conn, channels map[string]chan *co
 				symbol = common.UnsafeBytesToString(msg[33:44])
 			} else if msg[45] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:45])
+			} else if msg[46] == '"' {
+				symbol = common.UnsafeBytesToString(msg[33:46])
+			} else if msg[47] == '"' {
+				symbol = common.UnsafeBytesToString(msg[33:47])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)

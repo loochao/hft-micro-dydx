@@ -15,12 +15,12 @@ import (
 )
 
 type RawOrderBookWS struct {
-	writeCh       chan interface{}
-	done          chan interface{}
-	reconnectCh   chan interface{}
-	marketCh      chan string
-	source        []byte
-	stopped       int32
+	writeCh     chan interface{}
+	done        chan interface{}
+	reconnectCh chan interface{}
+	marketCh    chan string
+	source      []byte
+	stopped     int32
 }
 
 func (w *RawOrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
@@ -100,7 +100,12 @@ func (w *RawOrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan
 		}
 		msgLen := len(msg)
 		if msgLen > 128 && msg[13] == 'o' {
-			if msg[45] == ',' {
+			if msg[44] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:43])
+			} else if msg[43] == ',' {
+				//fang chuan
+				symbol = common.UnsafeBytesToString(msg[36:42])
+			} else if msg[45] == ',' {
 				symbol = common.UnsafeBytesToString(msg[36:44])
 			} else if msg[46] == ',' {
 				symbol = common.UnsafeBytesToString(msg[36:45])
@@ -112,8 +117,10 @@ func (w *RawOrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan
 				symbol = common.UnsafeBytesToString(msg[36:48])
 			} else if msg[50] == ',' {
 				symbol = common.UnsafeBytesToString(msg[36:49])
-			} else if msg[44] == ',' {
-				symbol = common.UnsafeBytesToString(msg[36:43])
+			} else if msg[51] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:50])
+			} else if msg[52] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:51])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
@@ -404,7 +411,6 @@ func (w *RawOrderBookWS) Done() chan interface{} {
 	return w.done
 }
 
-
 func NewRawOrderBookWS(
 	ctx context.Context,
 	proxy string,
@@ -412,12 +418,12 @@ func NewRawOrderBookWS(
 	channels map[string]chan *common.RawMessage,
 ) *RawOrderBookWS {
 	ws := RawOrderBookWS{
-		done:          make(chan interface{}),
-		reconnectCh:   make(chan interface{}, 100),
-		writeCh:       make(chan interface{}, 100*len(channels)),
-		marketCh:      make(chan string, 100*len(channels)),
-		source:        source,
-		stopped:       0,
+		done:        make(chan interface{}),
+		reconnectCh: make(chan interface{}, 100),
+		writeCh:     make(chan interface{}, 100*len(channels)),
+		marketCh:    make(chan string, 100*len(channels)),
+		source:      source,
+		stopped:     0,
 	}
 	go ws.mainLoop(ctx, proxy, channels)
 	ws.reconnectCh <- nil
