@@ -1,4 +1,4 @@
-package kucoin_usdtfuture
+package kucoin_usdtspot
 
 import (
 	"context"
@@ -19,16 +19,14 @@ type RawDepth5WS struct {
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
-	source      []byte
 	symbolCh    chan string
+	source      []byte
 	stopped     int32
 }
 
 func (w *RawDepth5WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
-	defer func() {
-		logger.Debugf("EXIT writeLoop")
-	}()
+	defer logger.Debugf("EXIT writeLoop")
 	for {
 		select {
 		case <-ctx.Done():
@@ -46,20 +44,20 @@ func (w *RawDepth5WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 			default:
 				bytes, err = json.Marshal(msg)
 				if err != nil {
-					logger.Debugf("Marshal err %v", err)
+					logger.Debugf("json.Marshal err %v", err)
 					continue
 				}
 			}
-			err = conn.SetWriteDeadline(time.Now().Add(time.Minute))
+			err = conn.SetWriteDeadline(time.Now().Add(300 * time.Millisecond))
 			if err != nil {
-				logger.Debugf("conn.SetWriteDeadline error %v", err)
 				w.restart()
 				return
 			}
 
 			err = conn.WriteMessage(websocket.TextMessage, bytes)
+
 			if err != nil {
-				logger.Debugf("conn.WriteMessage error %v, %s", err, string(bytes))
+				logger.Debugf("conn.WriteMessage %s error %v", string(bytes), err)
 				w.restart()
 				return
 			}
@@ -67,14 +65,9 @@ func (w *RawDepth5WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *RawDepth5WS) readLoop(
-	conn *websocket.Conn,
-	channels map[string]chan *common.RawMessage,
-) {
+func (w *RawDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *common.RawMessage) {
 	logger.Debugf("START readLoop")
-	defer func() {
-		logger.Debugf("EXIT readLoop")
-	}()
+	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
 	var symbol string
 	var msgLen int
@@ -89,7 +82,6 @@ func (w *RawDepth5WS) readLoop(
 			Prefix: w.source,
 		}
 	}
-
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -105,35 +97,15 @@ func (w *RawDepth5WS) readLoop(
 		}
 		msg, err := w.readAll(r)
 		if err != nil {
-			logger.Debugf("w.readAll error %v", err)
+			logger.Debugf("readAll error %v", err)
 			go w.restart()
 			return
 		}
-
-		//中间有一次数据变更，可能两种格式
-		//{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,
-		//{"type":"message","topic":"/contractMarket/level2Depth5:GRTUSDTM","subject":"level2","data":{"sequence":1627365704601,"asks":[[0.62612,194],[0.62625,194],[0.62640,3230],[0.62655,6368],[0.62656,6300]],"bids":[[0.62580,1846],[0.62565,1087],[0.62555,1959],[0.62551,1038],[0.62550,601]],"ts":1627723139256,"timestamp":1627723139256}}
 		msgLen = len(msg)
+		//{"data":{"asks":[["55447.5","0.00128653"],["55447.6","0.0040067"],["55447.7","5.26962769"],["55449","0.00016278"],["55451.5","0.00013396"]],"bids":[["55403.1","0.01254575"],["55402.5","0.00005319"],["55279.9","0.201"],["55268.3","0.02406837"],["55233.5","0.0004668"]],"timestamp":1618724853172},"subject":"level2","topic":"/spotMarket/level2Depth5:BTC-USDT","type":"message"}`)
+		//{"type":"message","topic":"/spotMarket/level2Depth5:ENJ-USDT","subject":"level2","data":{"asks":[["1.421","291.4019"],["1.4211","257.9855"],["1.4214","17.2666"],["1.4215","538.358"],["1.4217","2111.2333"]],"bids":[["1.4195","507.9287"],["1.4193","538.358"],["1.4191","308.6314"],["1.419","2110.5551"],["1.4188","4320.975"]],"timestamp":1627748904217}}
 		if msgLen > 128 {
-			if msg[2] == 't' {
-				if msg[65] == ',' {
-					symbol = common.UnsafeBytesToString(msg[56:64])
-				} else if msg[66] == ',' {
-					symbol = common.UnsafeBytesToString(msg[56:65])
-				} else if msg[67] == ',' {
-					symbol = common.UnsafeBytesToString(msg[56:66])
-				} else if msg[64] == ',' {
-					symbol = common.UnsafeBytesToString(msg[56:63])
-				} else if msg[68] == ',' {
-					symbol = common.UnsafeBytesToString(msg[56:67])
-				} else {
-					if time.Now().Sub(logSilentTime) > 0 {
-						logSilentTime = time.Now().Add(time.Minute)
-						logger.Debugf("OTHER MSG %s", msg)
-					}
-					continue
-				}
-			} else if msg[2] == 'd' {
+			if msg[2] == 'd' {
 				if msg[msgLen-28] == ':' {
 					symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
 				} else if msg[msgLen-29] == ':' {
@@ -144,15 +116,35 @@ func (w *RawDepth5WS) readLoop(
 					symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
 				} else {
 					if time.Now().Sub(logSilentTime) > 0 {
-						logSilentTime = time.Now().Add(time.Minute)
 						logger.Debugf("OTHER MSG %s", msg)
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+					continue
+				}
+			} else if msg[2] == 't' && msg[51] == ':' {
+				if msg[60] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:60])
+				} else if msg[61] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:61])
+				} else if msg[62] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:62])
+				} else if msg[63] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:63])
+				} else if msg[59] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:59])
+				} else if msg[64] == '"' {
+					symbol = common.UnsafeBytesToString(msg[52:64])
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("OTHER MSG %s", msg)
+						logSilentTime = time.Now().Add(time.Minute)
 					}
 					continue
 				}
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logSilentTime = time.Now().Add(time.Minute)
 					logger.Debugf("OTHER MSG %s", msg)
+					logSilentTime = time.Now().Add(time.Minute)
 				}
 				continue
 			}
@@ -186,7 +178,6 @@ func (w *RawDepth5WS) readLoop(
 				logger.Debugf("%s", msg)
 			}
 		}
-
 	}
 }
 
@@ -211,7 +202,7 @@ func (w *RawDepth5WS) readAll(r io.Reader) ([]byte, error) {
 func (w *RawDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
-		logger.Debugf("reconnect %d %s", counter, wsUrl)
+		logger.Debugf("reconnect %s, %d retries", wsUrl, counter)
 	}
 
 	var dialer *websocket.Dialer
@@ -255,17 +246,13 @@ func (w *RawDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string,
 	return conn, nil
 }
 
-func (w *RawDepth5WS) mainLoop(
-	ctx context.Context, api *API,
-	proxy string,
-	channels map[string]chan *common.RawMessage,
-) {
-
+func (w *RawDepth5WS) mainLoop(ctx context.Context, api *API, proxy string, channels map[string]chan *common.RawMessage) {
 	logger.Debugf("START mainLoop")
 	symbols := make([]string, 0)
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 	}
+	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 
@@ -273,6 +260,7 @@ func (w *RawDepth5WS) mainLoop(
 		if internalCancel != nil {
 			internalCancel()
 		}
+		cancel()
 		w.Stop()
 		logger.Debugf("EXIT mainLoop")
 	}()
@@ -286,12 +274,19 @@ func (w *RawDepth5WS) mainLoop(
 				internalCancel = nil
 			}
 			return
+		case <-w.done:
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
+			return
 		case <-w.reconnectCh:
 			if internalCancel != nil {
 				internalCancel()
 				internalCancel = nil
 			}
 			reconnectTimer.Reset(time.Second * 15)
+			break
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
 				internalCancel()
@@ -299,44 +294,36 @@ func (w *RawDepth5WS) mainLoop(
 			internalCtx, internalCancel = context.WithCancel(ctx)
 			connectToken, err := api.GetPublicConnectToken(internalCtx)
 			if err != nil {
-				if internalCancel != nil {
-					internalCancel()
-				}
+				logger.Debugf("api.GetPublicConnectToken error %v", err)
+				internalCancel()
 				w.Stop()
-				logger.Debugf("api.GetPublicConnectToken error %v, stop ws", err)
 				return
 			}
 			if len(connectToken.InstanceServers) == 0 {
-				if internalCancel != nil {
-					internalCancel()
-				}
+				logger.Debugf("no InstanceServers %v", connectToken)
+				internalCancel()
 				w.Stop()
-				logger.Debugf("no InstanceServers %v, stop ws", connectToken)
 				return
 			}
 			urlStr := connectToken.InstanceServers[0].Endpoint + "?token=" + connectToken.Token
-
 			conn, err := w.reconnect(internalCtx, urlStr, proxy, 0)
 			if err != nil {
-				if internalCancel != nil {
-					internalCancel()
-				}
-				logger.Debugf("w.reconnect error %v, stop ws", err)
+				internalCancel()
+				logger.Debugf("w.reconnect error %v", err)
 				return
 			}
 			go w.readLoop(conn, channels)
 			go w.writeLoop(internalCtx, conn)
-			go w.heartbeatLoop(internalCtx, conn, symbols, time.Millisecond*time.Duration(connectToken.InstanceServers[0].PingInterval))
-			reconnectTimer.Reset(time.Hour * 9999)
+			go w.heartbeatLoop(internalCtx, conn, symbols)
+			break
 		}
 	}
 }
 
-func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string, pingInterval time.Duration) {
-
+func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
-
 	defer func() {
+		logger.Debugf("EXIT heartbeatLoop")
 		err := conn.Close()
 		if err != nil {
 			logger.Debugf("conn.Close() ERROR %v", err)
@@ -349,9 +336,7 @@ func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 	symbolCheckTimer := time.NewTimer(time.Second)
 	defer symbolCheckTimer.Stop()
 	symbolUpdatedTimes := make(map[string]time.Time)
-	resubCounters := make(map[string]int)
 	for _, symbol := range symbols {
-		resubCounters[symbol] = 0
 		symbolUpdatedTimes[symbol] = time.Unix(0, 0)
 	}
 
@@ -363,16 +348,16 @@ func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 			return
 		case symbol := <-w.symbolCh:
 			symbolUpdatedTimes[symbol] = time.Now()
-			resubCounters[symbol] = 0
+			break
 		case <-pingTimer.C:
-			pingTimer.Reset(pingInterval)
+			pingTimer.Reset(time.Second * 15)
 			select {
 			case <-ctx.Done():
 				return
 			case <-time.After(time.Millisecond):
-				logger.Debug("send ping to writeCh timeout in 1ms")
+				logger.Debug("w.writeCh <- Ping timeout in 1ms")
 			case w.writeCh <- Ping{
-				ID:   fmt.Sprintf("%d", time.Now().UnixNano()/1000000),
+				ID:   fmt.Sprintf("%d", time.Now().Nanosecond()/1000000),
 				Type: "ping",
 			}:
 			}
@@ -381,22 +366,15 @@ func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
-					resubCounters[symbol] ++
-					if resubCounters[symbol] > 10 {
-						logger.Debugf("%s SUBSCRIBE 10 TIMES FAILED, RESTART WS", symbol)
-						w.restart()
-						return
-					}
-					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/contractMarket/level2Depth5:%s", symbol))
+					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol))
 					select {
 					case <-ctx.Done():
-						return
 					case <-time.After(time.Millisecond):
-						logger.Debugf("send msg to writeCh timeout in 1m, %s", fmt.Sprintf("/contractMarket/level2Depth5:%s", symbol))
+						logger.Debugf("w.writeCh <- SubscribeMsg timeout in 1ms, %s", fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol))
 					case w.writeCh <- SubscribeMsg{
-						ID:             fmt.Sprintf("/contractMarket/level2Depth5:%s", symbol),
+						ID:             fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol),
 						Type:           "subscribe",
-						Topic:          fmt.Sprintf("/contractMarket/level2Depth5:%s", symbol),
+						Topic:          fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol),
 						PrivateChannel: false,
 						Response:       true,
 					}:
@@ -413,7 +391,8 @@ func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 }
 
 func (w *RawDepth5WS) Stop() {
-	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
+	if atomic.LoadInt32(&w.stopped) == 0 {
+		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
 		logger.Debugf("stopped")
 	}
@@ -421,19 +400,20 @@ func (w *RawDepth5WS) Stop() {
 
 func (w *RawDepth5WS) restart() {
 	select {
+	case w.RestartCh <- nil:
+	default:
+		logger.Debugf("w.RestartCh <- nil failed")
+	}
+	select {
 	case <-w.done:
+		return
 	case <-time.After(time.Millisecond):
+		logger.Debugf("w.reconnectCh <- nil time out in 1m, stop ws")
 		w.Stop()
-		logger.Debugf("KCPERP NIL TO RECONNECT CH TIMEOUT IN 1MS, STOP WS!")
 	case w.reconnectCh <- nil:
-		logger.Infof("KCPERP WS RESTART")
-		select {
-		case w.RestartCh <- nil:
-		default:
-			logger.Debugf("KCPERP NIL TO RESTART FAILED, STOP WS!")
-		}
 	}
 }
+
 
 func (w *RawDepth5WS) Done() chan interface{} {
 	return w.done
@@ -453,8 +433,8 @@ func NewRawDepth5WS(
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
 		RestartCh:   make(chan interface{}, 4),
-		writeCh:     make(chan interface{}, 4*len(channels)),
-		symbolCh:    make(chan string, 4*len(channels)),
+		writeCh:     make(chan interface{}, 64*len(channels)),
+		symbolCh:    make(chan string, 64*len(channels)),
 		source:      source,
 		stopped:     0,
 	}

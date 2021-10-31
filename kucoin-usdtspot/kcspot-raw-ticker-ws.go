@@ -1,4 +1,4 @@
-package kucoin_usdtfuture
+package kucoin_usdtspot
 
 import (
 	"context"
@@ -14,17 +14,16 @@ import (
 	"time"
 )
 
-type RawDepth5WS struct {
-	RestartCh   chan interface{}
+type RawTickerWS struct {
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
-	source      []byte
 	symbolCh    chan string
+	source      []byte
 	stopped     int32
 }
 
-func (w *RawDepth5WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *RawTickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer func() {
 		logger.Debugf("EXIT writeLoop")
@@ -67,14 +66,12 @@ func (w *RawDepth5WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *RawDepth5WS) readLoop(
+func (w *RawTickerWS) readLoop(
 	conn *websocket.Conn,
 	channels map[string]chan *common.RawMessage,
 ) {
 	logger.Debugf("START readLoop")
-	defer func() {
-		logger.Debugf("EXIT readLoop")
-	}()
+	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
 	var symbol string
 	var msgLen int
@@ -89,7 +86,6 @@ func (w *RawDepth5WS) readLoop(
 			Prefix: w.source,
 		}
 	}
-
 	for {
 		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -109,23 +105,21 @@ func (w *RawDepth5WS) readLoop(
 			go w.restart()
 			return
 		}
-
-		//中间有一次数据变更，可能两种格式
-		//{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,
-		//{"type":"message","topic":"/contractMarket/level2Depth5:GRTUSDTM","subject":"level2","data":{"sequence":1627365704601,"asks":[[0.62612,194],[0.62625,194],[0.62640,3230],[0.62655,6368],[0.62656,6300]],"bids":[[0.62580,1846],[0.62565,1087],[0.62555,1959],[0.62551,1038],[0.62550,601]],"ts":1627723139256,"timestamp":1627723139256}}
 		msgLen = len(msg)
+		//{"data":{"sequence":"1618200194453","bestAsk":"32704.5","size":"0.00058862","bestBidSize":"0.06704767","price":"32704.5","time":1626290937603,"bestAskSize":"0.01955972","bestBid":"32704.4"},"subject":"trade.ticker","topic":"/market/ticker:BTC-USDT","type":"message"}
+		//{"type":"message","topic":"/market/ticker:BTC-USDT","subject":"trade.ticker","data":{"bestAsk":"41217.7","bestAskSize":"0.21545096","bestBid":"41217.6","bestBidSize":"0.0265","price":"41217.7","sequence":"1618607525224","size":"0.00043659","time":1627752855836}}
 		if msgLen > 128 {
-			if msg[2] == 't' {
-				if msg[65] == ',' {
-					symbol = common.UnsafeBytesToString(msg[56:64])
-				} else if msg[66] == ',' {
-					symbol = common.UnsafeBytesToString(msg[56:65])
-				} else if msg[67] == ',' {
-					symbol = common.UnsafeBytesToString(msg[56:66])
-				} else if msg[64] == ',' {
-					symbol = common.UnsafeBytesToString(msg[56:63])
-				} else if msg[68] == ',' {
-					symbol = common.UnsafeBytesToString(msg[56:67])
+			if msg[2] == 't' && msg[9] == 'm' {
+				if msg[50] == '"' {
+					symbol = common.UnsafeBytesToString(msg[42:50])
+				} else if msg[51] == '"' {
+					symbol = common.UnsafeBytesToString(msg[42:51])
+				} else if msg[52] == '"' {
+					symbol = common.UnsafeBytesToString(msg[42:52])
+				} else if msg[53] == '"' {
+					symbol = common.UnsafeBytesToString(msg[42:53])
+				} else if msg[49] == '"' {
+					symbol = common.UnsafeBytesToString(msg[42:49])
 				} else {
 					if time.Now().Sub(logSilentTime) > 0 {
 						logSilentTime = time.Now().Add(time.Minute)
@@ -134,14 +128,16 @@ func (w *RawDepth5WS) readLoop(
 					continue
 				}
 			} else if msg[2] == 'd' {
-				if msg[msgLen-28] == ':' {
+				if msg[msgLen-27] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-26 : msgLen-19])
+				} else if msg[msgLen-28] == ':' {
 					symbol = common.UnsafeBytesToString(msg[msgLen-27 : msgLen-19])
 				} else if msg[msgLen-29] == ':' {
-					symbol = common.UnsafeBytesToString(msg[msgLen-28 : msgLen-19])
-				} else if msg[msgLen-30] == ':' {
 					symbol = common.UnsafeBytesToString(msg[msgLen-29 : msgLen-19])
-				} else if msg[msgLen-31] == ':' {
+				} else if msg[msgLen-30] == ':' {
 					symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
+				} else if msg[msgLen-31] == ':' {
+					symbol = common.UnsafeBytesToString(msg[msgLen-31 : msgLen-19])
 				} else {
 					if time.Now().Sub(logSilentTime) > 0 {
 						logSilentTime = time.Now().Add(time.Minute)
@@ -185,12 +181,13 @@ func (w *RawDepth5WS) readLoop(
 			if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
 				logger.Debugf("%s", msg)
 			}
+			continue
 		}
 
 	}
 }
 
-func (w *RawDepth5WS) readAll(r io.Reader) ([]byte, error) {
+func (w *RawTickerWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 512)
 	for {
 		if len(b) == cap(b) {
@@ -208,7 +205,7 @@ func (w *RawDepth5WS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *RawDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *RawTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %d %s", counter, wsUrl)
@@ -255,7 +252,7 @@ func (w *RawDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string,
 	return conn, nil
 }
 
-func (w *RawDepth5WS) mainLoop(
+func (w *RawTickerWS) mainLoop(
 	ctx context.Context, api *API,
 	proxy string,
 	channels map[string]chan *common.RawMessage,
@@ -266,10 +263,12 @@ func (w *RawDepth5WS) mainLoop(
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 	}
+	ctx, cancel := context.WithCancel(ctx)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 
 	defer func() {
+		cancel()
 		if internalCancel != nil {
 			internalCancel()
 		}
@@ -286,12 +285,19 @@ func (w *RawDepth5WS) mainLoop(
 				internalCancel = nil
 			}
 			return
+		case <-w.done:
+			if internalCancel != nil {
+				internalCancel()
+				internalCancel = nil
+			}
+			return
 		case <-w.reconnectCh:
 			if internalCancel != nil {
 				internalCancel()
 				internalCancel = nil
 			}
 			reconnectTimer.Reset(time.Second * 15)
+			break
 		case <-reconnectTimer.C:
 			if internalCancel != nil {
 				internalCancel()
@@ -327,12 +333,11 @@ func (w *RawDepth5WS) mainLoop(
 			go w.readLoop(conn, channels)
 			go w.writeLoop(internalCtx, conn)
 			go w.heartbeatLoop(internalCtx, conn, symbols, time.Millisecond*time.Duration(connectToken.InstanceServers[0].PingInterval))
-			reconnectTimer.Reset(time.Hour * 9999)
 		}
 	}
 }
 
-func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string, pingInterval time.Duration) {
+func (w *RawTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string, pingInterval time.Duration) {
 
 	logger.Debugf("START heartbeatLoop")
 
@@ -343,15 +348,15 @@ func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 		}
 	}()
 
-	symbolTimeout := time.Minute
+	symbolTimeout := time.Minute * 5
 	symbolCheckInterval := time.Second
 	pingTimer := time.NewTimer(time.Second)
 	symbolCheckTimer := time.NewTimer(time.Second)
 	defer symbolCheckTimer.Stop()
 	symbolUpdatedTimes := make(map[string]time.Time)
-	resubCounters := make(map[string]int)
+	reSubCounters := make(map[string]int)
 	for _, symbol := range symbols {
-		resubCounters[symbol] = 0
+		reSubCounters[symbol] = 0
 		symbolUpdatedTimes[symbol] = time.Unix(0, 0)
 	}
 
@@ -363,7 +368,7 @@ func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 			return
 		case symbol := <-w.symbolCh:
 			symbolUpdatedTimes[symbol] = time.Now()
-			resubCounters[symbol] = 0
+			reSubCounters[symbol] = 0
 		case <-pingTimer.C:
 			pingTimer.Reset(pingInterval)
 			select {
@@ -381,22 +386,22 @@ func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
-					resubCounters[symbol] ++
-					if resubCounters[symbol] > 10 {
-						logger.Debugf("%s SUBSCRIBE 10 TIMES FAILED, RESTART WS", symbol)
+					reSubCounters[symbol] ++
+					if reSubCounters[symbol] > 10 {
+						logger.Debugf("%s subscribe 10 times failed, restart ws", symbol)
 						w.restart()
 						return
 					}
-					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/contractMarket/level2Depth5:%s", symbol))
+					logger.Debugf("subscribe %s", fmt.Sprintf("/market/ticker:%s", symbol))
 					select {
 					case <-ctx.Done():
 						return
 					case <-time.After(time.Millisecond):
-						logger.Debugf("send msg to writeCh timeout in 1m, %s", fmt.Sprintf("/contractMarket/level2Depth5:%s", symbol))
+						logger.Debugf("send msg to writeCh timeout in 1m, %s", fmt.Sprintf("/market/ticker:%s", symbol))
 					case w.writeCh <- SubscribeMsg{
-						ID:             fmt.Sprintf("/contractMarket/level2Depth5:%s", symbol),
+						ID:             fmt.Sprintf("/market/ticker:%s", symbol),
 						Type:           "subscribe",
-						Topic:          fmt.Sprintf("/contractMarket/level2Depth5:%s", symbol),
+						Topic:          fmt.Sprintf("/market/ticker:%s", symbol),
 						PrivateChannel: false,
 						Response:       true,
 					}:
@@ -412,50 +417,48 @@ func (w *RawDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 
 }
 
-func (w *RawDepth5WS) Stop() {
+func (w *RawTickerWS) Stop() {
 	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (w *RawDepth5WS) restart() {
+func (w *RawTickerWS) restart() {
 	select {
 	case <-w.done:
-	case <-time.After(time.Millisecond):
-		w.Stop()
-		logger.Debugf("KCPERP NIL TO RECONNECT CH TIMEOUT IN 1MS, STOP WS!")
+		return
+	default:
+	}
+	select {
 	case w.reconnectCh <- nil:
-		logger.Infof("KCPERP WS RESTART")
-		select {
-		case w.RestartCh <- nil:
-		default:
-			logger.Debugf("KCPERP NIL TO RESTART FAILED, STOP WS!")
-		}
+		logger.Debugf("restart w.reconnectCh <- nil")
+	default:
+		w.Stop()
+		logger.Debugf("w.reconnectCh <- nil timeout failed, ch len %d, stop ws", len(w.reconnectCh))
 	}
 }
 
-func (w *RawDepth5WS) Done() chan interface{} {
+func (w *RawTickerWS) Done() chan interface{} {
 	return w.done
 }
 
-func NewRawDepth5WS(
+func NewRawTickerWS(
 	ctx context.Context,
 	proxy string,
 	source []byte,
 	channels map[string]chan *common.RawMessage,
-) *RawDepth5WS {
+) *RawTickerWS {
 	api, err := NewAPI("", "", "", proxy)
 	if err != nil {
 		logger.Fatal(err)
 	}
-	ws := RawDepth5WS{
+	ws := RawTickerWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		RestartCh:   make(chan interface{}, 4),
-		writeCh:     make(chan interface{}, 4*len(channels)),
-		symbolCh:    make(chan string, 4*len(channels)),
-		source:      source,
+		writeCh:     make(chan interface{}, 64*len(channels)),
+		symbolCh:    make(chan string, 64*len(channels)),
+		source: source,
 		stopped:     0,
 	}
 	go ws.mainLoop(ctx, api, proxy, channels)
