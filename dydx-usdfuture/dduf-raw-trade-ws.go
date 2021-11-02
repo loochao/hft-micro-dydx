@@ -107,7 +107,7 @@ func (w *RawTradeWS) readLoop(conn *websocket.Conn, channels map[string]chan *co
 	}
 
 	for {
-		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
+		err = conn.SetReadDeadline(time.Now().Add(time.Hour))
 		if err != nil {
 			logger.Debugf("conn.SetReadDeadline error %v", err)
 			w.restart()

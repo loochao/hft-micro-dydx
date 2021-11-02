@@ -114,6 +114,8 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if method == http.MethodPost {
 		logger.Debugf("%s %s %s", method, path, bodyStr)
 		logger.Debugf("%s", contents)
+	}else{
+		//logger.Debugf("%s", contents)
 	}
 	if err != nil {
 		return err
@@ -165,6 +167,8 @@ func (api *API) GetAccounts(ctx context.Context) ([]Account, error) {
 	)
 }
 
+
+
 func (api *API) GetAccount(ctx context.Context) (*Account, error) {
 	ar := &AccountResp{}
 	return &ar.Account, api.SendAuthenticatedHTTPRequest(
@@ -176,6 +180,20 @@ func (api *API) GetAccount(ctx context.Context) (*Account, error) {
 		ar,
 	)
 }
+
+
+func (api *API) GetRewards(ctx context.Context, param RewardsParam) (*Rewards, error) {
+	rw := &Rewards{}
+	return rw, api.SendAuthenticatedHTTPRequest(
+		ctx,
+		http.MethodGet,
+		"/v3/rewards/weight",
+		&param,
+		nil,
+		rw,
+	)
+}
+
 
 func (api *API) GetOrders(ctx context.Context) ([]Order, error) {
 	or := &OrdersResp{}

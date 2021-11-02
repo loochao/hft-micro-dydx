@@ -350,6 +350,58 @@ type OrdersResp struct {
 	Orders []Order `json:"orders"`
 }
 
+type RewardsParam struct {
+	Epoch string `json:"epoch"`
+}
+
+func (c RewardsParam) ToUrlValues() url.Values {
+	v := url.Values{}
+	if c.Epoch != "" {
+		v.Set("epoch", c.Epoch)
+	}
+	return v
+}
+
+//{
+//  "epoch": 3,
+//  "epochStart": "2021-10-26T15:00:00.000Z",
+//  "epochEnd": "2021-11-23T15:00:00.000Z",
+//  "fees": {
+//    "feesPaid": "59.160614",
+//    "totalFeesPaid": "13989407.385301999999999999061692"
+//  },
+//  "openInterest": {
+//    "averageOpenInterest": "3644.20491462505489679402722880983751",
+//    "totalAverageOpenInterest": "2576694127.22229207059727711901624945103206"
+//  },
+//  "weight": {
+//    "weight": "0.0000030445655241047631635",
+//    "totalWeight": "0.65575184795376765568943944984"
+//  },
+//  "totalRewards": "3835616",
+//  "estimatedRewards": "17.80823687153060345586679689494579"
+//}
+
+type Rewards struct {
+	Epoch      int       `json:"epoch"`
+	EpochStart time.Time `json:"epochStart"`
+	EpochEnd   time.Time `json:"epochEnd"`
+	Fees       struct {
+		FeesPaid      float64 `json:"feesPaid,string"`
+		TotalFeesPaid float64 `json:"totalFeesPaid,string"`
+	} `json:"fees"`
+	OpenInterest struct {
+		AverageOpenInterest      float64 `json:"averageOpenInterest,string"`
+		TotalAverageOpenInterest float64 `json:"totalAverageOpenInterest,string"`
+	} `json:"openInterest"`
+	Weight struct {
+		TotalWeight float64 `json:"totalWeight,string"`
+		Weight      float64 `json:"weight,string"`
+	} `json:"weight"`
+	TotalRewards     float64 `json:"totalRewards,string"`
+	EstimatedRewards float64 `json:"estimatedRewards,string"`
+}
+
 type CancelOrdersParam struct {
 	Market string `json:"market,omitempty"`
 }
