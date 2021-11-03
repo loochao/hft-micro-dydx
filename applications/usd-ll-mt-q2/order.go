@@ -12,8 +12,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.ySystemStatus != common.SystemStatusReady {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("%s updateXOrder xSystemStatus %v ySystemStatus %v",
-				*strat.config.Name,
+			logger.Debugf("updateXOrder xSystemStatus %v ySystemStatus %v",
 				strat.xSystemStatus, strat.ySystemStatus)
 		}
 		return
@@ -62,8 +61,7 @@ func (strat *XYStrategy) updateXOrder() {
 	strat.midPrice = (strat.xWalkedDepth.MidPrice + strat.yWalkedDepth.MidPrice) * 0.5
 	if math.IsNaN(strat.longBot) && time.Now().Sub(strat.logSilentTime) > 0 {
 		strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-		logger.Debugf("%s %s enterTarget %f targetWeight %f EnterTargetFactor %f",
-			*strat.config.Name,
+		logger.Debugf("%s enterTarget %f targetWeight %f EnterTargetFactor %f",
 			strat.xSymbol, strat.enterTarget, strat.targetWeight, strat.config.EnterTargetFactor)
 	}
 
@@ -79,8 +77,7 @@ func (strat *XYStrategy) updateXOrder() {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 			logger.Debugf(
-				"%s %s %s unhedged value %f > 0.8*enterStep %f",
-				*strat.config.Name,
+				"%s %s unhedged value %f > 0.8*enterStep %f",
 				strat.xSymbol, strat.ySymbol, math.Abs(strat.xValue+strat.yValue), strat.enterStep*0.8,
 			)
 		}
@@ -155,8 +152,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.shortBotCloseOrderCount.Insert(time.Now(), 1.0)
 			logger.Debugf(
-				"%s %s SHORT BOT REDUCE %f < %f, %f < %f QM %f, ES %f EV %f,SIZE %f PRICE %f, X %v Y %v",
-				*strat.config.Name,
+				"%s SHORT BOT REDUCE %f < %f, %f < %f QM %f, ES %f EV %f,SIZE %f PRICE %f, X %v Y %v",
 				strat.xSymbol,
 				strat.spread.ShortLastLeave, strat.shortBot,
 				strat.spread.ShortMedianLeave, strat.shortBot,
@@ -228,8 +224,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.longTopCloseOrderCount.Insert(time.Now(), 1.0)
 			logger.Debugf(
-				"%s %s LONG TOP REDUCE %f > %f, %f > %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
-				*strat.config.Name,
+				"%s LONG TOP REDUCE %f > %f, %f > %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
 				strat.xSymbol,
 				strat.spread.LongLastLeave, strat.longTop,
 				strat.spread.LongMedianLeave, strat.longTop,
@@ -266,8 +261,7 @@ func (strat *XYStrategy) updateXOrder() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
-					*strat.config.Name,
+					"%s FAILED SHORT TOP OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f > %f, %f > %f, SIZE %f",
 					strat.xSymbol,
 					strat.enterValue,
 					strat.usdAvailable,
@@ -283,8 +277,7 @@ func (strat *XYStrategy) updateXOrder() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
-					*strat.config.Name,
+					"%s FAILED SHORT TOP OPEN, ORDER VALUE %f TOO SMALL, %f > %f, %f > %f, SIZE %f",
 					strat.xSymbol,
 					strat.enterValue,
 					strat.spread.ShortLastEnter, strat.shortTop,
@@ -327,8 +320,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.shortTopOpenOrderCount.Insert(time.Now(), 1.0)
 		logger.Debugf(
-			"%s %s SHORT TOP OPEN %f > %f, %f > %f,  ES %f EV %f YI %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
-			*strat.config.Name,
+			"%s SHORT TOP OPEN %f > %f, %f > %f,  ES %f EV %f YI %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
 			strat.xSymbol,
 			strat.spread.ShortLastEnter, strat.shortTop,
 			strat.spread.ShortMedianEnter, strat.shortTop,
@@ -364,8 +356,7 @@ func (strat *XYStrategy) updateXOrder() {
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
-					*strat.config.Name,
+					"%s FAILED LONG BOT OPEN, ENTRY VALUE %f MORE THAN usdAvailable %f, %f < %f, %f < %f, SIZE %f",
 					strat.xSymbol,
 					strat.enterValue,
 					strat.usdAvailable,
@@ -381,8 +372,7 @@ func (strat *XYStrategy) updateXOrder() {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
 				strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 				logger.Debugf(
-					"%s %s FAILED LONG BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
-					*strat.config.Name,
+					"%s FAILED LONG BOT OPEN, ORDER VALUE %f TOO SMALL, %f < %f, %f < %f, SIZE %f",
 					strat.xSymbol,
 					strat.enterValue,
 					strat.spread.LongLastEnter, strat.longBot,
@@ -425,8 +415,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.longBotOpenOrderCount.Insert(time.Now(), 1.0)
 		logger.Debugf(
-			"%s %s LONG BOT OPEN %f < %f, %f < %f, ES %f EV %f YI %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
-			*strat.config.Name,
+			"%s LONG BOT OPEN %f < %f, %f < %f, ES %f EV %f YI %f, QM %f, SIZE %f PRICE %f, X %v Y %v",
 			strat.xSymbol,
 			strat.spread.LongLastEnter, strat.longBot,
 			strat.spread.LongMedianEnter, strat.longBot,
@@ -445,16 +434,14 @@ func (strat *XYStrategy) updateXOrder() {
 
 func (strat *XYStrategy) isXOpenOrderOk() bool {
 	if time.Now().Sub(strat.xWalkedDepth.Time) > strat.config.YDepthTimeToCancel {
-		logger.Debugf("%s %s CANCEL,Y WALKED DEPTH IS OUT OF DATE %v",
-			*strat.config.Name,
+		logger.Debugf("%s CANCEL,Y WALKED DEPTH IS OUT OF DATE %v",
 			strat.xSymbol, strat.config.YDepthTimeToCancel)
 		return false
 	}
 	//检查价格有没有在OFFSET范围内，不在撤掉
 	if strat.xOpenOrder.Side == common.OrderSideBuy &&
 		strat.xOpenOrder.Price < strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.FarBot)-strat.xTickSize {
-		logger.Debugf("%s %s CANCEL, BUY PRICE %f < FAR BOT %f",
-			*strat.config.Name,
+		logger.Debugf("%s CANCEL, BUY PRICE %f < FAR BOT %f",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
 			strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.FarBot)-+strat.xTickSize,
@@ -462,8 +449,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideBuy &&
 		strat.xOpenOrder.Price > strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.NearBot)+strat.xTickSize {
-		logger.Debugf("%s %s CANCEL, BUY PRICE %f > NEAR BOT %f",
-			*strat.config.Name,
+		logger.Debugf("%s CANCEL, BUY PRICE %f > NEAR BOT %f",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
 			strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.NearBot)+strat.xTickSize,
@@ -471,8 +457,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
 		strat.xOpenOrder.Price > strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.FarTop)+strat.xTickSize {
-		logger.Debugf("%s %s CANCEL, SELL PRICE %f > FAR TOP %f",
-			*strat.config.Name,
+		logger.Debugf("%s CANCEL, SELL PRICE %f > FAR TOP %f",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
 			strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.FarTop)+strat.xTickSize,
@@ -480,8 +465,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
 		strat.xOpenOrder.Price < strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.NearTop)-strat.xTickSize {
-		logger.Debugf("%s %s CANCEL, SELL PRICE %f < NEAR TOP %f",
-			*strat.config.Name,
+		logger.Debugf("%s CANCEL, SELL PRICE %f < NEAR TOP %f",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
 			strat.xWalkedDepth.MidPrice*(1.0+strat.orderOffset.NearTop)-strat.xTickSize,
@@ -496,8 +480,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 				return true
 			} else {
 				logger.Debugf(
-					"%s %s CANCEL, LONG TOP CLOSE %f < %f",
-					*strat.config.Name,
+					"%s CANCEL, LONG TOP CLOSE %f < %f",
 					strat.xSymbol,
 					(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.longTop-(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
 				)
@@ -509,8 +492,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 				return true
 			} else {
 				logger.Debugf(
-					"%s %s CANCEL, SHORT TOP OPEN %f < %f",
-					*strat.config.Name,
+					"%s CANCEL, SHORT TOP OPEN %f < %f",
 					strat.xSymbol,
 					(strat.yWalkedDepth.BidPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.shortTop-(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
 				)
@@ -524,8 +506,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 				return true
 			} else {
 				logger.Debugf(
-					"%s %s CANCEL, SHORT BOT CLOSE %f > %f",
-					*strat.config.Name,
+					"%s CANCEL, SHORT BOT CLOSE %f > %f",
 					strat.xSymbol,
 					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.shortBot+(strat.config.ShortEnterDelta-strat.config.ShortExitDelta)*strat.config.CancelOffsetFactor,
 				)
@@ -537,8 +518,7 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 				return true
 			} else {
 				logger.Debugf(
-					"%s %s CANCEL, LONG BOT OPEN %f > %f",
-					*strat.config.Name,
+					"%s CANCEL, LONG BOT OPEN %f > %f",
 					strat.xSymbol,
 					(strat.yWalkedDepth.AskPrice-strat.xOpenOrder.Price)/strat.xOpenOrder.Price, strat.longBot+(strat.config.LongExitDelta-strat.config.LongEnterDelta)*strat.config.CancelOffsetFactor,
 				)
