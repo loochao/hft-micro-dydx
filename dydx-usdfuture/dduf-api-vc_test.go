@@ -6,6 +6,7 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"os"
+	"sort"
 	"testing"
 )
 
@@ -50,7 +51,15 @@ func TestAPI_GetVCAccount(t *testing.T) {
 		"%10s  %6s  %8s  %12s  %12s  %9s\n",
 		"SYMBOL", "SIDE", "VALUE", "SIZE", "PRICE", "URPNL",
 	)
+	markets := make([]string,0)
+	posMap := map[string]Position{}
 	for _, pos := range account.OpenPositions {
+		markets = append(markets, pos.Market)
+		posMap[pos.Market] = pos
+	}
+	sort.Strings(markets)
+	for _, m := range markets {
+		pos := posMap[m]
 		totalPosValue += math.Abs(pos.Size) * pos.EntryPrice
 		totalUnrealizedPnl += pos.UnrealizedPnl
 		fmt.Printf(
@@ -68,6 +77,7 @@ func TestAPI_GetVCAccount(t *testing.T) {
 	fmt.Printf("未实现盈亏\t%.3f\n", totalUnrealizedPnl)
 	fmt.Printf("当前持仓量\t%.3f USDC\n", totalPosValue)
 	fmt.Printf("杠杆\t\t\t%.3f\n", totalPosValue/account.Equity)
+	fmt.Printf("DYDX净值\t\t%.3f\n", account.Equity/50000)
 	fmt.Printf("\n")
 	rw, err := api.GetRewards(ctx, RewardsParam{})
 	if err != nil {
