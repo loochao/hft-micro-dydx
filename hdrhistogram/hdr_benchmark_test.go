@@ -1,7 +1,7 @@
 package hdrhistogram_test
 
 import (
-	hdrhistogram "github.com/HdrHistogram/hdrhistogram-go"
+	"github.com/geometrybase/hft-micro/hdrhistogram"
 	"gonum.org/v1/gonum/stat/distuv"
 	"math"
 	"math/rand"

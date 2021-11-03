@@ -1,7 +1,7 @@
 package hdrhistogram_test
 
 import (
-	hdrhistogram "github.com/HdrHistogram/hdrhistogram-go"
+	"github.com/geometrybase/hft-micro/hdrhistogram"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -3,7 +3,7 @@ package hdrhistogram_test
 import (
 	"bytes"
 	"fmt"
-	hdrhistogram "github.com/HdrHistogram/hdrhistogram-go"
+	"github.com/geometrybase/hft-micro/hdrhistogram"
 	"io/ioutil"
 )
 

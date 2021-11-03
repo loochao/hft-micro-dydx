@@ -2,7 +2,7 @@ package hdrhistogram_test
 
 import (
 	"fmt"
-	"github.com/HdrHistogram/hdrhistogram-go"
+	"github.com/geometrybase/hft-micro/hdrhistogram"
 	"os"
 )
 
