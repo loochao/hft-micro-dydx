@@ -226,10 +226,10 @@ func main() {
 					}
 					subCtxt, _ := context.WithTimeout(ctx, time.Second*15)
 					o, err := api.GetKLines(subCtxt, binance_usdtfuture.KlineParams{
-						Symbol:   symbol,
-						Interval: interval,
-						StartTime:  startTime.Unix() * 1000,
-						Limit:    1000,
+						Symbol:    symbol,
+						Interval:  interval,
+						StartTime: startTime.Unix() * 1000,
+						Limit:     1000,
 					})
 					logger.Debugf("%s %s forward query from %v", interval, symbol, startTime)
 					if err != nil {
@@ -391,11 +391,11 @@ func getFirstLineTimestamp(rootPath, interval, symbol string, startYear time.Tim
 			if tmp[0] == 't' {
 				return startYear.Add(-time.Second), nil
 			} else {
-				tt, err := common.ParseInt(tmp[:10])
+				tt, err := time.Parse(time.RFC3339, strings.Split(string(tmp), ",")[0])
 				if err != nil {
-					return t, err
+					return time.Time{}, err
 				} else {
-					return time.Unix(tt, 0), nil
+					return tt, nil
 				}
 			}
 		}
@@ -430,11 +430,11 @@ func getLastLineTimestamp(rootPath, interval, symbol string, startYear time.Time
 		}
 	}
 	if len(lastMsg) > 10 {
-		tt, err := common.ParseInt(lastMsg[:10])
+		tt, err := time.Parse(time.RFC3339, strings.Split(string(lastMsg), ",")[0])
 		if err != nil {
 			return time.Time{}, err
 		} else {
-			return time.Unix(tt, 0), nil
+			return tt, nil
 		}
 	} else {
 		return time.Time{}, fmt.Errorf("can't get timestamp from %s", dataPath)
@@ -482,4 +482,3 @@ func appendSave(rootPath, interval, symbol string, klines []common.KLine) error 
 	}
 	return nil
 }
-
