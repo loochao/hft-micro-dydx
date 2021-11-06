@@ -211,6 +211,10 @@ func main() {
 					logger.Debugf("%s %s bad start time %v, ignore", interval, symbol, startTime)
 					continue
 				}
+				if time.Now().Sub(startTime) < time.Hour*8 {
+					logger.Debugf("%s %s not long than 8 hours %v %v, ignore", interval, symbol, startTime, time.Now())
+					continue
+				}
 				logger.Debugf("%s %s forward query from %v", interval, symbol, startTime)
 				kLines := make([]common.KLine, 0)
 				retryCount := 10
@@ -331,9 +335,8 @@ func prependSave(rootPath, interval, symbol string, klines []common.KLine, getAl
 	}
 	for _, k := range klines {
 		_, err = writer.WriteString(fmt.Sprintf(
-			"%d,%s,%s,%s,%s,%s,%s\n",
-			k.Timestamp.Unix(),
-			k.Timestamp.Format(time.RFC3339),
+			"%s,%s,%s,%s,%s,%s\n",
+			k.Timestamp.UTC().Format(time.RFC3339),
 			strconv.FormatFloat(k.Open, 'f', -1, 64),
 			strconv.FormatFloat(k.High, 'f', -1, 64),
 			strconv.FormatFloat(k.Low, 'f', -1, 64),
@@ -464,9 +467,8 @@ func appendSave(rootPath, interval, symbol string, klines []common.KLine) error 
 	//}
 	for _, k := range klines {
 		_, err = writer.WriteString(fmt.Sprintf(
-			"%d,%s,%s,%s,%s,%s,%s\n",
-			k.Timestamp.Unix(),
-			k.Timestamp.Format(time.RFC3339),
+			"%s,%s,%s,%s,%s,%s\n",
+			k.Timestamp.UTC().Format(time.RFC3339),
 			strconv.FormatFloat(k.Open, 'f', -1, 64),
 			strconv.FormatFloat(k.High, 'f', -1, 64),
 			strconv.FormatFloat(k.Low, 'f', -1, 64),
