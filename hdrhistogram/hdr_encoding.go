@@ -200,21 +200,21 @@ func fillCountsArrayFromSourceBuffer(payload []byte, rh *Histogram) (err error) 
 	return
 }
 
-func (rh *Histogram) fillBufferFromCountsArray() (buffer []byte, err error) {
+func (h *Histogram) fillBufferFromCountsArray() (buffer []byte, err error) {
 	buf := new(bytes.Buffer)
 	// V2 encoding format uses a ZigZag LEB128-64b9B encoded long. Positive values are counts,
 	// while negative values indicate a repeat zero counts.
-	var countsLimit int32 = int32(rh.countsIndexFor(rh.Max()) + 1)
+	var countsLimit int32 = int32(h.countsIndexFor(h.Max()) + 1)
 	var srcIndex int32 = 0
 	for srcIndex < countsLimit {
-		count := rh.counts[srcIndex]
+		count := h.counts[srcIndex]
 		srcIndex++
 
 		var zeros int64 = 0
 		// check for contiguous zeros
 		if count == 0 {
 			zeros = 1
-			for srcIndex < countsLimit && 0 == rh.counts[srcIndex] {
+			for srcIndex < countsLimit && 0 == h.counts[srcIndex] {
 				zeros++
 				srcIndex++
 			}

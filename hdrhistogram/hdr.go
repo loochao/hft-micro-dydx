@@ -98,7 +98,7 @@ func New(lowestDiscernibleValue, highestTrackableValue int64, numberOfSignifican
 	// We need to maintain power-of-two subBucketCount (for clean direct indexing) that is large enough to
 	// provide unit resolution to at least largestValueWithSingleUnitResolution. So figure out
 	// largestValueWithSingleUnitResolution's nearest power-of-two (rounded up), and use that:
-	subBucketCountMagnitude := int32(math.Ceil(math.Log2(float64(largestValueWithSingleUnitResolution))))
+	subBucketCountMagnitude := int32(math.Ceil(math.Log2(largestValueWithSingleUnitResolution)))
 	subBucketHalfCountMagnitude := subBucketCountMagnitude
 	if subBucketHalfCountMagnitude < 1 {
 		subBucketHalfCountMagnitude = 1
@@ -117,8 +117,8 @@ func New(lowestDiscernibleValue, highestTrackableValue int64, numberOfSignifican
 
 	// determine exponent range needed to support the trackable value with no
 	// overflow:
-	smallestUntrackableValue := int64(subBucketCount) << uint(unitMagnitude)
-	bucketsNeeded := getBucketsNeededToCoverValue(smallestUntrackableValue, highestTrackableValue)
+	smallestUnTrackableValue := int64(subBucketCount) << uint(unitMagnitude)
+	bucketsNeeded := getBucketsNeededToCoverValue(smallestUnTrackableValue, highestTrackableValue)
 
 	bucketCount := bucketsNeeded
 	countsLen := (bucketCount + 1) * (subBucketCount / 2)
@@ -142,16 +142,16 @@ func New(lowestDiscernibleValue, highestTrackableValue int64, numberOfSignifican
 	}
 }
 
-func getBucketsNeededToCoverValue(smallestUntrackableValue int64, maxValue int64) int32 {
+func getBucketsNeededToCoverValue(smallestUnTrackableValue int64, maxValue int64) int32 {
 	// always have at least 1 bucket
 	bucketsNeeded := int32(1)
-	for smallestUntrackableValue < maxValue {
-		if smallestUntrackableValue > (math.MaxInt64 / 2) {
+	for smallestUnTrackableValue < maxValue {
+		if smallestUnTrackableValue > (math.MaxInt64 / 2) {
 			// next shift will overflow, meaning that bucket could represent values up to ones greater than
 			// math.MaxInt64, so it's the last bucket
 			return bucketsNeeded + 1
 		}
-		smallestUntrackableValue <<= 1
+		smallestUnTrackableValue <<= 1
 		bucketsNeeded++
 	}
 	return bucketsNeeded

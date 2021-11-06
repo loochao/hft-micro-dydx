@@ -9,6 +9,7 @@ import (
 
 type TimedTDigest struct {
 	Lookback       time.Duration      `json:"lookback,omitempty"`
+	Compression    uint32             `json:"compression,omitempty"`
 	SubInterval    time.Duration      `json:"subInterval,omitempty"`
 	Times          []time.Time        `json:"times,omitempty"`
 	SubTDs         []*tdigest.TDigest `json:"-"`
@@ -98,7 +99,7 @@ func (ttd *TimedTDigest) Insert(timestamp time.Time, value float64) (err error) 
 			ttd.Times = append(ttd.Times, *ttd.SubTDStartTime)
 			ttd.SubTDs = append(ttd.SubTDs, ttd.CurrentSubTD)
 			ttd.SubTDStartTime = &timestamp
-			ttd.CurrentSubTD, _ = tdigest.New()
+			ttd.CurrentSubTD, _ = tdigest.New(tdigest.Compression(ttd.Compression))
 		}
 	}
 
@@ -114,7 +115,7 @@ func (ttd *TimedTDigest) Insert(timestamp time.Time, value float64) (err error) 
 	if cutIndex > 0 {
 		ttd.SubTDs = ttd.SubTDs[cutIndex:]
 		ttd.Times = ttd.Times[cutIndex:]
-		ttd.RollingTD, _ = tdigest.New()
+		ttd.RollingTD, _ = tdigest.New(tdigest.Compression(ttd.Compression))
 		for _, td := range ttd.SubTDs {
 			err = ttd.RollingTD.Merge(td)
 			if err != nil {
@@ -154,6 +155,21 @@ func NewTimedTDigest(lookback, subInterval time.Duration) *TimedTDigest {
 	rollingTD, _ := tdigest.New()
 	subTD, _ := tdigest.New()
 	return &TimedTDigest{
+		CurrentSubTD: subTD,
+		RollingTD:    rollingTD,
+		Lookback:     lookback,
+		SubInterval:  subInterval,
+		Compression:  100,
+		Times:        make([]time.Time, 0),
+		SubTDs:       make([]*tdigest.TDigest, 0),
+	}
+}
+
+func NewTimedTDigestWithCompression(lookback, subInterval time.Duration, compression uint32) *TimedTDigest {
+	rollingTD, _ := tdigest.New(tdigest.Compression(compression))
+	subTD, _ := tdigest.New(tdigest.Compression(compression))
+	return &TimedTDigest{
+		Compression:  compression,
 		CurrentSubTD: subTD,
 		RollingTD:    rollingTD,
 		Lookback:     lookback,

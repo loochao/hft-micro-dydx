@@ -71,7 +71,7 @@ func (iw *InfluxWriter) save() error {
 		return err
 	}
 	//logger.Debugf("%d", len(iw.points))
-	if len(iw.points) <= 100*iw.batchSize {
+	if len(iw.points) <= iw.batchSize {
 		bp.AddPoints(iw.points)
 		err = iw.influxClient.Write(bp)
 		if err != nil {
@@ -80,13 +80,13 @@ func (iw *InfluxWriter) save() error {
 		iw.points = make([]*client.Point, 0)
 		return nil
 	} else {
-		bp.AddPoints(iw.points[:100*iw.batchSize])
+		bp.AddPoints(iw.points[:iw.batchSize])
 		err = iw.influxClient.Write(bp)
 		if err != nil {
 			return err
 		}
-		if len(iw.points) > 100*iw.batchSize {
-			iw.points = iw.points[100*iw.batchSize:]
+		if len(iw.points) > iw.batchSize {
+			iw.points = iw.points[iw.batchSize:]
 			return iw.save()
 		}
 		return nil

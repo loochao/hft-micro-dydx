@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+
 // nolint
 func TestHighSigFig(t *testing.T) {
 	input := []int64{

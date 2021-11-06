@@ -3,6 +3,7 @@ package hdrhistogram_test
 import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/hdrhistogram"
+	"github.com/geometrybase/hft-micro/logger"
 	"os"
 )
 
@@ -15,7 +16,7 @@ import (
 //   - 300 microsecond (or better) from 10 seconds up to 30 seconds,
 // nolint
 func ExampleNew() {
-	lH := hdrhistogram.New(1, 30000000, 4)
+	lH := hdrhistogram.New(-30000000, 30000000, 4)
 	input := []int64{
 		459876, 669187, 711612, 816326, 931423, 1033197, 1131895, 2477317,
 		3964974, 12718782,
@@ -25,6 +26,10 @@ func ExampleNew() {
 		lH.RecordValue(sample)
 	}
 
+	err := lH.RecordValue(-100)
+	if err != nil {
+		logger.Fatal(err)
+	}
 	fmt.Printf("Percentile 50: %d\n", lH.ValueAtQuantile(50.0))
 
 	// Output:

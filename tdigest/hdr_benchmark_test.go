@@ -1,26 +1,69 @@
-package hdrhistogram_test
+package tdigest_test
 
 import (
 	"github.com/geometrybase/hft-micro/hdrhistogram"
+	"github.com/geometrybase/hft-micro/tdigest"
 	"gonum.org/v1/gonum/stat/distuv"
 	"math"
 	"math/rand"
 	"testing"
 )
 
+
 // nolint
-func BenchmarkHistogramRecordValue(b *testing.B) {
-	h := hdrhistogram.New(1, 10000000, 3)
-	for i := 0; i < 1000000; i++ {
-		if err := h.RecordValue(int64(i)); err != nil {
-			b.Fatal(err)
-		}
+func BenchmarkTDigest_Add(b *testing.B) {
+	td, _ := tdigest.New(tdigest.Compression(4))
+	values := make([]float64, b.N)
+	for i := 0; i < b.N; i++ {
+		values[i] = rand.Float64()*100
 	}
 	b.ResetTimer()
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		h.RecordValue(100)
+		_ = td.Add(values[i])
+	}
+}
+
+func BenchmarkTDigest_RecordValue(b *testing.B) {
+	values := make([]int64, b.N)
+	hh := hdrhistogram.New(1, 2000, 1)
+	for i := 0; i < b.N; i++ {
+		values[i] = int64(rand.Float64()*2000+1)
+	}
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		hh.RecordValue(values[i])
+	}
+}
+
+
+func BenchmarkTDigest_Quantile2(b *testing.B) {
+	values := make([]float64, b.N)
+	hh := hdrhistogram.New(1, 2000, 1)
+	for i := 0; i < b.N; i++ {
+		values[i] = rand.Float64()*100
+		hh.RecordValue(int64(rand.Float64()*2000+1))
+	}
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		hh.ValueAtPercentile(values[i])
+	}
+}
+
+func BenchmarkTDigest_Quantile(b *testing.B) {
+	td, _ := tdigest.New(tdigest.Compression(10))
+	values := make([]float64, b.N)
+	for i := 0; i < b.N; i++ {
+		values[i] = rand.Float64()
+		_ = td.Add(rand.Float64()*2000)
+	}
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		td.Quantile(values[i])
 	}
 }
 
@@ -54,7 +97,7 @@ func BenchmarkHistogramValueAtPercentile(b *testing.B) {
 // nolint
 func BenchmarkHistogramValueAtPercentileGivenPercentileSlice(b *testing.B) {
 	rand.Seed(12345)
-	var highestTrackableValue int64 = 10000 //00
+	var highestTrackableValue int64 = 1000000
 	var lowestDiscernibleValue int64 = 1
 	var sigfigs = 3
 	var totalDatapoints = 1000000
@@ -76,7 +119,7 @@ func BenchmarkHistogramValueAtPercentileGivenPercentileSlice(b *testing.B) {
 // nolint
 func BenchmarkHistogramValueAtPercentilesGivenPercentileSlice(b *testing.B) {
 	rand.Seed(12345)
-	var highestTrackableValue int64 = 10000 //00
+	var highestTrackableValue int64 = 1000000
 	var lowestDiscernibleValue int64 = 1
 	var sigfigs = 3
 	var totalDatapoints = 1000000
