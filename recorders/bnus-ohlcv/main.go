@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/geometrybase/hft-micro/binance-usdtfuture"
+	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"os"
@@ -27,22 +28,40 @@ func main() {
 	sleepInterval := flag.Duration("sleepInterval", time.Second, "sleepInterval")
 	roundInterval := flag.Duration("roundInterval", time.Minute, "roundInterval")
 
-	proxyAddress := flag.String("proxy", "", "proxy address")
-	savePath := flag.String("path", "/root/bnuf-ohlcv", "data save folder")
-	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
+	//proxyAddress := flag.String("proxy", "", "proxy address")
+	//savePath := flag.String("path", "/root/bnus-ohlcv", "data save folder")
+	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 	flag.Parse()
 
 	intervals := strings.Split(*intervalsStr, ",")
 
-	api, err := binance_usdtfuture.NewAPI(&common.Credentials{}, *proxyAddress)
+	fapi, err := binance_usdtfuture.NewAPI(&common.Credentials{}, *proxyAddress)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	ctx := context.Background()
+	fExchangeInfo, err := fapi.GetExchangeInfo(ctx)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	futuresMap := make(map[string]string)
+	for _, symbol := range fExchangeInfo.Symbols {
+		if symbol.Status != "TRADING" {
+			continue
+		}
+		futuresMap[symbol.Symbol] = symbol.Symbol
+	}
+
+	api, err := binance_usdtspot.NewAPI(&common.Credentials{}, *proxyAddress)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	startYear, _ := time.Parse("2006", *startYearStr)
 
-	ctx := context.Background()
 	exchangeInfo, err := api.GetExchangeInfo(ctx)
 	if err != nil {
 		logger.Fatal(err)
@@ -50,16 +69,37 @@ func main() {
 
 	symbols := make([]string, 0)
 	for _, symbol := range exchangeInfo.Symbols {
-		if symbol.Status != "TRADING" {
+		if symbol.Status != "TRADING" || (symbol.QuoteAsset != "USDT" && symbol.QuoteAsset != "BUSD") {
 			continue
 		}
-		symbols = append(symbols, symbol.Symbol)
+		if strings.Contains(symbol.Symbol, "DOWNUSDT") {
+			continue
+		}
+		if strings.Contains(symbol.Symbol, "UPUSDT") {
+			continue
+		}
+		if symbol.BaseAsset == "USDC" ||
+			symbol.BaseAsset == "TUSD" ||
+			symbol.BaseAsset == "USDP" ||
+			symbol.BaseAsset == "FTT" {
+			symbols = append(symbols, symbol.Symbol)
+		} else if symbol.QuoteAsset == "USDT" {
+			if _, ok := futuresMap[symbol.Symbol]; ok {
+				symbols = append(symbols, symbol.Symbol)
+			}
+		} else if symbol.QuoteAsset == "BUSD" {
+			if _, ok := futuresMap[symbol.Symbol]; ok {
+				symbols = append(symbols, symbol.Symbol)
+			} else if _, ok := futuresMap[strings.Replace(symbol.Symbol, "BUSD", "USDT", -1)]; ok {
+				symbols = append(symbols, symbol.Symbol)
+			}
+		}
 	}
 
 	sort.Strings(symbols)
 
-	//intervals = []string{"1m"}
-	//symbols = symbols[:1]
+	intervals = []string{"1d"}
+	symbols = symbols[:1]
 
 	logger.Debugf("SYMBOLS %s\n", symbols)
 	logger.Debugf("INTERVALS %s\n", symbols)
@@ -122,7 +162,7 @@ func main() {
 					default:
 					}
 					subCtxt, _ := context.WithTimeout(ctx, time.Second*15)
-					o, err := api.GetKLines(subCtxt, binance_usdtfuture.KlineParams{
+					o, err := api.GetKlines(subCtxt, binance_usdtspot.KlineParams{
 						Symbol:   symbol,
 						Interval: interval,
 						EndTime:  startTime.Unix() * 1000,
@@ -143,13 +183,13 @@ func main() {
 							continue
 						}
 					}
-					olderKilines := make([]common.KLine, 0)
+					olderKlines := make([]common.KLine, 0)
 					for _, l := range o {
 						if startTime.Sub(l.Timestamp) > 0 {
-							olderKilines = append(olderKilines, l)
+							olderKlines = append(olderKlines, l)
 						}
 					}
-					kLines = append(olderKilines, kLines...)
+					kLines = append(olderKlines, kLines...)
 					if len(o) < 1000 || len(kLines) >= *batchSize {
 						if len(o) < 1000 {
 							getAll = true
@@ -215,7 +255,7 @@ func main() {
 					logger.Debugf("%s %s not long than 8 hours %v %v, ignore", interval, symbol, startTime, time.Now())
 					continue
 				}
-				logger.Debugf("%s %s forward query from %v", interval, symbol, startTime)
+				//logger.Debugf("OVERALL %s %s forward query from %v", interval, symbol, startTime)
 				kLines := make([]common.KLine, 0)
 				retryCount := 10
 				for {
@@ -225,7 +265,7 @@ func main() {
 					default:
 					}
 					subCtxt, _ := context.WithTimeout(ctx, time.Second*15)
-					o, err := api.GetKLines(subCtxt, binance_usdtfuture.KlineParams{
+					o, err := api.GetKlines(subCtxt, binance_usdtspot.KlineParams{
 						Symbol:    symbol,
 						Interval:  interval,
 						StartTime: startTime.Unix() * 1000,
