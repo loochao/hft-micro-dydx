@@ -28,10 +28,10 @@ func main() {
 	sleepInterval := flag.Duration("sleepInterval", time.Second, "sleepInterval")
 	roundInterval := flag.Duration("roundInterval", time.Minute, "roundInterval")
 
-	//proxyAddress := flag.String("proxy", "", "proxy address")
-	//savePath := flag.String("path", "/root/bnus-ohlcv", "data save folder")
-	savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
-	proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
+	proxyAddress := flag.String("proxy", "", "proxy address")
+	savePath := flag.String("path", "/root/bnus-ohlcv", "data save folder")
+	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 	flag.Parse()
 
 	intervals := strings.Split(*intervalsStr, ",")
@@ -98,8 +98,8 @@ func main() {
 
 	sort.Strings(symbols)
 
-	intervals = []string{"1d"}
-	symbols = symbols[:1]
+	//intervals = []string{"1d"}
+	//symbols = symbols[:1]
 
 	logger.Debugf("SYMBOLS %s\n", symbols)
 	logger.Debugf("INTERVALS %s\n", symbols)
