@@ -24,7 +24,7 @@ func main() {
 
 	intervalsStr := flag.String("intervals", "1d,1h,5m,1m", "data save folder")
 	startYearStr := flag.String("startYear", "2015", "data save folder")
-	batchSize := flag.Int("batch", 10000, "kline save batch size")
+	batchSize := flag.Int("batch", 100000, "kline save batch size")
 	sleepInterval := flag.Duration("sleepInterval", time.Second, "sleepInterval")
 	roundInterval := flag.Duration("roundInterval", time.Minute, "roundInterval")
 
