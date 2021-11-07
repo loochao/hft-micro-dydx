@@ -419,6 +419,7 @@ func getFirstLineTimestamp(rootPath, interval, symbol string, startYear time.Tim
 	}
 	g, err := gzip.NewReader(f)
 	if err != nil {
+		logger.Debugf("gzip.NewReader error %v %s", err,dataPath)
 		return t, err
 	}
 	defer func() {
@@ -452,6 +453,7 @@ func getLastLineTimestamp(rootPath, interval, symbol string, startYear time.Time
 	}
 	g, err := gzip.NewReader(f)
 	if err != nil {
+		logger.Debugf("gzip.NewReader error %v %s", err,dataPath)
 		return time.Time{}, err
 	}
 	defer func() {
