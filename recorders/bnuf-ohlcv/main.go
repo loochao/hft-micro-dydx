@@ -327,7 +327,7 @@ func prependSave(rootPath, interval, symbol string, klines []common.KLine, getAl
 		_ = f.Close()
 	}()
 	if getAll {
-		_, err = writer.WriteString("timestamp,open,close,high,low,volume\n")
+		_, err = writer.WriteString("timestamp,open,high,low,close,volume\n")
 		if err != nil {
 			logger.Debugf("writer.WriteString %v", err)
 			return err
