@@ -296,6 +296,7 @@ func prependSave(rootPath, interval, symbol string, klines []common.KLine, getAl
 	if err == nil {
 		g, err := gzip.NewReader(f)
 		if err != nil {
+			defer f.Close()
 			logger.Debugf("gzip.NewReader %v", err)
 			return err
 		}
@@ -305,10 +306,8 @@ func prependSave(rootPath, interval, symbol string, klines []common.KLine, getAl
 				oldContents = append(oldContents, tmp)
 			}
 		}
-		defer func() {
-			_ = g.Close()
-			_ = f.Close()
-		}()
+		_ = g.Close()
+		_ = f.Close()
 	}
 	f, err = os.OpenFile(dataPath, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
@@ -317,6 +316,7 @@ func prependSave(rootPath, interval, symbol string, klines []common.KLine, getAl
 	}
 	g, err := gzip.NewWriterLevel(f, gzip.BestCompression)
 	if err != nil {
+		defer f.Close()
 		logger.Debugf("zip.NewWriterLevel %v", err)
 		return err
 	}
@@ -348,7 +348,6 @@ func prependSave(rootPath, interval, symbol string, klines []common.KLine, getAl
 			return err
 		}
 	}
-
 	for _, c := range oldContents {
 		_, err = writer.WriteString(fmt.Sprintf("%s\n", c))
 		if err != nil {
@@ -371,6 +370,7 @@ func getFirstLineTimestamp(rootPath, interval, symbol string, startYear time.Tim
 	}
 	g, err := gzip.NewReader(f)
 	if err != nil {
+		defer f.Close()
 		logger.Debugf("gzip.NewReader error %v %s", err,dataPath)
 		return t, err
 	}
@@ -405,6 +405,7 @@ func getLastLineTimestamp(rootPath, interval, symbol string, startYear time.Time
 	}
 	g, err := gzip.NewReader(f)
 	if err != nil {
+		defer f.Close()
 		logger.Debugf("gzip.NewReader error %v %s", err,dataPath)
 		return time.Time{}, err
 	}
@@ -441,6 +442,7 @@ func appendSave(rootPath, interval, symbol string, klines []common.KLine) error 
 	}
 	g, err := gzip.NewWriterLevel(f, gzip.BestCompression)
 	if err != nil {
+		defer f.Close()
 		logger.Debugf("zip.NewWriterLevel %v", err)
 		return err
 	}
