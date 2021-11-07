@@ -81,6 +81,7 @@ func main() {
 		if symbol.BaseAsset == "USDC" ||
 			symbol.BaseAsset == "TUSD" ||
 			symbol.BaseAsset == "USDP" ||
+			symbol.BaseAsset == "BUSD" ||
 			symbol.BaseAsset == "FTT" {
 			symbols = append(symbols, symbol.Symbol)
 		} else if symbol.QuoteAsset == "USDT" {
