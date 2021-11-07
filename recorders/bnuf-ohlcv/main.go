@@ -349,14 +349,6 @@ func prependSave(rootPath, interval, symbol string, klines []common.KLine, getAl
 		}
 	}
 
-	//if len(oldContents) > 0 {
-	//	_, err = writer.WriteString("DIVIDE LINE\n")
-	//	if err != nil {
-	//		logger.Debugf("writer.WriteString %v", err)
-	//		return err
-	//	}
-	//}
-
 	for _, c := range oldContents {
 		_, err = writer.WriteString(fmt.Sprintf("%s\n", c))
 		if err != nil {
@@ -422,11 +414,6 @@ func getLastLineTimestamp(rootPath, interval, symbol string, startYear time.Time
 	}()
 	scanner := bufio.NewScanner(g)
 	lastMsg := make([]byte, 0)
-	//_, err = f.Seek(-2048, io.SeekEnd)
-	//if err != nil {
-	//	logger.Debugf("f.Seek(-2048, io.SeekEnd) error %v", err)
-	//	_, _ = f.Seek(0, io.SeekStart)
-	//}
 	for scanner.Scan() {
 		if tmp := scanner.Bytes(); len(tmp) > 0 {
 			lastMsg = tmp
@@ -463,11 +450,6 @@ func appendSave(rootPath, interval, symbol string, klines []common.KLine) error 
 		_ = g.Close()
 		_ = f.Close()
 	}()
-	//_, err = writer.WriteString("DIVIDE LINE\n")
-	//if err != nil {
-	//	logger.Debugf("writer.WriteString %v", err)
-	//	return err
-	//}
 	for _, k := range klines {
 		_, err = writer.WriteString(fmt.Sprintf(
 			"%s,%s,%s,%s,%s,%s\n",
