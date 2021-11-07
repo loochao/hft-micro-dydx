@@ -421,63 +421,15 @@ func getFirstLineTimestamp(rootPath, interval, symbol string, startYear time.Tim
 	if err != nil {
 		return t, err
 	}
-	renameFistLine := false
 	defer func() {
 		_ = g.Close()
 		_ = f.Close()
-		if !renameFistLine {
-			return
-		}
-
-		logger.Debugf("rename first line %s\n\n", dataPath)
-		f, err = os.OpenFile(dataPath, os.O_RDONLY, 0600)
-		if err == nil {
-			g, err = gzip.NewReader(f)
-			if err != nil {
-				return
-			}
-			scanner := bufio.NewScanner(g)
-			oldContents := make([]string, 0)
-			for scanner.Scan() {
-				if tmp := scanner.Text(); len(tmp) > 0 {
-					oldContents = append(oldContents, tmp)
-				}
-			}
-			_ = g.Close()
-			_ = f.Close()
-			oldContents[0] = "timestamp,open,high,low,close,volume"
-
-			f, err = os.OpenFile(dataPath, os.O_CREATE|os.O_WRONLY, 0755)
-			if err != nil {
-				return
-			}
-			gr, err := gzip.NewWriterLevel(f, gzip.BestCompression)
-			if err != nil {
-				return
-			}
-			writer := bufio.NewWriter(gr)
-			defer func() {
-				_ = writer.Flush()
-				_ = g.Close()
-				_ = f.Close()
-			}()
-			for _, c := range oldContents {
-				_, err = writer.WriteString(fmt.Sprintf("%s\n", c))
-				if err != nil {
-					logger.Debugf("writer.WriteString %v", err)
-					return
-				}
-			}
-		}
 	}()
 
 	scanner := bufio.NewScanner(g)
 	for scanner.Scan() {
 		if tmp := scanner.Bytes(); len(tmp) > 15 {
 			if tmp[0] == 't' {
-				if tmp[15] == 'c' {
-					renameFistLine = true
-				}
 				return startYear.Add(-time.Second), nil
 			} else {
 				tt, err := time.Parse(time.RFC3339, strings.Split(string(tmp), ",")[0])
