@@ -58,6 +58,8 @@ func main() {
 		filterMap[symbol.Symbol] = symbol.Symbol
 	}
 
+	filterMap["USDT/USD"] = "USDT/USD"
+
 	api, err := ftx_usdspot.NewAPI("", "", "", *proxyAddress)
 	if err != nil {
 		logger.Fatal(err)
@@ -70,15 +72,18 @@ func main() {
 	for _, market := range markets {
 		if market.Type == "spot" &&
 			market.Enabled &&
-			market.QuoteCurrency == "USD" &&
+			(market.QuoteCurrency == "USD" || market.QuoteCurrency == "USDT") &&
 			!strings.Contains(market.Name, "BULL") &&
 			!strings.Contains(market.Name, "BEAR") &&
 			!strings.Contains(market.Name, "HALF") &&
 			!strings.Contains(market.Name, "HEDGE") {
 
-			_, ok1 := filterMap[strings.Replace(market.Name, "/USD", "-PERP", -1)]
-			_, ok2 := filterMap[strings.Replace(market.Name, "/USD", "USDT", -1)]
-			if ok1 || ok2 {
+			_, ok1 := filterMap[market.Name]
+			_, ok2 := filterMap[strings.Replace(market.Name, "/USD", "-PERP", -1)]
+			_, ok3 := filterMap[strings.Replace(market.Name, "/USD", "USDT", -1)]
+			_, ok4 := filterMap[strings.Replace(market.Name, "/USDT", "-PERP", -1)]
+			_, ok5 := filterMap[strings.Replace(market.Name, "/USDT", "USDT", -1)]
+			if ok1 || ok2 || ok3 || ok4 || ok5{
 				symbols = append(symbols, market.Name)
 			}
 		}
