@@ -58,7 +58,12 @@ func main() {
 
 	symbols := make([]string, 0)
 	for _, symbol := range exchangeInfo.Symbols {
-		if symbol.Status != "TRADING" || (symbol.QuoteAsset != "USDT" && symbol.QuoteAsset != "BUSD") {
+		if symbol.Status != "TRADING" ||
+			(symbol.QuoteAsset != "USDT" &&
+				symbol.QuoteAsset != "TUSD" &&
+				symbol.QuoteAsset != "USDP" &&
+				symbol.QuoteAsset != "USDC" &&
+				symbol.QuoteAsset != "BUSD") {
 			continue
 		}
 		if strings.Contains(symbol.Symbol, "DOWNUSDT") {
@@ -76,6 +81,10 @@ func main() {
 			if _, ok := futuresMap[symbol.Symbol]; ok {
 				symbols = append(symbols, symbol.Symbol)
 			}
+		} else if symbol.QuoteAsset == "TUSD" ||
+			symbol.QuoteAsset == "USDP" ||
+			symbol.QuoteAsset == "USDC" {
+			symbols = append(symbols, symbol.Symbol)
 		} else if symbol.QuoteAsset == "BUSD" {
 			if _, ok := futuresMap[symbol.Symbol]; ok {
 				symbols = append(symbols, symbol.Symbol)
