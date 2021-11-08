@@ -69,7 +69,11 @@ func main() {
 
 	symbols := make([]string, 0)
 	for _, symbol := range exchangeInfo.Symbols {
-		if symbol.Status != "TRADING" || (symbol.QuoteAsset != "USDT" && symbol.QuoteAsset != "BUSD") {
+		if symbol.Status != "TRADING" || (symbol.QuoteAsset != "USDT" &&
+			symbol.QuoteAsset != "BUSD" &&
+			symbol.QuoteAsset != "USDC" &&
+			symbol.QuoteAsset != "USDP" &&
+			symbol.QuoteAsset != "TUSD") {
 			continue
 		}
 		if strings.Contains(symbol.Symbol, "DOWNUSDT") {
@@ -107,7 +111,7 @@ func main() {
 	//symbols = symbols[:1]
 
 	logger.Debugf("SYMBOLS %s\n", symbols)
-	logger.Debugf("INTERVALS %s\n", symbols)
+	logger.Debugf("INTERVALS %s\n", intervals)
 
 	for _, interval := range intervals {
 		err = os.MkdirAll(path.Join(*savePath, "/"+interval), 0777)
