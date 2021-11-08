@@ -84,6 +84,10 @@ func main() {
 			symbol.BaseAsset == "BUSD" ||
 			symbol.BaseAsset == "FTT" {
 			symbols = append(symbols, symbol.Symbol)
+		} else if symbol.QuoteAsset == "USDP" ||
+			symbol.QuoteAsset == "USDC" ||
+			symbol.QuoteAsset == "TUSD" {
+			symbols = append(symbols, symbol.Symbol)
 		} else if symbol.QuoteAsset == "USDT" {
 			if _, ok := futuresMap[symbol.Symbol]; ok {
 				symbols = append(symbols, symbol.Symbol)
