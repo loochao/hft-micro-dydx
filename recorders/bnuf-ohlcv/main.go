@@ -25,7 +25,7 @@ func main() {
 	startYearStr := flag.String("startYear", "2015", "data save folder")
 	batchSize := flag.Int("batch", 100000, "kline save batch size")
 	sleepInterval := flag.Duration("sleepInterval", time.Second, "sleepInterval")
-	roundInterval := flag.Duration("roundInterval", time.Minute, "roundInterval")
+	roundInterval := flag.Duration("roundInterval", time.Hour, "roundInterval")
 
 	proxyAddress := flag.String("proxy", "", "proxy address")
 	savePath := flag.String("path", "/root/bnuf-ohlcv", "data save folder")
@@ -188,7 +188,7 @@ func main() {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(*sleepInterval):
+		case <-time.After(*roundInterval):
 			logger.Debugf("\n\n BACKWARD NEXT ROUND \n\n")
 		}
 	}
@@ -212,7 +212,7 @@ func main() {
 					continue
 				}
 				if time.Now().Sub(startTime) < time.Hour*25 {
-					logger.Debugf("%s %s not long than 8 hours %v %v, ignore", interval, symbol, startTime, time.Now())
+					logger.Debugf("%s %s not long than 25 hours %v %v, ignore", interval, symbol, startTime, time.Now())
 					continue
 				}
 				logger.Debugf("%s %s forward query from %v", interval, symbol, startTime)
