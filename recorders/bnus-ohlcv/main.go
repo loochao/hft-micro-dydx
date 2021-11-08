@@ -26,7 +26,7 @@ func main() {
 	startYearStr := flag.String("startYear", "2015", "data save folder")
 	batchSize := flag.Int("batch", 100000, "kline save batch size")
 	sleepInterval := flag.Duration("sleepInterval", time.Second, "sleepInterval")
-	roundInterval := flag.Duration("roundInterval", time.Minute, "roundInterval")
+	roundInterval := flag.Duration("roundInterval", time.Hour, "roundInterval")
 
 	proxyAddress := flag.String("proxy", "", "proxy address")
 	savePath := flag.String("path", "/root/bnus-ohlcv", "data save folder")
@@ -260,8 +260,8 @@ func main() {
 					logger.Debugf("%s %s bad start time %v, ignore", interval, symbol, startTime)
 					continue
 				}
-				if time.Now().Sub(startTime) < time.Hour*8 {
-					logger.Debugf("%s %s not long than 8 hours %v %v, ignore", interval, symbol, startTime, time.Now())
+				if time.Now().Sub(startTime) < time.Hour*25 {
+					logger.Debugf("%s %s not long than 25 hours %v %v, ignore", interval, symbol, startTime, time.Now())
 					continue
 				}
 				//logger.Debugf("OVERALL %s %s forward query from %v", interval, symbol, startTime)
