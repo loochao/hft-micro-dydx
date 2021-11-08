@@ -431,7 +431,6 @@ func getFirstLineTimestamp(rootPath, interval, symbol string, startYear time.Tim
 	scanner := bufio.NewScanner(g)
 	for scanner.Scan() {
 		if tmp := scanner.Bytes(); len(tmp) > 15 {
-			logger.Debugf("%s", tmp)
 			if tmp[0] == 't' {
 				return startYear.Add(-time.Second), nil
 			} else {
