@@ -211,7 +211,7 @@ func main() {
 					logger.Debugf("%s %s bad start time %v, ignore", interval, symbol, startTime)
 					continue
 				}
-				if time.Now().Sub(startTime) < time.Hour*8 {
+				if time.Now().Sub(startTime) < time.Hour*25 {
 					logger.Debugf("%s %s not long than 8 hours %v %v, ignore", interval, symbol, startTime, time.Now())
 					continue
 				}
