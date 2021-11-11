@@ -13,10 +13,18 @@ func (strat *XYStrategy) handleFundingRate() {
 		strat.yFundingRateFactor == nil {
 		return
 	}
+	if strat.xAdjustedFundingRate == nil {
+		strat.xAdjustedFundingRate = new(float64)
+	}
+	if strat.yAdjustedFundingRate == nil {
+		strat.yAdjustedFundingRate = new(float64)
+	}
 	if strat.xyFundingRate == nil {
 		strat.xyFundingRate = new(float64)
 	}
-	*strat.xyFundingRate = strat.yFundingRate.GetFundingRate()**strat.yFundingRateFactor - strat.xFundingRate.GetFundingRate()**strat.yFundingRateFactor
+	*strat.yAdjustedFundingRate = strat.yFundingRate.GetFundingRate()*strat.config.YFundingRateWeight**strat.yFundingRateFactor
+	*strat.xAdjustedFundingRate =  strat.xFundingRate.GetFundingRate()*strat.config.XFundingRateWeight**strat.xFundingRateFactor
+	*strat.xyFundingRate =  *strat.yAdjustedFundingRate - *strat.xAdjustedFundingRate
 }
 
 func (strat *XYStrategy) handleXOrder() {

@@ -96,34 +96,34 @@ func startXYStrategy(
 
 		xyTickerCh: xyTickerCh,
 
-		xPositionUpdateTime:     time.Time{},
-		yPositionUpdateTime:     time.Time{},
-		xTicker:                 nil,
-		yTicker:                 nil,
-		xTickerTime:             time.Time{},
-		yTickerTime:             time.Time{},
-		xAccount:                nil,
-		yAccount:                nil,
-		xPosition:               nil,
-		yPosition:               nil,
-		xOrderSilentTime:        time.Now().Add(config.RestartSilent),
-		yOrderSilentTime:        time.Now().Add(config.RestartSilent),
-		xFundingRate:            nil,
-		yFundingRate:            nil,
-		xyFundingRate:           nil,
-		xLastFilledBuyPrice:     nil,
-		xLastFilledSellPrice:    nil,
-		yLastFilledBuyPrice:     nil,
-		yLastFilledSellPrice:    nil,
-		xOrder:                  nil,
-		yOrder:                  nil,
-		xOrderError:             common.OrderError{},
-		yOrderError:             common.OrderError{},
-		enterStep:               0,
-		enterTarget:             0,
-		usdAvailable:            0,
-		logSilentTime:           time.Time{},
-		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
+		xPositionUpdateTime:  time.Time{},
+		yPositionUpdateTime:  time.Time{},
+		xTicker:              nil,
+		yTicker:              nil,
+		xTickerTime:          time.Time{},
+		yTickerTime:          time.Time{},
+		xAccount:             nil,
+		yAccount:             nil,
+		xPosition:            nil,
+		yPosition:            nil,
+		xOrderSilentTime:     time.Now().Add(config.RestartSilent),
+		yOrderSilentTime:     time.Now().Add(config.RestartSilent),
+		xFundingRate:         nil,
+		yFundingRate:         nil,
+		xyFundingRate:        nil,
+		xLastFilledBuyPrice:  nil,
+		xLastFilledSellPrice: nil,
+		yLastFilledBuyPrice:  nil,
+		yLastFilledSellPrice: nil,
+		xOrder:               nil,
+		yOrder:               nil,
+		xOrderError:          common.OrderError{},
+		yOrderError:          common.OrderError{},
+		enterStep:            0,
+		enterTarget:          0,
+		usdAvailable:         0,
+		logSilentTime:        time.Time{},
+		realisedSpreadTimer:  time.NewTimer(time.Hour * 9999),
 
 		xFundingRateCheckTimer: time.NewTimer(time.Second),
 		yFundingRateCheckTimer: time.NewTimer(time.Second),
@@ -138,21 +138,23 @@ func startXYStrategy(
 		spreadMedianShort:      0,
 		spreadMedianLong:       0,
 
-		xTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
-		yTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
-		tickerMatchCount:        0,
-		tickerCount:             0,
-		strategyOutputCh:        nil,
-		error:                   nil,
-		offsetFactor:            0,
-		thresholdShortTop:       0,
-		thresholdShortBot:       0,
-		thresholdLongBot:        0,
-		thresholdLongTop:        0,
+		xTimedPositionChange: common.NewTimedSum(config.TurnoverLookback),
+		yTimedPositionChange: common.NewTimedSum(config.TurnoverLookback),
+		tickerMatchCount:     0,
+		tickerCount:          0,
+		strategyOutputCh:     nil,
+		error:                nil,
+		offsetFactor:         0,
+		thresholdShortTop:    0,
+		thresholdShortBot:    0,
+		thresholdLongBot:     0,
+		thresholdLongTop:     0,
 
 		targetWeight: common.ForAtomicFloat64(1.0),
+		targetWeightUpdated: common.ForAtomicBool(false),
 
-		maxPosValue:             config.MaximalPosValues[xSymbol],
+		maxPosSize:              config.MaxPosSizes[xSymbol],
+		maxPosValue:             config.MaxPosValues[xSymbol],
 		xSize:                   0,
 		ySize:                   0,
 		xValue:                  0,
@@ -268,7 +270,7 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 						strat.xFundingRateFactor = new(float64)
 					}
 					t := 1.0 - time.Now().Add(strat.config.XFundingRateInterval).Truncate(strat.config.XFundingRateInterval).Sub(time.Now()).Seconds()/strat.config.XFundingRateInterval.Seconds()
-					*strat.xFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.FundingRateEaseFn(t)
+					*strat.xFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.XFundingRateEaseFn(t)
 				}
 			} else {
 				if time.Now().Add(strat.config.XFundingRateTimeOffset).Truncate(strat.config.XFundingRateInterval).Add(strat.config.XFundingRateTimeOffset).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
@@ -282,7 +284,7 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 						strat.xFundingRateFactor = new(float64)
 					}
 					t := 1.0 - time.Now().Add(strat.config.XFundingRateTimeOffset).Truncate(strat.config.XFundingRateInterval).Add(strat.config.XFundingRateTimeOffset).Sub(time.Now()).Seconds()/strat.config.XFundingRateInterval.Seconds()
-					*strat.xFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.FundingRateEaseFn(t)
+					*strat.xFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.XFundingRateEaseFn(t)
 				}
 			}
 			break
@@ -299,7 +301,7 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 						strat.yFundingRateFactor = new(float64)
 					}
 					t := 1.0 - time.Now().Add(strat.config.YFundingRateInterval).Truncate(strat.config.YFundingRateInterval).Sub(time.Now()).Seconds()/strat.config.YFundingRateInterval.Seconds()
-					*strat.yFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.FundingRateEaseFn(t)
+					*strat.yFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.YFundingRateEaseFn(t)
 				}
 			} else {
 				if time.Now().Add(strat.config.YFundingRateTimeOffset).Truncate(strat.config.YFundingRateInterval).Add(strat.config.YFundingRateTimeOffset).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
@@ -313,7 +315,7 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 						strat.yFundingRateFactor = new(float64)
 					}
 					t := 1.0 - time.Now().Add(strat.config.YFundingRateTimeOffset).Truncate(strat.config.YFundingRateInterval).Add(strat.config.YFundingRateTimeOffset).Sub(time.Now()).Seconds()/strat.config.YFundingRateInterval.Seconds()
-					*strat.yFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.FundingRateEaseFn(t)
+					*strat.yFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.YFundingRateEaseFn(t)
 				}
 			}
 			break

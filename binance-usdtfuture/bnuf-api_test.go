@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
+	"sort"
 	"strconv"
 	"testing"
 	"time"
@@ -69,6 +71,16 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	indexes, err := api.GetPremiumIndex(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	indexPrices := make(map[string]float64)
+	for _, index := range indexes {
+		indexPrices[index.Symbol] = index.IndexPrice
+	}
+
 	tickSizes := make(map[string]float64)
 	stepSizes := make(map[string]float64)
 	minSizes := make(map[string]float64)
@@ -77,11 +89,16 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	minNotional := make(map[string]float64)
 	tickPrecisions := make(map[string]int)
 	stepPrecisions := make(map[string]int)
+	maxPosSizes := make(map[string]float64)
+	maxPosValues := make(map[string]float64)
+
+	symbols := make([]string, 0)
 	for _, symbol := range exchangeInfo.Symbols {
 		//logger.Debugf("%s", symbol.ContractType)
 		if symbol.ContractType != "PERPETUAL" || symbol.Status != "TRADING" || symbol.QuoteAsset != "USDT"{
 			continue
 		}
+		symbols = append(symbols, symbol.Symbol)
 		for _, filter := range symbol.Filters {
 			switch filter.FilterType {
 			case "PRICE_FILTER":
@@ -90,6 +107,8 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 			case "MARKET_LOT_SIZE":
 				stepSizes[symbol.Symbol] = filter.StepSize
 				minSizes[symbol.Symbol] = filter.MinQty
+				maxPosSizes[symbol.Symbol] = filter.MaxQty
+				maxPosValues[symbol.Symbol] = math.Floor(filter.MaxQty*indexPrices[symbol.Symbol]/10000)*10000
 				stepPrecisions[symbol.Symbol] = common.GetFloatPrecision(filter.StepSize)
 			case "PERCENT_PRICE":
 				multiplierUps[symbol.Symbol] = filter.MultiplierUp
@@ -99,44 +118,65 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 			}
 		}
 	}
+	sort.Strings(symbols)
 	str := "var TickSizes = map[string]float64{\n"
-	for symbol, value := range tickSizes {
+	for _, symbol := range symbols {
+		value := tickSizes[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var StepSizes = map[string]float64{\n"
-	for symbol, value := range stepSizes {
+	for _, symbol := range symbols {
+		value := stepSizes[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var MinSizes = map[string]float64{\n"
-	for symbol, value := range minSizes {
+	for _, symbol := range symbols {
+		value := minSizes[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var MinNotional = map[string]float64{\n"
-	for symbol, value := range minNotional {
+	for _, symbol := range symbols {
+		value := minNotional[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var MultiplierUps = map[string]float64{\n"
-	for symbol, value := range multiplierUps {
+	for _, symbol := range symbols {
+		value := multiplierUps[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var MultiplierDowns = map[string]float64{\n"
-	for symbol, value := range multiplierDowns {
+	for _, symbol := range symbols {
+		value := multiplierDowns[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var TickPrecisions = map[string]int{\n"
-	for symbol, value := range tickPrecisions {
+	for _, symbol := range symbols {
+		value := tickPrecisions[symbol]
 		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
 	}
 	str += "}\n\n"
 	str += "var StepPrecisions = map[string]int{\n"
-	for symbol, value := range stepPrecisions {
+	for _, symbol := range symbols {
+		value := stepPrecisions[symbol]
 		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
+	}
+	str += "}\n\n"
+	str += "var MaxPosSizes = map[string]float64{\n"
+	for _, symbol := range symbols {
+		value := maxPosSizes[symbol]
+		str += fmt.Sprintf("  \"%s\": %.0f,\n", symbol, value)
+	}
+	str += "}\n\n"
+	str += "var MaxPosValues = map[string]float64{\n"
+	for _, symbol := range symbols {
+		value := maxPosValues[symbol]
+		str += fmt.Sprintf("  \"%s\": %.0f,\n", symbol, value)
 	}
 	str += "}\n\n"
 	fmt.Printf("%s", str)

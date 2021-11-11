@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"os"
 	"strconv"
 	"testing"
@@ -30,8 +31,11 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	tickSizes := make(map[string]float64)
 	stepSizes := make(map[string]float64)
 	minSizes := make(map[string]float64)
+	maxPosSizes := make(map[string]float64)
 	tickPrecisions := make(map[string]int)
 	stepPrecisions := make(map[string]int)
+	maxPosValues := make(map[string]float64)
+
 	for _, market := range markets {
 		if market.Type != "PERPETUAL" || market.Status != "ONLINE" {
 			continue
@@ -40,7 +44,9 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 		tickPrecisions[market.Market] = common.GetFloatPrecision(market.TickSize)
 		stepSizes[market.Market] = market.StepSize
 		minSizes[market.Market] = market.MinOrderSize
+		maxPosSizes[market.Market] = market.MaxPositionSize
 		stepPrecisions[market.Market] = common.GetFloatPrecision(market.StepSize)
+		maxPosValues[market.Market] = math.Floor(market.MaxPositionSize*market.IndexPrice/10000)*10000
 	}
 	str := "var TickSizes = map[string]float64{\n"
 	for symbol, value := range tickSizes {
@@ -65,6 +71,16 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	str += "var StepPrecisions = map[string]int{\n"
 	for symbol, value := range stepPrecisions {
 		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
+	}
+	str += "}\n\n"
+	str += "var MaxPosSizes = map[string]float64{\n"
+	for symbol, value := range maxPosSizes {
+		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var MaxPosValues = map[string]float64{\n"
+	for symbol, value := range maxPosValues {
+		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	fmt.Printf("%s", str)

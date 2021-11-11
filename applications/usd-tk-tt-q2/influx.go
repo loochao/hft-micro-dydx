@@ -116,18 +116,43 @@ func handleSave(
 			hasAllSymbols = false
 		}
 
+
 		//stats不管策略状态，都需要保存
-		fields["statsXTimeDeltaBot"] = strat.stats.XTimeDeltaBot.Load()
-		fields["statsXTimeDeltaMid"] = strat.stats.XTimeDeltaMid.Load()
-		fields["statsXTimeDeltaTop"] = strat.stats.XTimeDeltaTop.Load()
 
-		fields["statsYTimeDeltaBot"] = strat.stats.YTimeDeltaBot.Load()
-		fields["statsYTimeDeltaMid"] = strat.stats.YTimeDeltaMid.Load()
-		fields["statsYTimeDeltaTop"] = strat.stats.YTimeDeltaTop.Load()
+		if strat.stats.Ready.True() {
+			fields["statsReady"] = 1.0
+			if strat.targetWeightUpdated.True() {
+				fields["targetWeight"] = strat.targetWeight.Load()
+			}
+		}else{
+			fields["statsReady"] = 0.0
+		}
 
-		fields["statsXYTimeDeltaBot"] = strat.stats.XYTimeDeltaBot.Load()
-		fields["statsXYTimeDeltaMid"] = strat.stats.XYTimeDeltaMid.Load()
-		fields["statsXYTimeDeltaTop"] = strat.stats.XYTimeDeltaTop.Load()
+		fields["statsXTimeDeltaBot"] = strat.stats.XTimeDeltaBot.Load().Seconds()
+		fields["statsXTimeDeltaMid"] = strat.stats.XTimeDeltaMid.Load().Seconds()
+		fields["statsXTimeDeltaTop"] = strat.stats.XTimeDeltaTop.Load().Seconds()
+
+		fields["statsYTimeDeltaBot"] = strat.stats.YTimeDeltaBot.Load().Seconds()
+		fields["statsYTimeDeltaMid"] = strat.stats.YTimeDeltaMid.Load().Seconds()
+		fields["statsYTimeDeltaTop"] = strat.stats.YTimeDeltaTop.Load().Seconds()
+
+		fields["statsXYTimeDeltaBot"] = strat.stats.XYTimeDeltaBot.Load().Seconds()
+		fields["statsXYTimeDeltaMid"] = strat.stats.XYTimeDeltaMid.Load().Seconds()
+		fields["statsXYTimeDeltaTop"] = strat.stats.XYTimeDeltaTop.Load().Seconds()
+
+		fields["statsXBidSize"] = strat.stats.XBidSize.Load()
+		fields["statsXAskSize"] = strat.stats.XAskSize.Load()
+		fields["statsYBidSize"] = strat.stats.YBidSize.Load()
+		fields["statsYAskSize"] = strat.stats.YAskSize.Load()
+		if strat.stats.XMiddlePrice.Load() > 0 {
+			fields["statsXMiddlePrice"] = strat.stats.XMiddlePrice.Load()
+		}
+		if strat.stats.YMiddlePrice.Load() > 0 {
+			fields["statsYMiddlePrice"] = strat.stats.YMiddlePrice.Load()
+		}
+		if strat.tickerCount > 0 && strat.tickerMatchCount > 0{
+			fields["tickerMatchRatio"] = float64(strat.tickerMatchCount) / float64(strat.tickerCount)
+		}
 
 		fields["statsSpreadEnterOffset"] = strat.stats.SpreadEnterOffset.Load()
 		fields["statsSpreadLeaveOffset"] = strat.stats.SpreadLeaveOffset.Load()
@@ -140,8 +165,20 @@ func handleSave(
 		if strat.xFundingRate != nil {
 			fields["xFundingRate"] = strat.xFundingRate.GetFundingRate()
 		}
+		if strat.xFundingRateFactor != nil {
+			fields["xFundingRateFactor"] = *strat.xFundingRateFactor
+		}
 		if strat.yFundingRate != nil {
 			fields["yFundingRate"] = strat.yFundingRate.GetFundingRate()
+		}
+		if strat.yFundingRateFactor != nil {
+			fields["yFundingRateFactor"] = *strat.yFundingRateFactor
+		}
+		if strat.xAdjustedFundingRate != nil {
+			fields["xAdjustedFundingRate"] = *strat.xAdjustedFundingRate
+		}
+		if strat.yAdjustedFundingRate != nil {
+			fields["yAdjustedFundingRate"] = *strat.yAdjustedFundingRate
 		}
 		if strat.xyFundingRate != nil {
 			fields["xyFundingRate"] = *strat.xyFundingRate

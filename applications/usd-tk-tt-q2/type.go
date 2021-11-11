@@ -66,6 +66,8 @@ type XYStrategy struct {
 	xFundingRate         common.FundingRate
 	yFundingRate         common.FundingRate
 	xyFundingRate        *float64
+	xAdjustedFundingRate *float64
+	yAdjustedFundingRate *float64
 	xLastFilledBuyPrice  *float64
 	xLastFilledSellPrice *float64
 	yLastFilledBuyPrice  *float64
@@ -78,12 +80,11 @@ type XYStrategy struct {
 	logSilentTime       time.Time
 	realisedSpreadTimer *time.Timer
 
-
 	xTimedPositionChange *common.TimedSum
 	yTimedPositionChange *common.TimedSum
 
-	tickerMatchCount        int
-	tickerCount             int
+	tickerMatchCount int
+	tickerCount      int
 
 	spreadWalkTimer        *time.Timer
 	spreadShortTimedMedian *common.TimedMedian
@@ -123,6 +124,7 @@ type XYStrategy struct {
 	thresholdLongTop  float64
 
 	maxPosValue            float64
+	maxPosSize             float64
 	xSize                  float64
 	ySize                  float64
 	xValue                 float64
@@ -132,6 +134,7 @@ type XYStrategy struct {
 	xyMidPrice             float64
 	enterValue             float64
 	targetWeight           *common.AtomicFloat64
+	targetWeightUpdated    *common.AtomicBool
 	targetValue            float64
 	realisedSpread         *float64
 	adjustedRealisedSpread *float64
@@ -146,7 +149,7 @@ type XYStrategy struct {
 	xOrderError    common.OrderError
 	yOrderError    common.OrderError
 
-	stopped                 int32
+	stopped int32
 
 	fundingRateSettleSilent bool
 	xFundingRateCheckTimer  *time.Timer

@@ -64,7 +64,6 @@ func (api *API) SendHTTPRequest(ctx context.Context, path string, params common.
 	values.Set("recvWindow", strconv.FormatInt(common.RecvWindow(15*time.Second), 10))
 	values.Set("timestamp", strconv.FormatInt(time.Now().Unix()*1000, 10))
 	path = common.EncodeURLValues(path, values)
-	//logger.Debugf("%s", path)
 
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {

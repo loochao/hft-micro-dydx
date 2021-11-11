@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"math"
 	"time"
 )
 
@@ -18,9 +20,13 @@ type Config struct {
 	XExchange common.ExchangeSettings `yaml:"xExchange"`
 	YExchange common.ExchangeSettings `yaml:"yExchange"`
 
-	LogInterval           time.Duration `yaml:"logInterval"`
-	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
-	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
+	StreamBatchSize int `yaml:"streamBatchSize"`
+
+	RestartSilent    time.Duration `yaml:"restartSilent"`
+	RestartInterval  time.Duration `yaml:"restartInterval"`
+	LogInterval      time.Duration `yaml:"logInterval"`
+	TurnoverLookback time.Duration `yaml:"turnoverLookback"`
+	AccountMaxAge    time.Duration `yaml:"accountMaxAge"`
 
 	SpreadEnterOffset   float64 `yaml:"spreadEnterOffset"`
 	SpreadLeaveOffset   float64 `yaml:"spreadLeaveOffset"`
@@ -59,42 +65,28 @@ type Config struct {
 	TimeDeltaQuantileTop float64 `yaml:"timeDeltaQuantileTop"`
 	TimeDeltaQuantileBot float64 `yaml:"timeDeltaQuantileBot"`
 
-	MinimalEnterFundingRate float64             `yaml:"minimalEnterFundingRate"`
-	FundingRateOffsetMin    float64             `yaml:"fundingRateOffsetMin"`
-	FundingRateOffsetMax    float64             `yaml:"fundingRateOffsetMax"`
-	FundingRateEaseFnName   string              `yaml:"fundingRateEaseFnName"`
-	FundingRateEaseFn       common.EaseFunction `yaml:"-"`
-	FundingRateSilentTime   time.Duration       `yaml:"fundingRateSilentTime"`
+	//MinimalEnterFundingRate float64             `yaml:"minimalEnterFundingRate"`
+	FundingRateOffsetMin   float64             `yaml:"fundingRateOffsetMin"`
+	FundingRateOffsetMax   float64             `yaml:"fundingRateOffsetMax"`
+	XFundingRateEaseFnName string              `yaml:"xFundingRateEaseFnName"`
+	XFundingRateEaseFn     common.EaseFunction `yaml:"-"`
+	YFundingRateEaseFnName string              `yaml:"yFundingRateEaseFnName"`
+	YFundingRateEaseFn     common.EaseFunction `yaml:"-"`
+	FundingRateSilentTime  time.Duration       `yaml:"fundingRateSilentTime"`
+	XFundingRateWeight     float64             `yaml:"xFundingRateWeight"`
+	YFundingRateWeight     float64             `yaml:"yFundingRateWeight"`
 
 	XFundingRateInterval   time.Duration `yaml:"xFundingRateInterval"`
 	YFundingRateInterval   time.Duration `yaml:"yFundingRateInterval"`
 	XFundingRateTimeOffset time.Duration `yaml:"xFundingRateTimeOffset"`
 	YFundingRateTimeOffset time.Duration `yaml:"yFundingRateTimeOffset"`
 
-	XFundingRateFactor float64 `yaml:"xFundingRateFactor"`
-	YFundingRateFactor float64 `yaml:"yFundingRateFactor"`
-
 	TickerMaxRemoteLocalTimeDiff time.Duration `yaml:"tickerMaxRemoteLocalTimeDiff"` //控制时间上限
 	TickerMaxXYTimeDiff          time.Duration `yaml:"tickerMaxXYTimeDiff"`          //控制时差上限
-	TickerReportCount            int           `yaml:"tickerReportCount"`
 
-	SpreadTimeToEnter time.Duration `yaml:"spreadTimeToEnter"`
-	SpreadLookback    time.Duration `yaml:"spreadLookback"`
-	SpreadWalkDelay   time.Duration `yaml:"spreadWalkDelay"`
-
-	BatchSize int `yaml:"batchSize"`
-
-	StartValue            float64 `yaml:"startValue"`
-	MinimalXFree          float64 `yaml:"minimalXFree"`
-	MinimalYFree          float64 `yaml:"minimalYFree"`
-	GlobalMaximalPosValue float64 `yaml:"GlobalMaximalPosValue"`
-
-	//BestSizeFactor    float64            `yaml:"bestSizeFactor"`
-	EnterFreePct      float64            `yaml:"enterFreePct"`
-	EnterSlippage     float64            `yaml:"enterSlippage"`
-	EnterMinimalStep  float64            `yaml:"enterMinimalStep"`
-	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
-	StartValues       map[string]float64 `yaml:"startValues"`
+	SpreadMaxAge    time.Duration `yaml:"spreadMaxAge"`
+	SpreadLookback  time.Duration `yaml:"spreadLookback"`
+	SpreadWalkDelay time.Duration `yaml:"spreadWalkDelay"`
 
 	XOrderSilent           time.Duration           `yaml:"xOrderSilent"`
 	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
@@ -105,19 +97,37 @@ type Config struct {
 	HedgeCheckDuration     time.Duration           `yaml:"hedgeCheckDuration"`
 	HedgeCheckInterval     time.Duration           `yaml:"hedgeCheckInterval"`
 	RealisedSpreadLogDelay time.Duration           `yaml:"realisedSpreadLogDelay"`
-	RestartSilent          time.Duration           `yaml:"restartSilent"`
-	RestartInterval        time.Duration           `yaml:"restartInterval"`
 
-	XYPairs          map[string]string  `yaml:"xyPairs"`
-	MaximalPosValues map[string]float64 `yaml:"maximalPosValues,omitempty"`
+	StartValue  float64 `yaml:"startValue"`
+	MinXFree    float64 `yaml:"minXFree"`
+	MinYFree    float64 `yaml:"minYFree"`
+	MaxPosValue float64 `yaml:"maxPosValue"`
+
+	//BestSizeFactor    float64            `yaml:"bestSizeFactor"`
+	EnterFreePct               float64            `yaml:"enterFreePct"`
+	EnterSlippage              float64            `yaml:"enterSlippage"`
+	EnterMinimalStep           float64            `yaml:"enterMinimalStep"`
+	EnterTargetFactor          float64            `yaml:"enterTargetFactor"`
+	StartValues                map[string]float64 `yaml:"startValues"`
+	TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`
+
+	XYPairs      map[string]string  `yaml:"xyPairs"`
+	MaxPosSizes  map[string]float64 `yaml:"maxPosSizes,omitempty"`
+	MaxPosValues map[string]float64 `yaml:"maxPosValues,omitempty"`
 }
 
-func (config *Config) SetDefaultIfNotSet() {
+func (config *Config) SetDefaultIfNotSet() error {
+	if config.InternalInflux.SaveInterval == 0 {
+		config.InternalInflux.SaveInterval = time.Minute
+	}
+	if config.ExternalInflux.SaveInterval == 0 {
+		config.ExternalInflux.SaveInterval = time.Minute
+	}
 	if config.LogInterval == 0 {
 		config.LogInterval = time.Minute
 	}
-	if config.BalancePositionMaxAge == 0 {
-		config.BalancePositionMaxAge = time.Minute * 3
+	if config.AccountMaxAge == 0 {
+		config.AccountMaxAge = time.Minute * 3
 	}
 	if config.RealisedSpreadLogDelay == 0 {
 		config.RealisedSpreadLogDelay = time.Second
@@ -125,8 +135,8 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.RestartSilent == 0 {
 		config.RestartSilent = time.Minute * 3
 	}
-	if config.BatchSize <= 0 {
-		config.BatchSize = 20
+	if config.StreamBatchSize <= 0 {
+		config.StreamBatchSize = 20
 	}
 	if config.XEnterSilent == 0 {
 		config.XEnterSilent = time.Second
@@ -137,11 +147,11 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.TickerMaxRemoteLocalTimeDiff == 0 {
 		config.TickerMaxRemoteLocalTimeDiff = time.Second * 5
 	}
-	if config.TickerReportCount == 0 {
-		config.RestartSilent = 1000
-	}
 	if config.SpreadLookback == 0 {
 		config.SpreadLookback = time.Second
+	}
+	if config.TargetWeightUpdateInterval == 0 {
+		config.TargetWeightUpdateInterval = time.Hour
 	}
 	if config.RestartInterval == 0 {
 		config.RestartInterval = time.Hour * 9999
@@ -166,17 +176,15 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.XFundingRateInterval == 0 {
 		config.XFundingRateInterval = time.Hour * 4
 	}
-	if config.XFundingRateFactor == 0 {
-		config.XFundingRateFactor = 1.0
+	if config.XFundingRateWeight == 0 {
+		config.XFundingRateWeight = 1.0
 	}
-	if config.YFundingRateFactor == 0 {
-		config.YFundingRateFactor = 1.0
+	if config.YFundingRateWeight == 0 {
+		config.YFundingRateWeight = 1.0
 	}
-	if config.FundingRateEaseFnName == "" {
-		config.FundingRateEaseFn = common.Linear
-	}else{
-		config.FundingRateEaseFn = common.GetEaseFnByName(config.FundingRateEaseFnName)
-	}
+	config.XFundingRateEaseFn = common.GetEaseFnByName(config.XFundingRateEaseFnName)
+	config.YFundingRateEaseFn = common.GetEaseFnByName(config.YFundingRateEaseFnName)
+
 	if config.XOrderTimeInForce == "" {
 		config.XOrderTimeInForce = common.OrderTimeInForceFOK
 	}
@@ -260,14 +268,18 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.StatsSampleInterval == 0 {
 		config.StatsSampleInterval = time.Second
 	}
-	if config.MaximalPosValues == nil {
-		config.MaximalPosValues = make(map[string]float64)
+	if config.MaxPosValues == nil {
+		config.MaxPosValues = make(map[string]float64)
 	}
 	for xSymbol := range config.XYPairs {
-		if v, ok := config.MaximalPosValues[xSymbol]; !ok {
-			config.MaximalPosValues[xSymbol] = config.GlobalMaximalPosValue
-		} else if v > config.GlobalMaximalPosValue {
-			config.MaximalPosValues[xSymbol] = config.GlobalMaximalPosValue
+		if posValue, ok := config.MaxPosValues[xSymbol]; !ok {
+			config.MaxPosValues[xSymbol] = config.MaxPosValue
+		} else {
+			config.MaxPosValues[xSymbol] = math.Min(config.MaxPosValue, posValue)
+		}
+		if _, ok := config.MaxPosSizes[xSymbol]; !ok {
+			return fmt.Errorf("miss max pos size for %s", xSymbol)
 		}
 	}
+	return nil
 }

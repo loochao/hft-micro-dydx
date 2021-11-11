@@ -18,6 +18,7 @@ func (strat *XYStrategy) updateXPosition() {
 	}
 
 	if !strat.spreadReady ||
+		!strat.targetWeightUpdated.True() ||
 		strat.xPosition == nil ||
 		strat.yPosition == nil ||
 		strat.xyFundingRate == nil ||
@@ -76,12 +77,12 @@ func (strat *XYStrategy) updateXPosition() {
 	//	logger.Debugf("%s enterTarget %f targetWeight %f enterTargetFactor %f", strat.xSymbol, strat.enterTarget, strat.targetWeight, strat.config.EnterTargetFactor)
 	//}
 
-	if time.Now().Sub(strat.xPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
-		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
+	if time.Now().Sub(strat.xPositionUpdateTime) > strat.config.AccountMaxAge ||
+		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.AccountMaxAge ||
 		strat.xAccount == nil ||
 		strat.yAccount == nil ||
 		strat.fundingRateSettleSilent ||
-		time.Now().Sub(strat.spreadTickerTime) > strat.config.SpreadTimeToEnter ||
+		time.Now().Sub(strat.spreadTickerTime) > strat.config.SpreadMaxAge ||
 		time.Now().Sub(strat.xOrderSilentTime) < 0 {
 		return
 	}
@@ -268,10 +269,11 @@ func (strat *XYStrategy) updateXPosition() {
 		!strat.isYSpot &&
 		strat.spreadMedianShort > strat.thresholdShortTop &&
 		strat.spreadLastShort > strat.spreadMedianShort &&
-		*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
+		//*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
 		strat.xSize > -strat.xMinSize*strat.xMultiplier &&
-		strat.xAccount.GetFree() > strat.config.MinimalXFree &&
-		strat.yAccount.GetFree() > strat.config.MinimalYFree &&
+		strat.xAccount.GetFree() > strat.config.MinXFree &&
+		strat.yAccount.GetFree() > strat.config.MinYFree &&
+		strat.xSize < strat.maxPosSize &&
 		strat.xAbsValue < strat.maxPosValue &&
 		strat.yAbsValue < strat.maxPosValue {
 
@@ -389,10 +391,11 @@ func (strat *XYStrategy) updateXPosition() {
 		!strat.isXSpot &&
 		strat.spreadMedianLong < strat.thresholdLongBot &&
 		strat.spreadLastLong < strat.spreadMedianLong &&
-		*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
+		//*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
 		strat.xSize < strat.xMinSize*strat.xMultiplier &&
-		strat.xAccount.GetFree() > strat.config.MinimalXFree &&
-		strat.yAccount.GetFree() > strat.config.MinimalYFree &&
+		strat.xAccount.GetFree() > strat.config.MinXFree &&
+		strat.yAccount.GetFree() > strat.config.MinYFree &&
+		strat.xSize > -strat.maxPosSize &&
 		strat.xAbsValue < strat.maxPosValue &&
 		strat.yAbsValue < strat.maxPosValue {
 
@@ -624,7 +627,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 	}
 	if strat.yPosition == nil ||
 		strat.xPosition == nil ||
-		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
+		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.AccountMaxAge ||
 		time.Now().Sub(strat.yOrderSilentTime) < 0 {
 		//if time.Now().Sub(strat.logSilentTime) > 0 {
 		//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)

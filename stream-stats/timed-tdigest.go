@@ -175,6 +175,7 @@ func NewTimedTDigestWithCompression(lookback, subInterval time.Duration, compres
 		CurrentSubTD: subTD,
 		RollingTD:    rollingTD,
 		Lookback:     lookback,
+		HalfLookback: lookback/2,
 		SubInterval:  subInterval,
 		Times:        make([]time.Time, 0),
 		SubTDs:       make([]*tdigest.TDigest, 0),

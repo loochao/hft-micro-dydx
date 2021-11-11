@@ -21,6 +21,7 @@ import (
 	okut "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"math"
 	"os"
 	"os/signal"
 	"runtime/pprof"
@@ -73,7 +74,11 @@ func main() {
 		logger.Warn(err)
 		return
 	}
-	config.SetDefaultIfNotSet()
+	err = config.SetDefaultIfNotSet()
+	if err != nil {
+		logger.Warn(err)
+		return
+	}
 	xyConfig = &config
 
 	if xyConfig.CpuProfile != "" {
@@ -211,7 +216,7 @@ func main() {
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)
-		if _, ok := xyConfig.MaximalPosValues[xSymbol]; !ok {
+		if _, ok := xyConfig.MaxPosSizes[xSymbol]; !ok {
 			logger.Warnf("miss maximal position value for %s", xSymbol)
 			return
 		}
@@ -276,14 +281,6 @@ func main() {
 		defer xyExternalInfluxWriter.Stop()
 	}
 
-	influxSaveTimer := time.NewTimer(
-		time.Now().Truncate(
-			xyConfig.InternalInflux.SaveInterval,
-		).Add(
-			xyConfig.InternalInflux.SaveInterval * 3,
-		).Sub(time.Now()),
-	)
-	defer influxSaveTimer.Stop()
 
 	xPositionChMap := make(map[string]chan common.Position)
 	xOrderChMap := make(map[string]chan common.Order)
@@ -370,12 +367,12 @@ func main() {
 	go xExchange.StreamFundingRate(
 		xyGlobalCtx,
 		xFundingRateChMap,
-		xyConfig.BatchSize,
+		xyConfig.StreamBatchSize,
 	)
 	go xExchange.StreamTicker(
 		xyGlobalCtx,
 		xTickerChMap,
-		xyConfig.BatchSize,
+		xyConfig.StreamBatchSize,
 	)
 	go xExchange.WatchOrders(
 		xyGlobalCtx,
@@ -395,12 +392,12 @@ func main() {
 	go yExchange.StreamFundingRate(
 		xyGlobalCtx,
 		yFundingRateChMap,
-		xyConfig.BatchSize,
+		xyConfig.StreamBatchSize,
 	)
 	go yExchange.StreamTicker(
 		xyGlobalCtx,
 		yTickerChMap,
-		xyConfig.BatchSize,
+		xyConfig.StreamBatchSize,
 	)
 	go yExchange.WatchOrders(
 		xyGlobalCtx,
@@ -420,6 +417,12 @@ func main() {
 	logger.Debugf("start main loop")
 	restartTimer := time.NewTimer(xyConfig.RestartInterval)
 	defer restartTimer.Stop()
+
+	targetWeightUpdateTimer := time.NewTimer(xyConfig.InternalInflux.SaveInterval/2)
+	defer targetWeightUpdateTimer.Stop()
+
+	influxSaveTimer := time.NewTimer(config.RestartSilent)
+	defer influxSaveTimer.Stop()
 
 	lastExternalSaveTime := &time.Time{}
 mainLoop:
@@ -465,10 +468,45 @@ mainLoop:
 				}
 			}
 			break
+		case <-targetWeightUpdateTimer.C:
+			totalLiquidity := 0.0
+			liquidityMap := make(map[string]float64)
+			for xSymbol, st := range strategyMap {
+				if st.stats.Ready.True() {
+					liquidityMap[xSymbol] = st.yMultiplier * math.Min(st.stats.YBidSize.Load(), st.stats.YAskSize.Load()) * st.stats.YMiddlePrice.Load()
+					totalLiquidity += liquidityMap[xSymbol]
+				}
+			}
+			if len(liquidityMap) > len(strategyMap) / 2 {
+				meanLiquidity := totalLiquidity/float64(len(liquidityMap))
+				for xSymbol, liquidity := range liquidityMap {
+					st := strategyMap[xSymbol]
+					weight := liquidity / meanLiquidity
+					weight = math.Sqrt(weight)
+					if weight > 1.0 {
+						weight = 1.0
+					}else if weight < 0.1 {
+						weight = 0.1
+					}
+					st.targetWeight.Set(weight)
+					if !st.targetWeightUpdated.True() {
+						st.targetWeightUpdated.Set(true)
+						logger.Debugf("%s target weight %f", xSymbol, weight)
+					}
+				}
+			}
+			if len(liquidityMap) == len(strategyMap){
+				targetWeightUpdateTimer.Reset(config.TargetWeightUpdateInterval)
+			}else{
+				targetWeightUpdateTimer.Reset(xyConfig.InternalInflux.SaveInterval/2)
+			}
+			break
 		case xcv := <-xCommissionAssetValueCh:
 			xCommissionAssetValue = &xcv
+			break
 		case ycv := <-yCommissionAssetValueCh:
 			yCommissionAssetValue = &ycv
+			break
 		case account := <-xAccountCh:
 			if xAccount == nil || account.GetTime().Sub(xAccount.GetTime()) >= 0 {
 				xAccount = account

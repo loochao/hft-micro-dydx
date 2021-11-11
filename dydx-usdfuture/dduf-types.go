@@ -6,7 +6,6 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"net/url"
-	"os"
 	"strconv"
 	"time"
 )
@@ -69,11 +68,7 @@ func (m *Market) GetSymbol() string {
 }
 
 func (m *Market) GetFundingRate() float64 {
-	if os.Getenv("DYDX_FUNDING_RATE_1H") != "" {
-		return m.NextFundingRate
-	} else {
-		return m.NextFundingRate * 8.0
-	}
+	return m.NextFundingRate
 }
 
 func (m *Market) GetNextFundingTime() time.Time {

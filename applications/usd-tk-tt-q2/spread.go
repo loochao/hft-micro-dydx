@@ -37,6 +37,8 @@ func (strat *XYStrategy) updateSpread() {
 	strat.spreadMedianShort = strat.spreadShortTimedMedian.Insert(strat.spreadTickerTime, strat.spreadLastShort)
 	strat.spreadMedianLong = strat.spreadLongTimedMedian.Insert(strat.spreadTickerTime, strat.spreadLastLong)
 
+	strat.spreadReady = true
+
 	strat.updateXPosition()
 	if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 		strat.hedgeYPosition()
@@ -66,16 +68,16 @@ func (strat *XYStrategy) handleXTicker() {
 	if strat.xNextTicker.GetTime().Sub(strat.xTickerTime) < 0 {
 		return
 	}
-	select {
-	case strat.stats.XTickerCh <- strat.xTicker:
-	default:
-	}
 	strat.xTicker = strat.xNextTicker
 	strat.xMidPrice = 0.5 * (strat.xTicker.GetAskPrice() + strat.xTicker.GetBidPrice())
 	strat.xTickerTime = strat.xTicker.GetTime()
 	strat.xTickerTimeDelta = strat.xTickerTime.Sub(time.Now())
 	strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 	strat.tickerCount++
+	select {
+	case strat.stats.XTickerCh <- strat.xTicker:
+	default:
+	}
 }
 
 func (strat *XYStrategy) handleYTicker() {
@@ -85,14 +87,14 @@ func (strat *XYStrategy) handleYTicker() {
 	if strat.yNextTicker.GetTime().Sub(strat.yTickerTime) < 0 {
 		return
 	}
-	select {
-	case strat.stats.YTickerCh <- strat.yTicker:
-	default:
-	}
 	strat.yTicker = strat.yNextTicker
 	strat.yMidPrice = 0.5 * (strat.yTicker.GetAskPrice() + strat.yTicker.GetBidPrice())
 	strat.yTickerTime = strat.yTicker.GetTime()
 	strat.yTickerTimeDelta = strat.yTickerTime.Sub(time.Now())
 	strat.tickerCount++
 	strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
+	select {
+	case strat.stats.YTickerCh <- strat.yTicker:
+	default:
+	}
 }
