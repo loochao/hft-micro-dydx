@@ -9,6 +9,7 @@ import (
 
 type TimedTDigest struct {
 	Lookback       time.Duration      `json:"lookback,omitempty"`
+	HalfLookback   time.Duration      `json:"halfLookback,omitempty"`
 	Compression    uint32             `json:"compression,omitempty"`
 	SubInterval    time.Duration      `json:"subInterval,omitempty"`
 	Times          []time.Time        `json:"times,omitempty"`
@@ -158,6 +159,7 @@ func NewTimedTDigest(lookback, subInterval time.Duration) *TimedTDigest {
 		CurrentSubTD: subTD,
 		RollingTD:    rollingTD,
 		Lookback:     lookback,
+		HalfLookback: lookback/2,
 		SubInterval:  subInterval,
 		Compression:  100,
 		Times:        make([]time.Time, 0),

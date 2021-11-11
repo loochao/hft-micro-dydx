@@ -2,13 +2,10 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
 	"math"
-	"os"
-	"path"
 	"sync/atomic"
 	"time"
 )
@@ -34,79 +31,83 @@ func startXYStrategy(
 	xSystemStatusCh chan common.SystemStatus,
 	ySystemStatusCh chan common.SystemStatus,
 	xyTickerCh chan common.Ticker,
-	saveCh chan *XYStrategy,
-) (err error) {
+) (strat *XYStrategy, err error) {
 
-	xBiasInMs := float64(config.TickerXBias / time.Millisecond)
-	yBiasInMs := float64(config.TickerYBias / time.Millisecond)
-	minTimeDeltaInMs := float64(config.TickerMinTimeDelta / time.Millisecond)
-	maxTimeDeltaInMs := float64(config.TickerMaxTimeDelta / time.Millisecond)
-	var quantileMiddle *float64
+	strat = &XYStrategy{
+		xExchange: xExchange,
+		yExchange: yExchange,
+		isXSpot:   xExchange.IsSpot(),
+		isYSpot:   yExchange.IsSpot(),
+		stats: stream_stats.NewXYTickerStats(
+			xSymbol, ySymbol,
+			config.StatsRootPath,
+			config.StatsSampleInterval,
+			config.StatsSaveInterval,
 
-	timedTDigest := stream_stats.NewTimedTDigest(config.SpreadTDLookback, config.SpreadTDSubInterval)
-	if config.TDRootPath != "" {
-		longBytes, err := os.ReadFile(path.Join(config.TDRootPath, common.SymbolSanitize(xSymbol)+"-"+common.SymbolSanitize(ySymbol)+".json"))
-		if err != nil {
-			logger.Debugf("%s os.ReadFile error %v", xSymbol, err)
-		} else {
-			err = json.Unmarshal(longBytes, &timedTDigest)
-			if err != nil {
-				logger.Debugf("%s json.Unmarshal error %v", xSymbol, err)
-				timedTDigest = stream_stats.NewTimedTDigest(config.SpreadTDLookback, config.SpreadTDSubInterval)
-			} else {
-				timedTDigest.Lookback = config.SpreadTDLookback
-				timedTDigest.SubInterval = config.SpreadTDSubInterval
-				quantileMiddle = new(float64)
-				*quantileMiddle = timedTDigest.Quantile(0.5)
-				logger.Debugf("%s - %s QUANTILE MIDDLE %f", xSymbol, ySymbol, *quantileMiddle)
-			}
-		}
-	}
+			config.TimeDeltaTDLookback,
+			config.TimeDeltaTDSubInterval,
+			config.TimeDeltaTDCompression,
 
-	strat := XYStrategy{
-		xExchange:               xExchange,
-		yExchange:               yExchange,
-		isXSpot:                 xExchange.IsSpot(),
-		isYSpot:                 yExchange.IsSpot(),
-		xLeverage:               config.XExchange.Leverage,
-		yLeverage:               config.YExchange.Leverage,
-		xSymbol:                 xSymbol,
-		ySymbol:                 ySymbol,
-		targetWeight:            config.TargetWeights[xSymbol],
-		maxOrderValue:           config.MaxOrderValues[xSymbol],
-		config:                  config,
-		hedgeCheckTimer:         time.NewTimer(time.Hour * 9999),
-		hedgeCheckStopTime:      time.Time{},
-		xAccountCh:              xAccountCh,
-		yAccountCh:              yAccountCh,
-		xPositionCh:             xPositionCh,
-		yPositionCh:             yPositionCh,
-		xFundingRateCh:          xFundingRateCh,
-		yFundingRateCh:          yFundingRateCh,
-		xOrderCh:                xOrderCh,
-		yOrderCh:                yOrderCh,
-		xOrderErrorCh:           xOrderErrorCh,
-		yOrderErrorCh:           yOrderErrorCh,
-		xOrderRequestCh:         xOrderRequestCh,
-		yOrderRequestCh:         yOrderRequestCh,
-		xSystemStatusCh:         xSystemStatusCh,
-		ySystemStatusCh:         ySystemStatusCh,
-		xyTickerCh:              xyTickerCh,
-		saveCh:                  saveCh,
+			config.XLiquidityTDLookback,
+			config.XLiquidityTDSubInterval,
+			config.XLiquidityTDCompression,
+
+			config.YLiquidityTDLookback,
+			config.YLiquidityTDSubInterval,
+			config.YLiquidityTDCompression,
+
+			config.SpreadTDLookback,
+			config.SpreadTDSubInterval,
+			config.SpreadTDCompression,
+
+			config.TimeDeltaQuantileBot,
+			config.TimeDeltaQuantileTop,
+			config.XSizeQuantile,
+			config.YSizeQuantile,
+
+			config.SpreadLongEnterQuantileBot,
+			config.SpreadLongLeaveQuantileTop,
+			config.SpreadShortEnterQuantileTop,
+			config.SpreadShortLeaveQuantileBot,
+			config.SpreadEnterOffset,
+			config.SpreadLeaveOffset,
+		),
+		xLeverage:          config.XExchange.Leverage,
+		yLeverage:          config.YExchange.Leverage,
+		xSymbol:            xSymbol,
+		ySymbol:            ySymbol,
+		config:             config,
+		hedgeCheckTimer:    time.NewTimer(time.Hour * 9999),
+		hedgeCheckStopTime: time.Time{},
+		xAccountCh:         xAccountCh,
+		yAccountCh:         yAccountCh,
+		xPositionCh:        xPositionCh,
+		yPositionCh:        yPositionCh,
+		xFundingRateCh:     xFundingRateCh,
+		yFundingRateCh:     yFundingRateCh,
+		xOrderCh:           xOrderCh,
+		yOrderCh:           yOrderCh,
+		xOrderErrorCh:      xOrderErrorCh,
+		yOrderErrorCh:      yOrderErrorCh,
+		xOrderRequestCh:    xOrderRequestCh,
+		yOrderRequestCh:    yOrderRequestCh,
+		xSystemStatusCh:    xSystemStatusCh,
+		ySystemStatusCh:    ySystemStatusCh,
+
+		xyTickerCh: xyTickerCh,
+
 		xPositionUpdateTime:     time.Time{},
 		yPositionUpdateTime:     time.Time{},
 		xTicker:                 nil,
 		yTicker:                 nil,
 		xTickerTime:             time.Time{},
 		yTickerTime:             time.Time{},
-		xTickerFilter:           common.NewTimeFilter(config.TickerXDecay, xBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs),
-		yTickerFilter:           common.NewTimeFilter(config.TickerYDecay, yBiasInMs, minTimeDeltaInMs, maxTimeDeltaInMs),
 		xAccount:                nil,
 		yAccount:                nil,
 		xPosition:               nil,
 		yPosition:               nil,
 		xOrderSilentTime:        time.Now().Add(config.RestartSilent),
-		yOrderSilentTime:        time.Time{},
+		yOrderSilentTime:        time.Now().Add(config.RestartSilent),
 		xFundingRate:            nil,
 		yFundingRate:            nil,
 		xyFundingRate:           nil,
@@ -122,52 +123,50 @@ func startXYStrategy(
 		enterTarget:             0,
 		usdAvailable:            0,
 		logSilentTime:           time.Time{},
-		spreadWalkTimer:         time.NewTimer(time.Hour * 9999),
 		realisedSpreadTimer:     time.NewTimer(time.Hour * 9999),
-		saveTimer:               time.NewTimer(config.RestartSilent),
-		fundingRateSettleTimer:  time.NewTimer(time.Second),
-		spreadTime:              time.Time{},
-		spread:                  nil,
-		shortEnterTimedMedian:   common.NewTimedMedian(config.SpreadLookback),
-		longEnterTimedMedian:    common.NewTimedMedian(config.SpreadLookback),
+
+		xFundingRateCheckTimer: time.NewTimer(time.Second),
+		yFundingRateCheckTimer: time.NewTimer(time.Second),
+
+		spreadTickerTime:       time.Time{},
+		spreadReady:            false,
+		spreadWalkTimer:        time.NewTimer(time.Hour * 9999),
+		spreadShortTimedMedian: common.NewTimedMedian(config.SpreadLookback),
+		spreadLongTimedMedian:  common.NewTimedMedian(config.SpreadLookback),
+		spreadLastShort:        0,
+		spreadLastLong:         0,
+		spreadMedianShort:      0,
+		spreadMedianLong:       0,
+
 		xTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
 		yTimedPositionChange:    common.NewTimedSum(config.TurnoverLookback),
-		expectedChanSendingTime: time.Nanosecond * 300,
 		tickerMatchCount:        0,
 		tickerCount:             0,
-		xTickerExpireCount:      0,
-		yTickerExpireCount:      0,
-		shortLastEnter:          0,
-		longLastEnter:           0,
-		adjustedAgeDiff:         0,
-		spreadReport:            nil,
-		stateOutputCh:           nil,
+		strategyOutputCh:        nil,
 		error:                   nil,
-		ySizeDiff:               0,
 		offsetFactor:            0,
-		shortTop:                0,
-		shortBot:                0,
-		longBot:                 0,
-		longTop:                 0,
+		thresholdShortTop:       0,
+		thresholdShortBot:       0,
+		thresholdLongBot:        0,
+		thresholdLongTop:        0,
+
+		targetWeight: common.ForAtomicFloat64(1.0),
+
+		maxPosValue:             config.MaximalPosValues[xSymbol],
 		xSize:                   0,
 		ySize:                   0,
 		xValue:                  0,
 		yValue:                  0,
 		xAbsValue:               0,
 		yAbsValue:               0,
-		midPrice:                0,
+		xyMidPrice:              0,
 		enterValue:              0,
 		targetValue:             0,
-		xSizeDiff:               0,
-		orderSide:               common.OrderSideUnknown,
 		stopped:                 0,
 		fundingRateSettleSilent: false,
 		xExchangeID:             xExchange.GetExchange(),
 		yExchangeID:             yExchange.GetExchange(),
-		timedTDigest:            timedTDigest,
-		quantileSaveTimer:       time.NewTimer(config.TDSaveInterval),
-		quantileLastSampleTime:  time.Time{},
-		quantileMiddle:          nil,
+		tdSpreadMiddle:          0,
 		lastEnterTime:           time.Time{},
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
@@ -198,7 +197,6 @@ func startXYStrategy(
 
 	strat.xTickSize, err = xExchange.GetTickSize(xSymbol)
 	if err != nil {
-		logger.Debugf("%v", xExchange)
 		logger.Debugf("%v", err)
 		return
 	}
@@ -224,21 +222,21 @@ func startXYStrategy(
 	}
 	strat.xyMergedSpotStepSize = common.MergedStepSize(strat.xStepSize*strat.xMultiplier, strat.yStepSize*strat.yMultiplier)
 
-	go strat.startLoop(ctx)
+	go strat.stats.Start(ctx)
+	go strat.Start(ctx)
 	return
 }
 
 func (strat *XYStrategy) Stop() {
 	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
-		strat.handleQuantileSave()
+		strat.stats.Stop()
 		logger.Debugf("%s %s stopped", strat.xSymbol, strat.ySymbol)
 	}
 }
 
-func (strat *XYStrategy) startLoop(ctx context.Context) {
+func (strat *XYStrategy) Start(ctx context.Context) {
 	defer strat.spreadWalkTimer.Stop()
 	defer strat.realisedSpreadTimer.Stop()
-	defer strat.saveTimer.Stop()
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
 	strat.xOrderSilentTime = time.Now().Add(strat.config.RestartSilent)
@@ -257,43 +255,67 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.RestartSilent)
 			}
 			break
-		case <-strat.fundingRateSettleTimer.C:
-			if strat.config.FundingRateTimeOffset == 0 {
-				if time.Now().Add(strat.config.FundingRateInterval).Truncate(strat.config.FundingRateInterval).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
-					logger.Debugf("%s fundingRate Silent true %v", strat.xSymbol, time.Now().Add(strat.config.FundingRateInterval).Truncate(strat.config.FundingRateInterval).Sub(time.Now()))
+		case <-strat.xFundingRateCheckTimer.C:
+			if strat.config.XFundingRateTimeOffset == 0 {
+				if time.Now().Add(strat.config.XFundingRateInterval).Truncate(strat.config.XFundingRateInterval).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
+					logger.Debugf("%s x fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.XFundingRateInterval).Truncate(strat.config.XFundingRateInterval).Sub(time.Now()))
 					strat.fundingRateSettleSilent = true
-					strat.fundingRateSettleTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
+					strat.xFundingRateCheckTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
 				} else {
 					strat.fundingRateSettleSilent = false
-					//strat.fundingRateSettleTimer.Reset(time.Now().Add(strat.config.FundingRateTimeOffset).Truncate(strat.config.FundingRateInterval).Add(strat.config.FundingRateTimeOffset - strat.config.FundingRateSilentTime - time.Second).Sub(time.Now()))
-					strat.fundingRateSettleTimer.Reset(time.Second)
-					if strat.fundingRateFactor == nil {
-						strat.fundingRateFactor = new(float64)
+					strat.xFundingRateCheckTimer.Reset(time.Second)
+					if strat.xFundingRateFactor == nil {
+						strat.xFundingRateFactor = new(float64)
 					}
-					*strat.fundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*(1.0-time.Now().Add(strat.config.FundingRateInterval).Truncate(strat.config.FundingRateInterval).Sub(time.Now()).Seconds()/strat.config.FundingRateInterval.Seconds())
+					t := 1.0 - time.Now().Add(strat.config.XFundingRateInterval).Truncate(strat.config.XFundingRateInterval).Sub(time.Now()).Seconds()/strat.config.XFundingRateInterval.Seconds()
+					*strat.xFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.FundingRateEaseFn(t)
 				}
 			} else {
-				if time.Now().Add(strat.config.FundingRateTimeOffset).Truncate(strat.config.FundingRateInterval).Add(strat.config.FundingRateTimeOffset).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
-					logger.Debugf("%s fundingRate Silent true %v", strat.xSymbol, time.Now().Add(strat.config.FundingRateTimeOffset).Truncate(strat.config.FundingRateInterval).Add(strat.config.FundingRateTimeOffset).Sub(time.Now()))
+				if time.Now().Add(strat.config.XFundingRateTimeOffset).Truncate(strat.config.XFundingRateInterval).Add(strat.config.XFundingRateTimeOffset).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
+					logger.Debugf("%s x fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.XFundingRateTimeOffset).Truncate(strat.config.XFundingRateInterval).Add(strat.config.XFundingRateTimeOffset).Sub(time.Now()))
 					strat.fundingRateSettleSilent = true
-					strat.fundingRateSettleTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
+					strat.xFundingRateCheckTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
 				} else {
 					strat.fundingRateSettleSilent = false
-					//strat.fundingRateSettleTimer.Reset(time.Now().Add(strat.config.FundingRateTimeOffset).Truncate(strat.config.FundingRateInterval).Add(strat.config.FundingRateTimeOffset - strat.config.FundingRateSilentTime - time.Second).Sub(time.Now()))
-					strat.fundingRateSettleTimer.Reset(time.Second)
-					if strat.fundingRateFactor == nil {
-						strat.fundingRateFactor = new(float64)
+					strat.xFundingRateCheckTimer.Reset(time.Second)
+					if strat.xFundingRateFactor == nil {
+						strat.xFundingRateFactor = new(float64)
 					}
-					*strat.fundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*(1.0-time.Now().Add(strat.config.FundingRateTimeOffset).Truncate(strat.config.FundingRateInterval).Add(strat.config.FundingRateTimeOffset).Sub(time.Now()).Seconds()/strat.config.FundingRateInterval.Seconds())
+					t := 1.0 - time.Now().Add(strat.config.XFundingRateTimeOffset).Truncate(strat.config.XFundingRateInterval).Add(strat.config.XFundingRateTimeOffset).Sub(time.Now()).Seconds()/strat.config.XFundingRateInterval.Seconds()
+					*strat.xFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.FundingRateEaseFn(t)
 				}
 			}
 			break
-		case <-strat.saveTimer.C:
-			strat.handleSave()
-			break
-		case <-strat.quantileSaveTimer.C:
-			strat.handleQuantileSave()
-			strat.quantileSaveTimer.Reset(strat.config.TDSaveInterval)
+		case <-strat.yFundingRateCheckTimer.C:
+			if strat.config.YFundingRateTimeOffset == 0 {
+				if time.Now().Add(strat.config.YFundingRateInterval).Truncate(strat.config.YFundingRateInterval).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
+					logger.Debugf("%s y fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.YFundingRateInterval).Truncate(strat.config.YFundingRateInterval).Sub(time.Now()))
+					strat.fundingRateSettleSilent = true
+					strat.yFundingRateCheckTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
+				} else {
+					strat.fundingRateSettleSilent = false
+					strat.yFundingRateCheckTimer.Reset(time.Second)
+					if strat.yFundingRateFactor == nil {
+						strat.yFundingRateFactor = new(float64)
+					}
+					t := 1.0 - time.Now().Add(strat.config.YFundingRateInterval).Truncate(strat.config.YFundingRateInterval).Sub(time.Now()).Seconds()/strat.config.YFundingRateInterval.Seconds()
+					*strat.yFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.FundingRateEaseFn(t)
+				}
+			} else {
+				if time.Now().Add(strat.config.YFundingRateTimeOffset).Truncate(strat.config.YFundingRateInterval).Add(strat.config.YFundingRateTimeOffset).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
+					logger.Debugf("%s y fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.YFundingRateTimeOffset).Truncate(strat.config.YFundingRateInterval).Add(strat.config.YFundingRateTimeOffset).Sub(time.Now()))
+					strat.fundingRateSettleSilent = true
+					strat.yFundingRateCheckTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
+				} else {
+					strat.fundingRateSettleSilent = false
+					strat.yFundingRateCheckTimer.Reset(time.Second)
+					if strat.yFundingRateFactor == nil {
+						strat.yFundingRateFactor = new(float64)
+					}
+					t := 1.0 - time.Now().Add(strat.config.YFundingRateTimeOffset).Truncate(strat.config.YFundingRateInterval).Add(strat.config.YFundingRateTimeOffset).Sub(time.Now()).Seconds()/strat.config.YFundingRateInterval.Seconds()
+					*strat.yFundingRateFactor = strat.config.FundingRateOffsetMin + (strat.config.FundingRateOffsetMax-strat.config.FundingRateOffsetMin)*strat.config.FundingRateEaseFn(t)
+				}
+			}
 			break
 		case <-strat.hedgeCheckTimer.C:
 			strat.hedgeYPosition()
@@ -345,128 +367,16 @@ func (strat *XYStrategy) startLoop(ctx context.Context) {
 		}
 	}
 }
-func (strat *XYStrategy) handleSave() {
-	strat.saveTimer.Reset(strat.config.InternalInflux.SaveInterval)
-	if strat.xSystemStatus != common.SystemStatusReady ||
-		strat.ySystemStatus != common.SystemStatusReady ||
-		strat.xPosition == nil ||
-		strat.yPosition == nil ||
-		strat.xAccount == nil ||
-		strat.yAccount == nil {
-		return
-	}
-	select {
-	case strat.saveCh <- strat:
-	default:
-		logger.Debugf("%s strat.saveCh <- strat failed %s ch len %d", strat.xSymbol, strat.ySymbol, len(strat.saveCh))
-	}
-}
-
-func (strat *XYStrategy) hedgeYPosition() {
-	if strat.xSystemStatus != common.SystemStatusReady ||
-		strat.ySystemStatus != common.SystemStatusReady {
-		if time.Now().Sub(strat.logSilentTime) > 0 {
-			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("%s hedgeYPosition xSystemStatus %v ySystemStatus %v", strat.xSymbol, strat.xSystemStatus, strat.ySystemStatus)
-		}
-		return
-	}
-	if strat.yPosition == nil ||
-		strat.xPosition == nil ||
-		strat.spread == nil ||
-		time.Now().Sub(strat.yPositionUpdateTime) > strat.config.BalancePositionMaxAge ||
-		time.Now().Sub(strat.yOrderSilentTime) < 0 {
-		//if time.Now().Sub(strat.logSilentTime) > 0 {
-		//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-		//	logger.Debugf("hedgeYPosition skipped order silent time %v positionUpdateTime %v", time.Now().Sub(strat.yOrderSilentTime), time.Now().Sub(strat.yPositionUpdateTime))
-		//}
-		return
-	}
-	if time.Now().Sub(strat.lastEnterTime) < strat.config.XEnterTimeout {
-		strat.ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
-	} else {
-		//其他时间对冲小的size, 防止出现一边爆仓的情况
-		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) > math.Abs(strat.yPosition.GetSize()*strat.yMultiplier) {
-			//Y的size比X小，不用操作Y
-			return
-		} else {
-			strat.ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
-		}
-	}
-	if math.Abs(strat.ySizeDiff) < strat.yStepSize {
-		return
-	}
-	//如y下单也加上控制，以限下单太大，造成市场冲击
-	if strat.ySizeDiff*strat.yMultiplier < -strat.maxOrderValue/strat.yTicker.GetBidPrice() {
-		strat.ySizeDiff = -strat.maxOrderValue / strat.yTicker.GetBidPrice() / strat.yMultiplier
-	} else if strat.ySizeDiff*strat.yMultiplier > strat.maxOrderValue/strat.yTicker.GetAskPrice() {
-		strat.ySizeDiff = strat.maxOrderValue / strat.yTicker.GetAskPrice() / strat.yMultiplier
-	}
-	if strat.ySizeDiff >= 0 {
-		strat.ySizeDiff = math.Floor(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
-	} else {
-		strat.ySizeDiff = math.Ceil(strat.ySizeDiff/strat.yStepSize) * strat.yStepSize
-	}
-
-	if strat.isYSpot {
-		if math.Abs(strat.ySizeDiff) < strat.yStepSize || math.Abs(strat.ySizeDiff) < strat.yMinSize {
-			return
-		} else if strat.ySizeDiff < 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice() < 1.2*strat.yMinNotional {
-			return
-		} else if strat.ySizeDiff > 0 && strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetAskPrice() < 1.2*strat.yMinNotional {
-			return
-		}
-	} else {
-		//期货以close仓位，没有minNotional限制
-		if math.Abs(strat.ySizeDiff) < strat.yStepSize || math.Abs(strat.ySizeDiff) < strat.yMinSize {
-			return
-		} else if strat.ySizeDiff < 0 && strat.yPosition.GetSize() <= 0 && -strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetBidPrice() < 1.2*strat.yMinNotional {
-			return
-		} else if strat.ySizeDiff > 0 && strat.yPosition.GetSize() >= 0 && strat.ySizeDiff*strat.yMultiplier*strat.yTicker.GetAskPrice() < 1.2*strat.yMinNotional {
-			return
-		}
-	}
-
-	strat.reduceOnly = false
-	if strat.ySizeDiff*strat.yPosition.GetSize() < 0 && math.Abs(strat.ySizeDiff)*0.995 <= math.Abs(strat.yPosition.GetSize()) {
-		strat.reduceOnly = true
-	}
-	strat.orderSide = common.OrderSideBuy
-	if strat.ySizeDiff < 0 {
-		strat.orderSide = common.OrderSideSell
-		strat.ySizeDiff = -strat.ySizeDiff
-	}
-	strat.yNewOrderParam = common.NewOrderParam{
-		Symbol:     strat.ySymbol,
-		Side:       strat.orderSide,
-		Type:       common.OrderTypeMarket,
-		Size:       strat.ySizeDiff,
-		ReduceOnly: strat.reduceOnly,
-		ClientID:   strat.yExchange.GenerateClientID(),
-	}
-	if !strat.config.DryRun {
-		select {
-		case strat.yOrderRequestCh <- common.OrderRequest{
-			New: &strat.yNewOrderParam,
-		}:
-			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
-			strat.yPositionUpdateTime = time.Unix(0, 0)
-		}
-	} else {
-		strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
-		strat.yPositionUpdateTime = time.Unix(0, 0)
-	}
-}
 
 func (strat *XYStrategy) updateEnterStepAndTarget() {
 	if strat.xAccount == nil || strat.yAccount == nil {
 		return
 	}
-	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.config.EnterFreePct * strat.targetWeight
+	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.config.EnterFreePct * strat.targetWeight.Load()
 	if strat.enterStep < strat.config.EnterMinimalStep {
 		strat.enterStep = strat.config.EnterMinimalStep
 	}
-	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.targetWeight
+	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.targetWeight.Load()
 	strat.usdAvailable = math.Min(strat.xAccount.GetFree()*strat.xLeverage, strat.yAccount.GetFree()*strat.yLeverage)
 }
 
@@ -536,29 +446,5 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 		strat.yPosition = nextPos
 		strat.yPositionUpdateTime = nextPos.GetParseTime()
 		logger.Debugf("%s y position change nil -> %f %f", nextPos.GetSymbol(), nextPos.GetSize(), nextPos.GetPrice())
-	}
-}
-
-func (strat *XYStrategy) handleQuantileSave() {
-	if strat.config.TDRootPath != "" {
-		strat.quantileBytes, strat.error = json.Marshal(strat.timedTDigest)
-		if strat.error != nil {
-			logger.Debugf("%s json.Marshal(strat.timedTDigest) error %v", strat.xSymbol, strat.error)
-		} else {
-			strat.quantileFile, strat.error = os.OpenFile(path.Join(strat.config.TDRootPath, common.SymbolSanitize(strat.xSymbol)+"-"+common.SymbolSanitize(strat.ySymbol)+".json"), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-			if strat.error != nil {
-				logger.Debugf("%s os.OpenFile error %v", strat.xSymbol, strat.error)
-			} else {
-				_, strat.error = strat.quantileFile.Write(strat.quantileBytes)
-				if strat.error != nil {
-					logger.Debugf("%s strat.file.Write error %v", strat.xSymbol, strat.error)
-				} else {
-					strat.error = strat.quantileFile.Close()
-					if strat.error != nil {
-						logger.Debugf("%s strat.file.Close() error %v", strat.xSymbol, strat.error)
-					}
-				}
-			}
-		}
 	}
 }

@@ -18,24 +18,24 @@ type Config struct {
 	XExchange common.ExchangeSettings `yaml:"xExchange"`
 	YExchange common.ExchangeSettings `yaml:"yExchange"`
 
-	SpreadWalkDelay       time.Duration `yaml:"spreadWalkDelay"`
 	LogInterval           time.Duration `yaml:"logInterval"`
 	TurnoverLookback      time.Duration `yaml:"turnoverLookback"`
 	BalancePositionMaxAge time.Duration `yaml:"balancePositionMaxAge"`
 
-	EnterOffset     float64 `yaml:"enterOffset"`
-	ExitOffset      float64 `yaml:"exitOffset"`
-	LongEnterDelta  float64 `yaml:"longEnterDelta"`
-	ShortEnterDelta float64 `yaml:"shortEnterDelta"`
-	LongExitDelta   float64 `yaml:"longExitDelta"`
-	ShortExitDelta  float64 `yaml:"shortExitDelta"`
+	SpreadEnterOffset   float64 `yaml:"spreadEnterOffset"`
+	SpreadLeaveOffset   float64 `yaml:"spreadLeaveOffset"`
+	LongEnterThreshold  float64 `yaml:"longEnterThreshold"`
+	LongLeaveThreshold  float64 `yaml:"longLeaveThreshold"`
+	ShortEnterThreshold float64 `yaml:"shortEnterThreshold"`
+	ShortLeaveThreshold float64 `yaml:"shortLeaveThreshold"`
 
-	TDRootPath     string        `yaml:"tdRootPath"`
-	TDSaveInterval time.Duration `yaml:"tdSaveInterval"`
+	StatsRootPath       string        `yaml:"statsRootPath"`
+	StatsSampleInterval time.Duration `yaml:"statsSampleInterval"`
+	StatsSaveInterval   time.Duration `yaml:"statsSaveInterval"`
 
-	SpreadTDLookback        time.Duration `yaml:"spreadTDLookback"`
-	SpreadTDSubInterval     time.Duration `yaml:"spreadTDSubInterval"`
-	SpreadTDCompression     uint32        `yaml:"spreadTDCompression"`
+	TimeDeltaTDLookback    time.Duration `yaml:"timeDeltaTDLookback"`
+	TimeDeltaTDSubInterval time.Duration `yaml:"timeDeltaTDSubInterval"`
+	TimeDeltaTDCompression uint32        `yaml:"timeDeltaTDCompression"`
 
 	XLiquidityTDLookback    time.Duration `yaml:"xLiquidityTDLookback"`
 	XLiquidityTDSubInterval time.Duration `yaml:"xLiquidityTDSubInterval"`
@@ -45,54 +45,52 @@ type Config struct {
 	YLiquidityTDSubInterval time.Duration `yaml:"yLiquidityTDSubInterval"`
 	YLiquidityTDCompression uint32        `yaml:"yLiquidityTDCompression"`
 
-	TimeDeltaTDLookback     time.Duration `yaml:"timeDeltaTDLookback"`
-	TimeDeltaTDSubInterval  time.Duration `yaml:"timeDeltaTDSubInterval"`
-	TimeDeltaTDCompression  uint32        `yaml:"timeDeltaTDCompression"`
+	SpreadTDLookback    time.Duration `yaml:"spreadTDLookback"`
+	SpreadTDSubInterval time.Duration `yaml:"spreadTDSubInterval"`
+	SpreadTDCompression uint32        `yaml:"spreadTDCompression"`
 
 	SpreadShortEnterQuantileTop float64 `yaml:"spreadShortEnterQuantileTop"`
-	SpreadShortExitQuantileBot  float64 `yaml:"spreadShortExitQuantileBot"`
+	SpreadShortLeaveQuantileBot float64 `yaml:"spreadShortLeaveQuantileBot"`
 	SpreadLongEnterQuantileBot  float64 `yaml:"spreadLongEnterQuantileBot"`
-	SpreadLongExitQuantileTop   float64 `yaml:"spreadLongExitQuantileTop"`
+	SpreadLongLeaveQuantileTop  float64 `yaml:"spreadLongLeaveQuantileTop"`
 
-	XLiquidityQuantile   float64 `yaml:"xLiquidityQuantile"`
-	YLiquidityQuantile   float64 `yaml:"yLiquidityQuantile"`
-	TimeDeltaQuantileTop float64 `yaml:"spreadShortEnterQuantileTop"`
-	TimeDeltaQuantileBot float64 `yaml:"spreadShortExitQuantileBot"`
+	XSizeQuantile        float64 `yaml:"xLiquidityQuantile"`
+	YSizeQuantile        float64 `yaml:"yLiquidityQuantile"`
+	TimeDeltaQuantileTop float64 `yaml:"timeDeltaQuantileTop"`
+	TimeDeltaQuantileBot float64 `yaml:"timeDeltaQuantileBot"`
 
-	StatsOutputInterval time.Duration `yaml:"statsOutputInterval"`
-	StatsSampleInterval time.Duration `yaml:"statsSampleInterval"`
+	MinimalEnterFundingRate float64             `yaml:"minimalEnterFundingRate"`
+	FundingRateOffsetMin    float64             `yaml:"fundingRateOffsetMin"`
+	FundingRateOffsetMax    float64             `yaml:"fundingRateOffsetMax"`
+	FundingRateEaseFnName   string              `yaml:"fundingRateEaseFnName"`
+	FundingRateEaseFn       common.EaseFunction `yaml:"-"`
+	FundingRateSilentTime   time.Duration       `yaml:"fundingRateSilentTime"`
 
-	MinimalEnterFundingRate float64       `yaml:"minimalEnterFundingRate"`
-	FundingRateOffsetMin    float64       `yaml:"fundingRateOffsetMin"`
-	FundingRateOffsetMax    float64       `yaml:"fundingRateOffsetMax"`
-	FundingRateSilentTime   time.Duration `yaml:"fundingRateSilentTime"`
-	FundingRateInterval     time.Duration `yaml:"fundingRateInterval"`
-	FundingRateTimeOffset   time.Duration `yaml:"fundingRateTimeOffset"`
-	XFundingRateFactor      float64       `yaml:"xFundingRateFactor"`
-	YFundingRateFactor      float64       `yaml:"yFundingRateFactor"`
+	XFundingRateInterval   time.Duration `yaml:"xFundingRateInterval"`
+	YFundingRateInterval   time.Duration `yaml:"yFundingRateInterval"`
+	XFundingRateTimeOffset time.Duration `yaml:"xFundingRateTimeOffset"`
+	YFundingRateTimeOffset time.Duration `yaml:"yFundingRateTimeOffset"`
 
-	TickerMaxTimeDelta   time.Duration `yaml:"tickerTimeDeltaMax"`
-	TickerMinTimeDelta   time.Duration `yaml:"tickerTimeDeltaMin"`
-	TickerYDecay         float64       `yaml:"tickerYDecay"`
-	TickerXDecay         float64       `yaml:"tickerXDecay"`
-	TickerYBias          time.Duration `yaml:"tickerYBias"`
-	TickerXBias          time.Duration `yaml:"tickerXBias"`
-	TickerMaxAgeDiffBias time.Duration `yaml:"tickerMaxAgeDiffBias"`
-	TickerReportCount    int           `yaml:"tickerReportCount"`
+	XFundingRateFactor float64 `yaml:"xFundingRateFactor"`
+	YFundingRateFactor float64 `yaml:"yFundingRateFactor"`
+
+	TickerMaxRemoteLocalTimeDiff time.Duration `yaml:"tickerMaxRemoteLocalTimeDiff"` //控制时间上限
+	TickerMaxXYTimeDiff          time.Duration `yaml:"tickerMaxXYTimeDiff"`          //控制时差上限
+	TickerReportCount            int           `yaml:"tickerReportCount"`
 
 	SpreadTimeToEnter time.Duration `yaml:"spreadTimeToEnter"`
 	SpreadLookback    time.Duration `yaml:"spreadLookback"`
-	BatchSize         int           `yaml:"batchSize"`
+	SpreadWalkDelay   time.Duration `yaml:"spreadWalkDelay"`
 
-	StartValue float64 `yaml:"startValue"`
+	BatchSize int `yaml:"batchSize"`
 
-	MinimalXFree     float64 `yaml:"minimalXFree"`
-	MinimalYFree     float64 `yaml:"minimalYFree"`
-	MaximalXPosValue float64 `yaml:"maximalXPosValue"`
-	MaximalYPosValue float64 `yaml:"maximalYPosValue"`
+	StartValue            float64 `yaml:"startValue"`
+	MinimalXFree          float64 `yaml:"minimalXFree"`
+	MinimalYFree          float64 `yaml:"minimalYFree"`
+	GlobalMaximalPosValue float64 `yaml:"GlobalMaximalPosValue"`
 
+	//BestSizeFactor    float64            `yaml:"bestSizeFactor"`
 	EnterFreePct      float64            `yaml:"enterFreePct"`
-	BestSizeFactor    float64            `yaml:"bestSizeFactor"`
 	EnterSlippage     float64            `yaml:"enterSlippage"`
 	EnterMinimalStep  float64            `yaml:"enterMinimalStep"`
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
@@ -110,9 +108,8 @@ type Config struct {
 	RestartSilent          time.Duration           `yaml:"restartSilent"`
 	RestartInterval        time.Duration           `yaml:"restartInterval"`
 
-	XYPairs        map[string]string  `yaml:"xyPairs"`
-	TargetWeights  map[string]float64 `yaml:"targetWeights,omitempty"`
-	MaxOrderValues map[string]float64 `yaml:"maxOrderValues,omitempty"`
+	XYPairs          map[string]string  `yaml:"xyPairs"`
+	MaximalPosValues map[string]float64 `yaml:"maximalPosValues,omitempty"`
 }
 
 func (config *Config) SetDefaultIfNotSet() {
@@ -134,8 +131,11 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.XEnterSilent == 0 {
 		config.XEnterSilent = time.Second
 	}
-	if config.TickerMaxAgeDiffBias == 0 {
-		config.TickerMaxAgeDiffBias = time.Millisecond * 100
+	if config.TickerMaxXYTimeDiff == 0 {
+		config.TickerMaxXYTimeDiff = time.Second
+	}
+	if config.TickerMaxRemoteLocalTimeDiff == 0 {
+		config.TickerMaxRemoteLocalTimeDiff = time.Second * 5
 	}
 	if config.TickerReportCount == 0 {
 		config.RestartSilent = 1000
@@ -155,22 +155,27 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.YOrderSilent == 0 {
 		config.YOrderSilent = time.Second * 5
 	}
+	config.XExchange.DryRun = config.DryRun
+	config.YExchange.DryRun = config.DryRun
+	//if config.BestSizeFactor == 0 {
+	//	config.BestSizeFactor = 1.0
+	//}
 	if config.FundingRateSilentTime == 0 {
 		config.FundingRateSilentTime = time.Minute
 	}
-	if config.FundingRateInterval == 0 {
-		config.FundingRateInterval = time.Hour * 4
-	}
-	config.XExchange.DryRun = config.DryRun
-	config.YExchange.DryRun = config.DryRun
-	if config.BestSizeFactor == 0 {
-		config.BestSizeFactor = 1.0
+	if config.XFundingRateInterval == 0 {
+		config.XFundingRateInterval = time.Hour * 4
 	}
 	if config.XFundingRateFactor == 0 {
 		config.XFundingRateFactor = 1.0
 	}
 	if config.YFundingRateFactor == 0 {
 		config.YFundingRateFactor = 1.0
+	}
+	if config.FundingRateEaseFnName == "" {
+		config.FundingRateEaseFn = common.Linear
+	}else{
+		config.FundingRateEaseFn = common.GetEaseFnByName(config.FundingRateEaseFnName)
 	}
 	if config.XOrderTimeInForce == "" {
 		config.XOrderTimeInForce = common.OrderTimeInForceFOK
@@ -185,11 +190,11 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.SpreadShortEnterQuantileTop == 0 {
 		config.SpreadShortEnterQuantileTop = 0.995
 	}
-	if config.SpreadShortExitQuantileBot == 0 {
-		config.SpreadShortExitQuantileBot = 0.2
+	if config.SpreadShortLeaveQuantileBot == 0 {
+		config.SpreadShortLeaveQuantileBot = 0.2
 	}
-	if config.SpreadLongExitQuantileTop == 0 {
-		config.SpreadLongExitQuantileTop = 0.8
+	if config.SpreadLongLeaveQuantileTop == 0 {
+		config.SpreadLongLeaveQuantileTop = 0.8
 	}
 
 	if config.SpreadTDLookback == 0 {
@@ -231,20 +236,20 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.SpreadShortEnterQuantileTop == 0 {
 		config.SpreadShortEnterQuantileTop = 0.995
 	}
-	if config.SpreadShortExitQuantileBot == 0 {
-		config.SpreadShortExitQuantileBot = 0.2
+	if config.SpreadShortLeaveQuantileBot == 0 {
+		config.SpreadShortLeaveQuantileBot = 0.2
 	}
 	if config.SpreadLongEnterQuantileBot == 0 {
 		config.SpreadLongEnterQuantileBot = 0.005
 	}
-	if config.SpreadLongExitQuantileTop == 0 {
-		config.SpreadLongExitQuantileTop = 0.8
+	if config.SpreadLongLeaveQuantileTop == 0 {
+		config.SpreadLongLeaveQuantileTop = 0.8
 	}
-	if config.XLiquidityQuantile == 0 {
-		config.XLiquidityQuantile = 0.8
+	if config.XSizeQuantile == 0 {
+		config.XSizeQuantile = 0.8
 	}
-	if config.YLiquidityQuantile == 0 {
-		config.YLiquidityQuantile = 0.8
+	if config.YSizeQuantile == 0 {
+		config.YSizeQuantile = 0.8
 	}
 	if config.TimeDeltaQuantileTop == 0 {
 		config.TimeDeltaQuantileTop = 0.95
@@ -252,10 +257,17 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.TimeDeltaQuantileBot == 0 {
 		config.TimeDeltaQuantileBot = 0.2
 	}
-	if config.StatsOutputInterval == 0 {
-		config.StatsOutputInterval = time.Second * 15
-	}
 	if config.StatsSampleInterval == 0 {
 		config.StatsSampleInterval = time.Second
+	}
+	if config.MaximalPosValues == nil {
+		config.MaximalPosValues = make(map[string]float64)
+	}
+	for xSymbol := range config.XYPairs {
+		if v, ok := config.MaximalPosValues[xSymbol]; !ok {
+			config.MaximalPosValues[xSymbol] = config.GlobalMaximalPosValue
+		} else if v > config.GlobalMaximalPosValue {
+			config.MaximalPosValues[xSymbol] = config.GlobalMaximalPosValue
+		}
 	}
 }

@@ -314,6 +314,7 @@ type TimedMedian struct {
 	median           float64
 	sortedFloatSlice SortedFloatSlice
 }
+
 func (tm *TimedMedian) Insert(timestamp time.Time, value float64) float64 {
 	tm.times = append(tm.times, timestamp)
 	tm.values = append(tm.values, value)
@@ -428,6 +429,7 @@ type RollingSum struct {
 	index  int
 	sum    float64
 }
+
 func (tm *RollingSum) Insert(value float64) float64 {
 	tm.sum += value
 	tm.index++
@@ -453,3 +455,10 @@ func NewRollingSum(window int) *RollingSum {
 	}
 }
 
+func EaseInExpo(x float64) float64 {
+	if x == 0 {
+		return 0
+	} else {
+		return math.Pow(2, 10*x-10)
+	}
+}

@@ -1,0 +1,459 @@
+package stream_stats
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
+	"os"
+	"path"
+	"sync/atomic"
+	"time"
+)
+
+type XYTickerStats struct {
+	sampleInterval time.Duration
+	saveInterval   time.Duration
+
+	xTimeDeltaTD  *TimedTDigest
+	yTimeDeltaTD  *TimedTDigest
+	xyTimeDeltaTD *TimedTDigest
+	xBidSizeTD    *TimedTDigest
+	xAskSizeTD    *TimedTDigest
+	yBidSizeTD    *TimedTDigest
+	yAskSizeTD    *TimedTDigest
+	spreadTD      *TimedTDigest
+
+	xTimeDeltaTDPath  string
+	yTimeDeltaTDPath  string
+	xyTimeDeltaTDPath string
+	xBidSizeTDPath    string
+	xAskSizeTDPath    string
+	yBidSizeTDPath    string
+	yAskSizeTDPath    string
+	spreadTDPath      string
+
+	xTimeDelta  time.Duration
+	xEventTime  time.Time
+	yTimeDelta  time.Duration
+	yEventTime  time.Time
+	xyTimeDelta time.Duration
+	xyEventTime time.Time
+
+	spread float64
+
+	yTicker common.Ticker
+	xTicker common.Ticker
+
+	XTickerCh chan common.Ticker
+	YTickerCh chan common.Ticker
+
+	timeDeltaQuantileBot float64
+	timeDeltaQuantileTop float64
+	xLiquidityQuantile   float64
+	yLiquidityQuantile   float64
+
+	spreadLongEnterQuantileBot  float64
+	spreadLongExitQuantileTop   float64
+	spreadShortEnterQuantileTop float64
+	spreadShortExitQuantileBot  float64
+	baseEnterOffset             float64
+	baseExitOffset              float64
+
+	Ready *common.AtomicBool
+
+
+	XTimeDeltaBot  *common.AtomicDuration
+	XTimeDeltaMid  *common.AtomicDuration
+	XTimeDeltaTop  *common.AtomicDuration
+	YTimeDeltaBot  *common.AtomicDuration
+	YTimeDeltaMid  *common.AtomicDuration
+	YTimeDeltaTop  *common.AtomicDuration
+	XYTimeDeltaBot *common.AtomicDuration
+	XYTimeDeltaMid *common.AtomicDuration
+	XYTimeDeltaTop *common.AtomicDuration
+
+	XBidSize *common.AtomicFloat64
+	XAskSize *common.AtomicFloat64
+	YBidSize *common.AtomicFloat64
+	YAskSize *common.AtomicFloat64
+
+	SpreadMiddle        *common.AtomicFloat64
+	SpreadLongEnterBot  *common.AtomicFloat64
+	SpreadLongLeaveTop  *common.AtomicFloat64
+	SpreadShortEnterTop *common.AtomicFloat64
+	SpreadShortLeaveBot *common.AtomicFloat64
+	SpreadEnterOffset   *common.AtomicFloat64
+	SpreadLeaveOffset   *common.AtomicFloat64
+
+	stopped int32
+	done    chan interface {
+	}
+}
+
+func (sl *XYTickerStats) Stop() {
+	if atomic.CompareAndSwapInt32(&sl.stopped, 0, 1) {
+		close(sl.done)
+		sl.handleSave()
+	}
+}
+
+func (sl *XYTickerStats) Start(ctx context.Context) {
+	sampleTimer := time.NewTimer(sl.sampleInterval)
+	saveTimer := time.NewTimer(sl.saveInterval)
+	defer func() {
+		sl.Stop()
+		sampleTimer.Stop()
+		saveTimer.Stop()
+	}()
+	hasAllFields := true
+	var err error
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-sl.done:
+			return
+		case <-sampleTimer.C:
+			if sl.xTicker != nil {
+				err = sl.xTimeDeltaTD.Insert(sl.xEventTime, sl.xTimeDelta.Seconds())
+				if err != nil {
+					logger.Debugf("sl.xTimeDeltaTD.Insert error %v", err)
+				}
+				err = sl.xBidSizeTD.Insert(sl.xTicker.GetTime(), sl.xTicker.GetBidSize())
+				if err != nil {
+					logger.Debugf("sl.xBidSizeTD.Insert error %v", err)
+				}
+				err = sl.xAskSizeTD.Insert(sl.xTicker.GetTime(), sl.xTicker.GetAskSize())
+				if err != nil {
+					logger.Debugf("sl.xAskSizeTD.Insert error %v", err)
+				}
+			}
+			if sl.yTicker != nil {
+				err = sl.yTimeDeltaTD.Insert(sl.yEventTime, sl.yTimeDelta.Seconds())
+				if err != nil {
+					logger.Debugf("sl.yTimeDeltaTD.Insert error %v", err)
+				}
+				err = sl.yBidSizeTD.Insert(sl.yTicker.GetTime(), sl.yTicker.GetBidSize())
+				if err != nil {
+					logger.Debugf("sl.yBidSizeTD.Insert error %v", err)
+				}
+				err = sl.yAskSizeTD.Insert(sl.yTicker.GetTime(), sl.yTicker.GetAskSize())
+				if err != nil {
+					logger.Debugf("sl.yAskSizeTD.Insert error %v", err)
+				}
+
+				if sl.xTicker != nil {
+					err = sl.xyTimeDeltaTD.Insert(sl.xyEventTime, sl.xyTimeDelta.Seconds())
+					if err != nil {
+						logger.Debugf("sl.xyTimeDeltaTD.Insert error %v", err)
+					}
+					err = sl.spreadTD.Insert(sl.xyEventTime, sl.spread)
+					if err != nil {
+						logger.Debugf("sl.spreadTD.Insert error %v", err)
+					}
+				}
+			}
+
+			sl.xTicker = nil
+			sl.yTicker = nil
+
+			hasAllFields = true
+
+			if hasAllFields && sl.xTimeDeltaTD.Range()/2 < sl.xTimeDeltaTD.HalfLookback {
+				hasAllFields = false
+			}
+			sl.XTimeDeltaBot.Set(time.Second * time.Duration(sl.xTimeDeltaTD.Quantile(sl.timeDeltaQuantileBot)))
+			sl.XTimeDeltaMid.Set(time.Second * time.Duration(sl.xTimeDeltaTD.Quantile(0.5)))
+			sl.XTimeDeltaTop.Set(time.Second * time.Duration(sl.xTimeDeltaTD.Quantile(sl.timeDeltaQuantileTop)))
+
+			if hasAllFields && sl.yTimeDeltaTD.Range()/2 < sl.yTimeDeltaTD.HalfLookback {
+				hasAllFields = false
+			}
+			sl.YTimeDeltaBot.Set(time.Second * time.Duration(sl.yTimeDeltaTD.Quantile(sl.timeDeltaQuantileBot)))
+			sl.YTimeDeltaMid.Set(time.Second * time.Duration(sl.yTimeDeltaTD.Quantile(0.5)))
+			sl.YTimeDeltaTop.Set(time.Second * time.Duration(sl.yTimeDeltaTD.Quantile(sl.timeDeltaQuantileTop)))
+
+			if hasAllFields && sl.xyTimeDeltaTD.Range()/2 < sl.xyTimeDeltaTD.HalfLookback {
+				hasAllFields = false
+			}
+			sl.XYTimeDeltaBot.Set(time.Second * time.Duration(sl.xyTimeDeltaTD.Quantile(sl.timeDeltaQuantileBot)))
+			sl.XYTimeDeltaMid.Set(time.Second * time.Duration(sl.xyTimeDeltaTD.Quantile(0.5)))
+			sl.XYTimeDeltaTop.Set(time.Second * time.Duration(sl.xyTimeDeltaTD.Quantile(sl.timeDeltaQuantileTop)))
+
+			if hasAllFields && sl.xBidSizeTD.Range()/2 < sl.xBidSizeTD.HalfLookback {
+				hasAllFields = false
+			}
+			sl.XBidSize.Set(sl.xBidSizeTD.Quantile(sl.xLiquidityQuantile))
+
+			if hasAllFields && sl.xAskSizeTD.Range()/2 < sl.xAskSizeTD.HalfLookback {
+				hasAllFields = false
+			}
+			sl.XAskSize.Set(sl.xAskSizeTD.Quantile(sl.xLiquidityQuantile))
+
+			if hasAllFields && sl.yBidSizeTD.Range()/2 < sl.yBidSizeTD.HalfLookback {
+				hasAllFields = false
+			}
+			sl.YBidSize.Set(sl.yBidSizeTD.Quantile(sl.yLiquidityQuantile))
+
+			if hasAllFields && sl.yAskSizeTD.Range()/2 < sl.yAskSizeTD.HalfLookback {
+				hasAllFields = false
+			}
+			sl.YAskSize.Set(sl.yAskSizeTD.Quantile(sl.yLiquidityQuantile))
+
+			if hasAllFields && sl.spreadTD.Range()/2 < sl.spreadTD.HalfLookback {
+				hasAllFields = false
+			}
+			longEnterBot := sl.spreadTD.Quantile(sl.spreadLongEnterQuantileBot)
+			longExitTop := sl.spreadTD.Quantile(sl.spreadLongExitQuantileTop)
+			shortEnterTop := sl.spreadTD.Quantile(sl.spreadShortEnterQuantileTop)
+			shortExitBot := sl.spreadTD.Quantile(sl.spreadShortExitQuantileBot)
+			enterOffset := shortEnterTop - longEnterBot
+			exitOffset := longExitTop - shortExitBot
+			if enterOffset < sl.baseEnterOffset {
+				enterOffset = sl.baseEnterOffset
+			}
+			if exitOffset < enterOffset*0.25 {
+				exitOffset = enterOffset * 0.25
+			}
+			if exitOffset < sl.baseExitOffset {
+				exitOffset = sl.baseExitOffset
+			}
+
+			sl.SpreadMiddle.Set(sl.spreadTD.Quantile(0.5))
+			sl.SpreadLongEnterBot.Set(longEnterBot)
+			sl.SpreadLongLeaveTop.Set(longExitTop)
+			sl.SpreadShortEnterTop.Set(shortEnterTop)
+			sl.SpreadShortLeaveBot.Set(shortExitBot)
+			sl.SpreadEnterOffset.Set(enterOffset)
+			sl.SpreadLeaveOffset.Set(exitOffset)
+
+			sl.Ready.Set(hasAllFields)
+
+			sampleTimer.Reset(sl.sampleInterval)
+			break
+		case <-saveTimer.C:
+			sl.handleSave()
+			saveTimer.Reset(sl.saveInterval)
+			break
+		case sl.xTicker = <-sl.XTickerCh:
+			sl.xEventTime = sl.xTicker.GetTime()
+			sl.xTimeDelta = sl.xEventTime.Sub(time.Now())
+			if sl.yTicker != nil {
+				sl.xyTimeDelta = sl.yEventTime.Sub(sl.xEventTime)
+				sl.spread = ((sl.yTicker.GetBidPrice() + sl.yTicker.GetAskPrice()) - (sl.xTicker.GetBidPrice() + sl.xTicker.GetAskPrice())) / 2
+				if sl.xyTimeDelta > 0 {
+					sl.xyEventTime = sl.yEventTime
+				} else {
+					sl.xyEventTime = sl.xEventTime
+				}
+			}
+			break
+		case sl.yTicker = <-sl.YTickerCh:
+			sl.yEventTime = sl.yTicker.GetTime()
+			sl.yTimeDelta = sl.yEventTime.Sub(time.Now())
+			if sl.yTicker != nil {
+				sl.xyTimeDelta = sl.yEventTime.Sub(sl.xEventTime)
+				sl.spread = ((sl.yTicker.GetBidPrice() + sl.yTicker.GetAskPrice()) - (sl.xTicker.GetBidPrice() + sl.xTicker.GetAskPrice())) / 2
+				if sl.xyTimeDelta > 0 {
+					sl.xyEventTime = sl.yEventTime
+				} else {
+					sl.xyEventTime = sl.xEventTime
+				}
+			}
+			break
+		}
+	}
+}
+
+func (sl *XYTickerStats) loadTD(tdPath string, lookback, subInterval time.Duration, compression uint32) *TimedTDigest {
+	td := NewTimedTDigestWithCompression(lookback, subInterval, compression)
+	tdBytes, err := os.ReadFile(tdPath)
+	if err != nil {
+		logger.Debugf("os.ReadFile %s error %v", tdPath, err)
+	} else {
+		err = json.Unmarshal(tdBytes, td)
+		if err != nil {
+			logger.Debugf("json.Unmarshal %s error %v", tdPath, err)
+		} else {
+			td.Lookback = lookback
+			td.SubInterval = subInterval
+			td.Compression = compression
+		}
+	}
+	return td
+}
+
+func (sl *XYTickerStats) saveTD(td *TimedTDigest, tdPath string) error {
+	tdBytes, err := json.Marshal(td)
+	if err != nil {
+		return err
+	}
+	tdFile, err := os.OpenFile(tdPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	} else {
+		_, err = tdFile.Write(tdBytes)
+		if err != nil {
+			return err
+		} else {
+			err = tdFile.Close()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (sl *XYTickerStats) handleSave() {
+	tds := []*TimedTDigest{
+		sl.xTimeDeltaTD,
+		sl.yTimeDeltaTD,
+		sl.xyTimeDeltaTD,
+		sl.xBidSizeTD,
+		sl.xAskSizeTD,
+		sl.yBidSizeTD,
+		sl.yAskSizeTD,
+		sl.spreadTD,
+	}
+	paths := []string{
+		sl.xTimeDeltaTDPath,
+		sl.yTimeDeltaTDPath,
+		sl.xyTimeDeltaTDPath,
+		sl.xBidSizeTDPath,
+		sl.xAskSizeTDPath,
+		sl.yBidSizeTDPath,
+		sl.yAskSizeTDPath,
+		sl.spreadTDPath,
+	}
+	for i, td := range tds {
+		err := sl.saveTD(td, paths[i])
+		if err != nil {
+			logger.Debugf("sl.saveTD to %s error %v", paths[i], err)
+		}
+	}
+}
+
+func NewXYTickerStats(
+	xSymbol, ySymbol string,
+	rootPath string,
+	sampleInterval,
+	saveInterval time.Duration,
+
+	timeDeltaTDLookback,
+	timeDeltaTDSubInterval time.Duration,
+	timeDeltaTDCompression uint32,
+
+	xLiquidityTDLookback,
+	xLiquidityTDSubInterval time.Duration,
+	xLiquidityTDCompression uint32,
+
+	yLiquidityTDLookback,
+	yLiquidityTDSubInterval time.Duration,
+	yLiquidityTDCompression uint32,
+
+	spreadTDLookback,
+	spreadTDSubInterval time.Duration,
+	spreadTDCompression uint32,
+
+	timeDeltaQuantileBot,
+	timeDeltaQuantileTop,
+	xLiquidityQuantile,
+	yLiquidityQuantile,
+
+	spreadLongEnterQuantileBot,
+	spreadLongExitQuantileTop,
+	spreadShortEnterQuantileTop,
+	spreadShortExitQuantileBot,
+	baseEnterOffset,
+	baseExitOffset float64,
+) *XYTickerStats {
+
+	if rootPath != "" {
+		logger.Fatal("need stats root path")
+	}
+
+	sl := &XYTickerStats{
+
+		sampleInterval: sampleInterval,
+		saveInterval:   saveInterval,
+
+		XTickerCh: make(chan common.Ticker, 16),
+		YTickerCh: make(chan common.Ticker, 16),
+
+		timeDeltaQuantileBot: timeDeltaQuantileBot,
+		timeDeltaQuantileTop: timeDeltaQuantileTop,
+		xLiquidityQuantile:   xLiquidityQuantile,
+		yLiquidityQuantile:   yLiquidityQuantile,
+
+		spreadLongEnterQuantileBot:  spreadLongEnterQuantileBot,
+		spreadLongExitQuantileTop:   spreadLongExitQuantileTop,
+		spreadShortEnterQuantileTop: spreadShortEnterQuantileTop,
+		spreadShortExitQuantileBot:  spreadShortExitQuantileBot,
+		baseEnterOffset:             baseEnterOffset,
+		baseExitOffset:              baseExitOffset,
+
+		xTimeDeltaTDPath:  path.Join(rootPath, fmt.Sprintf("%s-%s.XTD.json", common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol))),
+		yTimeDeltaTDPath:  path.Join(rootPath, fmt.Sprintf("%s-%s.YTD.json", common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol))),
+		xyTimeDeltaTDPath: path.Join(rootPath, fmt.Sprintf("%s-%s.XYTD.json", common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol))),
+		xBidSizeTDPath:    path.Join(rootPath, fmt.Sprintf("%s-%s.XB.json", common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol))),
+		xAskSizeTDPath:    path.Join(rootPath, fmt.Sprintf("%s-%s.XA.json", common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol))),
+		yBidSizeTDPath:    path.Join(rootPath, fmt.Sprintf("%s-%s.YB.json", common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol))),
+		yAskSizeTDPath:    path.Join(rootPath, fmt.Sprintf("%s-%s.YA.json", common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol))),
+		spreadTDPath:      path.Join(rootPath, fmt.Sprintf("%s-%s.S.json", common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol))),
+
+		Ready: common.ForAtomicBool(false),
+
+		XTimeDeltaBot:  common.ForAtomicDuration(0),
+		XTimeDeltaTop:  common.ForAtomicDuration(0),
+		YTimeDeltaBot:  common.ForAtomicDuration(0),
+		YTimeDeltaTop:  common.ForAtomicDuration(0),
+		XYTimeDeltaBot: common.ForAtomicDuration(0),
+		XYTimeDeltaTop: common.ForAtomicDuration(0),
+
+		XBidSize: common.ForAtomicFloat64(0),
+		XAskSize: common.ForAtomicFloat64(0),
+		YBidSize: common.ForAtomicFloat64(0),
+		YAskSize: common.ForAtomicFloat64(0),
+
+
+		SpreadMiddle:        common.ForAtomicFloat64(0),
+		SpreadLongEnterBot:  common.ForAtomicFloat64(0),
+		SpreadLongLeaveTop:  common.ForAtomicFloat64(0),
+		SpreadShortEnterTop: common.ForAtomicFloat64(0),
+		SpreadShortLeaveBot: common.ForAtomicFloat64(0),
+		SpreadEnterOffset:   common.ForAtomicFloat64(0),
+		SpreadLeaveOffset:   common.ForAtomicFloat64(0),
+
+		stopped: 0,
+		done:    make(chan interface{}),
+	}
+
+	sl.xTimeDeltaTD = sl.loadTD(sl.xTimeDeltaTDPath, timeDeltaTDLookback, timeDeltaTDSubInterval, timeDeltaTDCompression)
+	logger.Debugf("%s - %s X TIME DELTA QUANTILE %f - %f", xSymbol, ySymbol, sl.xTimeDeltaTD.Quantile(timeDeltaQuantileBot), sl.xTimeDeltaTD.Quantile(timeDeltaQuantileTop))
+
+	sl.yTimeDeltaTD = sl.loadTD(sl.yTimeDeltaTDPath, timeDeltaTDLookback, timeDeltaTDSubInterval, timeDeltaTDCompression)
+	logger.Debugf("%s - %s Y TIME DELTA QUANTILE %f - %f", xSymbol, ySymbol, sl.yTimeDeltaTD.Quantile(timeDeltaQuantileBot), sl.yTimeDeltaTD.Quantile(timeDeltaQuantileTop))
+
+	sl.xyTimeDeltaTD = sl.loadTD(sl.xyTimeDeltaTDPath, timeDeltaTDLookback, timeDeltaTDSubInterval, timeDeltaTDCompression)
+	logger.Debugf("%s - %s XY TIME DELTA QUANTILE %f - %f", xSymbol, ySymbol, sl.xyTimeDeltaTD.Quantile(timeDeltaQuantileBot), sl.xyTimeDeltaTD.Quantile(timeDeltaQuantileTop))
+
+	sl.xBidSizeTD = sl.loadTD(sl.xBidSizeTDPath, xLiquidityTDLookback, xLiquidityTDSubInterval, xLiquidityTDCompression)
+	logger.Debugf("%s - %s X BID SIZE QUANTILE %f", xSymbol, ySymbol, sl.xBidSizeTD.Quantile(xLiquidityQuantile))
+
+	sl.xAskSizeTD = sl.loadTD(sl.xAskSizeTDPath, xLiquidityTDLookback, xLiquidityTDSubInterval, xLiquidityTDCompression)
+	logger.Debugf("%s - %s X ASK SIZE QUANTILE %f", xSymbol, ySymbol, sl.xAskSizeTD.Quantile(xLiquidityQuantile))
+
+	sl.yBidSizeTD = sl.loadTD(sl.yBidSizeTDPath, yLiquidityTDLookback, yLiquidityTDSubInterval, yLiquidityTDCompression)
+	logger.Debugf("%s - %s Y BID SIZE QUANTILE %f", xSymbol, ySymbol, sl.yBidSizeTD.Quantile(yLiquidityQuantile))
+
+	sl.yAskSizeTD = sl.loadTD(sl.yAskSizeTDPath, yLiquidityTDLookback, yLiquidityTDSubInterval, yLiquidityTDCompression)
+	logger.Debugf("%s - %s Y ASK SIZE QUANTILE %f", xSymbol, ySymbol, sl.yAskSizeTD.Quantile(yLiquidityQuantile))
+
+	sl.spreadTD = sl.loadTD(sl.spreadTDPath, spreadTDLookback, spreadTDSubInterval, spreadTDCompression)
+	logger.Debugf("%s - %s SPREAD QUANTILE MIDDLE %f %f %f", xSymbol, ySymbol, sl.spreadTD.Quantile(0.5))
+
+	return sl
+}

@@ -12,7 +12,7 @@ import (
 func handleSave(
 	xAccount, yAccount common.Balance,
 	xExchange, yExchange common.UsdExchange,
-	strategiesMap map[string]*XYStrategy,
+	stratMap map[string]*XYStrategy,
 	xSymbols []string,
 	xSystemStatus, ySystemStatus common.SystemStatus,
 	xyConfig *Config,
@@ -34,118 +34,123 @@ func handleSave(
 	xTradeVolume := 0.0
 	yTradeVolume := 0.0
 	for _, xSymbol := range xSymbols {
-		st, ok := strategiesMap[xSymbol]
+		strat, ok := stratMap[xSymbol]
 		if !ok {
 			hasAllSymbols = false
 			continue
 		}
-		ySymbol := st.ySymbol
+		ySymbol := strat.ySymbol
 		fields := make(map[string]interface{})
-		if st.xPosition != nil &&
-			st.yPosition != nil &&
-			st.spread != nil &&
-			st.midPrice != 0 {
+		if strat.xPosition != nil &&
+			strat.yPosition != nil &&
+			strat.spreadReady &&
+			strat.xyMidPrice != 0 {
 
-			unHedgeValue := math.Abs(st.xSize+st.ySize) * st.midPrice
+			unHedgeValue := math.Abs(strat.xSize+strat.ySize) * strat.xyMidPrice
 			totalUnHedgeValue += unHedgeValue
-			totalXSymbolValue += st.xAbsValue
-			totalYSymbolValue += st.yAbsValue
+			totalXSymbolValue += strat.xAbsValue
+			totalYSymbolValue += strat.yAbsValue
 
-			xTradeVolume += st.xTimedPositionChange.Sum()
-			yTradeVolume += st.yTimedPositionChange.Sum()
+			xTradeVolume += strat.xTimedPositionChange.Sum()
+			yTradeVolume += strat.yTimedPositionChange.Sum()
 
 			fields["unHedgeValue"] = unHedgeValue
-			fields["xSize"] = st.xSize
-			fields["xAbsValue"] = st.xAbsValue
-			fields["xValue"] = st.xValue
-			fields["ySize"] = st.ySize
-			fields["yAbsValue"] = st.yAbsValue
-			fields["yValue"] = st.yValue
-			fields["xyValue"] = st.xValue + st.yValue
-			totalURPnl += st.xValue + st.yValue
-			fields["shortTop"] = st.shortTop
-			fields["shortBot"] = st.shortBot
-			fields["longBot"] = st.longBot
-			fields["longTop"] = st.longTop
-			fields["enterTarget"] = st.enterTarget
-			fields["enterStep"] = st.enterStep
-			fields["enterValue"] = st.enterValue
-			fields["offsetFactor"] = st.offsetFactor
-			if st.quantileMiddle != nil {
-				fields["quantileMiddle"] = *st.quantileMiddle
-				fields["quantileEnterTop"] = st.quantileEnterTop
-				fields["quantileEnterBot"] = st.quantileEnterBot
-				fields["quantileExitTop"] = st.quantileExitTop
-				fields["quantileExitBot"] = st.quantileExitBot
-				fields["enterOffsetDelta"] = *st.enterOffset
-				fields["exitOffsetDelta"] = *st.exitOffset
+			fields["xSize"] = strat.xSize
+			fields["xAbsValue"] = strat.xAbsValue
+			fields["xValue"] = strat.xValue
+			fields["ySize"] = strat.ySize
+			fields["yAbsValue"] = strat.yAbsValue
+			fields["yValue"] = strat.yValue
+			fields["xyValue"] = strat.xValue + strat.yValue
+			totalURPnl += strat.xValue + strat.yValue
+			fields["thresholdShortTop"] = strat.thresholdShortTop
+			fields["thresholdShortBot"] = strat.thresholdShortBot
+			fields["thresholdLongBot"] = strat.thresholdLongBot
+			fields["thresholdLongTop"] = strat.thresholdLongTop
+			fields["enterTarget"] = strat.enterTarget
+			fields["enterStep"] = strat.enterStep
+			fields["enterValue"] = strat.enterValue
+			fields["offsetFactor"] = strat.offsetFactor
+			if strat.tdSpreadMiddle != 0 {
+				fields["thresholdLongTop"] = strat.thresholdLongTop
+				fields["thresholdShortTop"] = strat.thresholdShortTop
+				fields["thresholdShortBot"] = strat.thresholdShortBot
+				fields["thresholdLongBot"] = strat.thresholdLongBot
+				fields["tdSpreadMiddle"] = strat.tdSpreadMiddle
+				fields["tdSpreadEnterOffset"] = strat.tdSpreadEnterOffset
+				fields["tdSpreadExitOffset"] = strat.tdSpreadExitOffset
 			}
-			if st.fundingRateFactor != nil {
-				fields["fundingRateFactor"] = *st.fundingRateFactor
+			if strat.xFundingRateFactor != nil {
+				fields["xFundingRateFactor"] = *strat.xFundingRateFactor
 			}
-
-			if st.xPosition.GetPrice() != 0 {
-				xURPnl += st.xValue * (st.xMidPrice - st.xPosition.GetPrice()) / st.xPosition.GetPrice()
-			}
-			if st.yPosition.GetPrice() != 0 {
-				yURPnl += st.yValue * (st.yMidPrice - st.yPosition.GetPrice()) / st.yPosition.GetPrice()
+			if strat.yFundingRateFactor != nil {
+				fields["yFundingRateFactor"] = *strat.yFundingRateFactor
 			}
 
-			fields["spreadTimeDelta"] = st.spread.ParseTime.Sub(st.spread.EventTime).Seconds()
+			if strat.xPosition.GetPrice() != 0 {
+				xURPnl += strat.xValue * (strat.xMidPrice - strat.xPosition.GetPrice()) / strat.xPosition.GetPrice()
+			}
+			if strat.yPosition.GetPrice() != 0 {
+				yURPnl += strat.yValue * (strat.yMidPrice - strat.yPosition.GetPrice()) / strat.yPosition.GetPrice()
+			}
 
-			fields["spreadShortLastEnter"] = st.spread.ShortLastEnter
-			fields["spreadShortLastLeave"] = st.spread.ShortLastLeave
-			fields["spreadShortMedianEnter"] = st.spread.ShortMedianEnter
-			fields["spreadShortMedianLeave"] = st.spread.ShortMedianLeave
+			fields["spreadTimeDelta"] = strat.spreadEventTime.Sub(strat.spreadTickerTime).Seconds()
+			fields["spreadLastLong"] = strat.spreadLastLong
+			fields["spreadLastShort"] = strat.spreadLastShort
+			fields["spreadMedianLong"] = strat.spreadMedianLong
+			fields["spreadMedianShort"] = strat.spreadMedianShort
 
-			fields["spreadLongLastEnter"] = st.spread.LongLastEnter
-			fields["spreadLongLastLeave"] = st.spread.LongLastLeave
-			fields["spreadLongMedianEnter"] = st.spread.LongMedianEnter
-			fields["spreadLongMedianLeave"] = st.spread.LongMedianLeave
+			fields["xBidPrice"] = strat.xTicker.GetBidPrice()
+			fields["xAskPrice"] = strat.xTicker.GetAskPrice()
+			fields["xMidPrice"] = strat.xMidPrice
 
-			fields["xBidPrice"] = st.xTicker.GetBidPrice()
-			fields["xAskPrice"] = st.xTicker.GetAskPrice()
-			fields["xMidPrice"] = st.xMidPrice
-
-			fields["yBidPrice"] = st.yTicker.GetBidPrice()
-			fields["yAskPrice"] = st.yTicker.GetAskPrice()
-			fields["yMidPrice"] = st.yMidPrice
+			fields["yBidPrice"] = strat.yTicker.GetBidPrice()
+			fields["yAskPrice"] = strat.yTicker.GetAskPrice()
+			fields["yMidPrice"] = strat.yMidPrice
 
 		} else {
 			logger.Debugf(
-				"%s %s save failed, okXPosition %v okYPosition %v okSpread %v midPrice %v",
-				xSymbol, ySymbol, st.xPosition != nil, st.yPosition != nil, st.spread != nil, st.midPrice,
+				"%s %s save failed, okXPosition %v okYPosition %v okSpread %v xyMidPrice %v",
+				xSymbol, ySymbol, strat.xPosition != nil, strat.yPosition != nil, strat.spreadReady, strat.xyMidPrice,
 			)
 			hasAllSymbols = false
 		}
 
-		//只要有report， 存一份
-		if st.spreadReport != nil {
-			fields["matchRatio"] = st.spreadReport.MatchRatio
-			fields["xTimeDeltaEma"] = st.spreadReport.XTimeDeltaEma
-			fields["yTimeDeltaEma"] = st.spreadReport.YTimeDeltaEma
-			fields["xTimeDelta"] = st.spreadReport.XTimeDelta
-			fields["yTimeDelta"] = st.spreadReport.YTimeDelta
-			fields["xTickerFilterRatio"] = st.spreadReport.XTickerFilterRatio
-			fields["yTickerFilterRatio"] = st.spreadReport.XTickerFilterRatio
-			fields["xExpireRatio"] = st.spreadReport.XExpireRatio
-			fields["yExpireRatio"] = st.spreadReport.YExpireRatio
-		}
+		//stats不管策略状态，都需要保存
+		fields["statsXTimeDeltaBot"] = strat.stats.XTimeDeltaBot.Load()
+		fields["statsXTimeDeltaMid"] = strat.stats.XTimeDeltaMid.Load()
+		fields["statsXTimeDeltaTop"] = strat.stats.XTimeDeltaTop.Load()
 
-		if st.xFundingRate != nil {
-			fields["xFundingRate"] = st.xFundingRate.GetFundingRate()
+		fields["statsYTimeDeltaBot"] = strat.stats.YTimeDeltaBot.Load()
+		fields["statsYTimeDeltaMid"] = strat.stats.YTimeDeltaMid.Load()
+		fields["statsYTimeDeltaTop"] = strat.stats.YTimeDeltaTop.Load()
+
+		fields["statsXYTimeDeltaBot"] = strat.stats.XYTimeDeltaBot.Load()
+		fields["statsXYTimeDeltaMid"] = strat.stats.XYTimeDeltaMid.Load()
+		fields["statsXYTimeDeltaTop"] = strat.stats.XYTimeDeltaTop.Load()
+
+		fields["statsSpreadEnterOffset"] = strat.stats.SpreadEnterOffset.Load()
+		fields["statsSpreadLeaveOffset"] = strat.stats.SpreadLeaveOffset.Load()
+		fields["statsSpreadLongEnterBot"] = strat.stats.SpreadLongEnterBot.Load()
+		fields["statsSpreadLongLeaveTop"] = strat.stats.SpreadLongLeaveTop.Load()
+		fields["statsSpreadShortEnterTop"] = strat.stats.SpreadShortEnterTop.Load()
+		fields["statsSpreadShortLeaveBot"] = strat.stats.SpreadShortLeaveBot.Load()
+		fields["statsSpreadMiddle"] = strat.stats.SpreadMiddle.Load()
+
+		if strat.xFundingRate != nil {
+			fields["xFundingRate"] = strat.xFundingRate.GetFundingRate()
 		}
-		if st.yFundingRate != nil {
-			fields["yFundingRate"] = st.yFundingRate.GetFundingRate()
+		if strat.yFundingRate != nil {
+			fields["yFundingRate"] = strat.yFundingRate.GetFundingRate()
 		}
-		if st.xyFundingRate != nil {
-			fields["xyFundingRate"] = *st.xyFundingRate
+		if strat.xyFundingRate != nil {
+			fields["xyFundingRate"] = *strat.xyFundingRate
 		}
-		if st.realisedSpread != nil {
-			fields["realisedSpread"] = *st.realisedSpread
+		if strat.realisedSpread != nil {
+			fields["realisedSpread"] = *strat.realisedSpread
 		}
-		if st.adjustedRealisedSpread != nil {
-			fields["adjustedRealisedSpread"] = *st.adjustedRealisedSpread
+		if strat.adjustedRealisedSpread != nil {
+			fields["adjustedRealisedSpread"] = *strat.adjustedRealisedSpread
 		}
 		if xSystemStatus == common.SystemStatusReady {
 			fields["xSystemStatus"] = 1.0

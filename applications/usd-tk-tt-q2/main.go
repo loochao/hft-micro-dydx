@@ -58,17 +58,20 @@ func main() {
 	flag.Parse()
 
 	if *configPath == "" {
-		logger.Fatal("config is empty")
+		logger.Warn("config is empty")
+		return
 	}
 
 	configFile, err := ioutil.ReadFile(*configPath)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Warn(err)
+		return
 	}
 	var config Config
 	err = yaml.Unmarshal(configFile, &config)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Warn(err)
+		return
 	}
 	config.SetDefaultIfNotSet()
 	xyConfig = &config
@@ -76,12 +79,12 @@ func main() {
 	if xyConfig.CpuProfile != "" {
 		f, err := os.Create(xyConfig.CpuProfile)
 		if err != nil {
-			logger.Debugf("os.Create error %v", err)
+			logger.Warnf("os.Create error %v", err)
 			return
 		}
 		err = pprof.StartCPUProfile(f)
 		if err != nil {
-			logger.Debugf("pprof.StartCPUProfile error %v", err)
+			logger.Warnf("pprof.StartCPUProfile error %v", err)
 			return
 		}
 		defer pprof.StopCPUProfile()
@@ -142,7 +145,8 @@ func main() {
 		xExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
 		break
 	default:
-		logger.Fatalf("unsupported exchange %s", xyConfig.XExchange.Name)
+		logger.Warnf("unsupported exchange %s", xyConfig.XExchange.Name)
+		return
 	}
 
 	switch xyConfig.YExchange.Name {
@@ -200,18 +204,15 @@ func main() {
 		yExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
 		break
 	default:
-		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)
+		logger.Warnf("unsupported exchange %s", xyConfig.YExchange.Name)
+		return
 	}
 
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
 		xSymbols = append(xSymbols, xSymbol)
 		ySymbols = append(ySymbols, ySymbol)
-		if _, ok := xyConfig.TargetWeights[xSymbol]; !ok {
-			logger.Debugf("miss target weight for %s", xSymbol)
-			return
-		}
-		if _, ok := xyConfig.MaxOrderValues[xSymbol]; !ok {
-			logger.Debugf("miss max order value for %s", xSymbol)
+		if _, ok := xyConfig.MaximalPosValues[xSymbol]; !ok {
+			logger.Warnf("miss maximal position value for %s", xSymbol)
 			return
 		}
 	}
@@ -220,7 +221,8 @@ func main() {
 
 	configStr, err := yaml.Marshal(xyConfig)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Warn(err)
+		return
 	}
 	logger.Debug("\n\nCONFIG:")
 	for _, l := range strings.Split(string(configStr), "\n") {
@@ -233,12 +235,12 @@ func main() {
 
 	err = xExchange.Setup(xyGlobalCtx, xyConfig.XExchange)
 	if err != nil {
-		logger.Debugf("xExchange.Setup(xyGlobalCtx, xyConfig.XExchange) error %v", err)
+		logger.Warnf("xExchange.Setup(xyGlobalCtx, xyConfig.XExchange) error %v", err)
 		return
 	}
 	err = yExchange.Setup(xyGlobalCtx, xyConfig.YExchange)
 	if err != nil {
-		logger.Debugf("yExchange.Setup(xyGlobalCtx, xyConfig.YExchange) error %v", err)
+		logger.Warnf("yExchange.Setup(xyGlobalCtx, xyConfig.YExchange) error %v", err)
 		return
 	}
 
@@ -252,7 +254,7 @@ func main() {
 			xyConfig.InternalInflux.BatchSize,
 		)
 		if err != nil {
-			logger.Debugf("common.NewInfluxWriter error %v", err)
+			logger.Warnf("common.NewInfluxWriter error %v", err)
 			return
 		}
 		defer xyInternalInfluxWriter.Stop()
@@ -268,7 +270,7 @@ func main() {
 			xyConfig.ExternalInflux.BatchSize,
 		)
 		if err != nil {
-			logger.Debugf("common.NewInfluxWriter error %v", err)
+			logger.Warnf("common.NewInfluxWriter error %v", err)
 			return
 		}
 		defer xyExternalInfluxWriter.Stop()
@@ -289,7 +291,6 @@ func main() {
 	xNewOrderErrorChMap := make(map[string]chan common.OrderError)
 	xAccountChMap := make(map[string]chan common.Balance)
 	xSystemStatusChMap := make(map[string]chan common.SystemStatus)
-	//此处的原则，chan越短，发送速度越快, 对于时效性高的，立即发出的要短
 
 	xTickerChMap := make(map[string]chan common.Ticker)
 	yTickerChMap := make(map[string]chan common.Ticker)
@@ -297,13 +298,14 @@ func main() {
 	for _, xSymbol := range xSymbols {
 		xPositionChMap[xSymbol] = make(chan common.Position, 16)
 		xOrderChMap[xSymbol] = make(chan common.Order, 32)
-		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 4)
+		xFundingRateChMap[xSymbol] = make(chan common.FundingRate, 16)
+		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 16)
+		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 16)
+		xAccountChMap[xSymbol] = make(chan common.Balance, 16)
+		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 16)
+
 		xTickerChMap[xSymbol] = make(chan common.Ticker, 256)
 		yTickerChMap[config.XYPairs[xSymbol]] = xTickerChMap[xSymbol]
-		xOrderRequestChMap[xSymbol] = make(chan common.OrderRequest, 4)
-		xNewOrderErrorChMap[xSymbol] = make(chan common.OrderError, 4)
-		xAccountChMap[xSymbol] = make(chan common.Balance, 16)
-		xSystemStatusChMap[xSymbol] = make(chan common.SystemStatus, 4)
 	}
 
 	yPositionChMap := make(map[string]chan common.Position)
@@ -315,22 +317,21 @@ func main() {
 	for _, ySymbol := range ySymbols {
 		yPositionChMap[ySymbol] = make(chan common.Position, 16)
 		yOrderChMap[ySymbol] = make(chan common.Order, 32)
-		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 4)
-		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 4)
-		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 4)
+		yFundingRateChMap[ySymbol] = make(chan common.FundingRate, 16)
+		yOrderRequestChMap[ySymbol] = make(chan common.OrderRequest, 16)
+		yNewOrderErrorChMap[ySymbol] = make(chan common.OrderError, 16)
 		yAccountChMap[ySymbol] = make(chan common.Balance, 16)
-		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 4)
+		ySystemStatusChMap[ySymbol] = make(chan common.SystemStatus, 16)
 	}
 
-	saveCh := make(chan *XYStrategy, 2048)
-	strategiesMap := make(map[string]*XYStrategy)
+	strategyMap := make(map[string]*XYStrategy)
 
 	var xCommissionAssetValue, yCommissionAssetValue *float64
 	var xCommissionAssetValueCh = make(chan float64, 4)
 	var yCommissionAssetValueCh = make(chan float64, 4)
 
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
-		err = startXYStrategy(
+		strategyMap[xSymbol], err = startXYStrategy(
 			xyGlobalCtx,
 			xSymbol, ySymbol,
 			*xyConfig,
@@ -351,7 +352,6 @@ func main() {
 			xSystemStatusChMap[xSymbol],
 			ySystemStatusChMap[ySymbol],
 			xTickerChMap[xSymbol],
-			saveCh,
 		)
 		if err != nil {
 			logger.Debugf("startXYStrategy %s %s error %v", xSymbol, ySymbol, err)
@@ -467,15 +467,9 @@ mainLoop:
 			break
 		case xcv := <-xCommissionAssetValueCh:
 			xCommissionAssetValue = &xcv
-			//logger.Debugf("xCommissionAssetValue %f", *xCommissionAssetValue)
 		case ycv := <-yCommissionAssetValueCh:
 			yCommissionAssetValue = &ycv
-			//logger.Debugf("yCommissionAssetValue %f", *yCommissionAssetValue)
 		case account := <-xAccountCh:
-			if xAccount == account {
-				logger.Debugf("bad xAccount == account pass same pointer")
-			}
-			//logger.Debugf("xAccount %f %f", account.GetBalance(), account.GetFree())
 			if xAccount == nil || account.GetTime().Sub(xAccount.GetTime()) >= 0 {
 				xAccount = account
 				for xSymbol, ch := range xAccountChMap {
@@ -488,10 +482,6 @@ mainLoop:
 			}
 			break
 		case account := <-yAccountCh:
-			if yAccount == account {
-				logger.Debugf("bad  yAccount == account pass same pointer")
-			}
-			//logger.Debugf("yAccount %f %f", account.GetBalance(), account.GetFree())
 			if yAccount == nil || account.GetTime().Sub(yAccount.GetTime()) >= 0 {
 				yAccount = account
 				for ySymbol, ch := range yAccountChMap {
@@ -503,16 +493,12 @@ mainLoop:
 				}
 			}
 			break
-		case st := <-saveCh:
-			strategiesMap[st.xSymbol] = st
-			break
 		case <-influxSaveTimer.C:
 			if xyConfig.InternalInflux.Address != "" {
-
 				handleSave(
 					xAccount, yAccount,
 					xExchange, yExchange,
-					strategiesMap,
+					strategyMap,
 					xSymbols,
 					xSystemStatus, ySystemStatus,
 					xyConfig,
@@ -531,7 +517,7 @@ mainLoop:
 			break
 		}
 	}
-	logger.Debugf("stop waiting 5s")
-	<-time.After(time.Second * 5)
+	logger.Debugf("stop waiting 15s")
+	<-time.After(time.Second * 15)
 	logger.Debugf("exit 0")
 }
