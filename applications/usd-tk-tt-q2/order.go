@@ -268,7 +268,7 @@ func (strat *XYStrategy) updateXPosition() {
 				*strat.xFundingRateFactor,
 			)
 		}
-	} else if !strat.config.ReduceOnly &&
+	} else if !strat.reduceOnly &&
 		!strat.isYSpot &&
 		strat.spreadMedianShort > strat.thresholdShortTop &&
 		strat.spreadLastShort > strat.spreadMedianShort &&
@@ -390,7 +390,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.tdSpreadExitOffset,
 			*strat.xFundingRateFactor,
 		)
-	} else if !strat.config.ReduceOnly &&
+	} else if !strat.reduceOnly &&
 		!strat.isXSpot &&
 		strat.spreadMedianLong < strat.thresholdLongBot &&
 		strat.spreadLastLong < strat.spreadMedianLong &&
