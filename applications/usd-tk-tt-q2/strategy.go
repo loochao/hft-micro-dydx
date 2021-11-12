@@ -157,6 +157,7 @@ func startXYStrategy(
 
 		maxPosSize:  config.MaxPosSizes[xSymbol],
 		maxPosValue: config.MaxPosValues[xSymbol],
+		maxOrderSize: config.MaxPosSizes[xSymbol]/4,
 		//xSize:                   0,
 		//ySize:                   0,
 		//xValue:                  0,

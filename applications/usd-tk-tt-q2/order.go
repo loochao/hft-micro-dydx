@@ -74,7 +74,6 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.thresholdLongTop = strat.tdSpreadMiddle + strat.config.LongLeaveThreshold - strat.tdSpreadExitOffset*(strat.offsetFactor-strat.offsetStep) - *strat.xyFundingRate**strat.xFundingRateFactor
 	}
 
-
 	//if math.IsNaN(strat.thresholdLongBot) && time.Now().Sub(strat.logSilentTime) > 0 {
 	//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 	//	logger.Debugf("%s enterTarget %f targetWeight %f enterTargetFactor %f", strat.xSymbol, strat.enterTarget, strat.targetWeight, strat.config.EnterTargetFactor)
@@ -120,6 +119,10 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.enterValue = tdYAskValue
 		}
 		xSizeDiff := strat.enterValue / xyMidPrice
+
+		if xSizeDiff > strat.maxOrderSize {
+			xSizeDiff = strat.maxOrderSize
+		}
 
 		//限开仓大小限制到best bid ask size, 主要关心Y的深度，保证Y的深度足够
 		//xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
@@ -205,9 +208,15 @@ func (strat *XYStrategy) updateXPosition() {
 
 		xSizeDiff := strat.enterValue / xyMidPrice
 
-		//限开仓大小限制到best bid ask size
-		//xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
-		//xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+		if xSizeDiff > strat.maxOrderSize {
+			xSizeDiff = strat.maxOrderSize
+		}
+
+		if strat.config.BestSizeFactor > 0 {
+			//限开仓大小限制到best bid ask size
+			xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+			xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+		}
 
 		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = xSizeDiff * xyMidPrice
@@ -302,9 +311,14 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 
 		xSizeDiff := strat.enterValue / xyMidPrice
+		if xSizeDiff > strat.maxOrderSize {
+			xSizeDiff = strat.maxOrderSize
+		}
 
-		//xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
-		//xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+		if strat.config.BestSizeFactor > 0 {
+			xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+			xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+		}
 
 		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = xSizeDiff * xyMidPrice
@@ -425,8 +439,14 @@ func (strat *XYStrategy) updateXPosition() {
 		xSizeDiff := strat.enterValue / xyMidPrice
 
 		xSizeDiff = strat.enterValue / xyMidPrice
-		//xSizeDiff = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
-		//xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+		if xSizeDiff > strat.maxOrderSize {
+			xSizeDiff = strat.maxOrderSize
+		}
+
+		if strat.config.BestSizeFactor > 0 {
+			xSizeDiff = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+			xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+		}
 
 		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 		strat.enterValue = xSizeDiff * xyMidPrice
@@ -537,6 +557,12 @@ func (strat *XYStrategy) hedgeXPosition() {
 			} else if xSizeDiff > tdXAskSize {
 				xSizeDiff = tdXAskSize
 			}
+		}
+
+		if xSizeDiff > strat.maxOrderSize {
+			xSizeDiff = strat.maxOrderSize
+		} else if xSizeDiff < -strat.maxOrderSize {
+			xSizeDiff = -strat.maxOrderSize
 		}
 
 		if xSizeDiff >= 0 {
@@ -653,6 +679,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 	if math.Abs(ySizeDiff) < strat.yStepSize {
 		return
 	}
+
 	//下单也加上控制，以限下单太大，造成市场冲击
 	if strat.stats.Ready.True() {
 		tdYBidSize := strat.stats.YBidSize.Load()
@@ -663,6 +690,13 @@ func (strat *XYStrategy) hedgeYPosition() {
 			ySizeDiff = tdYAskSize
 		}
 	}
+
+	if ySizeDiff > strat.maxOrderSize {
+		ySizeDiff = strat.maxOrderSize
+	}else if ySizeDiff < -strat.maxOrderSize {
+		ySizeDiff = -strat.maxOrderSize
+	}
+
 	if ySizeDiff >= 0 {
 		ySizeDiff = math.Floor(ySizeDiff/strat.yStepSize) * strat.yStepSize
 	} else {

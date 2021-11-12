@@ -103,7 +103,7 @@ type Config struct {
 	MinYFree    float64 `yaml:"minYFree"`
 	MaxPosValue float64 `yaml:"maxPosValue"`
 
-	//BestSizeFactor    float64            `yaml:"bestSizeFactor"`
+	BestSizeFactor             float64            `yaml:"bestSizeFactor"`
 	EnterFreePct               float64            `yaml:"enterFreePct"`
 	EnterSlippage              float64            `yaml:"enterSlippage"`
 	EnterMinimalStep           float64            `yaml:"enterMinimalStep"`
@@ -168,9 +168,6 @@ func (config *Config) SetDefaultIfNotSet() error {
 	}
 	config.XExchange.DryRun = config.DryRun
 	config.YExchange.DryRun = config.DryRun
-	//if config.BestSizeFactor == 0 {
-	//	config.BestSizeFactor = 1.0
-	//}
 	if config.FundingRateSilentTime == 0 {
 		config.FundingRateSilentTime = time.Minute
 	}
@@ -287,7 +284,7 @@ func (config *Config) SetDefaultIfNotSet() error {
 	}
 	for xSymbol := range config.XYPairs {
 		//如果是全局减仓，那所有币的减仓，如果全局不减，可以有的币自定规则
-		if reduce, ok := config.ReduceOnlyBySymbol[xSymbol]; !ok || config.ReduceOnly{
+		if reduce, ok := config.ReduceOnlyBySymbol[xSymbol]; !ok || config.ReduceOnly {
 			config.ReduceOnlyBySymbol[xSymbol] = config.ReduceOnly
 		} else {
 			config.ReduceOnlyBySymbol[xSymbol] = reduce

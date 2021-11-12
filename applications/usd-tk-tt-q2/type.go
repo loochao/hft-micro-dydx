@@ -15,7 +15,7 @@ type XYStrategy struct {
 
 	config Config
 
-	reduceOnly bool
+	reduceOnly      bool
 	xAccountCh      chan common.Balance
 	yAccountCh      chan common.Balance
 	xPositionCh     chan common.Position
@@ -124,8 +124,9 @@ type XYStrategy struct {
 	thresholdLongBot  float64
 	thresholdLongTop  float64
 
-	maxPosValue            float64
-	maxPosSize             float64
+	maxPosValue  float64
+	maxPosSize   float64
+	maxOrderSize float64
 
 	//xSize                  float64
 	//ySize                  float64
