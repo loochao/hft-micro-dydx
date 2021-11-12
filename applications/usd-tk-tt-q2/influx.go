@@ -129,16 +129,16 @@ func handleSave(
 		}
 
 
-		//stats不管策略状态，都需要保存
 		if strat.stats.Ready.True() {
 			fields["statsReady"] = 1.0
-			if strat.targetWeightUpdated.True() {
-				fields["targetWeight"] = strat.targetWeight.Load()
-			}
 		}else{
 			fields["statsReady"] = 0.0
 		}
 
+		//stats不管策略状态，都需要保存
+		if strat.targetWeightUpdated.True() {
+			fields["targetWeight"] = strat.targetWeight.Load()
+		}
 		fields["statsXTimeDeltaBot"] = strat.stats.XTimeDeltaBot.Load().Seconds()
 		fields["statsXTimeDeltaMid"] = strat.stats.XTimeDeltaMid.Load().Seconds()
 		fields["statsXTimeDeltaTop"] = strat.stats.XTimeDeltaTop.Load().Seconds()
