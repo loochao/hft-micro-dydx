@@ -234,7 +234,7 @@ func startXYStrategy(
 func (strat *XYStrategy) Stop() {
 	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
 		strat.stats.Stop()
-		logger.Debugf("%s %s stopped", strat.xSymbol, strat.ySymbol)
+		logger.Debugf("%10s %10s stopped", strat.xSymbol, strat.ySymbol)
 	}
 }
 
@@ -262,7 +262,7 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 		case <-strat.xFundingRateCheckTimer.C:
 			if strat.config.XFundingRateTimeOffset == 0 {
 				if time.Now().Add(strat.config.XFundingRateInterval).Truncate(strat.config.XFundingRateInterval).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
-					logger.Debugf("%s x fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.XFundingRateInterval).Truncate(strat.config.XFundingRateInterval).Sub(time.Now()))
+					logger.Debugf("%10s x fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.XFundingRateInterval).Truncate(strat.config.XFundingRateInterval).Sub(time.Now()))
 					strat.fundingRateSettleSilent = true
 					strat.xFundingRateCheckTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
 				} else {
@@ -276,7 +276,7 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 				}
 			} else {
 				if time.Now().Add(strat.config.XFundingRateTimeOffset).Truncate(strat.config.XFundingRateInterval).Add(strat.config.XFundingRateTimeOffset).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
-					logger.Debugf("%s x fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.XFundingRateTimeOffset).Truncate(strat.config.XFundingRateInterval).Add(strat.config.XFundingRateTimeOffset).Sub(time.Now()))
+					logger.Debugf("%10s x fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.XFundingRateTimeOffset).Truncate(strat.config.XFundingRateInterval).Add(strat.config.XFundingRateTimeOffset).Sub(time.Now()))
 					strat.fundingRateSettleSilent = true
 					strat.xFundingRateCheckTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
 				} else {
@@ -293,7 +293,7 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 		case <-strat.yFundingRateCheckTimer.C:
 			if strat.config.YFundingRateTimeOffset == 0 {
 				if time.Now().Add(strat.config.YFundingRateInterval).Truncate(strat.config.YFundingRateInterval).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
-					logger.Debugf("%s y fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.YFundingRateInterval).Truncate(strat.config.YFundingRateInterval).Sub(time.Now()))
+					logger.Debugf("%10s y fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.YFundingRateInterval).Truncate(strat.config.YFundingRateInterval).Sub(time.Now()))
 					strat.fundingRateSettleSilent = true
 					strat.yFundingRateCheckTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
 				} else {
@@ -307,7 +307,7 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 				}
 			} else {
 				if time.Now().Add(strat.config.YFundingRateTimeOffset).Truncate(strat.config.YFundingRateInterval).Add(strat.config.YFundingRateTimeOffset).Sub(time.Now()) <= strat.config.FundingRateSilentTime {
-					logger.Debugf("%s y fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.YFundingRateTimeOffset).Truncate(strat.config.YFundingRateInterval).Add(strat.config.YFundingRateTimeOffset).Sub(time.Now()))
+					logger.Debugf("%10s y fundingRate silent true %v", strat.xSymbol, time.Now().Add(strat.config.YFundingRateTimeOffset).Truncate(strat.config.YFundingRateInterval).Add(strat.config.YFundingRateTimeOffset).Sub(time.Now()))
 					strat.fundingRateSettleSilent = true
 					strat.yFundingRateCheckTimer.Reset(strat.config.FundingRateSilentTime + time.Second)
 				} else {
@@ -386,12 +386,12 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 
 func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 	if nextPos.GetSymbol() != strat.xSymbol {
-		logger.Debugf("%s bad next position, symbol %s not match %v", nextPos.GetSymbol(), strat.xSymbol, nextPos)
+		logger.Debugf("%10s bad next position, symbol %s not match %v", nextPos.GetSymbol(), strat.xSymbol, nextPos)
 		return
 	}
 	if strat.xPosition != nil {
 		if strat.xPosition == nextPos {
-			logger.Debugf("%s bad strat.xPosition == nextPos pass same pointer", strat.xSymbol)
+			logger.Debugf("%10s bad strat.xPosition == nextPos pass same pointer", strat.xSymbol)
 			return
 		}
 		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= 0 {
@@ -402,7 +402,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 				if strat.xTicker != nil {
 					strat.xTimedPositionChange.Insert(time.Now(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize())*strat.xMidPrice*strat.xMultiplier)
 				}
-				logger.Debugf("%s x position change %f -> %f %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
+				logger.Debugf("%10s x position change %f -> %f %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
 				strat.xPosition = nextPos
 				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 					strat.hedgeYPosition()
@@ -422,18 +422,18 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 	} else {
 		strat.xPosition = nextPos
 		strat.xPositionUpdateTime = nextPos.GetParseTime()
-		logger.Debugf("%s x position change nil -> %f %f", nextPos.GetSymbol(), nextPos.GetSize(), nextPos.GetPrice())
+		logger.Debugf("%10s x position change nil -> %f %f", nextPos.GetSymbol(), nextPos.GetSize(), nextPos.GetPrice())
 	}
 }
 
 func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 	if nextPos.GetSymbol() != strat.ySymbol {
-		logger.Debugf("bad next position, symbol %s %s not match %v", nextPos.GetSymbol(), strat.ySymbol, nextPos)
+		logger.Debugf("%10s bad next position, %s not match %v", nextPos.GetSymbol(), strat.ySymbol, nextPos)
 		return
 	}
 	if strat.yPosition != nil {
 		if strat.yPosition == nextPos {
-			logger.Debugf("bad strat.yPosition == nextPos pass same pointer")
+			logger.Debugf("%10sbad strat.yPosition == nextPos pass same pointer", nextPos.GetSymbol())
 			return
 		}
 		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= -time.Second {
@@ -441,7 +441,7 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 				if strat.yTicker != nil {
 					strat.yTimedPositionChange.Insert(time.Now(), math.Abs(strat.yPosition.GetSize()-nextPos.GetSize())*strat.yMidPrice*strat.yMultiplier)
 				}
-				logger.Debugf("%s y position change %f -> %f %f %v", nextPos.GetSymbol(), strat.yPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
+				logger.Debugf("%10s y position change %f -> %f %f %v", nextPos.GetSymbol(), strat.yPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
 			}
 			strat.yPosition = nextPos
 		}
@@ -449,6 +449,6 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 	} else {
 		strat.yPosition = nextPos
 		strat.yPositionUpdateTime = nextPos.GetParseTime()
-		logger.Debugf("%s y position change nil -> %f %f", nextPos.GetSymbol(), nextPos.GetSize(), nextPos.GetPrice())
+		logger.Debugf("%10s y position change nil -> %f %f", nextPos.GetSymbol(), nextPos.GetSize(), nextPos.GetPrice())
 	}
 }

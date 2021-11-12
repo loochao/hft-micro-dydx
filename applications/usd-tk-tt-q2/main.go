@@ -491,7 +491,7 @@ mainLoop:
 					st.targetWeight.Set(weight)
 					if !st.targetWeightUpdated.True() {
 						st.targetWeightUpdated.Set(true)
-						logger.Debugf("%s target weight %f", xSymbol, weight)
+						logger.Debugf("%10s TARGET WEIGHT UPDATE %f", xSymbol, weight)
 					}
 				}
 			}

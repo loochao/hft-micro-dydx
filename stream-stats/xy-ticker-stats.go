@@ -445,28 +445,28 @@ func NewXYTickerStats(params NewXYTickerStatsParams) *XYTickerStats {
 	}
 
 	sl.xTimeDeltaTD = sl.loadTD(sl.xTimeDeltaTDPath, params.TimeDeltaTDLookback, params.TimeDeltaTDSubInterval, params.TimeDeltaTDCompression)
-	logger.Debugf("%s - %s X TIME DELTA QUANTILE %f - %f", params.XSymbol, params.YSymbol, sl.xTimeDeltaTD.Quantile(params.TimeDeltaQuantileBot), sl.xTimeDeltaTD.Quantile(params.TimeDeltaQuantileTop))
+	logger.Debugf("%10s - %10s X TIME DELTA QUANTILE %.6f - %.6f", params.XSymbol, params.YSymbol, sl.xTimeDeltaTD.Quantile(params.TimeDeltaQuantileBot), sl.xTimeDeltaTD.Quantile(params.TimeDeltaQuantileTop))
 
 	sl.yTimeDeltaTD = sl.loadTD(sl.yTimeDeltaTDPath, params.TimeDeltaTDLookback, params.TimeDeltaTDSubInterval, params.TimeDeltaTDCompression)
-	logger.Debugf("%s - %s Y TIME DELTA QUANTILE %f - %f", params.XSymbol, params.YSymbol, sl.yTimeDeltaTD.Quantile(params.TimeDeltaQuantileBot), sl.yTimeDeltaTD.Quantile(params.TimeDeltaQuantileTop))
+	logger.Debugf("%10s - %10s Y TIME DELTA QUANTILE %.6f - %.6f", params.XSymbol, params.YSymbol, sl.yTimeDeltaTD.Quantile(params.TimeDeltaQuantileBot), sl.yTimeDeltaTD.Quantile(params.TimeDeltaQuantileTop))
 
 	sl.xyTimeDeltaTD = sl.loadTD(sl.xyTimeDeltaTDPath, params.TimeDeltaTDLookback, params.TimeDeltaTDSubInterval, params.TimeDeltaTDCompression)
-	logger.Debugf("%s - %s XY TIME DELTA QUANTILE %f - %f", params.XSymbol, params.YSymbol, sl.xyTimeDeltaTD.Quantile(params.TimeDeltaQuantileBot), sl.xyTimeDeltaTD.Quantile(params.TimeDeltaQuantileTop))
+	logger.Debugf("%10s - %10s XY TIME DELTA QUANTILE %.6f - %.6f", params.XSymbol, params.YSymbol, sl.xyTimeDeltaTD.Quantile(params.TimeDeltaQuantileBot), sl.xyTimeDeltaTD.Quantile(params.TimeDeltaQuantileTop))
 
 	sl.xBidSizeTD = sl.loadTD(sl.xBidSizeTDPath, params.XLiquidityTDLookback, params.XLiquidityTDSubInterval, params.XLiquidityTDCompression)
-	logger.Debugf("%s - %s X BID SIZE QUANTILE %f", params.XSymbol, params.YSymbol, sl.xBidSizeTD.Quantile(params.XLiquidityQuantile))
+	logger.Debugf("%10s - %10s X BID SIZE QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.xBidSizeTD.Quantile(params.XLiquidityQuantile))
 
 	sl.xAskSizeTD = sl.loadTD(sl.xAskSizeTDPath, params.XLiquidityTDLookback, params.XLiquidityTDSubInterval, params.XLiquidityTDCompression)
-	logger.Debugf("%s - %s X ASK SIZE QUANTILE %f", params.XSymbol, params.YSymbol, sl.xAskSizeTD.Quantile(params.XLiquidityQuantile))
+	logger.Debugf("%10s - %10s X ASK SIZE QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.xAskSizeTD.Quantile(params.XLiquidityQuantile))
 
 	sl.yBidSizeTD = sl.loadTD(sl.yBidSizeTDPath, params.YLiquidityTDLookback, params.YLiquidityTDSubInterval, params.YLiquidityTDCompression)
-	logger.Debugf("%s - %s Y BID SIZE QUANTILE %f", params.XSymbol, params.YSymbol, sl.yBidSizeTD.Quantile(params.YLiquidityQuantile))
+	logger.Debugf("%10s - %10s Y BID SIZE QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.yBidSizeTD.Quantile(params.YLiquidityQuantile))
 
 	sl.yAskSizeTD = sl.loadTD(sl.yAskSizeTDPath, params.YLiquidityTDLookback, params.YLiquidityTDSubInterval, params.YLiquidityTDCompression)
-	logger.Debugf("%s - %s Y ASK SIZE QUANTILE %f", params.XSymbol, params.YSymbol, sl.yAskSizeTD.Quantile(params.YLiquidityQuantile))
+	logger.Debugf("%10s - %10s Y ASK SIZE QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.yAskSizeTD.Quantile(params.YLiquidityQuantile))
 
 	sl.spreadTD = sl.loadTD(sl.spreadTDPath, params.SpreadTDLookback, params.SpreadTDSubInterval, params.SpreadTDCompression)
-	logger.Debugf("%s - %s SPREAD QUANTILE MIDDLE %f", params.XSymbol, params.YSymbol, sl.spreadTD.Quantile(0.5))
+	logger.Debugf("%10s - %10s SPREAD QUANTILE MIDDLE %.6f", params.XSymbol, params.YSymbol, sl.spreadTD.Quantile(0.5))
 
 	return sl
 }
