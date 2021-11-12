@@ -15,6 +15,7 @@ type XYStrategy struct {
 
 	config Config
 
+	reduceOnly bool
 	xAccountCh      chan common.Balance
 	yAccountCh      chan common.Balance
 	xPositionCh     chan common.Position
@@ -97,7 +98,7 @@ type XYStrategy struct {
 	spreadLastLong    float64
 	spreadMedianShort float64
 	spreadMedianLong  float64
-	strategyOutputCh  chan XYStrategy
+	//strategyOutputCh  chan XYStrategy
 
 	xTickSize            float64
 	yTickSize            float64
@@ -111,7 +112,7 @@ type XYStrategy struct {
 	yMinNotional         float64
 	xyMergedSpotStepSize float64
 
-	error error
+	//error error
 
 	isXSpot bool
 	isYSpot bool
@@ -125,13 +126,15 @@ type XYStrategy struct {
 
 	maxPosValue            float64
 	maxPosSize             float64
-	xSize                  float64
-	ySize                  float64
-	xValue                 float64
-	yValue                 float64
-	xAbsValue              float64
-	yAbsValue              float64
-	xyMidPrice             float64
+
+	//xSize                  float64
+	//ySize                  float64
+	//xValue                 float64
+	//yValue                 float64
+	//xAbsValue              float64
+	//yAbsValue              float64
+	//xyMidPrice             float64
+
 	enterValue             float64
 	targetWeight           *common.AtomicFloat64
 	targetWeightUpdated    *common.AtomicBool

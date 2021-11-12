@@ -472,7 +472,7 @@ mainLoop:
 			totalLiquidity := 0.0
 			liquidityMap := make(map[string]float64)
 			for xSymbol, st := range strategyMap {
-				if st.stats.Ready.True() {
+				if st.stats.YMiddlePrice.Load() > 0 {
 					liquidityMap[xSymbol] = st.yMultiplier * math.Min(st.stats.YBidSize.Load(), st.stats.YAskSize.Load()) * st.stats.YMiddlePrice.Load()
 					totalLiquidity += liquidityMap[xSymbol]
 				}

@@ -111,9 +111,10 @@ type Config struct {
 	StartValues                map[string]float64 `yaml:"startValues"`
 	TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`
 
-	XYPairs      map[string]string  `yaml:"xyPairs"`
-	MaxPosSizes  map[string]float64 `yaml:"maxPosSizes,omitempty"`
-	MaxPosValues map[string]float64 `yaml:"maxPosValues,omitempty"`
+	XYPairs            map[string]string  `yaml:"xyPairs"`
+	MaxPosSizes        map[string]float64 `yaml:"maxPosSizes,omitempty"`
+	MaxPosValues       map[string]float64 `yaml:"maxPosValues,omitempty"`
+	ReduceOnlyBySymbol map[string]bool    `yaml:"reduceOnlyBySymbol,omitempty"`
 }
 
 func (config *Config) SetDefaultIfNotSet() error {
@@ -279,6 +280,17 @@ func (config *Config) SetDefaultIfNotSet() error {
 		}
 		if _, ok := config.MaxPosSizes[xSymbol]; !ok {
 			return fmt.Errorf("miss max pos size for %s", xSymbol)
+		}
+	}
+	if config.ReduceOnlyBySymbol == nil {
+		config.ReduceOnlyBySymbol = make(map[string]bool)
+	}
+	for xSymbol := range config.XYPairs {
+		//如果是全局减仓，那所有币的减仓，如果全局不减，可以有的币自定规则
+		if reduce, ok := config.ReduceOnlyBySymbol[xSymbol]; !ok || config.ReduceOnly{
+			config.ReduceOnlyBySymbol[xSymbol] = config.ReduceOnly
+		} else {
+			config.ReduceOnlyBySymbol[xSymbol] = reduce
 		}
 	}
 	return nil

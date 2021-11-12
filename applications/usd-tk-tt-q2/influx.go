@@ -43,62 +43,8 @@ func handleSave(
 		fields := make(map[string]interface{})
 		if strat.xPosition != nil &&
 			strat.yPosition != nil &&
-			strat.spreadReady &&
-			strat.xyMidPrice != 0 {
-
-			unHedgeValue := math.Abs(strat.xSize+strat.ySize) * strat.xyMidPrice
-			totalUnHedgeValue += unHedgeValue
-			totalXSymbolValue += strat.xAbsValue
-			totalYSymbolValue += strat.yAbsValue
-
-			xTradeVolume += strat.xTimedPositionChange.Sum()
-			yTradeVolume += strat.yTimedPositionChange.Sum()
-
-			fields["unHedgeValue"] = unHedgeValue
-			fields["xSize"] = strat.xSize
-			fields["xAbsValue"] = strat.xAbsValue
-			fields["xValue"] = strat.xValue
-			fields["ySize"] = strat.ySize
-			fields["yAbsValue"] = strat.yAbsValue
-			fields["yValue"] = strat.yValue
-			fields["xyValue"] = strat.xValue + strat.yValue
-			totalURPnl += strat.xValue + strat.yValue
-			fields["thresholdShortTop"] = strat.thresholdShortTop
-			fields["thresholdShortBot"] = strat.thresholdShortBot
-			fields["thresholdLongBot"] = strat.thresholdLongBot
-			fields["thresholdLongTop"] = strat.thresholdLongTop
-			fields["enterTarget"] = strat.enterTarget
-			fields["enterStep"] = strat.enterStep
-			fields["enterValue"] = strat.enterValue
-			fields["offsetFactor"] = strat.offsetFactor
-			if strat.tdSpreadMiddle != 0 {
-				fields["thresholdLongTop"] = strat.thresholdLongTop
-				fields["thresholdShortTop"] = strat.thresholdShortTop
-				fields["thresholdShortBot"] = strat.thresholdShortBot
-				fields["thresholdLongBot"] = strat.thresholdLongBot
-				fields["tdSpreadMiddle"] = strat.tdSpreadMiddle
-				fields["tdSpreadEnterOffset"] = strat.tdSpreadEnterOffset
-				fields["tdSpreadExitOffset"] = strat.tdSpreadExitOffset
-			}
-			if strat.xFundingRateFactor != nil {
-				fields["xFundingRateFactor"] = *strat.xFundingRateFactor
-			}
-			if strat.yFundingRateFactor != nil {
-				fields["yFundingRateFactor"] = *strat.yFundingRateFactor
-			}
-
-			if strat.xPosition.GetPrice() != 0 {
-				xURPnl += strat.xValue * (strat.xMidPrice - strat.xPosition.GetPrice()) / strat.xPosition.GetPrice()
-			}
-			if strat.yPosition.GetPrice() != 0 {
-				yURPnl += strat.yValue * (strat.yMidPrice - strat.yPosition.GetPrice()) / strat.yPosition.GetPrice()
-			}
-
-			fields["spreadTimeDelta"] = strat.spreadEventTime.Sub(strat.spreadTickerTime).Seconds()
-			fields["spreadLastLong"] = strat.spreadLastLong
-			fields["spreadLastShort"] = strat.spreadLastShort
-			fields["spreadMedianLong"] = strat.spreadMedianLong
-			fields["spreadMedianShort"] = strat.spreadMedianShort
+			strat.xMidPrice > 0 &&
+			strat.yMidPrice > 0{
 
 			fields["xBidPrice"] = strat.xTicker.GetBidPrice()
 			fields["xAskPrice"] = strat.xTicker.GetAskPrice()
@@ -108,17 +54,82 @@ func handleSave(
 			fields["yAskPrice"] = strat.yTicker.GetAskPrice()
 			fields["yMidPrice"] = strat.yMidPrice
 
+			xSize := strat.xPosition.GetSize() * strat.xMultiplier
+			ySize := strat.yPosition.GetSize() * strat.yMultiplier
+			xValue := 0.0
+			yValue := 0.0
+			if strat.isXSpot || strat.xPosition.GetPrice() == 0 {
+				xValue = xSize * strat.xMidPrice
+			} else {
+				xValue = xSize * strat.xPosition.GetPrice()
+			}
+			if strat.isYSpot || strat.yPosition.GetPrice() == 0 {
+				yValue = ySize * strat.yMidPrice
+			} else {
+				yValue = ySize * strat.yPosition.GetPrice()
+			}
+			xAbsValue := math.Abs(xValue)
+			yAbsValue := math.Abs(yValue)
+			xyMidPrice := (strat.xMidPrice + strat.yMidPrice) * 0.5
+
+			unHedgeValue := math.Abs(xSize+ySize) * xyMidPrice
+			totalUnHedgeValue += unHedgeValue
+			totalXSymbolValue += xAbsValue
+			totalYSymbolValue += yAbsValue
+
+			xTradeVolume += strat.xTimedPositionChange.Sum()
+			yTradeVolume += strat.yTimedPositionChange.Sum()
+
+			fields["unHedgeValue"] = unHedgeValue
+			fields["xSize"] = xSize
+			fields["xAbsValue"] = xAbsValue
+			fields["xValue"] = xValue
+			fields["ySize"] = ySize
+			fields["yAbsValue"] = yAbsValue
+			fields["yValue"] = yValue
+			fields["xyValue"] = xValue + yValue
+			totalURPnl += xValue + yValue
+
+			//如果已经计算了tdSpreadMiddle, 这些数据都该有了
+			if strat.tdSpreadMiddle != 0 {
+				fields["enterTarget"] = strat.enterTarget
+				fields["enterStep"] = strat.enterStep
+				fields["enterValue"] = strat.enterValue
+				fields["offsetFactor"] = strat.offsetFactor
+				fields["thresholdLongTop"] = strat.thresholdLongTop
+				fields["thresholdShortTop"] = strat.thresholdShortTop
+				fields["thresholdShortBot"] = strat.thresholdShortBot
+				fields["thresholdLongBot"] = strat.thresholdLongBot
+				fields["tdSpreadMiddle"] = strat.tdSpreadMiddle
+				fields["tdSpreadEnterOffset"] = strat.tdSpreadEnterOffset
+				fields["tdSpreadExitOffset"] = strat.tdSpreadExitOffset
+			}
+			if strat.xPosition.GetPrice() != 0 {
+				xURPnl += xValue * (strat.xMidPrice - strat.xPosition.GetPrice()) / strat.xPosition.GetPrice()
+			}
+			if strat.yPosition.GetPrice() != 0 {
+				yURPnl += yValue * (strat.yMidPrice - strat.yPosition.GetPrice()) / strat.yPosition.GetPrice()
+			}
+
+			if strat.spreadReady {
+				fields["spreadTimeDelta"] = strat.spreadEventTime.Sub(strat.spreadTickerTime).Seconds()
+				fields["spreadLastLong"] = strat.spreadLastLong
+				fields["spreadLastShort"] = strat.spreadLastShort
+				fields["spreadMedianLong"] = strat.spreadMedianLong
+				fields["spreadMedianShort"] = strat.spreadMedianShort
+			}
+
+
 		} else {
 			logger.Debugf(
-				"%s %s save failed, okXPosition %v okYPosition %v okSpread %v xyMidPrice %v",
-				xSymbol, ySymbol, strat.xPosition != nil, strat.yPosition != nil, strat.spreadReady, strat.xyMidPrice,
+				"%s %s save failed, okXPosition %v okYPosition %v xMidPrice %v yMidPrice %v",
+				xSymbol, ySymbol, strat.xPosition != nil, strat.yPosition != nil, strat.xMidPrice, strat.yMidPrice,
 			)
 			hasAllSymbols = false
 		}
 
 
 		//stats不管策略状态，都需要保存
-
 		if strat.stats.Ready.True() {
 			fields["statsReady"] = 1.0
 			if strat.targetWeightUpdated.True() {
@@ -183,6 +194,7 @@ func handleSave(
 		if strat.xyFundingRate != nil {
 			fields["xyFundingRate"] = *strat.xyFundingRate
 		}
+
 		if strat.realisedSpread != nil {
 			fields["realisedSpread"] = *strat.realisedSpread
 		}
