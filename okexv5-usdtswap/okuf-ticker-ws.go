@@ -114,6 +114,9 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 			}else if msg[54] == '"' {
 				symbol = common.UnsafeBytesToString(msg[38:54])
 				msgCut = 85
+			}else if msg[55] == '"' {
+				symbol = common.UnsafeBytesToString(msg[38:55])
+				msgCut = 86
 			}else{
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)
