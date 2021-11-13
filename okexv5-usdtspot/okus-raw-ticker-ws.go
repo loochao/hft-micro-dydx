@@ -117,6 +117,10 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 				symbol = common.UnsafeBytesToString(msg[38:48])
 			} else if msg[49] == '"' {
 				symbol = common.UnsafeBytesToString(msg[38:48])
+			} else if msg[50] == '"' {
+				symbol = common.UnsafeBytesToString(msg[38:50])
+			} else if msg[51] == '"' {
+				symbol = common.UnsafeBytesToString(msg[38:51])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)
