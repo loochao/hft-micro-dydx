@@ -124,7 +124,7 @@ func (w *RawTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 				}
 				continue
 			}
-		} else if msgLen == 4 && msg[2] == 'p' {
+		} else if msgLen == 4 && msg[0] == 'p' {
 			select {
 			case w.pingCh <- msg:
 			default:

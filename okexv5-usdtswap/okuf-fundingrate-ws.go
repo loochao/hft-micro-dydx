@@ -94,7 +94,6 @@ func (w *FundingRateWS) readLoop(conn *websocket.Conn, channels map[string]chan 
 			w.restart()
 			return
 		}
-		logger.Debugf("%s", msg)
 		msgLen = len(msg)
 		if msgLen > 72 && msg[2] == 'a' && msg[42] == '"' {
 			//{"arg":{"channel":"funding-rate","instId":"DOGE-USDT-SWAP"},"data":[{"fundingRate":"0.00009327","fundingTime":"1636848000000","instId":"DOGE-USDT-SWAP","instType":"SWAP","nextFundingRate":"0.0003"}]}
@@ -120,7 +119,7 @@ func (w *FundingRateWS) readLoop(conn *websocket.Conn, channels map[string]chan 
 				}
 				continue
 			}
-		} else if msgLen == 4 && msg[2] == 'p' {
+		} else if msgLen == 4 && msg[0] == 'p' {
 			select {
 			case w.pingCh <- msg:
 			default:
@@ -137,7 +136,6 @@ func (w *FundingRateWS) readLoop(conn *websocket.Conn, channels map[string]chan 
 			}
 			continue
 		}
-		logger.Debugf("%s", symbol)
 		if ch, ok = channels[symbol]; ok {
 			select {
 			case ch <- msg[msgCut:]:
@@ -286,8 +284,8 @@ func (w *FundingRateWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
-	symbolTimeout := time.Minute
-	symbolCheckInterval := time.Second
+	symbolTimeout := time.Minute*2
+	symbolCheckInterval := time.Second*5
 	symbolCheckTimer := time.NewTimer(time.Second)
 	defer symbolCheckTimer.Stop()
 	symbolUpdatedTimes := make(map[string]time.Time)
@@ -320,13 +318,13 @@ func (w *FundingRateWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 			break
 		case symbol := <-w.symbolCh:
 			pingTimer.Reset(time.Second * 15)
-			trafficTimeout.Reset(time.Second * 30)
+			trafficTimeout.Reset(time.Minute * 2)
 			symbolUpdatedTimes[symbol] = time.Now()
 			break
 		case <-w.pingCh:
 			logger.Debugf("PING MSG")
 			pingTimer.Reset(time.Second * 15)
-			trafficTimeout.Reset(time.Second * 30)
+			trafficTimeout.Reset(time.Minute * 2)
 			break
 		case <-symbolCheckTimer.C:
 			args := make([]WsArgs, 0)

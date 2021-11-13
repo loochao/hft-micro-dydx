@@ -123,7 +123,7 @@ func (w *RawFundingRateWS) readLoop(conn *websocket.Conn, channels map[string]ch
 				}
 				continue
 			}
-		} else if msgLen == 4 && msg[2] == 'p' {
+		} else if msgLen == 4 && msg[0] == 'p' {
 			select {
 			case w.pingCh <- msg:
 			default:
