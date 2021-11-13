@@ -279,6 +279,8 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 	} else if !strat.reduceOnly &&
 		!strat.isYSpot &&
+		strat.tdSpreadMiddle > strat.config.SpreadMiddleMin &&
+		strat.tdSpreadMiddle < strat.config.SpreadMiddleMax &&
 		strat.spreadMedianShort > strat.thresholdShortTop &&
 		strat.spreadLastShort > strat.spreadMedianShort &&
 		//*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
@@ -406,6 +408,8 @@ func (strat *XYStrategy) updateXPosition() {
 		)
 	} else if !strat.reduceOnly &&
 		!strat.isXSpot &&
+		strat.tdSpreadMiddle > strat.config.SpreadMiddleMin &&
+		strat.tdSpreadMiddle < strat.config.SpreadMiddleMax &&
 		strat.spreadMedianLong < strat.thresholdLongBot &&
 		strat.spreadLastLong < strat.spreadMedianLong &&
 		//*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&

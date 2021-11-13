@@ -59,6 +59,8 @@ type Config struct {
 	SpreadShortLeaveQuantileBot float64 `yaml:"spreadShortLeaveQuantileBot"`
 	SpreadLongEnterQuantileBot  float64 `yaml:"spreadLongEnterQuantileBot"`
 	SpreadLongLeaveQuantileTop  float64 `yaml:"spreadLongLeaveQuantileTop"`
+	SpreadMiddleMin             float64 `yaml:"spreadMiddleMin"`
+	SpreadMiddleMax             float64 `yaml:"spreadMiddleMax"`
 
 	XSizeQuantile        float64 `yaml:"xLiquidityQuantile"`
 	YSizeQuantile        float64 `yaml:"yLiquidityQuantile"`

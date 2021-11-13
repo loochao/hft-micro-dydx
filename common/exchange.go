@@ -21,4 +21,6 @@ const (
 	HoubiUsdtFuture
 	BitfinexUsdtFuture
 	DydxUsdFuture
+	OkexV5UsdtSpot
+	OkexV5UsdtFuture
 )
