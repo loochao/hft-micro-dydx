@@ -300,7 +300,7 @@ func (w *RawTradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, sy
 			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
-	symbolTimeout := time.Minute
+	symbolTimeout := time.Minute*5
 	symbolCheckInterval := time.Second
 	symbolCheckTimer := time.NewTimer(time.Second)
 	defer symbolCheckTimer.Stop()
@@ -338,7 +338,7 @@ func (w *RawTradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, sy
 			symbolUpdatedTimes[symbol] = time.Now()
 			break
 		case <-w.pingCh:
-			logger.Debugf("PING MSG")
+			//logger.Debugf("PING MSG")
 			pingTimer.Reset(time.Second * 15)
 			trafficTimeout.Reset(time.Second * 30)
 			break
