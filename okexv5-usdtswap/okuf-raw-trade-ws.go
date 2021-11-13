@@ -302,7 +302,7 @@ func (w *RawTradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, sy
 			logger.Debugf("conn.Close() ERROR %v", err)
 		}
 	}()
-	symbolTimeout := time.Minute
+	symbolTimeout := time.Minute*5
 	symbolCheckInterval := time.Second
 	symbolCheckTimer := time.NewTimer(time.Second)
 	defer symbolCheckTimer.Stop()

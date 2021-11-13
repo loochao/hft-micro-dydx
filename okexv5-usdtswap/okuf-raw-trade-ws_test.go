@@ -11,7 +11,8 @@ import (
 
 func TestNewRawTradeWs(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute*5)
-	symbols := []string{"BTC-USDT-SWAP", "DOGE-USDT-SWAP", "WAVES-USDT-SWAP"}
+	//symbols := []string{"BTC-USDT-SWAP", "DOGE-USDT-SWAP", "BABYDOGE-USDT-SWAP"}
+	symbols := []string{"BABYDOGE-USDT-SWAP"}
 	channels := make(map[string]chan *common.RawMessage)
 	ch := make(chan *common.RawMessage)
 	for _, symbol := range symbols {
