@@ -1,4 +1,4 @@
-package okexv5_usdtspot
+package okexv5_usdtswap
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type TradeWS struct {
+type TickerWS struct {
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
@@ -23,7 +23,7 @@ type TradeWS struct {
 	stopped     int32
 }
 
-func (w *TradeWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -64,7 +64,7 @@ func (w *TradeWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 }
 
 
-func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -96,23 +96,24 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 			return
 		}
 		msgLen = len(msg)
-		if  msgLen > 61 && msg[2] == 'a' && msg[36] == '"'{
-			//{"arg":{"channel":"trades","instId":"DOGE-USDT"},"data":[{"instId":"DOGE-USDT","tradeId":"106645495","px":"0.256222","sz":"14.19554","side":"sell","ts":"1636778780284"}]}
-			if msg[45] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:45])
-				msgCut = 58
-			}else if msg[44] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:44])
-				msgCut = 57
-			}else if msg[46] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:46])
-				msgCut = 59
-			}else if msg[47] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:47])
-				msgCut = 60
-			}else if msg[48] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:48])
-				msgCut = 61
+		logger.Debugf("%s", msg)
+		if  msgLen > 128 && msg[2] == 'a' && msg[37] == '"'{
+			//{"arg":{"channel":"tickers","instId":"BTC-USDT-SWAP"},"data":[{"instType":"SWAP","instId":"BTC-USDT-SWAP","last":"64555.9","lastSz":"1","askPx":"64556","askSz":"758","bidPx":"64555.9","bidSz":"686","open24h":"63018.6","high24h":"65111","low24h":"63006.5","sodUtc0":"64108.7","sodUtc8":"64674.7","volCcy24h":"29767.59","vol24h":"2976759","ts":"1636823978601"}]}
+			if msg[51] == '"' {
+				symbol = common.UnsafeBytesToString(msg[38:51])
+				msgCut = 82
+			}else if msg[50] == '"' {
+				symbol = common.UnsafeBytesToString(msg[38:50])
+				msgCut = 81
+			}else if msg[52] == '"' {
+				symbol = common.UnsafeBytesToString(msg[38:52])
+				msgCut = 83
+			}else if msg[53] == '"' {
+				symbol = common.UnsafeBytesToString(msg[38:53])
+				msgCut = 84
+			}else if msg[54] == '"' {
+				symbol = common.UnsafeBytesToString(msg[38:54])
+				msgCut = 85
 			}else{
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)
@@ -131,10 +132,10 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 			}
 			continue
 		} else{
-			//if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("MSG %s", msg)
+			if time.Now().Sub(logSilentTime) > 0 {
+				logger.Debugf("other msg %s", msg)
 				logSilentTime = time.Now().Add(time.Minute)
-			//}
+			}
 			continue
 		}
 		if ch, ok = channels[symbol]; ok {
@@ -158,7 +159,7 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 	}
 }
 
-func (w *TradeWS) readAll(r io.Reader) ([]byte, error) {
+func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -176,7 +177,7 @@ func (w *TradeWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *TradeWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -223,7 +224,7 @@ func (w *TradeWS) reconnect(ctx context.Context, wsUrl string, proxy string, cou
 	return conn, nil
 }
 
-func (w *TradeWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
+func (w *TickerWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -276,7 +277,7 @@ func (w *TradeWS) mainLoop(ctx context.Context, proxy string, channels map[strin
 	}
 }
 
-func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -332,14 +333,14 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
 					args = append(args, WsArgs{
-						Channel: "trades",
+						Channel: "tickers",
 						InstId: symbol,
 					})
 					symbolUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
 				}
 			}
 			if len(args) > 0 {
-				logger.Debugf("SUB %s", args)
+				logger.Debugf("SUBSCRIBE %s", args)
 				for start := 0; start < len(args); start += 50 {
 					end := start + 50
 					if end > len(args) {
@@ -362,14 +363,14 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 
 }
 
-func (w *TradeWS) Stop() {
+func (w *TickerWS) Stop() {
 	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (w *TradeWS) restart() {
+func (w *TickerWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -377,19 +378,18 @@ func (w *TradeWS) restart() {
 	}
 }
 
-func (w *TradeWS) Done() chan interface{} {
+func (w *TickerWS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *TradeWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Trade) {
+func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Ticker) {
 	logSilentTime := time.Now()
-	const bufferLen = 4096
 	var err error
-	var trade *Trade
+	var ticker *Ticker
 	index := -1
-	pool := [bufferLen]*Trade{}
-	for i := 0; i < bufferLen; i++ {
-		pool[i] = &Trade{}
+	pool := [4]*Ticker{}
+	for i := 0; i < 4; i++ {
+		pool[i] = &Ticker{}
 	}
 	for {
 		select {
@@ -399,20 +399,20 @@ func (w *TradeWS) dataHandleLoop(ctx context.Context, symbol string, inputCh cha
 			return
 		case msg := <-inputCh:
 			index++
-			if index == bufferLen {
+			if index == 4 {
 				index = 0
 			}
-			trade = pool[index]
-			err = ParseTrade(msg, trade)
+			ticker = pool[index]
+			err = ParseTicker(msg, ticker)
 			if err != nil {
 				logger.Debugf("%s ParseTicker error %v %s", symbol, err, msg)
 				continue
 			}
 			select {
-			case outputCh <- trade:
+			case outputCh <- ticker:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("outputCh <- trade failed, %s ch len %d", symbol, len(outputCh))
+					logger.Debugf("outputCh <- ticker failed, %s ch len %d", symbol, len(outputCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -420,12 +420,12 @@ func (w *TradeWS) dataHandleLoop(ctx context.Context, symbol string, inputCh cha
 	}
 }
 
-func NewTradeWS(
+func NewTickerWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan common.Trade,
-) *TradeWS {
-	ws := TradeWS{
+	channels map[string]chan common.Ticker,
+) *TickerWS {
+	ws := TickerWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}, 16),
 		writeCh:     make(chan interface{}, len(channels)*4),

@@ -1,4 +1,4 @@
-package okexv5_usdtspot
+package okexv5_usdtswap
 
 import (
 	"encoding/json"
@@ -9,33 +9,35 @@ import (
 	"time"
 )
 
-//    {
+// {
 //      "alias": "",
-//      "baseCcy": "BTC",
+//      "baseCcy": "",
 //      "category": "1",
-//      "ctMult": "",
-//      "ctType": "",
-//      "ctVal": "",
-//      "ctValCcy": "",
+//      "ctMult": "1",
+//      "ctType": "linear",
+//      "ctVal": "0.01",
+//      "ctValCcy": "BTC",
 //      "expTime": "",
-//      "instId": "BTC-USDT",
-//      "instType": "SPOT",
-//      "lever": "10",
-//      "listTime": "1548133413000",
-//      "lotSz": "0.00000001",
-//      "minSz": "0.00001",
+//      "instId": "BTC-USDT-SWAP",
+//      "instType": "SWAP",
+//      "lever": "125",
+//      "listTime": "1636620075000",
+//      "lotSz": "1",
+//      "minSz": "1",
 //      "optType": "",
-//      "quoteCcy": "USDT",
-//      "settleCcy": "",
+//      "quoteCcy": "",
+//      "settleCcy": "USDT",
 //      "state": "live",
 //      "stk": "",
 //      "tickSz": "0.1",
-//      "uly": ""
+//      "uly": "BTC-USDT"
 //    }
 
 type Instrument struct {
-	Alias    string  `json:"alias"`
-	BaseCcy  string  `json:"baseCcy"`
+	CtVal    float64 `json:"ctVal,string"`
+	CtValCcy string  `json:"ctValCcy"`
+	CtMult   float64 `json:"ctMult,string"`
+	Lever    int64   `json:"lever,string"`
 	InstId   string  `json:"instId"`
 	InstType string  `json:"instType"`
 	ListTime int64   `json:"listTime,string"`
@@ -44,6 +46,114 @@ type Instrument struct {
 	QuoteCcy string  `json:"quoteCcy"`
 	State    string  `json:"state"`
 	TickSz   float64 `json:"tickSz,string"`
+}
+
+//{
+//      "adl": "2",
+//      "availPos": "1",
+//      "avgPx": "32.65",
+//      "cTime": "1636814100137",
+//      "ccy": "USDT",
+//      "deltaBS": "",
+//      "deltaPA": "",
+//      "gammaBS": "",
+//      "gammaPA": "",
+//      "imr": "32.645704200632",
+//      "instId": "ATOM-USDT-SWAP",
+//      "instType": "SWAP",
+//      "interest": "0",
+//      "last": "32.653",
+//      "lever": "1",
+//      "liab": "",
+//      "liabCcy": "",
+//      "liqPx": "241.42399513235674",
+//      "margin": "",
+//      "markPx": "32.645704200632",
+//      "mgnMode": "cross",
+//      "mgnRatio": "628.2958655980798",
+//      "mmr": "0.32645704200632",
+//      "notionalUsd": "32.65288625555614",
+//      "optVal": "",
+//      "pos": "1",
+//      "posCcy": "",
+//      "posId": "379761092775538690",
+//      "posSide": "short",
+//      "thetaBS": "",
+//      "thetaPA": "",
+//      "tradeId": "20034596",
+//      "uTime": "1636814108239",
+//      "upl": "0.004295799368002",
+//      "uplRatio": "0.0001315711904442",
+//      "usdPx": "",
+//      "vegaBS": "",
+//      "vegaPA": ""
+//    }
+
+type Position struct {
+	//Adl         int       `json:"adl,string"`
+	AvgPx float64 `json:"avgPx,string"`
+	//CTime       time.Time `json:"-"`
+	Ccy string `json:"ccy"`
+	//Imr         float64   `json:"imr,string"` //初始保证金，仅适用于全仓
+	InstId   string `json:"instId"`
+	InstType string `json:"instType"`
+	//Last        float64   `json:"last,string"`
+	//Lever       float64   `json:"lever,string"`
+	//LiqPx       float64   `json:"liqPx,string"`
+	//MarkPx      float64   `json:"markPx,string"`
+	MgnMode  string  `json:"mgnMode"`
+	MgnRatio float64 `json:"mgnRatio,string"`
+	Mmr      float64 `json:"mmr,string"` //维持保证金
+	//NotionalUsd float64   `json:"notionalUsd,string"` //以美金价值为单位的持仓数量
+	Pos     float64   `json:"pos,string"`
+	PosId   string    `json:"posId"`
+	PosSide string    `json:"posSide"`
+	TradeId string    `json:"tradeId"`
+	UTime   time.Time `json:"-"`
+	//Upl         float64   `json:"upl,string"`
+	//UplRatio    float64   `json:"uplRatio,string"`
+	ParseTime time.Time `json:"-"`
+}
+
+func (p *Position) GetSymbol() string {
+	return p.InstId
+}
+
+func (p *Position) GetSize() float64 {
+	return p.Pos
+}
+
+func (p *Position) GetPrice() float64 {
+	return p.AvgPx
+}
+
+func (p *Position) GetEventTime() time.Time {
+	return p.UTime
+}
+
+func (p *Position) GetParseTime() time.Time {
+	return p.ParseTime
+}
+
+func (p *Position) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (p *Position) UnmarshalJSON(data []byte) error {
+	type Alias Position
+	aux := &struct {
+		UTime int64 `json:"uTime,string"`
+		*Alias
+	}{
+		Alias: (*Alias)(p),
+	}
+	var err error
+	if err = json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	p.UTime = time.Unix(0, aux.UTime*1000000)
+	p.ParseTime = time.Now()
+	return nil
 }
 
 //{
@@ -68,46 +178,53 @@ type Status struct {
 	ScheDesc    string `json:"scheDesc"`
 }
 
-//     {
-//        "availBal": "",
-//        "availEq": "227.32204128222",
-//        "cashBal": "227.32204128222",
-//        "ccy": "USDT",
-//        "crossLiab": "",
-//        "disEq": "227.3743253517149",
-//        "eq": "227.32204128222",
-//        "eqUsd": "227.3743253517149",
-//        "frozenBal": "0",
-//        "interest": "",
-//        "isoEq": "0",
-//        "isoLiab": "",
-//        "isoUpl": "0",
-//        "liab": "",
-//        "maxLoan": "",
-//        "mgnRatio": "",
-//        "notionalLever": "0",
-//        "ordFrozen": "0",
-//        "stgyEq": "0",
-//        "twap": "0",
-//        "uTime": "1636700783723",
-//        "upl": "0",
-//        "uplLiab": ""
-//      }
+//        {
+//          "availBal": "",
+//          "availEq": "200.196998228728",
+//          "cashBal": "211.14357218222",
+//          "ccy": "USDT",
+//          "crossLiab": "",
+//          "disEq": "211.1789526319414",
+//          "eq": "211.149391717101",
+//          "eqUsd": "211.1789526319414",
+//          "frozenBal": "10.952393488373",
+//          "interest": "",
+//          "isoEq": "0",
+//          "isoLiab": "",
+//          "isoUpl": "0",
+//          "liab": "",
+//          "maxLoan": "",
+//          "mgnRatio": "623.910531981601",
+//          "notionalLever": "0.155611059060692",
+//          "ordFrozen": "0",
+//          "stgyEq": "0",
+//          "twap": "0",
+//          "uTime": "1636815658786",
+//          "upl": "0.0058195348809988",
+//          "uplLiab": ""
+//        }
 
-type Balance struct {
-	Ccy       string    `json:"ccy"`
-	Eq        float64   `json:"eq,string"`        //币种总权益
-	CashBal   float64   `json:"cashBal,string"`   //币种余额
-	FrozenBal float64   `json:"frozenBal,string"` //币种占用金额
-	OrdFrozen float64   `json:"ordFrozen,string"` //挂单冻结数量
-	EventTime time.Time `json:"-"`
-	ParseTime time.Time `json:"-"`
+type Account struct {
+	Ccy           string    `json:"ccy"`
+	AvailEq       float64   `json:"availEq,string"`
+	CashBal       float64   `json:"cashBal,string"`
+	DisEq         float64   `json:"disEq,string"`
+	Eq            float64   `json:"eq,string"`    //币种总权益
+	EqUsd         float64   `json:"eqUsd,string"` //币种总权益
+	FrozenBal     float64   `json:"frozenBal,string"`
+	MgnRatio      float64   `json:"-"`
+	NotionalLever float64   `json:"-"`
+	Upl           float64   `json:"upl,string"`
+	UTime         time.Time `json:"-"`
+	ParseTime     time.Time `json:"-"`
 }
 
-func (b *Balance) UnmarshalJSON(data []byte) error {
-	type Alias Balance
+func (b *Account) UnmarshalJSON(data []byte) error {
+	type Alias Account
 	aux := &struct {
-		UTime int64 `json:"uTime,string"`
+		UTime         int64  `json:"uTime,string"`
+		MgnRatio      string `json:"mgnRatio"`
+		NotionalLever string `json:"notionalLever"`
 		*Alias
 	}{
 		Alias: (*Alias)(b),
@@ -116,74 +233,98 @@ func (b *Balance) UnmarshalJSON(data []byte) error {
 	if err = json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
-	b.EventTime = time.Unix(0, aux.UTime*1000000)
+	b.UTime = time.Unix(0, aux.UTime*1000000)
 	b.ParseTime = time.Now()
+	if aux.MgnRatio != "" {
+		b.MgnRatio, err = strconv.ParseFloat(aux.MgnRatio, 64)
+	}
+	if aux.NotionalLever != "" {
+		b.NotionalLever, err = strconv.ParseFloat(aux.NotionalLever, 64)
+	}
 	return nil
 }
 
-func (b *Balance) GetExchange() common.ExchangeID {
+func (b *Account) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (b *Balance) GetSymbol() string {
-	return b.Ccy + "-USDT"
+func (b *Account) GetEventTime() time.Time {
+	return b.UTime
 }
 
-func (b *Balance) GetSize() float64 {
-	return b.Eq
-}
-
-func (b *Balance) GetPrice() float64 {
-	return 0.0
-}
-
-func (b *Balance) GetEventTime() time.Time {
-	return b.EventTime
-}
-
-func (b *Balance) GetParseTime() time.Time {
+func (b *Account) GetParseTime() time.Time {
 	return b.ParseTime
 }
 
-func (b *Balance) GetCurrency() string {
+func (b *Account) GetCurrency() string {
 	return b.Ccy
 }
 
-func (b *Balance) GetBalance() float64 {
+func (b *Account) GetBalance() float64 {
 	return b.Eq
 }
 
-func (b *Balance) GetFree() float64 {
-	return b.CashBal
+func (b *Account) GetFree() float64 {
+	return b.AvailEq
 }
 
-func (b *Balance) GetUsed() float64 {
-	return b.Eq - b.CashBal
+func (b *Account) GetUsed() float64 {
+	return b.Eq - b.AvailEq
 }
 
-func (b *Balance) GetTime() time.Time {
-	return b.EventTime
+func (b *Account) GetTime() time.Time {
+	return b.UTime
 }
 
-// "imr": "3372.2942371050594217",
-//            "isoEq": "0",
-//            "mgnRatio": "70375.35408747017",
-//            "mmr": "134.8917694842024",
-//            "notionalUsd": "33722.9423710505978888",
-//            "ordFroz": "0",
-//            "totalEq": "11172992.1657531589092577",
-//            "uTime": "1623392334718"
+//{
+//      "adjEq": "",
+//      "details": [
+//        {
+//          "availBal": "",
+//          "availEq": "200.196998228728",
+//          "cashBal": "211.14357218222",
+//          "ccy": "USDT",
+//          "crossLiab": "",
+//          "disEq": "211.1789526319414",
+//          "eq": "211.149391717101",
+//          "eqUsd": "211.1789526319414",
+//          "frozenBal": "10.952393488373",
+//          "interest": "",
+//          "isoEq": "0",
+//          "isoLiab": "",
+//          "isoUpl": "0",
+//          "liab": "",
+//          "maxLoan": "",
+//          "mgnRatio": "623.910531981601",
+//          "notionalLever": "0.155611059060692",
+//          "ordFrozen": "0",
+//          "stgyEq": "0",
+//          "twap": "0",
+//          "uTime": "1636815658786",
+//          "upl": "0.0058195348809988",
+//          "uplLiab": ""
+//        }
+//      ],
+//      "imr": "",
+//      "isoEq": "0",
+//      "mgnRatio": "",
+//      "mmr": "",
+//      "notionalUsd": "",
+//      "ordFroz": "",
+//      "totalEq": "227.60212008766186",
+//      "uTime": "1636817309566"
+//    }
 
-type BalancesData struct {
+type AccountData struct {
 	AdjEq     string    `json:"adjEq"`
-	Details   []Balance `json:"details"`
+	Details   []Account `json:"details"`
 	TotalEq   float64   `json:"totalEq,string"`
 	UTime     time.Time `json:"-"`
 	ParseTime time.Time `json:"-"`
 }
 
-func (b *BalancesData) UnmarshalJSON(data []byte) error {
-	type Alias BalancesData
+func (b *AccountData) UnmarshalJSON(data []byte) error {
+	type Alias AccountData
 	aux := &struct {
 		UTime int64 `json:"uTime,string"`
 		*Alias
@@ -229,9 +370,9 @@ func (b *CashBalance) UnmarshalJSON(data []byte) error {
 }
 
 type BalanceAndPosition struct {
-	BalData   []CashBalance `json:"balData"`
-	EventType string        `json:"eventType"`
-	PTime     time.Time     `json:"-"`
+	PosData   []Position `json:"posData"`
+	EventType string     `json:"eventType"`
+	PTime     time.Time  `json:"-"`
 }
 
 func (b *BalanceAndPosition) UnmarshalJSON(data []byte) error {
@@ -531,26 +672,6 @@ func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type FundingRate struct {
-	Symbol string
-}
-
-func (f FundingRate) GetExchange() common.ExchangeID {
-	return ExchangeID
-}
-
-func (f FundingRate) GetSymbol() string {
-	return f.Symbol
-}
-
-func (f FundingRate) GetFundingRate() float64 {
-	return 0
-}
-
-func (f FundingRate) GetNextFundingTime() time.Time {
-	return time.Time{}
-}
-
 //    {
 //      "instId": "DOGE-USDT",
 //      "tradeId": "106645495",
@@ -601,5 +722,73 @@ func (t *Trade) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	t.TS = time.Unix(0, aux.TS*1000000)
+	return nil
+}
+
+//{
+//        "uid": "43812",
+//        "acctLv": "2",
+//        "posMode": "long_short_mode",
+//        "autoLoan": true,
+//        "greeksType": "BS",
+//        "level": "lv1",
+//        "levelTmp": ""
+//    }
+
+type AccountConfig struct {
+	Uid        string `json:"uid"`
+	AcctLv     string `json:"acctLv"`
+	PosMode    string `json:"posMode"`
+	AutoLoan   bool   `json:"autoLoan"`
+	GreeksType string `json:"greeksType"`
+	Level      string `json:"level"`
+	LevelTmp   string `json:"levelTmp"`
+}
+
+//{
+//        "instType": "SWAP",
+//        "instId": "BTC-USD-SWAP",
+//        "fundingRate": "0.018",
+//        "nextFundingRate": "",
+//        "fundingTime": "1597026383085"
+//    }
+
+type FundingRate struct {
+	InstType        string    `json:"instType"`
+	InstId          string    `json:"instId"`
+	FundingRate     float64   `json:"fundingRate,string"`
+	NextFundingRate float64   `json:"nextFundingRate,string"`
+	FundingTime     time.Time `json:"-"`
+}
+
+func (f *FundingRate) GetSymbol() string {
+	return f.InstId
+}
+
+func (f *FundingRate) GetFundingRate() float64 {
+	return f.FundingRate
+}
+
+func (f *FundingRate) GetNextFundingTime() time.Time {
+	return f.FundingTime
+}
+
+func (f *FundingRate) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (f *FundingRate) UnmarshalJSON(data []byte) error {
+	type Alias FundingRate
+	aux := &struct {
+		FundingTime int64 `json:"fundingTime,string"`
+		*Alias
+	}{
+		Alias: (*Alias)(f),
+	}
+	var err error
+	if err = json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	f.FundingTime = time.Unix(0, aux.FundingTime*1000000)
 	return nil
 }

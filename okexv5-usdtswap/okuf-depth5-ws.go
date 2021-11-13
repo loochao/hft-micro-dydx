@@ -1,4 +1,4 @@
-package okexv5_usdtspot
+package okexv5_usdtswap
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type TradeWS struct {
+type Depth5WS struct {
 	writeCh     chan interface{}
 	done        chan interface{}
 	reconnectCh chan interface{}
@@ -23,7 +23,7 @@ type TradeWS struct {
 	stopped     int32
 }
 
-func (w *TradeWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *Depth5WS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -63,8 +63,7 @@ func (w *TradeWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-
-func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -96,23 +95,24 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 			return
 		}
 		msgLen = len(msg)
-		if  msgLen > 61 && msg[2] == 'a' && msg[36] == '"'{
-			//{"arg":{"channel":"trades","instId":"DOGE-USDT"},"data":[{"instId":"DOGE-USDT","tradeId":"106645495","px":"0.256222","sz":"14.19554","side":"sell","ts":"1636778780284"}]}
-			if msg[45] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:45])
-				msgCut = 58
-			}else if msg[44] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:44])
-				msgCut = 57
-			}else if msg[46] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:46])
-				msgCut = 59
-			}else if msg[47] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:47])
-				msgCut = 60
-			}else if msg[48] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:48])
-				msgCut = 61
+		//logger.Debugf("%s", msg)
+		if  msgLen > 128 && msg[2] == 'a' && msg[36] == '"'{
+			//{"arg":{"channel":"books5","instId":"WAVES-USDT-SWAP"},"data":[{"asks":[["23.773","33","0","1"],["23.776","211","0","1"],["23.779","500","0","1"],["23.784","204","0","1"],["23.791","4","0","1"]],"bids":[["23.765","16","0","1"],["23.763","9","0","1"],["23.762","1","0","1"],["23.761","4","0","1"],["23.758","59","0","2"]],"instId":"WAVES-USDT-SWAP","ts":"1636824158165"}]}
+			if msg[50] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:50])
+				msgCut = 63
+			}else if msg[49] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:49])
+				msgCut = 62
+			}else if msg[51] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:51])
+				msgCut = 64
+			}else if msg[52] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:52])
+				msgCut = 65
+			}else if msg[53] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:53])
+				msgCut = 66
 			}else{
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)
@@ -131,10 +131,10 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 			}
 			continue
 		} else{
-			//if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("MSG %s", msg)
+			if time.Now().Sub(logSilentTime) > 0 {
+				logger.Debugf("other msg %s", msg)
 				logSilentTime = time.Now().Add(time.Minute)
-			//}
+			}
 			continue
 		}
 		if ch, ok = channels[symbol]; ok {
@@ -158,7 +158,7 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 	}
 }
 
-func (w *TradeWS) readAll(r io.Reader) ([]byte, error) {
+func (w *Depth5WS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -176,7 +176,7 @@ func (w *TradeWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *TradeWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *Depth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -223,7 +223,7 @@ func (w *TradeWS) reconnect(ctx context.Context, wsUrl string, proxy string, cou
 	return conn, nil
 }
 
-func (w *TradeWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
+func (w *Depth5WS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -276,7 +276,7 @@ func (w *TradeWS) mainLoop(ctx context.Context, proxy string, channels map[strin
 	}
 }
 
-func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *Depth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -332,14 +332,14 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
 					args = append(args, WsArgs{
-						Channel: "trades",
+						Channel: "books5",
 						InstId: symbol,
 					})
 					symbolUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
 				}
 			}
 			if len(args) > 0 {
-				logger.Debugf("SUB %s", args)
+				logger.Debugf("SUBSCRIBE %s", args)
 				for start := 0; start < len(args); start += 50 {
 					end := start + 50
 					if end > len(args) {
@@ -362,14 +362,14 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 
 }
 
-func (w *TradeWS) Stop() {
+func (w *Depth5WS) Stop() {
 	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (w *TradeWS) restart() {
+func (w *Depth5WS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -377,19 +377,18 @@ func (w *TradeWS) restart() {
 	}
 }
 
-func (w *TradeWS) Done() chan interface{} {
+func (w *Depth5WS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *TradeWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Trade) {
+func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Depth) {
 	logSilentTime := time.Now()
-	const bufferLen = 4096
 	var err error
-	var trade *Trade
+	var depth5 *Depth5
 	index := -1
-	pool := [bufferLen]*Trade{}
-	for i := 0; i < bufferLen; i++ {
-		pool[i] = &Trade{}
+	pool := [4]*Depth5{}
+	for i := 0; i < 4; i++ {
+		pool[i] = &Depth5{}
 	}
 	for {
 		select {
@@ -399,20 +398,20 @@ func (w *TradeWS) dataHandleLoop(ctx context.Context, symbol string, inputCh cha
 			return
 		case msg := <-inputCh:
 			index++
-			if index == bufferLen {
+			if index == 4 {
 				index = 0
 			}
-			trade = pool[index]
-			err = ParseTrade(msg, trade)
+			depth5 = pool[index]
+			err = ParseDepth5(msg, depth5)
 			if err != nil {
-				logger.Debugf("%s ParseTicker error %v %s", symbol, err, msg)
+				logger.Debugf("%s ParseDepth5 error %v %s", symbol, err, msg)
 				continue
 			}
 			select {
-			case outputCh <- trade:
+			case outputCh <- depth5:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("outputCh <- trade failed, %s ch len %d", symbol, len(outputCh))
+					logger.Debugf("outputCh <- depth5 failed, %s ch len %d", symbol, len(outputCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -420,17 +419,17 @@ func (w *TradeWS) dataHandleLoop(ctx context.Context, symbol string, inputCh cha
 	}
 }
 
-func NewTradeWS(
+func NewDepth5WS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan common.Trade,
-) *TradeWS {
-	ws := TradeWS{
+	channels map[string]chan common.Depth,
+) *Depth5WS {
+	ws := Depth5WS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 16),
-		writeCh:     make(chan interface{}, len(channels)*4),
-		symbolCh:    make(chan string, len(channels)*16),
-		pingCh:      make(chan []byte, 16),
+		reconnectCh: make(chan interface{}, 4),
+		writeCh:     make(chan interface{}, len(channels)),
+		symbolCh:    make(chan string, len(channels)),
+		pingCh:      make(chan []byte, 4),
 		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)

@@ -111,7 +111,7 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 				msgCut = 60
 			}else if msg[48] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:48])
-				msgCut = 70
+				msgCut = 61
 			}else{
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)

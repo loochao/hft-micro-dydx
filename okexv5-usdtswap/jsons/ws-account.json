@@ -1,0 +1,46 @@
+{
+  "arg": {
+    "channel": "account",
+    "uid": "1483770842722304"
+  },
+  "data": [
+    {
+      "adjEq": "",
+      "details": [
+        {
+          "availBal": "",
+          "availEq": "200.0630226201461",
+          "cashBal": "211.14899579926876",
+          "ccy": "USDT",
+          "coinUsdPrice": "1.00016",
+          "crossLiab": "",
+          "disEq": "211.08403395747314",
+          "eq": "211.05026591492677",
+          "eqUsd": "211.08403395747314",
+          "frozenBal": "10.987243294780667",
+          "interest": "",
+          "isoEq": "0",
+          "isoLiab": "",
+          "isoUpl": "0",
+          "liab": "",
+          "maxLoan": "",
+          "mgnRatio": "621.6396151238633",
+          "notionalLever": "0.1561795231171549",
+          "ordFrozen": "0",
+          "stgyEq": "0",
+          "twap": "0",
+          "uTime": "1636819211491",
+          "upl": "-0.0987298843419993"
+        }
+      ],
+      "imr": "",
+      "isoEq": "0",
+      "mgnRatio": "",
+      "mmr": "",
+      "notionalUsd": "",
+      "ordFroz": "",
+      "totalEq": "227.56718554018246",
+      "uTime": "1636822639240"
+    }
+  ]
+}

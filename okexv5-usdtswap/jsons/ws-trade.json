@@ -1,0 +1,16 @@
+{
+  "arg": {
+    "channel": "trades",
+    "instId": "DOGE-USDT-SWAP"
+  },
+  "data": [
+    {
+      "instId": "DOGE-USDT-SWAP",
+      "tradeId": "103502273",
+      "px": "0.259851",
+      "sz": "6",
+      "side": "buy",
+      "ts": "1636823608860"
+    }
+  ]
+}

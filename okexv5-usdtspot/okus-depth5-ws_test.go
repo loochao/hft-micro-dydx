@@ -13,7 +13,7 @@ func TestNewDepth5Ws(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute*5)
 	symbols := []string{"BTC-USDT", "DOGE-USDT", "WAVES-USDT"}
 	channels := make(map[string]chan common.Depth)
-	ch := make(chan common.Depth)
+	ch := make(chan common.Depth, 64)
 	for _, symbol := range symbols {
 		channels[symbol] = ch
 	}

@@ -1,4 +1,4 @@
-package okexv5_usdtspot
+package okexv5_usdtswap
 
 import (
 	"context"
@@ -24,6 +24,7 @@ func TestAPI_GetInstruments(t *testing.T) {
 	tickSizes := make(map[string]float64)
 	stepSizes := make(map[string]float64)
 	minSizes := make(map[string]float64)
+	multipliers := make(map[string]float64)
 	tickPrecisions := make(map[string]int)
 	stepPrecisions := make(map[string]int)
 	ids := make([]string, 0)
@@ -31,15 +32,17 @@ func TestAPI_GetInstruments(t *testing.T) {
 		if instrument.State != "live" {
 			continue
 		}
-		if instrument.InstType != "SPOT" {
+		if len(instrument.InstId) < 10 {
 			continue
 		}
-		if len(instrument.InstId) < 5 {
+		if instrument.InstId[len(instrument.InstId)-10:] != "-USDT-SWAP" {
 			continue
 		}
-		if instrument.InstId[len(instrument.InstId)-5:] != "-USDT" {
+		if instrument.CtMult != 1.0 {
+			logger.Debugf("%s %s %f %f", instrument.InstId, instrument.CtValCcy, instrument.CtVal, instrument.CtMult)
 			continue
 		}
+		multipliers[instrument.InstId] = instrument.CtVal
 		tickSizes[instrument.InstId] = instrument.TickSz
 		stepSizes[instrument.InstId] = instrument.LotSz
 		minSizes[instrument.InstId] = instrument.MinSz
@@ -66,13 +69,19 @@ func TestAPI_GetInstruments(t *testing.T) {
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
-	str += "var StepPrecisions = map[string]float64{\n"
+	str += "var Multipliers = map[string]float64{\n"
+	for _, symbol := range ids {
+		value := multipliers[symbol]
+		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var StepPrecisions = map[string]int{\n"
 	for _, symbol := range ids {
 		value := stepPrecisions[symbol]
 		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
 	}
 	str += "}\n\n"
-	str += "var TickPrecisions = map[string]float64{\n"
+	str += "var TickPrecisions = map[string]int{\n"
 	for _, symbol := range ids {
 		value := tickPrecisions[symbol]
 		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)

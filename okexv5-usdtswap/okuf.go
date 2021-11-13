@@ -1,4 +1,4 @@
-package okexv5_usdtspot
+package okexv5_usdtswap
 
 import (
 	"context"
@@ -91,14 +91,14 @@ func (okut *OkexV5UsdtSpot) StreamBasic(ctx context.Context, statusCh chan commo
 		okut.settings.ApiKey, okut.settings.ApiSecret, okut.settings.ApiPassphrase,
 		proxy,
 	)
-	balancesMap := make(map[string]*Balance, 0)
-	internalAccountCh := make(chan Balance, 4)
-	internalBalancesCh := make(chan []Balance, 4)
+	positionsMap := make(map[string]*Position, 0)
+	internalAccountCh := make(chan Account, 4)
+	internalBalancesCh := make(chan []Position, 4)
 	go okut.watchAccount(ctx, internalAccountCh)
 	go okut.watchBalances(ctx, internalBalancesCh)
 	go okut.watchSystemStatus(ctx, statusCh)
 	logSilentTime := time.Now()
-	usdtAccount := Balance{
+	usdtAccount := Account{
 		Ccy: "USDT",
 	}
 
@@ -138,35 +138,32 @@ func (okut *OkexV5UsdtSpot) StreamBasic(ctx context.Context, statusCh chan commo
 			}
 			commissionTimer.Reset(time.Minute)
 			break
-		case cashBalances := <-userWS.CashBalancesCh:
-			for _, cashBalance := range cashBalances {
-				if cashBalance.Ccy == "USDT" {
-					if cashBalance.EventTime.Sub(usdtAccount.EventTime) > 0 {
-						usdtAccount.Eq = cashBalance.CashBal
-						outUsdtBalance := usdtAccount
-						select {
-						case usdtAccountCh <- &outUsdtBalance:
-						default:
-							if time.Now().Sub(logSilentTime) > 0 {
-								logger.Debugf("usdtAccountCh <- usdtAccount failed, ch len %d", len(usdtAccountCh))
-								logSilentTime = time.Now().Add(time.Minute)
-							}
-						}
+		case positions := <-userWS.PositionsCh:
+			for _, nextPos := range positions {
+				if nextPos.Ccy != "USDT" {
+					continue
+				}
+				if nextPos.MgnMode != "cross" {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("%s bad position margin mode %s %v", nextPos.InstId, nextPos.MgnMode, nextPos)
 					}
 					continue
 				}
-				symbol := cashBalance.Ccy + "-USDT"
-				if ch, ok := positionChMap[symbol]; ok {
-					if lastBalance, ok2 := balancesMap[symbol]; ok2 && cashBalance.EventTime.Sub(lastBalance.EventTime) > 0 {
-						lastBalance.EventTime = cashBalance.EventTime
-						lastBalance.Eq = cashBalance.CashBal
-						lastBalance.ParseTime = cashBalance.ParseTime
-						balancesMap[symbol] = lastBalance
+				if nextPos.PosSide != "net" {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("%s bad position side %s %v", nextPos.InstId, nextPos.PosSide, nextPos)
+					}
+					continue
+				}
+				if ch, ok1 := positionChMap[nextPos.InstId]; ok1{
+					if lastPos, ok2 := positionsMap[nextPos.InstId]; ok2 && nextPos.UTime.Sub(lastPos.UTime) > 0 {
+						position := nextPos
+						positionsMap[position.InstId] = &position
 						select {
-						case ch <- lastBalance:
+						case ch <- &position:
 						default:
 							if time.Now().Sub(logSilentTime) > 0 {
-								logger.Debugf("ch <- balance failed, ch len %d", len(ch))
+								logger.Debugf("ch <- &nextPos failed, ch len %d", len(ch))
 								logSilentTime = time.Now().Add(time.Minute)
 							}
 						}
@@ -174,52 +171,32 @@ func (okut *OkexV5UsdtSpot) StreamBasic(ctx context.Context, statusCh chan commo
 				}
 			}
 			break
-		case balances := <-userWS.BalancesCh:
-			for _, wsBalance := range balances {
-				if wsBalance.Ccy == "USDT" {
-					if wsBalance.EventTime.Sub(usdtAccount.EventTime) > 0 {
-						usdtAccount.Eq = wsBalance.Eq
-						usdtAccount.CashBal = wsBalance.CashBal
-						usdtAccount.OrdFrozen = wsBalance.OrdFrozen
-						usdtAccount.EventTime = wsBalance.EventTime
-						usdtAccount.ParseTime = wsBalance.ParseTime
+		case accounts := <-userWS.AccountsCh:
+			for _, account := range accounts {
+				if account.Ccy == "USDT" {
+					if account.UTime.Sub(usdtAccount.UTime) > 0 {
+						usdtAccount.AvailEq = account.AvailEq
+						usdtAccount.CashBal = account.CashBal
+						usdtAccount.DisEq = account.DisEq
+						usdtAccount.Eq = account.Eq
+						usdtAccount.EqUsd = account.EqUsd
+						usdtAccount.FrozenBal = account.FrozenBal
+						usdtAccount.MgnRatio = account.MgnRatio
+						usdtAccount.NotionalLever = account.NotionalLever
+						usdtAccount.Upl = account.Upl
+						usdtAccount.UTime = account.UTime
+						usdtAccount.ParseTime = account.ParseTime
 						outUsdtBalance := usdtAccount
 						select {
 						case usdtAccountCh <- &outUsdtBalance:
 						default:
 							if time.Now().Sub(logSilentTime) > 0 {
-								logger.Debugf("usdtAccountCh <- usdtAccount failed, ch len %d", len(usdtAccountCh))
+								logger.Debugf("usdtAccountCh <- &outUsdtBalance failed, ch len %d", len(usdtAccountCh))
 								logSilentTime = time.Now().Add(time.Minute)
 							}
 						}
 					}
-					continue
-				}
-				symbol := wsBalance.Ccy + "-USDT"
-				if ch, ok := positionChMap[symbol]; ok {
-					lastBalance, ok2 := balancesMap[symbol]
-					if ok2 && wsBalance.EventTime.Sub(lastBalance.EventTime) < 0 {
-						continue
-					}
-					if !ok2 {
-						balance := wsBalance
-						balancesMap[symbol] = &balance
-					} else {
-						balancesMap[symbol].EventTime = wsBalance.EventTime
-						balancesMap[symbol].Ccy = wsBalance.Ccy
-						balancesMap[symbol].CashBal = wsBalance.CashBal
-						balancesMap[symbol].FrozenBal = wsBalance.FrozenBal
-						balancesMap[symbol].OrdFrozen = wsBalance.OrdFrozen
-					}
-					outBalance := *balancesMap[symbol]
-					select {
-					case ch <- &outBalance:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("ch <- balance failed, ch len %d", len(ch))
-							logSilentTime = time.Now().Add(time.Minute)
-						}
-					}
+					break
 				}
 			}
 			break
@@ -249,42 +226,57 @@ func (okut *OkexV5UsdtSpot) StreamBasic(ctx context.Context, statusCh chan commo
 				}
 			}
 			break
-		case balances := <-internalBalancesCh:
-			for _, balance := range balances {
-				if balance.Ccy == "USDT" {
+		case positions := <-internalBalancesCh:
+			for _, nextPos := range positions {
+				if nextPos.Ccy != "USDT" {
 					continue
 				}
-				symbol := balance.Ccy + "-USDT"
-				lastBalance, ok := balancesMap[symbol]
-				if ok && balance.EventTime.Sub(lastBalance.EventTime) < 0 {
+				if nextPos.MgnMode != "cross" {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("%s bad position margin mode %s %v", nextPos.InstId, nextPos.MgnMode, nextPos)
+					}
 					continue
 				}
-				balance := balance
-				balancesMap[symbol] = &balance
-				if ch, ok := positionChMap[symbol]; ok {
+				if nextPos.PosSide != "net" {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("%s bad position side %s %v", nextPos.InstId, nextPos.PosSide, nextPos)
+					}
+					continue
+				}
+				lastPos, ok := positionsMap[nextPos.InstId]
+				if ok && nextPos.UTime.Sub(lastPos.UTime) < 0 {
+					continue
+				}
+				position := nextPos
+				positionsMap[position.InstId] = &position
+				if ch, ok := positionChMap[position.InstId]; ok {
 					select {
-					case ch <- &balance:
+					case ch <- &position:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("ch <- balance failed, ch len %d", len(ch))
+							logger.Debugf("ch <- &position failed, ch len %d", len(ch))
 							logSilentTime = time.Now().Add(time.Minute)
 						}
 					}
 				}
 			}
 			for symbol, ch := range positionChMap {
-				if _, ok := balancesMap[symbol]; !ok {
-					balance := &Balance{
-						Ccy:       strings.Replace(symbol, "-USDT", "", -1),
-						EventTime: time.Now(),
+				if _, ok := positionsMap[symbol]; !ok {
+					position := &Position{
+						InstId:    symbol,
+						InstType:  "SWAP",
+						MgnMode:   "cross",
+						PosSide:   "net",
+						Ccy:       "USDT",
+						UTime:     time.Now(),
 						ParseTime: time.Now(),
 					}
-					balancesMap[symbol] = balance
+					positionsMap[symbol] = position
 					select {
-					case ch <- balance:
+					case ch <- position:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("ch <- balance failed, ch len %d", len(ch))
+							logger.Debugf("ch <- position failed, ch len %d", len(ch))
 							logSilentTime = time.Now().Add(time.Minute)
 						}
 					}
@@ -406,8 +398,8 @@ func (okut *OkexV5UsdtSpot) StreamFundingRate(ctx context.Context, channels map[
 		case <-timer.C:
 			for symbol, ch := range channels {
 				select {
-				case ch <- FundingRate{
-					Symbol: symbol,
+				case ch <- &FundingRate{
+					InstId: symbol,
 				}:
 				default:
 					logger.Debugf("ch <- &common.ZeroFundingRate failed %s ch len %d", symbol, len(ch))
@@ -533,7 +525,7 @@ func (okut *OkexV5UsdtSpot) watchSystemStatus(
 
 func (okut *OkexV5UsdtSpot) watchAccount(
 	ctx context.Context,
-	output chan Balance,
+	output chan Account,
 ) {
 	updateInterval := okut.settings.PullInterval
 	timer := time.NewTimer(time.Second)
@@ -561,7 +553,7 @@ func (okut *OkexV5UsdtSpot) watchAccount(
 
 func (okut *OkexV5UsdtSpot) watchBalances(
 	ctx context.Context,
-	output chan []Balance,
+	output chan []Position,
 ) {
 	updateInterval := okut.settings.PullInterval
 	timer := time.NewTimer(time.Second)
@@ -572,7 +564,7 @@ func (okut *OkexV5UsdtSpot) watchBalances(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			balances, err := okut.api.GetBalances(subCtx)
+			balances, err := okut.api.GetPositions(subCtx)
 			if err != nil {
 				logger.Debugf("api.GetBalances error %v", err)
 			} else {

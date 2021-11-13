@@ -24,6 +24,7 @@ const (
 	JsonKeyIndexPrice
 	JsonKeyEstimatedSettlePrice
 	JsonKeyFundingRate
+	JsonKeyNextFundingRate
 	JsonKeyNextFundingTime
 	JsonKeyStream
 	JsonKeyPrice

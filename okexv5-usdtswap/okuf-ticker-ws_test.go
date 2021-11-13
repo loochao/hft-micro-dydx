@@ -1,4 +1,4 @@
-package okexv5_usdtspot
+package okexv5_usdtswap
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 
 func TestNewTickerWs(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Minute*5)
-	symbols := []string{"BTC-USDT", "DOGE-USDT", "WAVES-USDT"}
+	symbols := []string{"BTC-USDT-SWAP", "DOGE-USDT-SWAP", "WAVES-USDT-SWAP"}
 	channels := make(map[string]chan common.Ticker)
-	ch := make(chan common.Ticker, 0)
+	ch := make(chan common.Ticker, 64)
 	for _, symbol := range symbols {
 		channels[symbol] = ch
 	}

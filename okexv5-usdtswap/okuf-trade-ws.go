@@ -1,4 +1,4 @@
-package okexv5_usdtspot
+package okexv5_usdtswap
 
 import (
 	"context"
@@ -63,7 +63,6 @@ func (w *TradeWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-
 func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
@@ -95,25 +94,26 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 			w.restart()
 			return
 		}
+		//logger.Debugf("%s", msg)
 		msgLen = len(msg)
-		if  msgLen > 61 && msg[2] == 'a' && msg[36] == '"'{
-			//{"arg":{"channel":"trades","instId":"DOGE-USDT"},"data":[{"instId":"DOGE-USDT","tradeId":"106645495","px":"0.256222","sz":"14.19554","side":"sell","ts":"1636778780284"}]}
-			if msg[45] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:45])
-				msgCut = 58
-			}else if msg[44] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:44])
-				msgCut = 57
-			}else if msg[46] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:46])
-				msgCut = 59
-			}else if msg[47] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:47])
-				msgCut = 60
-			}else if msg[48] == '"' {
-				symbol = common.UnsafeBytesToString(msg[37:48])
-				msgCut = 61
-			}else{
+		if msgLen > 66 && msg[2] == 'a' && msg[36] == '"' {
+			//{"arg":{"channel":"trades","instId":"BTC-USDT-SWAP"},"data":[{"instId":"BTC-USDT-SWAP","tradeId":"132198271","px":"64617","sz":"9","side":"buy","ts":"1636823694551"}]}
+			if msg[50] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:50])
+				msgCut = 63
+			} else if msg[49] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:49])
+				msgCut = 62
+			} else if msg[51] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:51])
+				msgCut = 64
+			} else if msg[52] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:52])
+				msgCut = 65
+			} else if msg[53] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:53])
+				msgCut = 66
+			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
@@ -130,11 +130,11 @@ func (w *TradeWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte
 				}
 			}
 			continue
-		} else{
-			//if time.Now().Sub(logSilentTime) > 0 {
+		} else {
+			if time.Now().Sub(logSilentTime) > 0 {
 				logger.Debugf("MSG %s", msg)
 				logSilentTime = time.Now().Add(time.Minute)
-			//}
+			}
 			continue
 		}
 		if ch, ok = channels[symbol]; ok {
@@ -190,13 +190,13 @@ func (w *TradeWS) reconnect(ctx context.Context, wsUrl string, proxy string, cou
 			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:            http.ProxyURL(proxyUrl),
-			HandshakeTimeout: 60 * time.Second,
+			Proxy:             http.ProxyURL(proxyUrl),
+			HandshakeTimeout:  60 * time.Second,
 			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
 			EnableCompression: true,
 		}
 	}
@@ -333,7 +333,7 @@ func (w *TradeWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbo
 				if time.Now().Sub(updateTime) > symbolTimeout {
 					args = append(args, WsArgs{
 						Channel: "trades",
-						InstId: symbol,
+						InstId:  symbol,
 					})
 					symbolUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
 				}
