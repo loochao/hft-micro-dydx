@@ -382,8 +382,10 @@ func (okuf *OkexV5UsdtSwap) StreamTicker(ctx context.Context, channels map[strin
 	for {
 		select {
 		case <-ctx.Done():
+			logger.Debugf("ctx done")
 			return
 		case <-okuf.done:
+			logger.Debugf("okuf done")
 			return
 		}
 	}
