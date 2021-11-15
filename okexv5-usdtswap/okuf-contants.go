@@ -3,7 +3,7 @@ package okexv5_usdtswap
 import "github.com/geometrybase/hft-micro/common"
 
 const (
-	ExchangeID = common.OkexV5UsdtSpot
+	ExchangeID = common.OkexV5UsdtSwap
 
 	TdModeCash     = "cash"
 	TdModeIsolated = "isolated"

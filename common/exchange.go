@@ -22,5 +22,5 @@ const (
 	BitfinexUsdtFuture
 	DydxUsdFuture
 	OkexV5UsdtSpot
-	OkexV5UsdtFuture
+	OkexV5UsdtSwap
 )

@@ -245,6 +245,9 @@ func main() {
 	}
 	logger.Debug("\n\n")
 
+	logger.Debugf("X EXCHANGE ID %s", xExchange.GetExchange())
+	logger.Debugf("Y EXCHANGE ID %s", yExchange.GetExchange())
+
 	xyGlobalCtx, xyGlobalCancel = context.WithCancel(context.Background())
 	defer xyGlobalCancel()
 
