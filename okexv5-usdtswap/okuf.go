@@ -486,8 +486,8 @@ func (okuf *OkexV5UsdtSwap) Setup(ctx context.Context, settings common.ExchangeS
 
 func (okuf *OkexV5UsdtSwap) Stop() {
 	if atomic.CompareAndSwapInt32(&okuf.stopped, 0, 1) {
-		close(okuf.done)
 		logger.Debugf("stopped")
+		close(okuf.done)
 	}
 }
 
