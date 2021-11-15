@@ -112,6 +112,18 @@ func (w *DepthTicker5WS) readLoop(conn *websocket.Conn, channels map[string]chan
 			}else if msg[53] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:53])
 				msgCut = 66
+			}else if msg[54] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:54])
+				msgCut = 67
+			}else if msg[55] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:55])
+				msgCut = 68
+			}else if msg[56] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:56])
+				msgCut = 69
+			}else if msg[57] == '"' {
+				symbol = common.UnsafeBytesToString(msg[37:57])
+				msgCut = 70
 			}else{
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)
