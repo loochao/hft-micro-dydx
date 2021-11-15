@@ -290,8 +290,8 @@ func (okus *OkexV5UsdtSpot) StreamBasic(ctx context.Context, statusCh chan commo
 					}
 				}
 			}
+			break
 		}
-		break
 	}
 
 }

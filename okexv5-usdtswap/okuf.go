@@ -286,8 +286,8 @@ func (okuf *OkexV5UsdtSwap) StreamBasic(ctx context.Context, statusCh chan commo
 					}
 				}
 			}
+			break
 		}
-		break
 	}
 
 }
