@@ -307,7 +307,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 				}
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("other msg %s", msg)
+					logger.Debugf("MSG %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}

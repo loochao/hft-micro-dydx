@@ -137,7 +137,7 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 			continue
 		} else{
 			if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("other msg %s", msg)
+				logger.Debugf("MSG %s", msg)
 				logSilentTime = time.Now().Add(time.Minute)
 			}
 			continue
