@@ -166,13 +166,15 @@ func handleSave(
 			fields["tickerMatchRatio"] = float64(strat.tickerMatchCount) / float64(strat.tickerCount)
 		}
 
-		fields["statsSpreadEnterOffset"] = strat.stats.SpreadEnterOffset.Load()
-		fields["statsSpreadLeaveOffset"] = strat.stats.SpreadLeaveOffset.Load()
-		fields["statsSpreadLongEnterBot"] = strat.stats.SpreadLongEnterBot.Load()
-		fields["statsSpreadLongLeaveTop"] = strat.stats.SpreadLongLeaveTop.Load()
-		fields["statsSpreadShortEnterTop"] = strat.stats.SpreadShortEnterTop.Load()
-		fields["statsSpreadShortLeaveBot"] = strat.stats.SpreadShortLeaveBot.Load()
-		fields["statsSpreadMiddle"] = strat.stats.SpreadMiddle.Load()
+		if !math.IsNaN(strat.stats.SpreadEnterOffset.Load()) {
+			fields["statsSpreadEnterOffset"] = strat.stats.SpreadEnterOffset.Load()
+			fields["statsSpreadLeaveOffset"] = strat.stats.SpreadLeaveOffset.Load()
+			fields["statsSpreadLongEnterBot"] = strat.stats.SpreadLongEnterBot.Load()
+			fields["statsSpreadLongLeaveTop"] = strat.stats.SpreadLongLeaveTop.Load()
+			fields["statsSpreadShortEnterTop"] = strat.stats.SpreadShortEnterTop.Load()
+			fields["statsSpreadShortLeaveBot"] = strat.stats.SpreadShortLeaveBot.Load()
+			fields["statsSpreadMiddle"] = strat.stats.SpreadMiddle.Load()
+		}
 
 		if strat.xFundingRate != nil {
 			fields["xFundingRate"] = strat.xFundingRate.GetFundingRate()
