@@ -25,7 +25,7 @@ type API struct {
 func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result interface{}) (err error) {
 	path := "https://www.okex.com" + requestPath
 
-	logger.Debugf("%v", path)
+	//logger.Debugf("%v", path)
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
 		return err

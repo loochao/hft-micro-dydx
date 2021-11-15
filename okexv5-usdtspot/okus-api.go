@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -25,7 +24,7 @@ type API struct {
 func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result interface{}) (err error) {
 	path := "https://www.okex.com" + requestPath
 
-	logger.Debugf("%v", path)
+	//logger.Debugf("%v", path)
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
 		return err
@@ -102,7 +101,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 		return err
 	}
 	var errCap CommonCapture
-	if err := json.Unmarshal(contents, &errCap); err != nil {
+	if err = json.Unmarshal(contents, &errCap); err != nil {
 		return err
 	}
 	if errCap.Code != "0" {
