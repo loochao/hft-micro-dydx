@@ -374,47 +374,47 @@ func main() {
 		xPositionChMap,
 		xOrderChMap,
 	)
-	go xExchange.StreamFundingRate(
-		xyGlobalCtx,
-		xFundingRateChMap,
-		xyConfig.StreamBatchSize,
-	)
-	go xExchange.StreamTicker(
-		xyGlobalCtx,
-		xTickerChMap,
-		xyConfig.StreamBatchSize,
-	)
-	go xExchange.WatchOrders(
-		xyGlobalCtx,
-		xOrderRequestChMap,
-		xOrderChMap,
-		xNewOrderErrorChMap,
-	)
-
-	go yExchange.StreamBasic(
-		xyGlobalCtx,
-		ySystemStatusCh,
-		yAccountCh,
-		yCommissionAssetValueCh,
-		yPositionChMap,
-		yOrderChMap,
-	)
-	go yExchange.StreamFundingRate(
-		xyGlobalCtx,
-		yFundingRateChMap,
-		xyConfig.StreamBatchSize,
-	)
-	go yExchange.StreamTicker(
-		xyGlobalCtx,
-		yTickerChMap,
-		xyConfig.StreamBatchSize,
-	)
-	go yExchange.WatchOrders(
-		xyGlobalCtx,
-		yOrderRequestChMap,
-		yOrderChMap,
-		yNewOrderErrorChMap,
-	)
+	//go xExchange.StreamFundingRate(
+	//	xyGlobalCtx,
+	//	xFundingRateChMap,
+	//	xyConfig.StreamBatchSize,
+	//)
+	//go xExchange.StreamTicker(
+	//	xyGlobalCtx,
+	//	xTickerChMap,
+	//	xyConfig.StreamBatchSize,
+	//)
+	//go xExchange.WatchOrders(
+	//	xyGlobalCtx,
+	//	xOrderRequestChMap,
+	//	xOrderChMap,
+	//	xNewOrderErrorChMap,
+	//)
+	//
+	//go yExchange.StreamBasic(
+	//	xyGlobalCtx,
+	//	ySystemStatusCh,
+	//	yAccountCh,
+	//	yCommissionAssetValueCh,
+	//	yPositionChMap,
+	//	yOrderChMap,
+	//)
+	//go yExchange.StreamFundingRate(
+	//	xyGlobalCtx,
+	//	yFundingRateChMap,
+	//	xyConfig.StreamBatchSize,
+	//)
+	//go yExchange.StreamTicker(
+	//	xyGlobalCtx,
+	//	yTickerChMap,
+	//	xyConfig.StreamBatchSize,
+	//)
+	//go yExchange.WatchOrders(
+	//	xyGlobalCtx,
+	//	yOrderRequestChMap,
+	//	yOrderChMap,
+	//	yNewOrderErrorChMap,
+	//)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
