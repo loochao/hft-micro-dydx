@@ -497,7 +497,7 @@ func (okus *OkexV5UsdtSpot) watchSystemStatus(
 			statuses, err := okus.api.GetStatus(subCtx)
 			if err != nil {
 				logger.Debugf("api.GetStatus(subCtx) error %v", err)
-				if !strings.Contains(err.Error(), "Too Many Requests") {
+				if !strings.Contains(err.Error(), "Requests too frequent") {
 					select {
 					case output <- common.SystemStatusError:
 					default:
