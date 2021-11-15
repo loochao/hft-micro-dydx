@@ -44,7 +44,7 @@ func handleSave(
 		if strat.xPosition != nil &&
 			strat.yPosition != nil &&
 			strat.xMidPrice > 0 &&
-			strat.yMidPrice > 0{
+			strat.yMidPrice > 0 {
 
 			fields["xBidPrice"] = strat.xTicker.GetBidPrice()
 			fields["xAskPrice"] = strat.xTicker.GetAskPrice()
@@ -117,8 +117,10 @@ func handleSave(
 				fields["spreadLastShort"] = strat.spreadLastShort
 				fields["spreadMedianLong"] = strat.spreadMedianLong
 				fields["spreadMedianShort"] = strat.spreadMedianShort
+				fields["xTickerTimeDelta"] = strat.xTickerTimeDelta
+				fields["yTickerTimeDelta"] = strat.yTickerTimeDelta
+				fields["xyTickerTimeDelta"] = strat.xyTickerTimeDelta
 			}
-
 
 		} else {
 			logger.Debugf(
@@ -128,10 +130,9 @@ func handleSave(
 			hasAllSymbols = false
 		}
 
-
 		if strat.stats.Ready.True() {
 			fields["statsReady"] = 1.0
-		}else{
+		} else {
 			fields["statsReady"] = 0.0
 		}
 
@@ -161,7 +162,7 @@ func handleSave(
 		if strat.stats.YMiddlePrice.Load() > 0 {
 			fields["statsYMiddlePrice"] = strat.stats.YMiddlePrice.Load()
 		}
-		if strat.tickerCount > 0 && strat.tickerMatchCount > 0{
+		if strat.tickerCount > 0 && strat.tickerMatchCount > 0 {
 			fields["tickerMatchRatio"] = float64(strat.tickerMatchCount) / float64(strat.tickerCount)
 		}
 

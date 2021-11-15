@@ -1,0 +1,19 @@
+{
+  "code": "0",
+  "data": [
+    {
+      "baseMaxLoan": "",
+      "imr": "0.135",
+      "instId": "",
+      "maxLever": "7.4",
+      "maxSz": "36000",
+      "minSz": "34001",
+      "mmr": "0.105",
+      "optMgnFactor": "0",
+      "quoteMaxLoan": "",
+      "tier": "20",
+      "uly": "FLM-USDT"
+    }
+  ],
+  "msg": ""
+}

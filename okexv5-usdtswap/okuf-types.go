@@ -792,3 +792,21 @@ func (f *FundingRate) UnmarshalJSON(data []byte) error {
 	f.FundingTime = time.Unix(0, aux.FundingTime*1000000)
 	return nil
 }
+
+type PositionTierParam struct {
+	InstType string `json:"instType"`
+	TdMode   string `json:"tdMode"`
+	Uly      string `json:"uly"`
+	Tier     string `json:"tier"`
+}
+
+type PositionTier struct {
+	Uly      string  `json:"uly"`
+	InstId   string  `json:"instId"`
+	Tier     string  `json:"tier"`
+	MinSz    float64 `json:"minSz,string"`
+	MaxSz    float64 `json:"maxSz,string"`
+	Mmr      float64 `json:"mmr,string"`
+	Imr      float64 `json:"imr,string"`
+	MaxLever float64 `json:"maxLever,string"`
+}

@@ -8,7 +8,9 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestAPI_GetInstruments(t *testing.T) {
@@ -24,6 +26,7 @@ func TestAPI_GetInstruments(t *testing.T) {
 	tickSizes := make(map[string]float64)
 	stepSizes := make(map[string]float64)
 	minSizes := make(map[string]float64)
+	maxSizes := make(map[string]float64)
 	multipliers := make(map[string]float64)
 	tickPrecisions := make(map[string]int)
 	stepPrecisions := make(map[string]int)
@@ -51,6 +54,25 @@ func TestAPI_GetInstruments(t *testing.T) {
 		ids = append(ids, instrument.InstId)
 	}
 	sort.Strings(ids)
+
+	for _, id := range ids {
+		var positionTiers []PositionTier
+		positionTiers, err = api.GetPositionTiers(context.Background(), PositionTierParam{
+			Uly: strings.Replace(id, "USDT-SWAP", "USDT", -1),
+			Tier: "20",
+			TdMode: "cross",
+			InstType: "SWAP",
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(positionTiers) != 1 {
+			t.Fatalf("bad results %v", positionTiers)
+		}
+		maxSizes[id] = positionTiers[0].MaxSz
+		time.Sleep(time.Second)
+	}
+
 	str := "var TickSizes = map[string]float64{\n"
 	for _, symbol := range ids {
 		value := tickSizes[symbol]
@@ -66,6 +88,12 @@ func TestAPI_GetInstruments(t *testing.T) {
 	str += "var MinSizes = map[string]float64{\n"
 	for _, symbol := range ids {
 		value := minSizes[symbol]
+		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
+	}
+	str += "}\n\n"
+	str += "var MaxSizes = map[string]float64{\n"
+	for _, symbol := range ids {
+		value := maxSizes[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
@@ -92,7 +120,7 @@ func TestAPI_GetInstruments(t *testing.T) {
 }
 
 func TestAPI_GetStatus(t *testing.T) {
-	logger.Debugf("%s",  os.Getenv("OK_PROXY"))
+	logger.Debugf("%s", os.Getenv("OK_PROXY"))
 	api, err := NewAPI(&Credentials{}, os.Getenv("OK_PROXY"))
 	if err != nil {
 		t.Fatal(err)
