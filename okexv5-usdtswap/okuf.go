@@ -499,8 +499,8 @@ func (okuf *OkexV5UsdtSwap) watchSystemStatus(
 	ctx context.Context,
 	output chan common.SystemStatus,
 ) {
-	updateInterval := okuf.settings.PullInterval
-	timer := time.NewTimer(time.Second)
+	updateInterval := time.Minute
+	timer := time.NewTimer(updateInterval)
 	defer timer.Stop()
 	for {
 		select {
@@ -541,7 +541,7 @@ func (okuf *OkexV5UsdtSwap) watchSystemStatus(
 					}
 				}
 			}
-			timer.Reset(time.Now().Truncate(updateInterval).Add(updateInterval).Sub(time.Now()))
+			timer.Reset(updateInterval)
 		}
 	}
 }
