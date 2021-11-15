@@ -96,7 +96,7 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 			return
 		}
 		msgLen = len(msg)
-		logger.Debugf("%s", msg)
+		//logger.Debugf("%s", msg)
 		if  msgLen > 128 && msg[2] == 'a' && msg[37] == '"'{
 			//{"arg":{"channel":"tickers","instId":"BTC-USDT-SWAP"},"data":[{"instType":"SWAP","instId":"BTC-USDT-SWAP","last":"64555.9","lastSz":"1","askPx":"64556","askSz":"758","bidPx":"64555.9","bidSz":"686","open24h":"63018.6","high24h":"65111","low24h":"63006.5","sodUtc0":"64108.7","sodUtc8":"64674.7","volCcy24h":"29767.59","vol24h":"2976759","ts":"1636823978601"}]}
 			if msg[51] == '"' {

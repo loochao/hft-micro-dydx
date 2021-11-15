@@ -93,7 +93,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%s", contents)
+	//logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
