@@ -396,24 +396,48 @@ func (okuf *OkexV5UsdtSwap) StreamKLine(ctx context.Context, channels map[string
 }
 
 func (okuf *OkexV5UsdtSwap) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
-	pullInterval := okuf.settings.PullInterval
-	timer := time.NewTimer(time.Second)
-	defer timer.Stop()
+	logger.Debugf("START StreamFundingRate")
+	defer logger.Debugf("STOP StreamFundingRate")
+	defer okuf.Stop()
+
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+
+	proxy := okuf.settings.Proxy
+
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.FundingRate)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.FundingRate) {
+			defer okuf.Stop()
+			ws1 := NewFundingRateWS(ctx, proxy, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws1.Done():
+					logger.Debugf("ticker ws done")
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
 	for {
 		select {
 		case <-ctx.Done():
+			logger.Debugf("ctx done")
 			return
-		case <-timer.C:
-			for symbol, ch := range channels {
-				select {
-				case ch <- &FundingRate{
-					InstId: symbol,
-				}:
-				default:
-					logger.Debugf("ch <- &common.ZeroFundingRate failed %s ch len %d", symbol, len(ch))
-				}
-			}
-			timer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
+		case <-okuf.done:
+			logger.Debugf("okuf done")
+			return
 		}
 	}
 }

@@ -112,6 +112,21 @@ func (w *FundingRateWS) readLoop(conn *websocket.Conn, channels map[string]chan 
 			} else if msg[59] == '"' {
 				symbol = common.UnsafeBytesToString(msg[43:59])
 				msgCut = 72
+			} else if msg[60] == '"' {
+				symbol = common.UnsafeBytesToString(msg[43:60])
+				msgCut = 73
+			} else if msg[61] == '"' {
+				symbol = common.UnsafeBytesToString(msg[43:61])
+				msgCut = 74
+			} else if msg[62] == '"' {
+				symbol = common.UnsafeBytesToString(msg[43:62])
+				msgCut = 75
+			} else if msg[63] == '"' {
+				symbol = common.UnsafeBytesToString(msg[43:63])
+				msgCut = 76
+			} else if msg[64] == '"' {
+				symbol = common.UnsafeBytesToString(msg[43:64])
+				msgCut = 77
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)
