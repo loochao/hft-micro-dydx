@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -39,7 +38,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%s", contents)
+	//logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
