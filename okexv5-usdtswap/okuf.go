@@ -474,6 +474,7 @@ func (okut *OkexV5UsdtSwap) Setup(ctx context.Context, settings common.ExchangeS
 			} else {
 				logger.Debugf("UPDATE LEVERAGE TO %.0f FOR %s ", settings.Leverage, symbol)
 			}
+			time.Sleep(time.Second)
 		}
 	}
 	return
