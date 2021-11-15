@@ -72,7 +72,6 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 			return errors.New("sendHTTPRequest: Unable to JSON request")
 		}
 	}
-	logger.Debugf("%s", payload)
 	path := "https://www.okex.com" + requestPath
 	req, err := http.NewRequest(httpMethod, path, bytes.NewReader(payload))
 	if err != nil {

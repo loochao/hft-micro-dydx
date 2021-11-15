@@ -19,39 +19,39 @@ type OkexV5UsdtSwap struct {
 	settings common.ExchangeSettings
 }
 
-func (okut *OkexV5UsdtSwap) GetPriceFactor() float64 {
+func (okuf *OkexV5UsdtSwap) GetPriceFactor() float64 {
 	return 1.0
 }
 
-func (okut *OkexV5UsdtSwap) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
+func (okuf *OkexV5UsdtSwap) StreamSystemStatus(ctx context.Context, statusCh chan common.SystemStatus) {
 	panic("implement me")
 }
 
-func (okut *OkexV5UsdtSwap) GetExchange() common.ExchangeID {
+func (okuf *OkexV5UsdtSwap) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (okut *OkexV5UsdtSwap) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+func (okuf *OkexV5UsdtSwap) WatchBatchOrders(ctx context.Context, requestChannels map[string]chan common.BatchOrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
 	panic("implement me")
 }
 
-func (okut *OkexV5UsdtSwap) StartSideLoop() {
+func (okuf *OkexV5UsdtSwap) StartSideLoop() {
 	panic("implement me")
 }
 
-func (okut *OkexV5UsdtSwap) IsSpot() bool {
+func (okuf *OkexV5UsdtSwap) IsSpot() bool {
 	return true
 }
 
-func (okut *OkexV5UsdtSwap) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
+func (okuf *OkexV5UsdtSwap) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
 	panic("implement me")
 }
 
-func (okut *OkexV5UsdtSwap) GenerateClientID() string {
+func (okuf *OkexV5UsdtSwap) GenerateClientID() string {
 	return fmt.Sprintf("M%d", time.Now().Unix()*10000+int64(rand.Intn(10000)))
 }
 
-func (okut *OkexV5UsdtSwap) GetMultiplier(symbol string) (float64, error) {
+func (okuf *OkexV5UsdtSwap) GetMultiplier(symbol string) (float64, error) {
 	if value, ok := Multipliers[symbol]; ok {
 		return value, nil
 	} else {
@@ -59,11 +59,11 @@ func (okut *OkexV5UsdtSwap) GetMultiplier(symbol string) (float64, error) {
 	}
 }
 
-func (okut *OkexV5UsdtSwap) GetMinNotional(symbol string) (float64, error) {
+func (okuf *OkexV5UsdtSwap) GetMinNotional(symbol string) (float64, error) {
 	return 0, nil
 }
 
-func (okut *OkexV5UsdtSwap) GetMinSize(symbol string) (float64, error) {
+func (okuf *OkexV5UsdtSwap) GetMinSize(symbol string) (float64, error) {
 	if value, ok := MinSizes[symbol]; ok {
 		return value, nil
 	} else {
@@ -71,7 +71,7 @@ func (okut *OkexV5UsdtSwap) GetMinSize(symbol string) (float64, error) {
 	}
 }
 
-func (okut *OkexV5UsdtSwap) GetStepSize(symbol string) (float64, error) {
+func (okuf *OkexV5UsdtSwap) GetStepSize(symbol string) (float64, error) {
 	if value, ok := StepSizes[symbol]; ok {
 		return value, nil
 	} else {
@@ -79,7 +79,7 @@ func (okut *OkexV5UsdtSwap) GetStepSize(symbol string) (float64, error) {
 	}
 }
 
-func (okut *OkexV5UsdtSwap) GetTickSize(symbol string) (float64, error) {
+func (okuf *OkexV5UsdtSwap) GetTickSize(symbol string) (float64, error) {
 	if value, ok := TickSizes[symbol]; ok {
 		return value, nil
 	} else {
@@ -87,20 +87,20 @@ func (okut *OkexV5UsdtSwap) GetTickSize(symbol string) (float64, error) {
 	}
 }
 
-func (okut *OkexV5UsdtSwap) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, usdtAccountCh chan common.Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan common.Position, orderChMap map[string]chan common.Order) {
-	defer okut.Stop()
-	proxy := okut.settings.Proxy
+func (okuf *OkexV5UsdtSwap) StreamBasic(ctx context.Context, statusCh chan common.SystemStatus, usdtAccountCh chan common.Balance, commissionAssetValueCh chan float64, positionChMap map[string]chan common.Position, orderChMap map[string]chan common.Order) {
+	defer okuf.Stop()
+	proxy := okuf.settings.Proxy
 	userWS := NewUserWebsocket(
 		ctx,
-		okut.settings.ApiKey, okut.settings.ApiSecret, okut.settings.ApiPassphrase,
+		okuf.settings.ApiKey, okuf.settings.ApiSecret, okuf.settings.ApiPassphrase,
 		proxy,
 	)
 	positionsMap := make(map[string]*Position, 0)
 	internalAccountCh := make(chan Account, 4)
 	internalBalancesCh := make(chan []Position, 4)
-	go okut.watchAccount(ctx, internalAccountCh)
-	go okut.watchBalances(ctx, internalBalancesCh)
-	go okut.watchSystemStatus(ctx, statusCh)
+	go okuf.watchAccount(ctx, internalAccountCh)
+	go okuf.watchBalances(ctx, internalBalancesCh)
+	go okuf.watchSystemStatus(ctx, statusCh)
 	logSilentTime := time.Now()
 	usdtAccount := Account{
 		Ccy: "USDT",
@@ -114,7 +114,7 @@ func (okut *OkexV5UsdtSwap) StreamBasic(ctx context.Context, statusCh chan commo
 		select {
 		case <-ctx.Done():
 			return
-		case <-okut.done:
+		case <-okuf.done:
 			return
 		case <-userWS.done:
 			return
@@ -292,17 +292,17 @@ func (okut *OkexV5UsdtSwap) StreamBasic(ctx context.Context, statusCh chan commo
 
 }
 
-func (okut *OkexV5UsdtSwap) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
+func (okuf *OkexV5UsdtSwap) StreamDepth(ctx context.Context, channels map[string]chan common.Depth, batchSize int) {
 	logger.Debugf("START StreamDepth")
 	defer logger.Debugf("STOP StreamDepth")
-	defer okut.Stop()
+	defer okuf.Stop()
 
 	symbols := make([]string, 0)
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 	}
 
-	proxy := okut.settings.Proxy
+	proxy := okuf.settings.Proxy
 
 	for start := 0; start < len(symbols); start += batchSize {
 		end := start + batchSize
@@ -314,7 +314,7 @@ func (okut *OkexV5UsdtSwap) StreamDepth(ctx context.Context, channels map[string
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Depth) {
-			defer okut.Stop()
+			defer okuf.Stop()
 			ws := NewDepth5WS(ctx, proxy, channels)
 			for {
 				select {
@@ -330,27 +330,27 @@ func (okut *OkexV5UsdtSwap) StreamDepth(ctx context.Context, channels map[string
 		select {
 		case <-ctx.Done():
 			return
-		case <-okut.done:
+		case <-okuf.done:
 			return
 		}
 	}
 }
 
-func (okut *OkexV5UsdtSwap) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
+func (okuf *OkexV5UsdtSwap) StreamTrade(ctx context.Context, channels map[string]chan common.Trade, batchSize int) {
 	panic("implement me")
 }
 
-func (okut *OkexV5UsdtSwap) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (okuf *OkexV5UsdtSwap) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")
 	defer logger.Debugf("STOP StreamTicker")
-	defer okut.Stop()
+	defer okuf.Stop()
 
 	symbols := make([]string, 0)
 	for symbol := range channels {
 		symbols = append(symbols, symbol)
 	}
 
-	proxy := okut.settings.Proxy
+	proxy := okuf.settings.Proxy
 
 	for start := 0; start < len(symbols); start += batchSize {
 		end := start + batchSize
@@ -362,7 +362,7 @@ func (okut *OkexV5UsdtSwap) StreamTicker(ctx context.Context, channels map[strin
 			subChannels[symbol] = channels[symbol]
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
-			defer okut.Stop()
+			defer okuf.Stop()
 			ws1 := NewTickerWS(ctx, proxy, channels)
 			ws2 := NewDepth5TickerWS(ctx, proxy, channels)
 			for {
@@ -370,8 +370,10 @@ func (okut *OkexV5UsdtSwap) StreamTicker(ctx context.Context, channels map[strin
 				case <-ctx.Done():
 					return
 				case <-ws1.Done():
+					logger.Debugf("ticker ws done")
 					return
 				case <-ws2.Done():
+					logger.Debugf("depth ws done")
 					return
 				}
 			}
@@ -381,18 +383,18 @@ func (okut *OkexV5UsdtSwap) StreamTicker(ctx context.Context, channels map[strin
 		select {
 		case <-ctx.Done():
 			return
-		case <-okut.done:
+		case <-okuf.done:
 			return
 		}
 	}
 }
 
-func (okut *OkexV5UsdtSwap) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
+func (okuf *OkexV5UsdtSwap) StreamKLine(ctx context.Context, channels map[string]chan []common.KLine, batchSize int, interval, lookback time.Duration) {
 	panic("implement me")
 }
 
-func (okut *OkexV5UsdtSwap) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
-	pullInterval := okut.settings.PullInterval
+func (okuf *OkexV5UsdtSwap) StreamFundingRate(ctx context.Context, channels map[string]chan common.FundingRate, batchSize int) {
+	pullInterval := okuf.settings.PullInterval
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
@@ -414,8 +416,8 @@ func (okut *OkexV5UsdtSwap) StreamFundingRate(ctx context.Context, channels map[
 	}
 }
 
-func (okut *OkexV5UsdtSwap) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
-	defer okut.Stop()
+func (okuf *OkexV5UsdtSwap) WatchOrders(ctx context.Context, requestChannels map[string]chan common.OrderRequest, responseChannels map[string]chan common.Order, errorChannels map[string]chan common.OrderError) {
+	defer okuf.Stop()
 	for symbol, reqCh := range requestChannels {
 		respCh, ok := responseChannels[symbol]
 		if !ok {
@@ -427,23 +429,23 @@ func (okut *OkexV5UsdtSwap) WatchOrders(ctx context.Context, requestChannels map
 			logger.Debugf("miss error ch for %s, exit", symbol)
 			return
 		}
-		go okut.watchOrder(ctx, symbol, reqCh, respCh, errCh)
+		go okuf.watchOrder(ctx, symbol, reqCh, respCh, errCh)
 	}
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-okut.done:
+		case <-okuf.done:
 			return
 		}
 	}
 }
 
-func (okut *OkexV5UsdtSwap) Setup(ctx context.Context, settings common.ExchangeSettings) (err error) {
-	okut.done = make(chan interface{})
-	okut.stopped = 0
-	okut.settings = settings
-	okut.api, err = NewAPI(&Credentials{
+func (okuf *OkexV5UsdtSwap) Setup(ctx context.Context, settings common.ExchangeSettings) (err error) {
+	okuf.done = make(chan interface{})
+	okuf.stopped = 0
+	okuf.settings = settings
+	okuf.api, err = NewAPI(&Credentials{
 		Key:        settings.ApiKey,
 		Secret:     settings.ApiSecret,
 		Passphrase: settings.ApiPassphrase,
@@ -465,7 +467,7 @@ func (okut *OkexV5UsdtSwap) Setup(ctx context.Context, settings common.ExchangeS
 			return fmt.Errorf("multiplier found for %s", symbol)
 		}
 		if settings.ChangeLeverage {
-			err = okut.api.UpdateLeverage(ctx, Leverage{
+			err = okuf.api.UpdateLeverage(ctx, Leverage{
 				InstId: symbol,
 				Lever:  int(settings.Leverage),
 			})
@@ -480,33 +482,33 @@ func (okut *OkexV5UsdtSwap) Setup(ctx context.Context, settings common.ExchangeS
 	return
 }
 
-func (okut *OkexV5UsdtSwap) Stop() {
-	if atomic.CompareAndSwapInt32(&okut.stopped, 0, 1) {
-		close(okut.done)
+func (okuf *OkexV5UsdtSwap) Stop() {
+	if atomic.CompareAndSwapInt32(&okuf.stopped, 0, 1) {
+		close(okuf.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (okut *OkexV5UsdtSwap) Done() chan interface{} {
-	return okut.done
+func (okuf *OkexV5UsdtSwap) Done() chan interface{} {
+	return okuf.done
 }
 
-func (okut *OkexV5UsdtSwap) watchSystemStatus(
+func (okuf *OkexV5UsdtSwap) watchSystemStatus(
 	ctx context.Context,
 	output chan common.SystemStatus,
 ) {
-	updateInterval := okut.settings.PullInterval
+	updateInterval := okuf.settings.PullInterval
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-okut.done:
+		case <-okuf.done:
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			statuses, err := okut.api.GetStatus(subCtx)
+			statuses, err := okuf.api.GetStatus(subCtx)
 			if err != nil {
 				logger.Debugf("api.GetStatus(subCtx) error %v", err)
 				if !strings.Contains(err.Error(), "Too Many Requests") {
@@ -542,11 +544,11 @@ func (okut *OkexV5UsdtSwap) watchSystemStatus(
 	}
 }
 
-func (okut *OkexV5UsdtSwap) watchAccount(
+func (okuf *OkexV5UsdtSwap) watchAccount(
 	ctx context.Context,
 	output chan Account,
 ) {
-	updateInterval := okut.settings.PullInterval
+	updateInterval := okuf.settings.PullInterval
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
@@ -555,7 +557,7 @@ func (okut *OkexV5UsdtSwap) watchAccount(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			balance, err := okut.api.GetAccount(subCtx)
+			balance, err := okuf.api.GetAccount(subCtx)
 			if err != nil {
 				logger.Debugf("api.GetAccount error %v", err)
 			} else {
@@ -570,11 +572,11 @@ func (okut *OkexV5UsdtSwap) watchAccount(
 	}
 }
 
-func (okut *OkexV5UsdtSwap) watchBalances(
+func (okuf *OkexV5UsdtSwap) watchBalances(
 	ctx context.Context,
 	output chan []Position,
 ) {
-	updateInterval := okut.settings.PullInterval
+	updateInterval := okuf.settings.PullInterval
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
@@ -583,7 +585,7 @@ func (okut *OkexV5UsdtSwap) watchBalances(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			balances, err := okut.api.GetPositions(subCtx)
+			balances, err := okuf.api.GetPositions(subCtx)
 			if err != nil {
 				logger.Debugf("api.GetBalances error %v", err)
 			} else {
@@ -598,7 +600,7 @@ func (okut *OkexV5UsdtSwap) watchBalances(
 	}
 }
 
-func (okut *OkexV5UsdtSwap) watchOrder(
+func (okuf *OkexV5UsdtSwap) watchOrder(
 	ctx context.Context,
 	market string,
 	requestCh chan common.OrderRequest,
@@ -609,7 +611,7 @@ func (okut *OkexV5UsdtSwap) watchOrder(
 		select {
 		case <-ctx.Done():
 			return
-		case <-okut.Done():
+		case <-okuf.Done():
 			return
 		case req := <-requestCh:
 			if req.New != nil {
@@ -624,16 +626,16 @@ func (okut *OkexV5UsdtSwap) watchOrder(
 					}
 					continue
 				}
-				okut.submitOrder(ctx, *req.New, responseCh, errorCh)
+				okuf.submitOrder(ctx, *req.New, responseCh, errorCh)
 			} else if req.Cancel != nil && req.Cancel.ClientID != "" {
 				//cancel need client order id
-				okut.cancelOrder(ctx, *req.Cancel, errorCh)
+				okuf.cancelOrder(ctx, *req.Cancel, errorCh)
 			}
 		}
 	}
 }
 
-func (okut *OkexV5UsdtSwap) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
+func (okuf *OkexV5UsdtSwap) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
 	newOrderParam := NewOrderParam{
 		TdMode: TdModeCash,
 	}
@@ -664,7 +666,7 @@ func (okut *OkexV5UsdtSwap) submitOrder(ctx context.Context, param common.NewOrd
 		*newOrderParam.Price = common.FormatFloat(param.Price, TickPrecisions[param.Symbol])
 	}
 	newOrderParam.ClOrdId = param.ClientID
-	_, err := okut.api.SubmitOrder(ctx, newOrderParam)
+	_, err := okuf.api.SubmitOrder(ctx, newOrderParam)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{
@@ -677,9 +679,9 @@ func (okut *OkexV5UsdtSwap) submitOrder(ctx context.Context, param common.NewOrd
 	}
 }
 
-func (okut *OkexV5UsdtSwap) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
+func (okuf *OkexV5UsdtSwap) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {
 	if param.Symbol != "" {
-		_, err := okut.api.CancelOrders(ctx, CancelOrderParam{
+		_, err := okuf.api.CancelOrders(ctx, CancelOrderParam{
 			ClOrdId: param.ClientID,
 			InstId:  param.Symbol,
 		})
