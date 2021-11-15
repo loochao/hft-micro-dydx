@@ -76,7 +76,7 @@ func (ticker *Ticker) GetBidSize() float64 {
 }
 
 func (ticker *Ticker) GetAskSize() float64 {
-	return ticker.AskPx
+	return ticker.AskSz
 }
 
 func (ticker *Ticker) GetExchange() common.ExchangeID {
