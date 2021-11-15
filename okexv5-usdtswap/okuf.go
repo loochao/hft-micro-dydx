@@ -52,7 +52,11 @@ func (okut *OkexV5UsdtSwap) GenerateClientID() string {
 }
 
 func (okut *OkexV5UsdtSwap) GetMultiplier(symbol string) (float64, error) {
-	return 1.0, nil
+	if value, ok := Multipliers[symbol]; ok {
+		return value, nil
+	} else {
+		return 0, fmt.Errorf(common.MultiplierNotFoundError, symbol)
+	}
 }
 
 func (okut *OkexV5UsdtSwap) GetMinNotional(symbol string) (float64, error) {
@@ -155,7 +159,7 @@ func (okut *OkexV5UsdtSwap) StreamBasic(ctx context.Context, statusCh chan commo
 					}
 					continue
 				}
-				if ch, ok1 := positionChMap[nextPos.InstId]; ok1{
+				if ch, ok1 := positionChMap[nextPos.InstId]; ok1 {
 					if lastPos, ok2 := positionsMap[nextPos.InstId]; ok2 && nextPos.UTime.Sub(lastPos.UTime) > 0 {
 						position := nextPos
 						positionsMap[position.InstId] = &position
@@ -456,6 +460,20 @@ func (okut *OkexV5UsdtSwap) Setup(ctx context.Context, settings common.ExchangeS
 		}
 		if _, ok := MinSizes[symbol]; !ok {
 			return fmt.Errorf("min size not found for %s", symbol)
+		}
+		if _, ok := Multipliers[symbol]; !ok {
+			return fmt.Errorf("multiplier found for %s", symbol)
+		}
+		if settings.ChangeLeverage {
+			err = okut.api.UpdateLeverage(ctx, Leverage{
+				InstId: symbol,
+				Lever:  int(settings.Leverage),
+			})
+			if err != nil {
+				logger.Debugf("UPDATE LEVERAGE FOR %s ERROR %v", symbol, err)
+			} else {
+				logger.Debugf("UPDATE LEVERAGE TO %.0f FOR %s ", settings.Leverage, symbol)
+			}
 		}
 	}
 	return

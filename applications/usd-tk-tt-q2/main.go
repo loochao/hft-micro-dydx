@@ -162,9 +162,9 @@ func main() {
 
 	switch xyConfig.YExchange.Name {
 	case "okexV5UsdtSpot":
-		xExchange = &okexv5_usdtspot.OkexV5UsdtSpot{}
+		yExchange = &okexv5_usdtspot.OkexV5UsdtSpot{}
 	case "okexV5UsdtSwap":
-		xExchange = &okexv5_usdtswap.OkexV5UsdtSwap{}
+		yExchange = &okexv5_usdtswap.OkexV5UsdtSwap{}
 	case "dydxUsdFuture":
 		yExchange = &dydx_usdfuture.DydxUsdFuture{}
 	case "binanceUsdtFuture":

@@ -25,3 +25,6 @@ rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" naeo:/usr/local/bin/
 echo "" && echo "" && echo "way"
 rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" way:/usr/local/bin/
 
+echo "" && echo "" && echo "hkhr"
+rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" hkhr:/usr/local/bin/
+
