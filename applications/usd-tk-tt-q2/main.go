@@ -245,8 +245,8 @@ func main() {
 	}
 	logger.Debug("\n\n")
 
-	logger.Debugf("X EXCHANGE ID %s", xExchange.GetExchange())
-	logger.Debugf("Y EXCHANGE ID %s", yExchange.GetExchange())
+	logger.Debugf("X EXCHANGE ID %d", xExchange.GetExchange())
+	logger.Debugf("Y EXCHANGE ID %d", yExchange.GetExchange())
 
 	logger.Debug("\n\n")
 

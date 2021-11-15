@@ -49,10 +49,14 @@ func handleSave(
 			fields["xBidPrice"] = strat.xTicker.GetBidPrice()
 			fields["xAskPrice"] = strat.xTicker.GetAskPrice()
 			fields["xMidPrice"] = strat.xMidPrice
+			fields["xBidSize"] = strat.xTicker.GetBidSize()
+			fields["xAskSize"] = strat.xTicker.GetAskSize()
 
 			fields["yBidPrice"] = strat.yTicker.GetBidPrice()
 			fields["yAskPrice"] = strat.yTicker.GetAskPrice()
 			fields["yMidPrice"] = strat.yMidPrice
+			fields["yBidSize"] = strat.yTicker.GetBidSize()
+			fields["yAskSize"] = strat.yTicker.GetAskSize()
 
 			xSize := strat.xPosition.GetSize() * strat.xMultiplier
 			ySize := strat.yPosition.GetSize() * strat.yMultiplier
