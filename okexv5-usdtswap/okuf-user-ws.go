@@ -64,7 +64,7 @@ func (w *UserWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 				return
 			}
 
-			logger.Debugf("%s", msgBytes)
+			//logger.Debugf("%s", msgBytes)
 
 			err = conn.WriteMessage(websocket.TextMessage, msgBytes)
 			if err != nil {
