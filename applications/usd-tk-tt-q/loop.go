@@ -13,7 +13,7 @@ func (strat *XYStrategy) handleFundingRate() {
 	if strat.xyFundingRate == nil {
 		strat.xyFundingRate = new(float64)
 	}
-	*strat.xyFundingRate = strat.yFundingRate.GetFundingRate() - strat.xFundingRate.GetFundingRate()
+	*strat.xyFundingRate = strat.yFundingRate.GetFundingRate()*strat.config.YFundingRateWeight - strat.xFundingRate.GetFundingRate()*strat.config.YFundingRateWeight
 }
 
 func (strat *XYStrategy) handleXOrder() {

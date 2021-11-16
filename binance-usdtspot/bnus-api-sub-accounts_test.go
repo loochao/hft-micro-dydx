@@ -31,6 +31,10 @@ func TestAPI_QuerySubAccountList(t *testing.T) {
 		Key:    os.Getenv("BN_TEST_MASTER_KEY"),
 		Secret: os.Getenv("BN_TEST_MASTER_SECRET"),
 	}, os.Getenv("BN_TEST_MASTER_PROXY"))
+	//api, err := NewAPI(&common.Credentials{
+	//	Key:    os.Getenv("BN_TEST_MASTER_KEY_OLD"),
+	//	Secret: os.Getenv("BN_TEST_MASTER_SECRET_OLD"),
+	//}, os.Getenv("BN_TEST_MASTER_PROXY_OLD"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +43,9 @@ func TestAPI_QuerySubAccountList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	logger.Debugf("%v", accounts)
+	for _, a := range accounts {
+		logger.Debugf("%s", a.Email)
+	}
 }
 
 func TestAPI_QuerySubAccountAssets(t *testing.T) {
@@ -52,7 +58,7 @@ func TestAPI_QuerySubAccountAssets(t *testing.T) {
 	}
 	ctx := context.Background()
 	balances, _, err := api.QuerySubAccountAssets(ctx, SubAccountParams{
-		"fund5@vf2021.com",
+		"fund1@vf2021.com",
 	})
 	if err != nil {
 		t.Fatal(err)

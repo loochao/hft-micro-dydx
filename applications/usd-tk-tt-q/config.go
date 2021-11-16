@@ -39,6 +39,8 @@ type Config struct {
 	QuantileEnterBot       float64       `yaml:"quantileEnterBot"`
 	QuantileExitTop        float64       `yaml:"quantileExitTop"`
 	QuantileExitBot        float64       `yaml:"quantileExitBot"`
+	SpreadMiddleMin        float64       `yaml:"spreadMiddleMin"`
+	SpreadMiddleMax        float64       `yaml:"spreadMiddleMax"`
 
 	MinimalEnterFundingRate float64       `yaml:"minimalEnterFundingRate"`
 	FundingRateOffsetMin    float64       `yaml:"fundingRateOffsetMin"`
@@ -46,8 +48,8 @@ type Config struct {
 	FundingRateSilentTime   time.Duration `yaml:"fundingRateSilentTime"`
 	FundingRateInterval     time.Duration `yaml:"fundingRateInterval"`
 	FundingRateTimeOffset   time.Duration `yaml:"fundingRateTimeOffset"`
-	XFundingRateFactor      float64       `yaml:"xFundingRateFactor"`
-	YFundingRateFactor      float64       `yaml:"yFundingRateFactor"`
+	XFundingRateWeight      float64       `yaml:"xFundingRateWeight"`
+	YFundingRateWeight      float64       `yaml:"yFundingRateWeight"`
 
 	TickerMaxTimeDelta   time.Duration `yaml:"tickerTimeDeltaMax"`
 	TickerMinTimeDelta   time.Duration `yaml:"tickerTimeDeltaMin"`
@@ -144,12 +146,6 @@ func (config *Config) SetDefaultIfNotSet() {
 	if config.BestSizeFactor == 0 {
 		config.BestSizeFactor = 1.0
 	}
-	if config.XFundingRateFactor == 0 {
-		config.XFundingRateFactor = 1.0
-	}
-	if config.YFundingRateFactor == 0 {
-		config.YFundingRateFactor = 1.0
-	}
 	if config.XOrderTimeInForce == "" {
 		config.XOrderTimeInForce = common.OrderTimeInForceFOK
 	}
@@ -167,5 +163,10 @@ func (config *Config) SetDefaultIfNotSet() {
 	}
 	if config.QuantileExitTop == 0 {
 		config.QuantileExitTop = 0.8
+	}
+	if config.SpreadMiddleMin == 0.0 &&
+		config.SpreadMiddleMax == 0.0 {
+		config.SpreadMiddleMin = -0.01
+		config.SpreadMiddleMax = 0.01
 	}
 }

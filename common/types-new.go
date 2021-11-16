@@ -119,7 +119,8 @@ type ExchangeSettings struct {
 	ApiUrl                              string        `yaml:"apiUrl" json:"apiUrl"`
 	PositionID                          string        `yaml:"positionID" json:"positionID"`
 	Symbols                             []string      `yaml:"symbols" json:"symbols"`
-	PullInterval                        time.Duration `yaml:"pullInterval" json:"httpPullInterval"`
+	PullInterval                        time.Duration `yaml:"pullInterval" json:"pullInterval"`
+	PullDelay                           time.Duration `yaml:"pullDelay" json:"pullDelay"`
 	HttpRequestInterval                 time.Duration `yaml:"httpRequestInterval" json:"httpRequestInterval"`
 	MarginType                          string        `yaml:"marginType" json:"marginType"`
 	ChangeMarginType                    bool          `yaml:"changeMarginType" json:"changeMarginType"`

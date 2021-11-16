@@ -126,7 +126,8 @@ func (ftx *FtxUsdFuture) StreamBasic(
 
 	internalPositions := make(map[string]Position)
 	internalPositionsCh := make(chan []Position, 100)
-	go ftx.positionsLoop(ctx, positionMarkets, internalPositionsCh)
+	pullEventCh := make(chan interface{}, 16)
+	go ftx.positionsLoop(ctx, positionMarkets, pullEventCh, internalPositionsCh)
 	internalAccountCh := make(chan *Account, 100)
 	go ftx.accountLoop(ctx, internalAccountCh)
 
@@ -224,11 +225,12 @@ func (ftx *FtxUsdFuture) StreamBasic(
 			}
 		case order := <-userWS.OrderCh:
 			if order.Status == OrderStatusNew {
-				//logger.Debugf("SAVE INTERNAL ORDER %d %v", order.ID, order)
+				logger.Debugf("ORDER_DEBUG NEW EVENT %s %s %v", order.Market, order.ID, order.ParseTime)
 				internalOrders[order.ID] = order
 			}
 			if order.Status == OrderStatusClosed &&
 				order.FilledSize != 0 {
+				logger.Debugf("ORDER_DEBUG CLOSED EVENT %s %s %v", order.Market, order.ID, order.ParseTime)
 				if pos, ok := internalPositions[order.Market]; ok {
 					if pos.ParseTime.Sub(order.ParseTime) > time.Second {
 						continue
@@ -278,9 +280,16 @@ func (ftx *FtxUsdFuture) StreamBasic(
 			} else {
 				logger.Debugf("ORDER FROM OTHER PLACE %v", order)
 			}
-			break
+			select {
+			case pullEventCh <- nil:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("pullEventCh <- nil failed, ch len %d", len(pullEventCh))
+					logSilentTime = time.Now().Add(time.Minute)
+				}
+			}
 		case fill := <-userWS.FillCh:
-			//logger.Debugf("FILL %d %v INTERNAL ORDER %v INTERNAL POSITION %v", fill.OrderId, fill, internalOrders[fill.OrderId], internalPositions[fill.Market])
+			logger.Debugf("ORDER_DEBUG FILL EVENT %s %s %v", fill.Market, fill.OrderId, fill.Time)
 			if order, ok := internalOrders[fill.OrderId]; ok {
 				fill.PostOnly = order.PostOnly
 				fill.ReduceOnly = order.ReduceOnly
@@ -297,6 +306,14 @@ func (ftx *FtxUsdFuture) StreamBasic(
 						logger.Debugf("orderCh <- &fill failed, ch len %d", len(orderCh))
 						logSilentTime = time.Now().Add(time.Minute)
 					}
+				}
+			}
+			select {
+			case pullEventCh <- nil:
+			default:
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("pullEventCh <- nil failed, ch len %d", len(pullEventCh))
+					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
 			break
@@ -466,7 +483,6 @@ func (ftx *FtxUsdFuture) WatchOrders(
 	}
 }
 
-
 func (ftx *FtxUsdFuture) watchPriceFactor(ctx context.Context, settings common.ExchangeSettings) {
 	logger.Debugf("watchPriceFactor for %s", settings.PriceFactorPair)
 	defer func() {
@@ -574,17 +590,60 @@ func (ftx *FtxUsdFuture) Done() chan interface{} {
 	return ftx.done
 }
 
-func (ftx *FtxUsdFuture) positionsLoop(ctx context.Context, markets []string, positionsCh chan []Position) {
+func (ftx *FtxUsdFuture) positionsLoop(ctx context.Context, markets []string, pullEventCh chan interface{}, positionsCh chan []Position) {
 	pullInterval := ftx.settings.PullInterval
-	pullTimer := time.NewTimer(pullInterval)
-	defer pullTimer.Stop()
+	pullDelay := ftx.settings.PullDelay
+	if pullInterval == 0 {
+		pullInterval = time.Second * 15
+	}
+	if pullDelay == 0 {
+		pullDelay = time.Millisecond * 50
+	}
+	pollingPullTimer := time.NewTimer(pullInterval)
+	defer pollingPullTimer.Stop()
+	pullBlockInterval := time.Hour * 9999
+	eventPullTimer := time.NewTimer(pullBlockInterval)
+	defer eventPullTimer.Stop()
+	//如果有订单成交或者Fill，会触发重新拉取持仓
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ftx.done:
 			return
-		case <-pullTimer.C:
+		case <-pullEventCh:
+			eventPullTimer.Reset(pullDelay)
+			break
+		case <-eventPullTimer.C:
+			logger.Debugf("ORDER_DEBUG TRIGGERED PULL POSITION")
+			positions, err := ftx.api.GetPositions(ctx)
+			if err != nil {
+				logger.Debugf("ftx.api.GetPositions(ctx) error %v", err)
+			} else {
+				hasPositions := map[string]bool{}
+				outPositions := make([]Position, 0)
+				for _, position := range positions {
+					hasPositions[position.Market] = true
+					outPositions = append(outPositions, position)
+				}
+				for _, market := range markets {
+					if _, ok := hasPositions[market]; !ok {
+						outPositions = append(outPositions, Position{
+							Market:    market,
+							ParseTime: time.Now(),
+						})
+					}
+				}
+				select {
+				case positionsCh <- outPositions:
+				default:
+					logger.Debugf("positionsCh <- positions failed, ch len %d", len(positionsCh))
+				}
+			}
+			eventPullTimer.Reset(pullBlockInterval)
+			pollingPullTimer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
+			break
+		case <-pollingPullTimer.C:
 			positions, err := ftx.api.GetPositions(ctx)
 			if err != nil {
 				logger.Debugf("ftx.api.GetPositions(ctx) error %v", err)
@@ -610,7 +669,8 @@ func (ftx *FtxUsdFuture) positionsLoop(ctx context.Context, markets []string, po
 					logger.Debugf("positionsCh <- positions failed, ch len %d", len(positionsCh))
 				}
 			}
-			pullTimer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
+			eventPullTimer.Reset(pullBlockInterval)
+			pollingPullTimer.Reset(time.Now().Truncate(pullInterval).Add(pullInterval).Sub(time.Now()))
 			break
 		}
 	}
