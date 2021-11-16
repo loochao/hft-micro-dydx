@@ -232,6 +232,9 @@ func (ftx *FtxUsdFuture) StreamBasic(
 				order.FilledSize != 0 {
 				logger.Debugf("ORDER_DEBUG CLOSED EVENT %s %s %v", order.Market, order.ID, order.ParseTime)
 				if pos, ok := internalPositions[order.Market]; ok {
+					//实盘极端行情可能出现http拉过来的持仓不能及时更新
+					//order用ParseTime过滤
+					//pos本身用EventTime过滤, delay一定的时间不更新, 比如5秒
 					if pos.ParseTime.Sub(order.ParseTime) > time.Second {
 						continue
 					}
@@ -253,7 +256,8 @@ func (ftx *FtxUsdFuture) StreamBasic(
 						pos.NetSize += size
 					}
 					pos.ParseTime = order.ParseTime
-					//logger.Debugf("UPDATE POSITION BY FILL %v", pos)
+					pos.EventTime = order.ParseTime.Add(time.Second*5)
+
 					internalPositions[order.Market] = pos
 					if positionCh, ok := positionsCh[order.Market]; ok {
 						select {
@@ -266,7 +270,6 @@ func (ftx *FtxUsdFuture) StreamBasic(
 						}
 					}
 				}
-
 			}
 			if orderCh, ok := ordersCh[order.Market]; ok {
 				select {

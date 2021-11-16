@@ -430,7 +430,6 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 				}
 				continue
 			}
-			//logger.Debugf("%s", msg)
 			if dataCap.Type == "error" {
 				if dataCap.Msg == "Already logged in" {
 					select {
@@ -482,7 +481,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 						select {
 						case w.FillCh <- fill:
 						default:
-							logger.Debugf("w.FillCh <- fill failed, ch len %d", len(w.FillCh))
+							logger.Debugf("w.FillCh <- fill failed, ch len %d %s", len(w.FillCh), msg)
 						}
 					}
 					continue
@@ -495,7 +494,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 						select {
 						case w.OrderCh <- order:
 						default:
-							logger.Debugf("w.Order <- order failed, ch len %d", len(w.OrderCh))
+							logger.Debugf("w.Order <- order failed, ch len %d %s", len(w.OrderCh), msg)
 						}
 					}
 					continue
@@ -517,19 +516,19 @@ func NewUserWS(
 ) *UserWS {
 	ws := UserWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 100),
-		writeCh:     make(chan interface{}, 100),
-		messageCh:   make(chan []byte, 10000),
-		RestartCh:   make(chan interface{}, 100),
-		trafficCh:   make(chan string, 100),
-		loginCh:     make(chan bool, 100),
+		reconnectCh: make(chan interface{}, 4),
+		writeCh:     make(chan interface{}, 16),
+		messageCh:   make(chan []byte, 256),
+		RestartCh:   make(chan interface{}, 4),
+		trafficCh:   make(chan string, 128),
+		loginCh:     make(chan bool, 4),
 		stopped:     0,
 		key:         key,
 		secret:      secret,
 		subAccount:  subAccount,
 		proxy:       proxy,
-		OrderCh:     make(chan Order, 1000),
-		FillCh:      make(chan Fill, 1000),
+		OrderCh:     make(chan Order, 128),
+		FillCh:      make(chan Fill, 128),
 	}
 	return &ws
 }

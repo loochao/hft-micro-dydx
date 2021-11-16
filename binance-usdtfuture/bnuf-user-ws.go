@@ -314,8 +314,8 @@ func NewUserWebsocket(
 		done:                            make(chan interface{}),
 		reconnectCh:                     make(chan interface{}),
 		RestartCh:                       make(chan interface{}, 4),
-		OrderUpdateEventCh:              make(chan *OrderUpdateEvent, 16),
-		BalanceAndPositionUpdateEventCh: make(chan *BalanceAndPositionUpdateEvent, 16),
+		OrderUpdateEventCh:              make(chan *OrderUpdateEvent, 64),
+		BalanceAndPositionUpdateEventCh: make(chan *BalanceAndPositionUpdateEvent, 64),
 		messageCh:                       make(chan []byte, 128),
 		stopped:                         0,
 	}

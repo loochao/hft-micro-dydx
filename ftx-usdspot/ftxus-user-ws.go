@@ -61,8 +61,6 @@ func (w *UserWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 				w.restart()
 				return
 			}
-
-			//logger.Debugf("%s", msgBytes)
 			err = conn.WriteMessage(websocket.TextMessage, msgBytes)
 			if err != nil {
 				logger.Debugf("conn.WriteMessage error %v", err)
@@ -77,12 +75,9 @@ func (w *UserWS) readLoop(conn *websocket.Conn) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
-	//var symbolBytes []byte
-	//var symbol string
+
 	var msg []byte
 	var err error
-	//var ch chan []byte
-	//var ok bool
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -469,19 +464,19 @@ func NewUserWS(
 ) *UserWS {
 	ws := UserWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 100),
-		writeCh:     make(chan interface{}, 100),
-		messageCh:   make(chan []byte, 10000),
-		RestartCh:   make(chan interface{}, 100),
-		trafficCh:   make(chan string, 100),
-		loginCh:     make(chan bool, 100),
+		reconnectCh: make(chan interface{}, 4),
+		writeCh:     make(chan interface{}, 64),
+		messageCh:   make(chan []byte, 256),
+		RestartCh:   make(chan interface{}, 4),
+		trafficCh:   make(chan string, 128),
+		loginCh:     make(chan bool, 4),
 		stopped:     0,
 		key:         key,
 		secret:      secret,
 		subAccount:  subAccount,
 		proxy:       proxy,
-		OrderCh:     make(chan Order, 1000),
-		FillCh:      make(chan Fill, 1000),
+		OrderCh:     make(chan Order, 64),
+		FillCh:      make(chan Fill, 64),
 	}
 	go ws.dataHandleLoop(ctx)
 	go ws.mainLoop(ctx, ws.key, ws.secret, ws.proxy)
