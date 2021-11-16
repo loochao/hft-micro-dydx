@@ -225,12 +225,12 @@ func (ftx *FtxUsdFuture) StreamBasic(
 			}
 		case order := <-userWS.OrderCh:
 			if order.Status == OrderStatusNew {
-				logger.Debugf("ORDER_DEBUG NEW EVENT %s %s %v", order.Market, order.ID, order.ParseTime)
+				logger.Debugf("ORDER_DEBUG NEW EVENT %s %d %v", order.Market, order.ID, order.ParseTime)
 				internalOrders[order.ID] = order
 			}
 			if order.Status == OrderStatusClosed &&
 				order.FilledSize != 0 {
-				logger.Debugf("ORDER_DEBUG CLOSED EVENT %s %s %v", order.Market, order.ID, order.ParseTime)
+				logger.Debugf("ORDER_DEBUG CLOSED EVENT %s %d %v", order.Market, order.ID, order.ParseTime)
 				if pos, ok := internalPositions[order.Market]; ok {
 					//实盘极端行情可能出现http拉过来的持仓不能及时更新
 					//order用ParseTime过滤
@@ -270,6 +270,14 @@ func (ftx *FtxUsdFuture) StreamBasic(
 						}
 					}
 				}
+				select {
+				case pullEventCh <- nil:
+				default:
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("pullEventCh <- nil failed, ch len %d", len(pullEventCh))
+						logSilentTime = time.Now().Add(time.Minute)
+					}
+				}
 			}
 			if orderCh, ok := ordersCh[order.Market]; ok {
 				select {
@@ -283,16 +291,8 @@ func (ftx *FtxUsdFuture) StreamBasic(
 			} else {
 				logger.Debugf("ORDER FROM OTHER PLACE %v", order)
 			}
-			select {
-			case pullEventCh <- nil:
-			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("pullEventCh <- nil failed, ch len %d", len(pullEventCh))
-					logSilentTime = time.Now().Add(time.Minute)
-				}
-			}
 		case fill := <-userWS.FillCh:
-			logger.Debugf("ORDER_DEBUG FILL EVENT %s %s %v", fill.Market, fill.OrderId, fill.Time)
+			logger.Debugf("ORDER_DEBUG FILL EVENT %s %d %v", fill.Market, fill.OrderId, fill.Time)
 			if order, ok := internalOrders[fill.OrderId]; ok {
 				fill.PostOnly = order.PostOnly
 				fill.ReduceOnly = order.ReduceOnly
