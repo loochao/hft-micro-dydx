@@ -256,7 +256,7 @@ func (ftx *FtxUsdFuture) StreamBasic(
 						pos.NetSize += size
 					}
 					pos.ParseTime = order.ParseTime
-					pos.EventTime = order.ParseTime.Add(time.Second*5)
+					pos.EventTime = order.ParseTime.Add(ftx.settings.PullDelay)
 
 					internalPositions[order.Market] = pos
 					if positionCh, ok := positionsCh[order.Market]; ok {
