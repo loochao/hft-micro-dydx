@@ -405,8 +405,8 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			logger.Debugf("%10s bad strat.xPosition == nextPos pass same pointer", strat.xSymbol)
 			return
 		}
-		logger.Debugf("X POS %s %v %v %f %f", strat.xSymbol, nextPos.GetEventTime(), strat.xPosition.GetEventTime(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()), strat.xStepSize)
 		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= 0 {
+			logger.Debugf("X POS %s %v %v %f %f", strat.xSymbol, nextPos.GetEventTime(), strat.xPosition.GetEventTime(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()), strat.xStepSize)
 			//logger.Debugf("%s %v %v %f %f", strat.xSymbol, nextPos.GetEventTime(), strat.xPosition.GetEventTime(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()), strat.xStepSize)
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
