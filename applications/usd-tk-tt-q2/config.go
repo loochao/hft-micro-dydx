@@ -120,6 +120,12 @@ type Config struct {
 }
 
 func (config *Config) SetDefaultIfNotSet() error {
+	if config.XExchange.Leverage == 0 {
+		config.XExchange.Leverage = 1.0
+	}
+	if config.YExchange.Leverage == 0 {
+		config.YExchange.Leverage = 1.0
+	}
 	if config.InternalInflux.SaveInterval == 0 {
 		config.InternalInflux.SaveInterval = time.Minute
 	}
