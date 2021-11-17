@@ -97,10 +97,10 @@ func (strat *XYStrategy) updateXPosition() {
 		time.Now().Sub(strat.xOrderSilentTime) < 0 {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("%s %v %v %v %v %v %v %v",
+			logger.Debugf("%s %v %v %v %v %v %v %v %v %v",
 				strat.xSymbol,
-				time.Now().Sub(strat.xPositionUpdateTime) > strat.config.AccountMaxAge,
-				time.Now().Sub(strat.yPositionUpdateTime) > strat.config.AccountMaxAge,
+				strat.xPositionUpdateTime, time.Now().Sub(strat.xPositionUpdateTime) > strat.config.AccountMaxAge,
+				strat.yPositionUpdateTime, time.Now().Sub(strat.yPositionUpdateTime) > strat.config.AccountMaxAge,
 				strat.xAccount == nil,
 				strat.yAccount == nil,
 				strat.fundingRateSettleSilent,
