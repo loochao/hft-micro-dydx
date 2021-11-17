@@ -28,3 +28,6 @@ chmod 755 "./dist/usd-tk-tt-q2.amd64.$dt"
 echo "" && echo "" && echo "hkhr"
 rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" hkhr:/usr/local/bin/
 
+echo "" && echo "" && echo "hk03"
+rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" hk03:/usr/local/bin/
+
