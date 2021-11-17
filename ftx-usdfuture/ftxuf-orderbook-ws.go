@@ -126,6 +126,7 @@ func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []
 			continue
 		}
 		if ch, ok = channels[symbol]; ok {
+			logger.Debugf("%s", msg)
 			select {
 			case ch <- msg:
 			default:

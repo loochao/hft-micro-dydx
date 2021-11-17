@@ -138,6 +138,7 @@ type XYStrategy struct {
 	maxOrderValue          float64
 	targetValue            float64
 	realisedSpread         *float64
+	referenceSpread        float64
 	adjustedRealisedSpread *float64
 
 	enterOffset *float64

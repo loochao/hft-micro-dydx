@@ -366,10 +366,10 @@ func (strat *XYStrategy) handleSave() {
 func (strat *XYStrategy) hedgeYPosition() {
 	if strat.xSystemStatus != common.SystemStatusReady ||
 		strat.ySystemStatus != common.SystemStatusReady {
-		if time.Now().Sub(strat.logSilentTime) > 0 {
-			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("%s hedgeYPosition xSystemStatus %v ySystemStatus %v", strat.xSymbol, strat.xSystemStatus, strat.ySystemStatus)
-		}
+		//if time.Now().Sub(strat.logSilentTime) > 0 {
+			//strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+			//logger.Debugf("%s hedgeYPosition xSystemStatus %v ySystemStatus %v", strat.xSymbol, strat.xSystemStatus, strat.ySystemStatus)
+		//}
 		return
 	}
 	if strat.yPosition == nil ||

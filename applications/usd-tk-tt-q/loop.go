@@ -92,6 +92,11 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			strat.realisedSpread = new(float64)
 		}
 		*strat.realisedSpread = (*strat.yLastFilledSellPrice - *strat.xLastFilledBuyPrice) / *strat.yLastFilledSellPrice
+		if strat.referenceSpread != 0 &&
+			*strat.realisedSpread > strat.referenceSpread-strat.config.EnterSlippage {
+
+			strat.referenceSpread = 0
+		}
 		if strat.quantileMiddle != nil {
 			if strat.adjustedRealisedSpread == nil {
 				strat.adjustedRealisedSpread = new(float64)

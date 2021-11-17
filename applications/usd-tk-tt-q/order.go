@@ -156,6 +156,7 @@ func (strat *XYStrategy) updateXPosition() {
 				}:
 				}
 			}
+			strat.referenceSpread = strat.shortBot
 			strat.xLastFilledBuyPrice = nil
 			strat.xLastFilledSellPrice = nil
 			strat.yLastFilledBuyPrice = nil
@@ -228,6 +229,7 @@ func (strat *XYStrategy) updateXPosition() {
 				}:
 				}
 			}
+			strat.referenceSpread = strat.longTop
 			strat.xLastFilledBuyPrice = nil
 			strat.xLastFilledSellPrice = nil
 			strat.yLastFilledBuyPrice = nil
@@ -343,6 +345,7 @@ func (strat *XYStrategy) updateXPosition() {
 			}:
 			}
 		}
+		strat.referenceSpread = strat.shortTop
 		strat.xLastFilledBuyPrice = nil
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
@@ -457,6 +460,7 @@ func (strat *XYStrategy) updateXPosition() {
 			}:
 			}
 		}
+		strat.referenceSpread = strat.longBot
 		strat.xLastFilledBuyPrice = nil
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
