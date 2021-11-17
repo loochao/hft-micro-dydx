@@ -158,11 +158,11 @@ func (okus *OkexV5UsdtSpot) StreamBasic(ctx context.Context, statusCh chan commo
 				symbol := cashBalance.Ccy + "-USDT"
 				if ch, ok := positionChMap[symbol]; ok {
 					if lastBalance, ok2 := balancesMap[symbol]; ok2 && cashBalance.EventTime.Sub(lastBalance.EventTime) > 0 {
-						lastBalance.EventTime = cashBalance.EventTime
-						lastBalance.Eq = cashBalance.CashBal
-						lastBalance.ParseTime = cashBalance.ParseTime
-						balancesMap[symbol] = lastBalance
 						outBalance := *lastBalance
+						outBalance.EventTime = cashBalance.EventTime
+						outBalance.ParseTime = cashBalance.ParseTime
+						outBalance.Eq = cashBalance.CashBal
+						balancesMap[symbol] = &outBalance
 						select {
 						case ch <- &outBalance:
 						default:
@@ -202,17 +202,17 @@ func (okus *OkexV5UsdtSpot) StreamBasic(ctx context.Context, statusCh chan commo
 					if ok2 && wsBalance.EventTime.Sub(lastBalance.EventTime) < 0 {
 						continue
 					}
-					if !ok2 {
-						balance := wsBalance
-						balancesMap[symbol] = &balance
-					} else {
-						balancesMap[symbol].EventTime = wsBalance.EventTime
-						balancesMap[symbol].Ccy = wsBalance.Ccy
-						balancesMap[symbol].CashBal = wsBalance.CashBal
-						balancesMap[symbol].FrozenBal = wsBalance.FrozenBal
-						balancesMap[symbol].OrdFrozen = wsBalance.OrdFrozen
+					outBalance  := wsBalance
+					if ok2 {
+						outBalance = *lastBalance
+						outBalance.EventTime = wsBalance.EventTime
+						outBalance.Ccy = wsBalance.Ccy
+						outBalance.CashBal = wsBalance.CashBal
+						outBalance.FrozenBal = wsBalance.FrozenBal
+						outBalance.OrdFrozen = wsBalance.OrdFrozen
+						outBalance.ParseTime = wsBalance.ParseTime
 					}
-					outBalance := *balancesMap[symbol]
+					balancesMap[symbol] = &outBalance
 					select {
 					case ch <- &outBalance:
 					default:
