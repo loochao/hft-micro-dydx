@@ -61,15 +61,14 @@ func handleSave(
 			fields["xBidSize"] = strat.xTicker.GetBidSize()
 			fields["xAskSize"] = strat.xTicker.GetAskSize()
 
-			xTotalBidValue += strat.xTicker.GetBidSize()*strat.xMultiplier*strat.xTicker.GetBidPrice()
-			xTotalAskValue += strat.xTicker.GetAskSize()*strat.xMultiplier*strat.xTicker.GetAskPrice()
-
 			fields["yBidPrice"] = strat.yTicker.GetBidPrice()
 			fields["yAskPrice"] = strat.yTicker.GetAskPrice()
 			fields["yMidPrice"] = strat.yMidPrice
 			fields["yBidSize"] = strat.yTicker.GetBidSize()
 			fields["yAskSize"] = strat.yTicker.GetAskSize()
 
+			xTotalBidValue += strat.xTicker.GetBidSize()*strat.xMultiplier*strat.xTicker.GetBidPrice()
+			xTotalAskValue += strat.xTicker.GetAskSize()*strat.xMultiplier*strat.xTicker.GetAskPrice()
 			yTotalBidValue += strat.yTicker.GetBidSize()*strat.yMultiplier*strat.yTicker.GetBidPrice()
 			yTotalAskValue += strat.yTicker.GetAskSize()*strat.yMultiplier*strat.yTicker.GetAskPrice()
 
@@ -284,9 +283,15 @@ func handleSave(
 		}
 		fields["xURPnl"] = xURPnl
 		fields["yURPnl"] = yURPnl
-		fields["xyTurnover"] = (xTradeVolume + yTradeVolume) / totalBalance
-		fields["xTurnover"] = xTradeVolume / xBalance
-		fields["yTurnover"] = yTradeVolume / yBalance
+		if totalBalance != 0 {
+			fields["xyTurnover"] = (xTradeVolume + yTradeVolume) / totalBalance
+		}
+		if xBalance != 0 {
+			fields["xTurnover"] = xTradeVolume / xBalance
+		}
+		if yBalance != 0 {
+			fields["yTurnover"] = yTradeVolume / yBalance
+		}
 		fields["xyURPnl"] = totalURPnl
 		fields["netWorth"] = netWorth
 		fields["startValue"] = xyConfig.StartValue
