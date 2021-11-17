@@ -19,8 +19,8 @@ type Position interface {
 	GetSymbol() string
 	GetSize() float64
 	GetPrice() float64
-	GetEventTime() time.Time
-	GetParseTime() time.Time
+	GetEventTime() time.Time //EventTime仓位数据变动触发时间
+	GetParseTime() time.Time //ParseTime持仓数据解析时间
 	GetExchange() ExchangeID
 }
 
@@ -120,7 +120,6 @@ type ExchangeSettings struct {
 	PositionID                          string        `yaml:"positionID" json:"positionID"`
 	Symbols                             []string      `yaml:"symbols" json:"symbols"`
 	PullInterval                        time.Duration `yaml:"pullInterval" json:"pullInterval"`
-	PullDelay                           time.Duration `yaml:"pullDelay" json:"pullDelay"`
 	HttpRequestInterval                 time.Duration `yaml:"httpRequestInterval" json:"httpRequestInterval"`
 	MarginType                          string        `yaml:"marginType" json:"marginType"`
 	ChangeMarginType                    bool          `yaml:"changeMarginType" json:"changeMarginType"`
