@@ -273,6 +273,7 @@ func (sl *XYTickerStats) loadTD(tdPath string, lookback, subInterval time.Durati
 			logger.Debugf("json.Unmarshal %s error %v", tdPath, err)
 		} else {
 			td.Lookback = lookback
+			td.HalfLookback = lookback/2
 			td.SubInterval = subInterval
 			td.Compression = compression
 		}
