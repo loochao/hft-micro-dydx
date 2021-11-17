@@ -292,5 +292,10 @@ func (config *Config) SetDefaultIfNotSet() error {
 			config.ReduceOnlyBySymbol[xSymbol] = reduce
 		}
 	}
+	if config.SpreadMiddleMax == 0 &&
+		config.SpreadMiddleMin == 0 {
+		config.SpreadMiddleMax = 0.01
+		config.SpreadMiddleMin = -0.01
+	}
 	return nil
 }
