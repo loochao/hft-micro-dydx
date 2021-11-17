@@ -78,10 +78,10 @@ type Config struct {
 	EnterTargetFactor float64            `yaml:"enterTargetFactor"`
 	StartValues       map[string]float64 `yaml:"startValues"`
 
-	XOrderSilent           time.Duration           `yaml:"xOrderSilent"`
 	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
+	XOrderSilent           time.Duration           `yaml:"xOrderSilent"`
 	YOrderSilent           time.Duration           `yaml:"yOrderSilent"`
-	XEnterTimeout          time.Duration           `yaml:"xEnterTimeout"`
+	XEnterTimeout          time.Duration           `yaml:"xEnterTimeout"` //控制信号作用的有效果时间, 超出范围对冲以以XY中小的对冲
 	XEnterSilent           time.Duration           `yaml:"xEnterSilent"`
 	HedgeDelay             time.Duration           `yaml:"hedgeDelay"`
 	HedgeCheckDuration     time.Duration           `yaml:"hedgeCheckDuration"`

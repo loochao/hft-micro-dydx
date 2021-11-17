@@ -34,7 +34,7 @@ func (strat *XYStrategy) handleXOrder() {
 			strat.xOrderSilentTime = time.Now()
 		} else {
 			logger.Debugf("%s x order filled %s %s size %f price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice()*strat.xMultiplier)
-			strat.realisedSpreadTimer.Reset(time.Second * 5)
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
 			if strat.xOrder.GetSide() == common.OrderSideBuy {
 				if strat.xLastFilledBuyPrice == nil {
 					strat.xLastFilledBuyPrice = new(float64)
@@ -114,6 +114,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		} else {
 			logger.Debugf("%s - %s realised short abs spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
 		}
+		//开仓成功，计算开仓暂停时间
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
 	} else if strat.xLastFilledSellPrice != nil && strat.yLastFilledBuyPrice != nil {
 		if strat.realisedSpread == nil {
@@ -137,6 +138,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		} else {
 			logger.Debugf("%s - %s realised long abs spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread)
 		}
+		//开仓成功，计算开仓暂停时间
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
 	}
 }

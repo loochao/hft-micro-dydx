@@ -163,7 +163,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
+			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration+strat.config.HedgeDelay)
 			strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
 				"%s %s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f Fr %f",
@@ -236,7 +236,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
+			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration+strat.config.HedgeDelay)
 			strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 			logger.Debugf(
 				"%s %s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
@@ -352,7 +352,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
+		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration+strat.config.HedgeDelay)
 		strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
 			"%s %s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
@@ -467,7 +467,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
+		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration+strat.config.HedgeDelay)
 		strat.lastEnterTime = strat.spread.EventTime.Add(strat.config.XOrderSilent)
 		logger.Debugf(
 			"%s %s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
