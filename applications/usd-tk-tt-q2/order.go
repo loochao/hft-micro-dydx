@@ -26,16 +26,16 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.enterTarget == 0 {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			logger.Debugf("%s %v %v %v %v %v %v %v",
-				strat.xSymbol,
-				strat.spreadReady,
-				!strat.targetWeightUpdated.True(),
-				strat.xPosition == nil,
-				strat.yPosition == nil,
-				strat.xyFundingRate == nil,
-				strat.xFundingRateFactor == nil,
-				strat.enterTarget == 0,
-			)
+			//logger.Debugf("%s %v %v %v %v %v %v %v",
+			//	strat.xSymbol,
+			//	strat.spreadReady,
+			//	!strat.targetWeightUpdated.True(),
+			//	strat.xPosition == nil,
+			//	strat.yPosition == nil,
+			//	strat.xyFundingRate == nil,
+			//	strat.xFundingRateFactor == nil,
+			//	strat.enterTarget == 0,
+			//)
 		}
 		return
 	}

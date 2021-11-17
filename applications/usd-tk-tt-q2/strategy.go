@@ -382,16 +382,16 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 		strat.enterStep = strat.config.EnterMinimalStep
 	}
 	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.targetWeight.Load()
-	logger.Debugf(
-		"%s ACCOUNT X %f %f Y %f %f W %f T %f",
-		strat.xSymbol,
-		strat.xAccount.GetFree(),
-		strat.xAccount.GetBalance(),
-		strat.yAccount.GetFree(),
-		strat.yAccount.GetBalance(),
-		strat.targetWeight.Load(),
-		strat.enterTarget,
-	)
+	//logger.Debugf(
+	//	"%s ACCOUNT X %f %f Y %f %f W %f T %f",
+	//	strat.xSymbol,
+	//	strat.xAccount.GetFree(),
+	//	strat.xAccount.GetBalance(),
+	//	strat.yAccount.GetFree(),
+	//	strat.yAccount.GetBalance(),
+	//	strat.targetWeight.Load(),
+	//	strat.enterTarget,
+	//)
 	strat.usdAvailable = math.Min(strat.xAccount.GetFree()*strat.xLeverage, strat.yAccount.GetFree()*strat.yLeverage)
 }
 
