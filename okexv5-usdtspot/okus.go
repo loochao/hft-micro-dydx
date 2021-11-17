@@ -487,7 +487,7 @@ func (okus *OkexV5UsdtSpot) watchSystemStatus(
 	ctx context.Context,
 	output chan common.SystemStatus,
 ) {
-	timer := time.NewTimer(time.Second*time.Duration(90 - rand.Intn(30)))
+	timer := time.NewTimer(time.Second*time.Duration(180 - rand.Intn(120)))
 	defer timer.Stop()
 	for {
 		select {
@@ -528,7 +528,7 @@ func (okus *OkexV5UsdtSpot) watchSystemStatus(
 					}
 				}
 			}
-			timer.Reset(time.Second*time.Duration(90 - rand.Intn(30)))
+			timer.Reset(time.Second*time.Duration(180 - rand.Intn(120)))
 		}
 	}
 }

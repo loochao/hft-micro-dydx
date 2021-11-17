@@ -96,18 +96,18 @@ func (strat *XYStrategy) updateXPosition() {
 		time.Now().Sub(strat.spreadTickerTime) > strat.config.SpreadMaxAge ||
 		time.Now().Sub(strat.xOrderSilentTime) < 0 {
 		//if time.Now().Sub(strat.logSilentTime) > 0 {
-			//strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			//logger.Debugf("%s %v %v %v %v %v %v %v %v %v %v",
-			//	strat.xSymbol,
-			//	strat.config.AccountMaxAge,
-			//	strat.xPositionUpdateTime, time.Now().Sub(strat.xPositionUpdateTime) > strat.config.AccountMaxAge,
-			//	strat.yPositionUpdateTime, time.Now().Sub(strat.yPositionUpdateTime) > strat.config.AccountMaxAge,
-			//	strat.xAccount == nil,
-			//	strat.yAccount == nil,
-			//	strat.fundingRateSettleSilent,
-			//	time.Now().Sub(strat.spreadTickerTime) > strat.config.SpreadMaxAge,
-			//	time.Now().Sub(strat.xOrderSilentTime) < 0,
-			//)
+		//strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+		//logger.Debugf("%s %v %v %v %v %v %v %v %v %v %v",
+		//	strat.xSymbol,
+		//	strat.config.AccountMaxAge,
+		//	strat.xPositionUpdateTime, time.Now().Sub(strat.xPositionUpdateTime) > strat.config.AccountMaxAge,
+		//	strat.yPositionUpdateTime, time.Now().Sub(strat.yPositionUpdateTime) > strat.config.AccountMaxAge,
+		//	strat.xAccount == nil,
+		//	strat.yAccount == nil,
+		//	strat.fundingRateSettleSilent,
+		//	time.Now().Sub(strat.spreadTickerTime) > strat.config.SpreadMaxAge,
+		//	time.Now().Sub(strat.xOrderSilentTime) < 0,
+		//)
 		//}
 		return
 	}
@@ -147,8 +147,10 @@ func (strat *XYStrategy) updateXPosition() {
 			xSizeDiff = strat.maxOrderSize
 		}
 
-		//限开仓大小限制到best bid ask size, 主要关心Y的深度，保证Y的深度足够
-		//xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+		if strat.config.BestSizeFactor > 0 {
+			//限开仓大小限制到best bid ask size, 主要关心Y的深度，保证Y的深度足够
+			xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+		}
 		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
 
 		strat.enterValue = xSizeDiff * xyMidPrice
@@ -237,7 +239,7 @@ func (strat *XYStrategy) updateXPosition() {
 
 		if strat.config.BestSizeFactor > 0 {
 			//限开仓大小限制到best bid ask size
-			xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+			//xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 			xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 		}
 
@@ -341,7 +343,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 
 		if strat.config.BestSizeFactor > 0 {
-			xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+			//xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 			xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 		}
 
@@ -471,7 +473,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 
 		if strat.config.BestSizeFactor > 0 {
-			xSizeDiff = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
+			//xSizeDiff = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 			xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 		}
 
