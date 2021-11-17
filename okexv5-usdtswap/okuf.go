@@ -40,7 +40,7 @@ func (okuf *OkexV5UsdtSwap) StartSideLoop() {
 }
 
 func (okuf *OkexV5UsdtSwap) IsSpot() bool {
-	return true
+	return false
 }
 
 func (okuf *OkexV5UsdtSwap) StreamSymbolStatus(ctx context.Context, channels map[string]chan common.SymbolStatusMsg, batchSize int) {
