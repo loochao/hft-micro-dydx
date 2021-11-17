@@ -155,9 +155,9 @@ func startXYStrategy(
 		targetWeight:        common.ForAtomicFloat64(1.0),
 		targetWeightUpdated: common.ForAtomicBool(false),
 
-		maxPosSize:  config.MaxPosSizes[xSymbol],
-		maxPosValue: config.MaxPosValues[xSymbol],
-		maxOrderSize: config.MaxPosSizes[xSymbol]/4,
+		maxPosSize:   config.MaxPosSizes[xSymbol],
+		maxPosValue:  config.MaxPosValues[xSymbol],
+		maxOrderSize: config.MaxPosSizes[xSymbol] / 4,
 		//xSize:                   0,
 		//ySize:                   0,
 		//xValue:                  0,
@@ -382,6 +382,16 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 		strat.enterStep = strat.config.EnterMinimalStep
 	}
 	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.targetWeight.Load()
+	logger.Debugf(
+		"%s ACCOUNT X %f %f Y %f %f W %f T %f",
+		strat.xSymbol,
+		strat.xAccount.GetFree(),
+		strat.xAccount.GetBalance(),
+		strat.yAccount.GetFree(),
+		strat.yAccount.GetBalance(),
+		strat.targetWeight.Load(),
+		strat.enterTarget,
+	)
 	strat.usdAvailable = math.Min(strat.xAccount.GetFree()*strat.xLeverage, strat.yAccount.GetFree()*strat.yLeverage)
 }
 
