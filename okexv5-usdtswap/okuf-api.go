@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -70,6 +71,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 		if err != nil {
 			return errors.New("sendHTTPRequest: Unable to JSON request")
 		}
+		logger.Debugf("ORDER-PAYLOAD %s", payload)
 	}
 	path := "https://www.okex.com" + requestPath
 	req, err := http.NewRequest(httpMethod, path, bytes.NewReader(payload))
@@ -92,7 +94,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 	if err != nil {
 		return err
 	}
-	//logger.Debugf("%s", contents)
+	logger.Debugf("%s", contents)
 	err = resp.Body.Close()
 	if err != nil {
 		return err
