@@ -97,9 +97,9 @@ func (okuf *OkexV5UsdtSwap) StreamBasic(ctx context.Context, statusCh chan commo
 	)
 	positionsMap := make(map[string]*Position, 0)
 	internalAccountCh := make(chan Account, 4)
-	internalBalancesCh := make(chan []Position, 4)
+	internalPositionsCh := make(chan []Position, 4)
 	go okuf.watchAccount(ctx, internalAccountCh)
-	go okuf.watchBalances(ctx, internalBalancesCh)
+	go okuf.watchPositions(ctx, internalPositionsCh)
 	go okuf.watchSystemStatus(ctx, statusCh)
 	logSilentTime := time.Now()
 	usdtAccount := Account{
@@ -230,7 +230,8 @@ func (okuf *OkexV5UsdtSwap) StreamBasic(ctx context.Context, statusCh chan commo
 				}
 			}
 			break
-		case positions := <-internalBalancesCh:
+		case positions := <-internalPositionsCh:
+			hasPositions := make(map[string]bool)
 			for _, nextPos := range positions {
 				if nextPos.Ccy != "USDT" {
 					continue
@@ -247,6 +248,7 @@ func (okuf *OkexV5UsdtSwap) StreamBasic(ctx context.Context, statusCh chan commo
 					}
 					continue
 				}
+				hasPositions[nextPos.InstId] = true
 				lastPos, ok := positionsMap[nextPos.InstId]
 				if ok && nextPos.UTime.Sub(lastPos.UTime) < 0 {
 					continue
@@ -265,7 +267,7 @@ func (okuf *OkexV5UsdtSwap) StreamBasic(ctx context.Context, statusCh chan commo
 				}
 			}
 			for symbol, ch := range positionChMap {
-				if _, ok := positionsMap[symbol]; !ok {
+				if _, ok := hasPositions[symbol]; !ok {
 					position := &Position{
 						InstId:    symbol,
 						InstType:  "SWAP",
@@ -597,7 +599,7 @@ func (okuf *OkexV5UsdtSwap) watchAccount(
 	}
 }
 
-func (okuf *OkexV5UsdtSwap) watchBalances(
+func (okuf *OkexV5UsdtSwap) watchPositions(
 	ctx context.Context,
 	output chan []Position,
 ) {
@@ -610,14 +612,14 @@ func (okuf *OkexV5UsdtSwap) watchBalances(
 			return
 		case <-timer.C:
 			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			balances, err := okuf.api.GetPositions(subCtx)
+			positions, err := okuf.api.GetPositions(subCtx)
 			if err != nil {
 				logger.Debugf("api.GetBalances error %v", err)
 			} else {
 				select {
-				case output <- balances:
+				case output <- positions:
 				default:
-					logger.Debugf("output <- balances failed, ch len %d", len(output))
+					logger.Debugf("output <- positions failed, ch len %d", len(output))
 				}
 			}
 			timer.Reset(time.Now().Truncate(updateInterval).Add(updateInterval).Sub(time.Now()))

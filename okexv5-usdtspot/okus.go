@@ -250,11 +250,13 @@ func (okus *OkexV5UsdtSpot) StreamBasic(ctx context.Context, statusCh chan commo
 			}
 			break
 		case balances := <-internalBalancesCh:
+			hasBalances := make(map[string]bool)
 			for _, balance := range balances {
 				if balance.Ccy == "USDT" {
 					continue
 				}
 				symbol := balance.Ccy + "-USDT"
+				hasBalances[symbol] = true
 				lastBalance, ok := balancesMap[symbol]
 				if ok && balance.EventTime.Sub(lastBalance.EventTime) < 0 {
 					continue
@@ -273,7 +275,7 @@ func (okus *OkexV5UsdtSpot) StreamBasic(ctx context.Context, statusCh chan commo
 				}
 			}
 			for symbol, ch := range positionChMap {
-				if _, ok := balancesMap[symbol]; !ok {
+				if _, ok := hasBalances[symbol]; !ok {
 					balance := &Balance{
 						Ccy:       strings.Replace(symbol, "-USDT", "", -1),
 						EventTime: time.Now(),
