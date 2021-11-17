@@ -162,11 +162,12 @@ func (okus *OkexV5UsdtSpot) StreamBasic(ctx context.Context, statusCh chan commo
 						lastBalance.Eq = cashBalance.CashBal
 						lastBalance.ParseTime = cashBalance.ParseTime
 						balancesMap[symbol] = lastBalance
+						outBalance := *lastBalance
 						select {
-						case ch <- lastBalance:
+						case ch <- &outBalance:
 						default:
 							if time.Now().Sub(logSilentTime) > 0 {
-								logger.Debugf("ch <- balance failed, ch len %d", len(ch))
+								logger.Debugf("ch <- &outBalance failed, ch len %d", len(ch))
 								logSilentTime = time.Now().Add(time.Minute)
 							}
 						}
