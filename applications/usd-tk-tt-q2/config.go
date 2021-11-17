@@ -297,5 +297,8 @@ func (config *Config) SetDefaultIfNotSet() error {
 		config.SpreadMiddleMax = 0.01
 		config.SpreadMiddleMin = -0.01
 	}
+	if config.BestSizeFactor == 0 {
+		config.BestSizeFactor = 1.0
+	}
 	return nil
 }
