@@ -474,7 +474,7 @@ func (depth *Depth5) GetBidPrice() float64 {
 }
 
 func (depth *Depth5) GetAskPrice() float64 {
-	return depth.Bids[1][0]
+	return depth.Asks[0][0]
 }
 
 func (depth *Depth5) GetBidSize() float64 {
@@ -482,7 +482,7 @@ func (depth *Depth5) GetBidSize() float64 {
 }
 
 func (depth *Depth5) GetAskSize() float64 {
-	return depth.Bids[1][1]
+	return depth.Asks[0][1]
 }
 
 func (depth *Depth5) GetExchange() common.ExchangeID {
