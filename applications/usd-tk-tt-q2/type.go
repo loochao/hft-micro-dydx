@@ -141,6 +141,7 @@ type XYStrategy struct {
 	targetWeightUpdated    *common.AtomicBool
 	targetValue            float64
 	realisedSpread         *float64
+	referenceSpread        float64
 	adjustedRealisedSpread *float64
 
 	tdSpreadEnterOffset float64
@@ -175,4 +176,7 @@ type XYStrategy struct {
 
 	xFundingRateFactor *float64
 	yFundingRateFactor *float64
+
+	successCount int
+	failureCount int
 }

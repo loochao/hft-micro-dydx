@@ -33,6 +33,12 @@ func handleSave(
 	hasAllSymbols := true
 	xTradeVolume := 0.0
 	yTradeVolume := 0.0
+	xTotalBidValue := 0.0
+	xTotalAskValue := 0.0
+	yTotalBidValue := 0.0
+	yTotalAskValue := 0.0
+	totalFailureCount := 0
+	totalSuccessCount := 0
 	for _, xSymbol := range xSymbols {
 		strat, ok := stratMap[xSymbol]
 		if !ok {
@@ -46,17 +52,26 @@ func handleSave(
 			strat.xMidPrice > 0 &&
 			strat.yMidPrice > 0 {
 
+			totalFailureCount += strat.failureCount
+			totalSuccessCount += strat.successCount
+
 			fields["xBidPrice"] = strat.xTicker.GetBidPrice()
 			fields["xAskPrice"] = strat.xTicker.GetAskPrice()
 			fields["xMidPrice"] = strat.xMidPrice
 			fields["xBidSize"] = strat.xTicker.GetBidSize()
 			fields["xAskSize"] = strat.xTicker.GetAskSize()
 
+			xTotalBidValue += strat.xTicker.GetBidSize()*strat.xMultiplier*strat.xTicker.GetBidPrice()
+			xTotalAskValue += strat.xTicker.GetAskSize()*strat.xMultiplier*strat.xTicker.GetAskPrice()
+
 			fields["yBidPrice"] = strat.yTicker.GetBidPrice()
 			fields["yAskPrice"] = strat.yTicker.GetAskPrice()
 			fields["yMidPrice"] = strat.yMidPrice
 			fields["yBidSize"] = strat.yTicker.GetBidSize()
 			fields["yAskSize"] = strat.yTicker.GetAskSize()
+
+			yTotalBidValue += strat.yTicker.GetBidSize()*strat.yMultiplier*strat.yTicker.GetBidPrice()
+			yTotalAskValue += strat.yTicker.GetAskSize()*strat.yMultiplier*strat.yTicker.GetAskPrice()
 
 			xSize := strat.xPosition.GetSize() * strat.xMultiplier
 			ySize := strat.yPosition.GetSize() * strat.yMultiplier
@@ -258,6 +273,15 @@ func handleSave(
 		fields["xBalance"] = xBalance
 		fields["yAvailable"] = yAccount.GetFree()
 		fields["xAvailable"] = xAccount.GetFree()
+		fields["xTotalBidValue"] = xTotalBidValue
+		fields["xTotalAskValue"] = xTotalAskValue
+		fields["yTotalBidValue"] = yTotalBidValue
+		fields["yTotalAskValue"] = yTotalAskValue
+		if (totalSuccessCount+totalFailureCount) != 0{
+			fields["totalSuccessCount"] = totalSuccessCount
+			fields["totalFailureCount"] = totalFailureCount
+			fields["totalSuccessRatio"] = float64(totalSuccessCount)/float64(totalSuccessCount+totalFailureCount)
+		}
 		fields["xURPnl"] = xURPnl
 		fields["yURPnl"] = yURPnl
 		fields["xyTurnover"] = (xTradeVolume + yTradeVolume) / totalBalance

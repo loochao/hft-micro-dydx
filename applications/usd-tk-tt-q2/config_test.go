@@ -40,7 +40,10 @@ func TestShowOkusOkufPairsAndMaxSizes(t *testing.T) {
 	symbols := make([]string, 0)
 	for ySymbol, yMaxPosSize := range okexv5_usdtswap.MaxSizes {
 		xSymbol := strings.Replace(ySymbol, "USDT-SWAP", "USDT", -1)
-		if _, ok := okexv5_usdtspot.TickSizes[xSymbol]; ok {
+		bnufSymbol := strings.Replace(ySymbol, "-USDT-SWAP", "USDT", -1)
+		_, ok1 := okexv5_usdtspot.TickSizes[xSymbol]
+		_, ok2 := binance_usdtfuture.TickSizes[bnufSymbol]
+		if ok1 && ok2 {
 			symbols = append(symbols, xSymbol)
 			symbolMap[xSymbol] = ySymbol
 			maxPosSizes[xSymbol] = yMaxPosSize * okexv5_usdtswap.Multipliers[ySymbol] * 0.5

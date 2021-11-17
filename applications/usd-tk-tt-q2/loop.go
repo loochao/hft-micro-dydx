@@ -22,9 +22,9 @@ func (strat *XYStrategy) handleFundingRate() {
 	if strat.xyFundingRate == nil {
 		strat.xyFundingRate = new(float64)
 	}
-	*strat.yAdjustedFundingRate = strat.yFundingRate.GetFundingRate()*strat.config.YFundingRateWeight**strat.yFundingRateFactor
-	*strat.xAdjustedFundingRate =  strat.xFundingRate.GetFundingRate()*strat.config.XFundingRateWeight**strat.xFundingRateFactor
-	*strat.xyFundingRate =  *strat.yAdjustedFundingRate - *strat.xAdjustedFundingRate
+	*strat.yAdjustedFundingRate = strat.yFundingRate.GetFundingRate() * strat.config.YFundingRateWeight * *strat.yFundingRateFactor
+	*strat.xAdjustedFundingRate = strat.xFundingRate.GetFundingRate() * strat.config.XFundingRateWeight * *strat.xFundingRateFactor
+	*strat.xyFundingRate = *strat.yAdjustedFundingRate - *strat.xAdjustedFundingRate
 }
 
 func (strat *XYStrategy) handleXOrder() {
@@ -103,6 +103,15 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			strat.realisedSpread = new(float64)
 		}
 		*strat.realisedSpread = (*strat.yLastFilledSellPrice - *strat.xLastFilledBuyPrice) / *strat.yLastFilledSellPrice
+		if strat.referenceSpread != 0 {
+			if *strat.realisedSpread >= strat.referenceSpread-strat.config.EnterSlippage {
+				strat.successCount++
+			} else {
+
+				strat.failureCount++
+			}
+			strat.referenceSpread = 0
+		}
 		if strat.tdSpreadMiddle != 0 {
 			if strat.adjustedRealisedSpread == nil {
 				strat.adjustedRealisedSpread = new(float64)
@@ -126,6 +135,14 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			strat.realisedSpread = new(float64)
 		}
 		*strat.realisedSpread = (*strat.yLastFilledBuyPrice - *strat.xLastFilledSellPrice) / *strat.yLastFilledBuyPrice
+		if strat.referenceSpread != 0 {
+			if *strat.realisedSpread <= strat.referenceSpread+strat.config.EnterSlippage {
+				strat.successCount++
+			} else {
+				strat.failureCount++
+			}
+			strat.referenceSpread = 0
+		}
 		if strat.tdSpreadMiddle != 0 {
 			if strat.adjustedRealisedSpread == nil {
 				strat.adjustedRealisedSpread = new(float64)

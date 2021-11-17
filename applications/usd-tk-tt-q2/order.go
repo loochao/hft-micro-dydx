@@ -197,6 +197,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
+			strat.referenceSpread = strat.thresholdShortBot
 			logger.Debugf(
 				"%10s %10s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f Fr %f",
 				strat.xSymbol, strat.ySymbol,
@@ -284,6 +285,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
+			strat.referenceSpread = strat.thresholdLongTop
 			logger.Debugf(
 				"%10s %10s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
 				strat.xSymbol, strat.ySymbol,
@@ -414,6 +416,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
+		strat.referenceSpread = strat.thresholdShortTop
 		logger.Debugf(
 			"%10s %10s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
 			strat.xSymbol, strat.ySymbol,
@@ -544,6 +547,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
+		strat.referenceSpread = strat.thresholdLongBot
 		logger.Debugf(
 			"%10s %10s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
 			strat.xSymbol, strat.ySymbol,

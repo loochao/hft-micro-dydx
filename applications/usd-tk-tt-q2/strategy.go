@@ -173,6 +173,8 @@ func startXYStrategy(
 		yExchangeID:             yExchange.GetExchange(),
 		tdSpreadMiddle:          0,
 		lastEnterTime:           time.Time{},
+		successCount:            0,
+		failureCount:            0,
 	}
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
