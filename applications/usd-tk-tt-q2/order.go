@@ -95,8 +95,8 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.fundingRateSettleSilent ||
 		time.Now().Sub(strat.spreadTickerTime) > strat.config.SpreadMaxAge ||
 		time.Now().Sub(strat.xOrderSilentTime) < 0 {
-		if time.Now().Sub(strat.logSilentTime) > 0 {
-			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+		//if time.Now().Sub(strat.logSilentTime) > 0 {
+			//strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 			//logger.Debugf("%s %v %v %v %v %v %v %v %v %v %v",
 			//	strat.xSymbol,
 			//	strat.config.AccountMaxAge,
@@ -108,7 +108,7 @@ func (strat *XYStrategy) updateXPosition() {
 			//	time.Now().Sub(strat.spreadTickerTime) > strat.config.SpreadMaxAge,
 			//	time.Now().Sub(strat.xOrderSilentTime) < 0,
 			//)
-		}
+		//}
 		return
 	}
 
