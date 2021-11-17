@@ -406,7 +406,9 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			return
 		}
 		if nextPos.GetEventTime().Sub(strat.xPosition.GetEventTime()) >= 0 {
-			logger.Debugf("X POS %s %v %v %f %f", strat.xSymbol, nextPos.GetEventTime(), strat.xPosition.GetEventTime(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()), strat.xStepSize)
+			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) != 0 {
+				logger.Debugf("X POS %f %s %v %v %f %f", nextPos.GetSize()-strat.xPosition.GetSize(), strat.xSymbol, nextPos.GetEventTime(), strat.xPosition.GetEventTime(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()), strat.xStepSize)
+			}
 			//logger.Debugf("%s %v %v %f %f", strat.xSymbol, nextPos.GetEventTime(), strat.xPosition.GetEventTime(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()), strat.xStepSize)
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
