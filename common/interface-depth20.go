@@ -462,7 +462,7 @@ func WalkTakerDepth5(depth20 Depth5, takerImpact float64) (*WalkedTakerDepth, er
 	return wd, nil
 }
 
-type WalkedDepth struct {
+type WalkedDepthOld struct {
 
 	FarAskPrice float64
 	FarBidPrice float64

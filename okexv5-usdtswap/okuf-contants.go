@@ -12,17 +12,18 @@ const (
 	OrderSideBuy  = "buy"
 	OrderSideSell = "sell"
 
-	OrderTypeMarket     = "market"
-	OrderTypeLimit      = "limit"
-	OrderTypePostOnly = "post_only"
-	OrderTypeFOK = "fok"
-	OrderTypeIOC = "ioc"
-	TimeLayout = "2006-01-02T15:04:05.999Z"
+	OrderTypeMarket          = "market"
+	OrderTypeLimit           = "limit"
+	OrderTypePostOnly        = "post_only"
+	OrderTypeOptimalLimitIoc = "optimal_limit_ioc"
+	OrderTypeFOK             = "fok"
+	OrderTypeIOC             = "ioc"
+	TimeLayout               = "2006-01-02T15:04:05.999Z"
 
-	OrderStateLive = "live"
-	OrderStateCanceled = "canceled"
+	OrderStateLive            = "live"
+	OrderStateCanceled        = "canceled"
 	OrderStatePartiallyFilled = "partially_filled"
-	OrderStateFilled = "filled"
+	OrderStateFilled          = "filled"
 
 	ServiceTypeWebsocket = 0
 	ServiceTypeSpot      = 1

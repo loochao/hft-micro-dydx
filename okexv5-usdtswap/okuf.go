@@ -674,7 +674,7 @@ func (okuf *OkexV5UsdtSwap) submitOrder(ctx context.Context, param common.NewOrd
 		newOrderParam.Side = OrderSideSell
 	}
 	if param.Type == common.OrderTypeMarket {
-		newOrderParam.OrderType = OrderTypeMarket
+		newOrderParam.OrderType = OrderTypeOptimalLimitIoc
 	} else {
 		newOrderParam.OrderType = OrderTypeLimit
 	}
@@ -704,6 +704,15 @@ func (okuf *OkexV5UsdtSwap) submitOrder(ctx context.Context, param common.NewOrd
 			logger.Debugf("errCh <- common.OrderError failed, ch len %d", len(errCh))
 		}
 	}
+	//if newOrderParam.OrderType ==  OrderTypeMarket {
+	//	_, err = okuf.api.CancelOrders(ctx, CancelOrderParam{
+	//		InstId: newOrderParam.InstId,
+	//		ClOrdId: newOrderParam.ClOrdId,
+	//	})
+	//	if err != nil {
+	//		logger.Debugf("okuf.api.CancelOrders %v", err)
+	//	}
+	//}
 }
 
 func (okuf *OkexV5UsdtSwap) cancelOrder(ctx context.Context, param common.CancelOrderParam, errCh chan common.OrderError) {

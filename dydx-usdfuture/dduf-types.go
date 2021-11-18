@@ -459,6 +459,22 @@ type Depth struct {
 	Offset           int64
 }
 
+func (d *Depth) GetBidOffset() float64 {
+	if tickSize, ok := TickSizes[d.Market]; len(d.Bids) > 0 && ok {
+		return tickSize * 0.5 / d.Bids[0][0]
+	} else {
+		return 0.0
+	}
+}
+
+func (d *Depth) GetAskOffset() float64 {
+	if tickSize, ok := TickSizes[d.Market]; len(d.Asks) > 0 && ok {
+		return tickSize * 0.5 / d.Asks[0][0]
+	} else {
+		return 0.0
+	}
+}
+
 func (d *Depth) GetBidPrice() float64 {
 	//if len(d.Bids) > 1 {
 	//	return d.Bids[1][0]

@@ -105,6 +105,8 @@ type Ticker interface {
 	GetAskPrice() float64
 	GetBidSize() float64
 	GetAskSize() float64
+	GetBidOffset() float64
+	GetAskOffset() float64
 	GetExchange() ExchangeID
 }
 

@@ -535,6 +535,14 @@ type Depth5 struct {
 	ParseTime    time.Time     `json:"-"`
 }
 
+func (depth *Depth5) GetBidOffset() float64 {
+	panic("implement me")
+}
+
+func (depth *Depth5) GetAskOffset() float64 {
+	panic("implement me")
+}
+
 func (depth *Depth5) GetBidPrice() float64 {
 	return depth.Bids[0][0]
 }
@@ -684,6 +692,14 @@ type BookTicker struct {
 	BestAskPrice float64   `json:"a,string"`
 	BestAskQty   float64   `json:"A,string"`
 	ParseTime    time.Time `json:"-"`
+}
+
+func (bt *BookTicker) GetBidOffset() float64 {
+	return TickSizes[bt.Symbol]*0.5/bt.BestBidPrice
+}
+
+func (bt *BookTicker) GetAskOffset() float64 {
+	return TickSizes[bt.Symbol]*0.5/bt.BestAskPrice
 }
 
 func (bt *BookTicker) GetTime() time.Time {

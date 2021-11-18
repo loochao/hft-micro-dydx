@@ -708,6 +708,14 @@ type Ticker struct {
 	Time    time.Time `json:"-"`
 }
 
+func (t *Ticker) GetBidOffset() float64 {
+	panic("implement me")
+}
+
+func (t *Ticker) GetAskOffset() float64 {
+	panic("implement me")
+}
+
 func (t *Ticker) GetExchange() common.ExchangeID {
 	return ExchangeID
 }

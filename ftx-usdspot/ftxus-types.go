@@ -702,6 +702,14 @@ type Ticker struct {
 	Time    time.Time `json:"-"`
 }
 
+func (t *Ticker) GetBidOffset() float64 {
+	panic("implement me")
+}
+
+func (t *Ticker) GetAskOffset() float64 {
+	panic("implement me")
+}
+
 func (t *Ticker) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
@@ -752,6 +760,14 @@ type Depth struct {
 	Symbol    string
 	EventTime time.Time
 	ParseTime time.Time
+}
+
+func (d *Depth) GetBidOffset() float64 {
+	panic("implement me")
+}
+
+func (d *Depth) GetAskOffset() float64 {
+	panic("implement me")
 }
 
 func (d *Depth) GetBidPrice() float64 {

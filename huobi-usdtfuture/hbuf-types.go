@@ -79,6 +79,14 @@ type Depth20 struct {
 	EventTime time.Time      `json:"-"`
 }
 
+func (depth *Depth20) GetBidOffset() float64 {
+	panic("implement me")
+}
+
+func (depth *Depth20) GetAskOffset() float64 {
+	panic("implement me")
+}
+
 func (depth *Depth20) GetBidPrice() float64 {
 	return depth.Bids[0][0]
 }
@@ -398,9 +406,9 @@ func (wsOrder *WSOrder) GetFilledPrice() float64 {
 func (wsOrder *WSOrder) GetSide() common.OrderSide {
 	if wsOrder.Direction == OrderDirectionSell {
 		return common.OrderSideSell
-	}else if wsOrder.Direction == OrderDirectionBuy {
+	} else if wsOrder.Direction == OrderDirectionBuy {
 		return common.OrderSideBuy
-	}else{
+	} else {
 		return common.OrderSideUnknown
 	}
 }
@@ -416,19 +424,19 @@ func (wsOrder *WSOrder) GetID() string {
 func (wsOrder *WSOrder) GetStatus() common.OrderStatus {
 	if wsOrder.Status == OrderStatusFilled {
 		return common.OrderStatusFilled
-	}else if wsOrder.Status == OrderStatusPartiallyFilled {
+	} else if wsOrder.Status == OrderStatusPartiallyFilled {
 		return common.OrderStatusFilled
-	}else if wsOrder.Status == OrderStatusPartiallyFilledButCancelledByClient {
+	} else if wsOrder.Status == OrderStatusPartiallyFilledButCancelledByClient {
 		return common.OrderStatusFilled
-	}else if wsOrder.Status == OrderStatusSubmitting {
+	} else if wsOrder.Status == OrderStatusSubmitting {
 		return common.OrderStatusNew
-	}else if wsOrder.Status == OrderStatusSubmit {
+	} else if wsOrder.Status == OrderStatusSubmit {
 		return common.OrderStatusOpen
-	}else if wsOrder.Status == OrderStatusCancelling {
+	} else if wsOrder.Status == OrderStatusCancelling {
 		return common.OrderStatusCancelled
-	}else if wsOrder.Status == OrderStatusCancelled {
+	} else if wsOrder.Status == OrderStatusCancelled {
 		return common.OrderStatusCancelled
-	}else{
+	} else {
 		return common.OrderStatusUnknown
 	}
 }
@@ -436,7 +444,7 @@ func (wsOrder *WSOrder) GetStatus() common.OrderStatus {
 func (wsOrder *WSOrder) GetType() common.OrderType {
 	if wsOrder.OrderPriceType == OrderPriceTypeOpponentIOC {
 		return common.OrderTypeMarket
-	}else{
+	} else {
 		return common.OrderTypeLimit
 	}
 }
@@ -444,7 +452,7 @@ func (wsOrder *WSOrder) GetType() common.OrderType {
 func (wsOrder *WSOrder) GetPostOnly() bool {
 	if wsOrder.OrderPriceType == OrderPriceTypePostOnly {
 		return true
-	}else{
+	} else {
 		return false
 	}
 }
@@ -621,6 +629,14 @@ type Ticker struct {
 	Bid       [2]float64 `json:"bid"`
 	Ask       [2]float64 `json:"ask"`
 	EventTime time.Time  `json:"-"`
+}
+
+func (t *Ticker) GetBidOffset() float64 {
+	panic("implement me")
+}
+
+func (t *Ticker) GetAskOffset() float64 {
+	panic("implement me")
 }
 
 func (t *Ticker) UnmarshalJSON(data []byte) error {

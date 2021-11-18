@@ -55,6 +55,14 @@ type Ticker struct {
 	TS time.Time `json:"-"`
 }
 
+func (ticker *Ticker) GetBidOffset() float64 {
+	panic("implement me")
+}
+
+func (ticker *Ticker) GetAskOffset() float64 {
+	panic("implement me")
+}
+
 func (ticker *Ticker) GetSymbol() string {
 	return ticker.InstId
 }

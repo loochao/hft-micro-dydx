@@ -199,6 +199,22 @@ type OrderBook struct {
 	Symbol    string
 }
 
+func (o OrderBook) GetBidOffset() float64 {
+	if tickSize, ok := TickSizes[o.Symbol]; ok && len(o.Bids) > 0 && o.Bids[0][0] != 0{
+		return tickSize*0.5/o.Bids[0][0]
+	}else{
+		return 1.0
+	}
+}
+
+func (o OrderBook) GetAskOffset() float64 {
+	if tickSize, ok := TickSizes[o.Symbol]; ok && len(o.Asks) > 0 && o.Asks[0][0] != 0{
+		return tickSize*0.5/o.Asks[0][0]
+	}else{
+		return 1.0
+	}
+}
+
 func (o OrderBook) GetBidPrice() float64 {
 	return o.Bids[0][0]
 }

@@ -24,6 +24,68 @@ type WalkedDepthBBMAA struct {
 	Time         time.Time
 }
 
+type WalkedDepth struct {
+	BidPrice float64
+	BidSize  float64
+	AskPrice float64
+	AskSize  float64
+	Symbol   string
+	Time     time.Time
+}
+
+func WalkDepth(depth Depth, multiplier float64, impact float64, output *WalkedDepth) error {
+	output.Time = depth.GetTime()
+	output.Symbol = depth.GetSymbol()
+	output.AskPrice = 0.0
+	output.BidPrice = 0.0
+
+	totalBidSize := 0.0
+	var value float64
+	var price float64
+	var size float64
+	bids := depth.GetBids()
+	for i := 0; i < len(bids); i++ {
+		price = bids[i][0]
+		size = bids[i][1] * multiplier
+		value = price * size
+		if output.BidPrice+value >= impact {
+			totalBidSize += (impact - output.BidPrice) / price
+			output.BidPrice = impact
+			break
+		} else {
+			totalBidSize += size
+			output.BidPrice += value
+		}
+	}
+	if totalBidSize == 0 {
+		return fmt.Errorf("bad depth bids %v", depth.GetBids())
+	}
+	output.BidPrice /= totalBidSize
+	output.BidSize = totalBidSize/multiplier
+
+	totalAskSize := 0.0
+	asks := depth.GetAsks()
+	for i := 0; i < len(asks); i++ {
+		price = asks[i][0]
+		size = asks[i][1] * multiplier
+		value = price * size
+		if output.AskPrice+value >= impact {
+			totalAskSize += (impact - output.AskPrice) / price
+			output.AskPrice = impact
+			break
+		} else {
+			totalAskSize += size
+			output.AskPrice += value
+		}
+	}
+	if totalAskSize == 0 {
+		return fmt.Errorf("bad depth asks %v", depth.GetAsks())
+	}
+	output.AskPrice /= totalAskSize
+	output.AskSize = totalAskSize/multiplier
+	return nil
+}
+
 func WalkDepthBBMAA(depth Depth, multiplier float64, impact float64, output *WalkedDepthBBMAA) error {
 
 	output.Time = depth.GetTime()
@@ -77,7 +139,7 @@ func WalkDepthBBMAA(depth Depth, multiplier float64, impact float64, output *Wal
 	}
 	output.AskPrice /= totalAskSize
 	output.MidPrice = (depth.GetBids()[0][0] + depth.GetAsks()[0][0]) * 0.5
-	output.MircoPrice = (output.BidPrice + output.AskPrice)*0.5
+	output.MircoPrice = (output.BidPrice + output.AskPrice) * 0.5
 	return nil
 }
 

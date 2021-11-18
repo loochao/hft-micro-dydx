@@ -610,6 +610,14 @@ type Depth5 struct {
 	EventTime time.Time     `json:"-"`
 }
 
+func (depth *Depth5) GetBidOffset() float64 {
+	panic("implement me")
+}
+
+func (depth *Depth5) GetAskOffset() float64 {
+	panic("implement me")
+}
+
 func (depth *Depth5) GetBidPrice() float64 {
 	return depth.Bids[0][0]
 }

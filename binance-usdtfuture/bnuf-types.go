@@ -920,6 +920,14 @@ type Depth5 struct {
 	Asks         [5][2]float64 `json:"a,omitempty"`
 }
 
+func (depth *Depth5) GetBidOffset() float64 {
+	panic("implement me")
+}
+
+func (depth *Depth5) GetAskOffset() float64 {
+	panic("implement me")
+}
+
 func (depth *Depth5) GetBidPrice() float64 {
 	return depth.Bids[0][0]
 }
@@ -1044,6 +1052,14 @@ type BookTicker struct {
 	BestBidQty   float64 `json:"B,string"`
 	BestAskPrice float64 `json:"a,string"`
 	BestAskQty   float64 `json:"A,string"`
+}
+
+func (bt *BookTicker) GetBidOffset() float64 {
+	panic("implement me")
+}
+
+func (bt *BookTicker) GetAskOffset() float64 {
+	panic("implement me")
 }
 
 func (bt *BookTicker) GetExchange() common.ExchangeID {
