@@ -105,10 +105,10 @@ func (w *Depth5TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan
 				} else if msg[msgLen-31] == ':' {
 					symbol = common.UnsafeBytesToString(msg[msgLen-30 : msgLen-19])
 				} else {
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("OTHER MSG %s", msg)
-						logSilentTime = time.Now().Add(time.Minute)
-					}
+					//if time.Now().Sub(logSilentTime) > 0 {
+					//	logger.Debugf("OTHER MSG %s", msg)
+					//	logSilentTime = time.Now().Add(time.Minute)
+					//}
 					continue
 				}
 			} else if msg[2] == 't' && msg[51] == ':' {
@@ -125,17 +125,17 @@ func (w *Depth5TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan
 				} else if msg[64] == '"' {
 					symbol = common.UnsafeBytesToString(msg[52:64])
 				} else {
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("OTHER MSG %s", msg)
-						logSilentTime = time.Now().Add(time.Minute)
-					}
+					//if time.Now().Sub(logSilentTime) > 0 {
+					//	logger.Debugf("OTHER MSG %s", msg)
+					//	logSilentTime = time.Now().Add(time.Minute)
+					//}
 					continue
 				}
 			}else{
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("OTHER MSG %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
+				//if time.Now().Sub(logSilentTime) > 0 {
+				//	logger.Debugf("OTHER MSG %s", msg)
+				//	logSilentTime = time.Now().Add(time.Minute)
+				//}
 				continue
 			}
 			if ch, ok = channels[symbol]; ok {
@@ -343,7 +343,7 @@ func (w *Depth5TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn
 		loop:
 			for symbol, updateTime := range symbolUpdatedTimes {
 				if time.Now().Sub(updateTime) > symbolTimeout {
-					logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol))
+					//logger.Debugf("SUBSCRIBE %s", fmt.Sprintf("/spotMarket/level2Depth5:%s", symbol))
 					select {
 					case <-ctx.Done():
 					case <-time.After(time.Millisecond):

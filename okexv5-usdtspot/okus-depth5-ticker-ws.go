@@ -136,10 +136,10 @@ func (w *DepthTicker5WS) readLoop(conn *websocket.Conn, channels map[string]chan
 			}
 			continue
 		} else{
-			if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("MGS %s", msg)
-				logSilentTime = time.Now().Add(time.Minute)
-			}
+			//if time.Now().Sub(logSilentTime) > 0 {
+			//	logger.Debugf("MGS %s", msg)
+			//	logSilentTime = time.Now().Add(time.Minute)
+			//}
 			continue
 		}
 		if ch, ok = channels[symbol]; ok {
@@ -328,7 +328,7 @@ func (w *DepthTicker5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn
 			symbolUpdatedTimes[symbol] = time.Now()
 			break
 		case <-w.pingCh:
-			logger.Debugf("PING MSG")
+			//logger.Debugf("PING MSG")
 			pingTimer.Reset(time.Second * 15)
 			trafficTimeout.Reset(time.Second * 30)
 			break
@@ -344,7 +344,7 @@ func (w *DepthTicker5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn
 				}
 			}
 			if len(args) > 0 {
-				logger.Debugf("SUBSCRIBE %s", args)
+				//logger.Debugf("SUBSCRIBE %s", args)
 				for start := 0; start < len(args); start += 50 {
 					end := start + 50
 					if end > len(args) {
