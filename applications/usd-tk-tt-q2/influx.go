@@ -39,6 +39,8 @@ func handleSave(
 	yTotalAskValue := 0.0
 	totalFailureCount := 0
 	totalSuccessCount := 0
+	totalXSlippage := 0.0
+	totalYSlippage := 0.0
 	for _, xSymbol := range xSymbols {
 		strat, ok := stratMap[xSymbol]
 		if !ok {
@@ -54,6 +56,8 @@ func handleSave(
 
 			totalFailureCount += strat.failureCount
 			totalSuccessCount += strat.successCount
+			totalXSlippage += strat.xSlippage
+			totalYSlippage += strat.ySlippage
 
 			fields["xBidPrice"] = strat.xTicker.GetBidPrice()
 			fields["xAskPrice"] = strat.xTicker.GetAskPrice()
@@ -279,6 +283,8 @@ func handleSave(
 		if (totalSuccessCount+totalFailureCount) != 0{
 			fields["totalSuccessCount"] = totalSuccessCount
 			fields["totalFailureCount"] = totalFailureCount
+			fields["meanXSlippage"] = totalXSlippage/float64(totalSuccessCount+totalFailureCount)
+			fields["meanYSlippage"] = totalYSlippage/float64(totalSuccessCount+totalFailureCount)
 			fields["totalSuccessRatio"] = float64(totalSuccessCount)/float64(totalSuccessCount+totalFailureCount)
 		}
 		fields["xURPnl"] = xURPnl
