@@ -233,7 +233,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 					continue
 
 				case "orders":
-					logger.Debugf("ORDER-WS %s", commonCap.Data)
+					//logger.Debugf("ORDER-WS %s", commonCap.Data)
 					orders := make([]Order, 0)
 					err = json.Unmarshal(commonCap.Data, &orders)
 					if err != nil {

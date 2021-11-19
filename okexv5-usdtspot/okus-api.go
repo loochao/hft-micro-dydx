@@ -97,7 +97,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 	}
 	if requestPath == "/api/v5/trade/order" {
 		logger.Debugf("ORDER-PAYLOAD %s", payload)
-		logger.Debugf("ORDER-RESULT %s", contents)
+		//logger.Debugf("ORDER-RESULT %s", contents)
 	}
 	err = resp.Body.Close()
 	if err != nil {
