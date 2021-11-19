@@ -929,3 +929,54 @@ func (k *KucoinUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, cha
 		}
 	}
 }
+
+type KucoinUsdtFutureWithWalkedTicker struct {
+	KucoinUsdtFuture
+}
+
+func (k *KucoinUsdtFutureWithWalkedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+	logger.Debugf("START StreamTicker")
+	defer logger.Debugf("STOP StreamTicker")
+	defer k.Stop()
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+	k.mu.Lock()
+	proxy := k.settings.Proxy
+	walkImpact := k.settings.WalkImpact
+	k.mu.Unlock()
+	if walkImpact <= 0 {
+		walkImpact = 1.0
+	}
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			defer k.Stop()
+			ws1 := NewWalkedDepth5WS(ctx, k.api, proxy, walkImpact, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws1.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-k.done:
+			return
+		}
+	}
+}

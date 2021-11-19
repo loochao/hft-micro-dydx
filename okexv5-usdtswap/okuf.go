@@ -733,3 +733,58 @@ func (okuf *OkexV5UsdtSwap) cancelOrder(ctx context.Context, param common.Cancel
 		}
 	}
 }
+
+type OkexV5UsdtSwapWithWalkedTicker struct {
+	OkexV5UsdtSwap
+}
+
+func (okuf *OkexV5UsdtSwapWithWalkedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+	logger.Debugf("START StreamTicker")
+	defer logger.Debugf("STOP StreamTicker")
+	defer okuf.Stop()
+
+	walkImpact := okuf.settings.WalkImpact
+	if walkImpact <= 0 {
+		walkImpact = 1.0
+	}
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+
+	proxy := okuf.settings.Proxy
+
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			defer okuf.Stop()
+			ws1 := NewWalkedDepth5WS(ctx, proxy, walkImpact, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws1.Done():
+					logger.Debugf("ticker ws done")
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Debugf("ctx done")
+			return
+		case <-okuf.done:
+			logger.Debugf("okuf done")
+			return
+		}
+	}
+}

@@ -21,11 +21,18 @@ type XYTickerStats struct {
 	xTimeDeltaTD  *TimedTDigest
 	yTimeDeltaTD  *TimedTDigest
 	xyTimeDeltaTD *TimedTDigest
-	xBidSizeTD    *TimedTDigest
-	xAskSizeTD    *TimedTDigest
-	yBidSizeTD    *TimedTDigest
-	yAskSizeTD    *TimedTDigest
-	spreadTD      *TimedTDigest
+
+	xBidSizeTD *TimedTDigest
+	xAskSizeTD *TimedTDigest
+	yBidSizeTD *TimedTDigest
+	yAskSizeTD *TimedTDigest
+
+	xBidOffsetTD *TimedTDigest
+	xAskOffsetTD *TimedTDigest
+	yBidOffsetTD *TimedTDigest
+	yAskOffsetTD *TimedTDigest
+
+	spreadTD *TimedTDigest
 
 	xTimeDeltaTDPath  string
 	yTimeDeltaTDPath  string
@@ -34,6 +41,10 @@ type XYTickerStats struct {
 	xAskSizeTDPath    string
 	yBidSizeTDPath    string
 	yAskSizeTDPath    string
+	xBidOffsetTDPath  string
+	xAskOffsetTDPath  string
+	yBidOffsetTDPath  string
+	yAskOffsetTDPath  string
 	spreadTDPath      string
 
 	xTimeDelta  time.Duration
@@ -55,6 +66,8 @@ type XYTickerStats struct {
 	timeDeltaQuantileTop float64
 	xLiquidityQuantile   float64
 	yLiquidityQuantile   float64
+	xOffsetQuantile      float64
+	yOffsetQuantile      float64
 
 	spreadLongEnterQuantileBot  float64
 	spreadLongLeaveQuantileTop  float64
@@ -75,10 +88,16 @@ type XYTickerStats struct {
 	XYTimeDeltaMid *common.AtomicDuration
 	XYTimeDeltaTop *common.AtomicDuration
 
-	XBidSize     *common.AtomicFloat64
-	XAskSize     *common.AtomicFloat64
-	YBidSize     *common.AtomicFloat64
-	YAskSize     *common.AtomicFloat64
+	XBidSize *common.AtomicFloat64
+	XAskSize *common.AtomicFloat64
+	YBidSize *common.AtomicFloat64
+	YAskSize *common.AtomicFloat64
+
+	XBidOffset *common.AtomicFloat64
+	XAskOffset *common.AtomicFloat64
+	YBidOffset *common.AtomicFloat64
+	YAskOffset *common.AtomicFloat64
+
 	XMiddlePrice *common.AtomicFloat64
 	YMiddlePrice *common.AtomicFloat64
 
@@ -125,6 +144,7 @@ func (sl *XYTickerStats) Start(ctx context.Context) {
 				if err != nil {
 					logger.Debugf("sl.xTimeDeltaTD.Insert error %v", err)
 				}
+
 				err = sl.xBidSizeTD.Insert(sl.xTicker.GetTime(), sl.xTicker.GetBidSize())
 				if err != nil {
 					logger.Debugf("sl.xBidSizeTD.Insert error %v", err)
@@ -133,6 +153,16 @@ func (sl *XYTickerStats) Start(ctx context.Context) {
 				if err != nil {
 					logger.Debugf("sl.xAskSizeTD.Insert error %v", err)
 				}
+
+				err = sl.xBidOffsetTD.Insert(sl.xTicker.GetTime(), sl.xTicker.GetBidOffset())
+				if err != nil {
+					logger.Debugf("sl.xBidOffsetTD.Insert error %v", err)
+				}
+				err = sl.xAskOffsetTD.Insert(sl.xTicker.GetTime(), sl.xTicker.GetAskOffset())
+				if err != nil {
+					logger.Debugf("sl.xAskOffsetTD.Insert error %v", err)
+				}
+
 				sl.XMiddlePrice.Set((sl.xTicker.GetBidPrice() + sl.xTicker.GetAskPrice()) * 0.5)
 			}
 			if sl.yTicker != nil {
@@ -140,6 +170,7 @@ func (sl *XYTickerStats) Start(ctx context.Context) {
 				if err != nil {
 					logger.Debugf("sl.yTimeDeltaTD.Insert error %v", err)
 				}
+
 				err = sl.yBidSizeTD.Insert(sl.yTicker.GetTime(), sl.yTicker.GetBidSize())
 				if err != nil {
 					logger.Debugf("sl.yBidSizeTD.Insert error %v", err)
@@ -148,11 +179,21 @@ func (sl *XYTickerStats) Start(ctx context.Context) {
 				if err != nil {
 					logger.Debugf("sl.yAskSizeTD.Insert error %v", err)
 				}
+
+				err = sl.yBidOffsetTD.Insert(sl.yTicker.GetTime(), sl.yTicker.GetBidOffset())
+				if err != nil {
+					logger.Debugf("sl.yBidOffsetTD.Insert error %v", err)
+				}
+				err = sl.yAskOffsetTD.Insert(sl.yTicker.GetTime(), sl.yTicker.GetAskOffset())
+				if err != nil {
+					logger.Debugf("sl.yAskOffsetTD.Insert error %v", err)
+				}
+
 				sl.YMiddlePrice.Set((sl.yTicker.GetBidPrice() + sl.yTicker.GetAskPrice()) * 0.5)
 
 				if sl.xTicker != nil {
 					sl.xyTimeDelta = sl.yEventTime.Sub(sl.xEventTime)
-					sl.spread = ((sl.yTicker.GetBidPrice() + sl.yTicker.GetAskPrice())*sl.yExchange.GetPriceFactor() - (sl.xTicker.GetBidPrice() + sl.xTicker.GetAskPrice())*sl.xExchange.GetPriceFactor()) / ((sl.xTicker.GetBidPrice() + sl.xTicker.GetAskPrice())*sl.xExchange.GetPriceFactor())
+					sl.spread = ((sl.yTicker.GetBidPrice()+sl.yTicker.GetAskPrice())*sl.yExchange.GetPriceFactor() - (sl.xTicker.GetBidPrice()+sl.xTicker.GetAskPrice())*sl.xExchange.GetPriceFactor()) / ((sl.xTicker.GetBidPrice() + sl.xTicker.GetAskPrice()) * sl.xExchange.GetPriceFactor())
 					if sl.xyTimeDelta > 0 {
 						sl.xyEventTime = sl.yEventTime
 					} else {
@@ -199,21 +240,25 @@ func (sl *XYTickerStats) Start(ctx context.Context) {
 				hasAllFields = false
 			}
 			sl.XBidSize.Set(sl.xBidSizeTD.Quantile(sl.xLiquidityQuantile))
+			sl.XBidOffset.Set(sl.xBidOffsetTD.Quantile(sl.xOffsetQuantile))
 
 			if hasAllFields && sl.xAskSizeTD.Range() < sl.xAskSizeTD.HalfLookback {
 				hasAllFields = false
 			}
 			sl.XAskSize.Set(sl.xAskSizeTD.Quantile(sl.xLiquidityQuantile))
+			sl.XAskOffset.Set(sl.xAskOffsetTD.Quantile(sl.xOffsetQuantile))
 
 			if hasAllFields && sl.yBidSizeTD.Range() < sl.yBidSizeTD.HalfLookback {
 				hasAllFields = false
 			}
 			sl.YBidSize.Set(sl.yBidSizeTD.Quantile(sl.yLiquidityQuantile))
+			sl.YBidOffset.Set(sl.yBidOffsetTD.Quantile(sl.yOffsetQuantile))
 
 			if hasAllFields && sl.yAskSizeTD.Range() < sl.yAskSizeTD.HalfLookback {
 				hasAllFields = false
 			}
 			sl.YAskSize.Set(sl.yAskSizeTD.Quantile(sl.yLiquidityQuantile))
+			sl.YAskOffset.Set(sl.yAskOffsetTD.Quantile(sl.yOffsetQuantile))
 
 			if hasAllFields && sl.spreadTD.Range() < sl.spreadTD.HalfLookback {
 				hasAllFields = false
@@ -273,7 +318,7 @@ func (sl *XYTickerStats) loadTD(tdPath string, lookback, subInterval time.Durati
 			logger.Debugf("json.Unmarshal %s error %v", tdPath, err)
 		} else {
 			td.Lookback = lookback
-			td.HalfLookback = lookback/2
+			td.HalfLookback = lookback / 2
 			td.SubInterval = subInterval
 			td.Compression = compression
 		}
@@ -339,34 +384,36 @@ func (sl *XYTickerStats) handleSave() {
 
 //做成struct, 防止函数传太多参数给传错顺序了
 type NewXYTickerStatsParams struct {
-	XSymbol string
-	YSymbol string
-	XExchange common.UsdExchange
-	YExchange common.UsdExchange
-	RootPath string
+	XSymbol        string
+	YSymbol        string
+	XExchange      common.UsdExchange
+	YExchange      common.UsdExchange
+	RootPath       string
 	SampleInterval time.Duration
-	SaveInterval time.Duration
+	SaveInterval   time.Duration
 
-	TimeDeltaTDLookback time.Duration
+	TimeDeltaTDLookback    time.Duration
 	TimeDeltaTDSubInterval time.Duration
 	TimeDeltaTDCompression uint32
 
-	XLiquidityTDLookback time.Duration
+	XLiquidityTDLookback    time.Duration
 	XLiquidityTDSubInterval time.Duration
 	XLiquidityTDCompression uint32
 
-	YLiquidityTDLookback time.Duration
+	YLiquidityTDLookback    time.Duration
 	YLiquidityTDSubInterval time.Duration
 	YLiquidityTDCompression uint32
 
-	SpreadTDLookback time.Duration
+	SpreadTDLookback    time.Duration
 	SpreadTDSubInterval time.Duration
 	SpreadTDCompression uint32
 
 	TimeDeltaQuantileBot float64
 	TimeDeltaQuantileTop float64
-	XLiquidityQuantile float64
-	YLiquidityQuantile float64
+	XLiquidityQuantile   float64
+	YLiquidityQuantile   float64
+	XOffsetQuantile      float64
+	YOffsetQuantile      float64
 
 	SpreadLongEnterQuantileBot  float64
 	SpreadLongLeaveQuantileTop  float64
@@ -396,6 +443,8 @@ func NewXYTickerStats(params NewXYTickerStatsParams) *XYTickerStats {
 		timeDeltaQuantileTop: params.TimeDeltaQuantileTop,
 		xLiquidityQuantile:   params.XLiquidityQuantile,
 		yLiquidityQuantile:   params.YLiquidityQuantile,
+		xOffsetQuantile:      params.XOffsetQuantile,
+		yOffsetQuantile:      params.YOffsetQuantile,
 
 		spreadLongEnterQuantileBot:  params.SpreadLongEnterQuantileBot,
 		spreadLongLeaveQuantileTop:  params.SpreadLongLeaveQuantileTop,
@@ -411,7 +460,13 @@ func NewXYTickerStats(params NewXYTickerStatsParams) *XYTickerStats {
 		xAskSizeTDPath:    path.Join(params.RootPath, fmt.Sprintf("%s-%s.XA.json", common.SymbolSanitize(params.XSymbol), common.SymbolSanitize(params.YSymbol))),
 		yBidSizeTDPath:    path.Join(params.RootPath, fmt.Sprintf("%s-%s.YB.json", common.SymbolSanitize(params.XSymbol), common.SymbolSanitize(params.YSymbol))),
 		yAskSizeTDPath:    path.Join(params.RootPath, fmt.Sprintf("%s-%s.YA.json", common.SymbolSanitize(params.XSymbol), common.SymbolSanitize(params.YSymbol))),
-		spreadTDPath:      path.Join(params.RootPath, fmt.Sprintf("%s-%s.S.json", common.SymbolSanitize(params.XSymbol), common.SymbolSanitize(params.YSymbol))),
+
+		xBidOffsetTDPath: path.Join(params.RootPath, fmt.Sprintf("%s-%s.XBO.json", common.SymbolSanitize(params.XSymbol), common.SymbolSanitize(params.YSymbol))),
+		xAskOffsetTDPath: path.Join(params.RootPath, fmt.Sprintf("%s-%s.XAO.json", common.SymbolSanitize(params.XSymbol), common.SymbolSanitize(params.YSymbol))),
+		yBidOffsetTDPath: path.Join(params.RootPath, fmt.Sprintf("%s-%s.YBO.json", common.SymbolSanitize(params.XSymbol), common.SymbolSanitize(params.YSymbol))),
+		yAskOffsetTDPath: path.Join(params.RootPath, fmt.Sprintf("%s-%s.YAO.json", common.SymbolSanitize(params.XSymbol), common.SymbolSanitize(params.YSymbol))),
+
+		spreadTDPath: path.Join(params.RootPath, fmt.Sprintf("%s-%s.S.json", common.SymbolSanitize(params.XSymbol), common.SymbolSanitize(params.YSymbol))),
 
 		Ready: common.ForAtomicBool(false),
 
@@ -425,13 +480,18 @@ func NewXYTickerStats(params NewXYTickerStatsParams) *XYTickerStats {
 		XYTimeDeltaMid: common.ForAtomicDuration(0),
 		XYTimeDeltaTop: common.ForAtomicDuration(0),
 
-		XBidSize:     common.ForAtomicFloat64(0),
-		XAskSize:     common.ForAtomicFloat64(0),
-		YBidSize:     common.ForAtomicFloat64(0),
-		YAskSize:     common.ForAtomicFloat64(0),
+		XBidSize: common.ForAtomicFloat64(0),
+		XAskSize: common.ForAtomicFloat64(0),
+		YBidSize: common.ForAtomicFloat64(0),
+		YAskSize: common.ForAtomicFloat64(0),
+
+		XBidOffset: common.ForAtomicFloat64(0),
+		XAskOffset: common.ForAtomicFloat64(0),
+		YBidOffset: common.ForAtomicFloat64(0),
+		YAskOffset: common.ForAtomicFloat64(0),
+
 		XMiddlePrice: common.ForAtomicFloat64(0),
 		YMiddlePrice: common.ForAtomicFloat64(0),
-
 
 		SpreadMiddle:        common.ForAtomicFloat64(0),
 		SpreadLongEnterBot:  common.ForAtomicFloat64(0),
@@ -465,6 +525,18 @@ func NewXYTickerStats(params NewXYTickerStatsParams) *XYTickerStats {
 
 	sl.yAskSizeTD = sl.loadTD(sl.yAskSizeTDPath, params.YLiquidityTDLookback, params.YLiquidityTDSubInterval, params.YLiquidityTDCompression)
 	logger.Debugf("%10s - %10s Y ASK SIZE QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.yAskSizeTD.Quantile(params.YLiquidityQuantile))
+
+	sl.xBidOffsetTD = sl.loadTD(sl.xBidOffsetTDPath, params.XLiquidityTDLookback, params.XLiquidityTDSubInterval, params.XLiquidityTDCompression)
+	logger.Debugf("%10s - %10s X BID OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.xBidOffsetTD.Quantile(params.XLiquidityQuantile))
+
+	sl.xAskOffsetTD = sl.loadTD(sl.xAskOffsetTDPath, params.XLiquidityTDLookback, params.XLiquidityTDSubInterval, params.XLiquidityTDCompression)
+	logger.Debugf("%10s - %10s X ASK OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.xAskOffsetTD.Quantile(params.XLiquidityQuantile))
+
+	sl.yBidOffsetTD = sl.loadTD(sl.yBidOffsetTDPath, params.YLiquidityTDLookback, params.YLiquidityTDSubInterval, params.YLiquidityTDCompression)
+	logger.Debugf("%10s - %10s Y BID OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.yBidOffsetTD.Quantile(params.YLiquidityQuantile))
+
+	sl.yAskOffsetTD = sl.loadTD(sl.yAskOffsetTDPath, params.YLiquidityTDLookback, params.YLiquidityTDSubInterval, params.YLiquidityTDCompression)
+	logger.Debugf("%10s - %10s Y ASK OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.yAskOffsetTD.Quantile(params.YLiquidityQuantile))
 
 	sl.spreadTD = sl.loadTD(sl.spreadTDPath, params.SpreadTDLookback, params.SpreadTDSubInterval, params.SpreadTDCompression)
 	logger.Debugf("%10s - %10s SPREAD QUANTILE MIDDLE %.6f", params.XSymbol, params.YSymbol, sl.spreadTD.Quantile(0.5))

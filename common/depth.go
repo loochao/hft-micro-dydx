@@ -25,12 +25,52 @@ type WalkedDepthBBMAA struct {
 }
 
 type WalkedDepth struct {
-	BidPrice float64
-	BidSize  float64
-	AskPrice float64
-	AskSize  float64
-	Symbol   string
-	Time     time.Time
+	Symbol    string
+	ExchangeID ExchangeID
+	MidPrice  float64
+	BidPrice  float64
+	AskPrice  float64
+	BidSize   float64
+	AskSize   float64
+	BidOffset float64
+	AskOffset float64
+	Time      time.Time
+}
+
+func (w WalkedDepth) GetSymbol() string {
+	return w.Symbol
+}
+
+func (w WalkedDepth) GetTime() time.Time {
+	return w.Time
+}
+
+func (w WalkedDepth) GetBidPrice() float64 {
+	return w.BidPrice
+}
+
+func (w WalkedDepth) GetAskPrice() float64 {
+	return w.AskPrice
+}
+
+func (w WalkedDepth) GetBidSize() float64 {
+	return w.BidSize
+}
+
+func (w WalkedDepth) GetAskSize() float64 {
+	return w.AskSize
+}
+
+func (w WalkedDepth) GetBidOffset() float64 {
+	return w.BidOffset
+}
+
+func (w WalkedDepth) GetAskOffset() float64 {
+	return w.AskOffset
+}
+
+func (w WalkedDepth) GetExchange() ExchangeID {
+	return w.ExchangeID
 }
 
 func WalkDepth(depth Depth, multiplier float64, impact float64, output *WalkedDepth) error {
@@ -38,6 +78,7 @@ func WalkDepth(depth Depth, multiplier float64, impact float64, output *WalkedDe
 	output.Symbol = depth.GetSymbol()
 	output.AskPrice = 0.0
 	output.BidPrice = 0.0
+	output.ExchangeID = depth.GetExchange()
 
 	totalBidSize := 0.0
 	var value float64
@@ -61,7 +102,7 @@ func WalkDepth(depth Depth, multiplier float64, impact float64, output *WalkedDe
 		return fmt.Errorf("bad depth bids %v", depth.GetBids())
 	}
 	output.BidPrice /= totalBidSize
-	output.BidSize = totalBidSize/multiplier
+	output.BidSize = totalBidSize / multiplier
 
 	totalAskSize := 0.0
 	asks := depth.GetAsks()
@@ -82,7 +123,10 @@ func WalkDepth(depth Depth, multiplier float64, impact float64, output *WalkedDe
 		return fmt.Errorf("bad depth asks %v", depth.GetAsks())
 	}
 	output.AskPrice /= totalAskSize
-	output.AskSize = totalAskSize/multiplier
+	output.AskSize = totalAskSize / multiplier
+	output.MidPrice = (output.BidPrice + output.AskPrice) * 0.5
+	output.BidOffset = (output.MidPrice - output.BidPrice) / output.MidPrice
+	output.AskOffset = (output.AskPrice - output.MidPrice) / output.MidPrice
 	return nil
 }
 
