@@ -233,7 +233,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 					continue
 
 				case "orders", "orders-algo", "algo-advance":
-					logger.Debugf("ORDER-WS %s", commonCap.Data)
+					//logger.Debugf("ORDER-WS %s", commonCap.Data)
 					orders := make([]Order, 0)
 					err = json.Unmarshal(commonCap.Data, &orders)
 					if err != nil {
@@ -300,17 +300,17 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 						}
 					}
 					continue
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("other event msg %s", msg)
-						logSilentTime = time.Now().Add(time.Minute)
-					}
+					//default:
+					//if time.Now().Sub(logSilentTime) > 0 {
+					//	logger.Debugf("MSG %s", msg)
+					//	logSilentTime = time.Now().Add(time.Minute)
+					//}
 				}
-			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("MSG %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
+				//} else {
+				//	if time.Now().Sub(logSilentTime) > 0 {
+				//		logger.Debugf("MSG %s", msg)
+				//		logSilentTime = time.Now().Add(time.Minute)
+				//	}
 			}
 		}
 	}

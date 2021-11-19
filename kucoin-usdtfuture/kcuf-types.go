@@ -776,7 +776,6 @@ func (fr *CurrentFundingRate) GetSymbol() string {
 func (fr *CurrentFundingRate) GetFundingRate() float64 {
 	if os.Getenv("KC_FR_WITH_PREDICTED") != "" {
 		if math.Abs(fr.Value) > math.Abs(fr.PredictedValue) {
-			//logger.Debugf("%s use predicted", fr.Symbol)
 			return fr.Value
 		} else {
 			return fr.PredictedValue

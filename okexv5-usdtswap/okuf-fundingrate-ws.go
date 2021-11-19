@@ -144,12 +144,12 @@ func (w *FundingRateWS) readLoop(conn *websocket.Conn, channels map[string]chan 
 				}
 			}
 			continue
-		} else {
-			if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("MSG %s", msg)
-				logSilentTime = time.Now().Add(time.Minute)
-			}
-			continue
+		//} else {
+		//	if time.Now().Sub(logSilentTime) > 0 {
+		//		logger.Debugf("MSG %s", msg)
+		//		logSilentTime = time.Now().Add(time.Minute)
+		//	}
+		//	continue
 		}
 		if ch, ok = channels[symbol]; ok {
 			select {
@@ -353,7 +353,7 @@ func (w *FundingRateWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 				}
 			}
 			if len(args) > 0 {
-				logger.Debugf("SUB %s", args)
+				//logger.Debugf("SUB %s", args)
 				for start := 0; start < len(args); start += 50 {
 					end := start + 50
 					if end > len(args) {

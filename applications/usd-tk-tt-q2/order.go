@@ -198,6 +198,8 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
 			strat.referenceSpread = strat.thresholdShortBot
+			strat.referenceXPrice = strat.xTicker.GetBidPrice()
+			strat.referenceYPrice = strat.yTicker.GetAskPrice()
 			logger.Debugf(
 				"%10s %10s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f Fr %f",
 				strat.xSymbol, strat.ySymbol,
@@ -286,6 +288,8 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
 			strat.referenceSpread = strat.thresholdLongTop
+			strat.referenceXPrice = strat.xTicker.GetAskPrice()
+			strat.referenceYPrice = strat.yTicker.GetBidPrice()
 			logger.Debugf(
 				"%10s %10s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
 				strat.xSymbol, strat.ySymbol,
@@ -417,6 +421,8 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
 		strat.referenceSpread = strat.thresholdShortTop
+		strat.referenceXPrice = strat.xTicker.GetAskPrice()
+		strat.referenceYPrice = strat.yTicker.GetBidPrice()
 		logger.Debugf(
 			"%10s %10s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
 			strat.xSymbol, strat.ySymbol,
@@ -548,6 +554,8 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
 		strat.referenceSpread = strat.thresholdLongBot
+		strat.referenceXPrice = strat.xTicker.GetBidPrice()
+		strat.referenceYPrice = strat.yTicker.GetAskPrice()
 		logger.Debugf(
 			"%10s %10s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
 			strat.xSymbol, strat.ySymbol,

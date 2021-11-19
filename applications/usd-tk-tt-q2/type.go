@@ -142,6 +142,8 @@ type XYStrategy struct {
 	targetValue            float64
 	realisedSpread         *float64
 	referenceSpread        float64
+	referenceXPrice        float64
+	referenceYPrice        float64
 	adjustedRealisedSpread *float64
 
 	tdSpreadEnterOffset float64
@@ -177,6 +179,10 @@ type XYStrategy struct {
 	xFundingRateFactor *float64
 	yFundingRateFactor *float64
 
-	successCount int
-	failureCount int
+	successCount   int
+	failureCount   int
+	xTotalSlippage float64
+	yTotalSlippage float64
+	xSlippage float64
+	ySlippage float64
 }
