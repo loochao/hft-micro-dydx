@@ -92,12 +92,14 @@ type Config struct {
 
 	XOrderSilent           time.Duration           `yaml:"xOrderSilent"`
 	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
+	YOrderTimeInForce      common.OrderTimeInForce `yaml:"yOrderTimeInForce"`
 	YOrderSilent           time.Duration           `yaml:"yOrderSilent"`
 	XEnterTimeout          time.Duration           `yaml:"xEnterTimeout"`
 	XEnterSilent           time.Duration           `yaml:"xEnterSilent"`
 	HedgeDelay             time.Duration           `yaml:"hedgeDelay"`
 	HedgeCheckDuration     time.Duration           `yaml:"hedgeCheckDuration"`
 	HedgeCheckInterval     time.Duration           `yaml:"hedgeCheckInterval"`
+	HedgeByLimit           bool                    `yaml:"hedgeByLimit"`
 	RealisedSpreadLogDelay time.Duration           `yaml:"realisedSpreadLogDelay"`
 
 	StartValue  float64 `yaml:"startValue"`
@@ -305,6 +307,12 @@ func (config *Config) SetDefaultIfNotSet() error {
 	}
 	if config.BestSizeFactor == 0 {
 		config.BestSizeFactor = 1.0
+	}
+	if config.XOrderTimeInForce == "" {
+		config.XOrderTimeInForce = common.OrderTimeInForceIOC
+	}
+	if config.YOrderTimeInForce == "" {
+		config.YOrderTimeInForce = common.OrderTimeInForceIOC
 	}
 	return nil
 }

@@ -77,7 +77,7 @@ func (strat *XYStrategy) handleYOrder() {
 			strat.yOrder.GetStatus() != common.OrderStatusPartiallyFilled {
 			logger.Debugf("%10s y order ended %s %s", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide())
 			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
-			strat.yPositionUpdateTime = time.Time{}
+			strat.yPositionUpdateTime = time.Now()
 		} else {
 			logger.Debugf("%10s y order filled %s %s size %f price %f value %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice(), strat.yOrder.GetFilledPrice()*strat.yOrder.GetFilledSize()*strat.yMultiplier)
 			if strat.yOrder.GetSide() == common.OrderSideBuy {

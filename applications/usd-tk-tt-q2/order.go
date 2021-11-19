@@ -768,17 +768,49 @@ func (strat *XYStrategy) hedgeYPosition() {
 		reduceOnly = true
 	}
 	orderSide := common.OrderSideBuy
-	if ySizeDiff < 0 {
-		orderSide = common.OrderSideSell
-		ySizeDiff = -ySizeDiff
-	}
-	strat.yNewOrderParam = common.NewOrderParam{
-		Symbol:     strat.ySymbol,
-		Side:       orderSide,
-		Type:       common.OrderTypeMarket,
-		Size:       ySizeDiff,
-		ReduceOnly: reduceOnly,
-		ClientID:   strat.yExchange.GenerateClientID(),
+	if strat.config.HedgeByLimit {
+		yPrice := 0.0
+		if ySizeDiff < 0 {
+			orderSide = common.OrderSideSell
+			ySizeDiff = -ySizeDiff
+			yPrice = strat.yTicker.GetBidPrice()
+			//防止TickSize太大
+			if strat.yTickSize/yPrice < strat.config.EnterSlippage {
+				yPrice = yPrice * (1.0 - strat.config.EnterSlippage)
+				yPrice = math.Floor(yPrice/strat.yTickSize) * strat.yTickSize
+			}
+		} else {
+			orderSide = common.OrderSideBuy
+			yPrice = strat.yTicker.GetAskPrice()
+			//防止TickSize太大
+			if strat.yTickSize/yPrice < strat.config.EnterSlippage {
+				yPrice = yPrice * (1.0 + strat.config.EnterSlippage)
+				yPrice = math.Ceil(yPrice/strat.yTickSize) * strat.yTickSize
+			}
+		}
+		strat.yNewOrderParam = common.NewOrderParam{
+			Symbol:      strat.ySymbol,
+			Side:        orderSide,
+			Type:        common.OrderTypeLimit,
+			Price:       yPrice,
+			TimeInForce: strat.config.YOrderTimeInForce,
+			Size:        ySizeDiff,
+			ReduceOnly:  reduceOnly,
+			ClientID:    strat.yExchange.GenerateClientID(),
+		}
+	} else {
+		if ySizeDiff < 0 {
+			orderSide = common.OrderSideSell
+			ySizeDiff = -ySizeDiff
+		}
+		strat.yNewOrderParam = common.NewOrderParam{
+			Symbol:     strat.ySymbol,
+			Side:       orderSide,
+			Type:       common.OrderTypeMarket,
+			Size:       ySizeDiff,
+			ReduceOnly: reduceOnly,
+			ClientID:   strat.yExchange.GenerateClientID(),
+		}
 	}
 	if !strat.config.DryRun {
 		select {
