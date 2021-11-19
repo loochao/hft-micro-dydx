@@ -386,8 +386,8 @@ mainLoop:
 					weight = math.Sqrt(weight)
 					if weight > 1.0 {
 						weight = 1.0
-					} else if weight < 0.1 {
-						weight = 0.1
+					} else if weight < 0.25 {
+						weight = 0.25
 					}
 					st.targetWeight.Set(weight)
 					if !st.targetWeightUpdated.True() {
