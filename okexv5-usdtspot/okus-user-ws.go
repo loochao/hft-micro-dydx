@@ -300,17 +300,17 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 						}
 					}
 					continue
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("other event msg %s", msg)
-						logSilentTime = time.Now().Add(time.Minute)
-					}
+					//default:
+					//	if time.Now().Sub(logSilentTime) > 0 {
+					//		logger.Debugf("other event msg %s", msg)
+					//		logSilentTime = time.Now().Add(time.Minute)
+					//	}
 				}
-			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("MSG %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
+				//} else {
+				//	if time.Now().Sub(logSilentTime) > 0 {
+				//		logger.Debugf("MSG %s", msg)
+				//		logSilentTime = time.Now().Add(time.Minute)
+				//	}
 			}
 		}
 	}
@@ -363,7 +363,7 @@ func (w *UserWS) reconnect(ctx context.Context, wsUrl string, proxy string, coun
 	return conn, nil
 }
 
-func (w *UserWS) mainLoop(ctx context.Context,  proxy string) {
+func (w *UserWS) mainLoop(ctx context.Context, proxy string) {
 	logger.Debugf("START mainLoop")
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -589,7 +589,7 @@ func NewUserWebsocket(
 		loginCh:        make(chan bool, 64),
 		stopped:        0,
 	}
-	go ws.mainLoop(ctx,  proxy)
+	go ws.mainLoop(ctx, proxy)
 	go ws.dataHandleLoop(ctx)
 	ws.reconnectCh <- nil
 	return &ws
