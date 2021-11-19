@@ -59,6 +59,11 @@ func handleSave(
 			totalXSlippage += strat.xSlippage
 			totalYSlippage += strat.ySlippage
 
+			if strat.failureCount+strat.successCount != 0 {
+				fields["xSlippage"] = strat.xSlippage / float64(strat.failureCount+strat.successCount)
+				fields["ySlippage"] = strat.ySlippage / float64(strat.failureCount+strat.successCount)
+			}
+
 			fields["xBidPrice"] = strat.xTicker.GetBidPrice()
 			fields["xAskPrice"] = strat.xTicker.GetAskPrice()
 			fields["xMidPrice"] = strat.xMidPrice
@@ -71,10 +76,10 @@ func handleSave(
 			fields["yBidSize"] = strat.yTicker.GetBidSize()
 			fields["yAskSize"] = strat.yTicker.GetAskSize()
 
-			xTotalBidValue += strat.xTicker.GetBidSize()*strat.xMultiplier*strat.xTicker.GetBidPrice()
-			xTotalAskValue += strat.xTicker.GetAskSize()*strat.xMultiplier*strat.xTicker.GetAskPrice()
-			yTotalBidValue += strat.yTicker.GetBidSize()*strat.yMultiplier*strat.yTicker.GetBidPrice()
-			yTotalAskValue += strat.yTicker.GetAskSize()*strat.yMultiplier*strat.yTicker.GetAskPrice()
+			xTotalBidValue += strat.xTicker.GetBidSize() * strat.xMultiplier * strat.xTicker.GetBidPrice()
+			xTotalAskValue += strat.xTicker.GetAskSize() * strat.xMultiplier * strat.xTicker.GetAskPrice()
+			yTotalBidValue += strat.yTicker.GetBidSize() * strat.yMultiplier * strat.yTicker.GetBidPrice()
+			yTotalAskValue += strat.yTicker.GetAskSize() * strat.yMultiplier * strat.yTicker.GetAskPrice()
 
 			xSize := strat.xPosition.GetSize() * strat.xMultiplier
 			ySize := strat.yPosition.GetSize() * strat.yMultiplier
@@ -280,12 +285,12 @@ func handleSave(
 		fields["xTotalAskValue"] = xTotalAskValue
 		fields["yTotalBidValue"] = yTotalBidValue
 		fields["yTotalAskValue"] = yTotalAskValue
-		if (totalSuccessCount+totalFailureCount) != 0{
+		if (totalSuccessCount + totalFailureCount) != 0 {
 			fields["totalSuccessCount"] = totalSuccessCount
 			fields["totalFailureCount"] = totalFailureCount
-			fields["meanXSlippage"] = totalXSlippage/float64(totalSuccessCount+totalFailureCount)
-			fields["meanYSlippage"] = totalYSlippage/float64(totalSuccessCount+totalFailureCount)
-			fields["totalSuccessRatio"] = float64(totalSuccessCount)/float64(totalSuccessCount+totalFailureCount)
+			fields["meanXSlippage"] = totalXSlippage / float64(totalSuccessCount+totalFailureCount)
+			fields["meanYSlippage"] = totalYSlippage / float64(totalSuccessCount+totalFailureCount)
+			fields["totalSuccessRatio"] = float64(totalSuccessCount) / float64(totalSuccessCount+totalFailureCount)
 		}
 		fields["xURPnl"] = xURPnl
 		fields["yURPnl"] = yURPnl
