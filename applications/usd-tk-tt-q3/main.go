@@ -375,7 +375,7 @@ mainLoop:
 				if st.stats.YMiddlePrice.Load() > 0 && offset > 0 {
 					liquidityMap[xSymbol] = st.yMultiplier * math.Min(st.stats.YBidSize.Load(), st.stats.YAskSize.Load()) * st.stats.YMiddlePrice.Load()
 					liquidityMap[xSymbol] /= offset
-					liquidityMap[xSymbol] = math.Log(liquidityMap[xSymbol])
+					liquidityMap[xSymbol] = math.Sqrt(liquidityMap[xSymbol])
 					totalLiquidity += liquidityMap[xSymbol]
 				}
 			}
