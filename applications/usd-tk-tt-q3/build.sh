@@ -28,6 +28,6 @@ rsync -avx --progress "./dist/usd-tk-tt-q3.amd64.$dt" way:/usr/local/bin/
 echo "" && echo "" && echo "hkhr"
 rsync -avx --progress "./dist/usd-tk-tt-q3.amd64.$dt" hkhr:/usr/local/bin/
 
-echo "" && echo "" && echo "hk03"
-rsync -avx --progress "./dist/usd-tk-tt-q3.amd64.$dt" hk03:/usr/local/bin/
+echo "" && echo "" && echo "hk06"
+rsync -avx --progress "./dist/usd-tk-tt-q3.amd64.$dt" hk06:/usr/local/bin/
 
