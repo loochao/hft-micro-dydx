@@ -362,6 +362,10 @@ func (sl *XYTickerStats) handleSave() {
 		sl.xAskSizeTD,
 		sl.yBidSizeTD,
 		sl.yAskSizeTD,
+		sl.xBidOffsetTD,
+		sl.xAskOffsetTD,
+		sl.yBidOffsetTD,
+		sl.yAskOffsetTD,
 		sl.spreadTD,
 	}
 	paths := []string{
@@ -372,6 +376,10 @@ func (sl *XYTickerStats) handleSave() {
 		sl.xAskSizeTDPath,
 		sl.yBidSizeTDPath,
 		sl.yAskSizeTDPath,
+		sl.xBidOffsetTDPath,
+		sl.xAskOffsetTDPath,
+		sl.yBidOffsetTDPath,
+		sl.yAskOffsetTDPath,
 		sl.spreadTDPath,
 	}
 	for i, td := range tds {
