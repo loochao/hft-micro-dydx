@@ -23,7 +23,8 @@ type API struct {
 }
 
 func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result interface{}) (err error) {
-	path := "https://www.okex.com" + requestPath
+	//path := "https://www.okex.com" + requestPath
+	path := "https://okex.com" + requestPath
 
 	//logger.Debugf("%v", path)
 	req, err := http.NewRequest("GET", path, nil)
@@ -73,6 +74,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 		}
 	}
 	path := "https://www.okex.com" + requestPath
+	//path := "https://okex.com" + requestPath
 	req, err := http.NewRequest(httpMethod, path, bytes.NewReader(payload))
 	if err != nil {
 		return err

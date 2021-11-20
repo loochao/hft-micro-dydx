@@ -14,7 +14,8 @@ import (
 )
 
 func TestAPI_GetInstruments(t *testing.T) {
-	api, err := NewAPI(&Credentials{}, os.Getenv("OK_PROXY"))
+	//api, err := NewAPI(&Credentials{}, os.Getenv("OK_PROXY"))
+	api, err := NewAPI(&Credentials{}, "socks5://127.0.0.1:1081")
 	if err != nil {
 		t.Fatal(err)
 	}
