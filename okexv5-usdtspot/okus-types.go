@@ -470,11 +470,19 @@ type Depth5 struct {
 }
 
 func (depth *Depth5) GetBidOffset() float64 {
-	panic("implement me")
+	if depth.Bids[0][0] != 0 {
+		return (depth.Asks[0][0]-depth.Bids[0][0])*0.5/depth.Bids[0][0]
+	}else{
+		return 0
+	}
 }
 
 func (depth *Depth5) GetAskOffset() float64 {
-	panic("implement me")
+	if depth.Asks[0][0] != 0 {
+		return (depth.Asks[0][0]-depth.Bids[0][0])*0.5/depth.Asks[0][0]
+	}else{
+		return 0
+	}
 }
 
 func (depth *Depth5) GetBidPrice() float64 {
@@ -611,3 +619,73 @@ func (t *Trade) UnmarshalJSON(data []byte) error {
 	t.TS = time.Unix(0, aux.TS*1000000)
 	return nil
 }
+
+
+//{"arg":{"channel":"tickers","instId":"DOGE-USDT"},"data":[{"instType":"SPOT","instId":"DOGE-USDT","last":"0.254381","lastSz":"600","askPx":"0.254381","askSz":"1400","bidPx":"0.25438","bidSz":"400","open24h":"0.263668","high24h":"0.268614","low24h":"0.248601","sodUtc0":"0.260658","sodUtc8":"0.253989","volCcy24h":"125310776.54685","vol24h":"486148293.462458","ts":"1636737706397"}]}
+type Ticker struct {
+	InstId    string    `json:"instId"`
+	AskPx     float64   `json:"askPx,string"`
+	AskSz     float64   `json:"askSz,string"`
+	BidPx     float64   `json:"bidPx,string"`
+	BidSz     float64   `json:"bidSz,string"`
+	TS time.Time `json:"-"`
+}
+
+func (ticker *Ticker) GetBidOffset() float64 {
+	if ticker.BidPx != 0 {
+		return (ticker.AskPx - ticker.BidPx)*0.5/ticker.BidPx
+	}else{
+		return common.DefaultBidAskOffset
+	}
+}
+
+func (ticker *Ticker) GetAskOffset() float64 {
+	if ticker.AskPx != 0 {
+		return (ticker.AskPx - ticker.BidPx)*0.5/ticker.AskPx
+	}else{
+		return common.DefaultBidAskOffset
+	}
+}
+
+func (ticker *Ticker) GetSymbol() string {
+	return ticker.InstId
+}
+
+func (ticker *Ticker) GetTime() time.Time {
+	return ticker.TS
+}
+
+func (ticker *Ticker) GetBidPrice() float64 {
+	return ticker.BidPx
+}
+
+func (ticker *Ticker) GetAskPrice() float64 {
+	return ticker.AskPx
+}
+
+func (ticker *Ticker) GetBidSize() float64 {
+	return ticker.BidSz
+}
+
+func (ticker *Ticker) GetAskSize() float64 {
+	return ticker.AskSz
+}
+
+func (ticker *Ticker) GetExchange() common.ExchangeID {
+	return ExchangeID
+}
+
+func (ticker *Ticker) UnmarshalJSON(data []byte) (err error) {
+	type Alias Ticker
+	aux := &struct {
+		TS int64 `json:"ts,string"`
+		*Alias
+	}{
+		Alias: (*Alias)(ticker),
+	}
+	if err = json.Unmarshal(data, &aux); err == nil {
+		ticker.TS = time.Unix(0, aux.TS*1000000)
+	}
+	return
+}
+

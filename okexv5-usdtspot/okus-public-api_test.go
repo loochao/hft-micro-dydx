@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func TestAPI_GetInstruments(t *testing.T) {
@@ -83,16 +84,28 @@ func TestAPI_GetInstruments(t *testing.T) {
 }
 
 func TestAPI_GetStatus(t *testing.T) {
-	logger.Debugf("%s",  os.Getenv("OK_PROXY"))
+	logger.Debugf("%s", os.Getenv("OK_PROXY"))
 	api, err := NewAPI(&Credentials{}, os.Getenv("OK_PROXY"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	status, err := api.GetStatus(context.Background())
-	if err != nil {
-		t.Fatal(err)
+	timer := time.NewTicker(time.Second)
+	counter := 0
+	for {
+		select {
+		case <-timer.C:
+			counter++
+			_, err = api.GetInstruments(context.Background())
+			_, err = api.GetStatus(context.Background())
+			if err != nil {
+				logger.Debugf("%2d FAILURE %v", counter, err)
+			} else {
+				logger.Debugf("%2d SUCCESS", counter)
+			}
+			timer.Reset(time.Second*5)
+		}
 	}
-	for _, s := range status {
-		logger.Debugf("%v", s)
-	}
+	//for _, s := range status {
+	//	logger.Debugf("%v", s)
+	//}
 }

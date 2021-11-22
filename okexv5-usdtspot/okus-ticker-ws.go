@@ -391,9 +391,10 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	logSilentTime := time.Now()
 	var err error
 	var ticker *Ticker
+	const bufferSize = 2048
 	index := -1
-	pool := [4]*Ticker{}
-	for i := 0; i < 4; i++ {
+	pool := [bufferSize]*Ticker{}
+	for i := 0; i < bufferSize; i++ {
 		pool[i] = &Ticker{}
 	}
 	for {
@@ -404,7 +405,7 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 			return
 		case msg := <-inputCh:
 			index++
-			if index == 4 {
+			if index == bufferSize {
 				index = 0
 			}
 			ticker = pool[index]
