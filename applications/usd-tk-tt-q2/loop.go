@@ -40,7 +40,7 @@ func (strat *XYStrategy) handleXOrder() {
 
 		if strat.xOrder.GetStatus() != common.OrderStatusFilled &&
 			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled {
-			logger.Debugf("%10s x %s order ended %s %s", strat.xOrder.GetSymbol(), strat.xOrder.GetSide())
+			logger.Debugf("%10s X %s ORDER %s", strat.xOrder.GetSymbol(), strat.xOrder.GetSide(), strat.xOrder.GetStatus())
 			strat.xPositionUpdateTime = time.Unix(0, 0)
 			strat.xOrderSilentTime = time.Now()
 		} else {
