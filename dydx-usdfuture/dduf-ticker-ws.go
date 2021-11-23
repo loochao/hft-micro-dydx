@@ -459,10 +459,10 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 
 				if msgCounter >= 0 {
 					//如果不复制，Downstream会被修改
-					outputDepth := *depth
+					//outputDepth := *depth
 					//logger.Debugf("%v output %v", market, outputDepth)
 					select {
-					case outputCh <- &outputDepth:
+					case outputCh <- depth:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
