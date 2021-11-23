@@ -72,8 +72,8 @@ type Config struct {
 
 	XLiquidityQuantile   float64 `yaml:"xLiquidityQuantile"`
 	YLiquidityQuantile   float64 `yaml:"yLiquidityQuantile"`
-	XOffsetQuantile      float64 `json:"xOffsetQuantile"`
-	YOffsetQuantile      float64 `json:"yOffsetQuantile"`
+	XOffsetQuantile      float64 `yaml:"xOffsetQuantile"`
+	YOffsetQuantile      float64 `yaml:"yOffsetQuantile"`
 	TimeDeltaQuantileTop float64 `yaml:"timeDeltaQuantileTop"`
 	TimeDeltaQuantileBot float64 `yaml:"timeDeltaQuantileBot"`
 

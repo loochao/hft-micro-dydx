@@ -70,6 +70,7 @@ func startXYStrategy(
 		TimeDeltaQuantileTop: config.TimeDeltaQuantileTop,
 		XLiquidityQuantile:   config.XLiquidityQuantile,
 		YLiquidityQuantile:   config.YLiquidityQuantile,
+
 		XOffsetQuantile:      config.XOffsetQuantile,
 		YOffsetQuantile:      config.YOffsetQuantile,
 
