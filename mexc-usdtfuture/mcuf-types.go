@@ -152,8 +152,8 @@ func (depth *Depth5) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (depth *Depth5) GetSymbol() string  { return depth.Symbol }
-func (depth *Depth5) GetTime() time.Time { return depth.EventTime }
+func (depth *Depth5) GetSymbol() string       { return depth.Symbol }
+func (depth *Depth5) GetEventTime() time.Time { return depth.EventTime }
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	type Alias Depth5
 	aux := struct {

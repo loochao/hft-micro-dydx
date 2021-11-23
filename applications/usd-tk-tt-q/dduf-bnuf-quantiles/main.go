@@ -159,7 +159,7 @@ func main() {
 
 				if yTD != nil &&
 					xTD != nil {
-					tDiff := yTD.GetTime().Sub(xTD.GetTime())
+					tDiff := yTD.GetEventTime().Sub(xTD.GetEventTime())
 
 					if tDiff > -time.Second &&
 						tDiff < time.Second {

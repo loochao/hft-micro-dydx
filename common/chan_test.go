@@ -141,7 +141,7 @@ func (depth *Depth20) GetAsks() common.Asks {
 func (depth *Depth20) GetSymbol() string {
 	return depth.Symbol
 }
-func (depth *Depth20) GetTime() time.Time {
+func (depth *Depth20) GetEventTime() time.Time {
 	return depth.EventTime
 }
 

@@ -10,15 +10,15 @@ func (strat *XYStrategy) updateSpread() {
 	//ticker 盘口无变动可能更新得很慢
 
 	//需要用ema time delta 对age diff进行修正
-	strat.adjustedAgeDiff = strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
+	strat.adjustedAgeDiff = strat.xTicker.GetEventTime().Sub(strat.yTicker.GetEventTime()) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
 
 	//取新一点的时间为spread time
-	if strat.xTicker.GetTime().Sub(strat.yTicker.GetTime()) < 0 {
+	if strat.xTicker.GetEventTime().Sub(strat.yTicker.GetEventTime()) < 0 {
 		//需要对时间进行补偿
-		strat.spreadTime = strat.yTicker.GetTime().Add(time.Millisecond * time.Duration(strat.yTickerFilter.TimeDeltaEma))
+		strat.spreadTime = strat.yTicker.GetEventTime().Add(time.Millisecond * time.Duration(strat.yTickerFilter.TimeDeltaEma))
 	} else {
 		//需要对时间进行补偿
-		strat.spreadTime = strat.xTicker.GetTime().Add(time.Millisecond * time.Duration(strat.xTickerFilter.TimeDeltaEma))
+		strat.spreadTime = strat.xTicker.GetEventTime().Add(time.Millisecond * time.Duration(strat.xTickerFilter.TimeDeltaEma))
 	}
 
 	if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
@@ -80,12 +80,12 @@ func (strat *XYStrategy) handleXTicker() {
 	if strat.xTicker == strat.xNextTicker {
 		return
 	}
-	if strat.xNextTicker.GetTime().Sub(strat.xTickerTime) < 0 {
+	if strat.xNextTicker.GetEventTime().Sub(strat.xTickerTime) < 0 {
 		return
 	}
 	strat.xTicker = strat.xNextTicker
 	strat.xMidPrice = 0.5 * (strat.xTicker.GetAskPrice() + strat.xTicker.GetBidPrice())
-	strat.xTickerTime = strat.xTicker.GetTime()
+	strat.xTickerTime = strat.xTicker.GetEventTime()
 	if !strat.xTickerFilter.Filter(strat.xTicker) && strat.yTicker != nil {
 		strat.adjustedAgeDiff = strat.xTickerTime.Sub(strat.yTickerTime) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
 		if strat.adjustedAgeDiff > strat.config.TickerMaxAgeDiffBias {
@@ -128,12 +128,12 @@ func (strat *XYStrategy) handleYTicker() {
 	if strat.yTicker == strat.yNextTicker {
 		return
 	}
-	if strat.yNextTicker.GetTime().Sub(strat.yTickerTime) < 0 {
+	if strat.yNextTicker.GetEventTime().Sub(strat.yTickerTime) < 0 {
 		return
 	}
 	strat.yTicker = strat.yNextTicker
 	strat.yMidPrice = 0.5 * (strat.yTicker.GetAskPrice() + strat.yTicker.GetBidPrice())
-	strat.yTickerTime = strat.yTicker.GetTime()
+	strat.yTickerTime = strat.yTicker.GetEventTime()
 	if !strat.yTickerFilter.Filter(strat.yTicker) && strat.xTicker != nil {
 		strat.adjustedAgeDiff = strat.xTickerTime.Sub(strat.yTickerTime) + time.Duration(strat.xTickerFilter.TimeDeltaEma-strat.yTickerFilter.TimeDeltaEma)*time.Millisecond
 		if strat.adjustedAgeDiff < -strat.config.TickerMaxAgeDiffBias {

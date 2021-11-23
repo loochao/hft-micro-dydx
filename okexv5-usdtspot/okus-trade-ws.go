@@ -389,7 +389,7 @@ func (w *TradeWS) Done() chan interface{} {
 
 func (w *TradeWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Trade) {
 	logSilentTime := time.Now()
-	const bufferLen = 4096
+	const bufferLen = 64
 	var err error
 	var trade *Trade
 	index := -1

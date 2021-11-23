@@ -199,33 +199,33 @@ func main() {
 					continue
 				}
 
-				if yT.GetTime().Sub(yT.GetTime().Truncate(time.Hour*4)) < time.Minute {
+				if yT.GetEventTime().Sub(yT.GetEventTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
-				if xT.GetTime().Sub(xT.GetTime().Truncate(time.Hour*4)) < time.Minute {
+				if xT.GetEventTime().Sub(xT.GetEventTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
 
-				if xT.GetTime().Sub(yT.GetTime()) < time.Second &&
-					xT.GetTime().Sub(yT.GetTime()) > -time.Second {
+				if xT.GetEventTime().Sub(yT.GetEventTime()) < time.Second &&
+					xT.GetEventTime().Sub(yT.GetEventTime()) > -time.Second {
 
 					longSpread := (yT.GetAskPrice() - xT.GetBidPrice()) / xT.GetBidPrice()
 					shortSpread := (yT.GetBidPrice() - xT.GetAskPrice()) / xT.GetAskPrice()
-					longSpreadMean.Insert(yT.GetTime(), longSpread)
-					shortSpreadMean.Insert(yT.GetTime(), shortSpread)
+					longSpreadMean.Insert(yT.GetEventTime(), longSpread)
+					shortSpreadMean.Insert(yT.GetEventTime(), shortSpread)
 					_ = longTD.Add(longSpread)
 					_ = shortTD.Add(shortSpread)
 
-					if yT.GetTime().Sub(enterSilentTime) > 0 {
+					if yT.GetEventTime().Sub(enterSilentTime) > 0 {
 						if shortSpreadMean.Mean() > 0.001 && shortSpread >= shortSpreadMean.Mean() {
-							enterSilentTime = yT.GetTime().Add(enterSilent)
+							enterSilentTime = yT.GetEventTime().Add(enterSilent)
 							size := enterValue / xT.GetAskPrice()
 							if kcPositionSize >= 0 {
 								if kcPositionSize == 0 || kcPositionPrice < xT.GetAskPrice() {
 									kcPositionPrice = (kcPositionSize*kcPositionPrice + enterValue) / (kcPositionSize + size)
 									netWorth += commission * enterValue
 									kcPositionSize += size
-									kcEnterTime = yT.GetTime()
+									kcEnterTime = yT.GetEventTime()
 								}
 							} else {
 								//先平仓
@@ -235,17 +235,17 @@ func main() {
 								netWorth += commission * enterValue
 								kcPositionPrice = xT.GetAskPrice()
 								kcPositionSize = size
-								kcEnterTime = yT.GetTime()
+								kcEnterTime = yT.GetEventTime()
 							}
 						} else if longSpreadMean.Mean() < -0.001 && longSpread <= longSpreadMean.Mean() {
-							enterSilentTime = yT.GetTime().Add(enterSilent)
+							enterSilentTime = yT.GetEventTime().Add(enterSilent)
 							size := -enterValue / xT.GetBidPrice()
 							if kcPositionSize <= 0 {
 								if kcPositionSize == 0 || kcPositionPrice > xT.GetBidPrice() {
 									kcPositionPrice = (kcPositionSize*kcPositionPrice - enterValue) / (kcPositionSize + size)
 									netWorth += commission * enterValue
 									kcPositionSize += size
-									kcEnterTime = yT.GetTime()
+									kcEnterTime = yT.GetEventTime()
 								}
 							} else {
 								//先平仓
@@ -255,13 +255,13 @@ func main() {
 								netWorth += commission * enterValue
 								kcPositionPrice = xT.GetBidPrice()
 								kcPositionSize = size
-								kcEnterTime = yT.GetTime()
+								kcEnterTime = yT.GetEventTime()
 							}
 						}
 					}
 
 					bnSize := -kcPositionSize - bnPositionSize
-					if bnSize != 0 && yT.GetTime().Sub(kcEnterTime) > hedgeDelay {
+					if bnSize != 0 && yT.GetEventTime().Sub(kcEnterTime) > hedgeDelay {
 						if bnSize*bnPositionSize > 0 {
 							//同向加仓
 							if bnSize > 0 {
@@ -333,7 +333,7 @@ func main() {
 								"delay":   fmt.Sprintf("%v", hedgeDelay),
 							},
 							fields,
-							yT.GetTime(),
+							yT.GetEventTime(),
 						)
 						if err == nil {
 							iw.PointCh <- pt

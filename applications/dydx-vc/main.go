@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"sort"
+	"strconv"
 )
 
 func main() {
@@ -17,6 +18,10 @@ func main() {
 		ApiPassphrase: os.Getenv("DYDX_VC_PASSPHRASE"),
 		AccountID:     os.Getenv("DYDX_VC_ACCOUNT_ID"),
 	}, os.Getenv("DYDX_VC_PROXY"))
+	if err != nil {
+		logger.Fatal(err)
+	}
+	startValue, err := strconv.ParseFloat(os.Getenv("DYDX_VC_START_VALUE"), 64)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -59,7 +64,7 @@ func main() {
 	fmt.Printf("未实现盈亏\t%.3f\n", totalUnrealizedPnl)
 	fmt.Printf("当前持仓量\t%.3f USDC\n", totalPosValue)
 	fmt.Printf("杠杆\t\t%.3f\n", totalPosValue/account.Equity)
-	fmt.Printf("DYDX净值\t%.3f\n", account.Equity/50000)
+	fmt.Printf("DYDX净值\t%.3f\n", account.Equity/startValue)
 	fmt.Printf("\n")
 	rw, err := api.GetRewards(ctx, dydx_usdfuture.RewardsParam{})
 	if err != nil {

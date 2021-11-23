@@ -183,6 +183,10 @@ func handleSave(
 		fields["statsXAskSize"] = strat.stats.XAskSize.Load()
 		fields["statsYBidSize"] = strat.stats.YBidSize.Load()
 		fields["statsYAskSize"] = strat.stats.YAskSize.Load()
+		fields["statsXBidOffset"] = strat.stats.XBidOffset.Load()
+		fields["statsXAskOffset"] = strat.stats.XAskOffset.Load()
+		fields["statsYBidOffset"] = strat.stats.YBidOffset.Load()
+		fields["statsYAskOffset"] = strat.stats.YAskOffset.Load()
 		if strat.stats.XMiddlePrice.Load() > 0 {
 			fields["statsXMiddlePrice"] = strat.stats.XMiddlePrice.Load()
 		}

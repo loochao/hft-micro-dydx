@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"github.com/gorilla/websocket"
 	"io"
@@ -313,10 +314,10 @@ func NewUserWebsocket(
 	ws := UserWebsocket{
 		done:                            make(chan interface{}),
 		reconnectCh:                     make(chan interface{}),
-		RestartCh:                       make(chan interface{}, 4),
-		OrderUpdateEventCh:              make(chan *OrderUpdateEvent, 64),
-		BalanceAndPositionUpdateEventCh: make(chan *BalanceAndPositionUpdateEvent, 64),
-		messageCh:                       make(chan []byte, 128),
+		RestartCh:                       make(chan interface{}, common.ChannelSizeLowLoad),
+		OrderUpdateEventCh:              make(chan *OrderUpdateEvent, common.ChannelSizeMediumLoad),
+		BalanceAndPositionUpdateEventCh: make(chan *BalanceAndPositionUpdateEvent, common.ChannelSizeMediumLoad),
+		messageCh:                       make(chan []byte, common.ChannelSizeHighLoad),
 		stopped:                         0,
 	}
 	go func(ctx context.Context, ws *UserWebsocket, listenKey ListenKey) {

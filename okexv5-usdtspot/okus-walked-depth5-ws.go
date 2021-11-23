@@ -388,7 +388,7 @@ func (w *WalkedDepth5WS) Done() chan interface{} {
 
 func (w *WalkedDepth5WS) dataHandleLoop(ctx context.Context, symbol string, impact float64, inputCh chan []byte, outputCh chan common.Ticker) {
 	logSilentTime := time.Now()
-	const bufferSize = 2048
+	const bufferSize = 64
 	var err error
 	index := -1
 	pool := [bufferSize]*common.WalkedDepth{}

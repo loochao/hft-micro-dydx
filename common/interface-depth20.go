@@ -114,7 +114,7 @@ func WalkMakerTakerDepth(depth Depth, makerImpact, takerImpact float64) (*Walked
 
 	wd, hasMakerData, hasTakerData := &WalkedMakerTakerDepth{
 		Symbol:       depth.GetSymbol(),
-		Time:         depth.GetTime(),
+		Time:         depth.GetEventTime(),
 		TakerAsk:     0,
 		TakerBid:     0,
 		MakerAsk:     0,
@@ -216,7 +216,7 @@ func WalkMakerTakerDepth5(depth5 Depth, makerImpact, takerImpact float64) (*Walk
 
 	wd, hasMakerData, hasTakerData := &WalkedMakerTakerDepth{
 		Symbol:       depth5.GetSymbol(),
-		Time:         depth5.GetTime(),
+		Time:         depth5.GetEventTime(),
 		TakerAsk:     0,
 		TakerBid:     0,
 		MakerAsk:     0,

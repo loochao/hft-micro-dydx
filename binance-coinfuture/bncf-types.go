@@ -35,7 +35,7 @@ func (depth *Depth20) GetAsks() common.Asks {
 func (depth *Depth20) GetSymbol() string {
 	return depth.Symbol
 }
-func (depth *Depth20) GetTime() time.Time {
+func (depth *Depth20) GetEventTime() time.Time {
 	return depth.EventTime
 }
 
@@ -689,7 +689,7 @@ func (depth *Depth5) GetAsks() common.Asks {
 func (depth *Depth5) GetSymbol() string {
 	return depth.Symbol
 }
-func (depth *Depth5) GetTime() time.Time {
+func (depth *Depth5) GetEventTime() time.Time {
 	return depth.EventTime
 }
 

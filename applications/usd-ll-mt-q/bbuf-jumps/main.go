@@ -109,7 +109,7 @@ func main() {
 						}
 						*lastAskPrice = xTD.GetAskPrice()
 						*lastBidPrice = xTD.GetBidPrice()
-						lastTime = xTD.GetTime()
+						lastTime = xTD.GetEventTime()
 					}
 					err = bybit_usdtfuture.UpdateOrderBook(msg[21:], xDepth)
 					if err != nil {
@@ -125,18 +125,18 @@ func main() {
 					}
 					xTD = xDepth
 					//if msg[56+symbolLen] == 's' {
-					//	logger.Debugf("new %v %v %v %v %v %v", isXDepthReady,xTD.GetTime(), xDepth.IsValidate(), lastTime, lastAskPrice, lastBidPrice)
+					//	logger.Debugf("new %v %v %v %v %v %v", isXDepthReady,xTD.GetEventTime(), xDepth.IsValidate(), lastTime, lastAskPrice, lastBidPrice)
 					//}
 				} else {
 					continue
 				}
 
 				if lastAskPrice != nil && lastBidPrice != nil && isXDepthReady {
-					//logger.Debugf("%v", xTD.GetTime().Sub(lastTime))
-					//if xTD.GetTime().Sub(lastTime) != 0 && counter < 10000{
-					//	logger.Debugf("%v %v %v", xTD.GetTime().Sub(lastTime), xTD.GetTime(), lastTime)
+					//logger.Debugf("%v", xTD.GetEventTime().Sub(lastTime))
+					//if xTD.GetEventTime().Sub(lastTime) != 0 && counter < 10000{
+					//	logger.Debugf("%v %v %v", xTD.GetEventTime().Sub(lastTime), xTD.GetEventTime(), lastTime)
 					//}
-					if xTD.GetTime().Sub(lastTime) < time.Millisecond*100 {
+					if xTD.GetEventTime().Sub(lastTime) < time.Millisecond*100 {
 						if xTD.GetAskPrice() > *lastAskPrice {
 							_ = upJumps.Add(xTD.GetAskPrice() - *lastAskPrice)
 						}
@@ -146,7 +146,7 @@ func main() {
 					}
 					if counter%1000 == 0 {
 						fields := make(map[string]interface{})
-						fields["td"] = xTD.GetTime().Sub(lastTime).Seconds()
+						fields["td"] = xTD.GetEventTime().Sub(lastTime).Seconds()
 						fields["up50"] = upJumps.Quantile(0.5)
 						fields["up80"] = upJumps.Quantile(0.8)
 						fields["up95"] = upJumps.Quantile(0.95)
@@ -163,7 +163,7 @@ func main() {
 								"xSymbol": xSymbol,
 							},
 							fields,
-							xTD.GetTime(),
+							xTD.GetEventTime(),
 						)
 						if err == nil {
 							iw.PointCh <- pt

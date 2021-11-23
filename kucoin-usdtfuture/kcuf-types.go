@@ -145,11 +145,19 @@ type Depth5 struct {
 }
 
 func (depth *Depth5) GetBidOffset() float64 {
-	panic("implement me")
+	if depth.Bids[0][0] != 0 {
+		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Bids[0][0]
+	} else {
+		return common.DefaultBidAskOffset
+	}
 }
 
 func (depth *Depth5) GetAskOffset() float64 {
-	panic("implement me")
+	if depth.Asks[0][0] != 0 {
+		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Asks[0][0]
+	} else {
+		return common.DefaultBidAskOffset
+	}
 }
 
 func (depth *Depth5) GetBidPrice() float64 {
@@ -181,7 +189,7 @@ func (depth *Depth5) GetAsks() common.Asks {
 func (depth *Depth5) GetSymbol() string {
 	return depth.Symbol
 }
-func (depth *Depth5) GetTime() time.Time {
+func (depth *Depth5) GetEventTime() time.Time {
 	return depth.EventTime
 }
 
@@ -878,11 +886,19 @@ type Ticker struct {
 }
 
 func (ticker *Ticker) GetBidOffset() float64 {
-	panic("implement me")
+	if ticker.BestBidPrice != 0 {
+		return (ticker.BestAskPrice - ticker.BestBidPrice)*0.5/ticker.BestBidPrice
+	}else{
+		return common.DefaultBidAskOffset
+	}
 }
 
 func (ticker *Ticker) GetAskOffset() float64 {
-	panic("implement me")
+	if ticker.BestAskPrice != 0 {
+		return (ticker.BestAskPrice - ticker.BestBidPrice)*0.5/ticker.BestAskPrice
+	}else{
+		return common.DefaultBidAskOffset
+	}
 }
 
 func (ticker *Ticker) GetSymbol() string {

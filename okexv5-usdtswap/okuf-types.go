@@ -610,18 +610,22 @@ type Depth5 struct {
 	EventTime time.Time     `json:"-"`
 }
 
+func (depth *Depth5) GetParseTime() time.Time {
+	return depth.ParseTime
+}
+
 func (depth *Depth5) GetBidOffset() float64 {
 	if depth.Bids[0][0] != 0 {
-		return (depth.Asks[0][0]-depth.Bids[0][0])*0.5/depth.Bids[0][0]
-	}else{
+		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Bids[0][0]
+	} else {
 		return common.DefaultBidAskOffset
 	}
 }
 
 func (depth *Depth5) GetAskOffset() float64 {
 	if depth.Asks[0][0] != 0 {
-		return (depth.Asks[0][0]-depth.Bids[0][0])*0.5/depth.Asks[0][0]
-	}else{
+		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Asks[0][0]
+	} else {
 		return common.DefaultBidAskOffset
 	}
 }
@@ -646,10 +650,10 @@ func (depth *Depth5) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (depth *Depth5) GetBids() common.Bids { return depth.Bids[:] }
-func (depth *Depth5) GetAsks() common.Asks { return depth.Asks[:] }
-func (depth *Depth5) GetSymbol() string    { return depth.InstId }
-func (depth *Depth5) GetTime() time.Time   { return depth.EventTime }
+func (depth *Depth5) GetBids() common.Bids    { return depth.Bids[:] }
+func (depth *Depth5) GetAsks() common.Asks    { return depth.Asks[:] }
+func (depth *Depth5) GetSymbol() string       { return depth.InstId }
+func (depth *Depth5) GetEventTime() time.Time { return depth.EventTime }
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	type Alias Depth5
 	aux := struct {
@@ -834,31 +838,36 @@ type Ticker struct {
 	AskSz     float64   `json:"askSz,string"`
 	BidPx     float64   `json:"bidPx,string"`
 	BidSz     float64   `json:"bidSz,string"`
-	TS time.Time `json:"-"`
+	TS        time.Time `json:"-"`
+	ParseTime time.Time `json:"-"`
+}
+
+func (ticker *Ticker) GetEventTime() time.Time {
+	return ticker.TS
+}
+
+func (ticker *Ticker) GetParseTime() time.Time {
+	return ticker.ParseTime
 }
 
 func (ticker *Ticker) GetBidOffset() float64 {
 	if ticker.BidPx != 0 {
-		return (ticker.AskPx - ticker.BidPx)*0.5/ticker.BidPx
-	}else{
+		return (ticker.AskPx - ticker.BidPx) * 0.5 / ticker.BidPx
+	} else {
 		return common.DefaultBidAskOffset
 	}
 }
 
 func (ticker *Ticker) GetAskOffset() float64 {
 	if ticker.AskPx != 0 {
-		return (ticker.AskPx - ticker.BidPx)*0.5/ticker.AskPx
-	}else{
+		return (ticker.AskPx - ticker.BidPx) * 0.5 / ticker.AskPx
+	} else {
 		return common.DefaultBidAskOffset
 	}
 }
 
 func (ticker *Ticker) GetSymbol() string {
 	return ticker.InstId
-}
-
-func (ticker *Ticker) GetTime() time.Time {
-	return ticker.TS
 }
 
 func (ticker *Ticker) GetBidPrice() float64 {
@@ -891,6 +900,7 @@ func (ticker *Ticker) UnmarshalJSON(data []byte) (err error) {
 	}
 	if err = json.Unmarshal(data, &aux); err == nil {
 		ticker.TS = time.Unix(0, aux.TS*1000000)
+		ticker.ParseTime = time.Now()
 	}
 	return
 }
@@ -932,6 +942,3 @@ type CommonCapture struct {
 	} `json:"arg,omitempty"`
 	Data json.RawMessage `json:"data,omitempty"`
 }
-
-
-

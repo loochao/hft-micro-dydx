@@ -33,10 +33,9 @@ func (w *RawDepth20WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 	var ok bool
 	var message *common.RawMessage
 	var r io.Reader
-	const bufferSize = 8192
 	index := -1
-	pool := [bufferSize]*common.RawMessage{}
-	for i := 0; i < bufferSize; i++ {
+	pool := [common.BufferSizeForHighLoadRealTimeData]*common.RawMessage{}
+	for i := 0; i < common.BufferSizeForHighLoadRealTimeData; i++ {
 		pool[i] = &common.RawMessage{
 			Prefix: w.prefix,
 		}
@@ -101,7 +100,7 @@ func (w *RawDepth20WS) readLoop(conn *websocket.Conn, channels map[string]chan *
 		}
 		if ch, ok = channels[symbol]; ok {
 			index++
-			if index == bufferSize {
+			if index == common.BufferSizeForHighLoadRealTimeData {
 				index = 0
 			}
 			message = pool[index]
@@ -332,7 +331,7 @@ func NewRawDepth20WS(
 ) *RawDepth20WS {
 	ws := RawDepth20WS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 4),
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
 		prefix: prefix,
 		stopped:     0,
 	}

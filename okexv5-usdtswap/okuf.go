@@ -734,11 +734,11 @@ func (okuf *OkexV5UsdtSwap) cancelOrder(ctx context.Context, param common.Cancel
 	}
 }
 
-type OkexV5UsdtSwapWithWalkedTicker struct {
+type OkexV5UsdtSwapWithWalkedDepth5 struct {
 	OkexV5UsdtSwap
 }
 
-func (okuf *OkexV5UsdtSwapWithWalkedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (okuf *OkexV5UsdtSwapWithWalkedDepth5) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")
 	defer logger.Debugf("STOP StreamTicker")
 	defer okuf.Stop()

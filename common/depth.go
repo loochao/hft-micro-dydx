@@ -25,24 +25,29 @@ type WalkedDepthBBMAA struct {
 }
 
 type WalkedDepth struct {
-	Symbol    string
+	Symbol     string
 	ExchangeID ExchangeID
-	MidPrice  float64
-	BidPrice  float64
-	AskPrice  float64
-	BidSize   float64
-	AskSize   float64
-	BidOffset float64
-	AskOffset float64
-	Time      time.Time
+	MidPrice   float64
+	BidPrice   float64
+	AskPrice   float64
+	BidSize    float64
+	AskSize    float64
+	BidOffset  float64
+	AskOffset  float64
+	EventTime  time.Time
+	ParseTime  time.Time
 }
 
 func (w WalkedDepth) GetSymbol() string {
 	return w.Symbol
 }
 
-func (w WalkedDepth) GetTime() time.Time {
-	return w.Time
+func (w WalkedDepth) GetEventTime() time.Time {
+	return w.EventTime
+}
+
+func (w WalkedDepth) GetParseTime() time.Time {
+	return w.ParseTime
 }
 
 func (w WalkedDepth) GetBidPrice() float64 {
@@ -74,7 +79,8 @@ func (w WalkedDepth) GetExchange() ExchangeID {
 }
 
 func WalkDepth(depth Depth, multiplier float64, impact float64, output *WalkedDepth) error {
-	output.Time = depth.GetTime()
+	output.EventTime = depth.GetEventTime()
+	output.ParseTime = depth.GetParseTime()
 	output.Symbol = depth.GetSymbol()
 	output.AskPrice = 0.0
 	output.BidPrice = 0.0
@@ -132,7 +138,7 @@ func WalkDepth(depth Depth, multiplier float64, impact float64, output *WalkedDe
 
 func WalkDepthBBMAA(depth Depth, multiplier float64, impact float64, output *WalkedDepthBBMAA) error {
 
-	output.Time = depth.GetTime()
+	output.Time = depth.GetEventTime()
 	output.Symbol = depth.GetSymbol()
 	output.AskPrice = 0.0
 	output.BidPrice = 0.0
@@ -189,7 +195,7 @@ func WalkDepthBBMAA(depth Depth, multiplier float64, impact float64, output *Wal
 
 func WalkDepthBMA(depth Depth, multiplier float64, impact float64, output *WalkedDepthBMA) error {
 
-	output.Time = depth.GetTime()
+	output.Time = depth.GetEventTime()
 	output.Symbol = depth.GetSymbol()
 	output.AskPrice = 0.0
 	output.BidPrice = 0.0
@@ -243,7 +249,7 @@ func WalkDepthBMA(depth Depth, multiplier float64, impact float64, output *Walke
 
 func WalkCoinDepthWithMultiplier(depth Depth, multiplier float64, impact float64, output *WalkedDepthBMA) error {
 
-	output.Time = depth.GetTime()
+	output.Time = depth.GetEventTime()
 	output.Symbol = depth.GetSymbol()
 	output.AskPrice = 0.0
 	output.BidPrice = 0.0

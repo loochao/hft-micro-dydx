@@ -251,7 +251,7 @@ func (o OrderBook) IsValidate() bool {
 	return true
 }
 
-func (o OrderBook) GetTime() time.Time {
+func (o OrderBook) GetEventTime() time.Time {
 	return o.EventTime
 }
 

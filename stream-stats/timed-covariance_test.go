@@ -17,5 +17,5 @@ func TestNewTimedCovariance(t *testing.T) {
 		v, _ := stats.CovariancePopulation(xs, ys)
 		assert.InDeltaf(t, v, tcv.Covariance(), 1e-10, "")
 	}
-	stats.Correlation()
+	//stats.Correlation()
 }

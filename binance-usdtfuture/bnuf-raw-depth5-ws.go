@@ -33,15 +33,13 @@ func (w *RawDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 	var ok bool
 	var message *common.RawMessage
 	var r io.Reader
-	const bufferSize = 8192
 	index := -1
-	pool := [bufferSize]*common.RawMessage{}
-	for i := 0; i < bufferSize; i++ {
+	pool := [common.BufferSizeForHighLoadRealTimeData]*common.RawMessage{}
+	for i := 0; i < common.BufferSizeForHighLoadRealTimeData; i++ {
 		pool[i] = &common.RawMessage{
 			Prefix: w.prefix,
 		}
 	}
-
 
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -101,7 +99,7 @@ func (w *RawDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan *c
 		}
 		if ch, ok = channels[symbol]; ok {
 			index++
-			if index == bufferSize {
+			if index == common.BufferSizeForHighLoadRealTimeData {
 				index = 0
 			}
 			message = pool[index]
@@ -151,13 +149,13 @@ func (w *RawDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string,
 			return nil, fmt.Errorf("url.Parse error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:            http.ProxyURL(proxyUrl),
-			HandshakeTimeout: 60 * time.Second,
+			Proxy:             http.ProxyURL(proxyUrl),
+			HandshakeTimeout:  60 * time.Second,
 			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
 			EnableCompression: true,
 		}
 	}
@@ -323,7 +321,6 @@ func (w *RawDepth5WS) Done() chan interface{} {
 	return w.done
 }
 
-
 func NewRawDepth5WS(
 	ctx context.Context,
 	proxy string,
@@ -332,8 +329,8 @@ func NewRawDepth5WS(
 ) *RawDepth5WS {
 	ws := RawDepth5WS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 4),
-		prefix: prefix,
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
+		prefix:      prefix,
 		stopped:     0,
 	}
 	newChannels := make(map[string]chan *common.RawMessage)

@@ -117,7 +117,7 @@ func (dd *DydxUsdFuture) watchPriceFactor(ctx context.Context, settings common.E
 		case <-ctx.Done():
 			return
 		case ticker := <-ch:
-			dd.priceFactor.Set(tm.Insert(ticker.GetTime(), (ticker.GetAskPrice()+ticker.GetBidPrice())*0.5))
+			dd.priceFactor.Set(tm.Insert(ticker.GetEventTime(), (ticker.GetAskPrice()+ticker.GetBidPrice())*0.5))
 		}
 	}
 }

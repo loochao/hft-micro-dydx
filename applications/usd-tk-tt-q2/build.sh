@@ -14,20 +14,23 @@ git tag -d "usd-tk-tt-q2.$dt"
 git tag "usd-tk-tt-q2.$dt"
 git push origin "usd-tk-tt-q2.$dt" --force
 
-#env GOOS=linux GOARCH=arm64 go build -o "./dist/usd-tk-tt-q2.arm64.$dt" ./applications/usd-tk-tt-q2
+env GOOS=linux GOARCH=arm64 go build -o "./dist/usd-tk-tt-q2.arm64.$dt" ./applications/usd-tk-tt-q2
 env GOOS=linux GOARCH=amd64 go build -o "./dist/usd-tk-tt-q2.amd64.$dt" ./applications/usd-tk-tt-q2
 
 chmod 755 "./dist/usd-tk-tt-q2.amd64.$dt"
 
-echo "" && echo "" && echo "naeo"
-rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" naeo:/usr/local/bin/
+#echo "" && echo "" && echo "naeo"
+#rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" naeo:/usr/local/bin/
 
 echo "" && echo "" && echo "way"
 rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" way:/usr/local/bin/
+rsync -avx --progress "./dist/usd-tk-tt-q2.arm64.$dt" way:/usr/local/bin/
 
-echo "" && echo "" && echo "hkhr"
-rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" hkhr:/usr/local/bin/
+ssh way "rsync -avx --progress way:/usr/local/bin/usd-tk-tt-q2.arm64.$dt nv1:/usr/local/bin/"
 
-echo "" && echo "" && echo "hk03"
-rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" hk03:/usr/local/bin/
+#echo "" && echo "" && echo "hkhr"
+#rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" hkhr:/usr/local/bin/
+#
+#echo "" && echo "" && echo "hk03"
+#rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" hk03:/usr/local/bin/
 

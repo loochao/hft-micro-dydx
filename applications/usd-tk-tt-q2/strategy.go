@@ -33,49 +33,64 @@ func startXYStrategy(
 	xyTickerCh chan common.Ticker,
 ) (strat *XYStrategy, err error) {
 
+	stats, err := stream_stats.NewXYTickerStats(stream_stats.NewXYTickerStatsParams{
+		XSymbol:        xSymbol,
+		YSymbol:        ySymbol,
+		XExchange:      xExchange,
+		YExchange:      yExchange,
+		RootPath:       config.StatsRootPath,
+		SampleInterval: config.StatsSampleInterval,
+		SaveInterval:   config.StatsSaveInterval,
+
+		TimeDeltaTDLookback:    config.TimeDeltaTDLookback,
+		TimeDeltaTDSubInterval: config.TimeDeltaTDSubInterval,
+		TimeDeltaTDCompression: config.TimeDeltaTDCompression,
+
+		XLiquidityTDLookback:    config.XLiquidityTDLookback,
+		XLiquidityTDSubInterval: config.XLiquidityTDSubInterval,
+		XLiquidityTDCompression: config.XLiquidityTDCompression,
+
+		YLiquidityTDLookback:    config.YLiquidityTDLookback,
+		YLiquidityTDSubInterval: config.YLiquidityTDSubInterval,
+		YLiquidityTDCompression: config.YLiquidityTDCompression,
+
+		XOffsetTDLookback:    config.XOffsetTDLookback,
+		XOffsetTDSubInterval: config.XOffsetTDSubInterval,
+		XOffsetTDCompression: config.XOffsetTDCompression,
+
+		YOffsetTDLookback:    config.YOffsetTDLookback,
+		YOffsetTDSubInterval: config.YOffsetTDSubInterval,
+		YOffsetTDCompression: config.YOffsetTDCompression,
+
+		SpreadTDLookback:    config.SpreadTDLookback,
+		SpreadTDSubInterval: config.SpreadTDSubInterval,
+		SpreadTDCompression: config.SpreadTDCompression,
+
+		TimeDeltaQuantileBot: config.TimeDeltaQuantileBot,
+		TimeDeltaQuantileTop: config.TimeDeltaQuantileTop,
+		XLiquidityQuantile:   config.XLiquidityQuantile,
+		YLiquidityQuantile:   config.YLiquidityQuantile,
+		XOffsetQuantile:      config.XOffsetQuantile,
+		YOffsetQuantile:      config.YOffsetQuantile,
+
+		SpreadLongEnterQuantileBot:  config.SpreadLongEnterQuantileBot,
+		SpreadLongLeaveQuantileTop:  config.SpreadLongLeaveQuantileTop,
+		SpreadShortEnterQuantileTop: config.SpreadShortEnterQuantileTop,
+		SpreadShortLeaveQuantileBot: config.SpreadShortLeaveQuantileBot,
+		BaseEnterOffset:             config.SpreadEnterOffset,
+		BaseLeaveOffset:             config.SpreadLeaveOffset,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	strat = &XYStrategy{
-		xExchange:  xExchange,
-		yExchange:  yExchange,
-		isXSpot:    xExchange.IsSpot(),
-		isYSpot:    yExchange.IsSpot(),
-		reduceOnly: config.ReduceOnlyBySymbol[xSymbol],
-		stats: stream_stats.NewXYTickerStats(stream_stats.NewXYTickerStatsParams{
-			XSymbol:        xSymbol,
-			YSymbol:        ySymbol,
-			XExchange:      xExchange,
-			YExchange:      yExchange,
-			RootPath:       config.StatsRootPath,
-			SampleInterval: config.StatsSampleInterval,
-			SaveInterval:   config.StatsSaveInterval,
-
-			TimeDeltaTDLookback:    config.TimeDeltaTDLookback,
-			TimeDeltaTDSubInterval: config.TimeDeltaTDSubInterval,
-			TimeDeltaTDCompression: config.TimeDeltaTDCompression,
-
-			XLiquidityTDLookback:    config.XLiquidityTDLookback,
-			XLiquidityTDSubInterval: config.XLiquidityTDSubInterval,
-			XLiquidityTDCompression: config.XLiquidityTDCompression,
-
-			YLiquidityTDLookback:    config.YLiquidityTDLookback,
-			YLiquidityTDSubInterval: config.YLiquidityTDSubInterval,
-			YLiquidityTDCompression: config.YLiquidityTDCompression,
-
-			SpreadTDLookback:    config.SpreadTDLookback,
-			SpreadTDSubInterval: config.SpreadTDSubInterval,
-			SpreadTDCompression: config.SpreadTDCompression,
-
-			TimeDeltaQuantileBot: config.TimeDeltaQuantileBot,
-			TimeDeltaQuantileTop: config.TimeDeltaQuantileTop,
-			XLiquidityQuantile:   config.XSizeQuantile,
-			YLiquidityQuantile:   config.YSizeQuantile,
-
-			SpreadLongEnterQuantileBot:  config.SpreadLongEnterQuantileBot,
-			SpreadLongLeaveQuantileTop:  config.SpreadLongLeaveQuantileTop,
-			SpreadShortEnterQuantileTop: config.SpreadShortEnterQuantileTop,
-			SpreadShortLeaveQuantileBot: config.SpreadShortLeaveQuantileBot,
-			BaseEnterOffset:             config.SpreadEnterOffset,
-			BaseLeaveOffset:             config.SpreadLeaveOffset,
-		}),
+		xExchange:          xExchange,
+		yExchange:          yExchange,
+		isXSpot:            xExchange.IsSpot(),
+		isYSpot:            yExchange.IsSpot(),
+		reduceOnly:         config.ReduceOnlyBySymbol[xSymbol],
+		stats:              stats,
 		xLeverage:          config.XExchange.Leverage,
 		yLeverage:          config.YExchange.Leverage,
 		xSymbol:            xSymbol,

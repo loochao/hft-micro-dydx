@@ -33,10 +33,9 @@ func (w *RawBookTickerWS) readLoop(conn *websocket.Conn, channels map[string]cha
 	var ok bool
 	var message *common.RawMessage
 	var r io.Reader
-	const bufferSize = 8192
 	index := -1
-	pool := [bufferSize]*common.RawMessage{}
-	for i := 0; i < bufferSize; i++ {
+	pool := [common.BufferSizeForHighLoadRealTimeData]*common.RawMessage{}
+	for i := 0; i < common.BufferSizeForHighLoadRealTimeData; i++ {
 		pool[i] = &common.RawMessage{
 			Prefix: w.prefix,
 		}
@@ -97,7 +96,7 @@ func (w *RawBookTickerWS) readLoop(conn *websocket.Conn, channels map[string]cha
 		}
 		if ch, ok = channels[symbol]; ok {
 			index++
-			if index == bufferSize {
+			if index == common.BufferSizeForHighLoadRealTimeData {
 				index = 0
 			}
 			message = pool[index]
@@ -375,7 +374,7 @@ func NewRawBookTickerWS(
 ) *RawBookTickerWS {
 	ws := RawBookTickerWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 4),
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
 		stopped:     0,
 		prefix:      prefix,
 	}

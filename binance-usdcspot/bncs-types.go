@@ -69,8 +69,8 @@ func (depth Depth20) GetExchange() common.ExchangeID {
 
 func (depth Depth20) GetBids() common.Bids { return depth.Bids[:] }
 func (depth Depth20) GetAsks() common.Asks { return depth.Asks[:] }
-func (depth Depth20) GetSymbol() string    { return depth.Symbol }
-func (depth Depth20) GetTime() time.Time   { return depth.ParseTime }
+func (depth Depth20) GetSymbol() string       { return depth.Symbol }
+func (depth Depth20) GetEventTime() time.Time { return depth.ParseTime }
 func (depth *Depth20) UnmarshalJSON(data []byte) error {
 	type Alias Depth20
 	aux := &struct {
@@ -564,8 +564,8 @@ func (depth Depth5) GetExchange() common.ExchangeID {
 
 func (depth Depth5) GetBids() common.Bids { return depth.Bids[:] }
 func (depth Depth5) GetAsks() common.Asks { return depth.Asks[:] }
-func (depth Depth5) GetSymbol() string    { return depth.Symbol }
-func (depth Depth5) GetTime() time.Time   { return depth.ParseTime }
+func (depth Depth5) GetSymbol() string       { return depth.Symbol }
+func (depth Depth5) GetEventTime() time.Time { return depth.ParseTime }
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	type Alias Depth5
 	aux := &struct {

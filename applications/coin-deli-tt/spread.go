@@ -147,10 +147,10 @@ func watchXYSpread(
 			break
 
 		case xDepth = <-xDepthCh:
-			if xDepth.GetTime().Sub(xDepthTime) < 0 {
+			if xDepth.GetEventTime().Sub(xDepthTime) < 0 {
 				break
 			}
-			xDepthTime = xDepth.GetTime()
+			xDepthTime = xDepth.GetEventTime()
 			//logger.Debugf("%s %v", xDepth.GetSymbol(), xDepthTime)
 			if !xDepthFilter.Filter(xDepth) && yDepth != nil {
 				adjustedAgeDiff = xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond
@@ -196,12 +196,12 @@ func watchXYSpread(
 			}
 			break
 		case yDepth = <-yDepthCh:
-			//logger.Debugf("yDepth %v", yDepth.GetTime())
+			//logger.Debugf("yDepth %v", yDepth.GetEventTime())
 			//过来的是指针，所以只需要判断和之前时间是不是更新
-			if yDepth.GetTime().Sub(yDepthTime) < 0 {
+			if yDepth.GetEventTime().Sub(yDepthTime) < 0 {
 				break
 			}
-			yDepthTime = yDepth.GetTime()
+			yDepthTime = yDepth.GetEventTime()
 			//logger.Debugf("%s %v", yDepth.GetSymbol(), yDepthTime)
 			if !yDepthFilter.Filter(yDepth) && xDepth != nil {
 				adjustedAgeDiff = xDepthTime.Sub(yDepthTime) + time.Duration(xDepthFilter.TimeDeltaEma-yDepthFilter.TimeDeltaEma)*time.Millisecond

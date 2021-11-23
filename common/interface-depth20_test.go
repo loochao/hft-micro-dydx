@@ -13,7 +13,7 @@ package common
 //func (t TestDepth20) GetAsks() [20][2]float64 {
 //	return t.Asks
 //}
-//func (t TestDepth20) GetTime() time.Time {
+//func (t TestDepth20) GetEventTime() time.Time {
 //	return t.EventTime
 //}
 //func (t TestDepth20) GetSymbol() string {

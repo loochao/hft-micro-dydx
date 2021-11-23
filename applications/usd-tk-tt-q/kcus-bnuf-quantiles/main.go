@@ -133,8 +133,8 @@ func main() {
 				}
 
 				if yTD != nil && xTD != nil &&
-					yTD.GetTime().Sub(xTD.GetTime()) < time.Second &&
-					yTD.GetTime().Sub(xTD.GetTime()) > -time.Second {
+					yTD.GetEventTime().Sub(xTD.GetEventTime()) < time.Second &&
+					yTD.GetEventTime().Sub(xTD.GetEventTime()) > -time.Second {
 					_ = sizeTD.Add(
 						math.Min(
 							math.Min(xTD.GetBidSize()*xTD.GetBidPrice(), xTD.GetAskSize()*xTD.GetAskPrice()),

@@ -930,11 +930,11 @@ func (k *KucoinUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, cha
 	}
 }
 
-type KucoinUsdtFutureWithWalkedTicker struct {
+type KucoinUsdtFutureWithWalkedDepth5 struct {
 	KucoinUsdtFuture
 }
 
-func (k *KucoinUsdtFutureWithWalkedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (k *KucoinUsdtFutureWithWalkedDepth5) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")
 	defer logger.Debugf("STOP StreamTicker")
 	defer k.Stop()

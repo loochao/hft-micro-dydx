@@ -33,10 +33,9 @@ func (w *RawTradeWS) readLoop(conn *websocket.Conn, channels map[string]chan *co
 	var ok bool
 	var message *common.RawMessage
 	var r io.Reader
-	const bufferSize = 8192
 	index := -1
-	pool := [bufferSize]*common.RawMessage{}
-	for i := 0; i < bufferSize; i++ {
+	pool := [common.BufferSizeForRealTimeData]*common.RawMessage{}
+	for i := 0; i < common.BufferSizeForRealTimeData; i++ {
 		pool[i] = &common.RawMessage{
 			Prefix: w.prefix,
 		}
@@ -97,7 +96,7 @@ func (w *RawTradeWS) readLoop(conn *websocket.Conn, channels map[string]chan *co
 		}
 		if ch, ok = channels[symbol]; ok {
 			index++
-			if index == bufferSize {
+			if index == common.BufferSizeForRealTimeData {
 				index = 0
 			}
 			message = pool[index]
@@ -147,13 +146,13 @@ func (w *RawTradeWS) reconnect(ctx context.Context, wsUrl string, proxy string, 
 			return nil, fmt.Errorf("url.Parse error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:            http.ProxyURL(proxyUrl),
-			HandshakeTimeout: 60 * time.Second,
+			Proxy:             http.ProxyURL(proxyUrl),
+			HandshakeTimeout:  60 * time.Second,
 			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
 			EnableCompression: true,
 		}
 	}
@@ -375,7 +374,7 @@ func NewRawTradeWS(
 ) *RawTradeWS {
 	ws := RawTradeWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 4),
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
 		stopped:     0,
 		prefix:      prefix,
 	}

@@ -61,7 +61,7 @@ func (bn *BinanceBusdFuture) watchPriceFactor(ctx context.Context, settings comm
 		case <-ctx.Done():
 			return
 		case ticker := <-ch:
-			bn.priceFactor.Set(tm.Insert(ticker.GetTime(), (ticker.GetAskPrice()+ticker.GetBidPrice())*0.5))
+			bn.priceFactor.Set(tm.Insert(ticker.GetEventTime(), (ticker.GetAskPrice()+ticker.GetBidPrice())*0.5))
 			//logger.Debugf("%f", tm.Mean())
 		}
 	}

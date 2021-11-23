@@ -31,7 +31,7 @@ func TestNewDepth5WS(t *testing.T) {
 		case <- ws.Done():
 			return
 		case d := <-outputCh:
-			logger.Debugf("%s %v", d.GetSymbol(), d.GetTime())
+			logger.Debugf("%s %v", d.GetSymbol(), d.GetEventTime())
 		}
 	}
 }

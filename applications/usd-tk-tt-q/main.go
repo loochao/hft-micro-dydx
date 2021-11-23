@@ -5,20 +5,19 @@ import (
 	"flag"
 	bnbf "github.com/geometrybase/hft-micro/binance-busdfuture"
 	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
-	binance_tusdspot "github.com/geometrybase/hft-micro/binance-tusdspot"
+	bnts "github.com/geometrybase/hft-micro/binance-tusdspot"
 	bncs "github.com/geometrybase/hft-micro/binance-usdcspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
 	bbuf "github.com/geometrybase/hft-micro/bybit-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
-	dydx_usdfuture "github.com/geometrybase/hft-micro/dydx-usdfuture"
+	dduf "github.com/geometrybase/hft-micro/dydx-usdfuture"
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
 	ftxus "github.com/geometrybase/hft-micro/ftx-usdspot"
 	hbuf "github.com/geometrybase/hft-micro/huobi-usdtfuture"
 	kcut "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	kcus "github.com/geometrybase/hft-micro/kucoin-usdtspot"
 	"github.com/geometrybase/hft-micro/logger"
-	okut "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -89,7 +88,7 @@ func main() {
 
 	switch xyConfig.XExchange.Name {
 	case "dydxUsdFuture":
-		xExchange = &dydx_usdfuture.DydxUsdFuture{}
+		xExchange = &dduf.DydxUsdFuture{}
 	case "binanceUsdtFuture":
 		xExchange = &bnuf.BinanceUsdtFuture{}
 		break
@@ -98,9 +97,6 @@ func main() {
 		break
 	case "ftxUsdSpot":
 		xExchange = &ftxus.FtxUsdSpot{}
-		break
-	case "okexUsdtSpot":
-		xExchange = &okut.OkexUsdtSpot{}
 		break
 	case "kucoinUsdtFuture":
 		xExchange = &kcut.KucoinUsdtFuture{}
@@ -121,7 +117,7 @@ func main() {
 		xExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
 		break
 	case "binanceTusdSpotWithMergedTicker":
-		xExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
+		xExchange = &bnts.BinanceTusdSpotWithMergedTicker{}
 		break
 	case "binanceBusdSpot":
 		xExchange = &bnbs.BinanceBusdSpot{}
@@ -147,7 +143,7 @@ func main() {
 
 	switch xyConfig.YExchange.Name {
 	case "dydxUsdFuture":
-		yExchange = &dydx_usdfuture.DydxUsdFuture{}
+		yExchange = &dduf.DydxUsdFuture{}
 	case "binanceUsdtFuture":
 		yExchange = &bnuf.BinanceUsdtFuture{}
 		break
@@ -156,9 +152,6 @@ func main() {
 		break
 	case "ftxUsdSpot":
 		yExchange = &ftxus.FtxUsdSpot{}
-		break
-	case "okexUsdtSpot":
-		yExchange = &okut.OkexUsdtSpot{}
 		break
 	case "kucoinUsdtFuture":
 		yExchange = &kcut.KucoinUsdtFuture{}
@@ -197,7 +190,7 @@ func main() {
 		yExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
 		break
 	case "binanceTusdSpotWithMergedTicker":
-		yExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
+		yExchange = &bnts.BinanceTusdSpotWithMergedTicker{}
 		break
 	default:
 		logger.Fatalf("unsupported exchange %s", xyConfig.YExchange.Name)

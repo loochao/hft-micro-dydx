@@ -128,20 +128,20 @@ func main() {
 					continue
 				}
 
-				if yTicker.GetTime().Sub(yTicker.GetTime().Truncate(time.Hour*4)) < time.Minute {
+				if yTicker.GetEventTime().Sub(yTicker.GetEventTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
-				if xTicker.GetTime().Sub(xTicker.GetTime().Truncate(time.Hour*4)) < time.Minute {
+				if xTicker.GetEventTime().Sub(xTicker.GetEventTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
 
-				if xTicker.GetTime().Sub(yTicker.GetTime()) < time.Millisecond &&
-					xTicker.GetTime().Sub(yTicker.GetTime()) > -time.Millisecond &&
-					yTicker.GetTime().Sub(lastCollectTime) > 0 {
-					lastCollectTime = yTicker.GetTime().Add(time.Millisecond)
+				if xTicker.GetEventTime().Sub(yTicker.GetEventTime()) < time.Millisecond &&
+					xTicker.GetEventTime().Sub(yTicker.GetEventTime()) > -time.Millisecond &&
+					yTicker.GetEventTime().Sub(lastCollectTime) > 0 {
+					lastCollectTime = yTicker.GetEventTime().Add(time.Millisecond)
 					longSpread := (yTicker.GetAskPrice() - xTicker.GetBidPrice()) / xTicker.GetBidPrice()
 					shortSpread := (yTicker.GetBidPrice() - xTicker.GetAskPrice()) / xTicker.GetAskPrice()
-					_ = timedTD.Insert(yTicker.GetTime(), (longSpread+shortSpread)/2)
+					_ = timedTD.Insert(yTicker.GetEventTime(), (longSpread+shortSpread)/2)
 					//_ = maxBidTD.Add(math.Min(xTicker.GetBidSize() * xTicker.GetBidPrice(), yTicker.GetBidSize() * yTicker.GetBidPrice()))
 					//_ = maxAskTD.Add(math.Min(xTicker.GetAskSize() * xTicker.GetAskPrice(), yTicker.GetAskSize() * yTicker.GetAskPrice()))
 					_ = maxBidTD.Add(yTicker.GetBidSize() * yTicker.GetBidPrice())

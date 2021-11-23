@@ -6,7 +6,7 @@ func WalkCoinPerpetualDepthForMakerAndTaker(depth Depth, contractSize float64, m
 
 	wd, hasMakerData, hasTakerData := &WalkedMakerTakerDepth{
 		Symbol:       depth.GetSymbol(),
-		Time:         depth.GetTime(),
+		Time:         depth.GetEventTime(),
 		TakerAsk:     0,
 		TakerBid:     0,
 		MakerAsk:     0,
@@ -106,7 +106,7 @@ func WalkCoinPerpetualDepth(depth Depth, contractSize float64, makerImpact, take
 
 	wd, hasMakerData, hasTakerData := &WalkedMakerTakerDepth{
 		Symbol:       depth.GetSymbol(),
-		Time:         depth.GetTime(),
+		Time:         depth.GetEventTime(),
 		TakerAsk:     0,
 		TakerBid:     0,
 		MakerAsk:     0,

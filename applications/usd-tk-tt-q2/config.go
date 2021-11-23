@@ -51,6 +51,14 @@ type Config struct {
 	YLiquidityTDSubInterval time.Duration `yaml:"yLiquidityTDSubInterval"`
 	YLiquidityTDCompression uint32        `yaml:"yLiquidityTDCompression"`
 
+	XOffsetTDLookback    time.Duration `yaml:"xOffsetTDLookback"`
+	XOffsetTDSubInterval time.Duration `yaml:"xOffsetTDSubInterval"`
+	XOffsetTDCompression uint32        `yaml:"xOffsetTDCompression"`
+
+	YOffsetTDLookback    time.Duration `yaml:"yOffsetTDLookback"`
+	YOffsetTDSubInterval time.Duration `yaml:"yOffsetTDSubInterval"`
+	YOffsetTDCompression uint32        `yaml:"yOffsetTDCompression"`
+
 	SpreadTDLookback    time.Duration `yaml:"spreadTDLookback"`
 	SpreadTDSubInterval time.Duration `yaml:"spreadTDSubInterval"`
 	SpreadTDCompression uint32        `yaml:"spreadTDCompression"`
@@ -62,8 +70,10 @@ type Config struct {
 	SpreadMiddleMin             float64 `yaml:"spreadMiddleMin"`
 	SpreadMiddleMax             float64 `yaml:"spreadMiddleMax"`
 
-	XSizeQuantile        float64 `yaml:"xLiquidityQuantile"`
-	YSizeQuantile        float64 `yaml:"yLiquidityQuantile"`
+	XLiquidityQuantile   float64 `yaml:"xLiquidityQuantile"`
+	YLiquidityQuantile   float64 `yaml:"yLiquidityQuantile"`
+	XOffsetQuantile      float64 `json:"xOffsetQuantile"`
+	YOffsetQuantile      float64 `json:"yOffsetQuantile"`
 	TimeDeltaQuantileTop float64 `yaml:"timeDeltaQuantileTop"`
 	TimeDeltaQuantileBot float64 `yaml:"timeDeltaQuantileBot"`
 
@@ -261,11 +271,11 @@ func (config *Config) SetDefaultIfNotSet() error {
 	if config.SpreadLongLeaveQuantileTop == 0 {
 		config.SpreadLongLeaveQuantileTop = 0.8
 	}
-	if config.XSizeQuantile == 0 {
-		config.XSizeQuantile = 0.8
+	if config.XLiquidityQuantile == 0 {
+		config.XLiquidityQuantile = 0.8
 	}
-	if config.YSizeQuantile == 0 {
-		config.YSizeQuantile = 0.8
+	if config.YLiquidityQuantile == 0 {
+		config.YLiquidityQuantile = 0.8
 	}
 	if config.TimeDeltaQuantileTop == 0 {
 		config.TimeDeltaQuantileTop = 0.95

@@ -223,24 +223,24 @@ func main() {
 					}
 
 					if yTD != nil && xTD != nil {
-						tDiff := xTD.GetTime().Sub(yTD.GetTime())
+						tDiff := xTD.GetEventTime().Sub(yTD.GetEventTime())
 						if tDiff < maxTimeDiff &&
 							tDiff > -maxTimeDiff {
 							shortLastSpread = (yTD.GetBidPrice() - xTD.GetAskPrice()) / xTD.GetAskPrice()
 							longLastSpread = (yTD.GetAskPrice() - xTD.GetBidPrice()) / xTD.GetBidPrice()
 							if tDiff > 0 {
-								longMedianSpread.Insert(xTD.GetTime(), longLastSpread)
-								shortMedianSpread.Insert(xTD.GetTime(), shortLastSpread)
+								longMedianSpread.Insert(xTD.GetEventTime(), longLastSpread)
+								shortMedianSpread.Insert(xTD.GetEventTime(), shortLastSpread)
 							} else {
-								longMedianSpread.Insert(yTD.GetTime(), longLastSpread)
-								shortMedianSpread.Insert(yTD.GetTime(), shortLastSpread)
+								longMedianSpread.Insert(yTD.GetEventTime(), longLastSpread)
+								shortMedianSpread.Insert(yTD.GetEventTime(), shortLastSpread)
 							}
-							if xTD.GetTime().Sub(lastAddTime) >= quantileAddInterval {
-								lastAddTime = xTD.GetTime()
+							if xTD.GetEventTime().Sub(lastAddTime) >= quantileAddInterval {
+								lastAddTime = xTD.GetEventTime()
 								if tDiff > 0 {
-									_ = timedTDigest.Insert(xTD.GetTime(), (shortLastSpread+longLastSpread)*0.5)
+									_ = timedTDigest.Insert(xTD.GetEventTime(), (shortLastSpread+longLastSpread)*0.5)
 								} else {
-									_ = timedTDigest.Insert(yTD.GetTime(), (shortLastSpread+longLastSpread)*0.5)
+									_ = timedTDigest.Insert(yTD.GetEventTime(), (shortLastSpread+longLastSpread)*0.5)
 								}
 							}
 
@@ -249,9 +249,9 @@ func main() {
 								matchedSpread.ServerTime = serverTime
 								lastOutputTime = serverTime
 								if tDiff > 0 {
-									matchedSpread.EventTime = xTD.GetTime().UnixNano()
+									matchedSpread.EventTime = xTD.GetEventTime().UnixNano()
 								} else {
-									matchedSpread.EventTime = yTD.GetTime().UnixNano()
+									matchedSpread.EventTime = yTD.GetEventTime().UnixNano()
 								}
 
 								matchedSpread.XBidPrice = xTD.GetBidPrice()

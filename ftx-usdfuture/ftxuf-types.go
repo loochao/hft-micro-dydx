@@ -138,7 +138,7 @@ func (orderBook *OrderBook) UnmarshalJSON(data []byte) error {
 func (orderBook *OrderBook) GetSymbol() string {
 	return orderBook.Market
 }
-func (orderBook *OrderBook) GetTime() time.Time {
+func (orderBook *OrderBook) GetEventTime() time.Time {
 	return orderBook.Time
 }
 func (orderBook *OrderBook) GetAsks() common.Asks {

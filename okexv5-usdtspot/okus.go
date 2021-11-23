@@ -687,11 +687,11 @@ func (okus *OkexV5UsdtSpot) cancelOrder(ctx context.Context, param common.Cancel
 	}
 }
 
-type OkexV5UsdtSpotWithWalkedTicker struct {
+type OkexV5UsdtSpotWithWalkedDepth5 struct {
 	OkexV5UsdtSpot
 }
 
-func (okus *OkexV5UsdtSpotWithWalkedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+func (okus *OkexV5UsdtSpotWithWalkedDepth5) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamTicker")
 	defer logger.Debugf("STOP StreamTicker")
 	defer okus.Stop()

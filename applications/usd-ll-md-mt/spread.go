@@ -82,10 +82,10 @@ func (strat *XYStrategy) walkYDepth() {
 }
 
 func (strat *XYStrategy) handleXDepth() {
-	if strat.xDepth.GetTime().Sub(strat.xDepthTime) < 0 {
+	if strat.xDepth.GetEventTime().Sub(strat.xDepthTime) < 0 {
 		return
 	}
-	strat.xDepthTime = strat.xDepth.GetTime()
+	strat.xDepthTime = strat.xDepth.GetEventTime()
 	if !strat.xDepthFilter.Filter(strat.xDepth) && strat.yDepth != nil {
 		strat.adjustedAgeDiff = strat.xDepthTime.Sub(strat.yDepthTime) + time.Duration(strat.xDepthFilter.TimeDeltaEma-strat.yDepthFilter.TimeDeltaEma)*time.Millisecond
 		if strat.adjustedAgeDiff > strat.config.DepthMaxAgeDiffBias {
@@ -125,10 +125,10 @@ func (strat *XYStrategy) handleXDepth() {
 }
 
 func (strat *XYStrategy) handleYDepth() {
-	if strat.yDepth.GetTime().Sub(strat.yDepthTime) < 0 {
+	if strat.yDepth.GetEventTime().Sub(strat.yDepthTime) < 0 {
 		return
 	}
-	strat.yDepthTime = strat.yDepth.GetTime()
+	strat.yDepthTime = strat.yDepth.GetEventTime()
 	if !strat.yDepthFilter.Filter(strat.yDepth) && strat.xDepth != nil {
 		strat.adjustedAgeDiff = strat.xDepthTime.Sub(strat.yDepthTime) + time.Duration(strat.xDepthFilter.TimeDeltaEma-strat.yDepthFilter.TimeDeltaEma)*time.Millisecond
 		if strat.adjustedAgeDiff < -strat.config.DepthMaxAgeDiffBias {

@@ -27,8 +27,8 @@ func StreamRawFundingRate(
 
 	var message *common.RawMessage
 	index := -1
-	pool := [4096]*common.RawMessage{}
-	for i := 0; i < 4096; i++ {
+	pool := [common.BufferSizeForRealTimeData]*common.RawMessage{}
+	for i := 0; i < common.BufferSizeForRealTimeData; i++ {
 		pool[i] = &common.RawMessage{
 			Prefix: prefix,
 		}
@@ -55,7 +55,7 @@ func StreamRawFundingRate(
 							logger.Debugf("json.Marshal(fr) error %v", err)
 						}
 						index++
-						if index == 4096 {
+						if index == common.BufferSizeForRealTimeData {
 							index = 0
 						}
 						message = pool[index]

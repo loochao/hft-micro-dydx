@@ -161,20 +161,20 @@ func main() {
 					continue
 				}
 
-				if yT.GetTime().Sub(yT.GetTime().Truncate(time.Hour*4)) < time.Minute {
+				if yT.GetEventTime().Sub(yT.GetEventTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
-				if xT.GetTime().Sub(xT.GetTime().Truncate(time.Hour*4)) < time.Minute {
+				if xT.GetEventTime().Sub(xT.GetEventTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
 
-				if xT.GetTime().Sub(yT.GetTime()) < time.Second &&
-					xT.GetTime().Sub(yT.GetTime()) > -time.Second &&
-					yT.GetTime().Sub(lastCollectTime) > 0 {
-					lastCollectTime = yT.GetTime().Add(time.Second)
+				if xT.GetEventTime().Sub(yT.GetEventTime()) < time.Second &&
+					xT.GetEventTime().Sub(yT.GetEventTime()) > -time.Second &&
+					yT.GetEventTime().Sub(lastCollectTime) > 0 {
+					lastCollectTime = yT.GetEventTime().Add(time.Second)
 					longSpread := (yT.GetAskPrice() - xT.GetBidPrice()) / xT.GetBidPrice()
 					shortSpread := (yT.GetBidPrice() - xT.GetAskPrice()) / xT.GetAskPrice()
-					_ = timedTD.Insert(yT.GetTime(), (longSpread+shortSpread)/2)
+					_ = timedTD.Insert(yT.GetEventTime(), (longSpread+shortSpread)/2)
 					if dayCounter >= 3 {
 						bidWeight := uint32(xT.GetBidSize() * kucoin_usdtfuture.Multipliers[xSymbol] * xT.GetBidPrice() / weightStep)
 						askWeight := uint32(xT.GetAskSize() * kucoin_usdtfuture.Multipliers[xSymbol] * xT.GetAskPrice() / weightStep)

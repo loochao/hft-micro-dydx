@@ -101,31 +101,31 @@ func (w *WalkedDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan
 			if msg[50] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:50])
 				msgCut = 63
-			}else if msg[49] == '"' {
+			} else if msg[49] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:49])
 				msgCut = 62
-			}else if msg[51] == '"' {
+			} else if msg[51] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:51])
 				msgCut = 64
-			}else if msg[52] == '"' {
+			} else if msg[52] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:52])
 				msgCut = 65
-			}else if msg[53] == '"' {
+			} else if msg[53] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:53])
 				msgCut = 66
-			}else if msg[54] == '"' {
+			} else if msg[54] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:54])
 				msgCut = 67
-			}else if msg[55] == '"' {
+			} else if msg[55] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:55])
 				msgCut = 68
-			}else if msg[56] == '"' {
+			} else if msg[56] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:56])
 				msgCut = 69
-			}else if msg[57] == '"' {
+			} else if msg[57] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:57])
 				msgCut = 70
-			}else{
+			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
@@ -398,10 +398,9 @@ func (w *WalkedDepth5WS) dataHandleLoop(ctx context.Context, symbol string, impa
 	var err error
 	var walkedDepth5 *common.WalkedDepth
 	index := -1
-	const bufferSize = 2048
-	multipler := Multipliers[symbol]
-	pool := [bufferSize]*common.WalkedDepth{}
-	for i := 0; i < bufferSize; i++ {
+	multiplier := Multipliers[symbol]
+	pool := [common.BufferSizeFor100msData]*common.WalkedDepth{}
+	for i := 0; i < common.BufferSizeFor100msData; i++ {
 		pool[i] = &common.WalkedDepth{}
 	}
 	depth5 := &Depth5{}
@@ -413,18 +412,24 @@ func (w *WalkedDepth5WS) dataHandleLoop(ctx context.Context, symbol string, impa
 			return
 		case msg := <-inputCh:
 			index++
-			if index == bufferSize {
+			if index == common.BufferSizeFor100msData {
 				index = 0
 			}
 			err = ParseDepth5(msg, depth5)
 			if err != nil {
-				logger.Debugf("%s ParseDepth5 error %v %s", symbol, err, msg)
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("%s ParseDepth5 error %v %s", symbol, err, msg)
+					logSilentTime = time.Now().Add(common.LogInterval)
+				}
 				continue
 			}
 			walkedDepth5 = pool[index]
-			err = common.WalkDepth(depth5, multipler, impact, walkedDepth5)
+			err = common.WalkDepth(depth5, multiplier, impact, walkedDepth5)
 			if err != nil {
-				logger.Debugf("%s common.WalkDepth error %v %s", symbol, err, msg)
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("%s common.WalkDepth error %v %s", symbol, err, msg)
+					logSilentTime = time.Now().Add(common.LogInterval)
+				}
 				continue
 			}
 			select {
@@ -432,7 +437,7 @@ func (w *WalkedDepth5WS) dataHandleLoop(ctx context.Context, symbol string, impa
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("outputCh <- walkedDepth5 failed, %s ch len %d", symbol, len(outputCh))
-					logSilentTime = time.Now().Add(time.Minute)
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 			}
 		}
@@ -455,7 +460,7 @@ func NewWalkedDepth5WS(
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[symbol] = make(chan []byte, 128)
+		messageChs[symbol] = make(chan []byte, 4)
 		go ws.dataHandleLoop(ctx, symbol, impact, messageChs[symbol], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messageChs)

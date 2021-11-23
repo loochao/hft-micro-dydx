@@ -99,14 +99,15 @@ type FundingRate interface {
 }
 
 type Ticker interface {
-	GetSymbol() string
-	GetTime() time.Time
 	GetBidPrice() float64
 	GetAskPrice() float64
 	GetBidSize() float64
 	GetAskSize() float64
 	GetBidOffset() float64
 	GetAskOffset() float64
+	GetSymbol() string
+	GetEventTime() time.Time
+	GetParseTime() time.Time
 	GetExchange() ExchangeID
 }
 
@@ -362,7 +363,8 @@ func (asks Asks) Update(ask [2]float64) Asks {
 }
 
 type Depth interface {
-	GetTime() time.Time
+	GetEventTime() time.Time
+	GetParseTime() time.Time
 	GetAsks() Asks
 	GetBids() Bids
 	GetSymbol() string

@@ -228,8 +228,8 @@ func main() {
 							}
 							xDepth.ParseTime = time.Unix(0, t)
 							xTD = xDepth
-							askDelta.Insert(xTD.GetTime(), xTD.GetAskPrice())
-							bidDelta.Insert(xTD.GetTime(), xTD.GetBidPrice())
+							askDelta.Insert(xTD.GetEventTime(), xTD.GetAskPrice())
+							bidDelta.Insert(xTD.GetEventTime(), xTD.GetBidPrice())
 						} else if msg[0] == 'S' && msg[1] == 'T' {
 							err = binance_busdspot.ParseBookTicker(msg[21:], xTicker)
 							if err != nil {
@@ -246,8 +246,8 @@ func main() {
 							}
 							xTicker.ParseTime = time.Unix(0, t)
 							xTD = xTicker
-							askDelta.Insert(xTD.GetTime(), xTD.GetAskPrice())
-							bidDelta.Insert(xTD.GetTime(), xTD.GetBidPrice())
+							askDelta.Insert(xTD.GetEventTime(), xTD.GetAskPrice())
+							bidDelta.Insert(xTD.GetEventTime(), xTD.GetBidPrice())
 						} else if msg[0] == 'F' && msg[1] == 'D' {
 							err = binance_usdtfuture.ParseDepth5(msg[21:], yDepth)
 							if err != nil {
@@ -281,15 +281,15 @@ func main() {
 							quantileMiddle = timedTDigest.Quantile(0.5)
 
 							if longLastEnter < quantileMiddle-enterThreshold {
-								if askDelta.Delta() > 0 && xTD.GetTime().Sub(lastAskAddTime) > qAddInterval {
-									lastAskAddTime = xTD.GetTime()
-									//_ = askJumpTD.Insert(xTD.GetTime(), askDelta.Delta()/xTD.GetAskPrice())
+								if askDelta.Delta() > 0 && xTD.GetEventTime().Sub(lastAskAddTime) > qAddInterval {
+									lastAskAddTime = xTD.GetEventTime()
+									//_ = askJumpTD.Insert(xTD.GetEventTime(), askDelta.Delta()/xTD.GetAskPrice())
 									_ = askJumpTD.Add(askDelta.Delta() / xTD.GetAskPrice())
 								}
 							} else if shortLastEnter > quantileMiddle+enterThreshold {
-								if bidDelta.Delta() < 0 && xTD.GetTime().Sub(lastBidAddTime) > qAddInterval {
-									lastBidAddTime = xTD.GetTime()
-									//_ = bidJumpTD.Insert(xTD.GetTime(), bidDelta.Delta()/xTD.GetBidPrice())
+								if bidDelta.Delta() < 0 && xTD.GetEventTime().Sub(lastBidAddTime) > qAddInterval {
+									lastBidAddTime = xTD.GetEventTime()
+									//_ = bidJumpTD.Insert(xTD.GetEventTime(), bidDelta.Delta()/xTD.GetBidPrice())
 									_ = bidJumpTD.Add(bidDelta.Delta() / xTD.GetBidPrice())
 								}
 							}

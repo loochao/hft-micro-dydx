@@ -11,11 +11,11 @@ func (strat *XYStrategy) handleXDepth() {
 	if strat.xDepth == strat.xNextDepth {
 		return
 	}
-	if strat.xNextDepth.GetTime().Sub(strat.xDepthTime) < 0 {
+	if strat.xNextDepth.GetEventTime().Sub(strat.xDepthTime) < 0 {
 		return
 	}
 	strat.xDepth = strat.xNextDepth
-	strat.xDepthTime = strat.xDepth.GetTime()
+	strat.xDepthTime = strat.xDepth.GetEventTime()
 	strat.updateTargetPositionSize()
 	strat.hedgeXPosition()
 	strat.hedgeYPosition()
@@ -25,11 +25,11 @@ func (strat *XYStrategy) handleYDepth() {
 	if strat.yDepth == strat.yNextDepth {
 		return
 	}
-	if strat.yNextDepth.GetTime().Sub(strat.yDepthTime) < 0 {
+	if strat.yNextDepth.GetEventTime().Sub(strat.yDepthTime) < 0 {
 		return
 	}
 	strat.yDepth = strat.yNextDepth
-	strat.yDepthTime = strat.yDepth.GetTime()
+	strat.yDepthTime = strat.yDepth.GetEventTime()
 	strat.updateTargetPositionSize()
 	strat.hedgeXPosition()
 	strat.hedgeYPosition()

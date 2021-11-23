@@ -159,17 +159,17 @@ func main() {
 				}
 
 				if yTD != nil && xTD != nil {
-					tDiff := xTD.GetTime().Sub(yTD.GetTime())
+					tDiff := xTD.GetEventTime().Sub(yTD.GetEventTime())
 					if tDiff < maxTimeDiff &&
 						tDiff > -maxTimeDiff &&
-						xTD.GetTime().Sub(lastAddTime) >= quantileAddInterval {
+						xTD.GetEventTime().Sub(lastAddTime) >= quantileAddInterval {
 						_ = sizeTD.Add(
 							math.Min(
 								math.Min(xTD.GetBidSize()*xTD.GetBidPrice(), xTD.GetAskSize()*xTD.GetAskPrice()),
 								math.Min(yTD.GetBidSize()*yTD.GetBidPrice()*kucoin_usdtfuture.Multipliers[ySymbol], yTD.GetAskSize()*yTD.GetAskPrice()*kucoin_usdtfuture.Multipliers[ySymbol]),
 							),
 						)
-						lastAddTime = xTD.GetTime()
+						lastAddTime = xTD.GetEventTime()
 						shortLastEnter = (yTD.GetBidPrice() - xTD.GetAskPrice()) / xTD.GetAskPrice()
 						longLastEnter = (yTD.GetAskPrice() - xTD.GetBidPrice()) / xTD.GetBidPrice()
 						_ = timedTDigest.Insert(yDepth.EventTime, (shortLastEnter+longLastEnter)*0.5)

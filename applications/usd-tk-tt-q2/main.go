@@ -3,24 +3,10 @@ package main
 import (
 	"context"
 	"flag"
-	bnbf "github.com/geometrybase/hft-micro/binance-busdfuture"
-	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
-	binance_tusdspot "github.com/geometrybase/hft-micro/binance-tusdspot"
-	bncs "github.com/geometrybase/hft-micro/binance-usdcspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
-	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
-	bbuf "github.com/geometrybase/hft-micro/bybit-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
-	dydx_usdfuture "github.com/geometrybase/hft-micro/dydx-usdfuture"
-	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
-	ftxus "github.com/geometrybase/hft-micro/ftx-usdspot"
-	hbuf "github.com/geometrybase/hft-micro/huobi-usdtfuture"
-	kcut "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
-	kcus "github.com/geometrybase/hft-micro/kucoin-usdtspot"
+	dduf "github.com/geometrybase/hft-micro/dydx-usdfuture"
 	"github.com/geometrybase/hft-micro/logger"
-	okut "github.com/geometrybase/hft-micro/okex-usdtspot"
-	okexv5_usdtspot "github.com/geometrybase/hft-micro/okexv5-usdtspot"
-	okexv5_usdtswap "github.com/geometrybase/hft-micro/okexv5-usdtswap"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"math"
@@ -98,126 +84,122 @@ func main() {
 	}
 
 	switch xyConfig.XExchange.Name {
-	case "okexV5UsdtSpot":
-		xExchange = &okexv5_usdtspot.OkexV5UsdtSpot{}
-	case "okexV5UsdtSwap":
-		xExchange = &okexv5_usdtswap.OkexV5UsdtSwap{}
+	//case "okexV5UsdtSpot":
+	//	xExchange = &okexv5_usdtspot.OkexV5UsdtSpot{}
+	//case "okexV5UsdtSwap":
+	//	xExchange = &okexv5_usdtswap.OkexV5UsdtSwap{}
 	case "dydxUsdFuture":
-		xExchange = &dydx_usdfuture.DydxUsdFuture{}
+		xExchange = &dduf.DydxUsdFuture{}
+		break
 	case "binanceUsdtFuture":
 		xExchange = &bnuf.BinanceUsdtFuture{}
 		break
-	case "ftxUsdFuture":
-		xExchange = &ftxuf.FtxUsdFuture{}
-		break
-	case "ftxUsdSpot":
-		xExchange = &ftxus.FtxUsdSpot{}
-		break
-	case "okexUsdtSpot":
-		xExchange = &okut.OkexUsdtSpot{}
-		break
-	case "kucoinUsdtFuture":
-		xExchange = &kcut.KucoinUsdtFuture{}
-		break
-	case "kucoinUsdtFutureWithMergedTicker":
-		xExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
-		break
-	case "binanceUsdtFutureWithMergedTicker":
-		xExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
-		break
-	case "binanceBusdFutureWithMergedTicker":
-		xExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
-		break
-	case "binanceUsdtSpot":
-		xExchange = &bnus.BinanceUsdtSpot{}
-		break
-	case "binanceUsdtSpotWithMergedTicker":
-		xExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
-		break
-	case "binanceTusdSpotWithMergedTicker":
-		xExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
-		break
-	case "binanceBusdSpot":
-		xExchange = &bnbs.BinanceBusdSpot{}
-		break
-	case "binanceBusdSpotWithMergedTicker":
-		xExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
-		break
-	case "binanceUsdcSpotWithMergedTicker":
-		xExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
-		break
-	case "huobiUsdtFutureWithMergedTicker":
-		xExchange = &hbuf.HuobiUsdtFutureWithMergedTicker{}
-		break
-	case "bybitUsdtFuture":
-		xExchange = &bbuf.BybitUsdtFuture{}
-		break
-	case "kucoinUsdtSpotWithMergedTicker":
-		xExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
-		break
+	//case "ftxUsdFuture":
+	//	xExchange = &ftxuf.FtxUsdFuture{}
+	//	break
+	//case "ftxUsdSpot":
+	//	xExchange = &ftxus.FtxUsdSpot{}
+	//	break
+	//case "kucoinUsdtFuture":
+	//	xExchange = &kcut.KucoinUsdtFuture{}
+	//	break
+	//case "kucoinUsdtFutureWithMergedTicker":
+	//	xExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
+	//	break
+	//case "binanceUsdtFutureWithMergedTicker":
+	//	xExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
+	//	break
+	//case "binanceBusdFutureWithMergedTicker":
+	//	xExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
+	//	break
+	//case "binanceUsdtSpot":
+	//	xExchange = &bnus.BinanceUsdtSpot{}
+	//	break
+	//case "binanceUsdtSpotWithMergedTicker":
+	//	xExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
+	//	break
+	//case "binanceTusdSpotWithMergedTicker":
+	//	xExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
+	//	break
+	//case "binanceBusdSpot":
+	//	xExchange = &bnbs.BinanceBusdSpot{}
+	//	break
+	//case "binanceBusdSpotWithMergedTicker":
+	//	xExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
+	//	break
+	//case "binanceUsdcSpotWithMergedTicker":
+	//	xExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
+	//	break
+	//case "huobiUsdtFutureWithMergedTicker":
+	//	xExchange = &hbuf.HuobiUsdtFutureWithMergedTicker{}
+	//	break
+	//case "bybitUsdtFuture":
+	//	xExchange = &bbuf.BybitUsdtFuture{}
+	//	break
+	//case "kucoinUsdtSpotWithMergedTicker":
+	//	xExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
+	//	break
 	default:
 		logger.Warnf("unsupported exchange %s", xyConfig.XExchange.Name)
 		return
 	}
 
 	switch xyConfig.YExchange.Name {
-	case "okexV5UsdtSpot":
-		yExchange = &okexv5_usdtspot.OkexV5UsdtSpot{}
-	case "okexV5UsdtSwap":
-		yExchange = &okexv5_usdtswap.OkexV5UsdtSwap{}
+	//case "okexV5UsdtSpot":
+	//	yExchange = &okexv5_usdtspot.OkexV5UsdtSpot{}
+	//case "okexV5UsdtSwap":
+	//	yExchange = &okexv5_usdtswap.OkexV5UsdtSwap{}
 	case "dydxUsdFuture":
-		yExchange = &dydx_usdfuture.DydxUsdFuture{}
+		yExchange = &dduf.DydxUsdFuture{}
+		break
 	case "binanceUsdtFuture":
 		yExchange = &bnuf.BinanceUsdtFuture{}
 		break
-	case "ftxUsdFuture":
-		yExchange = &ftxuf.FtxUsdFuture{}
-		break
-	case "ftxUsdSpot":
-		yExchange = &ftxus.FtxUsdSpot{}
-		break
-	case "okexUsdtSpot":
-		yExchange = &okut.OkexUsdtSpot{}
-		break
-	case "kucoinUsdtFuture":
-		yExchange = &kcut.KucoinUsdtFuture{}
-		break
-	case "kucoinUsdtFutureWithMergedTicker":
-		yExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
-		break
-	case "binanceUsdtFutureWithMergedTicker":
-		yExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
-		break
-	case "binanceUsdtSpot":
-		yExchange = &bnus.BinanceUsdtSpot{}
-		break
-	case "binanceUsdtSpotWithMergedTicker":
-		yExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
-		break
-	case "binanceBusdSpot":
-		yExchange = &bnbs.BinanceBusdSpot{}
-		break
-	case "binanceBusdSpotWithMergedTicker":
-		yExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
-		break
-	case "binanceUsdcSpotWithMergedTicker":
-		yExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
-		break
-	case "huobiUsdtFutureWithMergedTicker":
-		yExchange = &hbuf.HuobiUsdtFutureWithMergedTicker{}
-		break
-	case "bybitUsdtFuture":
-		yExchange = &bbuf.BybitUsdtFuture{}
-		break
-	case "kucoinUsdtSpotWithMergedTicker":
-		yExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
-		break
-	case "binanceBusdFutureWithMergedTicker":
-		yExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
-		break
-	case "binanceTusdSpotWithMergedTicker":
-		yExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
-		break
+	//case "ftxUsdFuture":
+	//	yExchange = &ftxuf.FtxUsdFuture{}
+	//	break
+	//case "ftxUsdSpot":
+	//	yExchange = &ftxus.FtxUsdSpot{}
+	//	break
+	//case "kucoinUsdtFuture":
+	//	yExchange = &kcut.KucoinUsdtFuture{}
+	//	break
+	//case "kucoinUsdtFutureWithMergedTicker":
+	//	yExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
+	//	break
+	//case "binanceUsdtFutureWithMergedTicker":
+	//	yExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
+	//	break
+	//case "binanceUsdtSpot":
+	//	yExchange = &bnus.BinanceUsdtSpot{}
+	//	break
+	//case "binanceUsdtSpotWithMergedTicker":
+	//	yExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
+	//	break
+	//case "binanceBusdSpot":
+	//	yExchange = &bnbs.BinanceBusdSpot{}
+	//	break
+	//case "binanceBusdSpotWithMergedTicker":
+	//	yExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
+	//	break
+	//case "binanceUsdcSpotWithMergedTicker":
+	//	yExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
+	//	break
+	//case "huobiUsdtFutureWithMergedTicker":
+	//	yExchange = &hbuf.HuobiUsdtFutureWithMergedTicker{}
+	//	break
+	//case "bybitUsdtFuture":
+	//	yExchange = &bbuf.BybitUsdtFuture{}
+	//	break
+	//case "kucoinUsdtSpotWithMergedTicker":
+	//	yExchange = &kcus.KucoinUsdtSpotWithMergedTicker{}
+	//	break
+	//case "binanceBusdFutureWithMergedTicker":
+	//	yExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
+	//	break
+	//case "binanceTusdSpotWithMergedTicker":
+	//	yExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
+	//	break
 	default:
 		logger.Warnf("unsupported exchange %s", xyConfig.YExchange.Name)
 		return
@@ -487,8 +469,10 @@ mainLoop:
 			totalLiquidity := 0.0
 			liquidityMap := make(map[string]float64)
 			for xSymbol, st := range strategyMap {
-				if st.stats.YMiddlePrice.Load() > 0 {
+				offset := math.Max(st.stats.YAskOffset.Load(), st.stats.YBidOffset.Load())
+				if st.stats.YMiddlePrice.Load() > 0 && offset > 0{
 					liquidityMap[xSymbol] = st.yMultiplier * math.Min(st.stats.YBidSize.Load(), st.stats.YAskSize.Load()) * st.stats.YMiddlePrice.Load()
+					liquidityMap[xSymbol] /= offset
 					totalLiquidity += liquidityMap[xSymbol]
 				}
 			}

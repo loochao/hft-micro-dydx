@@ -391,8 +391,9 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	var err error
 	var depth5 *Depth5
 	index := -1
-	pool := [4]*Depth5{}
-	for i := 0; i < 4; i++ {
+	const bufferSize = 64
+	pool := [bufferSize]*Depth5{}
+	for i := 0; i < bufferSize; i++ {
 		pool[i] = &Depth5{}
 	}
 	for {
@@ -403,7 +404,7 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 			return
 		case msg := <-inputCh:
 			index++
-			if index == 4 {
+			if index == bufferSize {
 				index = 0
 			}
 			depth5 = pool[index]

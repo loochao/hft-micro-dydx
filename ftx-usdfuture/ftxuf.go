@@ -495,7 +495,7 @@ func (ftx *FtxUsdFuture) watchPriceFactor(ctx context.Context, settings common.E
 		case <-ctx.Done():
 			return
 		case ticker := <-ch:
-			ftx.priceFactor.Set(tm.Insert(ticker.GetTime(), 2.0/(ticker.GetAskPrice()+ticker.GetBidPrice())))
+			ftx.priceFactor.Set(tm.Insert(ticker.GetEventTime(), 2.0/(ticker.GetAskPrice()+ticker.GetBidPrice())))
 			//logger.Debugf("%f", tm.Mean())
 		}
 	}

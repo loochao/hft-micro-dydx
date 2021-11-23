@@ -1070,7 +1070,6 @@ type BinanceUsdtFutureWithMergedTicker struct {
 	BinanceUsdtFuture
 }
 
-
 func (bn *BinanceUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
 	logger.Debugf("START StreamMergedTicker")
 	defer logger.Debugf("STOP StreamMergedTicker")
@@ -1104,6 +1103,56 @@ func (bn *BinanceUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, c
 				case <-ws1.Done():
 					return
 				case <-ws2.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-bn.done:
+			return
+		}
+	}
+}
+
+type BinanceUsdtFutureWithWalkedDepth5 struct {
+	BinanceUsdtFuture
+}
+
+func (bn *BinanceUsdtFutureWithWalkedDepth5) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+	logger.Debugf("START StreamMergedTicker")
+	defer logger.Debugf("STOP StreamMergedTicker")
+	defer bn.Stop()
+
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+
+	bn.mu.Lock()
+	impact := bn.settings.WalkImpact
+	proxy := bn.settings.Proxy
+	bn.mu.Unlock()
+
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			ws1 := NewWalkedDepth5WS(ctx, proxy, impact, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws1.Done():
 					return
 				}
 			}

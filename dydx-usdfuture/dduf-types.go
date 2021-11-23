@@ -459,26 +459,27 @@ type Depth struct {
 	Offset           int64
 }
 
+func (d *Depth) GetParseTime() time.Time {
+	return d.ParseTime
+}
+
 func (d *Depth) GetBidOffset() float64 {
-	if tickSize, ok := TickSizes[d.Market]; len(d.Bids) > 0 && ok {
-		return tickSize * 0.5 / d.Bids[0][0]
+	if len(d.Bids) > 0 && len(d.Asks) > 0 && d.Bids[0][0] != 0 {
+		return (d.Asks[0][0] - d.Bids[0][0]) * 0.5 / d.Bids[0][0]
 	} else {
-		return 0.0
+		return common.DefaultBidAskOffset
 	}
 }
 
 func (d *Depth) GetAskOffset() float64 {
-	if tickSize, ok := TickSizes[d.Market]; len(d.Asks) > 0 && ok {
-		return tickSize * 0.5 / d.Asks[0][0]
+	if len(d.Bids) > 0 && len(d.Asks) > 0 && d.Asks[0][0] != 0 {
+		return (d.Asks[0][0] - d.Bids[0][0]) * 0.5 / d.Asks[0][0]
 	} else {
-		return 0.0
+		return common.DefaultBidAskOffset
 	}
 }
 
 func (d *Depth) GetBidPrice() float64 {
-	//if len(d.Bids) > 1 {
-	//	return d.Bids[1][0]
-	//} else
 	if len(d.Bids) > 0 {
 		return d.Bids[0][0]
 	} else {
@@ -487,9 +488,6 @@ func (d *Depth) GetBidPrice() float64 {
 }
 
 func (d *Depth) GetAskPrice() float64 {
-	//if len(d.Asks) > 1 {
-	//	return d.Asks[1][0]
-	//} else
 	if len(d.Asks) > 0 {
 		return d.Asks[0][0]
 	} else {
@@ -513,7 +511,7 @@ func (d *Depth) GetAskSize() float64 {
 	}
 }
 
-func (d *Depth) GetTime() time.Time {
+func (d *Depth) GetEventTime() time.Time {
 	return d.ParseTime
 }
 

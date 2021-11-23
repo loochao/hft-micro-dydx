@@ -139,8 +139,8 @@ func main() {
 					}
 					xDepth.ParseTime = time.Unix(0, t)
 					xTD = xDepth
-					askDelta.Insert(xTD.GetTime(), xTD.GetAskPrice())
-					bidDelta.Insert(xTD.GetTime(), xTD.GetBidPrice())
+					askDelta.Insert(xTD.GetEventTime(), xTD.GetAskPrice())
+					bidDelta.Insert(xTD.GetEventTime(), xTD.GetBidPrice())
 				} else if msg[0] == 'S' && msg[1] == 'T' {
 					err = binance_usdtspot.ParseTicker(msg[21:], xTicker)
 					if err != nil {
@@ -157,8 +157,8 @@ func main() {
 					}
 					xTicker.ParseTime = time.Unix(0, t)
 					xTD = xTicker
-					askDelta.Insert(xTD.GetTime(), xTD.GetAskPrice())
-					bidDelta.Insert(xTD.GetTime(), xTD.GetBidPrice())
+					askDelta.Insert(xTD.GetEventTime(), xTD.GetAskPrice())
+					bidDelta.Insert(xTD.GetEventTime(), xTD.GetBidPrice())
 				} else if msg[0] == 'F' && msg[1] == 'D' {
 					err = binance_usdtfuture.ParseDepth5(msg[21:], yDepth)
 					if err != nil {
@@ -191,11 +191,11 @@ func main() {
 
 					//if longLastEnter < quantileMiddle-enterThreshold {
 						if askDelta.Delta() > 0 {
-							_ = askJumpTD.Insert(xTD.GetTime() ,askDelta.Delta()/xTD.GetAskPrice())
+							_ = askJumpTD.Insert(xTD.GetEventTime() ,askDelta.Delta()/xTD.GetAskPrice())
 						}
 					//}else if shortLastEnter > quantileMiddle + enterThreshold {
 						if bidDelta.Delta() < 0 {
-							_ = bidJumpTD.Insert(xTD.GetTime(), bidDelta.Delta()/xTD.GetBidPrice())
+							_ = bidJumpTD.Insert(xTD.GetEventTime(), bidDelta.Delta()/xTD.GetBidPrice())
 						}
 					//}
 

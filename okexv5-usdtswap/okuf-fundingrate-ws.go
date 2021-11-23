@@ -397,12 +397,12 @@ func (w *FundingRateWS) Done() chan interface{} {
 
 func (w *FundingRateWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.FundingRate) {
 	logSilentTime := time.Now()
-	const bufferLen = 4096
+	const bufferSize = 64
 	var err error
 	var fr *FundingRate
 	index := -1
-	pool := [bufferLen]*FundingRate{}
-	for i := 0; i < bufferLen; i++ {
+	pool := [bufferSize]*FundingRate{}
+	for i := 0; i < bufferSize; i++ {
 		pool[i] = &FundingRate{}
 	}
 	for {
@@ -413,7 +413,7 @@ func (w *FundingRateWS) dataHandleLoop(ctx context.Context, symbol string, input
 			return
 		case msg := <-inputCh:
 			index++
-			if index == bufferLen {
+			if index == bufferSize {
 				index = 0
 			}
 			fr = pool[index]

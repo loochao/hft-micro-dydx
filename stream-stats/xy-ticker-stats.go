@@ -145,20 +145,20 @@ func (sl *XYTickerStats) Start(ctx context.Context) {
 					logger.Debugf("sl.xTimeDeltaTD.Insert error %v", err)
 				}
 
-				err = sl.xBidSizeTD.Insert(sl.xTicker.GetTime(), sl.xTicker.GetBidSize())
+				err = sl.xBidSizeTD.Insert(sl.xEventTime, sl.xTicker.GetBidSize())
 				if err != nil {
 					logger.Debugf("sl.xBidSizeTD.Insert error %v", err)
 				}
-				err = sl.xAskSizeTD.Insert(sl.xTicker.GetTime(), sl.xTicker.GetAskSize())
+				err = sl.xAskSizeTD.Insert(sl.xEventTime, sl.xTicker.GetAskSize())
 				if err != nil {
 					logger.Debugf("sl.xAskSizeTD.Insert error %v", err)
 				}
 
-				err = sl.xBidOffsetTD.Insert(sl.xTicker.GetTime(), sl.xTicker.GetBidOffset())
+				err = sl.xBidOffsetTD.Insert(sl.xEventTime, sl.xTicker.GetBidOffset())
 				if err != nil {
 					logger.Debugf("sl.xBidOffsetTD.Insert error %v", err)
 				}
-				err = sl.xAskOffsetTD.Insert(sl.xTicker.GetTime(), sl.xTicker.GetAskOffset())
+				err = sl.xAskOffsetTD.Insert(sl.xEventTime, sl.xTicker.GetAskOffset())
 				if err != nil {
 					logger.Debugf("sl.xAskOffsetTD.Insert error %v", err)
 				}
@@ -171,20 +171,20 @@ func (sl *XYTickerStats) Start(ctx context.Context) {
 					logger.Debugf("sl.yTimeDeltaTD.Insert error %v", err)
 				}
 
-				err = sl.yBidSizeTD.Insert(sl.yTicker.GetTime(), sl.yTicker.GetBidSize())
+				err = sl.yBidSizeTD.Insert(sl.yEventTime, sl.yTicker.GetBidSize())
 				if err != nil {
 					logger.Debugf("sl.yBidSizeTD.Insert error %v", err)
 				}
-				err = sl.yAskSizeTD.Insert(sl.yTicker.GetTime(), sl.yTicker.GetAskSize())
+				err = sl.yAskSizeTD.Insert(sl.yEventTime, sl.yTicker.GetAskSize())
 				if err != nil {
 					logger.Debugf("sl.yAskSizeTD.Insert error %v", err)
 				}
 
-				err = sl.yBidOffsetTD.Insert(sl.yTicker.GetTime(), sl.yTicker.GetBidOffset())
+				err = sl.yBidOffsetTD.Insert(sl.yEventTime, sl.yTicker.GetBidOffset())
 				if err != nil {
 					logger.Debugf("sl.yBidOffsetTD.Insert error %v", err)
 				}
-				err = sl.yAskOffsetTD.Insert(sl.yTicker.GetTime(), sl.yTicker.GetAskOffset())
+				err = sl.yAskOffsetTD.Insert(sl.yEventTime, sl.yTicker.GetAskOffset())
 				if err != nil {
 					logger.Debugf("sl.yAskOffsetTD.Insert error %v", err)
 				}
@@ -296,11 +296,11 @@ func (sl *XYTickerStats) Start(ctx context.Context) {
 			saveTimer.Reset(sl.saveInterval)
 			break
 		case sl.xTicker = <-sl.XTickerCh:
-			sl.xEventTime = sl.xTicker.GetTime()
+			sl.xEventTime = sl.xTicker.GetEventTime()
 			sl.xTimeDelta = sl.xEventTime.Sub(time.Now())
 			break
 		case sl.yTicker = <-sl.YTickerCh:
-			sl.yEventTime = sl.yTicker.GetTime()
+			sl.yEventTime = sl.yTicker.GetEventTime()
 			sl.yTimeDelta = sl.yEventTime.Sub(time.Now())
 			break
 		}
@@ -412,6 +412,14 @@ type NewXYTickerStatsParams struct {
 	YLiquidityTDSubInterval time.Duration
 	YLiquidityTDCompression uint32
 
+	XOffsetTDLookback    time.Duration
+	XOffsetTDSubInterval time.Duration
+	XOffsetTDCompression uint32
+
+	YOffsetTDLookback    time.Duration
+	YOffsetTDSubInterval time.Duration
+	YOffsetTDCompression uint32
+
 	SpreadTDLookback    time.Duration
 	SpreadTDSubInterval time.Duration
 	SpreadTDCompression uint32
@@ -431,7 +439,12 @@ type NewXYTickerStatsParams struct {
 	BaseLeaveOffset             float64
 }
 
-func NewXYTickerStats(params NewXYTickerStatsParams) *XYTickerStats {
+func NewXYTickerStats(params NewXYTickerStatsParams) (*XYTickerStats, error) {
+
+	hasDefault, fields := common.DetectDefaultValues(params, []string{})
+	if hasDefault {
+		return nil, fmt.Errorf("bad params, has default filed for %s", fields)
+	}
 
 	if params.RootPath == "" {
 		logger.Fatal("need stats root path")
@@ -493,10 +506,10 @@ func NewXYTickerStats(params NewXYTickerStatsParams) *XYTickerStats {
 		YBidSize: common.ForAtomicFloat64(0),
 		YAskSize: common.ForAtomicFloat64(0),
 
-		XBidOffset: common.ForAtomicFloat64(0),
-		XAskOffset: common.ForAtomicFloat64(0),
-		YBidOffset: common.ForAtomicFloat64(0),
-		YAskOffset: common.ForAtomicFloat64(0),
+		XBidOffset: common.ForAtomicFloat64(common.DefaultBidAskOffset),
+		XAskOffset: common.ForAtomicFloat64(common.DefaultBidAskOffset),
+		YBidOffset: common.ForAtomicFloat64(common.DefaultBidAskOffset),
+		YAskOffset: common.ForAtomicFloat64(common.DefaultBidAskOffset),
 
 		XMiddlePrice: common.ForAtomicFloat64(0),
 		YMiddlePrice: common.ForAtomicFloat64(0),
@@ -534,20 +547,20 @@ func NewXYTickerStats(params NewXYTickerStatsParams) *XYTickerStats {
 	sl.yAskSizeTD = sl.loadTD(sl.yAskSizeTDPath, params.YLiquidityTDLookback, params.YLiquidityTDSubInterval, params.YLiquidityTDCompression)
 	logger.Debugf("%10s - %10s Y ASK SIZE QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.yAskSizeTD.Quantile(params.YLiquidityQuantile))
 
-	sl.xBidOffsetTD = sl.loadTD(sl.xBidOffsetTDPath, params.XLiquidityTDLookback, params.XLiquidityTDSubInterval, params.XLiquidityTDCompression)
-	logger.Debugf("%10s - %10s X BID OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.xBidOffsetTD.Quantile(params.XLiquidityQuantile))
+	sl.xBidOffsetTD = sl.loadTD(sl.xBidOffsetTDPath, params.XOffsetTDLookback, params.XOffsetTDSubInterval, params.XOffsetTDCompression)
+	logger.Debugf("%10s - %10s X BID OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.xBidOffsetTD.Quantile(params.XOffsetQuantile))
 
-	sl.xAskOffsetTD = sl.loadTD(sl.xAskOffsetTDPath, params.XLiquidityTDLookback, params.XLiquidityTDSubInterval, params.XLiquidityTDCompression)
-	logger.Debugf("%10s - %10s X ASK OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.xAskOffsetTD.Quantile(params.XLiquidityQuantile))
+	sl.xAskOffsetTD = sl.loadTD(sl.xAskOffsetTDPath, params.XOffsetTDLookback, params.XOffsetTDSubInterval, params.XOffsetTDCompression)
+	logger.Debugf("%10s - %10s X ASK OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.xAskOffsetTD.Quantile(params.XOffsetQuantile))
 
-	sl.yBidOffsetTD = sl.loadTD(sl.yBidOffsetTDPath, params.YLiquidityTDLookback, params.YLiquidityTDSubInterval, params.YLiquidityTDCompression)
-	logger.Debugf("%10s - %10s Y BID OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.yBidOffsetTD.Quantile(params.YLiquidityQuantile))
+	sl.yBidOffsetTD = sl.loadTD(sl.yBidOffsetTDPath, params.YOffsetTDLookback, params.YOffsetTDSubInterval, params.YOffsetTDCompression)
+	logger.Debugf("%10s - %10s Y BID OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.yBidOffsetTD.Quantile(params.YOffsetQuantile))
 
-	sl.yAskOffsetTD = sl.loadTD(sl.yAskOffsetTDPath, params.YLiquidityTDLookback, params.YLiquidityTDSubInterval, params.YLiquidityTDCompression)
-	logger.Debugf("%10s - %10s Y ASK OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.yAskOffsetTD.Quantile(params.YLiquidityQuantile))
+	sl.yAskOffsetTD = sl.loadTD(sl.yAskOffsetTDPath, params.YOffsetTDLookback, params.YOffsetTDSubInterval, params.YOffsetTDCompression)
+	logger.Debugf("%10s - %10s Y ASK OFFSET QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.yAskOffsetTD.Quantile(params.YOffsetQuantile))
 
 	sl.spreadTD = sl.loadTD(sl.spreadTDPath, params.SpreadTDLookback, params.SpreadTDSubInterval, params.SpreadTDCompression)
 	logger.Debugf("%10s - %10s SPREAD QUANTILE MIDDLE %.6f", params.XSymbol, params.YSymbol, sl.spreadTD.Quantile(0.5))
 
-	return sl
+	return sl, nil
 }

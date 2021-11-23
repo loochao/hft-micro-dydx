@@ -127,25 +127,25 @@ func main() {
 					continue
 				}
 
-				if yTicker.GetTime().Sub(yTicker.GetTime().Truncate(time.Hour*4)) < time.Minute {
+				if yTicker.GetEventTime().Sub(yTicker.GetEventTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
-				if xTicker.GetTime().Sub(xTicker.GetTime().Truncate(time.Hour*4)) < time.Minute {
+				if xTicker.GetEventTime().Sub(xTicker.GetEventTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
 
 				//if isXDepthReady {
-				//	logger.Debugf("%v", xTicker.GetTime().Sub(yTicker.GetTime()))
+				//	logger.Debugf("%v", xTicker.GetEventTime().Sub(yTicker.GetEventTime()))
 				//}
 
 				if isXDepthReady &&
-					xTicker.GetTime().Sub(yTicker.GetTime()) < time.Second &&
-					xTicker.GetTime().Sub(yTicker.GetTime()) > -time.Second &&
-					yTicker.GetTime().Sub(lastCollectTime) > 0 {
-					lastCollectTime = yTicker.GetTime().Add(time.Second)
+					xTicker.GetEventTime().Sub(yTicker.GetEventTime()) < time.Second &&
+					xTicker.GetEventTime().Sub(yTicker.GetEventTime()) > -time.Second &&
+					yTicker.GetEventTime().Sub(lastCollectTime) > 0 {
+					lastCollectTime = yTicker.GetEventTime().Add(time.Second)
 					longSpread := (yTicker.GetAskPrice() - xTicker.GetBidPrice()) / xTicker.GetBidPrice()
 					shortSpread := (yTicker.GetBidPrice() - xTicker.GetAskPrice()) / xTicker.GetAskPrice()
-					_ = timedTD.Insert(yTicker.GetTime(), (longSpread+shortSpread)/2)
+					_ = timedTD.Insert(yTicker.GetEventTime(), (longSpread+shortSpread)/2)
 					_ = maxBidTD.Add(yTicker.GetBidSize() * yTicker.GetBidPrice())
 					_ = maxAskTD.Add(yTicker.GetAskSize() * yTicker.GetAskPrice())
 					bidWeight := uint32(xTicker.GetBidSize() * xTicker.GetBidPrice())

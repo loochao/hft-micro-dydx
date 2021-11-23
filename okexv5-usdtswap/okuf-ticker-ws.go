@@ -63,7 +63,6 @@ func (w *TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-
 func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
@@ -97,36 +96,36 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 		}
 		msgLen = len(msg)
 		//logger.Debugf("%s", msg)
-		if  msgLen > 128 && msg[2] == 'a' && msg[37] == '"'{
+		if msgLen > 128 && msg[2] == 'a' && msg[37] == '"' {
 			//{"arg":{"channel":"tickers","instId":"BTC-USDT-SWAP"},"data":[{"instType":"SWAP","instId":"BTC-USDT-SWAP","last":"64555.9","lastSz":"1","askPx":"64556","askSz":"758","bidPx":"64555.9","bidSz":"686","open24h":"63018.6","high24h":"65111","low24h":"63006.5","sodUtc0":"64108.7","sodUtc8":"64674.7","volCcy24h":"29767.59","vol24h":"2976759","ts":"1636823978601"}]}
 			if msg[51] == '"' {
 				symbol = common.UnsafeBytesToString(msg[38:51])
 				msgCut = 82
-			}else if msg[50] == '"' {
+			} else if msg[50] == '"' {
 				symbol = common.UnsafeBytesToString(msg[38:50])
 				msgCut = 81
-			}else if msg[52] == '"' {
+			} else if msg[52] == '"' {
 				symbol = common.UnsafeBytesToString(msg[38:52])
 				msgCut = 83
-			}else if msg[53] == '"' {
+			} else if msg[53] == '"' {
 				symbol = common.UnsafeBytesToString(msg[38:53])
 				msgCut = 84
-			}else if msg[54] == '"' {
+			} else if msg[54] == '"' {
 				symbol = common.UnsafeBytesToString(msg[38:54])
 				msgCut = 85
-			}else if msg[55] == '"' {
+			} else if msg[55] == '"' {
 				symbol = common.UnsafeBytesToString(msg[38:55])
 				msgCut = 86
-			}else if msg[56] == '"' {
+			} else if msg[56] == '"' {
 				symbol = common.UnsafeBytesToString(msg[38:56])
 				msgCut = 87
-			}else if msg[57] == '"' {
+			} else if msg[57] == '"' {
 				symbol = common.UnsafeBytesToString(msg[38:57])
 				msgCut = 88
-			}else if msg[58] == '"' {
+			} else if msg[58] == '"' {
 				symbol = common.UnsafeBytesToString(msg[38:58])
 				msgCut = 89
-			}else{
+			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
@@ -143,7 +142,7 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 				}
 			}
 			continue
-		} else{
+		} else {
 			//if time.Now().Sub(logSilentTime) > 0 {
 			//	logger.Debugf("MSG %s", msg)
 			//	logSilentTime = time.Now().Add(time.Minute)
@@ -203,13 +202,13 @@ func (w *TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, co
 			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:            http.ProxyURL(proxyUrl),
-			HandshakeTimeout: 60 * time.Second,
+			Proxy:             http.ProxyURL(proxyUrl),
+			HandshakeTimeout:  60 * time.Second,
 			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
 			EnableCompression: true,
 		}
 	}
@@ -346,7 +345,7 @@ func (w *TickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 				if time.Now().Sub(updateTime) > symbolTimeout {
 					args = append(args, WsArgs{
 						Channel: "tickers",
-						InstId: symbol,
+						InstId:  symbol,
 					})
 					symbolUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
 				}
@@ -399,8 +398,9 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	var err error
 	var ticker *Ticker
 	index := -1
-	pool := [4]*Ticker{}
-	for i := 0; i < 4; i++ {
+	const bufferSize = 64
+	pool := [bufferSize]*Ticker{}
+	for i := 0; i < bufferSize; i++ {
 		pool[i] = &Ticker{}
 	}
 	for {
@@ -411,7 +411,7 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 			return
 		case msg := <-inputCh:
 			index++
-			if index == 4 {
+			if index == bufferSize {
 				index = 0
 			}
 			ticker = pool[index]

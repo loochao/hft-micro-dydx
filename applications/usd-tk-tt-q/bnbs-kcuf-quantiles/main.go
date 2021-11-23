@@ -171,21 +171,21 @@ func main() {
 				}
 
 				if yTD != nil && xTD != nil {
-					tDiff := xTD.GetTime().Sub(yTD.GetTime())
+					tDiff := xTD.GetEventTime().Sub(yTD.GetEventTime())
 					if tDiff < maxTimeDiff &&
 						tDiff > -maxTimeDiff &&
-						xTD.GetTime().Sub(lastAddTime) >= quantileAddInterval {
+						xTD.GetEventTime().Sub(lastAddTime) >= quantileAddInterval {
 
 						shortLastEnter = (yTD.GetBidPrice() - xTD.GetAskPrice()) / xTD.GetAskPrice()
 						longLastEnter = (yTD.GetAskPrice() - xTD.GetBidPrice()) / xTD.GetBidPrice()
-						lastAddTime = xTD.GetTime()
+						lastAddTime = xTD.GetEventTime()
 						_ = sizeTD.Add(
 							math.Min(
 								8*math.Min(xTD.GetBidSize()*xTD.GetBidPrice(), 8*xTD.GetAskSize()*xTD.GetAskPrice()),
 								math.Min(yTD.GetBidSize()*yTD.GetBidPrice()*kucoin_usdtfuture.Multipliers[ySymbol], yTD.GetAskSize()*yTD.GetAskPrice()*kucoin_usdtfuture.Multipliers[ySymbol]),
 							),
 						)
-						_ = timedTDigest.Insert(xTD.GetTime(), (shortLastEnter+longLastEnter)*0.5)
+						_ = timedTDigest.Insert(xTD.GetEventTime(), (shortLastEnter+longLastEnter)*0.5)
 						fields := make(map[string]interface{})
 						fields["enterMiddle"] = timedTDigest.Quantile(0.5)
 						fields["shortLastEnter"] = shortLastEnter

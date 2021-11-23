@@ -96,24 +96,24 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 		}
 		msgLen = len(msg)
 		//logger.Debugf("%s", msg)
-		if  msgLen > 128 && msg[2] == 'a' && msg[36] == '"'{
+		if msgLen > 128 && msg[2] == 'a' && msg[36] == '"' {
 			//{"arg":{"channel":"books5","instId":"WAVES-USDT-SWAP"},"data":[{"asks":[["23.773","33","0","1"],["23.776","211","0","1"],["23.779","500","0","1"],["23.784","204","0","1"],["23.791","4","0","1"]],"bids":[["23.765","16","0","1"],["23.763","9","0","1"],["23.762","1","0","1"],["23.761","4","0","1"],["23.758","59","0","2"]],"instId":"WAVES-USDT-SWAP","ts":"1636824158165"}]}
 			if msg[50] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:50])
 				msgCut = 63
-			}else if msg[49] == '"' {
+			} else if msg[49] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:49])
 				msgCut = 62
-			}else if msg[51] == '"' {
+			} else if msg[51] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:51])
 				msgCut = 64
-			}else if msg[52] == '"' {
+			} else if msg[52] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:52])
 				msgCut = 65
-			}else if msg[53] == '"' {
+			} else if msg[53] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:53])
 				msgCut = 66
-			}else{
+			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
@@ -130,7 +130,7 @@ func (w *Depth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 				}
 			}
 			continue
-		} else{
+		} else {
 			//if time.Now().Sub(logSilentTime) > 0 {
 			//	logger.Debugf("MSG %s", msg)
 			//	logSilentTime = time.Now().Add(time.Minute)
@@ -190,13 +190,13 @@ func (w *Depth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, co
 			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:            http.ProxyURL(proxyUrl),
-			HandshakeTimeout: 60 * time.Second,
+			Proxy:             http.ProxyURL(proxyUrl),
+			HandshakeTimeout:  60 * time.Second,
 			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
 			EnableCompression: true,
 		}
 	}
@@ -333,7 +333,7 @@ func (w *Depth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symb
 				if time.Now().Sub(updateTime) > symbolTimeout {
 					args = append(args, WsArgs{
 						Channel: "books5",
-						InstId: symbol,
+						InstId:  symbol,
 					})
 					symbolUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
 				}
@@ -386,8 +386,9 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	var err error
 	var depth5 *Depth5
 	index := -1
-	pool := [4]*Depth5{}
-	for i := 0; i < 4; i++ {
+	const bufferSize = 64
+	pool := [bufferSize]*Depth5{}
+	for i := 0; i < bufferSize; i++ {
 		pool[i] = &Depth5{}
 	}
 	for {
@@ -398,7 +399,7 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 			return
 		case msg := <-inputCh:
 			index++
-			if index == 4 {
+			if index == bufferSize {
 				index = 0
 			}
 			depth5 = pool[index]

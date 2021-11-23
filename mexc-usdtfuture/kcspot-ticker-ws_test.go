@@ -30,7 +30,7 @@ package mexc_usdtfuture
 //	for {
 //		select {
 //		case d := <-outputCh:
-//			logger.Debugf("%s %v", d.GetSymbol(), d.GetTime())
+//			logger.Debugf("%s %v", d.GetSymbol(), d.GetEventTime())
 //		}
 //	}
 //}

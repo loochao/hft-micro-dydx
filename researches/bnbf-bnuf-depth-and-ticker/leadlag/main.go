@@ -148,34 +148,34 @@ func main() {
 					continue
 				}
 
-				if yTicker.GetTime().Sub(yTicker.GetTime().Truncate(time.Hour*4)) < time.Minute {
+				if yTicker.GetEventTime().Sub(yTicker.GetEventTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
-				if xTicker.GetTime().Sub(xTicker.GetTime().Truncate(time.Hour*4)) < time.Minute {
+				if xTicker.GetEventTime().Sub(xTicker.GetEventTime().Truncate(time.Hour*4)) < time.Minute {
 					continue
 				}
 
-				if xTicker.GetTime().Sub(yTicker.GetTime()) < time.Millisecond &&
-					xTicker.GetTime().Sub(yTicker.GetTime()) > -time.Millisecond &&
-					yTicker.GetTime().Sub(lastCollectTime) > 0 {
-					lastCollectTime = yTicker.GetTime().Add(time.Millisecond)
+				if xTicker.GetEventTime().Sub(yTicker.GetEventTime()) < time.Millisecond &&
+					xTicker.GetEventTime().Sub(yTicker.GetEventTime()) > -time.Millisecond &&
+					yTicker.GetEventTime().Sub(lastCollectTime) > 0 {
+					lastCollectTime = yTicker.GetEventTime().Add(time.Millisecond)
 
 					longSpread := (yTicker.GetAskPrice() - xTicker.GetBidPrice()) / xTicker.GetBidPrice()
 					shortSpread := (yTicker.GetBidPrice() - xTicker.GetAskPrice()) / xTicker.GetAskPrice()
-					longSpreadMean.Insert(yTicker.GetTime(), longSpread)
-					shortSpreadMean.Insert(yTicker.GetTime(), shortSpread)
+					longSpreadMean.Insert(yTicker.GetEventTime(), longSpread)
+					shortSpreadMean.Insert(yTicker.GetEventTime(), shortSpread)
 
 
-					if yTicker.GetTime().Sub(enterSilentTime) > 0 {
+					if yTicker.GetEventTime().Sub(enterSilentTime) > 0 {
 						if shortSpreadMean.Mean() > shortEnter && shortSpread >= shortSpreadMean.Mean() {
-							enterSilentTime = yTicker.GetTime().Add(enterSilent+hedgeDelay)
+							enterSilentTime = yTicker.GetEventTime().Add(enterSilent+hedgeDelay)
 							size := enterValue / yTicker.GetAskPrice()
 							if xPositionSize >= 0 {
 								if xPositionSize == 0 || xPositionPrice < xTicker.GetAskPrice() {
 									xPositionPrice = (xPositionSize*xPositionPrice + enterValue) / (xPositionSize + size)
 									netWorth += commission * enterValue
 									xPositionSize += size
-									xEnterTime = yTicker.GetTime()
+									xEnterTime = yTicker.GetEventTime()
 								}
 							} else {
 								//先平仓
@@ -185,17 +185,17 @@ func main() {
 								netWorth += commission * enterValue
 								xPositionPrice = xTicker.GetAskPrice()
 								xPositionSize = size
-								xEnterTime = yTicker.GetTime()
+								xEnterTime = yTicker.GetEventTime()
 							}
 						} else if longSpreadMean.Mean() < longEnter && longSpread <= longSpreadMean.Mean() {
-							enterSilentTime = yTicker.GetTime().Add(enterSilent+hedgeDelay)
+							enterSilentTime = yTicker.GetEventTime().Add(enterSilent+hedgeDelay)
 							size := -enterValue / xTicker.GetBidPrice()
 							if xPositionSize <= 0 {
 								if xPositionSize == 0 || xPositionPrice > xTicker.GetBidPrice() {
 									xPositionPrice = (xPositionSize*xPositionPrice - enterValue) / (xPositionSize + size)
 									netWorth += commission * enterValue
 									xPositionSize += size
-									xEnterTime = yTicker.GetTime()
+									xEnterTime = yTicker.GetEventTime()
 								}
 							} else {
 								//先平仓
@@ -205,13 +205,13 @@ func main() {
 								netWorth += commission * enterValue
 								xPositionPrice = xTicker.GetBidPrice()
 								xPositionSize = size
-								xEnterTime = yTicker.GetTime()
+								xEnterTime = yTicker.GetEventTime()
 							}
 						}
 					}
 
 					ySize := -xPositionSize - yPositionSize
-					if ySize != 0 && yTicker.GetTime().Sub(xEnterTime) > hedgeDelay {
+					if ySize != 0 && yTicker.GetEventTime().Sub(xEnterTime) > hedgeDelay {
 						if ySize*yPositionSize > 0 {
 							//同向加仓
 							if ySize > 0 {
@@ -283,7 +283,7 @@ func main() {
 								"delay":   fmt.Sprintf("%v", hedgeDelay),
 							},
 							fields,
-							yTicker.GetTime(),
+							yTicker.GetEventTime(),
 						)
 						if err == nil {
 							iw.PointCh <- pt

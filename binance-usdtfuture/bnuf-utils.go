@@ -1,10 +1,8 @@
 package binance_usdtfuture
 
 import (
-	"context"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
 	"strconv"
 	"time"
 	"unsafe"
@@ -94,6 +92,7 @@ func ParseDepth20(bytes []byte, depth20 *Depth20) error {
 	bytesLen := len(bytes)
 	currentKey := common.JsonKeyUnknown
 	counter := 0
+	depth20.ParseTime = time.Now()
 	for offset < bytesLen-2 {
 		switch currentKey {
 		case common.JsonKeyBids:
@@ -313,200 +312,6 @@ func ParseMarkPrice(bytes []byte) (*MarkPrice, error) {
 	return &markPrice, nil
 }
 
-func WatchAccountFromHttp(
-	ctx context.Context, api *API, interval time.Duration,
-	output chan Account,
-) {
-	timer := time.NewTimer(time.Second)
-	defer timer.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			account, err := api.GetAccount(subCtx)
-			if err != nil {
-				logger.Debugf("api.GetAccount(subCtx) error %v", err)
-			} else {
-				output <- *account
-			}
-			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
-		}
-	}
-}
-
-func WatchPositionsFromHttp(
-	ctx context.Context, api *API, symbols []string, interval time.Duration,
-	output chan []Position,
-) {
-	timer := time.NewTimer(time.Second)
-	defer timer.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			eventTime := time.Now()
-			positions, err := api.GetPositions(subCtx)
-			if err != nil {
-				logger.Debugf("WatchPositionsFromHttp GetPositions error %v", err)
-			} else {
-				//有一种情况是有的合约的仓位是拉不到的, 拉不到的都是空仓
-				positionBySymbols := make(map[string]Position)
-				for _, symbol := range symbols {
-					positionBySymbols[symbol] = Position{
-						Symbol:       symbol,
-						PositionSide: "BOTH",
-						EventTime:    eventTime,
-						ParseTime:    time.Now(),
-					}
-				}
-				for _, position := range positions {
-					position := position
-					position.ParseTime = time.Now()
-					position.EventTime = eventTime
-					//if position.PositionAmt == 0 {
-					//	position.PositionSide = "BOTH"
-					//}
-					positionBySymbols[position.Symbol] = position
-				}
-				outPositions := make([]Position, len(symbols))
-				for i, symbol := range symbols {
-					outPositions[i] = positionBySymbols[symbol]
-				}
-				output <- outPositions
-			}
-			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
-		}
-	}
-}
-
-func GetOrderLimits(
-	ctx context.Context, api *API, symbols []string,
-) (tickSizes, stepSizes, minSizes, minNotional, multiplierUps, multiplierDowns map[string]float64, err error) {
-	exchangeInfo, err := api.GetExchangeInfo(ctx)
-	if err != nil {
-		return tickSizes, stepSizes, minSizes, minNotional, multiplierUps, multiplierDowns, err
-	}
-	tickSizes = make(map[string]float64)
-	stepSizes = make(map[string]float64)
-	minSizes = make(map[string]float64)
-	multiplierUps = make(map[string]float64)
-	multiplierDowns = make(map[string]float64)
-	minNotional = make(map[string]float64)
-	for _, symbol := range exchangeInfo.Symbols {
-		if symbol.ContractType != "PERPETUAL" && symbol.Status != "TRADING" {
-			continue
-		}
-		if !common.StringDataContains(symbols, symbol.Symbol) {
-			continue
-		}
-		symbols = append(symbols, symbol.Symbol)
-		for _, filter := range symbol.Filters {
-			switch filter.FilterType {
-			case "PRICE_FILTER":
-				tickSizes[symbol.Symbol] = filter.TickSize
-			case "MARKET_LOT_SIZE":
-				stepSizes[symbol.Symbol] = filter.StepSize
-				minSizes[symbol.Symbol] = filter.MinQty
-			case "PERCENT_PRICE":
-				multiplierUps[symbol.Symbol] = filter.MultiplierUp
-				multiplierDowns[symbol.Symbol] = filter.MultiplierDown
-			case "MIN_NOTIONAL":
-				minNotional[symbol.Symbol] = filter.Notional
-			}
-		}
-	}
-	for _, symbol := range symbols {
-		if _, ok := tickSizes[symbol]; !ok {
-			return nil, nil, nil, nil, nil, nil, fmt.Errorf("NO SWAP TICKSIZE FOR %s", symbol)
-		}
-		if _, ok := stepSizes[symbol]; !ok {
-			return nil, nil, nil, nil, nil, nil, fmt.Errorf("NO SWAP STEPSIZE FOR %s", symbol)
-		}
-		if _, ok := minSizes[symbol]; !ok {
-			return nil, nil, nil, nil, nil, nil, fmt.Errorf("NO SWAP  MINSIZE FOR %s", symbol)
-		}
-		if _, ok := minNotional[symbol]; !ok {
-			return nil, nil, nil, nil, nil, nil, fmt.Errorf("NO SWAP  MIN NOTIONAL FOR %s", symbol)
-		}
-		if _, ok := multiplierUps[symbol]; !ok {
-			return nil, nil, nil, nil, nil, nil, fmt.Errorf("NO SWAP  MULTIPLIER UPS FOR %s", symbol)
-		}
-		if _, ok := multiplierDowns[symbol]; !ok {
-			return nil, nil, nil, nil, nil, nil, fmt.Errorf("NO SWAP  MULTIPLIER DOWNS FOR %s", symbol)
-		}
-	}
-	logger.Debugf("BNSWAP TICK SIZES %v", tickSizes)
-	logger.Debugf("BNSWAP STEP SIZES %v", stepSizes)
-	logger.Debugf("BNSWAP MIN SIZES %v", minSizes)
-	logger.Debugf("BNSWAP MIN NOTIONAL %v", minNotional)
-	logger.Debugf("BNSWAP MULTIPLIER UPS %v", multiplierUps)
-	logger.Debugf("BNSWAP MULTIPLIER DOWNS %v", multiplierDowns)
-	return tickSizes, stepSizes, minSizes, minNotional, multiplierUps, multiplierDowns, nil
-}
-
-func UpdateLeverageAndMarginType(ctx context.Context, api *API, symbols []string, leverage int64, marginType string) {
-	for _, symbol := range symbols {
-		res, err := api.UpdateLeverage(ctx, UpdateLeverageParams{
-			Symbol:   symbol,
-			Leverage: leverage,
-		})
-		if err != nil {
-			logger.Debugf("UPDATE LEVERAGE FOR %s ERROR %v", symbol, err)
-		} else {
-			logger.Debugf("UPDATE LEVERAGE FOR %s RESPONSE %v", symbol, res)
-		}
-		time.Sleep(time.Second)
-		res, err = api.UpdateMarginType(ctx, UpdateMarginTypeParams{
-			Symbol:     symbol,
-			MarginType: marginType,
-		})
-		if err != nil {
-			logger.Debugf("UPDATE MARGIN TYPE FOR %s ERROR %v", symbol, err)
-		} else {
-			logger.Debugf("UPDATE MARGIN TYPE FOR %s RESPONSE %v", symbol, res)
-		}
-		time.Sleep(time.Second)
-	}
-}
-
-func WatchPremiumIndexesFromHttp(
-	ctx context.Context, api *API, symbols []string, interval time.Duration,
-	output chan map[string]PremiumIndex,
-) {
-	timer := time.NewTimer(time.Second)
-	defer timer.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
-			indexes, err := api.GetPremiumIndex(subCtx)
-			if err != nil {
-				logger.Debugf("WatchPositionsFromHttp GetPositions error %v", err)
-			} else {
-				indexMap := make(map[string]PremiumIndex)
-				for _, symbol := range symbols {
-					indexMap[symbol] = PremiumIndex{
-						Symbol: symbol,
-					}
-				}
-				for _, i := range indexes {
-					if _, ok := indexMap[i.Symbol]; ok {
-						indexMap[i.Symbol] = i
-					}
-				}
-				output <- indexMap
-			}
-			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
-		}
-	}
-}
-
 //{"stream":"scusdt@bookTicker","data":{"e":"bookTicker","u":552297398961,"s":"SCUSDT","b":"0.012805","B":"46556","a":"0.012816","A":"90351","T":1624971386657,"E":1624971386662}}
 func ParseBookTicker(msg []byte, bookTicker *BookTicker) (err error) {
 	msgLen := len(msg)
@@ -519,6 +324,7 @@ func ParseBookTicker(msg []byte, bookTicker *BookTicker) (err error) {
 		return
 	}
 	bookTicker.EventTime = time.Unix(0, t*1000000)
+	bookTicker.ParseTime = time.Now()
 	collectEnd := 59
 	collectStart := collectEnd
 	currentKey := common.JsonKeyUnknown
@@ -667,6 +473,7 @@ func ParseDepth5(bytes []byte, depth5 *Depth5) error {
 					return fmt.Errorf("TimePoint error %v start %d end %d %s", err, collectStart, offset, bytes[collectStart:offset])
 				}
 				depth5.EventTime = time.Unix(0, eventTime*1000000)
+				depth5.ParseTime = time.Now()
 				offset += 17
 				continue
 			} else if bytes[offset] == 'u' && bytes[offset-1] == '"' && bytes[offset+1] == '"' {
