@@ -62,9 +62,10 @@ func (strat *XYStrategy) handleTicker() {
 }
 
 func (strat *XYStrategy) handleXTicker() {
-	if strat.xTicker == strat.xNextTicker {
-		return
-	}
+	//有可能是同一个指针地址
+	//if strat.xTicker == strat.xNextTicker {
+	//	return
+	//}
 	if strat.xNextTicker.GetEventTime().Sub(strat.xTickerTime) < 0 {
 		return
 	}
@@ -81,9 +82,10 @@ func (strat *XYStrategy) handleXTicker() {
 }
 
 func (strat *XYStrategy) handleYTicker() {
-	if strat.yTicker == strat.yNextTicker {
-		return
-	}
+	//有可能是同一个指针地址
+	//if strat.yTicker == strat.yNextTicker {
+	//	return
+	//}
 	if strat.yNextTicker.GetEventTime().Sub(strat.yTickerTime) < 0 {
 		return
 	}
