@@ -138,9 +138,9 @@ func handleSave(
 				yURPnl += yValue * (strat.yMidPrice - strat.yPosition.GetPrice()) / strat.yPosition.GetPrice()
 			}
 
-			fields["xTickerTimeDelta"] = strat.xTickerTimeDelta.Seconds()
-			fields["yTickerTimeDelta"] = strat.yTickerTimeDelta.Seconds()
-			fields["xyTickerTimeDelta"] = strat.xyTickerTimeDelta.Seconds()
+			fields["xTickerTimeDeltaF"] = strat.xTickerTimeDelta.Seconds()
+			fields["yTickerTimeDeltaF"] = strat.yTickerTimeDelta.Seconds()
+			fields["xyTickerTimeDeltaF"] = strat.xyTickerTimeDelta.Seconds()
 			if strat.spreadReady {
 				fields["spreadTimeDelta"] = strat.spreadEventTime.Sub(strat.spreadTickerTime).Seconds()
 				fields["spreadLastLong"] = strat.spreadLastLong
