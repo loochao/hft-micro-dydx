@@ -371,12 +371,10 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 	defer logger.Debugf("EXIT dataHandleLoop %s", market)
 	logSilentTime := time.Now()
 	var err error
-	//outputDelay := time.Millisecond
 	hour999 := time.Hour * 999
-	resubDelay := time.Second * 3
-	//outputTimer := time.NewTimer(hour999)
+	resubDelay := time.Second * 15
 	resubTimer := time.NewTimer(hour999)
-	//defer outputTimer.Stop()
+
 	var depth = &Depth{}
 	var outputDepth *Depth
 	msgCounter := 0
@@ -405,21 +403,6 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 			logger.Debugf("%s RESUB SENT", market)
 			resubTimer.Reset(hour999)
 			continue
-		//case <-outputTimer.C:
-		//	if depth.IsValid() && msgCounter >= 0 {
-		//		//如果不复制，Downstream会被修改
-		//		outputDepth = *depth
-		//		//logger.Debugf("%v output %v", market, outputDepth)
-		//		select {
-		//		case outputCh <- &outputDepth:
-		//		default:
-		//			if time.Now().Sub(logSilentTime) > 0 {
-		//				logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
-		//				logSilentTime = time.Now().Add(time.Minute)
-		//			}
-		//		}
-		//	}
-		//	break
 		case msg := <-inputCh:
 			if msg[9] == 's' && msg[18] == 'd' {
 				err = ParseDepth(msg, depth)
@@ -451,14 +434,11 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 			if !depth.IsValid() {
 				if msgCounter > 0 {
 					resubTimer.Reset(resubDelay)
-					msgCounter = -20
-					//直接去掉best bid ask
-					//logger.Debugf("BAD MSG %s %d %v %v", market, msgCounter, depth.Bids[0], depth.Bids[1])
+					msgCounter = -4
 					depth.Bids = depth.Bids.Update([2]float64{depth.Bids[0][0], 0.0})
 					depth.Asks = depth.Asks.Update([2]float64{depth.Asks[0][0], 0.0})
 				} else {
-					msgCounter -= 20
-					//logger.Debugf("BAD MSG %s %d %v %v", market, msgCounter, depth.Bids[0], depth.Bids[1])
+					msgCounter -= 4
 					depth.Bids = depth.Bids.Update([2]float64{depth.Bids[0][0], 0.0})
 					depth.Asks = depth.Asks.Update([2]float64{depth.Asks[0][0], 0.0})
 				}
@@ -466,27 +446,21 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 				msgCounter++
 
 				if msgCounter >= 0 {
-					//如果不复制，Downstream会被修改
-					//outputDepth := *depth
-					//logger.Debugf("%v output %v", market, outputDepth)
-
 					index++
 					if index == common.BufferSizeForRealTimeData {
 						index = 0
 					}
 					outputDepth = pool[index]
 					*outputDepth = *depth
-
 					select {
 					case outputCh <- outputDepth:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
+							logger.Debugf("outputCh <- outputDepth failed, ch len %d", len(outputCh))
 							logSilentTime = time.Now().Add(time.Minute)
 						}
 					}
 				}
-
 				select {
 				case w.marketCh <- market:
 				default:
@@ -496,7 +470,6 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 					}
 				}
 				resubTimer.Reset(hour999)
-				//outputTimer.Reset(outputDelay)
 			}
 			break
 		}
@@ -510,15 +483,15 @@ func NewTickerWS(
 ) *TickerWS {
 	ws := TickerWS{
 		done:          make(chan interface{}),
-		reconnectCh:   make(chan interface{}, 100),
-		writeCh:       make(chan interface{}, 4*len(channels)),
-		marketCh:      make(chan string, 16*len(channels)),
-		marketResetCh: make(chan string, 16*len(channels)),
+		reconnectCh:   make(chan interface{}, common.ChannelSizeLowLoad),
+		writeCh:       make(chan interface{}, common.ChannelSizeLowLoad),
+		marketCh:      make(chan string, common.ChannelSizeHighLoad),
+		marketResetCh: make(chan string, common.ChannelSizeLowLoad),
 		stopped:       0,
 	}
 	messagesCh := make(map[string]chan []byte)
 	for market, ch := range channels {
-		messagesCh[market] = make(chan []byte, 256)
+		messagesCh[market] = make(chan []byte, common.ChannelSizeHighLoadLowLatency)
 		go ws.dataHandleLoop(ctx, market, messagesCh[market], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messagesCh)

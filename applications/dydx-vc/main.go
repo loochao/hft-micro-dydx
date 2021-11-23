@@ -66,7 +66,9 @@ func main() {
 	fmt.Printf("杠杆\t\t%.3f\n", totalPosValue/account.Equity)
 	fmt.Printf("DYDX净值\t%.3f\n", account.Equity/startValue)
 	fmt.Printf("\n")
-	rw, err := api.GetRewards(ctx, dydx_usdfuture.RewardsParam{})
+	rw, err := api.GetRewards(ctx, dydx_usdfuture.RewardsParam{
+		Epoch: "4",
+	})
 	if err != nil {
 		logger.Fatal(err)
 	}
