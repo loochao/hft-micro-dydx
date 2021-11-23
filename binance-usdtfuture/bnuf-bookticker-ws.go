@@ -352,7 +352,7 @@ func NewBookTickerWS(
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[strings.ToLower(symbol)] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
+		messageChs[strings.ToLower(symbol)] = make(chan []byte, common.ChannelSizeHighLoadLowLatency)
 		go ws.dataHandleLoop(ctx, messageChs[strings.ToLower(symbol)], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messageChs)
