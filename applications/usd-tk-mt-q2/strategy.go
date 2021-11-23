@@ -144,6 +144,7 @@ func startXYStrategy(
 		usdAvailable:         0,
 		logSilentTime:        time.Time{},
 		realisedSpreadTimer:  time.NewTimer(time.Hour * 9999),
+		xOpenOrderCheckTimer: time.NewTimer(time.Hour * 9999),
 
 		xFundingRateCheckTimer: time.NewTimer(time.Second),
 		yFundingRateCheckTimer: time.NewTimer(time.Second),
@@ -258,6 +259,10 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 	var nextXPos, nextYPos common.Position
 	strat.xOrderSilentTime = time.Now().Add(strat.config.RestartSilent)
 	strat.lastXActiveTime = strat.xOrderSilentTime
+	strat.xOpenOrder = &common.NewOrderParam{
+		Symbol: strat.xSymbol,
+	}
+	strat.tryCancelXOpenOrder("start")
 	for {
 		select {
 		case <-ctx.Done():
@@ -265,11 +270,13 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 		case strat.xSystemStatus = <-strat.xSystemStatusCh:
 			if strat.xSystemStatus != common.SystemStatusReady {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.RestartSilent)
+				strat.tryCancelXOpenOrder("xSystemStatus not ready")
 			}
 			break
 		case strat.ySystemStatus = <-strat.ySystemStatusCh:
 			if strat.ySystemStatus != common.SystemStatusReady {
 				strat.xOrderSilentTime = time.Now().Add(strat.config.RestartSilent)
+				strat.tryCancelXOpenOrder("ySystemStatus not ready")
 			}
 			break
 		case <-strat.xFundingRateCheckTimer.C:
@@ -340,6 +347,16 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 				strat.hedgeCheckTimer.Reset(time.Hour * 9999)
 			} else {
 				strat.hedgeCheckTimer.Reset(strat.config.HedgeCheckInterval)
+			}
+			break
+		case <-strat.xOpenOrderCheckTimer.C:
+			if strat.xOpenOrder != nil {
+				if !strat.isXOpenOrderOk() {
+					strat.tryCancelXOpenOrder("open order not ok")
+				}
+				strat.xOpenOrderCheckTimer.Reset(strat.config.XOrderCheckInterval)
+			} else {
+				strat.xOpenOrderCheckTimer.Reset(time.Hour * 9999)
 			}
 			break
 		case strat.xAccount = <-strat.xAccountCh:

@@ -24,19 +24,19 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.xyFundingRate == nil ||
 		strat.xFundingRateFactor == nil ||
 		strat.enterTarget == 0 {
-		if time.Now().Sub(strat.logSilentTime) > 0 {
-			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			//logger.Debugf("%s %v %v %v %v %v %v %v",
-			//	strat.xSymbol,
-			//	strat.spreadReady,
-			//	!strat.targetWeightUpdated.True(),
-			//	strat.xPosition == nil,
-			//	strat.yPosition == nil,
-			//	strat.xyFundingRate == nil,
-			//	strat.xFundingRateFactor == nil,
-			//	strat.enterTarget == 0,
-			//)
-		}
+		//if time.Now().Sub(strat.logSilentTime) > 0 {
+		//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+		//logger.Debugf("%s %v %v %v %v %v %v %v",
+		//	strat.xSymbol,
+		//	strat.spreadReady,
+		//	!strat.targetWeightUpdated.True(),
+		//	strat.xPosition == nil,
+		//	strat.yPosition == nil,
+		//	strat.xyFundingRate == nil,
+		//	strat.xFundingRateFactor == nil,
+		//	strat.enterTarget == 0,
+		//)
+		//}
 		return
 	}
 
@@ -165,19 +165,15 @@ func (strat *XYStrategy) updateXOrder() {
 		xSizeDiff = math.Floor(xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if xSizeDiff >= strat.xMinSize && strat.enterValue >= 1.2*strat.xMinNotional {
 
-			xPrice := strat.xTicker.GetBidPrice()
-			//防止TickSize太大
-			if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-				xPrice = xPrice * (1.0 - strat.config.EnterSlippage)
-				xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
-			}
+			xPrice := strat.xTicker.GetAskPrice() * (1.0 + strat.stats.XAskVolatility.Load())
+			xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
 				Side:        common.OrderSideSell,
 				Type:        common.OrderTypeLimit,
 				Price:       xPrice,
-				TimeInForce: strat.config.XOrderTimeInForce,
+				TimeInForce: common.OrderTimeInForceGTC,
 				Size:        xSizeDiff,
 				PostOnly:    false,
 				ReduceOnly:  true,
@@ -190,6 +186,8 @@ func (strat *XYStrategy) updateXOrder() {
 				}:
 				}
 			}
+			strat.xOpenOrder = &strat.xNewOrderParam
+			strat.xOpenOrderCheckTimer.Reset(strat.config.XOrderCheckInterval)
 			strat.xLastFilledBuyPrice = nil
 			strat.xLastFilledSellPrice = nil
 			strat.yLastFilledBuyPrice = nil
@@ -257,17 +255,14 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.enterValue = xSizeDiff * xyMidPrice
 		xSizeDiff = math.Floor(xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if xSizeDiff >= strat.xMinSize && strat.enterValue >= 1.2*strat.xMinNotional {
-			xPrice := strat.xTicker.GetAskPrice()
-			if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-				xPrice = xPrice * (1.0 + strat.config.EnterSlippage)
-				xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
-			}
+			xPrice := strat.xTicker.GetBidPrice() * (1 - strat.stats.XBidVolatility.Load())
+			xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
 				Side:        common.OrderSideBuy,
 				Type:        common.OrderTypeLimit,
 				Price:       xPrice,
-				TimeInForce: strat.config.XOrderTimeInForce,
+				TimeInForce: common.OrderTimeInForceGTC,
 				Size:        xSizeDiff,
 				PostOnly:    false,
 				ReduceOnly:  true,
@@ -280,6 +275,8 @@ func (strat *XYStrategy) updateXOrder() {
 				}:
 				}
 			}
+			strat.xOpenOrder = &strat.xNewOrderParam
+			strat.xOpenOrderCheckTimer.Reset(strat.config.XOrderCheckInterval)
 			strat.xLastFilledBuyPrice = nil
 			strat.xLastFilledSellPrice = nil
 			strat.yLastFilledBuyPrice = nil
@@ -316,6 +313,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.bidSpreadMedian > strat.thresholdShortTop &&
 		strat.bidSpreadLast > strat.bidSpreadMedian &&
 		//*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
+		strat.stats.XBidVolatility.Load() > strat.stats.YBidVolatility.Load() &&
 		xSize > -strat.xMinSize*strat.xMultiplier &&
 		strat.xAccount.GetFree() > strat.config.MinXFree &&
 		strat.yAccount.GetFree() > strat.config.MinYFree &&
@@ -390,17 +388,14 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.hedgeXPosition()
 			return
 		}
-		xPrice := strat.xTicker.GetAskPrice()
-		if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-			xPrice = xPrice * (1.0 + strat.config.EnterSlippage)
-			xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
-		}
+		xPrice := strat.xTicker.GetBidPrice() * (1 - strat.stats.XBidVolatility.Load())
+		xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideBuy,
 			Type:        common.OrderTypeLimit,
 			Price:       xPrice,
-			TimeInForce: strat.config.XOrderTimeInForce,
+			TimeInForce: common.OrderTimeInForceGTC,
 			Size:        xSizeDiff,
 			PostOnly:    false,
 			ReduceOnly:  false,
@@ -413,6 +408,8 @@ func (strat *XYStrategy) updateXOrder() {
 			}:
 			}
 		}
+		strat.xOpenOrder = &strat.xNewOrderParam
+		strat.xOpenOrderCheckTimer.Reset(strat.config.XOrderCheckInterval)
 		strat.xLastFilledBuyPrice = nil
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil
@@ -447,6 +444,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.tdBidSpreadMiddle < strat.config.SpreadMiddleMax &&
 		strat.askSpreadMedian < strat.thresholdLongBot &&
 		strat.askSpreadLast < strat.askSpreadMedian &&
+		strat.stats.XAskVolatility.Load() > strat.stats.YAskVolatility.Load() &&
 		//*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
 		xSize < strat.xMinSize*strat.xMultiplier &&
 		strat.xAccount.GetFree() > strat.config.MinXFree &&
@@ -522,18 +520,14 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.hedgeXPosition()
 			return
 		}
-		xPrice := strat.xTicker.GetBidPrice()
-		//防止TickSize太大
-		if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-			xPrice = xPrice * (1.0 - strat.config.EnterSlippage)
-			xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
-		}
+		xPrice := strat.xTicker.GetAskPrice() * (1 + strat.stats.XAskVolatility.Load())
+		xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
 			Side:        common.OrderSideSell,
 			Type:        common.OrderTypeLimit,
 			Price:       xPrice,
-			TimeInForce: strat.config.XOrderTimeInForce,
+			TimeInForce: common.OrderTimeInForceGTC,
 			Size:        xSizeDiff,
 			PostOnly:    false,
 			ReduceOnly:  false,
@@ -546,6 +540,8 @@ func (strat *XYStrategy) updateXOrder() {
 			}:
 			}
 		}
+		strat.xOpenOrder = &strat.xNewOrderParam
+		strat.xOpenOrderCheckTimer.Reset(strat.config.XOrderCheckInterval)
 		strat.xLastFilledBuyPrice = nil
 		strat.xLastFilledSellPrice = nil
 		strat.yLastFilledBuyPrice = nil

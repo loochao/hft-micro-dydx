@@ -160,6 +160,7 @@ type NewOrderParam struct {
 	PostOnly    bool
 	ReduceOnly  bool
 	TimeInForce OrderTimeInForce
+	CancelAfter time.Duration
 	ClientID    string
 }
 

@@ -106,8 +106,9 @@ type Config struct {
 	SpreadLookback  time.Duration `yaml:"spreadLookback"`
 	SpreadWalkDelay time.Duration `yaml:"spreadWalkDelay"`
 
-	XOrderSilent  time.Duration `yaml:"xOrderSilent"`
-	XCancelSilent time.Duration `yaml:"xCancelSilent"`
+	XOrderSilent        time.Duration `yaml:"xOrderSilent"`
+	XCancelSilent       time.Duration `yaml:"xCancelSilent"`
+	XOrderCheckInterval time.Duration `yaml:"xOrderCheckInterval"`
 
 	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
 	YOrderTimeInForce      common.OrderTimeInForce `yaml:"yOrderTimeInForce"`

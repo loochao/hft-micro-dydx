@@ -59,12 +59,13 @@ type XYStrategy struct {
 	xLeverage float64
 	yLeverage float64
 
-	xAccount          common.Balance
-	yAccount          common.Balance
-	xPosition         common.Position
-	yPosition         common.Position
-	xOrderSilentTime  time.Time
-	xCancelSilentTime time.Time
+	xAccount             common.Balance
+	yAccount             common.Balance
+	xPosition            common.Position
+	yPosition            common.Position
+	xOrderSilentTime     time.Time
+	xCancelSilentTime    time.Time
+	xOpenOrderCheckTimer *time.Timer
 
 	yOrderSilentTime     time.Time
 	xFundingRate         common.FundingRate

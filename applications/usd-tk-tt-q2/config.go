@@ -70,12 +70,17 @@ type Config struct {
 	SpreadMiddleMin             float64 `yaml:"spreadMiddleMin"`
 	SpreadMiddleMax             float64 `yaml:"spreadMiddleMax"`
 
-	XLiquidityQuantile   float64 `yaml:"xLiquidityQuantile"`
-	YLiquidityQuantile   float64 `yaml:"yLiquidityQuantile"`
-	XOffsetQuantile      float64 `yaml:"xOffsetQuantile"`
-	YOffsetQuantile      float64 `yaml:"yOffsetQuantile"`
-	TimeDeltaQuantileTop float64 `yaml:"timeDeltaQuantileTop"`
-	TimeDeltaQuantileBot float64 `yaml:"timeDeltaQuantileBot"`
+	XLiquidityQuantile float64 `yaml:"xLiquidityQuantile"`
+	YLiquidityQuantile float64 `yaml:"yLiquidityQuantile"`
+	XOffsetQuantile    float64 `yaml:"xOffsetQuantile"`
+	YOffsetQuantile    float64 `yaml:"yOffsetQuantile"`
+
+	XTimeDeltaQuantileTop  float64 `yaml:"xTimeDeltaQuantileTop"`
+	XTimeDeltaQuantileBot  float64 `yaml:"xTimeDeltaQuantileBot"`
+	YTimeDeltaQuantileTop  float64 `yaml:"yTimeDeltaQuantileTop"`
+	YTimeDeltaQuantileBot  float64 `yaml:"yTimeDeltaQuantileBot"`
+	XYTimeDeltaQuantileTop float64 `yaml:"xyTimeDeltaQuantileTop"`
+	XYTimeDeltaQuantileBot float64 `yaml:"xyTimeDeltaQuantileBot"`
 
 	//MinimalEnterFundingRate float64             `yaml:"minimalEnterFundingRate"`
 	FundingRateOffsetMin   float64             `yaml:"fundingRateOffsetMin"`
