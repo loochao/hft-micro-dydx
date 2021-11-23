@@ -83,7 +83,7 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
-					logSilentTime = time.Now().Add(common.LogInterval)
+					logSilentTime = time.Now().Add(common.LogInterval*5)
 				}
 			}
 		}
@@ -352,7 +352,7 @@ func NewBookTickerWS(
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[strings.ToLower(symbol)] = make(chan []byte, common.ChannelSizeHighLoadLowLatency)
+		messageChs[strings.ToLower(symbol)] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, messageChs[strings.ToLower(symbol)], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messageChs)
