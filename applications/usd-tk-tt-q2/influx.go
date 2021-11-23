@@ -149,6 +149,12 @@ func handleSave(
 				fields["spreadMedianShort"] = strat.spreadMedianShort
 			}
 
+			if strat.spreadReady {
+				fields["spreadReady"] = 1.0
+			} else {
+				fields["spreadReady"] = 0.0
+			}
+
 		} else {
 			logger.Debugf(
 				"%s %s save failed, okXPosition %v okYPosition %v xMidPrice %v yMidPrice %v",
