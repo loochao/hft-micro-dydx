@@ -42,8 +42,6 @@ type Config struct {
 	TimeDeltaTDLookback    time.Duration `yaml:"timeDeltaTDLookback"`
 	TimeDeltaTDSubInterval time.Duration `yaml:"timeDeltaTDSubInterval"`
 	TimeDeltaTDCompression uint32        `yaml:"timeDeltaTDCompression"`
-	IgnoreXTimeDelta       bool          `yaml:"ignoreXTimeDelta"`
-	IgnoreYTimeDelta       bool          `yaml:"ignoreYTimeDelta"`
 
 	XLiquidityTDLookback    time.Duration `yaml:"xLiquidityTDLookback"`
 	XLiquidityTDSubInterval time.Duration `yaml:"xLiquidityTDSubInterval"`

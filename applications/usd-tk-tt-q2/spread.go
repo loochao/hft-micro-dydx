@@ -11,8 +11,10 @@ func (strat *XYStrategy) updateSpread() {
 	if !strat.stats.Ready.True() ||
 		strat.xTicker == nil ||
 		strat.yTicker == nil ||
-		(!strat.config.IgnoreXTimeDelta && (strat.xTickerTimeDelta > strat.stats.XTimeDeltaTop.Load() || strat.xTickerTimeDelta < strat.stats.XTimeDeltaBot.Load())) ||
-		(!strat.config.IgnoreYTimeDelta && (strat.yTickerTimeDelta > strat.stats.YTimeDeltaTop.Load() || strat.yTickerTimeDelta < strat.stats.YTimeDeltaBot.Load())) {
+		strat.xTickerTimeDelta > strat.stats.XTimeDeltaTop.Load() ||
+		strat.xTickerTimeDelta < strat.stats.XTimeDeltaBot.Load() ||
+		strat.yTickerTimeDelta > strat.stats.YTimeDeltaTop.Load() ||
+		strat.yTickerTimeDelta < strat.stats.YTimeDeltaBot.Load() {
 		return
 	}
 
