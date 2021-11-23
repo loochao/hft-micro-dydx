@@ -7,15 +7,15 @@ import (
 )
 
 func (strat *XYStrategy) updateSpread() {
+
 	if !strat.stats.Ready.True() ||
 		strat.xTicker == nil ||
 		strat.yTicker == nil ||
-		strat.xTickerTimeDelta > strat.stats.XTimeDeltaTop.Load() ||
-		strat.xTickerTimeDelta < strat.stats.XTimeDeltaBot.Load() ||
-		strat.yTickerTimeDelta > strat.stats.YTimeDeltaTop.Load() ||
-		strat.yTickerTimeDelta < strat.stats.YTimeDeltaBot.Load() {
+		(!strat.config.IgnoreXTimeDelta && (strat.xTickerTimeDelta > strat.stats.XTimeDeltaTop.Load() || strat.xTickerTimeDelta < strat.stats.XTimeDeltaBot.Load())) ||
+		(!strat.config.IgnoreYTimeDelta && (strat.yTickerTimeDelta > strat.stats.YTimeDeltaTop.Load() || strat.yTickerTimeDelta < strat.stats.YTimeDeltaBot.Load())) {
 		return
 	}
+
 	strat.xyTickerTimeDelta = strat.yTickerTime.Sub(strat.xTickerTime)
 	if strat.xyTickerTimeDelta > strat.stats.XYTimeDeltaTop.Load() ||
 		strat.xyTickerTimeDelta < strat.stats.XYTimeDeltaBot.Load() {
@@ -31,8 +31,8 @@ func (strat *XYStrategy) updateSpread() {
 
 	strat.tickerMatchCount++
 
-	strat.spreadLastShort = (strat.yTicker.GetBidPrice()*strat.yExchange.GetPriceFactor() - strat.xTicker.GetAskPrice()*strat.xExchange.GetPriceFactor()) / (strat.xTicker.GetAskPrice()*strat.xExchange.GetPriceFactor())
-	strat.spreadLastLong = (strat.yTicker.GetAskPrice()*strat.yExchange.GetPriceFactor() - strat.xTicker.GetBidPrice()*strat.xExchange.GetPriceFactor()) / (strat.xTicker.GetBidPrice()*strat.xExchange.GetPriceFactor())
+	strat.spreadLastShort = (strat.yTicker.GetBidPrice()*strat.yExchange.GetPriceFactor() - strat.xTicker.GetAskPrice()*strat.xExchange.GetPriceFactor()) / (strat.xTicker.GetAskPrice() * strat.xExchange.GetPriceFactor())
+	strat.spreadLastLong = (strat.yTicker.GetAskPrice()*strat.yExchange.GetPriceFactor() - strat.xTicker.GetBidPrice()*strat.xExchange.GetPriceFactor()) / (strat.xTicker.GetBidPrice() * strat.xExchange.GetPriceFactor())
 
 	strat.spreadMedianShort = strat.spreadShortTimedMedian.Insert(strat.spreadTickerTime, strat.spreadLastShort)
 	strat.spreadMedianLong = strat.spreadLongTimedMedian.Insert(strat.spreadTickerTime, strat.spreadLastLong)
