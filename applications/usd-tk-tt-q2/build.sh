@@ -26,7 +26,7 @@ echo "" && echo "" && echo "way"
 rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" way:/usr/local/bin/
 rsync -avx --progress "./dist/usd-tk-tt-q2.arm64.$dt" way:/usr/local/bin/
 
-ssh way "rsync -avx --progress way:/usr/local/bin/usd-tk-tt-q2.arm64.$dt nv1:/usr/local/bin/"
+ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q2.arm64.$dt nv1:/usr/local/bin/"
 
 #echo "" && echo "" && echo "hkhr"
 #rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" hkhr:/usr/local/bin/
