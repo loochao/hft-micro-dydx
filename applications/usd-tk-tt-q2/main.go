@@ -94,6 +94,9 @@ func main() {
 	case "binanceUsdtFuture":
 		xExchange = &bnuf.BinanceUsdtFuture{}
 		break
+	case "binanceUsdtFutureWithMergedTicker":
+		xExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
+		break
 	//case "ftxUsdFuture":
 	//	xExchange = &ftxuf.FtxUsdFuture{}
 	//	break
@@ -105,9 +108,6 @@ func main() {
 	//	break
 	//case "kucoinUsdtFutureWithMergedTicker":
 	//	xExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
-	//	break
-	//case "binanceUsdtFutureWithMergedTicker":
-	//	xExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
 	//	break
 	//case "binanceBusdFutureWithMergedTicker":
 	//	xExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
@@ -155,6 +155,9 @@ func main() {
 	case "binanceUsdtFuture":
 		yExchange = &bnuf.BinanceUsdtFuture{}
 		break
+	case "binanceUsdtFutureWithMergedTicker":
+		yExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
+		break
 	//case "ftxUsdFuture":
 	//	yExchange = &ftxuf.FtxUsdFuture{}
 	//	break
@@ -166,9 +169,6 @@ func main() {
 	//	break
 	//case "kucoinUsdtFutureWithMergedTicker":
 	//	yExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
-	//	break
-	//case "binanceUsdtFutureWithMergedTicker":
-	//	yExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
 	//	break
 	//case "binanceUsdtSpot":
 	//	yExchange = &bnus.BinanceUsdtSpot{}
