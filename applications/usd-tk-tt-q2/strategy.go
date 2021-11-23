@@ -68,6 +68,11 @@ func startXYStrategy(
 
 		XTimeDeltaQuantileBot: config.XTimeDeltaQuantileBot,
 		XTimeDeltaQuantileTop: config.XTimeDeltaQuantileTop,
+		YTimeDeltaQuantileBot: config.YTimeDeltaQuantileBot,
+		YTimeDeltaQuantileTop: config.YTimeDeltaQuantileTop,
+		XYTimeDeltaQuantileBot: config.XYTimeDeltaQuantileBot,
+		XYTimeDeltaQuantileTop: config.XYTimeDeltaQuantileTop,
+
 		XLiquidityQuantile:    config.XLiquidityQuantile,
 		YLiquidityQuantile:    config.YLiquidityQuantile,
 
