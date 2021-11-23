@@ -491,7 +491,7 @@ func NewTickerWS(
 	}
 	messagesCh := make(map[string]chan []byte)
 	for market, ch := range channels {
-		messagesCh[market] = make(chan []byte, common.ChannelSizeHighLoadLowLatency)
+		messagesCh[market] = make(chan []byte, common.ChannelSizeLowDropRatio)
 		go ws.dataHandleLoop(ctx, market, messagesCh[market], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messagesCh)
