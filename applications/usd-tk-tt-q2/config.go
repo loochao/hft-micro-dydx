@@ -282,11 +282,23 @@ func (config *Config) SetDefaultIfNotSet() error {
 	if config.YLiquidityQuantile == 0 {
 		config.YLiquidityQuantile = 0.8
 	}
-	if config.TimeDeltaQuantileTop == 0 {
-		config.TimeDeltaQuantileTop = 0.95
+	if config.XTimeDeltaQuantileTop == 0 {
+		config.XTimeDeltaQuantileTop = 0.99995
 	}
-	if config.TimeDeltaQuantileBot == 0 {
-		config.TimeDeltaQuantileBot = 0.2
+	if config.XTimeDeltaQuantileBot == 0 {
+		config.XTimeDeltaQuantileBot = 0.00005
+	}
+	if config.YTimeDeltaQuantileTop == 0 {
+		config.YTimeDeltaQuantileTop = 0.99995
+	}
+	if config.YTimeDeltaQuantileBot == 0 {
+		config.YTimeDeltaQuantileBot = 0.00005
+	}
+	if config.XYTimeDeltaQuantileTop == 0 {
+		config.XYTimeDeltaQuantileTop = 0.99995
+	}
+	if config.XYTimeDeltaQuantileBot == 0 {
+		config.XYTimeDeltaQuantileBot = 0.00005
 	}
 	if config.StatsSampleInterval == 0 {
 		config.StatsSampleInterval = time.Second

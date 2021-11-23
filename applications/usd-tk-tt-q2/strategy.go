@@ -66,10 +66,10 @@ func startXYStrategy(
 		SpreadTDSubInterval: config.SpreadTDSubInterval,
 		SpreadTDCompression: config.SpreadTDCompression,
 
-		TimeDeltaQuantileBot: config.TimeDeltaQuantileBot,
-		TimeDeltaQuantileTop: config.TimeDeltaQuantileTop,
-		XLiquidityQuantile:   config.XLiquidityQuantile,
-		YLiquidityQuantile:   config.YLiquidityQuantile,
+		XTimeDeltaQuantileBot: config.XTimeDeltaQuantileBot,
+		XTimeDeltaQuantileTop: config.XTimeDeltaQuantileTop,
+		XLiquidityQuantile:    config.XLiquidityQuantile,
+		YLiquidityQuantile:    config.YLiquidityQuantile,
 
 		XOffsetQuantile:      config.XOffsetQuantile,
 		YOffsetQuantile:      config.YOffsetQuantile,

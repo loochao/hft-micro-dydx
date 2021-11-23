@@ -62,12 +62,16 @@ type XYTickerStats struct {
 	XTickerCh chan common.Ticker
 	YTickerCh chan common.Ticker
 
-	timeDeltaQuantileBot float64
-	timeDeltaQuantileTop float64
-	xLiquidityQuantile   float64
-	yLiquidityQuantile   float64
-	xOffsetQuantile      float64
-	yOffsetQuantile      float64
+	xTimeDeltaQuantileBot  float64
+	xTimeDeltaQuantileTop  float64
+	yTimeDeltaQuantileBot  float64
+	yTimeDeltaQuantileTop  float64
+	xyTimeDeltaQuantileBot float64
+	xyTimeDeltaQuantileTop float64
+	xLiquidityQuantile     float64
+	yLiquidityQuantile     float64
+	xOffsetQuantile        float64
+	yOffsetQuantile        float64
 
 	spreadLongEnterQuantileBot  float64
 	spreadLongLeaveQuantileTop  float64
@@ -218,23 +222,23 @@ func (sl *XYTickerStats) Start(ctx context.Context) {
 			if hasAllFields && sl.xTimeDeltaTD.Range() < sl.xTimeDeltaTD.HalfLookback {
 				hasAllFields = false
 			}
-			sl.XTimeDeltaBot.Set(time.Duration(secondFloat64 * sl.xTimeDeltaTD.Quantile(sl.timeDeltaQuantileBot)))
+			sl.XTimeDeltaBot.Set(time.Duration(secondFloat64 * sl.xTimeDeltaTD.Quantile(sl.xTimeDeltaQuantileBot)))
 			sl.XTimeDeltaMid.Set(time.Duration(secondFloat64 * sl.xTimeDeltaTD.Quantile(0.5)))
-			sl.XTimeDeltaTop.Set(time.Duration(secondFloat64 * sl.xTimeDeltaTD.Quantile(sl.timeDeltaQuantileTop)))
+			sl.XTimeDeltaTop.Set(time.Duration(secondFloat64 * sl.xTimeDeltaTD.Quantile(sl.xTimeDeltaQuantileTop)))
 
 			if hasAllFields && sl.yTimeDeltaTD.Range() < sl.yTimeDeltaTD.HalfLookback {
 				hasAllFields = false
 			}
-			sl.YTimeDeltaBot.Set(time.Duration(secondFloat64 * sl.yTimeDeltaTD.Quantile(sl.timeDeltaQuantileBot)))
+			sl.YTimeDeltaBot.Set(time.Duration(secondFloat64 * sl.yTimeDeltaTD.Quantile(sl.yTimeDeltaQuantileBot)))
 			sl.YTimeDeltaMid.Set(time.Duration(secondFloat64 * sl.yTimeDeltaTD.Quantile(0.5)))
-			sl.YTimeDeltaTop.Set(time.Duration(secondFloat64 * sl.yTimeDeltaTD.Quantile(sl.timeDeltaQuantileTop)))
+			sl.YTimeDeltaTop.Set(time.Duration(secondFloat64 * sl.yTimeDeltaTD.Quantile(sl.yTimeDeltaQuantileTop)))
 
 			if hasAllFields && sl.xyTimeDeltaTD.Range() < sl.xyTimeDeltaTD.HalfLookback {
 				hasAllFields = false
 			}
-			sl.XYTimeDeltaBot.Set(time.Duration(secondFloat64 * sl.xyTimeDeltaTD.Quantile(sl.timeDeltaQuantileBot)))
+			sl.XYTimeDeltaBot.Set(time.Duration(secondFloat64 * sl.xyTimeDeltaTD.Quantile(sl.xyTimeDeltaQuantileBot)))
 			sl.XYTimeDeltaMid.Set(time.Duration(secondFloat64 * sl.xyTimeDeltaTD.Quantile(0.5)))
-			sl.XYTimeDeltaTop.Set(time.Duration(secondFloat64 * sl.xyTimeDeltaTD.Quantile(sl.timeDeltaQuantileTop)))
+			sl.XYTimeDeltaTop.Set(time.Duration(secondFloat64 * sl.xyTimeDeltaTD.Quantile(sl.xyTimeDeltaQuantileTop)))
 
 			if hasAllFields && sl.xBidSizeTD.Range() < sl.xBidSizeTD.HalfLookback {
 				hasAllFields = false
@@ -424,12 +428,16 @@ type NewXYTickerStatsParams struct {
 	SpreadTDSubInterval time.Duration
 	SpreadTDCompression uint32
 
-	TimeDeltaQuantileBot float64
-	TimeDeltaQuantileTop float64
-	XLiquidityQuantile   float64
-	YLiquidityQuantile   float64
-	XOffsetQuantile      float64
-	YOffsetQuantile      float64
+	XTimeDeltaQuantileBot  float64
+	XTimeDeltaQuantileTop  float64
+	YTimeDeltaQuantileBot  float64
+	YTimeDeltaQuantileTop  float64
+	XYTimeDeltaQuantileBot float64
+	XYTimeDeltaQuantileTop float64
+	XLiquidityQuantile     float64
+	YLiquidityQuantile     float64
+	XOffsetQuantile        float64
+	YOffsetQuantile        float64
 
 	SpreadLongEnterQuantileBot  float64
 	SpreadLongLeaveQuantileTop  float64
@@ -460,12 +468,17 @@ func NewXYTickerStats(params NewXYTickerStatsParams) (*XYTickerStats, error) {
 		XTickerCh: make(chan common.Ticker, 16),
 		YTickerCh: make(chan common.Ticker, 16),
 
-		timeDeltaQuantileBot: params.TimeDeltaQuantileBot,
-		timeDeltaQuantileTop: params.TimeDeltaQuantileTop,
-		xLiquidityQuantile:   params.XLiquidityQuantile,
-		yLiquidityQuantile:   params.YLiquidityQuantile,
-		xOffsetQuantile:      params.XOffsetQuantile,
-		yOffsetQuantile:      params.YOffsetQuantile,
+		xTimeDeltaQuantileBot:  params.XTimeDeltaQuantileBot,
+		xTimeDeltaQuantileTop:  params.XTimeDeltaQuantileTop,
+		yTimeDeltaQuantileBot:  params.YTimeDeltaQuantileBot,
+		yTimeDeltaQuantileTop:  params.YTimeDeltaQuantileTop,
+		xyTimeDeltaQuantileBot: params.XYTimeDeltaQuantileBot,
+		xyTimeDeltaQuantileTop: params.XYTimeDeltaQuantileTop,
+
+		xLiquidityQuantile: params.XLiquidityQuantile,
+		yLiquidityQuantile: params.YLiquidityQuantile,
+		xOffsetQuantile:    params.XOffsetQuantile,
+		yOffsetQuantile:    params.YOffsetQuantile,
 
 		spreadLongEnterQuantileBot:  params.SpreadLongEnterQuantileBot,
 		spreadLongLeaveQuantileTop:  params.SpreadLongLeaveQuantileTop,
@@ -527,13 +540,13 @@ func NewXYTickerStats(params NewXYTickerStatsParams) (*XYTickerStats, error) {
 	}
 
 	sl.xTimeDeltaTD = sl.loadTD(sl.xTimeDeltaTDPath, params.TimeDeltaTDLookback, params.TimeDeltaTDSubInterval, params.TimeDeltaTDCompression)
-	logger.Debugf("%10s - %10s X TIME DELTA QUANTILE %.6f - %.6f", params.XSymbol, params.YSymbol, sl.xTimeDeltaTD.Quantile(params.TimeDeltaQuantileBot), sl.xTimeDeltaTD.Quantile(params.TimeDeltaQuantileTop))
+	logger.Debugf("%10s - %10s X TIME DELTA QUANTILE %.6f - %.6f", params.XSymbol, params.YSymbol, sl.xTimeDeltaTD.Quantile(params.XTimeDeltaQuantileBot), sl.xTimeDeltaTD.Quantile(params.XTimeDeltaQuantileTop))
 
 	sl.yTimeDeltaTD = sl.loadTD(sl.yTimeDeltaTDPath, params.TimeDeltaTDLookback, params.TimeDeltaTDSubInterval, params.TimeDeltaTDCompression)
-	logger.Debugf("%10s - %10s Y TIME DELTA QUANTILE %.6f - %.6f", params.XSymbol, params.YSymbol, sl.yTimeDeltaTD.Quantile(params.TimeDeltaQuantileBot), sl.yTimeDeltaTD.Quantile(params.TimeDeltaQuantileTop))
+	logger.Debugf("%10s - %10s Y TIME DELTA QUANTILE %.6f - %.6f", params.XSymbol, params.YSymbol, sl.yTimeDeltaTD.Quantile(params.XTimeDeltaQuantileBot), sl.yTimeDeltaTD.Quantile(params.XTimeDeltaQuantileTop))
 
 	sl.xyTimeDeltaTD = sl.loadTD(sl.xyTimeDeltaTDPath, params.TimeDeltaTDLookback, params.TimeDeltaTDSubInterval, params.TimeDeltaTDCompression)
-	logger.Debugf("%10s - %10s XY TIME DELTA QUANTILE %.6f - %.6f", params.XSymbol, params.YSymbol, sl.xyTimeDeltaTD.Quantile(params.TimeDeltaQuantileBot), sl.xyTimeDeltaTD.Quantile(params.TimeDeltaQuantileTop))
+	logger.Debugf("%10s - %10s XY TIME DELTA QUANTILE %.6f - %.6f", params.XSymbol, params.YSymbol, sl.xyTimeDeltaTD.Quantile(params.XTimeDeltaQuantileBot), sl.xyTimeDeltaTD.Quantile(params.XTimeDeltaQuantileTop))
 
 	sl.xBidSizeTD = sl.loadTD(sl.xBidSizeTDPath, params.XLiquidityTDLookback, params.XLiquidityTDSubInterval, params.XLiquidityTDCompression)
 	logger.Debugf("%10s - %10s X BID SIZE QUANTILE %.6f", params.XSymbol, params.YSymbol, sl.xBidSizeTD.Quantile(params.XLiquidityQuantile))
