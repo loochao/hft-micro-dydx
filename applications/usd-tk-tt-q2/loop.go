@@ -40,7 +40,7 @@ func (strat *XYStrategy) handleXOrder() {
 
 		if strat.xOrder.GetStatus() != common.OrderStatusFilled &&
 			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled {
-			logger.Debugf("%10s X %s ORDER %s", strat.xOrder.GetSymbol(), strat.xOrder.GetSide(), strat.xOrder.GetStatus())
+			logger.Debugf("%10s x %s order %s %s", strat.xOrder.GetSymbol(), strat.xOrder.GetSide(), strat.xOrder.GetClientID(), strat.xOrder.GetStatus())
 			strat.xPositionUpdateTime = time.Unix(0, 0)
 			strat.xOrderSilentTime = time.Now()
 		} else {
@@ -75,12 +75,12 @@ func (strat *XYStrategy) handleYOrder() {
 
 		if strat.yOrder.GetStatus() != common.OrderStatusFilled &&
 			strat.yOrder.GetStatus() != common.OrderStatusPartiallyFilled {
-			logger.Debugf("%10s y order ended %s %s", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide())
+			logger.Debugf("%10s y %s order %s %s", strat.yOrder.GetSymbol(), strat.yOrder.GetSide(), strat.yOrder.GetClientID(), strat.yOrder.GetStatus())
 			if strat.config.HedgeByLimit {
 				strat.yOrderSilentTime = time.Now()
 				strat.yPositionUpdateTime = time.Now()
 				strat.hedgeYPosition()
-			}else{
+			} else {
 				strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
 				strat.yPositionUpdateTime = time.Time{}
 			}
