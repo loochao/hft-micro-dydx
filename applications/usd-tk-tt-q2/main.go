@@ -473,6 +473,7 @@ mainLoop:
 				if st.stats.YMiddlePrice.Load() > 0 && offset > 0{
 					liquidityMap[xSymbol] = st.yMultiplier * math.Min(st.stats.YBidSize.Load(), st.stats.YAskSize.Load()) * st.stats.YMiddlePrice.Load()
 					liquidityMap[xSymbol] /= offset
+					liquidityMap[xSymbol] = math.Sqrt(liquidityMap[xSymbol])
 					totalLiquidity += liquidityMap[xSymbol]
 				}
 			}
@@ -481,7 +482,7 @@ mainLoop:
 				for xSymbol, liquidity := range liquidityMap {
 					st := strategyMap[xSymbol]
 					weight := liquidity / meanLiquidity
-					weight = math.Sqrt(weight)
+					//weight = math.Sqrt(weight)
 					if weight > 1.0 {
 						weight = 1.0
 					}else if weight < 0.1 {
