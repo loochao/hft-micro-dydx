@@ -443,7 +443,7 @@ func NewXYTickerStats(params NewXYTickerStatsParams) (*XYTickerStats, error) {
 
 	hasDefault, fields := common.DetectDefaultValues(params, []string{})
 	if hasDefault {
-		return nil, fmt.Errorf("bad params, has default filed for %s", fields)
+		return nil, fmt.Errorf("bad params, has default field for %s", fields)
 	}
 
 	if params.RootPath == "" {
