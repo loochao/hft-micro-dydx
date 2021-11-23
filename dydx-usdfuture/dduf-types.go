@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
 	"net/url"
 	"strconv"
 	"time"
@@ -446,7 +445,7 @@ func (nop *NewOrderParams) MarshalJSON() ([]byte, error) {
 		nop.ClientId,
 		nop.TimeInForce,
 	)
-	logger.Debugf("%s", jsonStr)
+	//logger.Debugf("%s", jsonStr)
 	return []byte(jsonStr), nil
 }
 

@@ -197,7 +197,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 					default:
 						logger.Debugf("w.OrdersCh <- wsUserChannelData.Orders failed, len %d", len(w.OrdersCh))
 					}
-					logger.Debugf("%s", wsCap.Contents)
+					//logger.Debugf("%s", wsCap.Contents)
 				}
 				if len(wsUserChannelData.Positions) > 0 {
 					select {

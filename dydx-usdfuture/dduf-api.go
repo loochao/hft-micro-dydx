@@ -225,7 +225,7 @@ func (api *API) CreateOrder(ctx context.Context, params *NewOrderParams) (*Order
 		}
 		reader := resp.Body
 		contents, err := ioutil.ReadAll(reader)
-		logger.Debugf("%s", contents)
+		//logger.Debugf("%s", contents)
 		if err != nil {
 			return nil, err
 		}
