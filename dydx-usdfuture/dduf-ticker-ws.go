@@ -378,7 +378,6 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 	resubTimer := time.NewTimer(hour999)
 	//defer outputTimer.Stop()
 	var depth = &Depth{}
-	var outputDepth = Depth{}
 	msgCounter := 0
 	for {
 		select {
@@ -460,7 +459,7 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 
 				if msgCounter >= 0 {
 					//如果不复制，Downstream会被修改
-					outputDepth = *depth
+					outputDepth := *depth
 					//logger.Debugf("%v output %v", market, outputDepth)
 					select {
 					case outputCh <- &outputDepth:
