@@ -482,7 +482,7 @@ mainLoop:
 				for xSymbol, liquidity := range liquidityMap {
 					st := strategyMap[xSymbol]
 					weight := liquidity / meanLiquidity
-					//weight = math.Sqrt(weight)
+					weight = math.Sqrt(weight)
 					if weight > 1.0 {
 						weight = 1.0
 					}else if weight < 0.1 {
