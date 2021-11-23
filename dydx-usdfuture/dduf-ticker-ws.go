@@ -371,7 +371,7 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 	defer logger.Debugf("EXIT dataHandleLoop %s", market)
 	logSilentTime := time.Now()
 	var err error
-	outputDelay := time.Millisecond * 5
+	outputDelay := time.Millisecond
 	hour999 := time.Hour * 999
 	resubDelay := time.Second * 3
 	outputTimer := time.NewTimer(hour999)
