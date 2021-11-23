@@ -1,0 +1,108 @@
+{
+  "fills": [
+    {
+      "market": "SNX-USD",
+      "transactionId": "32208763",
+      "quoteAmount": "6.304",
+      "price": "7.880000",
+      "size": "0.8",
+      "liquidity": "TAKER",
+      "accountId": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+      "side": "BUY",
+      "orderId": "14503afe113f7b969a642937ba5265d4ff82742cd5bb1c255821c573878ca68",
+      "fee": "0.006304",
+      "type": "LIMIT",
+      "id": "e883b857-19d6-5962-99a5-62f7e3375e68",
+      "nonce": null,
+      "forcePositionId": null,
+      "updatedAt": "2021-11-23T09:38:44.419Z",
+      "createdAt": "2021-11-23T09:38:44.419Z",
+      "orderClientId": "16376603249220"
+    }
+  ],
+  "positions": [
+    {
+      "id": "6e7b1a49-2ac6-5140-9666-be8d39836206",
+      "accountId": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+      "market": "SNX-USD",
+      "side": "LONG",
+      "status": "OPEN",
+      "size": "0.7",
+      "maxSize": "0.7",
+      "entryPrice": "7.880000",
+      "exitPrice": "0.000000",
+      "openTransactionId": "32208763",
+      "closeTransactionId": null,
+      "lastTransactionId": "32208763",
+      "closedAt": null,
+      "updatedAt": "2021-11-23T09:38:44.419Z",
+      "createdAt": "2021-11-23T09:38:44.419Z",
+      "sumOpen": "0.7",
+      "sumClose": "0",
+      "netFunding": "0",
+      "realizedPnl": "0.000000"
+    },
+    {
+      "id": "ba539c87-ad7d-52f3-809c-b0f872cc0eeb",
+      "accountId": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+      "market": "SNX-USD",
+      "side": "SHORT",
+      "status": "CLOSED",
+      "size": "0",
+      "maxSize": "-15.2",
+      "entryPrice": "8.505097",
+      "exitPrice": "8.530193",
+      "openTransactionId": "31423974",
+      "closeTransactionId": "32208763",
+      "lastTransactionId": "32208763",
+      "closedAt": "2021-11-23T09:38:44.425Z",
+      "updatedAt": "2021-11-21T19:22:08.814Z",
+      "createdAt": "2021-11-21T19:22:08.814Z",
+      "sumOpen": "25.9",
+      "sumClose": "25.9",
+      "netFunding": "-0.015127",
+      "realizedPnl": "-0.665127"
+    }
+  ],
+  "orders": [
+    {
+      "id": "14503afe113f7b969a642937ba5265d4ff82742cd5bb1c255821c573878ca68",
+      "clientId": "16376603249220",
+      "market": "SNX-USD",
+      "accountId": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+      "side": "BUY",
+      "size": "158.3",
+      "remainingSize": "157.5",
+      "limitFee": "0.0015",
+      "price": "7.88",
+      "triggerPrice": null,
+      "trailingPercent": null,
+      "type": "LIMIT",
+      "status": "CANCELED",
+      "signature": "0032ccec511f0938a0fb264b6bb45d2020045adeb276e2f3f0b32ae8f96897680055ae88461537a973a8496844c7940a1515cd5e19af956eb812cd038c90375c",
+      "timeInForce": "IOC",
+      "postOnly": false,
+      "cancelReason": "IMMEDIATE_OR_CANCEL_PARTIALLY_FILLED",
+      "expiresAt": "2021-11-24T09:38:44.213Z",
+      "unfillableAt": "2021-11-23T09:38:44.419Z",
+      "updatedAt": "2021-11-23T09:38:44.419Z",
+      "createdAt": "2021-11-23T09:38:44.374Z"
+    }
+  ],
+  "accounts": [
+    {
+      "id": "609fe98b-ca13-57c4-87b5-a6e1cd52f780",
+      "userId": "e3e2eac2-1ae8-5ed2-b425-7e1d7ea9f300",
+      "accountNumber": 0,
+      "starkKey": "03e49e730c07369815e7c0418e2eb473b1326fdfb54c73564411dc5af4d4011a",
+      "quoteBalance": "2686.999853",
+      "lastTransactionId": "32208763",
+      "updatedAt": "2021-11-23T09:38:44.419Z",
+      "createdAt": "2021-10-04T11:40:26.063Z",
+      "positionId": "119684",
+      "starkKeyYCoordinate": "01c4ab2ed0e45e5bffec0ca4435d9feac6e2accb720e55a47a038ad1208ca97f"
+    }
+  ],
+  "transfers": [],
+  "fundingPayments": []
+}

@@ -313,7 +313,11 @@ func (o *Order) GetID() string {
 func (o *Order) GetStatus() common.OrderStatus {
 	switch o.Status {
 	case OrderStatusCanceled:
-		return common.OrderStatusCancelled
+		if o.CancelReason != nil && *o.CancelReason == "IMMEDIATE_OR_CANCEL_PARTIALLY_FILLED"{
+			return common.OrderStatusPartiallyFilled
+		}else{
+			return common.OrderStatusCancelled
+		}
 	case OrderStatusFilled:
 		return common.OrderStatusFilled
 	case OrderStatusOpen:
