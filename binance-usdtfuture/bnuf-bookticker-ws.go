@@ -302,15 +302,38 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, inputCh chan []byte, 
 	for i := 0; i < common.BufferSizeForRealTimeData; i++ {
 		pool[i] = &BookTicker{}
 	}
-	var parseTimer = time.NewTimer(time.Hour * 9999)
-	defer parseTimer.Stop()
+	//var parseTimer = time.NewTimer(time.Hour * 9999)
+	//defer parseTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case <-parseTimer.C:
+		//case <-parseTimer.C:
+		//	index++
+		//	if index == common.BufferSizeForRealTimeData {
+		//		index = 0
+		//	}
+		//	bookTicker = pool[index]
+		//	err = ParseBookTicker(msg, bookTicker)
+		//	if err != nil {
+		//		if time.Now().Sub(logSilentTime) > 0 {
+		//			logger.Debugf("ParseBookTicker error %s %v", msg, err)
+		//			logSilentTime = time.Now().Add(time.Minute)
+		//		}
+		//		break
+		//	}
+		//	select {
+		//	case outputCh <- bookTicker:
+		//	default:
+		//		if time.Now().Sub(logSilentTime) > 0 {
+		//			logger.Debugf("ch <- bookTicker failed ch len %d", len(outputCh))
+		//			logSilentTime = time.Now().Add(time.Minute)
+		//		}
+		//	}
+		//	break
+		case msg = <-inputCh:
 			index++
 			if index == common.BufferSizeForRealTimeData {
 				index = 0
@@ -333,9 +356,8 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, inputCh chan []byte, 
 				}
 			}
 			break
-		case msg = <-inputCh:
-			parseTimer.Reset(time.Millisecond)
-			break
+			//parseTimer.Reset(time.Microsecond)
+			//break
 		}
 	}
 }

@@ -300,8 +300,8 @@ func (w *Depth5TickerWS) dataHandleLoop(ctx context.Context, symbol string, inpu
 	var msg []byte
 	var depth5 *Depth5
 	index := -1
-	pool := [4]*Depth5{}
-	for i := 0; i < 4; i++ {
+	pool := [common.BufferSizeFor100msData]*Depth5{}
+	for i := 0; i < common.BufferSizeFor100msData; i++ {
 		pool[i] = &Depth5{}
 	}
 	for {
@@ -312,7 +312,7 @@ func (w *Depth5TickerWS) dataHandleLoop(ctx context.Context, symbol string, inpu
 			return
 		case msg = <-inputCh:
 			index++
-			if index == 4 {
+			if index == common.BufferSizeFor100msData {
 				index = 0
 			}
 			depth5 = pool[index]
@@ -344,12 +344,12 @@ func NewDepth5TickerWS(
 ) *Depth5TickerWS {
 	ws := Depth5TickerWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 4),
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
 		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[strings.ToLower(symbol)] = make(chan []byte, 4)
+		messageChs[strings.ToLower(symbol)] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[strings.ToLower(symbol)], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messageChs)

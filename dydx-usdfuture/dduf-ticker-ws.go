@@ -371,13 +371,14 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 	defer logger.Debugf("EXIT dataHandleLoop %s", market)
 	logSilentTime := time.Now()
 	var err error
-	outputDelay := time.Millisecond
+	//outputDelay := time.Millisecond
 	hour999 := time.Hour * 999
 	resubDelay := time.Second * 3
-	outputTimer := time.NewTimer(hour999)
+	//outputTimer := time.NewTimer(hour999)
 	resubTimer := time.NewTimer(hour999)
-	defer outputTimer.Stop()
+	//defer outputTimer.Stop()
 	var depth = &Depth{}
+	var outputDepth = Depth{}
 	msgCounter := 0
 	for {
 		select {
@@ -397,21 +398,21 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 			logger.Debugf("%s RESUB SENT", market)
 			resubTimer.Reset(hour999)
 			continue
-		case <-outputTimer.C:
-			if depth.IsValid()  && msgCounter >= 0{
-				//如果不复制，Downstream会被修改
-				outputDepth := *depth
-				//logger.Debugf("%v output %v", market, outputDepth)
-				select {
-				case outputCh <- &outputDepth:
-				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
-				}
-			}
-			break
+		//case <-outputTimer.C:
+		//	if depth.IsValid() && msgCounter >= 0 {
+		//		//如果不复制，Downstream会被修改
+		//		outputDepth = *depth
+		//		//logger.Debugf("%v output %v", market, outputDepth)
+		//		select {
+		//		case outputCh <- &outputDepth:
+		//		default:
+		//			if time.Now().Sub(logSilentTime) > 0 {
+		//				logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
+		//				logSilentTime = time.Now().Add(time.Minute)
+		//			}
+		//		}
+		//	}
+		//	break
 		case msg := <-inputCh:
 			if msg[9] == 's' && msg[18] == 'd' {
 				err = ParseDepth(msg, depth)
@@ -448,14 +449,29 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 					//logger.Debugf("BAD MSG %s %d %v %v", market, msgCounter, depth.Bids[0], depth.Bids[1])
 					depth.Bids = depth.Bids.Update([2]float64{depth.Bids[0][0], 0.0})
 					depth.Asks = depth.Asks.Update([2]float64{depth.Asks[0][0], 0.0})
-				}else{
+				} else {
 					msgCounter -= 20
 					//logger.Debugf("BAD MSG %s %d %v %v", market, msgCounter, depth.Bids[0], depth.Bids[1])
 					depth.Bids = depth.Bids.Update([2]float64{depth.Bids[0][0], 0.0})
 					depth.Asks = depth.Asks.Update([2]float64{depth.Asks[0][0], 0.0})
 				}
 			} else {
-				msgCounter ++
+				msgCounter++
+
+				if msgCounter >= 0 {
+					//如果不复制，Downstream会被修改
+					outputDepth = *depth
+					//logger.Debugf("%v output %v", market, outputDepth)
+					select {
+					case outputCh <- &outputDepth:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
+							logSilentTime = time.Now().Add(time.Minute)
+						}
+					}
+				}
+
 				select {
 				case w.marketCh <- market:
 				default:
@@ -465,7 +481,7 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 					}
 				}
 				resubTimer.Reset(hour999)
-				outputTimer.Reset(outputDelay)
+				//outputTimer.Reset(outputDelay)
 			}
 			break
 		}
