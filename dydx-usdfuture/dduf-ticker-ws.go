@@ -378,7 +378,15 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 	resubTimer := time.NewTimer(hour999)
 	//defer outputTimer.Stop()
 	var depth = &Depth{}
+	var outputDepth *Depth
 	msgCounter := 0
+
+	index := -1
+	pool := [common.BufferSizeForRealTimeData]*Depth{}
+	for i := 0; i < common.BufferSizeForRealTimeData; i++ {
+		pool[i] = &Depth{}
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -461,8 +469,16 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 					//如果不复制，Downstream会被修改
 					//outputDepth := *depth
 					//logger.Debugf("%v output %v", market, outputDepth)
+
+					index++
+					if index == common.BufferSizeForRealTimeData {
+						index = 0
+					}
+					outputDepth = pool[index]
+					*outputDepth = *depth
+
 					select {
-					case outputCh <- depth:
+					case outputCh <- outputDepth:
 					default:
 						if time.Now().Sub(logSilentTime) > 0 {
 							logger.Debugf("outputCh <- &orderBook failed, ch len %d", len(outputCh))
