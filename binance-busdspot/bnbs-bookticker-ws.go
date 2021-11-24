@@ -274,8 +274,8 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 	var err error
 	var ticker *BookTicker
 	index := -1
-	pool := [4]*BookTicker{}
-	for i := 0; i < 4; i++ {
+	pool := [common.BufferSizeForRealTimeData]*BookTicker{}
+	for i := 0; i < common.BufferSizeForRealTimeData; i++ {
 		pool[i] = &BookTicker{}
 	}
 	var parseTimer = time.NewTimer(time.Hour * 9999)
@@ -289,7 +289,7 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 			return
 		case <-parseTimer.C:
 			index++
-			if index == 4 {
+			if index == common.BufferSizeForRealTimeData {
 				index = 0
 			}
 			ticker = pool[index]
@@ -321,12 +321,12 @@ func NewBookTickerWS(
 ) *BookTickerWS {
 	ws := BookTickerWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 4),
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
 		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[strings.ToLower(symbol)] = make(chan []byte, 64)
+		messageChs[strings.ToLower(symbol)] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[strings.ToLower(symbol)], ch)
 	}
 	go ws.mainLoop(ctx, messageChs, proxy)

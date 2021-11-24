@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"sort"
 	"strconv"
 	"testing"
 )
@@ -30,11 +31,13 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	minNotional := make(map[string]float64)
 	tickPrecisions := make(map[string]int)
 	stepPrecisions := make(map[string]int)
+	symbols := make([]string, 0)
 	for _, symbol := range exchangeInfo.Symbols {
 		//logger.Debugf("%s %s %s",symbol.Symbol, symbol.BaseAsset,symbol.QuoteAsset)
 		if symbol.Status != "TRADING" || symbol.QuoteAsset != "BUSD" {
 			continue
 		}
+		symbols = append(symbols, symbol.Symbol)
 		for _, filter := range symbol.Filters {
 			//logger.Debugf("%s", filter.FilterType)
 			switch filter.FilterType {
@@ -53,43 +56,52 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 			}
 		}
 	}
+	sort.Strings(symbols)
 	str := "var TickSizes = map[string]float64{\n"
-	for symbol, value := range tickSizes {
+	for _, symbol := range symbols{
+		value := tickSizes[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var StepSizes = map[string]float64{\n"
-	for symbol, value := range stepSizes {
+	for _, symbol := range symbols{
+		value := stepSizes[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var MinSizes = map[string]float64{\n"
-	for symbol, value := range minSizes {
+	for _, symbol := range symbols{
+		value := minSizes[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var MinNotionals = map[string]float64{\n"
-	for symbol, value := range minNotional {
+	for _, symbol := range symbols{
+		value := minNotional[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var MultiplierUps = map[string]float64{\n"
-	for symbol, value := range multiplierUps {
+	for _, symbol := range symbols{
+		value := multiplierUps[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var MultiplierDowns = map[string]float64{\n"
-	for symbol, value := range multiplierDowns {
+	for _, symbol := range symbols{
+		value := multiplierDowns[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var TickPrecisions = map[string]int{\n"
-	for symbol, value := range tickPrecisions {
+	for _, symbol := range symbols{
+		value := tickPrecisions[symbol]
 		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
 	}
 	str += "}\n\n"
 	str += "var StepPrecisions = map[string]int{\n"
-	for symbol, value := range stepPrecisions {
+	for _, symbol := range symbols{
+		value := stepPrecisions[symbol]
 		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
 	}
 	str += "}\n\n"

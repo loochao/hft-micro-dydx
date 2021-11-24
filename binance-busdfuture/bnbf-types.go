@@ -914,18 +914,35 @@ func (mpu *PremiumIndex) UnmarshalJSON(data []byte) error {
 
 type Depth5 struct {
 	EventTime    time.Time     `json:"-"`
+	ParseTime    time.Time     `json:"-"`
 	Symbol       string        `json:"s,omitempty"`
-	LastUpdateId int64         `json:"u,omitempty"`
 	Bids         [5][2]float64 `json:"b,omitempty"`
 	Asks         [5][2]float64 `json:"a,omitempty"`
+	LastUpdateId int64         `json:"u,omitempty"`
+}
+
+func (depth *Depth5) GetParseTime() time.Time {
+	return depth.ParseTime
+}
+
+func (depth *Depth5) GetEventTime() time.Time {
+	return depth.EventTime
 }
 
 func (depth *Depth5) GetBidOffset() float64 {
-	panic("implement me")
+	if depth.Asks[0][0] > depth.Bids[0][0] && depth.Bids[0][0] > 0 {
+		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Bids[0][0]
+	} else {
+		return common.DefaultBidAskOffset
+	}
 }
 
 func (depth *Depth5) GetAskOffset() float64 {
-	panic("implement me")
+	if depth.Asks[0][0] > depth.Bids[0][0] && depth.Bids[0][0] > 0 {
+		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Asks[0][0]
+	} else {
+		return common.DefaultBidAskOffset
+	}
 }
 
 func (depth *Depth5) GetBidPrice() float64 {
@@ -956,9 +973,6 @@ func (depth *Depth5) GetAsks() common.Asks {
 }
 func (depth *Depth5) GetSymbol() string {
 	return depth.Symbol
-}
-func (depth *Depth5) GetEventTime() time.Time {
-	return depth.EventTime
 }
 
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
@@ -991,6 +1005,7 @@ func (depth *Depth5) UnmarshalJSON(data []byte) error {
 		depth.Asks[i][1] = size
 	}
 	depth.EventTime = time.Unix(0, aux.EventTime*1000000)
+	depth.ParseTime = time.Now()
 	return nil
 }
 
@@ -1043,23 +1058,29 @@ type MultiAssetsMargin struct {
 //}
 
 type BookTicker struct {
-	EventType string `json:"e"`
-	//OrderBookUpdateId int64     `json:"u"`
-	EventTime time.Time `json:"-"`
-	//TransactionTime   time.Time `json:"-"`
-	Symbol       string  `json:"s"`
-	BestBidPrice float64 `json:"b,string"`
-	BestBidQty   float64 `json:"B,string"`
-	BestAskPrice float64 `json:"a,string"`
-	BestAskQty   float64 `json:"A,string"`
+	EventTime    time.Time `json:"-"`
+	ParseTime    time.Time `json:"-"`
+	Symbol       string    `json:"s"`
+	BestBidPrice float64   `json:"b,string"`
+	BestBidQty   float64   `json:"B,string"`
+	BestAskPrice float64   `json:"a,string"`
+	BestAskQty   float64   `json:"A,string"`
+}
+
+func (bt *BookTicker) GetEventTime() time.Time {
+	return bt.EventTime
+}
+
+func (bt *BookTicker) GetParseTime() time.Time {
+	return bt.ParseTime
 }
 
 func (bt *BookTicker) GetBidOffset() float64 {
-	panic("implement me")
+	return (bt.BestAskPrice - bt.BestBidPrice) * 0.5 / bt.BestBidPrice
 }
 
 func (bt *BookTicker) GetAskOffset() float64 {
-	panic("implement me")
+	return (bt.BestAskPrice - bt.BestBidPrice) * 0.5 / bt.BestAskPrice
 }
 
 func (bt *BookTicker) GetExchange() common.ExchangeID {
@@ -1068,10 +1089,6 @@ func (bt *BookTicker) GetExchange() common.ExchangeID {
 
 func (bt *BookTicker) GetSymbol() string {
 	return bt.Symbol
-}
-
-func (bt *BookTicker) GetTime() time.Time {
-	return bt.EventTime
 }
 
 func (bt *BookTicker) GetBidPrice() float64 {
@@ -1091,10 +1108,11 @@ func (bt *BookTicker) GetAskSize() float64 {
 }
 
 func (bt *BookTicker) UnmarshalJSON(data []byte) error {
+	bt.ParseTime = time.Now()
 	type Alias BookTicker
 	aux := &struct {
-		EventTime int64 `json:"E"`
-		//TransactionTime int64 `json:"T"`
+		EventType string `json:"e"`
+		EventTime int64  `json:"E"`
 		*Alias
 	}{
 		Alias: (*Alias)(bt),
@@ -1103,7 +1121,5 @@ func (bt *BookTicker) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	bt.EventTime = time.Unix(0, aux.EventTime*1000000)
-	//bt.TransactionTime = time.Unix(0, aux.TransactionTime*1000000)
 	return nil
 }
-

@@ -274,16 +274,25 @@ func (w *Depth20WS) Done() chan interface{} {
 
 func (w *Depth20WS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan<- common.Depth) {
 	logSilentTime := time.Now()
-	depth20 := &Depth20{Symbol: symbol}
 	var err error
-	var msg []byte
+	var depth20 *Depth20
+	index := -1
+	pool := [common.BufferSizeFor100msData]*Depth20{}
+	for i := 0; i < common.BufferSizeFor100msData; i++ {
+		pool[i] = &Depth20{}
+	}
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case msg = <-inputCh:
+		case msg := <-inputCh:
+			index++
+			if index == common.BufferSizeFor100msData {
+				index = 0
+			}
+			depth20 = pool[index]
 			err = ParseDepth20(msg, depth20)
 			if err != nil {
 				logger.Debugf("%s ParseDepth20 error %v %s", symbol, err, msg)

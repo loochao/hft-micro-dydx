@@ -25,6 +25,7 @@ func TestShowDydxBnufPairsAndMaxSizes(t *testing.T) {
 			maxPosSizes[xSymbol] = math.Min(xMaxPosSize, yMaxPosSize) * 0.5
 		}
 	}
+	sort.Strings(symbols)
 	fmt.Printf("\n\nxyPairs:\n")
 	for _, xSymbol := range symbols {
 		fmt.Printf("  %s: %s\n", xSymbol, symbolMap[xSymbol])

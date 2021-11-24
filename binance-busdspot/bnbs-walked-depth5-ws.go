@@ -14,13 +14,13 @@ import (
 	"time"
 )
 
-type Depth5BookTickerWS struct {
+type WalkedDepth5WS struct {
 	done        chan interface{}
 	reconnectCh chan interface{}
 	stopped     int32
 }
 
-func (w *Depth5BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *WalkedDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -78,7 +78,7 @@ func (w *Depth5BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]
 	}
 }
 
-func (w *Depth5BookTickerWS) readAll(r io.Reader) ([]byte, error) {
+func (w *WalkedDepth5WS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 512)
 	for {
 		if len(b) == cap(b) {
@@ -96,7 +96,7 @@ func (w *Depth5BookTickerWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *Depth5BookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *WalkedDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retries", wsUrl, counter)
@@ -141,8 +141,7 @@ func (w *Depth5BookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy 
 	return conn, nil
 }
 
-func (w *Depth5BookTickerWS) mainLoop(ctx context.Context, channels map[string]chan []byte, proxy string) {
-	logger.Debugf("START mainLoop")
+func (w *WalkedDepth5WS) mainLoop(ctx context.Context, channels map[string]chan []byte, proxy string) {
 	urlStr := "wss://stream.binance.com:9443/stream?streams="
 	for symbol := range channels {
 		urlStr += fmt.Sprintf(
@@ -151,13 +150,15 @@ func (w *Depth5BookTickerWS) mainLoop(ctx context.Context, channels map[string]c
 		)
 	}
 	urlStr = urlStr[:len(urlStr)-1]
-
-	ctx, cancel := context.WithCancel(ctx)
+	logger.Debugf("START mainLoop %s", urlStr)
 	var internalCtx context.Context
 	var internalCancel context.CancelFunc
 
 	defer func() {
-		cancel()
+		if internalCancel != nil {
+			internalCancel()
+			internalCancel = nil
+		}
 		w.Stop()
 		logger.Debugf("EXIT mainLoop")
 	}()
@@ -205,7 +206,7 @@ func (w *Depth5BookTickerWS) mainLoop(ctx context.Context, channels map[string]c
 	}
 }
 
-func (w *Depth5BookTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *WalkedDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("EXIT heartbeatLoop")
@@ -247,14 +248,14 @@ func (w *Depth5BookTickerWS) heartbeatLoop(ctx context.Context, conn *websocket.
 
 }
 
-func (w *Depth5BookTickerWS) Stop() {
+func (w *WalkedDepth5WS) Stop() {
 	if atomic.CompareAndSwapInt32(&w.stopped, 0, 1) {
 		close(w.done)
 		logger.Debugf("stopped")
 	}
 }
 
-func (w *Depth5BookTickerWS) restart() {
+func (w *WalkedDepth5WS) restart() {
 	select {
 	case <-w.done:
 	case w.reconnectCh <- nil:
@@ -265,54 +266,70 @@ func (w *Depth5BookTickerWS) restart() {
 	}
 }
 
-func (w *Depth5BookTickerWS) Done() chan interface{} {
+func (w *WalkedDepth5WS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *Depth5BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Ticker) {
+func (w *WalkedDepth5WS) dataHandleLoop(ctx context.Context, inputCh chan []byte, impact float64, outputCh chan common.Ticker) {
 	logSilentTime := time.Now()
 	var err error
-	var depth5 *Depth5
+	var msg []byte
+	var walkedDepth5 *common.WalkedDepth
 	index := -1
-	pool := [common.BufferSizeFor100msData]*Depth5{}
+	pool := [common.BufferSizeFor100msData]*common.WalkedDepth{}
 	for i := 0; i < common.BufferSizeFor100msData; i++ {
-		pool[i] = &Depth5{}
+		pool[i] = &common.WalkedDepth{}
 	}
+	depth5 := &Depth5{}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case msg := <-inputCh:
+		case msg = <-inputCh:
 			index++
 			if index == common.BufferSizeFor100msData {
 				index = 0
 			}
-			depth5 = pool[index]
 			err = ParseDepth5(msg, depth5)
 			if err != nil {
-				logger.Debugf("%s ParseDepth5 error %v %s", symbol, err, msg)
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("ParseDepth5 error %s %v", msg, err)
+					logSilentTime = time.Now().Add(common.LogInterval)
+				}
+				break
+			}
+			walkedDepth5 = pool[index]
+			err = common.WalkDepth(depth5, 1.0, impact, walkedDepth5)
+			if err != nil {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logger.Debugf("%s common.WalkDepth error %v %s", depth5.Symbol, err, msg)
+					logSilentTime = time.Now().Add(common.LogInterval)
+				}
 				continue
 			}
 			select {
-			case outputCh <- depth5:
+			case outputCh <- walkedDepth5:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("outputCh <- depth5 failed, %s ch len %d", symbol, len(outputCh))
-					logSilentTime = time.Now().Add(time.Minute)
+					logger.Debugf("ch <- walkedDepth5 failed ch len %d", len(outputCh))
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 			}
+			break
 		}
 	}
 }
 
-func NewDepth5BookTickerWS(
+func NewWalkedDepth5WS(
 	ctx context.Context,
 	proxy string,
+	impact float64,
 	channels map[string]chan common.Ticker,
-) *Depth5BookTickerWS {
-	ws := Depth5BookTickerWS{
+) *WalkedDepth5WS {
+	ws := WalkedDepth5WS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
 		stopped:     0,
@@ -320,7 +337,7 @@ func NewDepth5BookTickerWS(
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
 		messageChs[strings.ToLower(symbol)] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
-		go ws.dataHandleLoop(ctx, symbol, messageChs[strings.ToLower(symbol)], ch)
+		go ws.dataHandleLoop(ctx, messageChs[strings.ToLower(symbol)], impact, ch)
 	}
 	go ws.mainLoop(ctx, messageChs, proxy)
 	ws.reconnectCh <- nil

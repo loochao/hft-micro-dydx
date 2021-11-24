@@ -931,7 +931,7 @@ func (depth *Depth5) GetParseTime() time.Time {
 }
 
 func (depth *Depth5) GetBidOffset() float64 {
-	if depth.Asks[0][0] > 0 && depth.Bids[0][0] > 0 {
+	if depth.Asks[0][0] > depth.Bids[0][0] && depth.Bids[0][0] > 0 {
 		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Bids[0][0]
 	} else {
 		return common.DefaultBidAskOffset
@@ -939,12 +939,11 @@ func (depth *Depth5) GetBidOffset() float64 {
 }
 
 func (depth *Depth5) GetAskOffset() float64 {
-	if depth.Asks[0][0] > 0 && depth.Bids[0][0] > 0 {
+	if depth.Asks[0][0] > depth.Bids[0][0] && depth.Bids[0][0] > 0 {
 		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Asks[0][0]
 	} else {
 		return common.DefaultBidAskOffset
 	}
-
 }
 
 func (depth *Depth5) GetBidPrice() float64 {

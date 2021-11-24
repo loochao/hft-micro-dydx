@@ -615,7 +615,7 @@ func (depth *Depth5) GetParseTime() time.Time {
 }
 
 func (depth *Depth5) GetBidOffset() float64 {
-	if depth.Bids[0][0] != 0 {
+	if depth.Bids[0][0] > 0 && depth.Asks[0][0] > depth.Bids[0][0] {
 		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Bids[0][0]
 	} else {
 		return common.DefaultBidAskOffset
@@ -623,7 +623,7 @@ func (depth *Depth5) GetBidOffset() float64 {
 }
 
 func (depth *Depth5) GetAskOffset() float64 {
-	if depth.Asks[0][0] != 0 {
+	if depth.Bids[0][0] > 0 && depth.Asks[0][0] > depth.Bids[0][0] {
 		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Asks[0][0]
 	} else {
 		return common.DefaultBidAskOffset
@@ -838,12 +838,12 @@ type Ticker struct {
 	AskSz     float64   `json:"askSz,string"`
 	BidPx     float64   `json:"bidPx,string"`
 	BidSz     float64   `json:"bidSz,string"`
-	TS        time.Time `json:"-"`
+	EventTime time.Time `json:"-"`
 	ParseTime time.Time `json:"-"`
 }
 
 func (ticker *Ticker) GetEventTime() time.Time {
-	return ticker.TS
+	return ticker.EventTime
 }
 
 func (ticker *Ticker) GetParseTime() time.Time {
@@ -851,7 +851,7 @@ func (ticker *Ticker) GetParseTime() time.Time {
 }
 
 func (ticker *Ticker) GetBidOffset() float64 {
-	if ticker.BidPx != 0 {
+	if ticker.BidPx > 0 && ticker.AskPx > ticker.BidPx {
 		return (ticker.AskPx - ticker.BidPx) * 0.5 / ticker.BidPx
 	} else {
 		return common.DefaultBidAskOffset
@@ -859,7 +859,7 @@ func (ticker *Ticker) GetBidOffset() float64 {
 }
 
 func (ticker *Ticker) GetAskOffset() float64 {
-	if ticker.AskPx != 0 {
+	if ticker.BidPx > 0 && ticker.AskPx > ticker.BidPx {
 		return (ticker.AskPx - ticker.BidPx) * 0.5 / ticker.AskPx
 	} else {
 		return common.DefaultBidAskOffset
@@ -899,7 +899,7 @@ func (ticker *Ticker) UnmarshalJSON(data []byte) (err error) {
 		Alias: (*Alias)(ticker),
 	}
 	if err = json.Unmarshal(data, &aux); err == nil {
-		ticker.TS = time.Unix(0, aux.TS*1000000)
+		ticker.EventTime = time.Unix(0, aux.TS*1000000)
 		ticker.ParseTime = time.Now()
 	}
 	return

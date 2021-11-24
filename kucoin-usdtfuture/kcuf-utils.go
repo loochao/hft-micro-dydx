@@ -10,6 +10,7 @@ import (
 )
 
 func ParseDepth5(msg []byte, depth5 *Depth5) error {
+	depth5.ParseTime = time.Now()
 	var err error
 	//{"data":{"sequence":1617729498880,"asks":[[411.340,1295],[411.574,129],[411.593,1458],[411.617,1170],[411.640,944]],"bids":[[411.163,53],[411.162,53],[411.160,2174],[411.063,132],[411.033,2319]],"ts":1623511700678,"timestamp":1623511700678},"subject":"level2","topic":"/contractMarket/level2Depth5:KSMUSDTM","type":"message"}
 	//{"type":"message","topic":"/contractMarket/level2Depth5:GRTUSDTM","subject":"level2","data":{"sequence":1627365704601,"asks":[[0.62612,194],[0.62625,194],[0.62640,3230],[0.62655,6368],[0.62656,6300]],"bids":[[0.62580,1846],[0.62565,1087],[0.62555,1959],[0.62551,1038],[0.62550,601]],"ts":1627723139256,"timestamp":1627723139256}}
@@ -133,6 +134,7 @@ func passPhraseEncrypt(key, plain []byte) string {
 }
 
 func ParseTicker(msg []byte, ticker *Ticker) (err error) {
+	ticker.ParseTime = time.Now()
 
 	//{"data":{"symbol":"XBTUSDTM","sequence":1624824090655,"side":"buy","size":292,"price":33606,"bestBidSize":1567,"bestBidPrice":"33600.0","bestAskPrice":"33606.0","tradeId":"60e92ef53c7feb289d2b0072","ts":1625894645558931144,"bestAskSize":1819},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}
 	//{"type":"message","topic":"/contractMarket/ticker:1INCHUSDTM","subject":"ticker","data":{"symbol":"1INCHUSDTM","sequence":1627371661456,"side":"buy","size":21,"price":2.379,"bestBidSize":203,"bestBidPrice":"2.377","bestAskPrice":"2.38","tradeId":"6105178a991e1303211759d8","ts":1627723658671236584,"bestAskSize":251}}
@@ -251,7 +253,7 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 				if err != nil {
 					return
 				}
-				ticker.Timestamp = time.Unix(0, ts)
+				ticker.EventTime = time.Unix(0, ts)
 				counter++
 				break
 			}

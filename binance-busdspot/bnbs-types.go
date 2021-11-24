@@ -64,12 +64,16 @@ type Depth20 struct {
 	ParseTime    time.Time      `json:"-"`
 }
 
+func (depth Depth20) GetParseTime() time.Time {
+	return depth.ParseTime
+}
+
 func (depth Depth20) GetExchange() common.ExchangeID {
 	return ExchangeID
 }
 
-func (depth Depth20) GetBids() common.Bids { return depth.Bids[:] }
-func (depth Depth20) GetAsks() common.Asks { return depth.Asks[:] }
+func (depth Depth20) GetBids() common.Bids    { return depth.Bids[:] }
+func (depth Depth20) GetAsks() common.Asks    { return depth.Asks[:] }
 func (depth Depth20) GetSymbol() string       { return depth.Symbol }
 func (depth Depth20) GetEventTime() time.Time { return depth.ParseTime }
 func (depth *Depth20) UnmarshalJSON(data []byte) error {
@@ -535,12 +539,28 @@ type Depth5 struct {
 	ParseTime    time.Time     `json:"-"`
 }
 
+func (depth *Depth5) GetParseTime() time.Time {
+	return depth.ParseTime
+}
+
+func (depth *Depth5) GetEventTime() time.Time {
+	return depth.ParseTime
+}
+
 func (depth *Depth5) GetBidOffset() float64 {
-	panic("implement me")
+	if depth.Asks[0][0] > depth.Bids[0][0] && depth.Bids[0][0] > 0 {
+		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Bids[0][0]
+	} else {
+		return common.DefaultBidAskOffset
+	}
 }
 
 func (depth *Depth5) GetAskOffset() float64 {
-	panic("implement me")
+	if depth.Asks[0][0] > depth.Bids[0][0] && depth.Bids[0][0] > 0 {
+		return (depth.Asks[0][0] - depth.Bids[0][0]) * 0.5 / depth.Asks[0][0]
+	} else {
+		return common.DefaultBidAskOffset
+	}
 }
 
 func (depth *Depth5) GetBidPrice() float64 {
@@ -565,9 +585,9 @@ func (depth *Depth5) GetExchange() common.ExchangeID {
 
 func (depth *Depth5) GetBids() common.Bids { return depth.Bids[:] }
 func (depth *Depth5) GetAsks() common.Asks { return depth.Asks[:] }
-func (depth *Depth5) GetSymbol() string       { return depth.Symbol }
-func (depth *Depth5) GetEventTime() time.Time { return depth.ParseTime }
+func (depth *Depth5) GetSymbol() string    { return depth.Symbol }
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
+	depth.ParseTime = time.Now()
 	type Alias Depth5
 	aux := &struct {
 		Bids [5][2]string `json:"bids"`
@@ -694,16 +714,20 @@ type BookTicker struct {
 	ParseTime    time.Time `json:"-"`
 }
 
+func (bt *BookTicker) GetEventTime() time.Time {
+	return bt.ParseTime
+}
+
+func (bt *BookTicker) GetParseTime() time.Time {
+	return bt.ParseTime
+}
+
 func (bt *BookTicker) GetBidOffset() float64 {
-	panic("implement me")
+	return (bt.BestAskPrice - bt.BestBidPrice)*0.5/bt.BestBidPrice
 }
 
 func (bt *BookTicker) GetAskOffset() float64 {
-	panic("implement me")
-}
-
-func (bt *BookTicker) GetTime() time.Time {
-	return bt.ParseTime
+	return (bt.BestAskPrice - bt.BestBidPrice)*0.5/bt.BestAskPrice
 }
 
 func (bt *BookTicker) GetBidPrice() float64 {

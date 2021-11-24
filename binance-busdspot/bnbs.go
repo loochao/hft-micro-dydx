@@ -55,7 +55,7 @@ func (bn *BinanceBusdSpot) GenerateClientID() string {
 	return fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000))
 }
 
-func (bn *BinanceBusdSpot) GetMultiplier(symbol string) (float64, error) {
+func (bn *BinanceBusdSpot) GetMultiplier(_ string) (float64, error) {
 	return 1.0, nil
 }
 

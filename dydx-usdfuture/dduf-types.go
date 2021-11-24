@@ -312,9 +312,9 @@ func (o *Order) GetID() string {
 func (o *Order) GetStatus() common.OrderStatus {
 	switch o.Status {
 	case OrderStatusCanceled:
-		if o.CancelReason != nil && *o.CancelReason == "IMMEDIATE_OR_CANCEL_PARTIALLY_FILLED"{
+		if o.CancelReason != nil && *o.CancelReason == "IMMEDIATE_OR_CANCEL_PARTIALLY_FILLED" {
 			return common.OrderStatusPartiallyFilled
-		}else{
+		} else {
 			return common.OrderStatusCancelled
 		}
 	case OrderStatusFilled:
@@ -638,4 +638,94 @@ type WSUserCap struct {
 type ServerTime struct {
 	ISO   time.Time `json:"iso,string"`
 	Epoch float64   `json:"epoch,string"`
+}
+
+type User struct {
+	User struct {
+		EthereumAddress string `json:"ethereumAddress"`
+		IsRegistered    bool   `json:"isRegistered"`
+		Email           string `json:"email"`
+		Username        string `json:"username"`
+		MakerFeeRate            float64 `json:"makerFeeRate,string"`
+		TakerFeeRate            float64 `json:"takerFeeRate,string"`
+		MakerVolume30D          float64 `json:"makerVolume30D,string"`
+		TakerVolume30D          float64 `json:"takerVolume30D,string"`
+		Fees30D                 float64 `json:"fees30D,string"`
+		ReferredByAffiliateLink *string `json:"referredByAffiliateLink,omitempty"`
+		DydxTokenBalance        float64 `json:"dydxTokenBalance,string"`
+		StakedDydxTokenBalance  float64 `json:"stakedDydxTokenBalance,string"`
+		IsSharingUsername       bool    `json:"isSharingUsername"`
+		IsSharingAddress        bool    `json:"isSharingAddress"`
+		IsEmailVerified         bool    `json:"isEmailVerified"`
+		Country                 *string `json:"country,omitempty"`
+	} `json:"user"`
+	//`{
+	//  "user": {
+	//    "ethereumAddress": "0x840480f7bd95ce0c3c7c6b88dab1c2eb4381335b",
+	//    "isRegistered": false,
+	//    "email": "fund1@hehe.run",
+	//    "username": "fund1",
+	//    "userData": {
+	//      "walletType": "METAMASK",
+	//      "preferences": {
+	//        "userTradeOptions": {
+	//          "LIMIT": {
+	//            "postOnlyChecked": false,
+	//            "goodTilTimeInput": "28",
+	//            "goodTilTimeTimescale": "DAYS",
+	//            "selectedTimeInForceOption": "GTT"
+	//          },
+	//          "MARKET": {
+	//            "postOnlyChecked": false,
+	//            "goodTilTimeInput": "28",
+	//            "goodTilTimeTimescale": "DAYS",
+	//            "selectedTimeInForceOption": "GTT"
+	//          },
+	//          "lastPlacedTradeType": "MARKET"
+	//        },
+	//        "popUpNotifications": false,
+	//        "orderbookAnimations": false,
+	//        "oneTimeNotifications": [
+	//          "RANKINGS_SHOW_USERNAME"
+	//        ]
+	//      },
+	//      "notifications": {
+	//        "trade": {
+	//          "email": false
+	//        },
+	//        "deposit": {
+	//          "email": true
+	//        },
+	//        "transfer": {
+	//          "email": true
+	//        },
+	//        "marketing": {
+	//          "email": false
+	//        },
+	//        "withdrawal": {
+	//          "email": true
+	//        },
+	//        "liquidation": {
+	//          "email": false
+	//        },
+	//        "funding_payment": {
+	//          "email": false
+	//        }
+	//      },
+	//      "starredMarkets": []
+	//    },
+	//    "makerFeeRate": "0.00050",
+	//    "takerFeeRate": "0.00100",
+	//    "makerVolume30D": "0",
+	//    "takerVolume30D": "583806.1582",
+	//    "fees30D": "583.806135",
+	//    "referredByAffiliateLink": null,
+	//    "isSharingUsername": false,
+	//    "isSharingAddress": false,
+	//    "dydxTokenBalance": "0.000000000000000000",
+	//    "stakedDydxTokenBalance": "0.000000000000000000",
+	//    "isEmailVerified": true,
+	//    "country": null
+	//  }
+	//}`
 }

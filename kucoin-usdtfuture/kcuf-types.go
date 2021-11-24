@@ -137,11 +137,15 @@ func (depth *Depth50) UnmarshalJSON(data []byte) error {
 }
 
 type Depth5 struct {
-	Symbol string        `json:"-"`
-	Bids   [5][2]float64 `json:"bids,omitempty"`
-	Asks   [5][2]float64 `json:"asks,omitempty"`
-	//Sequence  int64         `json:"sequence"`
-	EventTime time.Time `json:"-"`
+	Symbol    string        `json:"-"`
+	Bids      [5][2]float64 `json:"bids,omitempty"`
+	Asks      [5][2]float64 `json:"asks,omitempty"`
+	EventTime time.Time     `json:"-"`
+	ParseTime time.Time     `json:"-"`
+}
+
+func (depth *Depth5) GetParseTime() time.Time {
+	return depth.ParseTime
 }
 
 func (depth *Depth5) GetBidOffset() float64 {
@@ -204,6 +208,7 @@ func (depth *Depth5) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	depth.EventTime = time.Unix(0, aux.EventTime*1000000)
+	depth.ParseTime = time.Now()
 	return nil
 }
 
@@ -882,31 +887,36 @@ type Ticker struct {
 	BestBidPrice float64   `json:"bestBidPrice,string"`
 	BestAskSize  float64   `json:"bestAskSize"`
 	BestAskPrice float64   `json:"bestAskPrice,string"`
-	Timestamp    time.Time `json:"-"`
+	EventTime    time.Time `json:"-"`
+	ParseTime    time.Time `json:"-"`
+}
+
+func (ticker *Ticker) GetEventTime() time.Time {
+	return ticker.EventTime
+}
+
+func (ticker *Ticker) GetParseTime() time.Time {
+	return ticker.ParseTime
 }
 
 func (ticker *Ticker) GetBidOffset() float64 {
-	if ticker.BestBidPrice != 0 {
-		return (ticker.BestAskPrice - ticker.BestBidPrice)*0.5/ticker.BestBidPrice
-	}else{
+	if ticker.BestBidPrice > 0 && ticker.BestAskPrice > ticker.BestBidPrice {
+		return (ticker.BestAskPrice - ticker.BestBidPrice) * 0.5 / ticker.BestBidPrice
+	} else {
 		return common.DefaultBidAskOffset
 	}
 }
 
 func (ticker *Ticker) GetAskOffset() float64 {
-	if ticker.BestAskPrice != 0 {
-		return (ticker.BestAskPrice - ticker.BestBidPrice)*0.5/ticker.BestAskPrice
-	}else{
+	if ticker.BestBidPrice > 0 && ticker.BestAskPrice > ticker.BestBidPrice {
+		return (ticker.BestAskPrice - ticker.BestBidPrice) * 0.5 / ticker.BestAskPrice
+	} else {
 		return common.DefaultBidAskOffset
 	}
 }
 
 func (ticker *Ticker) GetSymbol() string {
 	return ticker.Symbol
-}
-
-func (ticker *Ticker) GetTime() time.Time {
-	return ticker.Timestamp
 }
 
 func (ticker *Ticker) GetBidPrice() float64 {
@@ -941,6 +951,7 @@ func (ticker *Ticker) UnmarshalJSON(data []byte) error {
 		logger.Debugf("json.Unmarshal error %v", err)
 		return err
 	}
-	ticker.Timestamp = time.Unix(0, aux.Timestamp)
+	ticker.EventTime = time.Unix(0, aux.Timestamp)
+	ticker.ParseTime = time.Now()
 	return nil
 }

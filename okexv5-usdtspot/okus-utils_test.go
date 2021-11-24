@@ -56,7 +56,7 @@ func TestParseTicker(t *testing.T) {
 	assert.Equal(t, tickers[0].AskSz, ticker.AskSz)
 	assert.Equal(t, tickers[0].BidPx, ticker.BidPx)
 	assert.Equal(t, tickers[0].AskPx, ticker.AskPx)
-	assert.Equal(t, tickers[0].TS.Sub(ticker.TS), time.Duration(0))
+	assert.Equal(t, tickers[0].EventTime.Sub(ticker.EventTime), time.Duration(0))
 }
 
 func TestParseTrade(t *testing.T) {

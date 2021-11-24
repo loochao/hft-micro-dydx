@@ -75,6 +75,16 @@ func main() {
 	fmt.Printf("本期手续费\t%.0f USDC / %.0f USDC\n", rw.Fees.FeesPaid, rw.Fees.TotalFeesPaid)
 	fmt.Printf("本期权重\t%.8f / %.8f\n", rw.Weight.Weight, rw.Weight.TotalWeight)
 	fmt.Printf("DYDX奖励\t%.2f DYDX / %.0f DYDX\n", rw.EstimatedRewards, rw.TotalRewards)
+	fmt.Printf("\n")
+	user, err := api.GetUsers(ctx)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	fmt.Printf("吃单费率\t%.4f\n", user.User.TakerFeeRate)
+	fmt.Printf("挂单费率\t%.4f\n", user.User.MakerFeeRate)
+	fmt.Printf("30天手续费\t%.0f\n", user.User.Fees30D)
+	fmt.Printf("30天交易量\t%.0f\n", user.User.TakerVolume30D+user.User.MakerVolume30D)
+	fmt.Printf("DYDX持有量\t%.2f\n", user.User.DydxTokenBalance)
 	fmt.Printf("\n\n")
 }
 

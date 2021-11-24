@@ -1,0 +1,69 @@
+{
+  "user": {
+    "ethereumAddress": "0x840480f7bd95ce0c3c7c6b88dab1c2eb4381335b",
+    "isRegistered": false,
+    "email": "fund1@hehe.run",
+    "username": "fund1",
+    "userData": {
+      "walletType": "METAMASK",
+      "preferences": {
+        "userTradeOptions": {
+          "LIMIT": {
+            "postOnlyChecked": false,
+            "goodTilTimeInput": "28",
+            "goodTilTimeTimescale": "DAYS",
+            "selectedTimeInForceOption": "GTT"
+          },
+          "MARKET": {
+            "postOnlyChecked": false,
+            "goodTilTimeInput": "28",
+            "goodTilTimeTimescale": "DAYS",
+            "selectedTimeInForceOption": "GTT"
+          },
+          "lastPlacedTradeType": "MARKET"
+        },
+        "popUpNotifications": false,
+        "orderbookAnimations": false,
+        "oneTimeNotifications": [
+          "RANKINGS_SHOW_USERNAME"
+        ]
+      },
+      "notifications": {
+        "trade": {
+          "email": false
+        },
+        "deposit": {
+          "email": true
+        },
+        "transfer": {
+          "email": true
+        },
+        "marketing": {
+          "email": false
+        },
+        "withdrawal": {
+          "email": true
+        },
+        "liquidation": {
+          "email": false
+        },
+        "funding_payment": {
+          "email": false
+        }
+      },
+      "starredMarkets": []
+    },
+    "makerFeeRate": "0.00050",
+    "takerFeeRate": "0.00100",
+    "makerVolume30D": "0",
+    "takerVolume30D": "583806.1582",
+    "fees30D": "583.806135",
+    "referredByAffiliateLink": null,
+    "isSharingUsername": false,
+    "isSharingAddress": false,
+    "dydxTokenBalance": "0.000000000000000000",
+    "stakedDydxTokenBalance": "0.000000000000000000",
+    "isEmailVerified": true,
+    "country": null
+  }
+}

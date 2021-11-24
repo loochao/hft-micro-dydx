@@ -167,6 +167,17 @@ func (api *API) GetAccounts(ctx context.Context) ([]Account, error) {
 	)
 }
 
+func (api *API) GetUsers(ctx context.Context) (*User, error) {
+	ar := &User{}
+	return ar, api.SendAuthenticatedHTTPRequest(
+		ctx,
+		http.MethodGet,
+		"/v3/users",
+		nil,
+		nil,
+		ar,
+	)
+}
 
 
 func (api *API) GetAccount(ctx context.Context) (*Account, error) {

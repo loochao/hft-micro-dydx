@@ -7,6 +7,7 @@ import (
 )
 
 func ParseDepth5(msg []byte, depth5 *Depth5) (err error) {
+	depth5.ParseTime = time.Now()
 	//{"arg":{"channel":"books5","instId":"DOGE-USDT"},"data":[{"asks":[["0.257659","0.000011","0","1"],["0.257744","1380","0","1"],["0.257749","300","0","1"],["0.257769","1942.701948","0","1"],["0.25777","1000","0","1"]],"bids":[["0.257634","949.769316","0","1"],["0.257633","1380","0","1"],["0.257627","20250","0","1"],["0.25762","2929.149403","0","1"],["0.257614","5350","0","1"]],"instId":"DOGE-USDT","ts":"1636741161692"}]}
 	msgLen := len(msg)
 	if msgLen < 128 {
@@ -75,7 +76,6 @@ func ParseDepth5(msg []byte, depth5 *Depth5) (err error) {
 				if err == nil {
 					depth5.EventTime = time.Unix(0, t*1000000)
 				}
-				depth5.ParseTime = time.Now()
 				return
 			}
 			break
@@ -92,6 +92,7 @@ func ParseDepth5(msg []byte, depth5 *Depth5) (err error) {
 }
 
 func ParseTicker(msg []byte, ticker *Ticker) (err error) {
+	ticker.ParseTime = time.Now()
 	//{"arg":{"channel":"tickers","instId":"DOGE-USDT"},"data":[{"instType":"SPOT","instId":"DOGE-USDT","last":"0.254381","lastSz":"600","askPx":"0.254381","askSz":"1400","bidPx":"0.25438","bidSz":"400","open24h":"0.263668","high24h":"0.268614","low24h":"0.248601","sodUtc0":"0.260658","sodUtc8":"0.253989","volCcy24h":"125310776.54685","vol24h":"486148293.462458","ts":"1636737706397"}]}
 	bytesLen := len(msg)
 	if bytesLen < 128 {
@@ -130,7 +131,7 @@ func ParseTicker(msg []byte, ticker *Ticker) (err error) {
 				var t int64
 				t, err = common.ParseInt(msg[collectStart:offset])
 				if err == nil {
-					ticker.TS = time.Unix(0, t*1000000)
+					ticker.EventTime = time.Unix(0, t*1000000)
 				}
 				return
 			}

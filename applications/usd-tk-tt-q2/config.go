@@ -83,15 +83,17 @@ type Config struct {
 	XYTimeDeltaQuantileBot float64 `yaml:"xyTimeDeltaQuantileBot"`
 
 	//MinimalEnterFundingRate float64             `yaml:"minimalEnterFundingRate"`
-	FundingRateOffsetMin   float64             `yaml:"fundingRateOffsetMin"`
-	FundingRateOffsetMax   float64             `yaml:"fundingRateOffsetMax"`
-	XFundingRateEaseFnName string              `yaml:"xFundingRateEaseFnName"`
-	XFundingRateEaseFn     common.EaseFunction `yaml:"-"`
-	YFundingRateEaseFnName string              `yaml:"yFundingRateEaseFnName"`
-	YFundingRateEaseFn     common.EaseFunction `yaml:"-"`
-	FundingRateSilentTime  time.Duration       `yaml:"fundingRateSilentTime"`
-	XFundingRateWeight     float64             `yaml:"xFundingRateWeight"`
-	YFundingRateWeight     float64             `yaml:"yFundingRateWeight"`
+	FundingRateOpenShortMin float64             `yaml:"fundingRateOpenShortMin"`
+	FundingRateOpenLongMax  float64             `yaml:"fundingRateOpenLongMax"`
+	FundingRateOffsetMin    float64             `yaml:"fundingRateOffsetMin"`
+	FundingRateOffsetMax    float64             `yaml:"fundingRateOffsetMax"`
+	XFundingRateEaseFnName  string              `yaml:"xFundingRateEaseFnName"`
+	XFundingRateEaseFn      common.EaseFunction `yaml:"-"`
+	YFundingRateEaseFnName  string              `yaml:"yFundingRateEaseFnName"`
+	YFundingRateEaseFn      common.EaseFunction `yaml:"-"`
+	FundingRateSilentTime   time.Duration       `yaml:"fundingRateSilentTime"`
+	XFundingRateWeight      float64             `yaml:"xFundingRateWeight"`
+	YFundingRateWeight      float64             `yaml:"yFundingRateWeight"`
 
 	XFundingRateInterval   time.Duration `yaml:"xFundingRateInterval"`
 	YFundingRateInterval   time.Duration `yaml:"yFundingRateInterval"`

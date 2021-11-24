@@ -44,6 +44,8 @@ func (strat *XYStrategy) handleXOrder() {
 			strat.xPositionUpdateTime = time.Unix(0, 0)
 			strat.xOrderSilentTime = time.Now()
 		} else {
+			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			logger.Debugf("%10s x order filled %s %s size %f price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice()*strat.xMultiplier)
 			strat.realisedSpreadTimer.Reset(time.Second * 5)
 			if strat.xOrder.GetSide() == common.OrderSideBuy {

@@ -10,6 +10,7 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"testing"
 	"time"
@@ -36,50 +37,60 @@ func TestAPI_GetExchangeInfo(t *testing.T) {
 	stepPrecisions := make(map[string]int)
 	maxPosValues := make(map[string]float64)
 
+	symbols := make([]string, 0)
 	for _, market := range markets {
 		if market.Type != "PERPETUAL" || market.Status != "ONLINE" {
 			continue
 		}
+		symbols = append(symbols, market.Market)
 		tickSizes[market.Market] = market.TickSize
 		tickPrecisions[market.Market] = common.GetFloatPrecision(market.TickSize)
 		stepSizes[market.Market] = market.StepSize
 		minSizes[market.Market] = market.MinOrderSize
 		maxPosSizes[market.Market] = market.MaxPositionSize
 		stepPrecisions[market.Market] = common.GetFloatPrecision(market.StepSize)
-		maxPosValues[market.Market] = math.Floor(market.MaxPositionSize*market.IndexPrice/10000)*10000
+		maxPosValues[market.Market] = math.Floor(market.MaxPositionSize*market.IndexPrice/10000) * 10000
 	}
 	str := "var TickSizes = map[string]float64{\n"
-	for symbol, value := range tickSizes {
+	sort.Strings(symbols)
+	for _, symbol := range symbols {
+		value := tickSizes[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var StepSizes = map[string]float64{\n"
-	for symbol, value := range stepSizes {
+	for _, symbol := range symbols {
+		value := stepSizes[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var MinSizes = map[string]float64{\n"
-	for symbol, value := range minSizes {
+	for _, symbol := range symbols {
+		value := minSizes[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var TickPrecisions = map[string]int{\n"
-	for symbol, value := range tickPrecisions {
+	for _, symbol := range symbols {
+		value := tickPrecisions[symbol]
 		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
 	}
 	str += "}\n\n"
 	str += "var StepPrecisions = map[string]int{\n"
-	for symbol, value := range stepPrecisions {
+	for _, symbol := range symbols {
+		value := stepPrecisions[symbol]
 		str += fmt.Sprintf("  \"%s\": %d,\n", symbol, value)
 	}
 	str += "}\n\n"
 	str += "var MaxPosSizes = map[string]float64{\n"
-	for symbol, value := range maxPosSizes {
+	for _, symbol := range symbols {
+		value := maxPosSizes[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
 	str += "var MaxPosValues = map[string]float64{\n"
-	for symbol, value := range maxPosValues {
+	for _, symbol := range symbols {
+		value := maxPosValues[symbol]
 		str += fmt.Sprintf("  \"%s\": %s,\n", symbol, strconv.FormatFloat(value, 'f', -1, 64))
 	}
 	str += "}\n\n"
@@ -191,15 +202,33 @@ func TestAPI_CreateOrders(t *testing.T) {
 	ctx := context.Background()
 	account, err := api.CreateOrder(ctx, &NewOrderParams{
 		PositionID: "119684",
-		Market: "BTC-USD",
-		Type: OrderTypeLimit,
-		Side: OrderSideBuy,
-		PostOnly: true,
-		LimitFee: 0.001,
-		Price: 54000,
-		Size: 0.001,
+		Market:     "BTC-USD",
+		Type:       OrderTypeLimit,
+		Side:       OrderSideBuy,
+		PostOnly:   true,
+		LimitFee:   0.001,
+		Price:      54000,
+		Size:       0.001,
 		Expiration: time.Now().UTC().Add(time.Hour).Format(TimeLayout),
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%v", account)
+}
+
+func TestAPI_GetUsers(t *testing.T) {
+	api, err := NewAPI(Credentials{
+		ApiKey:        os.Getenv("DYDX_TEST_KEY"),
+		ApiSecret:     os.Getenv("DYDX_TEST_SECRET"),
+		ApiPassphrase: os.Getenv("DYDX_TEST_PASSPHRASE"),
+		AccountID:     os.Getenv("DYDX_TEST_ACCOUNT_ID"),
+	}, os.Getenv("DYDX_TEST_PROXY"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	account, err := api.GetUsers(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}

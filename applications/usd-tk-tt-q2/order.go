@@ -314,7 +314,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.tdSpreadMiddle < strat.config.SpreadMiddleMax &&
 		strat.spreadMedianShort > strat.thresholdShortTop &&
 		strat.spreadLastShort > strat.spreadMedianShort &&
-		//*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
+		*strat.xyFundingRate > strat.config.FundingRateOpenShortMin &&
 		xSize > -strat.xMinSize*strat.xMultiplier &&
 		strat.xAccount.GetFree() > strat.config.MinXFree &&
 		strat.yAccount.GetFree() > strat.config.MinYFree &&
@@ -446,7 +446,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.tdSpreadMiddle < strat.config.SpreadMiddleMax &&
 		strat.spreadMedianLong < strat.thresholdLongBot &&
 		strat.spreadLastLong < strat.spreadMedianLong &&
-		//*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
+		*strat.xyFundingRate < strat.config.FundingRateOpenLongMax &&
 		xSize < strat.xMinSize*strat.xMultiplier &&
 		strat.xAccount.GetFree() > strat.config.MinXFree &&
 		strat.yAccount.GetFree() > strat.config.MinYFree &&

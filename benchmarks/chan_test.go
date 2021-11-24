@@ -13,7 +13,7 @@ func TestChanDefaultLen(t *testing.T) {
 		delta := time.Duration(0)
 		for {
 			select {
-			case <- done:
+			case <-done:
 				logger.Debugf("%d", delta.Nanoseconds()/100000)
 				return
 			case t := <-ch:
@@ -35,7 +35,7 @@ func TestChanDefaultLen1(t *testing.T) {
 		delta := time.Duration(0)
 		for {
 			select {
-			case <- done:
+			case <-done:
 				logger.Debugf("%d", delta.Nanoseconds()/100000)
 				return
 			case t := <-ch:
@@ -57,7 +57,7 @@ func TestChanDefaultLen128(t *testing.T) {
 		delta := time.Duration(0)
 		for {
 			select {
-			case <- done:
+			case <-done:
 				logger.Debugf("%d", delta.Nanoseconds()/100000)
 				return
 			case t := <-ch:
@@ -80,7 +80,7 @@ func BenchmarkChanDefaultLen(b *testing.B) {
 		defer logger.Debugf("%v", delta)
 		for {
 			select {
-			case <- done:
+			case <-done:
 				return
 			case t := <-ch:
 				delta += time.Now().Sub(t)
@@ -117,5 +117,48 @@ func BenchmarkChanLen128(b *testing.B) {
 	}()
 	for i := 0; i < b.N; i++ {
 		ch <- 0
+	}
+}
+
+func BenchmarkSyncChan(b *testing.B) {
+	ch := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ch:
+			}
+		}
+	}()
+	for i := 0; i < b.N; i++ {
+		ch <- struct{}{}
+	}
+}
+
+func BenchmarkAsyncChan(b *testing.B) {
+	ch := make(chan struct{}, 1)
+	go func() {
+		for {
+			select {
+			case <-ch:
+			}
+		}
+	}()
+	for i := 0; i < b.N; i++ {
+		ch <- struct{}{}
+	}
+}
+
+
+func BenchmarkAsyncSemaphoreChan(b *testing.B) {
+	ch := make(chan struct{}, 0)
+	go func() {
+		for {
+			select {
+			case <-ch:
+			}
+		}
+	}()
+	for i := 0; i < b.N; i++ {
+		ch <- struct{}{}
 	}
 }
