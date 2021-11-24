@@ -215,7 +215,7 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.yTicker.GetAskPrice(),
 				strat.tdSpreadEnterOffset,
 				strat.tdSpreadExitOffset,
-				*strat.xFundingRateFactor,
+				*strat.xyFundingRate,
 			)
 		}
 	} else if strat.spreadMedianShort > strat.thresholdLongTop &&
@@ -305,7 +305,7 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.yTicker.GetAskPrice(),
 				strat.tdSpreadEnterOffset,
 				strat.tdSpreadExitOffset,
-				*strat.xFundingRateFactor,
+				*strat.xyFundingRate,
 			)
 		}
 	} else if !strat.reduceOnly &&
@@ -438,7 +438,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.yTicker.GetAskPrice(),
 			strat.tdSpreadEnterOffset,
 			strat.tdSpreadExitOffset,
-			*strat.xFundingRateFactor,
+			*strat.xyFundingRate,
 		)
 	} else if !strat.reduceOnly &&
 		!strat.isXSpot &&
@@ -571,7 +571,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.yTicker.GetAskPrice(),
 			strat.tdSpreadEnterOffset,
 			strat.tdSpreadExitOffset,
-			*strat.xFundingRateFactor,
+			*strat.xyFundingRate,
 		)
 
 	}
