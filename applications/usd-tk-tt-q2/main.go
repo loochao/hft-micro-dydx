@@ -7,6 +7,8 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	dduf "github.com/geometrybase/hft-micro/dydx-usdfuture"
 	"github.com/geometrybase/hft-micro/logger"
+	okexv5_usdtspot "github.com/geometrybase/hft-micro/okexv5-usdtspot"
+	okexv5_usdtswap "github.com/geometrybase/hft-micro/okexv5-usdtswap"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"math"
@@ -84,10 +86,10 @@ func main() {
 	}
 
 	switch xyConfig.XExchange.Name {
-	//case "okexV5UsdtSpot":
-	//	xExchange = &okexv5_usdtspot.OkexV5UsdtSpot{}
-	//case "okexV5UsdtSwap":
-	//	xExchange = &okexv5_usdtswap.OkexV5UsdtSwap{}
+	case "okexV5UsdtSpot":
+		xExchange = &okexv5_usdtspot.OkexV5UsdtSpot{}
+	case "okexV5UsdtSwap":
+		xExchange = &okexv5_usdtswap.OkexV5UsdtSwap{}
 	case "dydxUsdFuture":
 		xExchange = &dduf.DydxUsdFuture{}
 		break
@@ -145,10 +147,10 @@ func main() {
 	}
 
 	switch xyConfig.YExchange.Name {
-	//case "okexV5UsdtSpot":
-	//	yExchange = &okexv5_usdtspot.OkexV5UsdtSpot{}
-	//case "okexV5UsdtSwap":
-	//	yExchange = &okexv5_usdtswap.OkexV5UsdtSwap{}
+	case "okexV5UsdtSpot":
+		yExchange = &okexv5_usdtspot.OkexV5UsdtSpot{}
+	case "okexV5UsdtSwap":
+		yExchange = &okexv5_usdtswap.OkexV5UsdtSwap{}
 	case "dydxUsdFuture":
 		yExchange = &dduf.DydxUsdFuture{}
 		break
