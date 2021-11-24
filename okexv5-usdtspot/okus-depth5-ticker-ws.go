@@ -95,30 +95,30 @@ func (w *DepthTicker5WS) readLoop(conn *websocket.Conn, channels map[string]chan
 			return
 		}
 		msgLen = len(msg)
-		if  msgLen > 128 && msg[2] == 'a' && msg[36] == '"'{
+		if msgLen > 128 && msg[2] == 'a' && msg[36] == '"' {
 			//{"arg":{"channel":"books5","instId":"DOGE-USDT"},"data":[{"asks":[["0.257659","0.000011","0","1"],["0.257744","1380","0","1"],["0.257749","300","0","1"],["0.257769","1942.701948","0","1"],["0.25777","1000","0","1"]],"bids":[["0.257634","949.769316","0","1"],["0.257633","1380","0","1"],["0.257627","20250","0","1"],["0.25762","2929.149403","0","1"],["0.257614","5350","0","1"]],"instId":"DOGE-USDT","ts":"1636741161692"}]}
 			if msg[45] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:45])
 				msgCut = 58
-			}else if msg[44] == '"' {
+			} else if msg[44] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:44])
 				msgCut = 57
-			}else if msg[46] == '"' {
+			} else if msg[46] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:46])
 				msgCut = 59
-			}else if msg[47] == '"' {
+			} else if msg[47] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:47])
 				msgCut = 60
-			}else if msg[48] == '"' {
+			} else if msg[48] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:48])
 				msgCut = 61
-			}else if msg[49] == '"' {
+			} else if msg[49] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:49])
 				msgCut = 62
-			}else if msg[50] == '"' {
+			} else if msg[50] == '"' {
 				symbol = common.UnsafeBytesToString(msg[37:50])
 				msgCut = 63
-			}else{
+			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("symbol not found for %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
@@ -135,7 +135,7 @@ func (w *DepthTicker5WS) readLoop(conn *websocket.Conn, channels map[string]chan
 				}
 			}
 			continue
-		} else{
+		} else {
 			//if time.Now().Sub(logSilentTime) > 0 {
 			//	logger.Debugf("MGS %s", msg)
 			//	logSilentTime = time.Now().Add(time.Minute)
@@ -195,13 +195,13 @@ func (w *DepthTicker5WS) reconnect(ctx context.Context, wsUrl string, proxy stri
 			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:            http.ProxyURL(proxyUrl),
-			HandshakeTimeout: 60 * time.Second,
+			Proxy:             http.ProxyURL(proxyUrl),
+			HandshakeTimeout:  60 * time.Second,
 			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
 			EnableCompression: true,
 		}
 	}
@@ -338,7 +338,7 @@ func (w *DepthTicker5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn
 				if time.Now().Sub(updateTime) > symbolTimeout {
 					args = append(args, WsArgs{
 						Channel: "books5",
-						InstId: symbol,
+						InstId:  symbol,
 					})
 					symbolUpdatedTimes[symbol] = time.Now().Add(symbolTimeout)
 				}
@@ -391,8 +391,8 @@ func (w *DepthTicker5WS) dataHandleLoop(ctx context.Context, symbol string, inpu
 	var err error
 	var depth5 *Depth5
 	index := -1
-	pool := [4]*Depth5{}
-	for i := 0; i < 4; i++ {
+	pool := [common.BufferSizeFor100msData]*Depth5{}
+	for i := 0; i < common.BufferSizeFor100msData; i++ {
 		pool[i] = &Depth5{}
 	}
 	for {
@@ -403,7 +403,7 @@ func (w *DepthTicker5WS) dataHandleLoop(ctx context.Context, symbol string, inpu
 			return
 		case msg := <-inputCh:
 			index++
-			if index == 4 {
+			if index == common.BufferSizeFor100msData {
 				index = 0
 			}
 			depth5 = pool[index]
@@ -431,15 +431,15 @@ func NewDepth5TickerWS(
 ) *DepthTicker5WS {
 	ws := DepthTicker5WS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 4),
-		writeCh:     make(chan interface{}, len(channels)),
-		symbolCh:    make(chan string, len(channels)),
-		pingCh:      make(chan []byte, 4),
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
+		writeCh:     make(chan interface{}, len(channels)*common.ChannelSizeLowLoad),
+		symbolCh:    make(chan string, len(channels)*common.ChannelSizeLowLoad),
+		pingCh:      make(chan []byte, common.ChannelSizeLowLoad),
 		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[symbol] = make(chan []byte, 4)
+		messageChs[symbol] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[symbol], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messageChs)

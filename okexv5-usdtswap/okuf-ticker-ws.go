@@ -398,9 +398,8 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	var err error
 	var ticker *Ticker
 	index := -1
-	const bufferSize = 64
-	pool := [bufferSize]*Ticker{}
-	for i := 0; i < bufferSize; i++ {
+	pool := [common.BufferSizeForRealTimeData]*Ticker{}
+	for i := 0; i < common.BufferSizeForRealTimeData; i++ {
 		pool[i] = &Ticker{}
 	}
 	for {
@@ -411,7 +410,7 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 			return
 		case msg := <-inputCh:
 			index++
-			if index == bufferSize {
+			if index == common.BufferSizeForRealTimeData {
 				index = 0
 			}
 			ticker = pool[index]
@@ -439,15 +438,15 @@ func NewTickerWS(
 ) *TickerWS {
 	ws := TickerWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 16),
-		writeCh:     make(chan interface{}, len(channels)*4),
-		symbolCh:    make(chan string, len(channels)*16),
-		pingCh:      make(chan []byte, 16),
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
+		writeCh:     make(chan interface{}, len(channels)*common.ChannelSizeLowLoad),
+		symbolCh:    make(chan string, len(channels)*common.ChannelSizeLowLoad),
+		pingCh:      make(chan []byte, common.ChannelSizeLowLoad),
 		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[symbol] = make(chan []byte, 4)
+		messageChs[symbol] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[symbol], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messageChs)

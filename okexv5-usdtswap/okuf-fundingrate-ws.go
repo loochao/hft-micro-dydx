@@ -397,12 +397,11 @@ func (w *FundingRateWS) Done() chan interface{} {
 
 func (w *FundingRateWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.FundingRate) {
 	logSilentTime := time.Now()
-	const bufferSize = 64
 	var err error
 	var fr *FundingRate
 	index := -1
-	pool := [bufferSize]*FundingRate{}
-	for i := 0; i < bufferSize; i++ {
+	pool := [common.BufferSizeFor100msData]*FundingRate{}
+	for i := 0; i < common.BufferSizeFor100msData; i++ {
 		pool[i] = &FundingRate{}
 	}
 	for {
@@ -413,7 +412,7 @@ func (w *FundingRateWS) dataHandleLoop(ctx context.Context, symbol string, input
 			return
 		case msg := <-inputCh:
 			index++
-			if index == bufferSize {
+			if index == common.BufferSizeFor100msData {
 				index = 0
 			}
 			fr = pool[index]
@@ -441,15 +440,15 @@ func NewFundingRateWS(
 ) *FundingRateWS {
 	ws := FundingRateWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 16),
-		writeCh:     make(chan interface{}, len(channels)*4),
-		symbolCh:    make(chan string, len(channels)*16),
-		pingCh:      make(chan []byte, 16),
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
+		writeCh:     make(chan interface{}, len(channels)*common.ChannelSizeLowLoad),
+		symbolCh:    make(chan string, len(channels)*common.ChannelSizeLowLoad),
+		pingCh:      make(chan []byte, common.ChannelSizeLowLoad),
 		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[symbol] = make(chan []byte, 4)
+		messageChs[symbol] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[symbol], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messageChs)
