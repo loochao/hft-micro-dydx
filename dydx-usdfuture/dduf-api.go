@@ -52,7 +52,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, path string, params common.
 	if err != nil {
 		return err
 	}
-	logger.Debugf("%s", contents)
+	//logger.Debugf("%s", contents)
 	var errCap common.ErrorCap
 	if err := json.Unmarshal(contents, &errCap); err == nil {
 		if errCap.Code != 0 && errCap.Code != 200 {

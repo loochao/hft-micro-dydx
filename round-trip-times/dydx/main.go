@@ -35,6 +35,9 @@ func main() {
 		panic(err)
 	}
 	std, err := stats.StandardDeviation(rtts)
+	if err != nil {
+		panic(err)
+	}
 	fmt.Printf("\n\n")
 	fmt.Printf("RTT MEAN=%.4fms STD=%.4fms", mean, std)
 	fmt.Printf("\n\n")
