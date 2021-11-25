@@ -21,6 +21,7 @@ chmod 755 "./dist/rtt-bnuf.arm64.$dt"
 
 rsync -avx --progress "./dist/rtt-bnuf.arm64.$dt" tka1:/usr/local/bin/
 rsync -avx --progress "./dist/rtt-bnuf.arm64.$dt" tka2:/usr/local/bin/
+rsync -avx --progress "./dist/rtt-bnuf.arm64.$dt" tka3:/usr/local/bin/
 #rsync -avx --progress "./dist/rtt-bnuf.arm64.$dt" way:/usr/local/bin/
 #rsync -avx --progress "./dist/rtt-bnuf.amd64.$dt" way:/usr/local/bin/
 #
