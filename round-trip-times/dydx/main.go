@@ -34,10 +34,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	std, err := stats.StandardDeviation(rtts)
-	if err != nil {
-		panic(err)
-	}
 	median, err := stats.Median(rtts)
 	if err != nil {
 		panic(err)
@@ -46,11 +42,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	min, err := stats.Max(rtts)
+	min, err := stats.Min(rtts)
+	if err != nil {
+		panic(err)
+	}
+	std, err := stats.StandardDeviation(rtts)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("\n\n")
-	fmt.Printf("DYDX RTT MEAN=%.4fms STD=%.4fms MEDIAN=%.4fms MIN=%.4fms MAX=%.4fms", mean, std, median, min, max)
+	fmt.Printf("DYDX RTT MEAN=%.4f MEDIAN=%.4f MIN=%.4f MAX=%.4f STD=%.4f", mean, median, min, max, std)
 	fmt.Printf("\n\n")
 }
