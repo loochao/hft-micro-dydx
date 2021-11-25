@@ -78,10 +78,10 @@ func (w *Depth5BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]
 				select {
 				case ch <- msg:
 				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
+					//if time.Now().Sub(logSilentTime) > 0 {
+					//	logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
+					//	logSilentTime = time.Now().Add(time.Minute)
+					//}
 				}
 			}
 		}
