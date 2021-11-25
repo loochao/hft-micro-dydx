@@ -66,18 +66,18 @@ func startXYStrategy(
 		SpreadTDSubInterval: config.SpreadTDSubInterval,
 		SpreadTDCompression: config.SpreadTDCompression,
 
-		XTimeDeltaQuantileBot: config.XTimeDeltaQuantileBot,
-		XTimeDeltaQuantileTop: config.XTimeDeltaQuantileTop,
-		YTimeDeltaQuantileBot: config.YTimeDeltaQuantileBot,
-		YTimeDeltaQuantileTop: config.YTimeDeltaQuantileTop,
+		XTimeDeltaQuantileBot:  config.XTimeDeltaQuantileBot,
+		XTimeDeltaQuantileTop:  config.XTimeDeltaQuantileTop,
+		YTimeDeltaQuantileBot:  config.YTimeDeltaQuantileBot,
+		YTimeDeltaQuantileTop:  config.YTimeDeltaQuantileTop,
 		XYTimeDeltaQuantileBot: config.XYTimeDeltaQuantileBot,
 		XYTimeDeltaQuantileTop: config.XYTimeDeltaQuantileTop,
 
-		XLiquidityQuantile:    config.XLiquidityQuantile,
-		YLiquidityQuantile:    config.YLiquidityQuantile,
+		XLiquidityQuantile: config.XLiquidityQuantile,
+		YLiquidityQuantile: config.YLiquidityQuantile,
 
-		XOffsetQuantile:      config.XOffsetQuantile,
-		YOffsetQuantile:      config.YOffsetQuantile,
+		XOffsetQuantile: config.XOffsetQuantile,
+		YOffsetQuantile: config.YOffsetQuantile,
 
 		SpreadLongEnterQuantileBot:  config.SpreadLongEnterQuantileBot,
 		SpreadLongLeaveQuantileTop:  config.SpreadLongLeaveQuantileTop,
@@ -441,14 +441,16 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 				}
 				logger.Debugf("%10s x position change %f -> %f %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
 				strat.xPosition = nextPos
-				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
+				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 ||
+					strat.config.HedgeDelay == 0 {
 					strat.hedgeYPosition()
 				} else {
 					strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
 				}
 			} else {
 				strat.xPosition = nextPos
-				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
+				if time.Now().Sub(strat.hedgeCheckStopTime) > 0 ||
+					strat.config.HedgeDelay == 0 {
 					strat.hedgeYPosition()
 				} else {
 					strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
