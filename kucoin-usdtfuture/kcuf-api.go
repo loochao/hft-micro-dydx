@@ -191,6 +191,11 @@ func (api *API) GetPublicConnectToken(ctx context.Context) (*ConnectToken, error
 	return pct, api.SendHTTPRequest(ctx, http.MethodPost, "/api/v1/bullet-public", nil, pct)
 }
 
+func (api *API) GetServerTime(ctx context.Context) (*int64, error) {
+	t := new(int64)
+	return t, api.SendHTTPRequest(ctx, http.MethodGet, "/api/v1/timestamp", nil, t)
+}
+
 func (api *API) GetSystemStatus(ctx context.Context) (*SystemStatus, error) {
 	pct := &SystemStatus{}
 	return pct, api.SendHTTPRequest(ctx, http.MethodGet, "/api/v1/status", nil, pct)

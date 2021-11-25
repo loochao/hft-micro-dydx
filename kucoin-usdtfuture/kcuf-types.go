@@ -824,6 +824,7 @@ type SystemStatus struct {
 	Status string `json:"status"`
 }
 
+
 type MatchWS struct {
 	Data    Match  `json:"data"`
 	Topic   string `json:"topic"`
