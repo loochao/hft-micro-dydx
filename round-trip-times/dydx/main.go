@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	dydx_usdfuture "github.com/geometrybase/hft-micro/dydx-usdfuture"
+	"github.com/montanaflynn/stats"
 	"time"
 )
 
@@ -13,8 +14,8 @@ func main() {
 		panic(err)
 	}
 
-	totalTime := time.Duration(0)
 	counter := 0
+	rtts := make([]float64, 0)
 	for counter < 100 {
 		counter++
 		startTime := time.Now()
@@ -24,12 +25,17 @@ func main() {
 		} else {
 			diff := time.Now().Sub(startTime)
 			fmt.Printf("%2d %v\n", counter, diff)
-			totalTime += diff
+			rtts = append(rtts, diff.Seconds()*1000)
 			counter++
 		}
 		time.Sleep(time.Second)
 	}
+	mean, err := stats.Mean(rtts)
+	if err != nil {
+		panic(err)
+	}
+	std, err := stats.StandardDeviation(rtts)
 	fmt.Printf("\n\n")
-	fmt.Printf("RTT %dus", totalTime/time.Duration(counter)/time.Microsecond)
+	fmt.Printf("RTT MEAN=%.4fms STD=%.4fms", mean, std)
 	fmt.Printf("\n\n")
 }
