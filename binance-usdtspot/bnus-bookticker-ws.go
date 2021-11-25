@@ -60,7 +60,7 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 				continue
 			}
@@ -70,7 +70,7 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
-						logSilentTime = time.Now().Add(time.Minute)
+						logSilentTime = time.Now().Add(common.LogInterval * 2)
 					}
 				}
 			}
@@ -274,13 +274,11 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 	var err error
 	var ticker *BookTicker
 	index := -1
-	pool := [4]*BookTicker{}
-	for i := 0; i < 4; i++ {
+	pool := [common.BufferSizeForRealTimeData]*BookTicker{}
+	for i := 0; i < common.BufferSizeForRealTimeData; i++ {
 		pool[i] = &BookTicker{}
 	}
 	var msg []byte
-	var parseTimer = time.NewTimer(time.Hour * 9999)
-	defer parseTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -288,11 +286,8 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 		case <-w.done:
 			return
 		case msg = <-inputCh:
-			parseTimer.Reset(time.Millisecond)
-			break
-		case <-parseTimer.C:
 			index++
-			if index == 4 {
+			if index == common.BufferSizeForRealTimeData {
 				index = 0
 			}
 			ticker = pool[index]
@@ -306,7 +301,7 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("outputCh <- ticker failed, %s ch len %d", symbol, len(outputCh))
-					logSilentTime = time.Now().Add(time.Minute)
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 			}
 			break
@@ -321,12 +316,12 @@ func NewBookTickerWS(
 ) *BookTickerWS {
 	ws := BookTickerWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 4),
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
 		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[strings.ToLower(symbol)] = make(chan []byte, 64)
+		messageChs[strings.ToLower(symbol)] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[strings.ToLower(symbol)], ch)
 	}
 	go ws.mainLoop(ctx, messageChs, proxy)

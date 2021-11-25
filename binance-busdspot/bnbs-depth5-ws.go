@@ -301,7 +301,7 @@ func (w *Depth5WS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("outputCh <- depth5 failed, %s ch len %d", symbol, len(outputCh))
-					logSilentTime = time.Now().Add(time.Minute)
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 			}
 		}

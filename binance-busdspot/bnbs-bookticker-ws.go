@@ -60,7 +60,7 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 				continue
 			}
@@ -70,7 +70,7 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
-						logSilentTime = time.Now().Add(time.Minute)
+						logSilentTime = time.Now().Add(common.LogSlowInterval)
 					}
 				}
 			}
@@ -278,8 +278,6 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 	for i := 0; i < common.BufferSizeForRealTimeData; i++ {
 		pool[i] = &BookTicker{}
 	}
-	var parseTimer = time.NewTimer(time.Hour * 9999)
-	defer parseTimer.Stop()
 	var msg []byte
 	for {
 		select {
@@ -287,7 +285,7 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 			return
 		case <-w.done:
 			return
-		case <-parseTimer.C:
+		case msg = <-inputCh:
 			index++
 			if index == common.BufferSizeForRealTimeData {
 				index = 0
@@ -303,12 +301,9 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, inputC
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("outputCh <- ticker failed, %s ch len %d", symbol, len(outputCh))
-					logSilentTime = time.Now().Add(time.Minute)
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 			}
-			break
-		case msg = <-inputCh:
-			parseTimer.Reset(time.Millisecond)
 			break
 		}
 	}

@@ -274,13 +274,13 @@ func (w *Depth20WS) Done() chan interface{} {
 
 func (w *Depth20WS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan<- common.Depth) {
 	logSilentTime := time.Now()
-	var err error
-	var depth20 *Depth20
 	index := -1
 	pool := [common.BufferSizeFor100msData]*Depth20{}
 	for i := 0; i < common.BufferSizeFor100msData; i++ {
 		pool[i] = &Depth20{}
 	}
+	var depth20 *Depth20
+	var err error
 	for {
 		select {
 		case <-ctx.Done():
@@ -303,7 +303,7 @@ func (w *Depth20WS) dataHandleLoop(ctx context.Context, symbol string, inputCh c
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("outputCh <- depth20 failed, %s ch len %d", symbol, len(outputCh))
-					logSilentTime = time.Now().Add(time.Minute)
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 			}
 		}
@@ -317,13 +317,13 @@ func NewDepth20WS(
 ) *Depth20WS {
 	ws := Depth20WS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 1000),
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
 		stopped:     false,
 		mu:          sync.Mutex{},
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[strings.ToLower(symbol)] = make(chan []byte, 128)
+		messageChs[strings.ToLower(symbol)] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[strings.ToLower(symbol)], ch)
 	}
 	go ws.mainLoop(ctx,  messageChs, proxy)

@@ -300,7 +300,7 @@ func (w *Depth5BookTickerWS) dataHandleLoop(ctx context.Context, symbol string, 
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("outputCh <- depth5 failed, %s ch len %d", symbol, len(outputCh))
-					logSilentTime = time.Now().Add(time.Minute)
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 			}
 		}

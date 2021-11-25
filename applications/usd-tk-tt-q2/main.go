@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"flag"
+	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
+	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	dduf "github.com/geometrybase/hft-micro/dydx-usdfuture"
 	kucoin_usdtfuture "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
@@ -101,6 +103,13 @@ func main() {
 		xExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
 		break
 
+	case "binanceUsdtSpotWithMergedTicker":
+		xExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
+		break
+	case "binanceBusdSpotWithMergedTicker":
+		xExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
+		break
+
 	case "okexV5UsdtSpotWithWalkedDepth5":
 		xExchange = &okexv5_usdtspot.OkexV5UsdtSpotWithWalkedDepth5{}
 		break
@@ -131,17 +140,11 @@ func main() {
 	//case "binanceUsdtSpot":
 	//	xExchange = &bnus.BinanceUsdtSpot{}
 	//	break
-	//case "binanceUsdtSpotWithMergedTicker":
-	//	xExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
-	//	break
 	//case "binanceTusdSpotWithMergedTicker":
 	//	xExchange = &binance_tusdspot.BinanceTusdSpotWithMergedTicker{}
 	//	break
 	//case "binanceBusdSpot":
 	//	xExchange = &bnbs.BinanceBusdSpot{}
-	//	break
-	//case "binanceBusdSpotWithMergedTicker":
-	//	xExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
 	//	break
 	//case "binanceUsdcSpotWithMergedTicker":
 	//	xExchange = &bncs.BinanceUsdcSpotWithMergedTicker{}
@@ -173,6 +176,13 @@ func main() {
 		break
 	case "binanceUsdtFutureWithMergedTicker":
 		yExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
+		break
+
+	case "binanceUsdtSpotWithMergedTicker":
+		yExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
+		break
+	case "binanceBusdSpotWithMergedTicker":
+		yExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
 		break
 
 	case "okexV5UsdtSpotWithWalkedDepth5":

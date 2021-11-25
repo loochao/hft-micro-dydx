@@ -25,7 +25,9 @@ const (
 	ChannelSizeHighLoad             = 128
 	ChannelSizeLowDropRatio         = 256
 
-	LogInterval     = time.Minute
-	LogFastInterval = time.Second * 15
-	LogSlowInterval = time.Minute * 5
+	LogInterval         = time.Minute
+	LogSlowInterval     = time.Minute * 2
+	LogVerySlowInterval = time.Minute * 5
+	LogFastInterval     = time.Second * 15
+	LogVeryFastInterval = time.Second * 5
 )
