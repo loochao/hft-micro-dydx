@@ -194,7 +194,9 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.yLastFilledBuyPrice = nil
 			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+			if strat.config.HedgeDelay > 0 {
+				strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+			}
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
 			strat.referenceSpread = strat.thresholdShortBot
@@ -282,7 +284,9 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.yLastFilledBuyPrice = nil
 			strat.yLastFilledSellPrice = nil
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+			if strat.config.HedgeDelay > 0 {
+				strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+			}
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
 			strat.referenceSpread = strat.thresholdLongTop
@@ -414,7 +418,9 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-		strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+		if strat.config.HedgeDelay > 0 {
+			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+		}
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
 		strat.referenceSpread = strat.thresholdShortTop
@@ -546,7 +552,9 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.yLastFilledBuyPrice = nil
 		strat.yLastFilledSellPrice = nil
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
-		strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+		if strat.config.HedgeDelay > 0 {
+			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+		}
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
 		strat.referenceSpread = strat.thresholdLongBot
