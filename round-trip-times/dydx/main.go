@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	dydx_usdfuture "github.com/geometrybase/hft-micro/dydx-usdfuture"
-	"github.com/geometrybase/hft-micro/logger"
 	"time"
 )
 
@@ -21,11 +20,14 @@ func main() {
 		startTime := time.Now()
 		_, err = api.GetServerTime(context.Background())
 		if err != nil {
-			logger.Debugf("%v", err)
-		}else{
-			totalTime += time.Now().Sub(startTime)
-			counter ++
+			fmt.Printf("error %v", err)
+		} else {
+			diff := time.Now().Sub(startTime)
+			fmt.Printf("%2d %v\n", counter, diff)
+			totalTime += diff
+			counter++
 		}
+		time.Sleep(time.Second)
 	}
 	fmt.Printf("\n\n")
 	fmt.Printf("RTT %dus", totalTime/time.Duration(counter)/time.Microsecond)

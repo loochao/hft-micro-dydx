@@ -1,7 +1,9 @@
 package main
 
-import "github.com/geometrybase/hft-micro/logger"
+import (
+	"fmt"
+)
 
 func init() {
-	logger.Debug("####  BUILD @ 20211125 08:15:40  ####")
+	fmt.Printf("####  BUILD @ 20211125 08:17:47  ####\n")
 }
