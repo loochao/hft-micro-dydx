@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
+	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
 	dydx_usdfuture "github.com/geometrybase/hft-micro/dydx-usdfuture"
 	kucoin_usdtfuture "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	okexv5_usdtspot "github.com/geometrybase/hft-micro/okexv5-usdtspot"
@@ -77,7 +78,30 @@ func TestShowOkufKcufPairsAndMaxSizes(t *testing.T) {
 		if ok1 && ok2 {
 			symbols = append(symbols, xSymbol)
 			symbolMap[xSymbol] = ySymbol
-			maxPosSizes[xSymbol] =  yMaxPosSize * okexv5_usdtswap.Multipliers[ySymbol] * 0.25
+			maxPosSizes[xSymbol] = yMaxPosSize * okexv5_usdtswap.Multipliers[ySymbol] * 0.25
+		}
+	}
+	sort.Strings(symbols)
+	fmt.Printf("\n\nxyPairs:\n")
+	for _, xSymbol := range symbols {
+		fmt.Printf("  %s: %s\n", xSymbol, symbolMap[xSymbol])
+	}
+	fmt.Printf("\n\nmaxPosSizes:\n")
+	for _, xSymbol := range symbols {
+		fmt.Printf("  %s: %.0f\n", xSymbol, maxPosSizes[xSymbol])
+	}
+}
+
+func TestShowBnusBnufPairsAndMaxSizes(t *testing.T) {
+	symbolMap := make(map[string]string)
+	maxPosSizes := make(map[string]float64)
+	symbols := make([]string, 0)
+	for xSymbol := range binance_usdtspot.TickSizes {
+		ySymbol := strings.Replace(xSymbol, "USDT", "USDT", -1)
+		if yMaxPosSize, ok := binance_usdtfuture.MaxPosSizes[ySymbol]; ok {
+			symbols = append(symbols, xSymbol)
+			symbolMap[xSymbol] = ySymbol
+			maxPosSizes[xSymbol] = yMaxPosSize * 0.5
 		}
 	}
 	sort.Strings(symbols)

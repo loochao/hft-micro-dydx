@@ -124,12 +124,14 @@ func (w *WalkedDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy stri
 			return nil, fmt.Errorf("url.Parse error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:            http.ProxyURL(proxyUrl),
-			HandshakeTimeout: 60 * time.Second,
+			Proxy:             http.ProxyURL(proxyUrl),
+			HandshakeTimeout:  60 * time.Second,
+			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
+			EnableCompression: true,
 		}
 	}
 	conn, _, err := dialer.DialContext(

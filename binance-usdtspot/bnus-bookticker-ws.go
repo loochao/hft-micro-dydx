@@ -57,6 +57,16 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 				symbol = common.UnsafeBytesToString(msg[11:21])
 			} else if msg[17] == '@' {
 				symbol = common.UnsafeBytesToString(msg[11:17])
+			} else if msg[22] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:22])
+			} else if msg[23] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:23])
+			} else if msg[24] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:24])
+			} else if msg[25] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:25])
+			} else if msg[26] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:26])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
@@ -112,10 +122,12 @@ func (w *BookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string
 		dialer = &websocket.Dialer{
 			Proxy:            http.ProxyURL(proxyUrl),
 			HandshakeTimeout: 60 * time.Second,
+			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
 			HandshakeTimeout: 10 * time.Second,
+			EnableCompression: true,
 		}
 	}
 	conn, _, err := dialer.DialContext(

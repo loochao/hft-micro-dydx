@@ -58,8 +58,18 @@ func (w *Depth20WS) readLoop(conn *websocket.Conn, channels map[string]chan []by
 				symbol = common.UnsafeBytesToString(msg[11:21])
 			} else if msg[17] == '@' {
 				symbol = common.UnsafeBytesToString(msg[11:17])
-			}else{
-				if time.Now().Sub(logSilentTime)> 0 {
+			} else if msg[22] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:22])
+			} else if msg[23] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:23])
+			} else if msg[24] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:24])
+			} else if msg[25] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:25])
+			} else if msg[26] == '@' {
+				symbol = common.UnsafeBytesToString(msg[11:26])
+			} else {
+				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("other msg %s", msg)
 					logSilentTime = time.Now().Add(time.Minute)
 				}
@@ -111,12 +121,14 @@ func (w *Depth20WS) reconnect(ctx context.Context, wsUrl string, proxy string, c
 			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:            http.ProxyURL(proxyUrl),
-			HandshakeTimeout: 60 * time.Second,
+			Proxy:             http.ProxyURL(proxyUrl),
+			HandshakeTimeout:  60 * time.Second,
+			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
+			EnableCompression: true,
 		}
 	}
 	conn, _, err := dialer.DialContext(
@@ -327,7 +339,7 @@ func NewDepth20WS(
 		messageChs[strings.ToLower(symbol)] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[strings.ToLower(symbol)], ch)
 	}
-	go ws.mainLoop(ctx,  messageChs, proxy)
+	go ws.mainLoop(ctx, messageChs, proxy)
 	ws.reconnectCh <- nil
 	return &ws
 }

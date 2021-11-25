@@ -153,12 +153,14 @@ func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy strin
 			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:            http.ProxyURL(proxyUrl),
-			HandshakeTimeout: 60 * time.Second,
+			Proxy:             http.ProxyURL(proxyUrl),
+			HandshakeTimeout:  60 * time.Second,
+			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
+			EnableCompression: true,
 		}
 	}
 	conn, _, err := dialer.DialContext(
@@ -200,7 +202,7 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, urlStr string, proxy strin
 	defer reconnectTimer.Stop()
 	for {
 		select {
-		case <- w.done:
+		case <-w.done:
 			if internalCancel != nil {
 				internalCancel()
 				internalCancel = nil
@@ -232,7 +234,7 @@ func (w *UserWebsocket) mainLoop(ctx context.Context, urlStr string, proxy strin
 			}
 			go w.readLoop(conn)
 			go w.heartbeatLoop(internalCtx, conn)
-			reconnectTimer.Reset(time.Hour*9999)
+			reconnectTimer.Reset(time.Hour * 9999)
 		}
 	}
 }

@@ -83,7 +83,7 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
-					logSilentTime = time.Now().Add(common.LogInterval*5)
+					logSilentTime = time.Now().Add(common.LogInterval * 5)
 				}
 			}
 		}
@@ -122,12 +122,14 @@ func (w *BookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string
 			return nil, fmt.Errorf("url.Parse error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:            http.ProxyURL(proxyUrl),
-			HandshakeTimeout: 60 * time.Second,
+			Proxy:             http.ProxyURL(proxyUrl),
+			HandshakeTimeout:  60 * time.Second,
+			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
+			EnableCompression: true,
 		}
 	}
 	conn, _, err := dialer.DialContext(
