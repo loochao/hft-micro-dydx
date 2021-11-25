@@ -415,7 +415,7 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 	//	strat.targetWeight.Load(),
 	//	strat.enterTarget,
 	//)
-	strat.usdAvailable = math.Min(strat.xAccount.GetFree()*strat.xLeverage, strat.yAccount.GetFree()*strat.yLeverage)
+	strat.usdAvailable = math.Min(strat.xAccount.GetFree()*strat.xLeverage, strat.yAccount.GetFree()/strat.config.HedgeRatio*strat.yLeverage)
 }
 
 func (strat *XYStrategy) handleXPosition(nextPos common.Position) {

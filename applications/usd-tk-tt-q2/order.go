@@ -24,19 +24,19 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xyFundingRate == nil ||
 		strat.xFundingRateFactor == nil ||
 		strat.enterTarget == 0 {
-		if time.Now().Sub(strat.logSilentTime) > 0 {
-			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-			//logger.Debugf("%s %v %v %v %v %v %v %v",
-			//	strat.xSymbol,
-			//	strat.spreadReady,
-			//	!strat.targetWeightUpdated.True(),
-			//	strat.xPosition == nil,
-			//	strat.yPosition == nil,
-			//	strat.xyFundingRate == nil,
-			//	strat.xFundingRateFactor == nil,
-			//	strat.enterTarget == 0,
-			//)
-		}
+		//if time.Now().Sub(strat.logSilentTime) > 0 {
+		//strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+		//logger.Debugf("%s %v %v %v %v %v %v %v",
+		//	strat.xSymbol,
+		//	strat.spreadReady,
+		//	!strat.targetWeightUpdated.True(),
+		//	strat.xPosition == nil,
+		//	strat.yPosition == nil,
+		//	strat.xyFundingRate == nil,
+		//	strat.xFundingRateFactor == nil,
+		//	strat.enterTarget == 0,
+		//)
+		//}
 		return
 	}
 
@@ -58,7 +58,7 @@ func (strat *XYStrategy) updateXPosition() {
 	yAbsValue := math.Abs(yValue)
 	xyMidPrice := (strat.xMidPrice + strat.yMidPrice) * 0.5
 
-	strat.offsetFactor = (xAbsValue + yAbsValue) * 0.5 / strat.enterTarget
+	strat.offsetFactor = (xAbsValue + yAbsValue/strat.config.HedgeRatio) * 0.5 / strat.enterTarget
 	strat.offsetStep = math.Min(strat.enterStep/strat.enterTarget, strat.offsetFactor)
 	if strat.offsetFactor > 1.0 {
 		strat.offsetFactor = 1.0
@@ -112,7 +112,7 @@ func (strat *XYStrategy) updateXPosition() {
 		return
 	}
 
-	if math.Abs(xSize+ySize)*xyMidPrice > strat.enterStep*0.8 {
+	if math.Abs(xSize+ySize/strat.config.HedgeRatio)*xyMidPrice > strat.enterStep*0.8 {
 		if time.Now().Sub(strat.logSilentTime) > 0 {
 			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 			logger.Debugf(
@@ -130,7 +130,7 @@ func (strat *XYStrategy) updateXPosition() {
 	if strat.spreadMedianLong < strat.thresholdShortBot &&
 		strat.spreadLastLong < strat.spreadMedianLong &&
 		xSize >= strat.xMinSize*strat.xMultiplier {
-		strat.enterValue = math.Min(math.Max(4*strat.enterStep, xAbsValue*0.5), math.Min(xAbsValue, yAbsValue))
+		strat.enterValue = math.Min(math.Max(4*strat.enterStep, xAbsValue*0.5), math.Min(xAbsValue, yAbsValue/strat.config.HedgeRatio))
 
 		//两步，第一步看x的分布，用一个td之后的bidSize, 第二步不能超过y的td之后askSize的流动性
 		tdXBidValue := strat.stats.XBidSize.Load() * strat.xMultiplier * xyMidPrice
@@ -222,7 +222,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.spreadLastShort > strat.spreadMedianShort &&
 		xSize <= -strat.xMinSize*strat.xMultiplier {
 
-		strat.enterValue = math.Min(math.Max(4*strat.enterStep, xAbsValue*0.5), math.Min(xAbsValue, yAbsValue))
+		strat.enterValue = math.Min(math.Max(4*strat.enterStep, xAbsValue*0.5), math.Min(xAbsValue, yAbsValue/strat.config.HedgeRatio))
 
 		//两步，第一步看x的分布，用一个td之后的askSize, 第二步不能超过y的td之后bidSize的流动性
 		tdXAskValue := strat.stats.XAskSize.Load() * strat.xMultiplier * xyMidPrice
@@ -241,8 +241,6 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 
 		if strat.config.BestSizeFactor > 0 {
-			//限开仓大小限制到best bid ask size
-			//xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 			xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 		}
 
@@ -322,11 +320,11 @@ func (strat *XYStrategy) updateXPosition() {
 		xAbsValue < strat.maxPosValue &&
 		yAbsValue < strat.maxPosValue {
 
-		strat.targetValue = math.Max(xAbsValue, yAbsValue) + strat.enterStep
+		strat.targetValue = math.Max(xAbsValue, yAbsValue/strat.config.HedgeRatio) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
 			strat.targetValue = strat.enterTarget
 		}
-		strat.enterValue = strat.targetValue - math.Max(xAbsValue, yAbsValue)
+		strat.enterValue = strat.targetValue - math.Max(xAbsValue, yAbsValue/strat.config.HedgeRatio)
 		if strat.enterValue < 0 {
 			//超过最大仓位了, 不操作
 			strat.hedgeXPosition()
@@ -349,7 +347,6 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 
 		if strat.config.BestSizeFactor > 0 {
-			//xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 			xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 		}
 
@@ -454,11 +451,11 @@ func (strat *XYStrategy) updateXPosition() {
 		xAbsValue < strat.maxPosValue &&
 		yAbsValue < strat.maxPosValue {
 
-		strat.targetValue = math.Max(xAbsValue, yAbsValue) + strat.enterStep
+		strat.targetValue = math.Max(xAbsValue, yAbsValue/strat.config.HedgeRatio) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
 			strat.targetValue = strat.enterTarget
 		}
-		strat.enterValue = strat.targetValue - math.Max(xAbsValue, yAbsValue)
+		strat.enterValue = strat.targetValue - math.Max(xAbsValue, yAbsValue/strat.config.HedgeRatio)
 		if strat.enterValue < 0 {
 			//超过最大仓位了, 不操作
 			strat.hedgeXPosition()
@@ -482,7 +479,6 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 
 		if strat.config.BestSizeFactor > 0 {
-			//xSizeDiff = math.Min(strat.xTicker.GetBidSize()*strat.xMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 			xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 		}
 
@@ -583,11 +579,11 @@ func (strat *XYStrategy) hedgeXPosition() {
 	if time.Now().Sub(strat.lastEnterTime) > strat.config.XEnterTimeout {
 
 		//如果已经没有信号对冲，重新检查x y的仓位，对冲较小的
-		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) < math.Abs(strat.yPosition.GetSize()*strat.yMultiplier) {
+		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) < math.Abs(strat.yPosition.GetSize()*strat.yMultiplier/strat.config.HedgeRatio) {
 			//X的size比Y小，不用操作X
 			return
 		}
-		xSizeDiff := -strat.yPosition.GetSize()*strat.yMultiplier/strat.xMultiplier - strat.xPosition.GetSize()
+		xSizeDiff := -strat.yPosition.GetSize()*strat.yMultiplier/strat.config.HedgeRatio/strat.xMultiplier - strat.xPosition.GetSize()
 
 		//下单也加上控制，以防下单太大，造成市场冲击
 		if strat.stats.Ready.True() {
@@ -621,7 +617,7 @@ func (strat *XYStrategy) hedgeXPosition() {
 				return
 			}
 		} else {
-			//期货以close仓位，没有minNotional限制
+			//期货可以close仓位，没有minNotional限制
 			if math.Abs(xSizeDiff) < strat.xStepSize {
 				return
 			} else if xSizeDiff < 0 && strat.xPosition.GetSize() <= 0 && -xSizeDiff*strat.xMultiplier*strat.xTicker.GetBidPrice() < 1.2*strat.xMinNotional {
@@ -707,14 +703,14 @@ func (strat *XYStrategy) hedgeYPosition() {
 	}
 	var ySizeDiff float64
 	if time.Now().Sub(strat.lastEnterTime) < strat.config.XEnterTimeout {
-		ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
+		ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier*strat.config.HedgeRatio/strat.yMultiplier - strat.yPosition.GetSize()
 	} else {
 		//其他时间对冲小的size, 防止出现一边爆仓的情况
-		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) > math.Abs(strat.yPosition.GetSize()*strat.yMultiplier) {
+		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) > math.Abs(strat.yPosition.GetSize()*strat.yMultiplier/strat.config.HedgeRatio) {
 			//Y的size比X小，不用操作Y
 			return
 		} else {
-			ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier/strat.yMultiplier - strat.yPosition.GetSize()
+			ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier*strat.config.HedgeRatio/strat.yMultiplier - strat.yPosition.GetSize()
 		}
 	}
 	if math.Abs(ySizeDiff) < strat.yStepSize {

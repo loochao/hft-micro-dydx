@@ -82,7 +82,6 @@ type Config struct {
 	XYTimeDeltaQuantileTop float64 `yaml:"xyTimeDeltaQuantileTop"`
 	XYTimeDeltaQuantileBot float64 `yaml:"xyTimeDeltaQuantileBot"`
 
-	//MinimalEnterFundingRate float64             `yaml:"minimalEnterFundingRate"`
 	FundingRateOpenShortMin float64             `yaml:"fundingRateOpenShortMin"`
 	FundingRateOpenLongMax  float64             `yaml:"fundingRateOpenLongMax"`
 	FundingRateOffsetMin    float64             `yaml:"fundingRateOffsetMin"`
@@ -113,6 +112,7 @@ type Config struct {
 	YOrderSilent           time.Duration           `yaml:"yOrderSilent"`
 	XEnterTimeout          time.Duration           `yaml:"xEnterTimeout"`
 	XEnterSilent           time.Duration           `yaml:"xEnterSilent"`
+	HedgeRatio             float64                 `yaml:"hedgeRatio"`
 	HedgeDelay             time.Duration           `yaml:"hedgeDelay"`
 	HedgeCheckDuration     time.Duration           `yaml:"hedgeCheckDuration"`
 	HedgeCheckInterval     time.Duration           `yaml:"hedgeCheckInterval"`
