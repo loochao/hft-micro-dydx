@@ -25,7 +25,7 @@ func main() {
 			fmt.Printf("error %v", err)
 		} else {
 			diff := time.Now().Sub(startTime)
-			fmt.Printf("BNUS %2d %v\n", counter, diff)
+			fmt.Printf("BNUF %2d %v\n", counter, diff)
 			rtts = append(rtts, diff.Seconds()*1000)
 			counter++
 		}
@@ -53,7 +53,7 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("\n\n")
-	fmt.Printf("BNUS RTT MEAN=%.4f MEDIAN=%.4f MIN=%.4f MAX=%.4f STD=%.4f", mean, median, min, max, std)
+	fmt.Printf("BNUF RTT MEAN=%.4f MEDIAN=%.4f MIN=%.4f MAX=%.4f STD=%.4f", mean, median, min, max, std)
 	fmt.Printf("\n\n")
 }
 
