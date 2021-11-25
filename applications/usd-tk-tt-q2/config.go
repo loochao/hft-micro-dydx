@@ -343,5 +343,8 @@ func (config *Config) SetDefaultIfNotSet() error {
 	if config.YOrderTimeInForce == "" {
 		config.YOrderTimeInForce = common.OrderTimeInForceIOC
 	}
+	if config.HedgeRatio == 0 {
+		config.HedgeRatio = 1.0
+	}
 	return nil
 }
