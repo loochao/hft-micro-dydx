@@ -637,7 +637,7 @@ type WSUserCap struct {
 //}
 type ServerTime struct {
 	ISO   time.Time `json:"iso,string"`
-	Epoch float64   `json:"epoch,string"`
+	Epoch float64   `json:"epoch"`
 }
 
 type User struct {
