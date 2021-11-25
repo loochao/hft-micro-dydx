@@ -15,7 +15,7 @@ git tag "rtt-dydx.$dt"
 git push origin "rtt-dydx.$dt" --force
 
 env GOOS=linux GOARCH=arm64 go build -o "./dist/rtt-dydx.arm64.$dt" ./round-trip-times/dydx
-env GOOS=linux GOARCH=arm64 go build -o "./dist/rtt-dydx.amd64.$dt" ./round-trip-times/dydx
+env GOOS=linux GOARCH=amd64 go build -o "./dist/rtt-dydx.amd64.$dt" ./round-trip-times/dydx
 
 chmod 755 "./dist/rtt-dydx.arm64.$dt"
 
