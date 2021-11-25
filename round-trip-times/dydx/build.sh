@@ -23,4 +23,5 @@ rsync -avx --progress "./dist/rtt-dydx.arm64.$dt" way:/usr/local/bin/
 
 ssh way "rsync -avx --progress /usr/local/bin/rtt-dydx.arm64.$dt nv1:/usr/local/bin/"
 ssh way "rsync -avx --progress /usr/local/bin/rtt-dydx.arm64.$dt nv2:/usr/local/bin/"
+ssh way "rsync -avx --progress /usr/local/bin/rtt-dydx.arm64.$dt arm1:/usr/local/bin/"
 
