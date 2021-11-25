@@ -25,6 +25,7 @@ func handleSave(
 		return
 	}
 	totalUnHedgeValue := 0.0
+	totalRiskExposure := 0.0
 	totalXSymbolValue := 0.0
 	totalYSymbolValue := 0.0
 	yURPnl := 0.0
@@ -99,7 +100,9 @@ func handleSave(
 			yAbsValue := math.Abs(yValue)
 			xyMidPrice := (strat.xMidPrice + strat.yMidPrice) * 0.5
 
-			unHedgeValue := math.Abs(xSize+ySize) * xyMidPrice
+			riskExposure := (xSize+ySize) * xyMidPrice
+			totalRiskExposure += riskExposure
+			unHedgeValue := math.Abs(riskExposure)
 			totalUnHedgeValue += unHedgeValue
 			totalXSymbolValue += xAbsValue
 			totalYSymbolValue += yAbsValue
@@ -108,6 +111,7 @@ func handleSave(
 			yTradeVolume += strat.yTimedPositionChange.Sum()
 
 			fields["unHedgeValue"] = unHedgeValue
+			fields["riskExposure"] = riskExposure
 			fields["xSize"] = xSize
 			fields["xAbsValue"] = xAbsValue
 			fields["xValue"] = xValue
@@ -284,6 +288,7 @@ func handleSave(
 		netWorth := totalBalance / xyConfig.StartValue
 		fields := make(map[string]interface{})
 		fields["totalUnHedgeValue"] = totalUnHedgeValue
+		fields["totalRiskExposure"] = totalRiskExposure
 		fields["totalBalance"] = totalBalance
 		fields["xCommissionAssetValue"] = *xCommissionAssetValue
 		fields["yCommissionAssetValue"] = *yCommissionAssetValue
