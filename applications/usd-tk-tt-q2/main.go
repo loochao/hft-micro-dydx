@@ -6,6 +6,7 @@ import (
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
 	dduf "github.com/geometrybase/hft-micro/dydx-usdfuture"
+	kucoin_usdtfuture "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	okexv5_usdtspot "github.com/geometrybase/hft-micro/okexv5-usdtspot"
 	okexv5_usdtswap "github.com/geometrybase/hft-micro/okexv5-usdtswap"
@@ -99,6 +100,19 @@ func main() {
 	case "binanceUsdtFutureWithMergedTicker":
 		xExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
 		break
+
+	case "okexV5UsdtSpotWithWalkedDepth5":
+		xExchange = &okexv5_usdtspot.OkexV5UsdtSpotWithWalkedDepth5{}
+		break
+	case "okexV5UsdtSwapWithWalkedDepth5":
+		xExchange = &okexv5_usdtswap.OkexV5UsdtSwapWithWalkedDepth5{}
+		break
+	case "kucoinUsdtFutureWithWalkedDepth5":
+		xExchange = &kucoin_usdtfuture.KucoinUsdtFutureWithWalkedDepth5{}
+		break
+	case "binanceUsdtFutureWithWalkedDepth5":
+		xExchange = &bnuf.BinanceUsdtFutureWithWalkedDepth5{}
+		break
 	//case "ftxUsdFuture":
 	//	xExchange = &ftxuf.FtxUsdFuture{}
 	//	break
@@ -159,6 +173,19 @@ func main() {
 		break
 	case "binanceUsdtFutureWithMergedTicker":
 		yExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
+		break
+
+	case "okexV5UsdtSpotWithWalkedDepth5":
+		yExchange = &okexv5_usdtspot.OkexV5UsdtSpotWithWalkedDepth5{}
+		break
+	case "okexV5UsdtSwapWithWalkedDepth5":
+		yExchange = &okexv5_usdtswap.OkexV5UsdtSwapWithWalkedDepth5{}
+		break
+	case "kucoinUsdtFutureWithWalkedDepth5":
+		yExchange = &kucoin_usdtfuture.KucoinUsdtFutureWithWalkedDepth5{}
+		break
+	case "binanceUsdtFutureWithWalkedDepth5":
+		yExchange = &bnuf.BinanceUsdtFutureWithWalkedDepth5{}
 		break
 	//case "ftxUsdFuture":
 	//	yExchange = &ftxuf.FtxUsdFuture{}
