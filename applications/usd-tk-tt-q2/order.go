@@ -196,6 +196,8 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			if strat.config.HedgeDelay > 0 {
 				strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+			}else{
+				strat.hedgeCheckTimer.Reset(strat.config.HedgeCheckInterval)
 			}
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
@@ -286,6 +288,8 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			if strat.config.HedgeDelay > 0 {
 				strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+			}else{
+				strat.hedgeCheckTimer.Reset(strat.config.HedgeCheckInterval)
 			}
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 			strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
@@ -420,6 +424,8 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		if strat.config.HedgeDelay > 0 {
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+		}else{
+			strat.hedgeCheckTimer.Reset(strat.config.HedgeCheckInterval)
 		}
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
@@ -554,6 +560,8 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		if strat.config.HedgeDelay > 0 {
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+		}else{
+			strat.hedgeCheckTimer.Reset(strat.config.HedgeCheckInterval)
 		}
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
 		strat.lastEnterTime = strat.spreadTickerTime.Add(strat.config.XOrderSilent)
