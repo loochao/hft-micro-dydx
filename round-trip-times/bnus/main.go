@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
+	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/montanaflynn/stats"
 	"time"
 )
 
 func main() {
-	api, err := binance_usdtspot.NewAPI(&common.Credentials{}, "")
+	api, err := binance_usdtfuture.NewAPI(&common.Credentials{}, "")
 	if err != nil {
 		panic(err)
 	}
@@ -20,12 +20,12 @@ func main() {
 	for counter < 100 {
 		counter++
 		startTime := time.Now()
-		_, err = api.PingServer(context.Background())
+		_, err = api.GetServerTime(context.Background())
 		if err != nil {
 			fmt.Printf("error %v", err)
 		} else {
 			diff := time.Now().Sub(startTime)
-			fmt.Printf("BNUS %2d %v\n", counter, diff)
+			fmt.Printf("BNUF %2d %v\n", counter, diff)
 			rtts = append(rtts, diff.Seconds()*1000)
 			counter++
 		}
@@ -53,6 +53,6 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("\n\n")
-	fmt.Printf("BNUS RTT MEAN=%.4f MEDIAN=%.4f MIN=%.4f MAX=%.4f STD=%.4f", mean, median, min, max, std)
+	fmt.Printf("BNUF RTT MEAN=%.4f MEDIAN=%.4f MIN=%.4f MAX=%.4f STD=%.4f", mean, median, min, max, std)
 	fmt.Printf("\n\n")
 }
