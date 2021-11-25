@@ -13,7 +13,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	fmt.Printf("\n\n")
 	counter := 0
 	rtts := make([]float64, 0)
 	for counter < 100 {
@@ -24,7 +24,7 @@ func main() {
 			fmt.Printf("error %v", err)
 		} else {
 			diff := time.Now().Sub(startTime)
-			fmt.Printf("%2d %v\n", counter, diff)
+			fmt.Printf("DYDX %2d %v\n", counter, diff)
 			rtts = append(rtts, diff.Seconds()*1000)
 			counter++
 		}
@@ -39,6 +39,6 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("\n\n")
-	fmt.Printf("RTT MEAN=%.4fms STD=%.4fms", mean, std)
+	fmt.Printf("DYDX RTT MEAN=%.4fms STD=%.4fms", mean, std)
 	fmt.Printf("\n\n")
 }
