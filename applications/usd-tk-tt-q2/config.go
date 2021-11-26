@@ -130,7 +130,7 @@ type Config struct {
 	EnterSlippageLookback      time.Duration      `yaml:"enterSlippageLookback"`
 	EnterMinimalStep           float64            `yaml:"enterMinimalStep"`
 	EnterTargetFactor          float64            `yaml:"enterTargetFactor"`
-	EnterWithProfitConfirms    bool               `yaml:"enterWithProfitConfirms"`
+	//EnterWithProfitConfirms    bool               `yaml:"enterWithProfitConfirms"`
 	StartValues                map[string]float64 `yaml:"startValues"`
 	TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`
 

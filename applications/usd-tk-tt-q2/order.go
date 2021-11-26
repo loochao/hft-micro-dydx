@@ -328,13 +328,13 @@ func (strat *XYStrategy) updateXPosition() {
 		xAbsValue < strat.maxPosValue &&
 		yAbsValue < strat.maxPosValue {
 
-		if strat.config.EnterWithProfitConfirms &&
-			!strat.isXSpot &&
-			xSize > 2*strat.xyMergedStepSize &&
-			//spot balance has no entry price
-			strat.xTicker.GetAskPrice() < strat.xPosition.GetPrice() {
-			return
-		}
+		//if strat.config.EnterWithProfitConfirms &&
+		//	!strat.isXSpot &&
+		//	xSize > 2*strat.xyMergedStepSize &&
+		//	//spot balance has no entry price
+		//	strat.xTicker.GetAskPrice() < strat.xPosition.GetPrice() {
+		//	return
+		//}
 
 		strat.targetValue = math.Max(xAbsValue, yAbsValue/strat.config.HedgeRatio) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
@@ -471,11 +471,11 @@ func (strat *XYStrategy) updateXPosition() {
 		xAbsValue < strat.maxPosValue &&
 		yAbsValue < strat.maxPosValue {
 
-		if strat.config.EnterWithProfitConfirms &&
-			xSize < -2*strat.xyMergedStepSize &&
-			strat.xTicker.GetBidPrice() > strat.xPosition.GetPrice() {
-			return
-		}
+		//if strat.config.EnterWithProfitConfirms &&
+		//	xSize < -2*strat.xyMergedStepSize &&
+		//	strat.xTicker.GetBidPrice() > strat.xPosition.GetPrice() {
+		//	return
+		//}
 
 		strat.targetValue = math.Max(xAbsValue, yAbsValue/strat.config.HedgeRatio) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
