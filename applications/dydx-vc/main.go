@@ -82,8 +82,8 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
-	fmt.Printf("吃单费率\t%.4f\n", user.User.TakerFeeRate)
-	fmt.Printf("挂单费率\t%.4f\n", user.User.MakerFeeRate)
+	fmt.Printf("吃单费率\t%.5f\n", user.User.TakerFeeRate)
+	fmt.Printf("挂单费率\t%.5f\n", user.User.MakerFeeRate)
 	fmt.Printf("30天手续费\t%.0f\n", user.User.Fees30D)
 	fmt.Printf("30天交易量\t%.0f\n", user.User.TakerVolume30D+user.User.MakerVolume30D)
 	fmt.Printf("DYDX持有量\t%.2f\n", user.User.DydxTokenBalance)

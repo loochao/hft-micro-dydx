@@ -196,9 +196,9 @@ func startXYStrategy(
 		tdSpreadMiddle:          0,
 		lastEnterTime:           time.Time{},
 
-		xySuccessRatioTMPath: fmt.Sprintf("%s/%s-%s.XYSRTM", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		xSlippageTMPath:      fmt.Sprintf("%s/%s-%s.XSTM", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		ySlippageTMPath:      fmt.Sprintf("%s/%s-%s.YSTM", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		xySuccessRatioTMPath: fmt.Sprintf("%s/%s-%s.XYSRTM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		xSlippageTMPath:      fmt.Sprintf("%s/%s-%s.XSTM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		ySlippageTMPath:      fmt.Sprintf("%s/%s-%s.YSTM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
 	}
 	strat.xySuccessRatioTM = stream_stats.LoadOrCreateTimeMean(strat.xySuccessRatioTMPath, config.EnterSlippageLookback)
 	strat.xSlippageTM = stream_stats.LoadOrCreateTimeMean(strat.xSlippageTMPath, config.EnterSlippageLookback)
