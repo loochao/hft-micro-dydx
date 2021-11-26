@@ -115,7 +115,7 @@ func (w *TickerWS) readLoop(
 				} else {
 					if time.Now().Sub(logSilentTime) > 0 {
 						logSilentTime = time.Now().Add(time.Minute)
-						logger.Debugf("OTHER MSG %s", msg)
+						logger.Debugf("UNKNOWN MSG %s", msg)
 					}
 					continue
 				}
@@ -133,14 +133,14 @@ func (w *TickerWS) readLoop(
 				} else {
 					if time.Now().Sub(logSilentTime) > 0 {
 						logSilentTime = time.Now().Add(time.Minute)
-						logger.Debugf("OTHER MSG %s", msg)
+						logger.Debugf("UNKNOWN MSG %s", msg)
 					}
 					continue
 				}
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logSilentTime = time.Now().Add(time.Minute)
-					logger.Debugf("OTHER MSG %s", msg)
+					logSilentTime = time.Now().Add(common.LogInterval)
+					logger.Debugf("UNKNOWN MSG %s", msg)
 				}
 				continue
 			}
@@ -148,16 +148,16 @@ func (w *TickerWS) readLoop(
 				select {
 				case ch <- msg:
 				default:
-					if time.Now().Sub(logSilentTime) > 0 {
-						logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
-						logSilentTime = time.Now().Add(time.Minute)
-					}
+					//if time.Now().Sub(logSilentTime) > 0 {
+					//	logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
+					//	logSilentTime = time.Now().Add(time.Minute)
+					//}
 				}
 			}
-		} else {
-			if len(msg) > 3 && msg[2] == 'i' && msg[len(msg)-3] == 'k' {
-				logger.Debugf("%s", msg)
-			}
+		//} else {
+		//	if len(msg) > 3 && msg[2] == 'i' && msg[len(msg)-3] == 'k' {
+		//		logger.Debugf("%s", msg)
+		//	}
 		}
 	}
 }
