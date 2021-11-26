@@ -19,11 +19,11 @@ env GOOS=linux GOARCH=amd64 go build -o "./dist/rtt-kcuf.amd64.$dt" ./round-trip
 
 chmod 755 "./dist/rtt-kcuf.arm64.$dt"
 
-echo "" && echo "" && echo "way"
-rsync -avx --progress "./dist/rtt-kcuf.arm64.$dt" way:/usr/local/bin/
-rsync -avx --progress "./dist/rtt-kcuf.amd64.$dt" way:/usr/local/bin/
+rsync -avx --progress "./dist/rtt-kcuf.arm64.$dt" tkc1:/usr/local/bin/
+#rsync -avx --progress "./dist/rtt-kcuf.arm64.$dt" way:/usr/local/bin/
+#rsync -avx --progress "./dist/rtt-kcuf.amd64.$dt" way:/usr/local/bin/
 
-ssh way "rsync -avx --progress /usr/local/bin/rtt-kcuf.arm64.$dt nv1:/usr/local/bin/"
-ssh way "rsync -avx --progress /usr/local/bin/rtt-kcuf.arm64.$dt nv2:/usr/local/bin/"
-ssh way "rsync -avx --progress /usr/local/bin/rtt-kcuf.arm64.$dt arm1:/usr/local/bin/"
+#ssh way "rsync -avx --progress /usr/local/bin/rtt-kcuf.arm64.$dt nv1:/usr/local/bin/"
+#ssh way "rsync -avx --progress /usr/local/bin/rtt-kcuf.arm64.$dt nv2:/usr/local/bin/"
+#ssh way "rsync -avx --progress /usr/local/bin/rtt-kcuf.arm64.$dt arm1:/usr/local/bin/"
 
