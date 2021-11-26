@@ -63,7 +63,6 @@ type TimedSum struct {
 	values   []float64
 	sum      float64
 }
-
 func (tm *TimedSum) Insert(timestamp time.Time, value float64) float64 {
 	tm.times = append(tm.times, timestamp)
 	tm.values = append(tm.values, value)
@@ -98,7 +97,6 @@ func (tm *TimedSum) Range() time.Duration {
 		return time.Duration(0)
 	}
 }
-
 func NewTimedSum(lookback time.Duration) *TimedSum {
 	return &TimedSum{
 		lookback: lookback,
@@ -115,7 +113,6 @@ type TimedMean struct {
 	sum      float64
 	mean     float64
 }
-
 func (tm *TimedMean) Insert(timestamp time.Time, value float64) float64 {
 	tm.times = append(tm.times, timestamp)
 	tm.values = append(tm.values, value)
@@ -192,7 +189,6 @@ type TimedWeightedMean struct {
 	weight   float64
 	mean     float64
 }
-
 func (tm *TimedWeightedMean) Insert(timestamp time.Time, weight, value float64) float64 {
 	tm.times = append(tm.times, timestamp)
 	tm.weights = append(tm.weights, weight)

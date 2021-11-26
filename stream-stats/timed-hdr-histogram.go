@@ -9,7 +9,7 @@ import (
 type TimedHdrHistogram struct {
 	Lookback                       time.Duration             `json:"lookback,omitempty"`
 	SubInterval                    time.Duration             `json:"subInterval,omitempty"`
-	Times                          []time.Time               `json:"times,omitempty"`
+	Times                          []time.Time               `json:"Times,omitempty"`
 	SubHists                       []*hdrhistogram.Histogram `json:"-"`
 	SubHistStartTime               *time.Time                `json:"subHistStartTime,omitempty"`
 	SubHistEndTime                 *time.Time                `json:"subHistEndTime,omitempty"`

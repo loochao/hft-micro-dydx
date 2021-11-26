@@ -12,7 +12,7 @@ type TimedTDigest struct {
 	HalfLookback   time.Duration      `json:"halfLookback,omitempty"`
 	Compression    uint32             `json:"compression,omitempty"`
 	SubInterval    time.Duration      `json:"subInterval,omitempty"`
-	Times          []time.Time        `json:"times,omitempty"`
+	Times          []time.Time        `json:"Times,omitempty"`
 	SubTDs         []*tdigest.TDigest `json:"-"`
 	SubTDStartTime *time.Time         `json:"subTDStartTime,omitempty"`
 	SubTDEndTime   *time.Time         `json:"subTDEndTime,omitempty"`

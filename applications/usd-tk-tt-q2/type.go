@@ -183,6 +183,10 @@ type XYStrategy struct {
 	failureCount   int
 	xTotalSlippage float64
 	yTotalSlippage float64
-	xSlippage float64
-	ySlippage float64
+	//xSlippage      float64
+	//ySlippage      float64
+
+	successRatio *common.TimedMean
+	xSlippage    *common.TimedSum
+	ySlippage    *common.TimedSum
 }
