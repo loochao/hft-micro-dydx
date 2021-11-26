@@ -1,6 +1,11 @@
 package stream_stats
 
-import "time"
+import (
+	"encoding/json"
+	"github.com/geometrybase/hft-micro/logger"
+	"os"
+	"time"
+)
 
 type TimedMean struct {
 	Lookback time.Duration `json:"lookback"`
@@ -47,6 +52,42 @@ func (tm *TimedMean) Range() time.Duration {
 	} else {
 		return time.Duration(0)
 	}
+}
+
+func (tm *TimedMean) Load(tsPath string) error {
+	tsBytes, err := os.ReadFile(tsPath)
+	if err != nil {
+		return err
+	} else {
+		return json.Unmarshal(tsBytes, tm)
+	}
+}
+
+func (tm *TimedMean) Save(tsPath string) error {
+	tsBytes, err := json.Marshal(*tm)
+	if err != nil {
+		return err
+	}
+	tsFile, err := os.OpenFile(tsPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	_, err = tsFile.Write(tsBytes)
+	if err != nil {
+		return err
+	}
+	return tsFile.Close()
+}
+
+func LoadOrCreateTimeMean(tmPath string, lookback time.Duration) *TimedMean {
+	tm := NewTimedMean(lookback)
+	err := tm.Load(tmPath)
+	if err != nil {
+		logger.Debugf("tm.Load %s error %v", tmPath, err)
+		tm = NewTimedMean(lookback)
+	}
+	tm.Lookback = lookback
+	return tm
 }
 
 func NewTimedMean(lookback time.Duration) *TimedMean {

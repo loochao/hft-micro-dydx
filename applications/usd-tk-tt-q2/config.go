@@ -127,8 +127,10 @@ type Config struct {
 	BestSizeFactor             float64            `yaml:"bestSizeFactor"`
 	EnterFreePct               float64            `yaml:"enterFreePct"`
 	EnterSlippage              float64            `yaml:"enterSlippage"`
+	EnterSlippageLookback      time.Duration      `yaml:"enterSlippageLookback"`
 	EnterMinimalStep           float64            `yaml:"enterMinimalStep"`
 	EnterTargetFactor          float64            `yaml:"enterTargetFactor"`
+	EnterWithProfitConfirms    bool               `yaml:"enterWithProfitConfirms"`
 	StartValues                map[string]float64 `yaml:"startValues"`
 	TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`
 
@@ -345,6 +347,9 @@ func (config *Config) SetDefaultIfNotSet() error {
 	}
 	if config.HedgeRatio == 0 {
 		config.HedgeRatio = 1.0
+	}
+	if config.EnterSlippageLookback == 0 {
+		config.EnterSlippageLookback = time.Hour * 24
 	}
 	return nil
 }

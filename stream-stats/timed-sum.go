@@ -1,6 +1,11 @@
 package stream_stats
 
-import "time"
+import (
+	"encoding/json"
+	"github.com/geometrybase/hft-micro/logger"
+	"os"
+	"time"
+)
 
 type TimedSum struct {
 	Lookback time.Duration
@@ -9,15 +14,15 @@ type TimedSum struct {
 	Sum      float64
 }
 
-func (tm *TimedSum) Insert(timestamp time.Time, value float64) float64 {
-	tm.Times = append(tm.Times, timestamp)
-	tm.Values = append(tm.Values, value)
-	tm.Sum += value
+func (ts *TimedSum) Insert(timestamp time.Time, value float64) float64 {
+	ts.Times = append(ts.Times, timestamp)
+	ts.Values = append(ts.Values, value)
+	ts.Sum += value
 	cutIndex := -1
-	for i, t := range tm.Times {
-		if timestamp.Sub(t) > tm.Lookback {
+	for i, t := range ts.Times {
+		if timestamp.Sub(t) > ts.Lookback {
 			cutIndex = i
-			tm.Sum -= tm.Values[i]
+			ts.Sum -= ts.Values[i]
 		} else {
 			break
 		}
@@ -25,33 +30,58 @@ func (tm *TimedSum) Insert(timestamp time.Time, value float64) float64 {
 	//需要offset 1
 	cutIndex += 1
 	if cutIndex > 0 {
-		tm.Values = tm.Values[cutIndex:]
-		tm.Times = tm.Times[cutIndex:]
+		ts.Values = ts.Values[cutIndex:]
+		ts.Times = ts.Times[cutIndex:]
 	}
-	return tm.Sum
+	return ts.Sum
 }
 
-func (tm *TimedSum) Len() int {
-	return len(tm.Values)
+func (ts *TimedSum) Len() int {
+	return len(ts.Values)
 }
 
-func (tm *TimedSum) Range() time.Duration {
-	if len(tm.Times) > 2 {
-		return tm.Times[len(tm.Times)-1].Sub(tm.Times[0])
+func (ts *TimedSum) Range() time.Duration {
+	if len(ts.Times) > 2 {
+		return ts.Times[len(ts.Times)-1].Sub(ts.Times[0])
 	} else {
 		return time.Duration(0)
 	}
 }
 
-func LoadOrCreateTimeSum(path string, lookback time.Duration) {
-	tm := &TimedSum{
-		Lookback: lookback,
-		Times:    make([]time.Time, 0),
-		Values:   make([]float64, 0),
-		Sum:      0,
+func (ts *TimedSum) Load(tsPath string) error {
+	tsBytes, err := os.ReadFile(tsPath)
+	if err != nil {
+		return err
+	} else {
+		return json.Unmarshal(tsBytes, ts)
 	}
+}
 
-	td := NewTimedTDigestWithCompression(lookback, subInterval, compression)
+func (ts *TimedSum) Save(tsPath string) error {
+	tsBytes, err := json.Marshal(*ts)
+	if err != nil {
+		return err
+	}
+	tsFile, err := os.OpenFile(tsPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	_, err = tsFile.Write(tsBytes)
+	if err != nil {
+		return err
+	}
+	return tsFile.Close()
+}
+
+func LoadOrCreateTimeSum(tsPath string, lookback time.Duration) *TimedSum {
+	ts := NewTimedSum(lookback)
+	err := ts.Load(tsPath)
+	if err != nil {
+		logger.Debugf("ts.Load error %v", err)
+		ts = NewTimedSum(lookback)
+	}
+	ts.Lookback = lookback
+	return ts
 }
 
 func NewTimedSum(lookback time.Duration) *TimedSum {

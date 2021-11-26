@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	stream_stats "github.com/geometrybase/hft-micro/stream-stats"
@@ -194,9 +195,15 @@ func startXYStrategy(
 		yExchangeID:             yExchange.GetExchange(),
 		tdSpreadMiddle:          0,
 		lastEnterTime:           time.Time{},
-		successCount:            0,
-		failureCount:            0,
+
+		xySuccessRatioTMPath: fmt.Sprintf("%s/%s-%s.XYSRTM", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		xSlippageTMPath:      fmt.Sprintf("%s/%s-%s.XSTM", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		ySlippageTMPath:      fmt.Sprintf("%s/%s-%s.YSTM", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
 	}
+	strat.xySuccessRatioTM = stream_stats.LoadOrCreateTimeMean(strat.xySuccessRatioTMPath, config.EnterSlippageLookback)
+	strat.xSlippageTM = stream_stats.LoadOrCreateTimeMean(strat.xSlippageTMPath, config.EnterSlippageLookback)
+	strat.ySlippageTM = stream_stats.LoadOrCreateTimeMean(strat.ySlippageTMPath, config.EnterSlippageLookback)
+
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
 		logger.Debugf("%v", err)
@@ -248,7 +255,7 @@ func startXYStrategy(
 		logger.Debugf("%v", err)
 		return
 	}
-	strat.xyMergedSpotStepSize = common.MergedStepSize(strat.xStepSize*strat.xMultiplier, strat.yStepSize*strat.yMultiplier)
+	strat.xyMergedStepSize = common.MergedStepSize(strat.xStepSize*strat.xMultiplier, strat.yStepSize*strat.yMultiplier)
 
 	go strat.stats.Start(ctx)
 	go strat.Start(ctx)
@@ -259,6 +266,28 @@ func (strat *XYStrategy) Stop() {
 	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
 		strat.stats.Stop()
 		logger.Debugf("%10s %10s stopped", strat.xSymbol, strat.ySymbol)
+		strat.saveSlippageTMs()
+	}
+}
+
+func (strat *XYStrategy) saveSlippageTMs() {
+	err := strat.xySuccessRatioTM.Save(strat.xySuccessRatioTMPath)
+	if err != nil {
+		logger.Debugf("strat.xySuccessRatioTM.Save %s error %v", strat.xySuccessRatioTMPath, err)
+	} else {
+		logger.Debugf("%10s xySuccessRatioTM %s saved", strat.xSymbol, strat.xySuccessRatioTMPath)
+	}
+	err = strat.xSlippageTM.Save(strat.xSlippageTMPath)
+	if err != nil {
+		logger.Debugf("strat.xSlippageTM.Save %s error %v", strat.xSlippageTMPath, err)
+	} else {
+		logger.Debugf("%10s xSlippageTM %s saved", strat.xSymbol, strat.xSlippageTMPath)
+	}
+	err = strat.ySlippageTM.Save(strat.ySlippageTMPath)
+	if err != nil {
+		logger.Debugf("strat.xySuccessRatioTM.Save %s error %v", strat.ySlippageTMPath, err)
+	} else {
+		logger.Debugf("%10s ySlippageTM %s saved", strat.xSymbol, strat.ySlippageTMPath)
 	}
 }
 

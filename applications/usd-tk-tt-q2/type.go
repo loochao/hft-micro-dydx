@@ -100,17 +100,17 @@ type XYStrategy struct {
 	spreadMedianLong  float64
 	//strategyOutputCh  chan XYStrategy
 
-	xTickSize            float64
-	yTickSize            float64
-	xStepSize            float64
-	yStepSize            float64
-	xMinSize             float64
-	yMinSize             float64
-	xMultiplier          float64
-	yMultiplier          float64
-	xMinNotional         float64
-	yMinNotional         float64
-	xyMergedSpotStepSize float64
+	xTickSize        float64
+	yTickSize        float64
+	xStepSize        float64
+	yStepSize        float64
+	xMinSize         float64
+	yMinSize         float64
+	xMultiplier      float64
+	yMultiplier      float64
+	xMinNotional     float64
+	yMinNotional     float64
+	xyMergedStepSize float64
 
 	//error error
 
@@ -179,14 +179,13 @@ type XYStrategy struct {
 	xFundingRateFactor *float64
 	yFundingRateFactor *float64
 
-	successCount   int
-	failureCount   int
-	xTotalSlippage float64
-	yTotalSlippage float64
-	//xSlippage      float64
-	//ySlippage      float64
+	xySuccessRatioTM *stream_stats.TimedMean
+	xSlippageTM      *stream_stats.TimedMean
+	ySlippageTM      *stream_stats.TimedMean
 
-	successRatio *common.TimedMean
-	xSlippage    *common.TimedSum
-	ySlippage    *common.TimedSum
+	xSlippage            float64
+	ySlippage            float64
+	xSlippageTMPath      string
+	ySlippageTMPath      string
+	xySuccessRatioTMPath string
 }

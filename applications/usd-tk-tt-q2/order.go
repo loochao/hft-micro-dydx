@@ -151,11 +151,11 @@ func (strat *XYStrategy) updateXPosition() {
 			//限开仓大小限制到best bid ask size, 主要关心Y的深度，保证Y的深度足够
 			xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 		}
-		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
+		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedStepSize) * strat.xyMergedStepSize
 
 		strat.enterValue = xSizeDiff * xyMidPrice
-		if xAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
-			yAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
+		if xAbsValue-strat.enterValue < strat.xyMergedStepSize*1.005 ||
+			yAbsValue-strat.enterValue < strat.xyMergedStepSize*1.005 ||
 			xSizeDiff > xSize {
 			//两种情况都把x全平，间接y全平
 			xSizeDiff = xSize
@@ -248,10 +248,10 @@ func (strat *XYStrategy) updateXPosition() {
 			xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 		}
 
-		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
+		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedStepSize) * strat.xyMergedStepSize
 		strat.enterValue = xSizeDiff * xyMidPrice
-		if xAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
-			yAbsValue-strat.enterValue < strat.xyMergedSpotStepSize*1.005 ||
+		if xAbsValue-strat.enterValue < strat.xyMergedStepSize*1.005 ||
+			yAbsValue-strat.enterValue < strat.xyMergedStepSize*1.005 ||
 			xSizeDiff > -xSize {
 			xSizeDiff = -xSize
 		}
@@ -328,6 +328,14 @@ func (strat *XYStrategy) updateXPosition() {
 		xAbsValue < strat.maxPosValue &&
 		yAbsValue < strat.maxPosValue {
 
+		if strat.config.EnterWithProfitConfirms &&
+			!strat.isXSpot &&
+			xSize > 2*strat.xyMergedStepSize &&
+			//spot balance has no entry price
+			strat.xTicker.GetAskPrice() < strat.xPosition.GetPrice() {
+			return
+		}
+
 		strat.targetValue = math.Max(xAbsValue, yAbsValue/strat.config.HedgeRatio) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
 			strat.targetValue = strat.enterTarget
@@ -358,7 +366,7 @@ func (strat *XYStrategy) updateXPosition() {
 			xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 		}
 
-		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
+		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedStepSize) * strat.xyMergedStepSize
 		strat.enterValue = xSizeDiff * xyMidPrice
 		if strat.enterValue > strat.usdAvailable {
 			if time.Now().Sub(strat.logSilentTime) > 0 {
@@ -463,6 +471,12 @@ func (strat *XYStrategy) updateXPosition() {
 		xAbsValue < strat.maxPosValue &&
 		yAbsValue < strat.maxPosValue {
 
+		if strat.config.EnterWithProfitConfirms &&
+			xSize < -2*strat.xyMergedStepSize &&
+			strat.xTicker.GetBidPrice() > strat.xPosition.GetPrice() {
+			return
+		}
+
 		strat.targetValue = math.Max(xAbsValue, yAbsValue/strat.config.HedgeRatio) + strat.enterStep
 		if strat.targetValue > strat.enterTarget {
 			strat.targetValue = strat.enterTarget
@@ -494,7 +508,7 @@ func (strat *XYStrategy) updateXPosition() {
 			xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor, xSizeDiff)
 		}
 
-		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedSpotStepSize) * strat.xyMergedSpotStepSize
+		xSizeDiff = math.Round(xSizeDiff/strat.xyMergedStepSize) * strat.xyMergedStepSize
 		strat.enterValue = xSizeDiff * xyMidPrice
 		if strat.enterValue > strat.usdAvailable {
 			if time.Now().Sub(strat.logSilentTime) > strat.config.LogInterval {

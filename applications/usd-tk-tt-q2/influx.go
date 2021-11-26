@@ -38,10 +38,13 @@ func handleSave(
 	xTotalAskValue := 0.0
 	yTotalBidValue := 0.0
 	yTotalAskValue := 0.0
-	totalFailureCount := 0
-	totalSuccessCount := 0
+
+	totalSuccessCount := 0.0
 	totalXSlippage := 0.0
 	totalYSlippage := 0.0
+	totalSuccessRatioCount := 0.0
+	totalXSlippageCount := 0.0
+	totalYSlippageCount := 0.0
 	for _, xSymbol := range xSymbols {
 		strat, ok := stratMap[xSymbol]
 		if !ok {
@@ -55,14 +58,22 @@ func handleSave(
 			strat.xMidPrice > 0 &&
 			strat.yMidPrice > 0 {
 
-			totalFailureCount += strat.failureCount
-			totalSuccessCount += strat.successCount
-			totalXSlippage += strat.xSlippage
-			totalYSlippage += strat.ySlippage
+			if strat.xSlippageTM.Len() > 0 {
+				fields["xSlippage"] = strat.xSlippageTM.Mean
+				totalXSlippage += strat.xSlippageTM.Mean * float64(strat.xSlippageTM.Len())
+				totalXSlippageCount += float64(strat.xSlippageTM.Len())
+			}
 
-			if strat.failureCount+strat.successCount != 0 {
-				fields["xSlippage"] = strat.xSlippage / float64(strat.failureCount+strat.successCount)
-				fields["ySlippage"] = strat.ySlippage / float64(strat.failureCount+strat.successCount)
+			if strat.ySlippageTM.Len() > 0 {
+				fields["ySlippage"] = strat.ySlippageTM.Mean
+				totalYSlippage += strat.ySlippageTM.Mean * float64(strat.ySlippageTM.Len())
+				totalYSlippageCount += float64(strat.ySlippageTM.Len())
+			}
+
+			if strat.xySuccessRatioTM.Len() > 0 {
+				fields["xySuccessRatio"] = strat.xySuccessRatioTM.Mean
+				totalSuccessCount += strat.xySuccessRatioTM.Mean * float64(strat.xySuccessRatioTM.Len())
+				totalSuccessRatioCount += float64(strat.xySuccessRatioTM.Len())
 			}
 
 			fields["xBidPrice"] = strat.xTicker.GetBidPrice()
@@ -100,7 +111,7 @@ func handleSave(
 			yAbsValue := math.Abs(yValue)
 			xyMidPrice := (strat.xMidPrice + strat.yMidPrice) * 0.5
 
-			riskExposure := (xSize+ySize) * xyMidPrice
+			riskExposure := (xSize + ySize) * xyMidPrice
 			totalRiskExposure += riskExposure
 			unHedgeValue := math.Abs(riskExposure)
 			totalUnHedgeValue += unHedgeValue
@@ -300,12 +311,16 @@ func handleSave(
 		fields["xTotalAskValue"] = xTotalAskValue
 		fields["yTotalBidValue"] = yTotalBidValue
 		fields["yTotalAskValue"] = yTotalAskValue
-		if (totalSuccessCount + totalFailureCount) != 0 {
-			fields["totalSuccessCount"] = totalSuccessCount
-			fields["totalFailureCount"] = totalFailureCount
-			fields["meanXSlippage"] = totalXSlippage / float64(totalSuccessCount+totalFailureCount)
-			fields["meanYSlippage"] = totalYSlippage / float64(totalSuccessCount+totalFailureCount)
-			fields["totalSuccessRatio"] = float64(totalSuccessCount) / float64(totalSuccessCount+totalFailureCount)
+		if totalSuccessRatioCount != 0 {
+			fields["totalSuccessCount"] = int(totalSuccessCount)
+			fields["totalFailureCount"] = int(totalSuccessRatioCount - totalSuccessCount)
+			fields["totalSuccessRatio"] = totalSuccessCount / totalSuccessRatioCount
+		}
+		if totalXSlippageCount != 0 {
+			fields["meanXSlippage"] = totalXSlippage / totalXSlippageCount
+		}
+		if totalYSlippageCount != 0 {
+			fields["meanYSlippage"] = totalYSlippage / totalYSlippageCount
 		}
 		fields["xURPnl"] = xURPnl
 		fields["yURPnl"] = yURPnl

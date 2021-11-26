@@ -411,29 +411,32 @@ func (sl *XYMakerTakerStats) loadTD(tdPath string, lookback, subInterval time.Du
 	return td
 }
 
-func (sl *XYMakerTakerStats) saveTD(td *TimedTDigest, tdPath string) error {
-	tdBytes, err := json.Marshal(td)
-	if err != nil {
-		return err
-	}
-	tdFile, err := os.OpenFile(tdPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		return err
-	} else {
-		_, err = tdFile.Write(tdBytes)
-		if err != nil {
-			return err
-		} else {
-			err = tdFile.Close()
-			if err != nil {
-				return err
-			}
+func (sl *XYMakerTakerStats) saveTD(td *TimedTDigest, tdPath string) (err error) {
+	defer func() {
+		select {
+		case <-sl.done:
+			//如果已经退出，打一条log
+			logger.Debugf("stats save %s", tdPath)
+		default:
 		}
+	}()
+	var tdBytes []byte
+	var tdFile *os.File
+	tdBytes, err = json.Marshal(td)
+	if err != nil {
+		return err
 	}
-	select {
-	case <-sl.done:
-		logger.Debugf("stats save %s", tdPath)
-	default:
+	tdFile, err = os.OpenFile(tdPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	_, err = tdFile.Write(tdBytes)
+	if err != nil {
+		return err
+	}
+	err = tdFile.Close()
+	if err != nil {
+		return err
 	}
 	return nil
 }

@@ -109,18 +109,16 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			strat.realisedSpread = new(float64)
 		}
 		*strat.realisedSpread = (*strat.yLastFilledSellPrice - *strat.xLastFilledBuyPrice) / *strat.yLastFilledSellPrice
-		strat.xSlippage = 0
-		strat.ySlippage = 0
 		if strat.referenceSpread != 0 {
 			if *strat.realisedSpread >= strat.referenceSpread-strat.config.EnterSlippage {
-				strat.successCount++
+				strat.xySuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {
-				strat.failureCount++
+				strat.xySuccessRatioTM.Insert(time.Now(), -1.0)
 			}
 			strat.xSlippage = (*strat.xLastFilledBuyPrice - strat.referenceXPrice) / strat.referenceXPrice
 			strat.ySlippage = (strat.referenceYPrice - *strat.yLastFilledSellPrice) / strat.referenceYPrice
-			strat.xTotalSlippage += strat.xSlippage
-			strat.yTotalSlippage += strat.ySlippage
+			strat.xSlippageTM.Insert(time.Now(), strat.xSlippage)
+			strat.ySlippageTM.Insert(time.Now(), strat.ySlippage)
 			strat.referenceSpread = 0
 		}
 		if strat.tdSpreadMiddle != 0 {
@@ -150,14 +148,14 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		strat.ySlippage = 0
 		if strat.referenceSpread != 0 {
 			if *strat.realisedSpread <= strat.referenceSpread+strat.config.EnterSlippage {
-				strat.successCount++
+				strat.xySuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {
-				strat.failureCount++
+				strat.xySuccessRatioTM.Insert(time.Now(), -1.0)
 			}
 			strat.xSlippage = (strat.referenceXPrice - *strat.xLastFilledSellPrice) / strat.referenceXPrice
 			strat.ySlippage = (*strat.yLastFilledBuyPrice - strat.referenceYPrice) / strat.referenceYPrice
-			strat.xTotalSlippage += strat.xSlippage
-			strat.yTotalSlippage += strat.ySlippage
+			strat.xSlippageTM.Insert(time.Now(), strat.xSlippage)
+			strat.ySlippageTM.Insert(time.Now(), strat.ySlippage)
 			strat.referenceSpread = 0
 		}
 		if strat.tdSpreadMiddle != 0 {
