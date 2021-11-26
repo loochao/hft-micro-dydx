@@ -15,7 +15,7 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("\n\n")
-	counter := 0
+	counter := -1
 	rtts := make([]float64, 0)
 	for counter < 100 {
 		counter++
@@ -23,7 +23,7 @@ func main() {
 		_, err = api.GetServerTime(context.Background())
 		if err != nil {
 			fmt.Printf("error %v", err)
-		} else {
+		} else if counter > 0{
 			diff := time.Now().Sub(startTime)
 			fmt.Printf("BNUF %2d %v\n", counter, diff)
 			rtts = append(rtts, diff.Seconds()*1000)
