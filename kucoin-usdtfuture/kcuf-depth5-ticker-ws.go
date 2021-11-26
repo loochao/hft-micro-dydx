@@ -409,13 +409,11 @@ func (w *Depth5TickerWS) restart() {
 }
 
 func (w *Depth5TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh chan []byte, outputCh chan common.Ticker) {
-	//logger.Debugf("START dataHandleLoop %s", symbol)
-	//defer logger.Debugf("EXIT dataHandleLoop %s", symbol)
 	logSilentTime := time.Now()
 	var err error
 	index := -1
-	pool := [4]*Depth5{}
-	for i := 0; i < 4; i++ {
+	pool := [common.BufferSizeFor100msData]*Depth5{}
+	for i := 0; i < common.BufferSizeFor100msData; i++ {
 		pool[i] = &Depth5{}
 	}
 	var depth5 *Depth5
@@ -430,7 +428,7 @@ func (w *Depth5TickerWS) dataHandleLoop(ctx context.Context, symbol string, inpu
 			return
 		case <-parseTimer.C:
 			index++
-			if index == 4 {
+			if index == common.BufferSizeFor100msData {
 				index = 0
 			}
 			depth5 = pool[index]
@@ -446,13 +444,13 @@ func (w *Depth5TickerWS) dataHandleLoop(ctx context.Context, symbol string, inpu
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("w.symbolCh <- symbol failed, ch len %d", len(w.symbolCh))
-						logSilentTime = time.Now().Add(time.Minute)
+						logSilentTime = time.Now().Add(common.LogInterval)
 					}
 				}
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
 					logger.Debugf("outputCh <- depth5 failed, ch len %d", len(outputCh))
-					logSilentTime = time.Now().Add(time.Minute)
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 			}
 			break
@@ -476,14 +474,14 @@ func NewDepth5TickerWS(
 	ws := Depth5TickerWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		RestartCh:   make(chan interface{}, 4),
-		writeCh:     make(chan interface{}, 4*len(channels)),
-		symbolCh:    make(chan string, 4*len(channels)),
+		RestartCh:   make(chan interface{}, common.ChannelSizeLowLoad),
+		writeCh:     make(chan interface{}, common.ChannelSizeLowLoad*len(channels)),
+		symbolCh:    make(chan string, common.ChannelSizeLowLoad*len(channels)),
 		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[symbol] = make(chan []byte, 64)
+		messageChs[symbol] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[symbol], ch)
 	}
 	go ws.mainLoop(ctx, api, proxy, messageChs)

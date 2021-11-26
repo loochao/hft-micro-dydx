@@ -416,31 +416,29 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 	logSilentTime := time.Now()
 	var err error
 	index := -1
-	pool := [4]*Ticker{}
-	for i := 0; i < 4; i++ {
+	pool := [common.BufferSizeFor100msData]*Ticker{}
+	for i := 0; i < common.BufferSizeFor100msData; i++ {
 		pool[i] = &Ticker{}
 	}
 	var ticker *Ticker
 	var msg []byte
-	var parseTimer = time.NewTimer(time.Hour * 9999)
-	defer parseTimer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.done:
 			return
-		case <-parseTimer.C:
+		case msg = <-inputCh:
 			index++
-			if index == 4 {
+			if index == common.BufferSizeFor100msData {
 				index = 0
 			}
 			ticker = pool[index]
 			err = ParseTicker(msg, ticker)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logSilentTime = time.Now().Add(time.Minute)
-					logger.Debugf("ParseTicker(msg) error %v %s", err, msg)
+					logger.Debugf("ParseTicker(msg, ticker) error %v %s", err, msg)
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 				continue
 			}
@@ -451,18 +449,15 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 				default:
 					if time.Now().Sub(logSilentTime) > 0 {
 						logger.Debugf("w.symbolCh <- symbol failed, ch len %d", len(w.symbolCh))
-						logSilentTime = time.Now().Add(time.Minute)
+						logSilentTime = time.Now().Add(common.LogInterval)
 					}
 				}
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("outputCh <- depth5 failed, ch len %d", len(outputCh))
-					logSilentTime = time.Now().Add(time.Minute)
+					logger.Debugf("outputCh <- ticker failed, ch len %d", len(outputCh))
+					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 			}
-			break
-		case msg = <-inputCh:
-			parseTimer.Reset(time.Millisecond)
 			break
 		}
 	}
@@ -481,13 +476,13 @@ func NewTickerWS(
 	ws := TickerWS{
 		done:        make(chan interface{}),
 		reconnectCh: make(chan interface{}),
-		writeCh:     make(chan interface{}, 4*len(channels)),
-		symbolCh:    make(chan string, 4*len(channels)),
+		writeCh:     make(chan interface{}, common.ChannelSizeLowLoad*len(channels)),
+		symbolCh:    make(chan string, common.ChannelSizeLowLoad*len(channels)),
 		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)
 	for symbol, ch := range channels {
-		messageChs[symbol] = make(chan []byte, 64)
+		messageChs[symbol] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, symbol, messageChs[symbol], ch)
 	}
 	go ws.mainLoop(ctx, api, proxy, messageChs)

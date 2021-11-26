@@ -106,6 +106,9 @@ func main() {
 	case "binanceUsdtSpotWithMergedTicker":
 		xExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
 		break
+	case "binanceUsdtFutureWithWalkedDepth5":
+		xExchange = &bnuf.BinanceUsdtFutureWithWalkedDepth5{}
+		break
 	case "binanceBusdSpotWithMergedTicker":
 		xExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
 		break
@@ -116,11 +119,12 @@ func main() {
 	case "okexV5UsdtSwapWithWalkedDepth5":
 		xExchange = &okexv5_usdtswap.OkexV5UsdtSwapWithWalkedDepth5{}
 		break
+
+	case "kucoinUsdtFutureWithMergedTicker":
+		xExchange = &kucoin_usdtfuture.KucoinUsdtFutureWithMergedTicker{}
+		break
 	case "kucoinUsdtFutureWithWalkedDepth5":
 		xExchange = &kucoin_usdtfuture.KucoinUsdtFutureWithWalkedDepth5{}
-		break
-	case "binanceUsdtFutureWithWalkedDepth5":
-		xExchange = &bnuf.BinanceUsdtFutureWithWalkedDepth5{}
 		break
 	//case "ftxUsdFuture":
 	//	xExchange = &ftxuf.FtxUsdFuture{}
@@ -130,9 +134,6 @@ func main() {
 	//	break
 	//case "kucoinUsdtFuture":
 	//	xExchange = &kcut.KucoinUsdtFuture{}
-	//	break
-	//case "kucoinUsdtFutureWithMergedTicker":
-	//	xExchange = &kcut.KucoinUsdtFutureWithMergedTicker{}
 	//	break
 	//case "binanceBusdFutureWithMergedTicker":
 	//	xExchange = &bnbf.BinanceBusdFutureWidthMergedTicker{}
@@ -181,6 +182,9 @@ func main() {
 	case "binanceUsdtSpotWithMergedTicker":
 		yExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
 		break
+	case "binanceUsdtFutureWithWalkedDepth5":
+		yExchange = &bnuf.BinanceUsdtFutureWithWalkedDepth5{}
+		break
 	case "binanceBusdSpotWithMergedTicker":
 		yExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
 		break
@@ -191,11 +195,12 @@ func main() {
 	case "okexV5UsdtSwapWithWalkedDepth5":
 		yExchange = &okexv5_usdtswap.OkexV5UsdtSwapWithWalkedDepth5{}
 		break
+
+	case "kucoinUsdtFutureWithMergedTicker":
+		yExchange = &kucoin_usdtfuture.KucoinUsdtFutureWithMergedTicker{}
+		break
 	case "kucoinUsdtFutureWithWalkedDepth5":
 		yExchange = &kucoin_usdtfuture.KucoinUsdtFutureWithWalkedDepth5{}
-		break
-	case "binanceUsdtFutureWithWalkedDepth5":
-		yExchange = &bnuf.BinanceUsdtFutureWithWalkedDepth5{}
 		break
 	//case "ftxUsdFuture":
 	//	yExchange = &ftxuf.FtxUsdFuture{}
