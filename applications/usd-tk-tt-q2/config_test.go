@@ -116,7 +116,6 @@ func TestShowBnusBnufPairsAndMaxSizes(t *testing.T) {
 	}
 }
 
-
 func TestShowBnbsBnufPairsAndMaxSizes(t *testing.T) {
 	symbolMap := make(map[string]string)
 	maxPosSizes := make(map[string]float64)
@@ -127,6 +126,33 @@ func TestShowBnbsBnufPairsAndMaxSizes(t *testing.T) {
 			symbols = append(symbols, xSymbol)
 			symbolMap[xSymbol] = ySymbol
 			maxPosSizes[xSymbol] = yMaxPosSize * 0.5
+		}
+	}
+	sort.Strings(symbols)
+	fmt.Printf("\n\nxyPairs:\n")
+	for _, xSymbol := range symbols {
+		fmt.Printf("  %s: %s\n", xSymbol, symbolMap[xSymbol])
+	}
+	fmt.Printf("\n\nmaxPosSizes:\n")
+	for _, xSymbol := range symbols {
+		fmt.Printf("  %s: %.0f\n", xSymbol, maxPosSizes[xSymbol])
+	}
+}
+
+func TestShowKcufBnufPairsAndMaxSizes(t *testing.T) {
+	symbolMap := make(map[string]string)
+	maxPosSizes := make(map[string]float64)
+	symbols := make([]string, 0)
+	for ySymbol, yMaxPosSize := range binance_usdtfuture.MaxPosSizes {
+		xSymbol := strings.Replace(ySymbol, "USDT", "USDTM", -1)
+		if ySymbol == "BTCUSDT" {
+			xSymbol = "XBTUSDTM"
+		}
+		_, ok1 := kucoin_usdtfuture.TickSizes[xSymbol]
+		if ok1 {
+			symbols = append(symbols, xSymbol)
+			symbolMap[xSymbol] = ySymbol
+			maxPosSizes[xSymbol] = math.Min(yMaxPosSize * 0.25, kucoin_usdtfuture.MaxOrderSizes[xSymbol]*kucoin_usdtfuture.Multipliers[xSymbol])
 		}
 	}
 	sort.Strings(symbols)
