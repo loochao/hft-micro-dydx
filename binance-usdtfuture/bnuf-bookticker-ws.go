@@ -300,8 +300,8 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, inputCh chan []byte, 
 	var msg []byte
 	var bookTicker *BookTicker
 	index := -1
-	pool := [common.BufferSizeForRealTimeData]*BookTicker{}
-	for i := 0; i < common.BufferSizeForRealTimeData; i++ {
+	pool := [common.BufferSizeFor1msData]*BookTicker{}
+	for i := 0; i < common.BufferSizeFor1msData; i++ {
 		pool[i] = &BookTicker{}
 	}
 	//var parseTimer = time.NewTimer(time.Hour * 9999)
@@ -337,7 +337,7 @@ func (w *BookTickerWS) dataHandleLoop(ctx context.Context, inputCh chan []byte, 
 		//	break
 		case msg = <-inputCh:
 			index++
-			if index == common.BufferSizeForRealTimeData {
+			if index == common.BufferSizeFor1msData {
 				index = 0
 			}
 			bookTicker = pool[index]

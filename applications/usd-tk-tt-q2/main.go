@@ -599,7 +599,7 @@ mainLoop:
 			break
 		}
 	}
-	logger.Debugf("stop waiting 15s")
-	<-time.After(time.Second * 15)
+	logger.Debugf("stop waiting 30s")
+	<-time.After(time.Second * 30)
 	logger.Debugf("exit 0")
 }

@@ -5,8 +5,11 @@ import (
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
+	"runtime"
 	"strings"
 	"time"
+	"github.com/mackerelio/go-osstat/memory"
+	"github.com/mackerelio/go-osstat/cpu"
 )
 
 func handleSave(
@@ -281,6 +284,30 @@ func handleSave(
 			if err != nil {
 				logger.Debugf("xyInfluxWriter.PushPoint error %v", err)
 			}
+		}
+	}
+
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	fields := make(map[string]interface{})
+	fields["alloc"] = m.Alloc / 1024 / 1024
+	fields["totalAlloc"] = m.TotalAlloc / 1024 / 1024
+	fields["sys"] = m.Sys / 1024 / 1024
+	fields["numGC"] = m.NumGC
+	pt, err := client.NewPoint(
+		xyConfig.InternalInflux.Measurement,
+		map[string]string{
+			"type": "runtime",
+		},
+		fields,
+		time.Now().UTC(),
+	)
+	if err != nil {
+		logger.Debugf("client.NewPoint error %v", err)
+	} else {
+		err = xyInternalInfluxWriter.PushPoint(pt)
+		if err != nil {
+			logger.Debugf("xyInfluxWriter.PushPoint error %v", err)
 		}
 	}
 

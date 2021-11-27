@@ -11,7 +11,7 @@ import (
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
 	kcut "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
-	okut "github.com/geometrybase/hft-micro/okex-usdtspot"
+	//okut "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -74,9 +74,9 @@ func main() {
 	case "ftxUsdtFuture":
 		xExchange = &ftxuf.FtxUsdFuture{}
 		break
-	case "okexUsdtSpot":
-		xExchange = &okut.OkexUsdtSpot{}
-		break
+	//case "okexUsdtSpot":
+	//	xExchange = &okut.OkexUsdtSpot{}
+	//	break
 	case "kucoinUsdtFuture":
 		xExchange = &kcut.KucoinUsdtFuture{}
 		break
