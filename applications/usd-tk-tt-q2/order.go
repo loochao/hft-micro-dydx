@@ -743,6 +743,7 @@ func (strat *XYStrategy) hedgeYPosition() {
 			ySizeDiff = -strat.xPosition.GetSize()*strat.xMultiplier*strat.config.HedgeRatio/strat.yMultiplier - strat.yPosition.GetSize()
 		}
 	}
+
 	if math.Abs(ySizeDiff) < strat.yStepSize {
 		return
 	}
