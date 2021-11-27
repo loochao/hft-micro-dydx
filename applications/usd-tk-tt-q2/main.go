@@ -465,15 +465,12 @@ func main() {
 	influxSaveTimer := time.NewTimer(config.RestartSilent)
 	defer influxSaveTimer.Stop()
 
-	cpuUsage := CpuUsage{}
+	cpuUsage := &CpuUsage{}
 
 	go func() {
 		var before, after *cpu.Stats
-		before, err := cpu.Get()
-		if err != nil {
-			logger.Debugf("cpu.Get() error %v", err)
-		}
-		timer := time.NewTimer(time.Second)
+		interval := xyConfig.InternalInflux.SaveInterval
+		timer := time.NewTimer(time.Minute)
 		for {
 			select {
 			case <-xyGlobalCtx.Done():
@@ -489,7 +486,13 @@ func main() {
 					cpuUsage.System = float64(after.System-before.System) / total * 100
 					cpuUsage.Idle = float64(after.Idle-before.Idle) / total * 100
 				}
-				timer.Reset(time.Second)
+				timer.Reset(
+					time.Now().Truncate(
+						interval,
+					).Add(
+						interval - time.Second*3,
+					).Sub(time.Now()),
+				)
 			}
 		}
 	}()

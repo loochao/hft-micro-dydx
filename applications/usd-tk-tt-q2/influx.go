@@ -21,7 +21,7 @@ func handleSave(
 	xCommissionAssetValue, yCommissionAssetValue *float64,
 	xyInternalInfluxWriter, xyExternalInfluxWriter *common.InfluxWriter,
 	lastExternalSaveTime *time.Time,
-	cpuUsage CpuUsage,
+	cpuUsage *CpuUsage,
 ) {
 	if yCommissionAssetValue == nil || xCommissionAssetValue == nil {
 		logger.Debugf("miss commission %v %v", yCommissionAssetValue == nil, xCommissionAssetValue == nil)
