@@ -290,10 +290,10 @@ func handleSave(
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	fields := make(map[string]interface{})
-	fields["alloc"] = m.Alloc
-	fields["totalAlloc"] = m.TotalAlloc
-	fields["sys"] = m.Sys
-	fields["numGC"] = m.NumGC
+	fields["alloc"] = int64(m.Alloc/1000/1000)
+	fields["totalAlloc"] = int64(m.TotalAlloc/1000/1000)
+	fields["sys"] = int64(m.Sys/1000/1000)
+	fields["numGC"] = int64(m.NumGC)
 	fields["cpuSystem"] = cpuUsage.System
 	fields["cpuUser"] = cpuUsage.User
 	fields["cpuIdle"] = cpuUsage.Idle
@@ -301,10 +301,10 @@ func handleSave(
 	if err != nil {
 		logger.Debugf("get memory error %v", err)
 	} else {
-		fields["memoryTotal"] = mm.Total
-		fields["memoryFree"] = mm.Free
-		fields["memoryCached"] = mm.Cached
-		fields["memoryUsed"] = mm.Used
+		fields["memoryTotal"] = int64(mm.Total/1000/1000)
+		fields["memoryFree"] = int64(mm.Free/1000/1000)
+		fields["memoryCached"] = int64(mm.Cached/1000/1000)
+		fields["memoryUsed"] = int64(mm.Used/1000/1000)
 	}
 
 	pt, err := client.NewPoint(
