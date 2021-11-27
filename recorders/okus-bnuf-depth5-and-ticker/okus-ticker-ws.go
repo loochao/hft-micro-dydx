@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	okex_usdtspot "github.com/geometrybase/hft-micro/okex-usdtspot"
+	//okex_usdtspot "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"github.com/gorilla/websocket"
 	"io"
 	"net/http"

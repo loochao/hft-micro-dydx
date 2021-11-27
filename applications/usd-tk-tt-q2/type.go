@@ -189,3 +189,9 @@ type XYStrategy struct {
 	ySlippageTMPath      string
 	xySuccessRatioTMPath string
 }
+
+type CpuUsage struct {
+	User   float64
+	System float64
+	Idle   float64
+}

@@ -11,7 +11,6 @@ import (
 	ftxuf "github.com/geometrybase/hft-micro/ftx-usdfuture"
 	kcuf "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
-	okut "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -389,6 +388,10 @@ func main() {
 	logger.Debugf("start main loop")
 	restartTimer := time.NewTimer(xyConfig.RestartInterval)
 	defer restartTimer.Stop()
+
+	go func(){
+
+	}()
 
 mainLoop:
 	for {

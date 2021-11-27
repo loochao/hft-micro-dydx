@@ -4,7 +4,7 @@ import (
 	"compress/gzip"
 	binance_usdtfuture "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
-	okex_usdtspot "github.com/geometrybase/hft-micro/okex-usdtspot"
+	//okex_usdtspot "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"os"
 	"strings"
 	"testing"

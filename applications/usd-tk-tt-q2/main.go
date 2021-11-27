@@ -12,6 +12,7 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	okexv5_usdtspot "github.com/geometrybase/hft-micro/okexv5-usdtspot"
 	okexv5_usdtswap "github.com/geometrybase/hft-micro/okexv5-usdtswap"
+	"github.com/mackerelio/go-osstat/cpu"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"math"
@@ -322,7 +323,6 @@ func main() {
 		defer xyExternalInfluxWriter.Stop()
 	}
 
-
 	xPositionChMap := make(map[string]chan common.Position)
 	xOrderChMap := make(map[string]chan common.Order)
 	xFundingRateChMap := make(map[string]chan common.FundingRate)
@@ -459,11 +459,40 @@ func main() {
 	restartTimer := time.NewTimer(xyConfig.RestartInterval)
 	defer restartTimer.Stop()
 
-	targetWeightUpdateTimer := time.NewTimer(xyConfig.InternalInflux.SaveInterval/2)
+	targetWeightUpdateTimer := time.NewTimer(xyConfig.InternalInflux.SaveInterval / 2)
 	defer targetWeightUpdateTimer.Stop()
 
 	influxSaveTimer := time.NewTimer(config.RestartSilent)
 	defer influxSaveTimer.Stop()
+
+	cpuUsage := CpuUsage{}
+
+	go func() {
+		var before, after *cpu.Stats
+		before, err := cpu.Get()
+		if err != nil {
+			logger.Debugf("cpu.Get() error %v", err)
+		}
+		timer := time.NewTimer(time.Second)
+		for {
+			select {
+			case <-xyGlobalCtx.Done():
+				return
+			case <-timer.C:
+				before = after
+				after, err := cpu.Get()
+				if err != nil {
+					logger.Debugf("cpu.Get() error %v", err)
+				} else if before != nil {
+					total := float64(after.Total - before.Total)
+					cpuUsage.User = float64(after.User-before.User) / total * 100
+					cpuUsage.System = float64(after.System-before.System) / total * 100
+					cpuUsage.Idle = float64(after.Idle-before.Idle) / total * 100
+				}
+				timer.Reset(time.Second)
+			}
+		}
+	}()
 
 	lastExternalSaveTime := &time.Time{}
 mainLoop:
@@ -514,22 +543,22 @@ mainLoop:
 			liquidityMap := make(map[string]float64)
 			for xSymbol, st := range strategyMap {
 				offset := math.Max(st.stats.YAskOffset.Load(), st.stats.YBidOffset.Load())
-				if st.stats.YMiddlePrice.Load() > 0 && offset > 0{
+				if st.stats.YMiddlePrice.Load() > 0 && offset > 0 {
 					liquidityMap[xSymbol] = st.yMultiplier * math.Min(st.stats.YBidSize.Load(), st.stats.YAskSize.Load()) * st.stats.YMiddlePrice.Load()
 					liquidityMap[xSymbol] /= offset
 					liquidityMap[xSymbol] = math.Sqrt(liquidityMap[xSymbol])
 					totalLiquidity += liquidityMap[xSymbol]
 				}
 			}
-			if len(liquidityMap) > len(strategyMap) / 2 {
-				meanLiquidity := totalLiquidity/float64(len(liquidityMap))
+			if len(liquidityMap) > len(strategyMap)/2 {
+				meanLiquidity := totalLiquidity / float64(len(liquidityMap))
 				for xSymbol, liquidity := range liquidityMap {
 					st := strategyMap[xSymbol]
 					weight := liquidity / meanLiquidity
 					weight = math.Sqrt(weight)
 					if weight > 1.0 {
 						weight = 1.0
-					}else if weight < 0.2 {
+					} else if weight < 0.2 {
 						weight = 0.2
 					}
 					st.targetWeight.Set(weight)
@@ -539,10 +568,10 @@ mainLoop:
 					}
 				}
 			}
-			if len(liquidityMap) == len(strategyMap){
+			if len(liquidityMap) == len(strategyMap) {
 				targetWeightUpdateTimer.Reset(config.TargetWeightUpdateInterval)
-			}else{
-				targetWeightUpdateTimer.Reset(xyConfig.InternalInflux.SaveInterval/2)
+			} else {
+				targetWeightUpdateTimer.Reset(xyConfig.InternalInflux.SaveInterval / 2)
 			}
 			break
 		case xcv := <-xCommissionAssetValueCh:
@@ -587,6 +616,7 @@ mainLoop:
 					xCommissionAssetValue, yCommissionAssetValue,
 					xyInternalInfluxWriter, xyExternalInfluxWriter,
 					lastExternalSaveTime,
+					cpuUsage,
 				)
 				influxSaveTimer.Reset(
 					time.Now().Truncate(

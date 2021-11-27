@@ -8,14 +8,13 @@ module github.com/geometrybase/hft-micro
 go 1.16
 
 require (
-	github.com/certifi/gocertifi v0.0.0-20200922220541-2c3bb06c6054 // indirect
 	github.com/ethereum/go-ethereum v1.10.9
-	github.com/getsentry/raven-go v0.2.0
 	github.com/go-echarts/go-echarts/v2 v2.2.4
 	github.com/google/go-cmp v0.5.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab
 	github.com/leesper/go_rng v0.0.0-20190531154944-a612b043e353
+	github.com/mackerelio/go-osstat v0.2.1
 	github.com/minio/simdjson-go v0.2.2
 	github.com/montanaflynn/stats v0.6.6
 	github.com/stretchr/testify v1.7.0

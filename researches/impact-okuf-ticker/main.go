@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/geometrybase/hft-micro/logger"
-	okex_usdtspot "github.com/geometrybase/hft-micro/okex-usdtspot"
+	//okex_usdtspot "github.com/geometrybase/hft-micro/okex-usdtspot"
 	"github.com/geometrybase/hft-micro/tdigest"
 	"math"
 	"os"

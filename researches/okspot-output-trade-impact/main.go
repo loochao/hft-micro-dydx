@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/logger"
-	"github.com/geometrybase/hft-micro/okex-usdtspot"
+	//"github.com/geometrybase/hft-micro/okex-usdtspot"
 	"github.com/geometrybase/hft-micro/tdigest"
 	"os"
 	"strings"

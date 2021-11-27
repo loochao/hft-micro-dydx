@@ -4,12 +4,11 @@ import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/influx/client"
 	"github.com/geometrybase/hft-micro/logger"
+	"github.com/mackerelio/go-osstat/memory"
 	"math"
 	"runtime"
 	"strings"
 	"time"
-	"github.com/mackerelio/go-osstat/memory"
-	"github.com/mackerelio/go-osstat/cpu"
 )
 
 func handleSave(
@@ -22,6 +21,7 @@ func handleSave(
 	xCommissionAssetValue, yCommissionAssetValue *float64,
 	xyInternalInfluxWriter, xyExternalInfluxWriter *common.InfluxWriter,
 	lastExternalSaveTime *time.Time,
+	cpuUsage CpuUsage,
 ) {
 	if yCommissionAssetValue == nil || xCommissionAssetValue == nil {
 		logger.Debugf("miss commission %v %v", yCommissionAssetValue == nil, xCommissionAssetValue == nil)
@@ -290,10 +290,23 @@ func handleSave(
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	fields := make(map[string]interface{})
-	fields["alloc"] = m.Alloc / 1024 / 1024
-	fields["totalAlloc"] = m.TotalAlloc / 1024 / 1024
-	fields["sys"] = m.Sys / 1024 / 1024
+	fields["alloc"] = m.Alloc
+	fields["totalAlloc"] = m.TotalAlloc
+	fields["sys"] = m.Sys
 	fields["numGC"] = m.NumGC
+	fields["cpuSystem"] = cpuUsage.System
+	fields["cpuUser"] = cpuUsage.User
+	fields["cpuIdle"] = cpuUsage.Idle
+	mm, err := memory.Get()
+	if err != nil {
+		logger.Debugf("get memory error %v", err)
+	} else {
+		fields["memoryTotal"] = mm.Total
+		fields["memoryFree"] = mm.Free
+		fields["memoryCached"] = mm.Cached
+		fields["memoryUsed"] = mm.Used
+	}
+
 	pt, err := client.NewPoint(
 		xyConfig.InternalInflux.Measurement,
 		map[string]string{
