@@ -17,6 +17,7 @@ import (
 	"math"
 	"os"
 	"os/signal"
+	"runtime"
 	"runtime/pprof"
 	"strings"
 	"syscall"
@@ -75,12 +76,13 @@ func main() {
 	xyConfig = &config
 
 	if xyConfig.CpuProfile != "" {
-		f, err := os.Create(xyConfig.CpuProfile)
+		var cpuProfFile *os.File
+		cpuProfFile, err = os.Create(xyConfig.CpuProfile)
 		if err != nil {
 			logger.Warnf("os.Create error %v", err)
 			return
 		}
-		err = pprof.StartCPUProfile(f)
+		err = pprof.StartCPUProfile(cpuProfFile)
 		if err != nil {
 			logger.Warnf("pprof.StartCPUProfile error %v", err)
 			return
@@ -450,6 +452,17 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigs
+
+		if xyConfig.CpuProfile != "" {
+			var heapProfFile *os.File
+			runtime.GC() // profile all outstanding allocations
+			if heapProfFile, err = os.Create(xyConfig.HeapProfile); err != nil {
+				logger.Warnf("os.Create %s error %v", xyConfig.HeapProfile, err)
+			} else if err = pprof.WriteHeapProfile(heapProfFile); err != nil {
+				logger.Warnf("pprof.WriteHeapProfile error %v", err)
+			}
+		}
+
 		logger.Debugf("catch exit signal %v", sig)
 		xyGlobalCancel()
 	}()
@@ -495,6 +508,9 @@ mainLoop:
 				default:
 					logger.Debugf("ch <- xSystemStatus failed %s ch len %d", xSymbol, len(ch))
 				}
+			}
+			if xSystemStatus != common.SystemStatusReady {
+				runtime.GC()
 			}
 			break
 		case ySystemStatus = <-ySystemStatusCh:

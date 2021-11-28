@@ -10,9 +10,10 @@ import (
 type Config struct {
 	Name *string `yaml:"name"`
 
-	CpuProfile string `yaml:"cpuProfile"`
-	DryRun     bool   `yaml:"dryRun"`
-	ReduceOnly bool   `yaml:"reduceOnly"`
+	CpuProfile  string `yaml:"cpuProfile"`
+	HeapProfile string `yaml:"heapProfile"`
+	DryRun      bool   `yaml:"dryRun"`
+	ReduceOnly  bool   `yaml:"reduceOnly"`
 
 	InternalInflux common.InfluxSettings `yaml:"internalInflux"`
 	ExternalInflux common.InfluxSettings `yaml:"externalInflux"`
