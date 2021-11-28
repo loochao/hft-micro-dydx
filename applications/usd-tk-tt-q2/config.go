@@ -124,12 +124,12 @@ type Config struct {
 	MinYFree    float64 `yaml:"minYFree"`
 	MaxPosValue float64 `yaml:"maxPosValue"`
 
-	BestSizeFactor             float64            `yaml:"bestSizeFactor"`
-	EnterFreePct               float64            `yaml:"enterFreePct"`
-	EnterSlippage              float64            `yaml:"enterSlippage"`
-	EnterSlippageLookback      time.Duration      `yaml:"enterSlippageLookback"`
-	EnterMinimalStep           float64            `yaml:"enterMinimalStep"`
-	EnterTargetFactor          float64            `yaml:"enterTargetFactor"`
+	BestSizeFactor        float64       `yaml:"bestSizeFactor"`
+	EnterFreePct          float64       `yaml:"enterFreePct"`
+	EnterSlippage         float64       `yaml:"enterSlippage"`
+	EnterSlippageLookback time.Duration `yaml:"enterSlippageLookback"`
+	EnterMinimalStep      float64       `yaml:"enterMinimalStep"`
+	EnterTargetFactor     float64       `yaml:"enterTargetFactor"`
 	//EnterWithProfitConfirms    bool               `yaml:"enterWithProfitConfirms"`
 	StartValues                map[string]float64 `yaml:"startValues"`
 	TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`

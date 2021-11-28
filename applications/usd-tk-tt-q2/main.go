@@ -477,7 +477,7 @@ func main() {
 				return
 			case <-timer.C:
 				before = after
-				after, err := cpu.Get()
+				after, err = cpu.Get()
 				if err != nil {
 					logger.Debugf("cpu.Get() error %v", err)
 				} else if before != nil {
