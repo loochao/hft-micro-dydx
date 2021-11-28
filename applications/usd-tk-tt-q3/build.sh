@@ -14,8 +14,8 @@ git tag -d "usd-tk-tt-q2.$dt"
 git tag "usd-tk-tt-q2.$dt"
 git push origin "usd-tk-tt-q2.$dt" --force
 
-env GOOS=linux GOARCH=arm64 go build -gcflags="-m" -o "./dist/usd-tk-tt-q2.arm64.$dt" ./applications/usd-tk-tt-q2
-env GOOS=linux GOARCH=amd64 go build -gcflags="-m" -o "./dist/usd-tk-tt-q2.amd64.$dt" ./applications/usd-tk-tt-q2
+env GOOS=linux GOARCH=arm64 go build -o "./dist/usd-tk-tt-q2.arm64.$dt" ./applications/usd-tk-tt-q2
+env GOOS=linux GOARCH=amd64 go build -o "./dist/usd-tk-tt-q2.amd64.$dt" ./applications/usd-tk-tt-q2
 
 chmod 755 "./dist/usd-tk-tt-q2.amd64.$dt"
 
