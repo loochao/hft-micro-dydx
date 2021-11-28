@@ -21,7 +21,6 @@ func handleSave(
 	xCommissionAssetValue, yCommissionAssetValue *float64,
 	xyInternalInfluxWriter, xyExternalInfluxWriter *common.InfluxWriter,
 	lastExternalSaveTime *time.Time,
-	cpuUsage *CpuUsage,
 ) {
 	if yCommissionAssetValue == nil || xCommissionAssetValue == nil {
 		logger.Debugf("miss commission %v %v", yCommissionAssetValue == nil, xCommissionAssetValue == nil)
@@ -294,9 +293,6 @@ func handleSave(
 	fields["totalAlloc"] = int64(m.TotalAlloc/1000/1000)
 	fields["sys"] = int64(m.Sys/1000/1000)
 	fields["numGC"] = int64(m.NumGC)
-	fields["cpuSystem"] = cpuUsage.System
-	fields["cpuUser"] = cpuUsage.User
-	fields["cpuIdle"] = cpuUsage.Idle
 	mm, err := memory.Get()
 	if err != nil {
 		logger.Debugf("get memory error %v", err)

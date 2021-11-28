@@ -12,7 +12,6 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	okexv5_usdtspot "github.com/geometrybase/hft-micro/okexv5-usdtspot"
 	okexv5_usdtswap "github.com/geometrybase/hft-micro/okexv5-usdtswap"
-	"github.com/mackerelio/go-osstat/cpu"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"math"
@@ -465,41 +464,8 @@ func main() {
 	influxSaveTimer := time.NewTimer(config.RestartSilent)
 	defer influxSaveTimer.Stop()
 
-	cpuUsage := &CpuUsage{}
-
-	go func() {
-		var before, after *cpu.Stats
-		interval := xyConfig.InternalInflux.SaveInterval
-		timer := time.NewTimer(time.Minute)
-		for {
-			select {
-			case <-xyGlobalCtx.Done():
-				return
-			case <-timer.C:
-				before = after
-				after, err = cpu.Get()
-				if err != nil {
-					logger.Debugf("cpu.Get() error %v", err)
-				} else if before != nil {
-					total := float64(after.Total - before.Total)
-					if total != 0 {
-						cpuUsage.User = float64(after.User-before.User) / total * 100
-						cpuUsage.System = float64(after.System-before.System) / total * 100
-						cpuUsage.Idle = float64(after.Idle-before.Idle) / total * 100
-					}
-				}
-				timer.Reset(
-					time.Now().Truncate(
-						interval,
-					).Add(
-						interval - time.Second*3,
-					).Sub(time.Now()),
-				)
-			}
-		}
-	}()
-
 	lastExternalSaveTime := &time.Time{}
+
 mainLoop:
 	for {
 		select {
@@ -621,7 +587,6 @@ mainLoop:
 					xCommissionAssetValue, yCommissionAssetValue,
 					xyInternalInfluxWriter, xyExternalInfluxWriter,
 					lastExternalSaveTime,
-					cpuUsage,
 				)
 				influxSaveTimer.Reset(
 					time.Now().Truncate(
