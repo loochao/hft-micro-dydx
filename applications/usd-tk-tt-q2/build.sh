@@ -19,16 +19,16 @@ env GOOS=linux GOARCH=amd64 go build -o "./dist/usd-tk-tt-q2.amd64.$dt" ./applic
 
 chmod 755 "./dist/usd-tk-tt-q2.amd64.$dt"
 
-#rsync -avx --progress "./dist/usd-tk-tt-q2.arm64.$dt" tkc1:/usr/local/bin/
-#rsync -avx --progress "./dist/usd-tk-tt-q2.arm64.$dt" tka1:/usr/local/bin/
-#rsync -avx --progress "./dist/usd-tk-tt-q2.arm64.$dt" tka2:/usr/local/bin/
+rsync -avx --progress "./dist/usd-tk-tt-q2.arm64.$dt" tkc1:/usr/local/bin/
+rsync -avx --progress "./dist/usd-tk-tt-q2.arm64.$dt" tka1:/usr/local/bin/
+rsync -avx --progress "./dist/usd-tk-tt-q2.arm64.$dt" tka2:/usr/local/bin/
 
 rsync -avx --progress "./dist/usd-tk-tt-q2.amd64.$dt" way:/usr/local/bin/
 rsync -avx --progress "./dist/usd-tk-tt-q2.arm64.$dt" way:/usr/local/bin/
 
-ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q2.arm64.$dt tka1:/usr/local/bin/"
-ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q2.arm64.$dt tka2:/usr/local/bin/"
-ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q2.arm64.$dt tkc1:/usr/local/bin/"
+#ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q2.arm64.$dt tka1:/usr/local/bin/"
+#ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q2.arm64.$dt tka2:/usr/local/bin/"
+#ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q2.arm64.$dt tkc1:/usr/local/bin/"
 
 ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q2.arm64.$dt nv1:/usr/local/bin/"
 ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q2.arm64.$dt nv2:/usr/local/bin/"
