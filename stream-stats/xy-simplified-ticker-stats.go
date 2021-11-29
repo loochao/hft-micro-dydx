@@ -120,7 +120,7 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 			if sl.xTicker != nil {
 				// 0 is initial value
 				if sl.xEventTimeDeltaMean == 0 {
-					logger.Debugf("X EVENT TIME DELTA %f %f", sl.xEventTimeDelta, sl.timedDeltaK)
+					//logger.Debugf("X EVENT TIME DELTA %f %f", sl.xEventTimeDelta, sl.timedDeltaK)
 					sl.xEventTimeDeltaMean = sl.xEventTimeDelta.Seconds()
 				} else {
 					sl.xEventTimeDeltaMean = (sl.xEventTimeDelta.Seconds()-sl.xEventTimeDeltaMean)*sl.timedDeltaK + sl.xEventTimeDeltaMean
@@ -134,7 +134,7 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 			}
 			if sl.yTicker != nil {
 				if sl.yEventTimeDeltaMean == 0 {
-					logger.Debugf("Y EVENT TIME DELTA %f %f",sl.yEventTimeDelta, sl.timedDeltaK)
+					//logger.Debugf("Y EVENT TIME DELTA %f %f",sl.yEventTimeDelta, sl.timedDeltaK)
 					sl.yEventTimeDeltaMean = sl.yEventTimeDelta.Seconds()
 				} else {
 					sl.yEventTimeDeltaMean = (sl.yEventTimeDelta.Seconds()-sl.yEventTimeDeltaMean)*sl.timedDeltaK + sl.yEventTimeDeltaMean
