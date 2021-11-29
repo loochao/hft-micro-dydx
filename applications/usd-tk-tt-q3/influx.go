@@ -180,53 +180,46 @@ func handleSave(
 			hasAllSymbols = false
 		}
 
-		if strat.stats.Ready.True() {
+		if strat.stats.Ready {
 			fields["statsReady"] = 1.0
 		} else {
 			fields["statsReady"] = 0.0
 		}
 
 		//stats不管策略状态，都需要保存
-		if strat.targetWeightUpdated.True() {
-			fields["targetWeight"] = strat.targetWeight.Load()
+		fields["statsXTimeDeltaBot"] = strat.stats.XEventTimeDeltaBot.Seconds()
+		fields["statsXTimeDeltaMid"] = strat.stats.XEventTimeDeltaMid.Seconds()
+		fields["statsXTimeDeltaTop"] = strat.stats.XEventTimeDeltaTop.Seconds()
+
+		fields["statsYTimeDeltaBot"] = strat.stats.YEventTimeDeltaBot.Seconds()
+		fields["statsYTimeDeltaMid"] = strat.stats.YEventTimeDeltaMid.Seconds()
+		fields["statsYTimeDeltaTop"] = strat.stats.YEventTimeDeltaTop.Seconds()
+
+		fields["statsXYTimeDeltaBot"] = strat.stats.XYEventTimeDeltaBot.Seconds()
+		fields["statsXYTimeDeltaMid"] = strat.stats.XYEventTimeDeltaMid.Seconds()
+		fields["statsXYTimeDeltaTop"] = strat.stats.XYEventTimeDeltaTop.Seconds()
+
+		fields["statsXTimeDeltaMid"] = strat.stats.XParseTimeDeltaMid.Seconds()
+		fields["statsYTimeDeltaMid"] = strat.stats.YParseTimeDeltaMid.Seconds()
+
+
+		if strat.stats.XMiddlePrice > 0 {
+			fields["statsXMiddlePrice"] = strat.stats.XMiddlePrice
 		}
-		fields["statsXTimeDeltaBot"] = strat.stats.XTimeDeltaBot.Load().Seconds()
-		fields["statsXTimeDeltaMid"] = strat.stats.XTimeDeltaMid.Load().Seconds()
-		fields["statsXTimeDeltaTop"] = strat.stats.XTimeDeltaTop.Load().Seconds()
-
-		fields["statsYTimeDeltaBot"] = strat.stats.YTimeDeltaBot.Load().Seconds()
-		fields["statsYTimeDeltaMid"] = strat.stats.YTimeDeltaMid.Load().Seconds()
-		fields["statsYTimeDeltaTop"] = strat.stats.YTimeDeltaTop.Load().Seconds()
-
-		fields["statsXYTimeDeltaBot"] = strat.stats.XYTimeDeltaBot.Load().Seconds()
-		fields["statsXYTimeDeltaMid"] = strat.stats.XYTimeDeltaMid.Load().Seconds()
-		fields["statsXYTimeDeltaTop"] = strat.stats.XYTimeDeltaTop.Load().Seconds()
-
-		fields["statsXBidSize"] = strat.stats.XBidSize.Load()
-		fields["statsXAskSize"] = strat.stats.XAskSize.Load()
-		fields["statsYBidSize"] = strat.stats.YBidSize.Load()
-		fields["statsYAskSize"] = strat.stats.YAskSize.Load()
-		fields["statsXBidOffset"] = strat.stats.XBidOffset.Load()
-		fields["statsXAskOffset"] = strat.stats.XAskOffset.Load()
-		fields["statsYBidOffset"] = strat.stats.YBidOffset.Load()
-		fields["statsYAskOffset"] = strat.stats.YAskOffset.Load()
-		if strat.stats.XMiddlePrice.Load() > 0 {
-			fields["statsXMiddlePrice"] = strat.stats.XMiddlePrice.Load()
-		}
-		if strat.stats.YMiddlePrice.Load() > 0 {
-			fields["statsYMiddlePrice"] = strat.stats.YMiddlePrice.Load()
+		if strat.stats.YMiddlePrice > 0 {
+			fields["statsYMiddlePrice"] = strat.stats.YMiddlePrice
 		}
 		if strat.tickerCount > 0 && strat.tickerMatchCount > 0 {
 			fields["tickerMatchRatio"] = float64(strat.tickerMatchCount) / float64(strat.tickerCount)
 		}
 
-		fields["statsSpreadEnterOffset"] = strat.stats.SpreadEnterOffset.Load()
-		fields["statsSpreadLeaveOffset"] = strat.stats.SpreadLeaveOffset.Load()
-		fields["statsSpreadLongEnterBot"] = strat.stats.SpreadLongEnterBot.Load()
-		fields["statsSpreadLongLeaveTop"] = strat.stats.SpreadLongLeaveTop.Load()
-		fields["statsSpreadShortEnterTop"] = strat.stats.SpreadShortEnterTop.Load()
-		fields["statsSpreadShortLeaveBot"] = strat.stats.SpreadShortLeaveBot.Load()
-		fields["statsSpreadMiddle"] = strat.stats.SpreadMiddle.Load()
+		fields["statsSpreadEnterOffset"] = strat.stats.SpreadEnterOffset
+		fields["statsSpreadLeaveOffset"] = strat.stats.SpreadLeaveOffset
+		fields["statsSpreadLongEnterBot"] = strat.stats.SpreadLongEnterBot
+		fields["statsSpreadLongLeaveTop"] = strat.stats.SpreadLongLeaveTop
+		fields["statsSpreadShortEnterTop"] = strat.stats.SpreadShortEnterTop
+		fields["statsSpreadShortLeaveBot"] = strat.stats.SpreadShortLeaveBot
+		fields["statsSpreadMiddle"] = strat.stats.SpreadMiddle
 
 		if strat.xFundingRate != nil {
 			fields["xFundingRate"] = strat.xFundingRate.GetFundingRate()

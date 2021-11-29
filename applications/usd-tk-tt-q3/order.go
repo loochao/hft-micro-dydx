@@ -18,7 +18,6 @@ func (strat *XYStrategy) updateXPosition() {
 	}
 
 	if !strat.spreadReady ||
-		!strat.targetWeightUpdated.True() ||
 		strat.xPosition == nil ||
 		strat.yPosition == nil ||
 		strat.xyFundingRate == nil ||
@@ -67,9 +66,9 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.offsetStep = 1.0
 	}
 
-	strat.tdSpreadMiddle = strat.stats.SpreadMiddle.Load()
-	strat.tdSpreadEnterOffset = strat.stats.SpreadEnterOffset.Load()
-	strat.tdSpreadExitOffset = strat.stats.SpreadLeaveOffset.Load()
+	strat.tdSpreadMiddle = strat.stats.SpreadMiddle
+	strat.tdSpreadEnterOffset = strat.stats.SpreadEnterOffset
+	strat.tdSpreadExitOffset = strat.stats.SpreadLeaveOffset
 
 	if xSize >= 0 {
 		strat.thresholdShortTop = strat.tdSpreadMiddle + strat.config.ShortEnterThreshold + strat.tdSpreadEnterOffset*strat.offsetFactor - *strat.xyFundingRate**strat.xFundingRateFactor
@@ -132,15 +131,6 @@ func (strat *XYStrategy) updateXPosition() {
 		xSize >= strat.xMinSize*strat.xMultiplier {
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, xAbsValue*0.5), math.Min(xAbsValue, yAbsValue/strat.config.HedgeRatio))
 
-		//两步，第一步看x的分布，用一个td之后的bidSize, 第二步不能超过y的td之后askSize的流动性
-		tdXBidValue := strat.stats.XBidSize.Load() * strat.xMultiplier * xyMidPrice
-		tdYAskValue := strat.stats.YAskSize.Load() * strat.yMultiplier * xyMidPrice
-		if strat.enterValue > tdXBidValue {
-			strat.enterValue = tdXBidValue
-		}
-		if strat.enterValue > tdYAskValue {
-			strat.enterValue = tdYAskValue
-		}
 		xSizeDiff := strat.enterValue / xyMidPrice
 
 		if xSizeDiff > strat.maxOrderSize {
@@ -196,7 +186,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			if strat.config.HedgeDelay > 0 {
 				strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-			}else{
+			} else {
 				strat.hedgeCheckTimer.Reset(strat.config.HedgeCheckInterval)
 			}
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
@@ -227,16 +217,6 @@ func (strat *XYStrategy) updateXPosition() {
 		xSize <= -strat.xMinSize*strat.xMultiplier {
 
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, xAbsValue*0.5), math.Min(xAbsValue, yAbsValue/strat.config.HedgeRatio))
-
-		//两步，第一步看x的分布，用一个td之后的askSize, 第二步不能超过y的td之后bidSize的流动性
-		tdXAskValue := strat.stats.XAskSize.Load() * strat.xMultiplier * xyMidPrice
-		tdYBidValue := strat.stats.YBidSize.Load() * strat.yMultiplier * xyMidPrice
-		if strat.enterValue > tdXAskValue {
-			strat.enterValue = tdXAskValue
-		}
-		if strat.enterValue > tdYBidValue {
-			strat.enterValue = tdYBidValue
-		}
 
 		xSizeDiff := strat.enterValue / xyMidPrice
 
@@ -288,7 +268,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 			if strat.config.HedgeDelay > 0 {
 				strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-			}else{
+			} else {
 				strat.hedgeCheckTimer.Reset(strat.config.HedgeCheckInterval)
 			}
 			strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
@@ -345,16 +325,6 @@ func (strat *XYStrategy) updateXPosition() {
 			//超过最大仓位了, 不操作
 			strat.hedgeXPosition()
 			return
-		}
-
-		//两步，第一步看x的分布，用一个td之后的askSize, 第二步不能超过y的td之后bidSize的流动性
-		tdXAskValue := strat.stats.XAskSize.Load() * strat.xMultiplier * xyMidPrice
-		tdYBidValue := strat.stats.YBidSize.Load() * strat.yMultiplier * xyMidPrice
-		if strat.enterValue > tdXAskValue {
-			strat.enterValue = tdXAskValue
-		}
-		if strat.enterValue > tdYBidValue {
-			strat.enterValue = tdYBidValue
 		}
 
 		xSizeDiff := strat.enterValue / xyMidPrice
@@ -432,7 +402,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		if strat.config.HedgeDelay > 0 {
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-		}else{
+		} else {
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeCheckInterval)
 		}
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
@@ -487,19 +457,8 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.hedgeXPosition()
 			return
 		}
-
-		//两步，第一步看x的分布，用一个td之后的bidSize, 第二步不能超过y的td之后askSize的流动性
-		tdXBidValue := strat.stats.XBidSize.Load() * strat.xMultiplier * xyMidPrice
-		tdYAskValue := strat.stats.YAskSize.Load() * strat.yMultiplier * xyMidPrice
-		if strat.enterValue > tdXBidValue {
-			strat.enterValue = tdXBidValue
-		}
-		if strat.enterValue > tdYAskValue {
-			strat.enterValue = tdYAskValue
-		}
 		xSizeDiff := strat.enterValue / xyMidPrice
 
-		xSizeDiff = strat.enterValue / xyMidPrice
 		if xSizeDiff > strat.maxOrderSize {
 			xSizeDiff = strat.maxOrderSize
 		}
@@ -574,7 +533,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		if strat.config.HedgeDelay > 0 {
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
-		}else{
+		} else {
 			strat.hedgeCheckTimer.Reset(strat.config.HedgeCheckInterval)
 		}
 		strat.hedgeCheckStopTime = time.Now().Add(strat.config.HedgeCheckDuration)
@@ -615,16 +574,13 @@ func (strat *XYStrategy) hedgeXPosition() {
 		}
 		xSizeDiff := -strat.yPosition.GetSize()*strat.yMultiplier/strat.config.HedgeRatio/strat.xMultiplier - strat.xPosition.GetSize()
 
-		//下单也加上控制，以防下单太大，造成市场冲击
-		if strat.stats.Ready.True() {
-			tdXBidSize := strat.stats.XBidSize.Load()
-			tdXAskSize := strat.stats.XAskSize.Load()
-			if xSizeDiff < -tdXBidSize {
-				xSizeDiff = -tdXBidSize
-			} else if xSizeDiff > tdXAskSize {
-				xSizeDiff = tdXAskSize
-			}
-		}
+		//if strat.config.BestSizeFactor > 0 {
+		//	if xSizeDiff > 0 {
+		//		xSizeDiff = math.Min(strat.xTicker.GetAskSize()*strat.config.BestSizeFactor, xSizeDiff)
+		//	} else {
+		//		xSizeDiff = math.Max(-strat.xTicker.GetBidSize()*strat.config.BestSizeFactor, xSizeDiff)
+		//	}
+		//}
 
 		if xSizeDiff > strat.maxOrderSize {
 			xSizeDiff = strat.maxOrderSize
@@ -744,19 +700,16 @@ func (strat *XYStrategy) hedgeYPosition() {
 		}
 	}
 
+	//if strat.config.BestSizeFactor > 0 {
+	//	if ySizeDiff > 0 {
+	//		ySizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.config.BestSizeFactor, ySizeDiff)
+	//	} else {
+	//		ySizeDiff = math.Max(-strat.yTicker.GetBidSize()*strat.config.BestSizeFactor, ySizeDiff)
+	//	}
+	//}
+
 	if math.Abs(ySizeDiff) < strat.yStepSize {
 		return
-	}
-
-	//下单也加上控制，以限下单太大，造成市场冲击
-	if strat.stats.Ready.True() {
-		tdYBidSize := strat.stats.YBidSize.Load()
-		tdYAskSize := strat.stats.YAskSize.Load()
-		if ySizeDiff < -tdYBidSize {
-			ySizeDiff = -tdYBidSize
-		} else if ySizeDiff > tdYAskSize {
-			ySizeDiff = tdYAskSize
-		}
 	}
 
 	if ySizeDiff > strat.maxOrderSize {

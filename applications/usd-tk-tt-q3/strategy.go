@@ -34,51 +34,25 @@ func startXYStrategy(
 	xyTickerCh chan common.Ticker,
 ) (strat *XYStrategy, err error) {
 
-	stats, err := stream_stats.NewXYTickerStats(stream_stats.NewXYTickerStatsParams{
+	stats, err := stream_stats.NewXYSimplifiedTickerStats(stream_stats.NewXYSimplifiedTickerStatsParams{
 		XSymbol:        xSymbol,
 		YSymbol:        ySymbol,
-		XExchange:      xExchange,
-		YExchange:      yExchange,
 		RootPath:       config.StatsRootPath,
 		SampleInterval: config.StatsSampleInterval,
 		SaveInterval:   config.StatsSaveInterval,
 
-		TimeDeltaTDLookback:    config.TimeDeltaTDLookback,
-		TimeDeltaTDSubInterval: config.TimeDeltaTDSubInterval,
-		TimeDeltaTDCompression: config.TimeDeltaTDCompression,
-
-		XLiquidityTDLookback:    config.XLiquidityTDLookback,
-		XLiquidityTDSubInterval: config.XLiquidityTDSubInterval,
-		XLiquidityTDCompression: config.XLiquidityTDCompression,
-
-		YLiquidityTDLookback:    config.YLiquidityTDLookback,
-		YLiquidityTDSubInterval: config.YLiquidityTDSubInterval,
-		YLiquidityTDCompression: config.YLiquidityTDCompression,
-
-		XOffsetTDLookback:    config.XOffsetTDLookback,
-		XOffsetTDSubInterval: config.XOffsetTDSubInterval,
-		XOffsetTDCompression: config.XOffsetTDCompression,
-
-		YOffsetTDLookback:    config.YOffsetTDLookback,
-		YOffsetTDSubInterval: config.YOffsetTDSubInterval,
-		YOffsetTDCompression: config.YOffsetTDCompression,
+		TimeDeltaLookback: config.TimeDeltaLookback,
 
 		SpreadTDLookback:    config.SpreadTDLookback,
 		SpreadTDSubInterval: config.SpreadTDSubInterval,
 		SpreadTDCompression: config.SpreadTDCompression,
 
-		XTimeDeltaQuantileBot:  config.XTimeDeltaQuantileBot,
-		XTimeDeltaQuantileTop:  config.XTimeDeltaQuantileTop,
-		YTimeDeltaQuantileBot:  config.YTimeDeltaQuantileBot,
-		YTimeDeltaQuantileTop:  config.YTimeDeltaQuantileTop,
-		XYTimeDeltaQuantileBot: config.XYTimeDeltaQuantileBot,
-		XYTimeDeltaQuantileTop: config.XYTimeDeltaQuantileTop,
-
-		XLiquidityQuantile: config.XLiquidityQuantile,
-		YLiquidityQuantile: config.YLiquidityQuantile,
-
-		XOffsetQuantile: config.XOffsetQuantile,
-		YOffsetQuantile: config.YOffsetQuantile,
+		XTimeDeltaOffsetBot:  config.XTimeDeltaOffsetBot,
+		XTimeDeltaOffsetTop:  config.XTimeDeltaOffsetTop,
+		YTimeDeltaOffsetBot:  config.YTimeDeltaOffsetBot,
+		YTimeDeltaOffsetTop:  config.YTimeDeltaOffsetTop,
+		XYTimeDeltaOffsetBot: config.XYTimeDeltaOffsetBot,
+		XYTimeDeltaOffsetTop: config.XYTimeDeltaOffsetTop,
 
 		SpreadLongEnterQuantileBot:  config.SpreadLongEnterQuantileBot,
 		SpreadLongLeaveQuantileTop:  config.SpreadLongLeaveQuantileTop,
@@ -174,8 +148,7 @@ func startXYStrategy(
 		thresholdLongBot:     0,
 		thresholdLongTop:     0,
 
-		targetWeight:        common.ForAtomicFloat64(1.0),
-		targetWeightUpdated: common.ForAtomicBool(false),
+		targetWeight: config.PosWeights[xSymbol],
 
 		maxPosSize:   config.MaxPosSizes[xSymbol],
 		maxPosValue:  config.MaxPosValues[xSymbol],
@@ -429,11 +402,11 @@ func (strat *XYStrategy) updateEnterStepAndTarget() {
 	if strat.xAccount == nil || strat.yAccount == nil {
 		return
 	}
-	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.config.EnterFreePct * strat.targetWeight.Load()
+	strat.enterStep = (strat.xAccount.GetFree() + strat.yAccount.GetFree()) * strat.config.EnterFreePct * strat.targetWeight
 	if strat.enterStep < strat.config.EnterMinimalStep {
 		strat.enterStep = strat.config.EnterMinimalStep
 	}
-	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.targetWeight.Load()
+	strat.enterTarget = strat.enterStep * strat.config.EnterTargetFactor * strat.targetWeight
 	//logger.Debugf(
 	//	"%s ACCOUNT X %f %f Y %f %f W %f T %f",
 	//	strat.xSymbol,

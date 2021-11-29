@@ -40,25 +40,7 @@ type Config struct {
 	StatsSampleInterval time.Duration `yaml:"statsSampleInterval"`
 	StatsSaveInterval   time.Duration `yaml:"statsSaveInterval"`
 
-	TimeDeltaTDLookback    time.Duration `yaml:"timeDeltaTDLookback"`
-	TimeDeltaTDSubInterval time.Duration `yaml:"timeDeltaTDSubInterval"`
-	TimeDeltaTDCompression uint32        `yaml:"timeDeltaTDCompression"`
-
-	XLiquidityTDLookback    time.Duration `yaml:"xLiquidityTDLookback"`
-	XLiquidityTDSubInterval time.Duration `yaml:"xLiquidityTDSubInterval"`
-	XLiquidityTDCompression uint32        `yaml:"xLiquidityTDCompression"`
-
-	YLiquidityTDLookback    time.Duration `yaml:"yLiquidityTDLookback"`
-	YLiquidityTDSubInterval time.Duration `yaml:"yLiquidityTDSubInterval"`
-	YLiquidityTDCompression uint32        `yaml:"yLiquidityTDCompression"`
-
-	XOffsetTDLookback    time.Duration `yaml:"xOffsetTDLookback"`
-	XOffsetTDSubInterval time.Duration `yaml:"xOffsetTDSubInterval"`
-	XOffsetTDCompression uint32        `yaml:"xOffsetTDCompression"`
-
-	YOffsetTDLookback    time.Duration `yaml:"yOffsetTDLookback"`
-	YOffsetTDSubInterval time.Duration `yaml:"yOffsetTDSubInterval"`
-	YOffsetTDCompression uint32        `yaml:"yOffsetTDCompression"`
+	TimeDeltaLookback time.Duration `yaml:"timeDeltaLookback"`
 
 	SpreadTDLookback    time.Duration `yaml:"spreadTDLookback"`
 	SpreadTDSubInterval time.Duration `yaml:"spreadTDSubInterval"`
@@ -71,17 +53,12 @@ type Config struct {
 	SpreadMiddleMin             float64 `yaml:"spreadMiddleMin"`
 	SpreadMiddleMax             float64 `yaml:"spreadMiddleMax"`
 
-	XLiquidityQuantile float64 `yaml:"xLiquidityQuantile"`
-	YLiquidityQuantile float64 `yaml:"yLiquidityQuantile"`
-	XOffsetQuantile    float64 `yaml:"xOffsetQuantile"`
-	YOffsetQuantile    float64 `yaml:"yOffsetQuantile"`
-
-	XTimeDeltaQuantileTop  float64 `yaml:"xTimeDeltaQuantileTop"`
-	XTimeDeltaQuantileBot  float64 `yaml:"xTimeDeltaQuantileBot"`
-	YTimeDeltaQuantileTop  float64 `yaml:"yTimeDeltaQuantileTop"`
-	YTimeDeltaQuantileBot  float64 `yaml:"yTimeDeltaQuantileBot"`
-	XYTimeDeltaQuantileTop float64 `yaml:"xyTimeDeltaQuantileTop"`
-	XYTimeDeltaQuantileBot float64 `yaml:"xyTimeDeltaQuantileBot"`
+	XTimeDeltaOffsetTop  time.Duration `yaml:"xTimeDeltaOffsetTop"`
+	XTimeDeltaOffsetBot  time.Duration `yaml:"xTimeDeltaOffsetBot"`
+	YTimeDeltaOffsetTop  time.Duration `yaml:"yTimeDeltaOffsetTop"`
+	YTimeDeltaOffsetBot  time.Duration `yaml:"yTimeDeltaOffsetBot"`
+	XYTimeDeltaOffsetTop time.Duration `yaml:"xyTimeDeltaOffsetTop"`
+	XYTimeDeltaOffsetBot time.Duration `yaml:"xyTimeDeltaOffsetBot"`
 
 	FundingRateOpenShortMin float64             `yaml:"fundingRateOpenShortMin"`
 	FundingRateOpenLongMax  float64             `yaml:"fundingRateOpenLongMax"`
@@ -138,6 +115,7 @@ type Config struct {
 	XYPairs            map[string]string  `yaml:"xyPairs"`
 	MaxPosSizes        map[string]float64 `yaml:"maxPosSizes,omitempty"`
 	MaxPosValues       map[string]float64 `yaml:"maxPosValues,omitempty"`
+	PosWeights         map[string]float64 `yaml:"posWeights,omitempty"`
 	ReduceOnlyBySymbol map[string]bool    `yaml:"reduceOnlyBySymbol,omitempty"`
 }
 
@@ -242,32 +220,8 @@ func (config *Config) SetDefaultIfNotSet() error {
 	if config.SpreadTDCompression == 0 {
 		config.SpreadTDCompression = 10
 	}
-	if config.XLiquidityTDLookback == 0 {
-		config.XLiquidityTDLookback = time.Hour * 4
-	}
-	if config.XLiquidityTDSubInterval == 0 {
-		config.XLiquidityTDSubInterval = time.Minute * 5
-	}
-	if config.XLiquidityTDCompression == 0 {
-		config.XLiquidityTDCompression = 10
-	}
-	if config.YLiquidityTDLookback == 0 {
-		config.YLiquidityTDLookback = time.Hour * 4
-	}
-	if config.YLiquidityTDSubInterval == 0 {
-		config.YLiquidityTDSubInterval = time.Minute * 5
-	}
-	if config.YLiquidityTDCompression == 0 {
-		config.YLiquidityTDCompression = 10
-	}
-	if config.TimeDeltaTDLookback == 0 {
-		config.TimeDeltaTDLookback = time.Hour * 4
-	}
-	if config.TimeDeltaTDSubInterval == 0 {
-		config.TimeDeltaTDSubInterval = time.Minute * 5
-	}
-	if config.TimeDeltaTDCompression == 0 {
-		config.TimeDeltaTDCompression = 10
+	if config.TimeDeltaLookback == 0 {
+		config.TimeDeltaLookback = time.Hour * 4
 	}
 	if config.SpreadShortEnterQuantileTop == 0 {
 		config.SpreadShortEnterQuantileTop = 0.995
@@ -281,29 +235,23 @@ func (config *Config) SetDefaultIfNotSet() error {
 	if config.SpreadLongLeaveQuantileTop == 0 {
 		config.SpreadLongLeaveQuantileTop = 0.8
 	}
-	if config.XLiquidityQuantile == 0 {
-		config.XLiquidityQuantile = 0.8
+	if config.XTimeDeltaOffsetTop == 0 {
+		config.XTimeDeltaOffsetTop = time.Nanosecond
 	}
-	if config.YLiquidityQuantile == 0 {
-		config.YLiquidityQuantile = 0.8
+	if config.XTimeDeltaOffsetBot == 0 {
+		config.XTimeDeltaOffsetBot = -time.Nanosecond
 	}
-	if config.XTimeDeltaQuantileTop == 0 {
-		config.XTimeDeltaQuantileTop = 0.99995
+	if config.YTimeDeltaOffsetTop == 0 {
+		config.YTimeDeltaOffsetTop = time.Nanosecond
 	}
-	if config.XTimeDeltaQuantileBot == 0 {
-		config.XTimeDeltaQuantileBot = 0.00005
+	if config.YTimeDeltaOffsetBot == 0 {
+		config.YTimeDeltaOffsetBot = -time.Nanosecond
 	}
-	if config.YTimeDeltaQuantileTop == 0 {
-		config.YTimeDeltaQuantileTop = 0.99995
+	if config.XYTimeDeltaOffsetTop == 0 {
+		config.XYTimeDeltaOffsetTop = time.Nanosecond
 	}
-	if config.YTimeDeltaQuantileBot == 0 {
-		config.YTimeDeltaQuantileBot = 0.00005
-	}
-	if config.XYTimeDeltaQuantileTop == 0 {
-		config.XYTimeDeltaQuantileTop = 0.99995
-	}
-	if config.XYTimeDeltaQuantileBot == 0 {
-		config.XYTimeDeltaQuantileBot = 0.00005
+	if config.XYTimeDeltaOffsetBot == 0 {
+		config.XYTimeDeltaOffsetBot = -time.Nanosecond
 	}
 	if config.StatsSampleInterval == 0 {
 		config.StatsSampleInterval = time.Second
@@ -319,6 +267,12 @@ func (config *Config) SetDefaultIfNotSet() error {
 		}
 		if _, ok := config.MaxPosSizes[xSymbol]; !ok {
 			return fmt.Errorf("miss max pos size for %s", xSymbol)
+		}
+		if _, ok := config.MaxPosSizes[xSymbol]; !ok {
+			return fmt.Errorf("miss max pos size for %s", xSymbol)
+		}
+		if _, ok := config.PosWeights[xSymbol]; !ok {
+			return fmt.Errorf("miss pos weight for %s", xSymbol)
 		}
 	}
 	if config.ReduceOnlyBySymbol == nil {

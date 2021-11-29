@@ -8,19 +8,19 @@ import (
 
 func (strat *XYStrategy) updateSpread() {
 
-	if !strat.stats.Ready.True() ||
+	if !strat.stats.Ready ||
 		strat.xTicker == nil ||
 		strat.yTicker == nil ||
-		strat.xTickerTimeDelta > strat.stats.XTimeDeltaTop.Load() ||
-		strat.xTickerTimeDelta < strat.stats.XTimeDeltaBot.Load() ||
-		strat.yTickerTimeDelta > strat.stats.YTimeDeltaTop.Load() ||
-		strat.yTickerTimeDelta < strat.stats.YTimeDeltaBot.Load() {
+		strat.xTickerTimeDelta > strat.stats.XEventTimeDeltaTop ||
+		strat.xTickerTimeDelta < strat.stats.XEventTimeDeltaBot ||
+		strat.yTickerTimeDelta > strat.stats.YEventTimeDeltaTop ||
+		strat.yTickerTimeDelta < strat.stats.YEventTimeDeltaBot {
 		return
 	}
 
 	strat.xyTickerTimeDelta = strat.yTickerTime.Sub(strat.xTickerTime)
-	if strat.xyTickerTimeDelta > strat.stats.XYTimeDeltaTop.Load() ||
-		strat.xyTickerTimeDelta < strat.stats.XYTimeDeltaBot.Load() {
+	if strat.xyTickerTimeDelta > strat.stats.XYEventTimeDeltaTop ||
+		strat.xyTickerTimeDelta < strat.stats.XYEventTimeDeltaBot {
 		return
 	}
 

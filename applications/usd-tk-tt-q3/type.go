@@ -35,7 +35,7 @@ type XYStrategy struct {
 	xSystemStatus common.SystemStatus
 	ySystemStatus common.SystemStatus
 
-	stats *stream_stats.XYTickerStats
+	stats *stream_stats.XYSimplifiedTickerStats
 
 	xPositionUpdateTime time.Time
 	yPositionUpdateTime time.Time
@@ -137,8 +137,7 @@ type XYStrategy struct {
 	//xyMidPrice             float64
 
 	enterValue             float64
-	targetWeight           *common.AtomicFloat64
-	targetWeightUpdated    *common.AtomicBool
+	targetWeight           float64
 	targetValue            float64
 	realisedSpread         *float64
 	referenceSpread        float64
@@ -189,4 +188,3 @@ type XYStrategy struct {
 	ySlippageTMPath      string
 	xySuccessRatioTMPath string
 }
-
