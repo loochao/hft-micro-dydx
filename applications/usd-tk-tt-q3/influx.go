@@ -199,8 +199,8 @@ func handleSave(
 		fields["statsXYTimeDeltaMid"] = strat.stats.XYEventTimeDeltaMid.Seconds()
 		fields["statsXYTimeDeltaTop"] = strat.stats.XYEventTimeDeltaTop.Seconds()
 
-		fields["statsXTimeDeltaMid"] = strat.stats.XParseTimeDeltaMid.Seconds()
-		fields["statsYTimeDeltaMid"] = strat.stats.YParseTimeDeltaMid.Seconds()
+		fields["statsXParseTimeDeltaMid"] = strat.stats.XParseTimeDeltaMid.Seconds()
+		fields["statsYParseTimeDeltaMid"] = strat.stats.YParseTimeDeltaMid.Seconds()
 
 
 		if strat.stats.XMiddlePrice > 0 {
