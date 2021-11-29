@@ -332,6 +332,12 @@ func NewXYSimplifiedTickerStats(params NewXYSimplifiedTickerStatsParams) (*XYSim
 		spreadShortLeaveQuantileBot: params.SpreadShortLeaveQuantileBot,
 		baseEnterOffset:             params.BaseEnterOffset,
 		baseLeaveOffset:             params.BaseLeaveOffset,
+		xTimeDeltaOffsetTop:         params.XTimeDeltaOffsetTop,
+		xTimeDeltaOffsetBot:         params.XTimeDeltaOffsetBot,
+		yTimeDeltaOffsetTop:         params.YTimeDeltaOffsetTop,
+		yTimeDeltaOffsetBot:         params.YTimeDeltaOffsetBot,
+		xyTimeDeltaOffsetTop:        params.XYTimeDeltaOffsetTop,
+		xyTimeDeltaOffsetBot:        params.XYTimeDeltaOffsetBot,
 
 		spreadTDPath: path.Join(params.RootPath, fmt.Sprintf("%s-%s.S.json", common.SymbolSanitize(params.XSymbol), common.SymbolSanitize(params.YSymbol))),
 
