@@ -165,7 +165,7 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 			sl.xTicker = nil
 			sl.yTicker = nil
 
-			if sl.spreadTD.Range() < sl.spreadTD.HalfLookback {
+			if sl.spreadTD.Range() > sl.spreadTD.HalfLookback {
 				sl.Ready = true
 			}
 			longEnterBot := sl.spreadTD.Quantile(sl.spreadLongEnterQuantileBot)
