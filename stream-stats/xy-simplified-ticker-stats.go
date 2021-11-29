@@ -343,6 +343,8 @@ func NewXYSimplifiedTickerStats(params NewXYSimplifiedTickerStatsParams) (*XYSim
 		done:    make(chan interface{}),
 	}
 
+	logger.Debugf("%10s TIME DELTA K %f", params.XSymbol, sl.timedDeltaK)
+
 	sl.spreadTD = sl.loadTD(sl.spreadTDPath, params.SpreadTDLookback, params.SpreadTDSubInterval, params.SpreadTDCompression)
 	logger.Debugf("%10s - %10s SPREAD QUANTILE MIDDLE %.6f", params.XSymbol, params.YSymbol, sl.spreadTD.Quantile(0.5))
 
