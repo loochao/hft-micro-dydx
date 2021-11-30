@@ -63,9 +63,8 @@ mainLoop:
 		if err == nil {
 			readCounter++
 			msg = msg[:n]
-			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
+			if n < 1 || msg[n-1] != '}' {
 				partialReadCounter++
-			readLoop:
 				for {
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
@@ -77,7 +76,7 @@ mainLoop:
 					msg = msg[:len(msg)+n]
 					if err != nil {
 						if err == io.EOF {
-							break readLoop
+							break
 						} else {
 							logger.Debugf("r.Read error %v", err)
 							continue mainLoop
@@ -152,7 +151,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 			//{"e":"ACCOUNT_UPDATE","T":1616821544492,"E":1616821544496,"a":{"B":[{"a":"BNB","wb":"0.06858897","cw":"0"}],"P":[],"m":"DEPOSIT"}}
 			msgLen = len(msg)
 			if len(msg) > 14 && msg[0] == '{' {
-				if msg[msgLen-1] != '}' ||  msg[msgLen-2] != '}'{
+				if msg[msgLen-1] != '}' || msg[msgLen-2] != '}' {
 					logger.Debugf("%s", msg)
 				}
 				if msg[2] == 'e' && msg[6] == 'A' && msg[14] == 'U' {

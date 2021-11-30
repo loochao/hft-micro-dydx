@@ -27,62 +27,109 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 	var symbol string
 	var ch chan []byte
 	var ok bool
+	var msgLen int
+	var readPool = [bookTickerReadPoolSize][]byte{}
+	var readIndex = -1
+	var msg []byte
+	var n int
+	var r io.Reader
+	var err error
+	for i := range readPool {
+		readPool[i] = make([]byte, bookTickerReadMsgSize)
+	}
+	readCounter := 0
+	partialReadCounter := 0
+	allocateCounter := 0
+mainLoop:
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
+		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("conn.SetReadDeadline error %v", err)
 			w.restart()
 			return
 		}
-		_, r, err := conn.NextReader()
+		_, r, err = conn.NextReader()
 		if err != nil {
 			logger.Warnf("conn.NextReader error %v", err)
 			w.restart()
 			return
 		}
-		msg, err := w.readAll(r)
-		if err != nil {
-			logger.Warnf("w.readAll error %v", err)
-			w.restart()
-			return
+		readIndex += 1
+		if readIndex == bookTickerReadPoolSize {
+			readIndex = 0
 		}
-		if len(msg) > 128 {
-			if msg[18] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:18])
-			} else if msg[19] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:19])
-			} else if msg[20] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:20])
-			} else if msg[21] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:21])
-			} else if msg[17] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:17])
-			} else if msg[22] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:22])
-			} else if msg[23] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:23])
-			} else if msg[24] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:24])
-			} else if msg[25] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:25])
-			} else if msg[26] == '@' {
-				symbol = common.UnsafeBytesToString(msg[11:26])
-			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("other msg %s", msg)
-					logSilentTime = time.Now().Add(common.LogInterval)
+		msg = readPool[readIndex]
+		n, err = r.Read(msg)
+		if err == nil {
+			readCounter++
+			msg = msg[:n]
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
+				partialReadCounter++
+				for {
+					if len(msg) == cap(msg) {
+						// Add more capacity (let append pick how much).
+						msg = append(msg, 0)[:len(msg)]
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+						allocateCounter++
+					}
+					n, err = r.Read(msg[len(msg):cap(msg)])
+					msg = msg[:len(msg)+n]
+					if err != nil {
+						if err == io.EOF {
+							break
+						} else {
+							logger.Debugf("r.Read error %v", err)
+							continue mainLoop
+						}
+					}
 				}
-				continue
 			}
-			if ch, ok = channels[symbol]; ok {
-				select {
-				case ch <- msg:
-				default:
-					//if time.Now().Sub(logSilentTime) > 0 {
-					//	logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
-					//	logSilentTime = time.Now().Add(common.LogSlowInterval)
-					//}
-				}
+		} else {
+			logger.Debugf("r.Read error %v", err)
+			continue mainLoop
+		}
+		if readCounter%1000000 == 0 {
+			logger.Debugf("BNBS BOOK TICKER READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", bookTickerReadMsgSize, readCounter, partialReadCounter, allocateCounter)
+		}
+		msgLen = len(msg)
+		if msgLen < 128 {
+			continue mainLoop
+		}
+		if msg[18] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:18])
+		} else if msg[19] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:19])
+		} else if msg[20] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:20])
+		} else if msg[21] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:21])
+		} else if msg[17] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:17])
+		} else if msg[22] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:22])
+		} else if msg[23] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:23])
+		} else if msg[24] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:24])
+		} else if msg[25] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:25])
+		} else if msg[26] == '@' {
+			symbol = common.UnsafeBytesToString(msg[11:26])
+		} else {
+			if time.Now().Sub(logSilentTime) > 0 {
+				logger.Debugf("other msg %s", msg)
+				logSilentTime = time.Now().Add(common.LogInterval)
+			}
+			continue
+		}
+		if ch, ok = channels[symbol]; ok {
+			select {
+			case ch <- msg:
+			default:
+				//if time.Now().Sub(logSilentTime) > 0 {
+				//	logger.Debugf("ch <- msg failed %s len(ch) = %d", symbol, len(ch))
+				//	logSilentTime = time.Now().Add(common.LogSlowInterval)
+				//}
 			}
 		}
 	}
@@ -120,13 +167,13 @@ func (w *BookTickerWS) reconnect(ctx context.Context, wsUrl string, proxy string
 			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:            http.ProxyURL(proxyUrl),
-			HandshakeTimeout: 60 * time.Second,
+			Proxy:             http.ProxyURL(proxyUrl),
+			HandshakeTimeout:  60 * time.Second,
 			EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout: 10 * time.Second,
+			HandshakeTimeout:  10 * time.Second,
 			EnableCompression: true,
 		}
 	}

@@ -27,7 +27,6 @@ func (w *Depth5TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan
 	var symbol string
 	var ch chan []byte
 	var ok bool
-	var msgLen int
 	var readPool = [depth5ReadPoolSize][]byte{}
 	var readIndex = -1
 	var msg []byte
@@ -70,7 +69,7 @@ mainLoop:
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
-						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), depth5ReadMsgSize, msg)
 						allocateCounter++
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
@@ -92,9 +91,8 @@ mainLoop:
 		if readCounter%1000000 == 0 {
 			logger.Debugf("BNUF DEPTH READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", depth5ReadMsgSize, readCounter, partialReadCounter, allocateCounter)
 		}
-		msgLen = len(msg)
-		if msgLen < 128 {
-			continue mainLoop
+		if len(msg) < 128 {
+			continue
 		}
 		//{"stream":"btcusdt@depth5@100ms","data":{"e":"depthUpdate","E":1623494540877,"T":1623494540870,"s":"BTCUSDT","U":510743908847,"u":510743911822,"pu":510743908726,"b":[["35701.24","2.079"],["35701.23","0.276"],["35701.22","0.001"],["35700.35","0.400"],["35699.59","0.147"]],"a":[["35701.25","0.134"],["35704.02","0.248"],["35704.03","0.272"],["35704.55","0.001"],["35704.56","0.003"]]}}
 		//{"stream":"linkusdt@depth5@100ms","data":{"e":"depthUpdate","E":1623494540955,"T":1623494540947,"s":"LINKUSDT","U":510743911258,"u":510743914224,"pu":510743910356,"b":[["21.030","12.37"],["21.029","448.68"],["21.027","2.12"],["21.024","240.12"],["21.022","47.62"]],"a":[["21.031","4.66"],["21.034","20.68"],["21.036","7.17"],["21.038","20.53"],["21.039","251.82"]]}}

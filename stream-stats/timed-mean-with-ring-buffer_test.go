@@ -60,3 +60,13 @@ func BenchmarkSliceAppend(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkSliceAppend2(b *testing.B) {
+	s := make([]float64, 0)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		s = append(s, 0)
+		s[len(s)-1] = float64(n)
+	}
+}

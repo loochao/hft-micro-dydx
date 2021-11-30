@@ -28,25 +28,89 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
+	var readPool = [userReadPoolSize][]byte{}
+	var readIndex = -1
+	var msg []byte
+	var n int
+	var r io.Reader
+	var err error
+	for i := range readPool {
+		readPool[i] = make([]byte, userReadMsgSize)
+	}
+	readCounter := 0
+	partialReadCounter := 0
+	allocateCounter := 0
+mainLoop:
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(time.Hour * 4))
+		err = conn.SetReadDeadline(time.Now().Add(time.Hour))
 		if err != nil {
-			logger.Warnf("conn.SetReadDeadline error %v", err)
+			logger.Debugf("conn.SetReadDeadline error %v", err)
 			w.restart()
 			return
 		}
-		_, r, err := conn.NextReader()
+		_, r, err = conn.NextReader()
 		if err != nil {
 			logger.Warnf("conn.NextReader error %v", err)
 			w.restart()
 			return
 		}
-		msg, err := w.readAll(r)
-		if err != nil {
-			logger.Warnf("w.readAll error %v", err)
-			w.restart()
-			return
+		readIndex += 1
+		if readIndex == userReadPoolSize {
+			readIndex = 0
 		}
+		msg = readPool[readIndex]
+		n, err = r.Read(msg)
+		if err == nil {
+			readCounter++
+			msg = msg[:n]
+			if n < 1 || msg[n-1] != '}' {
+				partialReadCounter++
+				for {
+					if len(msg) == cap(msg) {
+						// Add more capacity (let append pick how much).
+						msg = append(msg, 0)[:len(msg)]
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", userReadMsgSize, msg)
+						allocateCounter++
+					}
+					n, err = r.Read(msg[len(msg):cap(msg)])
+					msg = msg[:len(msg)+n]
+					if err != nil {
+						if err == io.EOF {
+							break
+						} else {
+							logger.Debugf("r.Read error %v", err)
+							continue mainLoop
+						}
+					}
+				}
+			}
+		} else {
+			logger.Debugf("r.Read error %v", err)
+			continue mainLoop
+		}
+
+		if readCounter%1000 == 0 {
+			logger.Debugf("BNBS USER READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", userReadMsgSize, readCounter, partialReadCounter, allocateCounter)
+		}
+	//for {
+	//	err := conn.SetReadDeadline(time.Now().Add(time.Hour * 4))
+	//	if err != nil {
+	//		logger.Warnf("conn.SetReadDeadline error %v", err)
+	//		w.restart()
+	//		return
+	//	}
+	//	_, r, err := conn.NextReader()
+	//	if err != nil {
+	//		logger.Warnf("conn.NextReader error %v", err)
+	//		w.restart()
+	//		return
+	//	}
+	//	msg, err := w.readAll(r)
+	//	if err != nil {
+	//		logger.Warnf("w.readAll error %v", err)
+	//		w.restart()
+	//		return
+	//	}
 		select {
 		case w.messageCh <- msg:
 		default:
@@ -57,24 +121,24 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 		}
 	}
 }
-
-func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 1024)
-	for {
-		if len(b) == cap(b) {
-			// Add more capacity (let append pick how much).
-			b = append(b, 0)[:len(b)]
-		}
-		n, err := r.Read(b[len(b):cap(b)])
-		b = b[:len(b)+n]
-		if err != nil {
-			if err == io.EOF {
-				err = nil
-			}
-			return b, err
-		}
-	}
-}
+//
+//func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
+//	b := make([]byte, 0, 1024)
+//	for {
+//		if len(b) == cap(b) {
+//			// Add more capacity (let append pick how much).
+//			b = append(b, 0)[:len(b)]
+//		}
+//		n, err := r.Read(b[len(b):cap(b)])
+//		b = b[:len(b)+n]
+//		if err != nil {
+//			if err == io.EOF {
+//				err = nil
+//			}
+//			return b, err
+//		}
+//	}
+//}
 
 func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 	logger.Debugf("START dataHandleLoop")
