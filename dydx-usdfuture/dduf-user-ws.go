@@ -68,7 +68,7 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 				w.restart()
 				return
 			}
-			logger.Debugf("%s", msgBytes)
+			//logger.Debugf("%s", msgBytes)
 			err = conn.WriteMessage(websocket.TextMessage, msgBytes)
 			if err != nil {
 				logger.Warnf("conn.WriteMessage %s error %v", string(msgBytes), err)
@@ -118,7 +118,7 @@ mainLoop:
 		if err == nil {
 			readCounter++
 			msg = msg[:n]
-			if n > userReadMsgSize || msg[n-1] != '}' {
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}'{
 				partialReadCounter++
 			readLoop:
 				for {
@@ -126,7 +126,7 @@ mainLoop:
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
 						allocateCounter++
-						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", userReadMsgSize, msg)
+						//logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", userReadMsgSize, msg)
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
 					msg = msg[:len(msg)+n]

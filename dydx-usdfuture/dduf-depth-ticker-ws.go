@@ -48,9 +48,9 @@ func (w *TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 					continue
 				}
 			}
-			if len(msgBytes) != 14 {
-				logger.Debugf("%s", msgBytes)
-			}
+			//if len(msgBytes) != 14 {
+			//	logger.Debugf("%s", msgBytes)
+			//}
 			err = conn.SetWriteDeadline(time.Now().Add(time.Minute))
 			if err != nil {
 				logger.Debugf("conn.SetWriteDeadline error %v", err)
@@ -131,7 +131,7 @@ mainLoop:
 		if err == nil {
 			readCounter++
 			msg = msg[:n]
-			if n > depthReadMsgSize || msg[n-1] != '}' {
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}'{
 				partialReadCounter++
 			readLoop:
 				for {
@@ -174,12 +174,12 @@ mainLoop:
 				}
 				continue
 			}
-		} else {
-			if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
-				logger.Debugf("other msg %s", msg)
-				logSilentTime = time.Now().Add(time.Minute)
-			}
-			continue
+		//} else {
+		//	if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
+		//		logger.Debugf("other msg %s", msg)
+		//		logSilentTime = time.Now().Add(time.Minute)
+		//	}
+		//	continue
 		}
 		if ch, ok = channels[market]; ok {
 			select {
