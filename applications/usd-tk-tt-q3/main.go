@@ -456,7 +456,7 @@ func main() {
 		if xyConfig.CpuProfile != "" {
 			var heapProfFile *os.File
 			runtime.GC() // profile all outstanding allocations
-			if heapProfFile, err = os.Create(xyConfig.HeapProfile+time.Now().Format("-2006010150405.cpu.prof")); err != nil {
+			if heapProfFile, err = os.Create(xyConfig.HeapProfile+time.Now().Format("-2006010150405.heap.prof")); err != nil {
 				logger.Warnf("os.Create %s error %v", xyConfig.HeapProfile, err)
 			} else if err = pprof.WriteHeapProfile(heapProfFile); err != nil {
 				logger.Warnf("pprof.WriteHeapProfile error %v", err)
