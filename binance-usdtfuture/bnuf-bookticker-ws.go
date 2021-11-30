@@ -24,30 +24,69 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
+	var symbol string
 	var ch chan []byte
 	var ok bool
-	var symbol string
+	var msgLen int
+	var readPool = [bookTickerReadPoolSize][]byte{}
+	var readIndex = -1
+	var msg []byte
+	var n int
+	var r io.Reader
+	var err error
+	for i := range readPool {
+		readPool[i] = make([]byte, bookTickerReadMsgSize)
+	}
+mainLoop:
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
+		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("conn.SetReadDeadline error %v", err)
 			w.restart()
 			return
 		}
-		_, r, err := conn.NextReader()
+		_, r, err = conn.NextReader()
 		if err != nil {
 			logger.Warnf("conn.NextReader error %v", err)
 			w.restart()
 			return
 		}
-		msg, err := w.readAll(r)
-		if err != nil {
-			logger.Warnf("w.readAll error %v", err)
-			w.restart()
-			return
+		readIndex += 1
+		if readIndex == bookTickerReadPoolSize {
+			readIndex = 0
 		}
-		if len(msg) < 128 {
-			continue
+		msg = readPool[readIndex]
+		n, err = r.Read(msg)
+		if err == nil {
+			if n < bookTickerReadMsgSize {
+				msg = msg[:n]
+			} else {
+				for {
+					if len(msg) == cap(msg) {
+						// Add more capacity (let append pick how much).
+						msg = append(msg, 0)[:len(msg)]
+					}
+					n, err = r.Read(msg[len(msg):cap(msg)])
+					msg = msg[:len(msg)+n]
+					if err != nil {
+						if err == io.EOF {
+							logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+						} else {
+							logger.Debugf("r.Read error %v", err)
+							continue mainLoop
+						}
+					} else {
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+					}
+				}
+			}
+		} else {
+			logger.Debugf("r.Read error %v", err)
+			continue mainLoop
+		}
+		msgLen = len(msg)
+		if msgLen < 128 {
+			continue mainLoop
 		}
 		//{"stream":"scusdt@bookTicker","data":{"e":"bookTicker","u":552297398961,"s":"SCUSDT","b":"0.012805","B":"46556","a":"0.012816","A":"90351","T":1624971386657,"E":1624971386662}}
 		if msg[18] == '@' {

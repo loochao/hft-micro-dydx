@@ -78,105 +78,125 @@ func (w *TickerWS) readLoop(
 	var ch chan []byte
 	var ok bool
 	var msgLen int
+	var readPool = [bookTickerReadPoolSize][]byte{}
+	var readIndex = -1
+	var msg []byte
+	var n int
+	var r io.Reader
+	var err error
+	for i := range readPool {
+		readPool[i] = make([]byte, bookTickerReadMsgSize)
+	}
+mainLoop:
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
+		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Debugf("conn.SetReadDeadline error %v", err)
 			go w.restart()
 			return
 		}
-		_, r, err := conn.NextReader()
+		_, r, err = conn.NextReader()
 		if err != nil {
 			logger.Debugf("conn.NextReader error %v", err)
 			go w.restart()
 			return
 		}
-		msg, err := w.readAll(r)
-		if err != nil {
-			logger.Debugf("w.readAll error %v", err)
-			go w.restart()
-			return
+		readIndex += 1
+		if readIndex == bookTickerReadPoolSize {
+			readIndex = 0
+		}
+		msg = readPool[readIndex]
+		n, err = r.Read(msg)
+		if err == nil {
+			if n < bookTickerReadMsgSize {
+				msg = msg[:n]
+			} else {
+				for {
+					if len(msg) == cap(msg) {
+						// Add more capacity (let append pick how much).
+						msg = append(msg, 0)[:len(msg)]
+					}
+					n, err = r.Read(msg[len(msg):cap(msg)])
+					msg = msg[:len(msg)+n]
+					if err != nil {
+						if err == io.EOF {
+							logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+						} else {
+							logger.Debugf("r.Read error %v", err)
+							continue mainLoop
+						}
+					} else {
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+					}
+				}
+			}
+		} else {
+			logger.Debugf("r.Read error %v", err)
+			continue mainLoop
 		}
 		msgLen = len(msg)
 		//{"data":{"symbol":"XBTUSDTM","sequence":1624824090150,"side":"sell","size":2,"price":33590,"bestBidSize":47,"bestBidPrice":"33590.0","bestAskPrice":"33591.0","tradeId":"60e92c8c3c7feb289d2ab154","ts":1625894028299209614,"bestAskSize":463},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}
 		//{"type":"message","topic":"/contractMarket/ticker:1INCHUSDTM","subject":"ticker","data":{"symbol":"1INCHUSDTM","sequence":1627371661456,"side":"buy","size":21,"price":2.379,"bestBidSize":203,"bestBidPrice":"2.377","bestAskPrice":"2.38","tradeId":"6105178a991e1303211759d8","ts":1627723658671236584,"bestAskSize":251}}
 		if msgLen > 128 {
-			if msg[2] == 't' {
-				if msg[59] == ',' {
-					symbol = common.UnsafeBytesToString(msg[50:58])
-				} else if msg[60] == ',' {
-					symbol = common.UnsafeBytesToString(msg[50:59])
-				} else if msg[61] == ',' {
-					symbol = common.UnsafeBytesToString(msg[50:60])
-				} else if msg[58] == ',' {
-					symbol = common.UnsafeBytesToString(msg[50:57])
-				} else if msg[62] == ',' {
-					symbol = common.UnsafeBytesToString(msg[50:61])
-				} else {
-					if time.Now().Sub(logSilentTime) > 0 {
-						logSilentTime = time.Now().Add(time.Minute)
-						logger.Debugf("UNKNOWN MSG %s", msg)
-					}
-					continue
-				}
-			} else if msg[2] == 'd' {
-				if msg[27] == '"' {
-					symbol = common.UnsafeBytesToString(msg[19:27])
-				} else if msg[28] == '"' {
-					symbol = common.UnsafeBytesToString(msg[19:28])
-				} else if msg[29] == '"' {
-					symbol = common.UnsafeBytesToString(msg[19:29])
-				} else if msg[30] == '"' {
-					symbol = common.UnsafeBytesToString(msg[19:30])
-				} else if msg[31] == '"' {
-					symbol = common.UnsafeBytesToString(msg[19:31])
-				} else {
-					if time.Now().Sub(logSilentTime) > 0 {
-						logSilentTime = time.Now().Add(time.Minute)
-						logger.Debugf("UNKNOWN MSG %s", msg)
-					}
-					continue
-				}
+			continue mainLoop
+		}
+		if msg[2] == 't' {
+			if msg[59] == ',' {
+				symbol = common.UnsafeBytesToString(msg[50:58])
+			} else if msg[60] == ',' {
+				symbol = common.UnsafeBytesToString(msg[50:59])
+			} else if msg[61] == ',' {
+				symbol = common.UnsafeBytesToString(msg[50:60])
+			} else if msg[58] == ',' {
+				symbol = common.UnsafeBytesToString(msg[50:57])
+			} else if msg[62] == ',' {
+				symbol = common.UnsafeBytesToString(msg[50:61])
 			} else {
 				if time.Now().Sub(logSilentTime) > 0 {
-					logSilentTime = time.Now().Add(common.LogInterval)
+					logSilentTime = time.Now().Add(time.Minute)
 					logger.Debugf("UNKNOWN MSG %s", msg)
 				}
 				continue
 			}
-			if ch, ok = channels[symbol]; ok {
-				select {
-				case ch <- msg:
-				default:
-					//if time.Now().Sub(logSilentTime) > 0 {
-					//	logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
-					//	logSilentTime = time.Now().Add(time.Minute)
-					//}
+		} else if msg[2] == 'd' {
+			if msg[27] == '"' {
+				symbol = common.UnsafeBytesToString(msg[19:27])
+			} else if msg[28] == '"' {
+				symbol = common.UnsafeBytesToString(msg[19:28])
+			} else if msg[29] == '"' {
+				symbol = common.UnsafeBytesToString(msg[19:29])
+			} else if msg[30] == '"' {
+				symbol = common.UnsafeBytesToString(msg[19:30])
+			} else if msg[31] == '"' {
+				symbol = common.UnsafeBytesToString(msg[19:31])
+			} else {
+				if time.Now().Sub(logSilentTime) > 0 {
+					logSilentTime = time.Now().Add(time.Minute)
+					logger.Debugf("UNKNOWN MSG %s", msg)
 				}
+				continue
 			}
+		} else {
+			if time.Now().Sub(logSilentTime) > 0 {
+				logSilentTime = time.Now().Add(common.LogInterval)
+				logger.Debugf("UNKNOWN MSG %s", msg)
+			}
+			continue
+		}
+		if ch, ok = channels[symbol]; ok {
+			select {
+			case ch <- msg:
+			default:
+				//if time.Now().Sub(logSilentTime) > 0 {
+				//	logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
+				//	logSilentTime = time.Now().Add(time.Minute)
+				//}
+			}
+		}
 		//} else {
 		//	if len(msg) > 3 && msg[2] == 'i' && msg[len(msg)-3] == 'k' {
 		//		logger.Debugf("%s", msg)
 		//	}
-		}
-	}
-}
-
-func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 512)
-	for {
-		if len(b) == cap(b) {
-			// Add more capacity (let append pick how much).
-			b = append(b, 0)[:len(b)]
-		}
-		n, err := r.Read(b[len(b):cap(b)])
-		b = b[:len(b)+n]
-		if err != nil {
-			if err == io.EOF {
-				err = nil
-			}
-			return b, err
-		}
 	}
 }
 

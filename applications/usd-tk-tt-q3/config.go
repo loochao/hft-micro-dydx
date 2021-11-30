@@ -268,9 +268,6 @@ func (config *Config) SetDefaultIfNotSet() error {
 		if _, ok := config.MaxPosSizes[xSymbol]; !ok {
 			return fmt.Errorf("miss max pos size for %s", xSymbol)
 		}
-		if _, ok := config.MaxPosSizes[xSymbol]; !ok {
-			return fmt.Errorf("miss max pos size for %s", xSymbol)
-		}
 		if _, ok := config.PosWeights[xSymbol]; !ok {
 			return fmt.Errorf("miss pos weight for %s", xSymbol)
 		}

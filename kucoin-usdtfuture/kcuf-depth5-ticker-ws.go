@@ -79,26 +79,62 @@ func (w *Depth5TickerWS) readLoop(
 	var ch chan []byte
 	var ok bool
 	var msgLen int
+	var readPool = [depth5TickerReadPoolSize][]byte{}
+	var readIndex = -1
+	var msg []byte
+	var n int
+	var r io.Reader
+	var err error
+	for i := range readPool {
+		readPool[i] = make([]byte, depth5TickerReadMsgSize)
+	}
+mainLoop:
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
+		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Debugf("conn.SetReadDeadline error %v", err)
 			go w.restart()
 			return
 		}
-		_, r, err := conn.NextReader()
+		_, r, err = conn.NextReader()
 		if err != nil {
 			logger.Debugf("conn.NextReader error %v", err)
 			go w.restart()
 			return
 		}
-		msg, err := w.readAll(r)
-		if err != nil {
-			logger.Debugf("w.readAll error %v", err)
-			go w.restart()
-			return
+		readIndex += 1
+		if readIndex == depth5TickerReadPoolSize {
+			readIndex = 0
 		}
-		//logger.Debugf("%s", msg)
+		msg = readPool[readIndex]
+		n, err = r.Read(msg)
+		if err == nil {
+			if n < depth5TickerReadPoolSize {
+				msg = msg[:n]
+			} else {
+				for {
+					if len(msg) == cap(msg) {
+						// Add more capacity (let append pick how much).
+						msg = append(msg, 0)[:len(msg)]
+					}
+					n, err = r.Read(msg[len(msg):cap(msg)])
+					msg = msg[:len(msg)+n]
+					if err != nil {
+						if err == io.EOF {
+							logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), depth5TickerReadMsgSize, msg)
+						} else {
+							logger.Debugf("r.Read error %v", err)
+							continue mainLoop
+						}
+					} else {
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), depth5TickerReadMsgSize, msg)
+					}
+				}
+			}
+		} else {
+			logger.Debugf("r.Read error %v", err)
+			continue mainLoop
+		}
 
 		//中间有一次数据变更，可能两种格式
 		//{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,

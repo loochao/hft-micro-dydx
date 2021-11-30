@@ -24,30 +24,69 @@ func (w *WalkedDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
+	var symbol string
 	var ch chan []byte
 	var ok bool
-	var symbol string
+	var msgLen int
+	var readPool = [depth5TickerReadPoolSize][]byte{}
+	var readIndex = -1
+	var msg []byte
+	var n int
+	var r io.Reader
+	var err error
+	for i := range readPool {
+		readPool[i] = make([]byte, depth5TickerReadMsgSize)
+	}
+mainLoop:
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
+		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("conn.SetReadDeadline error %v", err)
 			w.restart()
 			return
 		}
-		_, r, err := conn.NextReader()
+		_, r, err = conn.NextReader()
 		if err != nil {
 			logger.Warnf("conn.NextReader error %v", err)
 			w.restart()
 			return
 		}
-		msg, err := w.readAll(r)
-		if err != nil {
-			logger.Warnf("w.readAl error %v", err)
-			w.restart()
-			return
+		readIndex += 1
+		if readIndex == depth5TickerReadPoolSize {
+			readIndex = 0
 		}
-		if len(msg) < 128 {
-			continue
+		msg = readPool[readIndex]
+		n, err = r.Read(msg)
+		if err == nil {
+			if n < depth5TickerReadMsgSize {
+				msg = msg[:n]
+			} else {
+				for {
+					if len(msg) == cap(msg) {
+						// Add more capacity (let append pick how much).
+						msg = append(msg, 0)[:len(msg)]
+					}
+					n, err = r.Read(msg[len(msg):cap(msg)])
+					msg = msg[:len(msg)+n]
+					if err != nil {
+						if err == io.EOF {
+							logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+						} else {
+							logger.Debugf("r.Read error %v", err)
+							continue mainLoop
+						}
+					} else {
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+					}
+				}
+			}
+		} else {
+			logger.Debugf("r.Read error %v", err)
+			continue mainLoop
+		}
+		msgLen = len(msg)
+		if msgLen < 128 {
+			continue mainLoop
 		}
 		//{"stream":"btcusdt@depth5@100ms","data":{"e":"depthUpdate","E":1623494540877,"T":1623494540870,"s":"BTCUSDT","U":510743908847,"u":510743911822,"pu":510743908726,"b":[["35701.24","2.079"],["35701.23","0.276"],["35701.22","0.001"],["35700.35","0.400"],["35699.59","0.147"]],"a":[["35701.25","0.134"],["35704.02","0.248"],["35704.03","0.272"],["35704.55","0.001"],["35704.56","0.003"]]}}
 		//{"stream":"linkusdt@depth5@100ms","data":{"e":"depthUpdate","E":1623494540955,"T":1623494540947,"s":"LINKUSDT","U":510743911258,"u":510743914224,"pu":510743910356,"b":[["21.030","12.37"],["21.029","448.68"],["21.027","2.12"],["21.024","240.12"],["21.022","47.62"]],"a":[["21.031","4.66"],["21.034","20.68"],["21.036","7.17"],["21.038","20.53"],["21.039","251.82"]]}}

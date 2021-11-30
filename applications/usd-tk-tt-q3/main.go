@@ -76,7 +76,7 @@ func main() {
 
 	if xyConfig.CpuProfile != "" {
 		var cpuProfFile *os.File
-		cpuProfFile, err = os.Create(xyConfig.CpuProfile)
+		cpuProfFile, err = os.Create(xyConfig.CpuProfile+time.Now().Format("-2006010150405.cpu.prof"))
 		if err != nil {
 			logger.Warnf("os.Create error %v", err)
 			return
@@ -260,6 +260,7 @@ func main() {
 	}
 	xyConfig.XExchange.Symbols = xSymbols
 	xyConfig.YExchange.Symbols = ySymbols
+
 
 	configStr, err := yaml.Marshal(xyConfig)
 	if err != nil {
@@ -455,7 +456,7 @@ func main() {
 		if xyConfig.CpuProfile != "" {
 			var heapProfFile *os.File
 			runtime.GC() // profile all outstanding allocations
-			if heapProfFile, err = os.Create(xyConfig.HeapProfile); err != nil {
+			if heapProfFile, err = os.Create(xyConfig.HeapProfile+time.Now().Format("-2006010150405.cpu.prof")); err != nil {
 				logger.Warnf("os.Create %s error %v", xyConfig.HeapProfile, err)
 			} else if err = pprof.WriteHeapProfile(heapProfFile); err != nil {
 				logger.Warnf("pprof.WriteHeapProfile error %v", err)
