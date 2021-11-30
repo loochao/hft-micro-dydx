@@ -58,9 +58,8 @@ mainLoop:
 		msg = readPool[readIndex]
 		n, err = r.Read(msg)
 		if err == nil {
-			if n < depth5TickerReadMsgSize {
 				msg = msg[:n]
-			} else {
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
 				for {
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).

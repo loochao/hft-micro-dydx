@@ -62,7 +62,7 @@ mainLoop:
 		if err == nil {
 			readCounter++
 			msg = msg[:n]
-			if n > bookTickerReadMsgSize || msg[n-1] != '}' {
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
 				partialReadCounter++
 			readLoop:
 				for {
