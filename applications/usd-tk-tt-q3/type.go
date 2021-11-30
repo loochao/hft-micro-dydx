@@ -87,9 +87,9 @@ type XYStrategy struct {
 	tickerMatchCount int
 	tickerCount      int
 
-	spreadWalkTimer        *time.Timer
-	spreadShortTimedMedian *common.TimedMedian
-	spreadLongTimedMedian  *common.TimedMedian
+	spreadWalkTimer      *time.Timer
+	spreadShortTimedMean *common.TimedMean
+	spreadLongTimedMean  *common.TimedMean
 
 	spreadReady       bool
 	spreadTickerTime  time.Time

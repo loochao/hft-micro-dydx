@@ -128,6 +128,10 @@ type Depth20 struct {
 	ParseTime    time.Time      `json:"-"`
 }
 
+func (depth *Depth20) GetParseTime() time.Time {
+	return depth.ParseTime
+}
+
 func (depth *Depth20) GetExchange() common.ExchangeID {
 	return common.BinanceUsdtFuture
 }
