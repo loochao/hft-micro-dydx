@@ -259,6 +259,12 @@ func handleSave(
 		} else {
 			fields["ySystemStatus"] = -1.0
 		}
+
+		if strat.tickerCount > 0 {
+			fields["tickerCount"] = strat.tickerCount
+			fields["tickerMatchCount"] = strat.tickerMatchCount
+		}
+
 		pt, err := client.NewPoint(
 			xyConfig.InternalInflux.Measurement,
 			map[string]string{
