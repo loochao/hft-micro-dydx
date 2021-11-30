@@ -96,7 +96,7 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 	partialReadCounter := 0
 mainLoop:
 	for {
-		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
+		err = conn.SetReadDeadline(time.Now().Add(time.Hour*999))
 		if err != nil {
 			logger.Debugf("conn.SetReadDeadline error %v", err)
 			w.restart()
@@ -143,7 +143,7 @@ mainLoop:
 			continue mainLoop
 		}
 
-		if readCounter%1000 == 0 {
+		if readCounter%100 == 0 {
 			logger.Debugf("DYDX USER WS TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
 		}
 
