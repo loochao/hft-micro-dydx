@@ -31,7 +31,7 @@ const (
 	depthReadMsgSize  = 8192
 
 	userReadPoolSize = 4096
-	userReadMsgSize  = 1024
+	userReadMsgSize  = 8192
 )
 
 const (
