@@ -41,7 +41,7 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 	partialReadCounter := 0
 mainLoop:
 	for {
-		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
+		err = conn.SetReadDeadline(time.Now().Add(time.Hour))
 		if err != nil {
 			logger.Debugf("conn.SetReadDeadline error %v", err)
 			w.restart()
