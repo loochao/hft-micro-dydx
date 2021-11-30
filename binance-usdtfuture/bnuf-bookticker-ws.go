@@ -39,6 +39,7 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 	}
 	readCounter := 0
 	partialReadCounter := 0
+	allocateCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -70,6 +71,7 @@ mainLoop:
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
 						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+						allocateCounter++
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
 					msg = msg[:len(msg)+n]
@@ -88,7 +90,7 @@ mainLoop:
 			continue mainLoop
 		}
 		if readCounter%1000000 == 0 {
-			logger.Debugf("BNUF BOOK TICKER TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
+			logger.Debugf("BNUF BOOK TICKER READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", bookTickerReadMsgSize, readCounter, partialReadCounter, allocateCounter)
 		}
 		msgLen = len(msg)
 		if msgLen < 128 {

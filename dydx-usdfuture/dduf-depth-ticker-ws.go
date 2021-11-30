@@ -48,15 +48,13 @@ func (w *TickerWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 					continue
 				}
 			}
-			//if len(msgBytes) != 14 {
-			//	logger.Debugf("%s", msgBytes)
-			//}
 			err = conn.SetWriteDeadline(time.Now().Add(time.Minute))
 			if err != nil {
 				logger.Debugf("conn.SetWriteDeadline error %v", err)
 				w.restart()
 				return
 			}
+			logger.Debugf("%s", msgBytes)
 			err = conn.WriteMessage(websocket.TextMessage, msgBytes)
 			if err != nil {
 				logger.Debugf("conn.WriteMessage error %v", err)

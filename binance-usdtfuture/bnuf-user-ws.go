@@ -39,6 +39,7 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 	}
 	readCounter := 0
 	partialReadCounter := 0
+	allocateCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Hour))
@@ -62,7 +63,7 @@ mainLoop:
 		if err == nil {
 			readCounter++
 			msg = msg[:n]
-			if n > userReadMsgSize || msg[n-1] != '}' {
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}'{
 				partialReadCounter++
 			readLoop:
 				for {
@@ -70,6 +71,7 @@ mainLoop:
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
 						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", userReadMsgSize, msg)
+						allocateCounter++
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
 					msg = msg[:len(msg)+n]
@@ -89,27 +91,27 @@ mainLoop:
 		}
 
 		if readCounter%1000 == 0 {
-			logger.Debugf("BNUF USER WS TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
+			logger.Debugf("BNUF USER READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", userReadMsgSize, readCounter, partialReadCounter, allocateCounter)
 		}
-	//for {
-	//	err := conn.SetReadDeadline(time.Now().Add(time.Hour * 4))
-	//	if err != nil {
-	//		logger.Warnf("conn.SetReadDeadline error %v", err)
-	//		w.restart()
-	//		return
-	//	}
-	//	_, r, err := conn.NextReader()
-	//	if err != nil {
-	//		logger.Warnf("conn.NextReader error %v", err)
-	//		w.restart()
-	//		return
-	//	}
-	//	msg, err := w.readAll(r)
-	//	if err != nil {
-	//		logger.Warnf("w.readAll error %v", err)
-	//		w.restart()
-	//		return
-	//	}
+		//for {
+		//	err := conn.SetReadDeadline(time.Now().Add(time.Hour * 4))
+		//	if err != nil {
+		//		logger.Warnf("conn.SetReadDeadline error %v", err)
+		//		w.restart()
+		//		return
+		//	}
+		//	_, r, err := conn.NextReader()
+		//	if err != nil {
+		//		logger.Warnf("conn.NextReader error %v", err)
+		//		w.restart()
+		//		return
+		//	}
+		//	msg, err := w.readAll(r)
+		//	if err != nil {
+		//		logger.Warnf("w.readAll error %v", err)
+		//		w.restart()
+		//		return
+		//	}
 		select {
 		case w.messageCh <- msg:
 		default:

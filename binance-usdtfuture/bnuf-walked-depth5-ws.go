@@ -28,15 +28,18 @@ func (w *WalkedDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan
 	var ch chan []byte
 	var ok bool
 	var msgLen int
-	var readPool = [depth5TickerReadPoolSize][]byte{}
+	var readPool = [depth5ReadPoolSize][]byte{}
 	var readIndex = -1
 	var msg []byte
 	var n int
 	var r io.Reader
 	var err error
 	for i := range readPool {
-		readPool[i] = make([]byte, depth5TickerReadMsgSize)
+		readPool[i] = make([]byte, depth5ReadMsgSize)
 	}
+	readCounter := 0
+	partialReadCounter := 0
+	allocateCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -52,36 +55,41 @@ mainLoop:
 			return
 		}
 		readIndex += 1
-		if readIndex == depth5TickerReadPoolSize {
+		if readIndex == depth5ReadPoolSize {
 			readIndex = 0
 		}
 		msg = readPool[readIndex]
 		n, err = r.Read(msg)
 		if err == nil {
-				msg = msg[:n]
+			readCounter++
+			msg = msg[:n]
 			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
+				partialReadCounter++
 				for {
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
+						allocateCounter++
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", depth5ReadMsgSize, msg)
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
 					msg = msg[:len(msg)+n]
 					if err != nil {
 						if err == io.EOF {
-							logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+							break
 						} else {
 							logger.Debugf("r.Read error %v", err)
 							continue mainLoop
 						}
-					} else {
-						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
 					}
 				}
 			}
 		} else {
 			logger.Debugf("r.Read error %v", err)
 			continue mainLoop
+		}
+		if readCounter%1000000 == 0 {
+			logger.Debugf("BNUF WALKED DEPTH5 READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", depth5ReadMsgSize, readCounter, partialReadCounter, allocateCounter)
 		}
 		msgLen = len(msg)
 		if msgLen < 128 {

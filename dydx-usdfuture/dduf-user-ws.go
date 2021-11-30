@@ -68,7 +68,7 @@ func (w *UserWebsocket) writeLoop(ctx context.Context, conn *websocket.Conn) {
 				w.restart()
 				return
 			}
-			//logger.Debugf("%s", msgBytes)
+			logger.Debugf("%s", msgBytes)
 			err = conn.WriteMessage(websocket.TextMessage, msgBytes)
 			if err != nil {
 				logger.Warnf("conn.WriteMessage %s error %v", string(msgBytes), err)
