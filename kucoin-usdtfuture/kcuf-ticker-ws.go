@@ -138,65 +138,61 @@ mainLoop:
 		//{"data":{"symbol":"XBTUSDTM","sequence":1624824090150,"side":"sell","size":2,"price":33590,"bestBidSize":47,"bestBidPrice":"33590.0","bestAskPrice":"33591.0","tradeId":"60e92c8c3c7feb289d2ab154","ts":1625894028299209614,"bestAskSize":463},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}
 		//{"type":"message","topic":"/contractMarket/ticker:1INCHUSDTM","subject":"ticker","data":{"symbol":"1INCHUSDTM","sequence":1627371661456,"side":"buy","size":21,"price":2.379,"bestBidSize":203,"bestBidPrice":"2.377","bestAskPrice":"2.38","tradeId":"6105178a991e1303211759d8","ts":1627723658671236584,"bestAskSize":251}}
 		if msgLen > 128 {
-			continue mainLoop
-		}
-		if msg[2] == 't' {
-			if msg[59] == ',' {
-				symbol = common.UnsafeBytesToString(msg[50:58])
-			} else if msg[60] == ',' {
-				symbol = common.UnsafeBytesToString(msg[50:59])
-			} else if msg[61] == ',' {
-				symbol = common.UnsafeBytesToString(msg[50:60])
-			} else if msg[58] == ',' {
-				symbol = common.UnsafeBytesToString(msg[50:57])
-			} else if msg[62] == ',' {
-				symbol = common.UnsafeBytesToString(msg[50:61])
-			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logSilentTime = time.Now().Add(time.Minute)
-					logger.Debugf("UNKNOWN MSG %s", msg)
+			if msg[2] == 't' {
+				if msg[59] == ',' {
+					symbol = common.UnsafeBytesToString(msg[50:58])
+				} else if msg[60] == ',' {
+					symbol = common.UnsafeBytesToString(msg[50:59])
+				} else if msg[61] == ',' {
+					symbol = common.UnsafeBytesToString(msg[50:60])
+				} else if msg[58] == ',' {
+					symbol = common.UnsafeBytesToString(msg[50:57])
+				} else if msg[62] == ',' {
+					symbol = common.UnsafeBytesToString(msg[50:61])
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("UNKNOWN MSG %s", msg)
+					}
+					continue
 				}
-				continue
-			}
-		} else if msg[2] == 'd' {
-			if msg[27] == '"' {
-				symbol = common.UnsafeBytesToString(msg[19:27])
-			} else if msg[28] == '"' {
-				symbol = common.UnsafeBytesToString(msg[19:28])
-			} else if msg[29] == '"' {
-				symbol = common.UnsafeBytesToString(msg[19:29])
-			} else if msg[30] == '"' {
-				symbol = common.UnsafeBytesToString(msg[19:30])
-			} else if msg[31] == '"' {
-				symbol = common.UnsafeBytesToString(msg[19:31])
-			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logSilentTime = time.Now().Add(time.Minute)
-					logger.Debugf("UNKNOWN MSG %s", msg)
+			} else if msg[2] == 'd' {
+				if msg[27] == '"' {
+					symbol = common.UnsafeBytesToString(msg[19:27])
+				} else if msg[28] == '"' {
+					symbol = common.UnsafeBytesToString(msg[19:28])
+				} else if msg[29] == '"' {
+					symbol = common.UnsafeBytesToString(msg[19:29])
+				} else if msg[30] == '"' {
+					symbol = common.UnsafeBytesToString(msg[19:30])
+				} else if msg[31] == '"' {
+					symbol = common.UnsafeBytesToString(msg[19:31])
+				} else {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logSilentTime = time.Now().Add(time.Minute)
+						logger.Debugf("UNKNOWN MSG %s", msg)
+					}
+					continue
 				}
-				continue
 			}
+			if ch, ok = channels[symbol]; ok {
+				select {
+				case ch <- msg:
+				default:
+					//if time.Now().Sub(logSilentTime) > 0 {
+					//	logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
+					//	logSilentTime = time.Now().Add(time.Minute)
+					//}
+				}
+			}
+		} else if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
+			logger.Debugf("%s", msg)
 		} else {
 			if time.Now().Sub(logSilentTime) > 0 {
 				logSilentTime = time.Now().Add(common.LogInterval)
 				logger.Debugf("UNKNOWN MSG %s", msg)
 			}
-			continue
 		}
-		if ch, ok = channels[symbol]; ok {
-			select {
-			case ch <- msg:
-			default:
-				//if time.Now().Sub(logSilentTime) > 0 {
-				//	logger.Debugf("ch <- msg failed %s len(ch) %d", symbol, len(ch))
-				//	logSilentTime = time.Now().Add(time.Minute)
-				//}
-			}
-		}
-		//} else {
-		//	if len(msg) > 3 && msg[2] == 'i' && msg[len(msg)-3] == 'k' {
-		//		logger.Debugf("%s", msg)
-		//	}
 	}
 }
 

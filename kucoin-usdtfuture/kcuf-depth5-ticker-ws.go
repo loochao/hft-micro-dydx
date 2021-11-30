@@ -192,9 +192,12 @@ mainLoop:
 					}
 				}
 			}
+		} else if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
+			logger.Debugf("%s", msg)
 		} else {
-			if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
-				logger.Debugf("%s", msg)
+			if time.Now().Sub(logSilentTime) > 0 {
+				logSilentTime = time.Now().Add(common.LogInterval)
+				logger.Debugf("UNKNOWN MSG %s", msg)
 			}
 		}
 
