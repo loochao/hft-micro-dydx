@@ -146,7 +146,7 @@ mainLoop:
 		}
 
 		if readCounter%100 == 0 {
-			logger.Debugf("DYDX USER WS TOTAL READ %d PARTIAL READ %d EXPAND ALLOCATE %d", readCounter, partialReadCounter, allocateCounter)
+			logger.Debugf("DYDX USER WS READ SIZE %d TOTAL READ %d PARTIAL READ %d EXPAND ALLOCATE %d", userReadMsgSize,readCounter, partialReadCounter, allocateCounter)
 		}
 
 		select {

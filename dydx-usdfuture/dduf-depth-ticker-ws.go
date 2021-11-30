@@ -131,7 +131,7 @@ mainLoop:
 		if err == nil {
 			readCounter++
 			msg = msg[:n]
-			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}'{
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
 				partialReadCounter++
 			readLoop:
 				for {
@@ -161,7 +161,7 @@ mainLoop:
 		}
 
 		if readCounter%10000 == 0 {
-			logger.Debugf("DYDX DEPTH TICKER TOTAL READ %d PARTIAL READ %d EXPAND ALLOCATE %d", readCounter, partialReadCounter, allocateCounter)
+			logger.Debugf("DYDX DEPTH TICKER READ SIZE %d TOTAL READ %d PARTIAL READ %d EXPAND ALLOCATE %d", depthReadMsgSize, readCounter, partialReadCounter, allocateCounter)
 		}
 
 		msgLen = len(msg)
@@ -174,12 +174,12 @@ mainLoop:
 				}
 				continue
 			}
-		//} else {
-		//	if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
-		//		logger.Debugf("other msg %s", msg)
-		//		logSilentTime = time.Now().Add(time.Minute)
-		//	}
-		//	continue
+			//} else {
+			//	if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
+			//		logger.Debugf("other msg %s", msg)
+			//		logSilentTime = time.Now().Add(time.Minute)
+			//	}
+			//	continue
 		}
 		if ch, ok = channels[market]; ok {
 			select {

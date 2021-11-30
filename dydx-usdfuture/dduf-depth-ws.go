@@ -129,7 +129,7 @@ mainLoop:
 		if err == nil {
 			readCounter++
 			msg = msg[:n]
-			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}'{
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
 				partialReadCounter++
 			readLoop:
 				for {
@@ -156,7 +156,7 @@ mainLoop:
 		}
 
 		if readCounter%10000 == 0 {
-			logger.Debugf("DYDX DEPTH TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
+			logger.Debugf("DYDX DEPTH READ SIZE %d TOTAL READ %d PARTIAL READ %d", depthReadMsgSize, readCounter, partialReadCounter)
 		}
 
 		msgLen = len(msg)
