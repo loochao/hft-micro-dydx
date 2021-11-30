@@ -87,7 +87,7 @@ mainLoop:
 			logger.Debugf("r.Read error %v", err)
 			continue mainLoop
 		}
-		if readCounter%100000 == 0 {
+		if readCounter%1000000 == 0 {
 			logger.Debugf("BNUF BOOK TICKER TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
 		}
 		msgLen = len(msg)
