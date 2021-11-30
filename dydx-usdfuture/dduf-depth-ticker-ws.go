@@ -479,10 +479,10 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 					continue
 				}
 			} else {
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("other msg %s", msg)
-					logSilentTime = time.Now().Add(time.Minute)
-				}
+				//if time.Now().Sub(logSilentTime) > 0 {
+				//	logger.Debugf("other msg %s", msg)
+				//	logSilentTime = time.Now().Add(time.Minute)
+				//}
 				continue
 			}
 
