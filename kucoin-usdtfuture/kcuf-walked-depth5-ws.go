@@ -86,8 +86,11 @@ func (w *WalkedDepth5WS) readLoop(
 	var r io.Reader
 	var err error
 	for i := range readPool {
-		readPool[i] = make([]byte, depth5TickerReadMsgSize)
+		readPool[i] = make([]byte, depth5ReadMsgSize)
 	}
+	readCounter := 0
+	partialReadCounter := 0
+	allocateCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -109,25 +112,26 @@ mainLoop:
 		msg = readPool[readIndex]
 		n, err = r.Read(msg)
 		if err == nil {
-			if n < depth5TickerReadPoolSize {
-				msg = msg[:n]
-			} else {
+			msg = msg[:n]
+			readCounter++
+			if n > depth5TickerReadPoolSize || msg[n-1] != '}' {
+				partialReadCounter++
 				for {
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", depth5ReadMsgSize, msg)
+						allocateCounter++
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
 					msg = msg[:len(msg)+n]
 					if err != nil {
 						if err == io.EOF {
-							logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), depth5TickerReadMsgSize, msg)
+							break
 						} else {
 							logger.Debugf("r.Read error %v", err)
 							continue mainLoop
 						}
-					} else {
-						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), depth5TickerReadMsgSize, msg)
 					}
 				}
 			}
@@ -136,6 +140,9 @@ mainLoop:
 			continue mainLoop
 		}
 
+		if readCounter%100000 == 0 {
+			logger.Debugf("KUCOIN DEPTH5 READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", depth5ReadMsgSize, readCounter, partialReadCounter, allocateCounter)
+		}
 		//中间有一次数据变更，可能两种格式
 		//{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,
 		//{"type":"message","topic":"/contractMarket/level2Depth5:GRTUSDTM","subject":"level2","data":{"sequence":1627365704601,"asks":[[0.62612,194],[0.62625,194],[0.62640,3230],[0.62655,6368],[0.62656,6300]],"bids":[[0.62580,1846],[0.62565,1087],[0.62555,1959],[0.62551,1038],[0.62550,601]],"ts":1627723139256,"timestamp":1627723139256}}
@@ -200,7 +207,6 @@ mainLoop:
 
 	}
 }
-
 
 func (w *WalkedDepth5WS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 

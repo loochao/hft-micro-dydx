@@ -86,10 +86,11 @@ func (w *Depth5TickerWS) readLoop(
 	var r io.Reader
 	var err error
 	for i := range readPool {
-		readPool[i] = make([]byte, depth5TickerReadMsgSize, 2*depth5TickerReadMsgSize)
+		readPool[i] = make([]byte, depth5ReadMsgSize, 2*depth5ReadMsgSize)
 	}
 	readCounter := 0
 	partialReadCounter := 0
+	allocateCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -113,20 +114,20 @@ mainLoop:
 		if err == nil {
 			readCounter++
 			msg = msg[:n]
-			if n > depth5TickerReadPoolSize || msg[n-1] != '}' {
+			if n < 1 || msg[n-1] != '}' {
 				partialReadCounter++
-			readLoop:
 				for {
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
-						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", depth5TickerReadMsgSize, msg)
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", depth5ReadMsgSize, msg)
+						allocateCounter++
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
 					msg = msg[:len(msg)+n]
 					if err != nil {
 						if err == io.EOF {
-							break readLoop
+							break
 						} else {
 							logger.Debugf("r.Read error %v", err)
 							continue mainLoop
@@ -139,7 +140,7 @@ mainLoop:
 			continue mainLoop
 		}
 		if readCounter%1000000 == 0 {
-			logger.Debugf("KUCOIN DEPTH5 TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
+			logger.Debugf("KUCOIN DEPTH5 READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", depth5ReadMsgSize, readCounter, partialReadCounter, allocateCounter)
 		}
 
 		//中间有一次数据变更，可能两种格式
