@@ -155,7 +155,7 @@ mainLoop:
 			continue mainLoop
 		}
 
-		if readCounter%10000 == 0 {
+		if readCounter%1000000 == 0 {
 			logger.Debugf("DYDX DEPTH READ SIZE %d TOTAL READ %d PARTIAL READ %d", depthReadMsgSize, readCounter, partialReadCounter)
 		}
 

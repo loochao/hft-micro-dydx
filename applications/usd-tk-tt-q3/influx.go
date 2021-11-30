@@ -286,7 +286,7 @@ func handleSave(
 	}
 
 	//每小时录一次
-	if time.Now().Truncate(time.Minute*5).Sub(time.Now().Truncate(time.Hour)) == 0 {
+	if time.Now().Truncate(time.Minute).Sub(time.Now().Truncate(time.Hour).Add(time.Minute*10)) == 0 {
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
 		fields := make(map[string]interface{})
