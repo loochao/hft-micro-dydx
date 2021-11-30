@@ -63,7 +63,7 @@ mainLoop:
 		if err == nil {
 			readCounter++
 			msg = msg[:n]
-			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}'{
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
 				partialReadCounter++
 			readLoop:
 				for {
@@ -141,6 +141,7 @@ func (w *UserWebsocket) readAll(r io.Reader) ([]byte, error) {
 func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 	logger.Debugf("START dataHandleLoop")
 	defer logger.Debugf("EXIT dataHandleLoop")
+	var msgLen int
 	for {
 		select {
 		case <-ctx.Done():
@@ -149,7 +150,11 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 			return
 		case msg := <-w.messageCh:
 			//{"e":"ACCOUNT_UPDATE","T":1616821544492,"E":1616821544496,"a":{"B":[{"a":"BNB","wb":"0.06858897","cw":"0"}],"P":[],"m":"DEPOSIT"}}
-			if msg[0] == '{' && len(msg) > 14 {
+			msgLen = len(msg)
+			if len(msg) > 14 && msg[0] == '{' {
+				if msg[msgLen-1] != '}' ||  msg[msgLen-2] != '}'{
+					logger.Debugf("%s", msg)
+				}
 				if msg[2] == 'e' && msg[6] == 'A' && msg[14] == 'U' {
 					balanceAndPositionUpdateEvent := BalanceAndPositionUpdateEvent{}
 					//logger.Debugf("%s", msg)
