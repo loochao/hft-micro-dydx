@@ -28,10 +28,10 @@ const (
 	ExchangeID = common.DydxUsdFuture
 
 	depthReadPoolSize = 8192
-	depthReadMsgSize  = 4096
+	depthReadMsgSize  = 2048
 
-	userReadPoolSize = 4096
-	userReadMsgSize  = 4096
+	userReadPoolSize = 1024
+	userReadMsgSize  = 8192*2
 )
 
 const (
