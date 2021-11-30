@@ -139,7 +139,7 @@ mainLoop:
 			continue mainLoop
 		}
 
-		if readCounter%10000 == 0 {
+		if readCounter%100000 == 0 {
 			logger.Debugf("KUCOIN DEPTH5 TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
 		}
 		//中间有一次数据变更，可能两种格式
