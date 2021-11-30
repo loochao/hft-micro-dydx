@@ -107,6 +107,7 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 	}
 	readCounter := 0
 	partialReadCounter := 0
+	allocateCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -137,7 +138,10 @@ mainLoop:
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
-						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", depthReadMsgSize, msg)
+						allocateCounter++
+						if msg[9] != 's' || msg[18] != 'd' {
+							logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", depthReadMsgSize, msg)
+						}
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
 					msg = msg[:len(msg)+n]
@@ -157,7 +161,7 @@ mainLoop:
 		}
 
 		if readCounter%10000 == 0 {
-			logger.Debugf("DYDX DEPTH TICKER TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
+			logger.Debugf("DYDX DEPTH TICKER TOTAL READ %d PARTIAL READ %d EXPAND ALLOCATE %d", readCounter, partialReadCounter, allocateCounter)
 		}
 
 		msgLen = len(msg)
@@ -486,12 +490,20 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 				if msgCounter > 0 {
 					resubTimer.Reset(resubDelay)
 					msgCounter = -4
-					depth.Bids = depth.Bids.Update([2]float64{depth.Bids[0][0], 0.0})
-					depth.Asks = depth.Asks.Update([2]float64{depth.Asks[0][0], 0.0})
+					if len(depth.Bids) > 0 {
+						depth.Bids = depth.Bids.Update([2]float64{depth.Bids[0][0], 0.0})
+					}
+					if len(depth.Asks) > 0 {
+						depth.Asks = depth.Asks.Update([2]float64{depth.Asks[0][0], 0.0})
+					}
 				} else {
 					msgCounter -= 4
-					depth.Bids = depth.Bids.Update([2]float64{depth.Bids[0][0], 0.0})
-					depth.Asks = depth.Asks.Update([2]float64{depth.Asks[0][0], 0.0})
+					if len(depth.Bids) > 0 {
+						depth.Bids = depth.Bids.Update([2]float64{depth.Bids[0][0], 0.0})
+					}
+					if len(depth.Asks) > 0 {
+						depth.Asks = depth.Asks.Update([2]float64{depth.Asks[0][0], 0.0})
+					}
 				}
 			} else {
 				msgCounter++

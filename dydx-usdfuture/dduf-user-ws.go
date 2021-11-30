@@ -94,6 +94,7 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 	}
 	readCounter := 0
 	partialReadCounter := 0
+	allocateCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Hour*999))
@@ -124,6 +125,7 @@ mainLoop:
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
+						allocateCounter++
 						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", userReadMsgSize, msg)
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
@@ -144,7 +146,7 @@ mainLoop:
 		}
 
 		if readCounter%100 == 0 {
-			logger.Debugf("DYDX USER WS TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
+			logger.Debugf("DYDX USER WS TOTAL READ %d PARTIAL READ %d EXPAND ALLOCATE %d", readCounter, partialReadCounter, allocateCounter)
 		}
 
 		select {
