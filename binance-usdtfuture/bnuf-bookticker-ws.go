@@ -38,7 +38,7 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 		readPool[i] = make([]byte, bookTickerReadMsgSize)
 	}
 	readCounter := 0
-	wholeReadCounter := 0
+	partialReadCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -61,10 +61,9 @@ mainLoop:
 		readCounter++
 		n, err = r.Read(msg)
 		if err == nil {
-			if n < bookTickerReadMsgSize && n > 0 && msg[n-1] == '}' {
-				wholeReadCounter++
-				msg = msg[:n]
-			} else {
+			msg = msg[:n]
+			if n > bookTickerReadMsgSize || msg[n-1] != '}' {
+				partialReadCounter++
 			readLoop:
 				for {
 					if len(msg) == cap(msg) {
@@ -89,7 +88,7 @@ mainLoop:
 			continue mainLoop
 		}
 		if readCounter%10000 == 0 {
-			logger.Debugf("READ %d ONE RUN READ %d", readCounter, wholeReadCounter)
+			logger.Debugf("READ %d PARTIAL READ %d", readCounter, partialReadCounter)
 		}
 		msgLen = len(msg)
 		if msgLen < 128 {

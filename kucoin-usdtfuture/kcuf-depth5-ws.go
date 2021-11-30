@@ -109,9 +109,8 @@ mainLoop:
 		msg = readPool[readIndex]
 		n, err = r.Read(msg)
 		if err == nil {
-			if n < depth5TickerReadPoolSize && n > 0 && msg[n-1] == '}' {
-				msg = msg[:n]
-			} else {
+			msg = msg[:n]
+			if n > depth5TickerReadPoolSize || msg[n-1] != '}' {
 			readLoop:
 				for {
 					if len(msg) == cap(msg) {

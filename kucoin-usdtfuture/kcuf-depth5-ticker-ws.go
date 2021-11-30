@@ -86,8 +86,10 @@ func (w *Depth5TickerWS) readLoop(
 	var r io.Reader
 	var err error
 	for i := range readPool {
-		readPool[i] = make([]byte, depth5TickerReadMsgSize)
+		readPool[i] = make([]byte, depth5TickerReadMsgSize, 2*depth5TickerReadMsgSize)
 	}
+	readCounter := 0
+	partialReadCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -109,9 +111,10 @@ mainLoop:
 		msg = readPool[readIndex]
 		n, err = r.Read(msg)
 		if err == nil {
-			if n < depth5TickerReadPoolSize && n > 0 && msg[n-1] == '}' {
-				msg = msg[:n]
-			} else {
+			readCounter++
+			msg = msg[:n]
+			if n > depth5TickerReadPoolSize || msg[n-1] != '}' {
+				partialReadCounter++
 			readLoop:
 				for {
 					if len(msg) == cap(msg) {
@@ -134,6 +137,9 @@ mainLoop:
 		} else {
 			logger.Debugf("r.Read error %v", err)
 			continue mainLoop
+		}
+		if readCounter%10000 == 0 {
+			logger.Debugf("READ %d PARTIAL READ %d", readCounter, partialReadCounter)
 		}
 
 		//中间有一次数据变更，可能两种格式
