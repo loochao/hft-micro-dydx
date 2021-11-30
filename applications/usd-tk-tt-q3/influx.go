@@ -279,39 +279,42 @@ func handleSave(
 		}
 	}
 
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	fields := make(map[string]interface{})
-	fields["alloc"] = int64(m.Alloc/1000/1000)
-	fields["totalAlloc"] = int64(m.TotalAlloc/1000/1000)
-	fields["sys"] = int64(m.Sys/1000/1000)
-	fields["numGC"] = int64(m.NumGC)
-	mm, err := memory.Get()
-	if err != nil {
-		logger.Debugf("get memory error %v", err)
-	} else {
-		fields["memoryTotal"] = int64(mm.Total/1000/1000)
-		fields["memoryFree"] = int64(mm.Free/1000/1000)
-		fields["memoryCached"] = int64(mm.Cached/1000/1000)
-		fields["memoryUsed"] = int64(mm.Used/1000/1000)
-	}
-
-	pt, err := client.NewPoint(
-		xyConfig.InternalInflux.Measurement,
-		map[string]string{
-			"type": "runtime",
-		},
-		fields,
-		time.Now().UTC(),
-	)
-	if err != nil {
-		logger.Debugf("client.NewPoint error %v", err)
-	} else {
-		err = xyInternalInfluxWriter.PushPoint(pt)
+	//每小时录一次
+	if time.Now().Truncate(time.Minute*5).Sub(time.Now().Truncate(time.Hour)) == 0 {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+		fields := make(map[string]interface{})
+		fields["alloc"] = int64(m.Alloc/1000/1000)
+		fields["totalAlloc"] = int64(m.TotalAlloc/1000/1000)
+		fields["sys"] = int64(m.Sys/1000/1000)
+		fields["numGC"] = int64(m.NumGC)
+		mm, err := memory.Get()
 		if err != nil {
-			logger.Debugf("xyInfluxWriter.PushPoint error %v", err)
+			logger.Debugf("get memory error %v", err)
+		} else {
+			fields["memoryTotal"] = int64(mm.Total/1000/1000)
+			fields["memoryFree"] = int64(mm.Free/1000/1000)
+			fields["memoryCached"] = int64(mm.Cached/1000/1000)
+			fields["memoryUsed"] = int64(mm.Used/1000/1000)
+		}
+		pt, err := client.NewPoint(
+			xyConfig.InternalInflux.Measurement,
+			map[string]string{
+				"type": "runtime",
+			},
+			fields,
+			time.Now().UTC(),
+		)
+		if err != nil {
+			logger.Debugf("client.NewPoint error %v", err)
+		} else {
+			err = xyInternalInfluxWriter.PushPoint(pt)
+			if err != nil {
+				logger.Debugf("xyInfluxWriter.PushPoint error %v", err)
+			}
 		}
 	}
+
 
 	if yAccount != nil &&
 		xAccount != nil &&
