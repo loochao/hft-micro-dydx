@@ -139,7 +139,7 @@ mainLoop:
 			continue mainLoop
 		}
 		if readCounter%10000 == 0 {
-			logger.Debugf("READ %d PARTIAL READ %d", readCounter, partialReadCounter)
+			logger.Debugf("KUCOIN DEPTH5 TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
 		}
 
 		//中间有一次数据变更，可能两种格式
@@ -200,8 +200,8 @@ mainLoop:
 			}
 		} else if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
 			logger.Debugf("%s", msg)
-		} else if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'p' {
-			logger.Debugf("PONG")
+		} else if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'g' {
+			//logger.Debugf("PONG")
 		} else {
 			if time.Now().Sub(logSilentTime) > 0 {
 				logSilentTime = time.Now().Add(common.LogInterval)

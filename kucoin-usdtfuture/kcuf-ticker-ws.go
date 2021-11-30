@@ -139,7 +139,7 @@ mainLoop:
 		}
 
 		if readCounter%10000 == 0 {
-			logger.Debugf("READ %d PARTIAL READ %d", readCounter, partialReadCounter)
+			logger.Debugf("KUCOIN BOOK TICKER TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
 		}
 		msgLen = len(msg)
 		//{"data":{"symbol":"XBTUSDTM","sequence":1624824090150,"side":"sell","size":2,"price":33590,"bestBidSize":47,"bestBidPrice":"33590.0","bestAskPrice":"33591.0","tradeId":"60e92c8c3c7feb289d2ab154","ts":1625894028299209614,"bestAskSize":463},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}
@@ -194,6 +194,8 @@ mainLoop:
 			}
 		} else if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
 			logger.Debugf("%s", msg)
+		} else if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'g' {
+			//logger.Debugf("%s", msg)
 		} else {
 			if time.Now().Sub(logSilentTime) > 0 {
 				logSilentTime = time.Now().Add(common.LogInterval)

@@ -88,6 +88,8 @@ func (w *Depth5WS) readLoop(
 	for i := range readPool {
 		readPool[i] = make([]byte, depth5TickerReadMsgSize)
 	}
+	readCounter := 0
+	partialReadCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -109,8 +111,10 @@ mainLoop:
 		msg = readPool[readIndex]
 		n, err = r.Read(msg)
 		if err == nil {
+			readCounter++
 			msg = msg[:n]
 			if n > depth5TickerReadPoolSize || msg[n-1] != '}' {
+				partialReadCounter++
 			readLoop:
 				for {
 					if len(msg) == cap(msg) {
@@ -135,6 +139,9 @@ mainLoop:
 			continue mainLoop
 		}
 
+		if readCounter%10000 == 0 {
+			logger.Debugf("KUCOIN DEPTH5 TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
+		}
 		//中间有一次数据变更，可能两种格式
 		//{"data":{"sequence":1616576945844,"asks":[[17.834,10],[18.019,10154],[18.082,11060]],"bids":[[17.797,701],[17.793,1061],[17.784,199],[17.781,881],[17.779,407]],"ts":1618717277315,
 		//{"type":"message","topic":"/contractMarket/level2Depth5:GRTUSDTM","subject":"level2","data":{"sequence":1627365704601,"asks":[[0.62612,194],[0.62625,194],[0.62640,3230],[0.62655,6368],[0.62656,6300]],"bids":[[0.62580,1846],[0.62565,1087],[0.62555,1959],[0.62551,1038],[0.62550,601]],"ts":1627723139256,"timestamp":1627723139256}}

@@ -58,9 +58,9 @@ mainLoop:
 			readIndex = 0
 		}
 		msg = readPool[readIndex]
-		readCounter++
 		n, err = r.Read(msg)
 		if err == nil {
+			readCounter++
 			msg = msg[:n]
 			if n > depth5TickerReadMsgSize || msg[n-1] != '}' {
 				partialReadCounter++
@@ -88,7 +88,7 @@ mainLoop:
 			continue mainLoop
 		}
 		if readCounter%10000 == 0 {
-			logger.Debugf("READ %d PARTIAL READ %d", readCounter, partialReadCounter)
+			logger.Debugf("BNUF DEPTH TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
 		}
 		msgLen = len(msg)
 		if msgLen < 128 {
