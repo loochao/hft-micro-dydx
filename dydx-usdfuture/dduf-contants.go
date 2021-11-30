@@ -26,6 +26,12 @@ const (
 	TimeLayout = "2006-01-02T15:04:05.999Z"
 
 	ExchangeID = common.DydxUsdFuture
+
+	depthReadPoolSize = 8192
+	depthReadMsgSize  = 1024
+
+	userReadPoolSize = 4096
+	userReadMsgSize  = 1024
 )
 
 const (

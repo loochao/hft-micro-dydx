@@ -87,15 +87,27 @@ func (w *TickerWS) findMarket(msg []byte) (string, error) {
 	}
 	return "", fmt.Errorf("market not found")
 }
+
 func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
 	var market string
-	var msg []byte
-	var err error
 	var ch chan []byte
 	var ok bool
+	var msgLen int
+	var readPool = [depthReadPoolSize][]byte{}
+	var readIndex = -1
+	var msg []byte
+	var n int
+	var r io.Reader
+	var err error
+	for i := range readPool {
+		readPool[i] = make([]byte, depthReadMsgSize)
+	}
+	readCounter := 0
+	partialReadCounter := 0
+mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -103,13 +115,52 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 			w.restart()
 			return
 		}
-		_, msg, err = conn.ReadMessage()
+		_, r, err = conn.NextReader()
 		if err != nil {
-			logger.Debugf("conn.NextReader error %v", err)
+			logger.Warnf("conn.NextReader error %v", err)
 			w.restart()
 			return
 		}
-		msgLen := len(msg)
+		readIndex += 1
+		if readIndex == depthReadPoolSize {
+			readIndex = 0
+		}
+		msg = readPool[readIndex]
+		n, err = r.Read(msg)
+		if err == nil {
+			readCounter++
+			msg = msg[:n]
+			if n > depthReadMsgSize || msg[n-1] != '}' {
+				partialReadCounter++
+			readLoop:
+				for {
+					if len(msg) == cap(msg) {
+						// Add more capacity (let append pick how much).
+						msg = append(msg, 0)[:len(msg)]
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", depthReadMsgSize, msg)
+					}
+					n, err = r.Read(msg[len(msg):cap(msg)])
+					msg = msg[:len(msg)+n]
+					if err != nil {
+						if err == io.EOF {
+							break readLoop
+						} else {
+							logger.Debugf("r.Read error %v", err)
+							continue mainLoop
+						}
+					}
+				}
+			}
+		} else {
+			logger.Debugf("r.Read error %v", err)
+			continue mainLoop
+		}
+
+		if readCounter%10000 == 0 {
+			logger.Debugf("DYDX DEPTH TICKER TOTAL READ %d PARTIAL READ %d", readCounter, partialReadCounter)
+		}
+
+		msgLen = len(msg)
 		if msgLen > 128 {
 			market, err = w.findMarket(msg)
 			if err != nil {
@@ -139,23 +190,23 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 	}
 }
 
-func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 1024)
-	for {
-		if len(b) == cap(b) {
-			// Add more capacity (let append pick how much).
-			b = append(b, 0)[:len(b)]
-		}
-		n, err := r.Read(b[len(b):cap(b)])
-		b = b[:len(b)+n]
-		if err != nil {
-			if err == io.EOF {
-				err = nil
-			}
-			return b, err
-		}
-	}
-}
+//func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
+//	b := make([]byte, 0, 1024)
+//	for {
+//		if len(b) == cap(b) {
+//			// Add more capacity (let append pick how much).
+//			b = append(b, 0)[:len(b)]
+//		}
+//		n, err := r.Read(b[len(b):cap(b)])
+//		b = b[:len(b)+n]
+//		if err != nil {
+//			if err == io.EOF {
+//				err = nil
+//			}
+//			return b, err
+//		}
+//	}
+//}
 
 func (w *TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
