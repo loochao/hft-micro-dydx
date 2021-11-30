@@ -372,8 +372,6 @@ func handleSave(
 		fields["xyURPnl"] = totalURPnl
 		fields["netWorth"] = netWorth
 		fields["startValue"] = xyConfig.StartValue
-		fields["xPriceFactor"] = xExchange.GetPriceFactor()
-		fields["yPriceFactor"] = yExchange.GetPriceFactor()
 		pt, err := client.NewPoint(
 			xyConfig.InternalInflux.Measurement,
 			map[string]string{
