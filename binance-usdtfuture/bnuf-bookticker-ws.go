@@ -37,6 +37,8 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 	for i := range readPool {
 		readPool[i] = make([]byte, bookTickerReadMsgSize)
 	}
+	readCounter := 0
+	wholeReadCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -56,33 +58,38 @@ mainLoop:
 			readIndex = 0
 		}
 		msg = readPool[readIndex]
+		readCounter++
 		n, err = r.Read(msg)
 		if err == nil {
-			if n < bookTickerReadMsgSize {
+			if n < bookTickerReadMsgSize && n > 0 && msg[n-1] == '}' {
+				wholeReadCounter++
 				msg = msg[:n]
 			} else {
+			readLoop:
 				for {
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
 					msg = msg[:len(msg)+n]
 					if err != nil {
 						if err == io.EOF {
-							logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+							break readLoop
 						} else {
 							logger.Debugf("r.Read error %v", err)
 							continue mainLoop
 						}
-					} else {
-						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
 					}
 				}
 			}
 		} else {
 			logger.Debugf("r.Read error %v", err)
 			continue mainLoop
+		}
+		if readCounter%10000 == 0 {
+			logger.Debugf("READ %d ONE RUN READ %d", readCounter, wholeReadCounter)
 		}
 		msgLen = len(msg)
 		if msgLen < 128 {

@@ -108,25 +108,25 @@ mainLoop:
 		msg = readPool[readIndex]
 		n, err = r.Read(msg)
 		if err == nil {
-			if n < bookTickerReadMsgSize {
+			if n < bookTickerReadMsgSize && n > 0 && msg[n-1] == '}' {
 				msg = msg[:n]
 			} else {
+			readLoop:
 				for {
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", bookTickerReadMsgSize, msg)
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
 					msg = msg[:len(msg)+n]
 					if err != nil {
 						if err == io.EOF {
-							logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+							break readLoop
 						} else {
 							logger.Debugf("r.Read error %v", err)
 							continue mainLoop
 						}
-					} else {
-						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
 					}
 				}
 			}
@@ -134,6 +134,7 @@ mainLoop:
 			logger.Debugf("r.Read error %v", err)
 			continue mainLoop
 		}
+
 		msgLen = len(msg)
 		//{"data":{"symbol":"XBTUSDTM","sequence":1624824090150,"side":"sell","size":2,"price":33590,"bestBidSize":47,"bestBidPrice":"33590.0","bestAskPrice":"33591.0","tradeId":"60e92c8c3c7feb289d2ab154","ts":1625894028299209614,"bestAskSize":463},"subject":"ticker","topic":"/contractMarket/ticker:XBTUSDTM","type":"message"}
 		//{"type":"message","topic":"/contractMarket/ticker:1INCHUSDTM","subject":"ticker","data":{"symbol":"1INCHUSDTM","sequence":1627371661456,"side":"buy","size":21,"price":2.379,"bestBidSize":203,"bestBidPrice":"2.377","bestAskPrice":"2.38","tradeId":"6105178a991e1303211759d8","ts":1627723658671236584,"bestAskSize":251}}

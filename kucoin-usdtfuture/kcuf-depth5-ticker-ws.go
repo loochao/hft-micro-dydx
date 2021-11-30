@@ -109,25 +109,25 @@ mainLoop:
 		msg = readPool[readIndex]
 		n, err = r.Read(msg)
 		if err == nil {
-			if n < depth5TickerReadPoolSize {
+			if n < depth5TickerReadPoolSize && n > 0 && msg[n-1] == '}' {
 				msg = msg[:n]
 			} else {
+			readLoop:
 				for {
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", depth5TickerReadMsgSize, msg)
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
 					msg = msg[:len(msg)+n]
 					if err != nil {
 						if err == io.EOF {
-							logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), depth5TickerReadMsgSize, msg)
+							break readLoop
 						} else {
 							logger.Debugf("r.Read error %v", err)
 							continue mainLoop
 						}
-					} else {
-						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), depth5TickerReadMsgSize, msg)
 					}
 				}
 			}
@@ -194,6 +194,8 @@ mainLoop:
 			}
 		} else if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'k' {
 			logger.Debugf("%s", msg)
+		} else if msgLen > 3 && msg[2] == 'i' && msg[msgLen-3] == 'p' {
+			logger.Debugf("PONG")
 		} else {
 			if time.Now().Sub(logSilentTime) > 0 {
 				logSilentTime = time.Now().Add(common.LogInterval)
