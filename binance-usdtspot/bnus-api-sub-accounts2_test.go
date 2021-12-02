@@ -37,14 +37,14 @@ func TestAPI_QuerySubAccountAssets2(t *testing.T) {
 	//	Secret: os.Getenv("BN_TEST_MASTER_SECRET"),
 	//}, os.Getenv("BN_TEST_MASTER_PROXY"))
 	api, err := NewAPI(&common.Credentials{
-		Key:    os.Getenv("BN_TEST_MASTER_KEY_OLD"),
-		Secret: os.Getenv("BN_TEST_MASTER_SECRET_OLD"),
-	}, os.Getenv("BN_TEST_MASTER_PROXY_OLD"))
+		Key:    os.Getenv("BN_TEST_MASTER_KEY"),
+		Secret: os.Getenv("BN_TEST_MASTER_SECRET"),
+	}, os.Getenv("BN_TEST_MASTER_PROXY"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	email := "fund16@vf2021.com"
+	email := "fund27@vf2021.com"
 	balances, _, err := api.QuerySubAccountAssets(ctx, SubAccountParams{
 		Email: email,
 	})
@@ -54,7 +54,7 @@ func TestAPI_QuerySubAccountAssets2(t *testing.T) {
 	fmt.Printf("%s\n", email)
 	for _, b := range balances {
 		if b.Free+b.Locked != 0 {
-			fmt.Printf("%6s: %f\n", b.Asset, b.Free+b.Locked)
+			fmt.Printf("%6s: %.10f\n", b.Asset, b.Free+b.Locked)
 		}
 	}
 }
@@ -94,8 +94,6 @@ func TestAPI_SubAccountUniversalTransfer2(t *testing.T) {
 	}
 }
 
-
-
 func TestAPI_QuerySubAccountAssets3(t *testing.T) {
 	api, err := NewAPI(&common.Credentials{
 		Key:    os.Getenv("BN_TEST_MASTER_KEY"),
@@ -126,7 +124,6 @@ func TestAPI_QuerySubAccountAssets3(t *testing.T) {
 	}
 }
 
-
 func TestAPI_SpotMainToSubSpot2(t *testing.T) {
 	api, err := NewAPI(&common.Credentials{
 		Key:    os.Getenv("BN_TEST_MASTER_KEY"),
@@ -137,12 +134,13 @@ func TestAPI_SpotMainToSubSpot2(t *testing.T) {
 	}
 	ctx := context.Background()
 	resp, _, err := api.SubAccountUniversalTransfer(ctx, SubAccountUniversalTransferParams{
-		FromEmail:       "bd@visioncap.io",
-		ToEmail:         "fund24@vf2021.com",
+		//FromEmail:       "bd@visioncap.io",
+		FromEmail:       "fund27@vf2021.com",
+		ToEmail:         "fund32@vf2021.com",
 		FromAccountType: SubAccountTypeSpot,
 		ToAccountType:   SubAccountTypeSpot,
 		Asset:           "USDT",
-		Amount:          4000,
+		Amount:          0.00000016,
 	})
 	if err != nil {
 		t.Fatal(err)

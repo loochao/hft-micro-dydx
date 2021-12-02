@@ -87,7 +87,7 @@ mainLoop:
 			logger.Debugf("r.Read error %v", err)
 			continue mainLoop
 		}
-		if readCounter%100 == 0 {
+		if readCounter%1000000 == 0 {
 			logger.Debugf("BNUS DEPTH TICKER READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", depth5ReadMsgSize, readCounter, partialReadCounter, allocateCounter)
 		}
 		if len(msg) < 128 {
