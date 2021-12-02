@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type OrderBookWS struct {
+type WalkedOrderBookWS struct {
 	writeCh       chan interface{}
 	done          chan interface{}
 	reconnectCh   chan interface{}
@@ -23,7 +23,7 @@ type OrderBookWS struct {
 	stopped       int32
 }
 
-func (w *OrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
+func (w *WalkedOrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	logger.Debugf("START writeLoop")
 	defer logger.Debugf("EXIT writeLoop")
 	for {
@@ -66,7 +66,7 @@ func (w *OrderBookWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 	}
 }
 
-func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
+func (w *WalkedOrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []byte) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
@@ -121,16 +121,16 @@ func (w *OrderBookWS) readLoop(conn *websocket.Conn, channels map[string]chan []
 			select {
 			case ch <- msg:
 			default:
-				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf(" ch <- msg %s ch len %d", symbol, len(ch))
-					logSilentTime = time.Now().Add(time.Minute)
-				}
+				//if time.Now().Sub(logSilentTime) > 0 {
+				//	logger.Debugf(" ch <- msg %s ch len %d", symbol, len(ch))
+				//	logSilentTime = time.Now().Add(time.Minute)
+				//}
 			}
 		}
 	}
 }
 
-func (w *OrderBookWS) readAll(r io.Reader) ([]byte, error) {
+func (w *WalkedOrderBookWS) readAll(r io.Reader) ([]byte, error) {
 	b := make([]byte, 0, 1024)
 	for {
 		if len(b) == cap(b) {
@@ -148,7 +148,7 @@ func (w *OrderBookWS) readAll(r io.Reader) ([]byte, error) {
 	}
 }
 
-func (w *OrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+func (w *WalkedOrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -195,7 +195,7 @@ func (w *OrderBookWS) reconnect(ctx context.Context, wsUrl string, proxy string,
 	return conn, nil
 }
 
-func (w *OrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
+func (w *WalkedOrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {
 	logger.Debugf("START mainLoop")
 	defer logger.Debugf("EXIT mainLoop")
 	ctx, cancel := context.WithCancel(ctx)
@@ -248,7 +248,7 @@ func (w *OrderBookWS) mainLoop(ctx context.Context, proxy string, channels map[s
 	}
 }
 
-func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
+func (w *WalkedOrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, symbols []string) {
 	logger.Debugf("START heartbeatLoop")
 	defer func() {
 		logger.Debugf("Exit heartbeatLoop")
@@ -329,7 +329,7 @@ func (w *OrderBookWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn, s
 	}
 }
 
-func (w *OrderBookWS) Stop() {
+func (w *WalkedOrderBookWS) Stop() {
 	if atomic.LoadInt32(&w.stopped) == 0 {
 		atomic.StoreInt32(&w.stopped, 1)
 		close(w.done)
@@ -337,7 +337,7 @@ func (w *OrderBookWS) Stop() {
 	}
 }
 
-func (w *OrderBookWS) restart() {
+func (w *WalkedOrderBookWS) restart() {
 	select {
 	case w.reconnectCh <- nil:
 	default:
@@ -345,29 +345,30 @@ func (w *OrderBookWS) restart() {
 	}
 }
 
-func (w *OrderBookWS) Done() chan interface{} {
+func (w *WalkedOrderBookWS) Done() chan interface{} {
 	return w.done
 }
 
-func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, outputCh chan common.Depth) {
+func (w *WalkedOrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh chan []byte, liquidity float64, outputCh chan common.Ticker) {
 	logger.Debugf("START dataHandleLoop %s", market)
 	defer logger.Debugf("EXIT dataHandleLoop %s", market)
 	logSilentTime := time.Now()
 	var err error
 
 	var orderBook = &OrderBook{}
-	var outputOrderBook *OrderBook
 	msgCounter := 0
 
+	var walkedOrderBook *common.WalkedDepth
 	index := -1
-	pool := [common.BufferSizeForRealTimeData]*OrderBook{}
+	pool := [common.BufferSizeForRealTimeData]*common.WalkedDepth{}
 	for i := 0; i < common.BufferSizeForRealTimeData; i++ {
-		pool[i] = &OrderBook{
-			Market: market,
-			Bids:   common.Bids{},
-			Asks:   common.Asks{},
-		}
+		pool[i] = &common.WalkedDepth{}
 	}
+
+	hour999 := time.Hour * 999
+	walkTimer := time.NewTimer(hour999)
+	defer walkTimer.Stop()
+	walkDelay := time.Microsecond
 
 	for {
 		select {
@@ -375,6 +376,32 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 			return
 		case <-w.done:
 			return
+		case <-walkTimer.C:
+			if orderBook.IsValid() {
+				index++
+				if index == common.BufferSizeForRealTimeData {
+					index = 0
+				}
+				walkedOrderBook = pool[index]
+				err = common.WalkDepth(orderBook, 1.0, liquidity, walkedOrderBook)
+				if err != nil {
+					if time.Now().Sub(logSilentTime) > 0 {
+						logger.Debugf("%s common.WalkDepth error %v", orderBook.Market, err)
+						logSilentTime = time.Now().Add(common.LogInterval)
+					}
+				}else{
+					select {
+					case outputCh <- walkedOrderBook:
+					default:
+						if time.Now().Sub(logSilentTime) > 0 {
+							logger.Debugf("outputCh <- outputOrderBook failed, ch len %d", len(outputCh))
+							logSilentTime = time.Now().Add(common.LogInterval)
+						}
+					}
+				}
+			}
+			walkTimer.Reset(hour999)
+			break
 		case msg := <-inputCh:
 			err = ParseOrderBook(msg, orderBook)
 			if err != nil {
@@ -384,7 +411,6 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 				}
 				continue
 			}
-
 			if !orderBook.IsValid() {
 				if msgCounter > 0 {
 					msgCounter = -4
@@ -412,22 +438,7 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 				}
 			} else {
 				msgCounter++
-				if msgCounter >= 0 {
-					index++
-					if index == common.BufferSizeForRealTimeData {
-						index = 0
-					}
-					outputOrderBook = pool[index]
-					*outputOrderBook = *orderBook
-					select {
-					case outputCh <- outputOrderBook:
-					default:
-						if time.Now().Sub(logSilentTime) > 0 {
-							logger.Debugf("outputCh <- outputOrderBook failed, ch len %d", len(outputCh))
-							logSilentTime = time.Now().Add(common.LogInterval)
-						}
-					}
-				}
+				walkTimer.Reset(walkDelay)
 				if msgCounter%100 == 0 {
 					select {
 					case w.marketCh <- market:
@@ -444,12 +455,13 @@ func (w *OrderBookWS) dataHandleLoop(ctx context.Context, market string, inputCh
 	}
 }
 
-func NewOrderBookWS(
+func NewWalkedOrderBookWS(
 	ctx context.Context,
 	proxy string,
-	channels map[string]chan common.Depth,
-) *OrderBookWS {
-	ws := OrderBookWS{
+	liquidity float64,
+	channels map[string]chan common.Ticker,
+) *WalkedOrderBookWS {
+	ws := WalkedOrderBookWS{
 		done:          make(chan interface{}),
 		reconnectCh:   make(chan interface{}, common.ChannelSizeLowLoad),
 		writeCh:       make(chan interface{}, common.ChannelSizeLowLoad*len(channels)),
@@ -460,7 +472,7 @@ func NewOrderBookWS(
 	messagesCh := make(map[string]chan []byte)
 	for market, ch := range channels {
 		messagesCh[market] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
-		go ws.dataHandleLoop(ctx, market, messagesCh[market], ch)
+		go ws.dataHandleLoop(ctx, market, messagesCh[market], liquidity, ch)
 	}
 	go ws.mainLoop(ctx, proxy, messagesCh)
 	ws.reconnectCh <- nil

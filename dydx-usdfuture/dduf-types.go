@@ -535,7 +535,7 @@ func (d *Depth) GetExchange() common.ExchangeID {
 }
 
 func (d *Depth) IsValid() bool {
-	if !d.WithSnapshotData || (len(d.Asks) > 0 && len(d.Bids) > 0 && d.Asks[0][0] < d.Bids[0][0]) {
+	if !d.WithSnapshotData || len(d.Asks) == 0 || len(d.Bids) == 0 || d.Asks[0][0] < d.Bids[0][0] {
 		return false
 	}
 	return true

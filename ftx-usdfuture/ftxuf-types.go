@@ -108,12 +108,25 @@ type TradesData struct {
 }
 
 type OrderBook struct {
-	Action   string      `json:"action"`
-	Time     time.Time   `json:"-"`
-	Bids     common.Bids `json:"bids"`
-	Asks     common.Asks `json:"asks"`
-	Checksum uint32      `json:"checksum"`
-	Market   string      `json:"-"`
+	Action     string      `json:"action"`
+	Time       time.Time   `json:"-"`
+	Bids       common.Bids `json:"bids"`
+	Asks       common.Asks `json:"asks"`
+	Checksum   uint32      `json:"checksum"`
+	Market     string      `json:"-"`
+	ParseTime  time.Time   `json:"-"`
+	hasPartial bool
+}
+
+func (orderBook *OrderBook) IsValid() bool {
+	if !orderBook.hasPartial || len(orderBook.Asks) == 0 || len(orderBook.Bids) == 0 || orderBook.Asks[0][0] < orderBook.Bids[0][0] {
+		return false
+	}
+	return true
+}
+
+func (orderBook *OrderBook) GetParseTime() time.Time {
+	return orderBook.ParseTime
 }
 
 func (orderBook *OrderBook) GetExchange() common.ExchangeID {
@@ -214,6 +227,21 @@ type OrderBookData struct {
 	Market  string    `json:"market"`
 	Channel string    `json:"channel"`
 	Type    string    `json:"type"`
+}
+
+func (obd *OrderBookData) UnmarshalJSON(data []byte) error {
+	type Alias OrderBookData
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(obd),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	} else {
+		obd.Data.Market = obd.Market
+	}
+	return nil
 }
 
 //    {
@@ -700,20 +728,29 @@ type TickerData struct {
 }
 
 type Ticker struct {
-	Bid     float64   `json:"bid"`
-	Ask     float64   `json:"ask"`
-	BidSize float64   `json:"bidSize"`
-	AskSize float64   `json:"askSize"`
-	Symbol  string    `json:"-"`
-	Time    time.Time `json:"-"`
+	Bid       float64   `json:"bid"`
+	Ask       float64   `json:"ask"`
+	BidSize   float64   `json:"bidSize"`
+	AskSize   float64   `json:"askSize"`
+	Symbol    string    `json:"-"`
+	EventTime time.Time `json:"-"`
+	ParseTime time.Time `json:"-"`
+}
+
+func (t *Ticker) GetEventTime() time.Time {
+	return t.EventTime
+}
+
+func (t *Ticker) GetParseTime() time.Time {
+	return t.ParseTime
 }
 
 func (t *Ticker) GetBidOffset() float64 {
-	panic("implement me")
+	return (t.Ask - t.Bid) / (t.Ask + t.Bid)
 }
 
 func (t *Ticker) GetAskOffset() float64 {
-	panic("implement me")
+	return (t.Ask - t.Bid) / (t.Ask + t.Bid)
 }
 
 func (t *Ticker) GetExchange() common.ExchangeID {
@@ -721,11 +758,7 @@ func (t *Ticker) GetExchange() common.ExchangeID {
 }
 
 func (t *Ticker) GetSymbol() string {
-	panic("implement me")
-}
-
-func (t *Ticker) GetTime() time.Time {
-	return t.Time
+	return t.Symbol
 }
 
 func (t *Ticker) GetBidPrice() float64 {
@@ -745,6 +778,7 @@ func (t *Ticker) GetAskSize() float64 {
 }
 
 func (t *Ticker) UnmarshalJSON(data []byte) error {
+	t.ParseTime = time.Now()
 	type Alias Ticker
 	aux := &struct {
 		Time float64 `json:"time"`
@@ -755,7 +789,7 @@ func (t *Ticker) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	} else {
-		t.Time = time.Unix(0, int64(aux.Time*1000000000))
+		t.EventTime = time.Unix(0, int64(aux.Time*1000000000))
 	}
 	return nil
 }

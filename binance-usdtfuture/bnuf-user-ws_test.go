@@ -29,7 +29,7 @@ func TestNewUserWebsocket(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, _ := context.WithTimeout(context.Background(), time.Minute*1)
+	ctx, _ := context.WithTimeout(context.Background(), time.Minute*10)
 	ws , err := NewUserWebsocket(ctx, api, proxy)
 	if err != nil {
 		t.Fatal(err)

@@ -3,6 +3,7 @@ package ftx_usdfuture
 import (
 	"context"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/logger"
 	"os"
 	"testing"
 )
@@ -24,12 +25,12 @@ func TestNewUserWS(t *testing.T) {
 	go ws.Start(ctx)
 	for {
 		select {
-		case <- ws.Done():
+		case <-ws.Done():
 			return
-		case _ = <-channels[symbols[0]]:
-		case _ = <-channels[symbols[1]]:
-		case _ = <-channels[symbols[2]]:
-		case _ = <-channels[symbols[3]]:
+		case f := <-ws.FillCh:
+			logger.Debugf("%v", f)
+		case o := <-ws.OrderCh:
+			logger.Debugf("%v", o)
 		}
 	}
 }

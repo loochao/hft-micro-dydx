@@ -76,13 +76,20 @@ func (w *UserWS) writeLoop(ctx context.Context, conn *websocket.Conn) {
 func (w *UserWS) readLoop(conn *websocket.Conn) {
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
-	logSilentTime := time.Now()
-	//var symbolBytes []byte
-	//var symbol string
+	var logSilentTime = time.Time{}
+	var readPool = [userReadPoolSize][]byte{}
+	var readIndex = -1
 	var msg []byte
+	var n int
+	var r io.Reader
 	var err error
-	//var ch chan []byte
-	//var ok bool
+	for i := range readPool {
+		readPool[i] = make([]byte, userReadMsgSize)
+	}
+	readCounter := 0
+	partialReadCounter := 0
+	allocateCounter := 0
+mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
@@ -90,82 +97,54 @@ func (w *UserWS) readLoop(conn *websocket.Conn) {
 			w.restart()
 			return
 		}
-
-		_, msg, err = conn.ReadMessage()
+		_, r, err = conn.NextReader()
 		if err != nil {
-			logger.Debugf("conn.NextReader error %v", err)
+			logger.Warnf("conn.NextReader error %v", err)
 			w.restart()
 			return
 		}
-		//logger.Debugf("%s", msg)
+		readIndex += 1
+		if readIndex == userReadPoolSize {
+			readIndex = 0
+		}
+		msg = readPool[readIndex]
+		n, err = r.Read(msg)
+		if err == nil {
+			readCounter++
+			msg = msg[:n]
+			if n < 1 || msg[n-1] != '}' {
+				partialReadCounter++
+				for {
+					if len(msg) == cap(msg) {
+						msg = append(msg, 0)[:len(msg)]
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", userReadMsgSize, msg)
+						allocateCounter++
+					}
+					n, err = r.Read(msg[len(msg):cap(msg)])
+					msg = msg[:len(msg)+n]
+					if err != nil {
+						if err == io.EOF {
+							break
+						} else {
+							logger.Debugf("r.Read error %v", err)
+							continue mainLoop
+						}
+					}
+				}
+			}
+		} else {
+			logger.Debugf("r.Read error %v", err)
+			continue mainLoop
+		}
+		if readCounter%1000 == 0 {
+			logger.Debugf("FtXUF USER READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", userReadMsgSize, readCounter, partialReadCounter, allocateCounter)
+		}
 		select {
 		case w.messageCh <- msg:
 		default:
 			if time.Now().Sub(logSilentTime) > 0 {
 				logSilentTime = time.Now().Add(time.Minute)
 			}
-		}
-		//msgLen := len(msg)
-		//if msgLen > 128 && msg[13] == 'o' {
-		//	if msg[45] == ',' {
-		//		symbolBytes = msg[36:44]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[46] == ',' {
-		//		symbolBytes = msg[36:45]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[47] == ',' {
-		//		symbolBytes = msg[36:46]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[48] == ',' {
-		//		symbolBytes = msg[36:47]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[49] == ',' {
-		//		symbolBytes = msg[36:48]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else if msg[50] == ',' {
-		//		symbolBytes = msg[36:49]
-		//		symbol = *(*string)(unsafe.Pointer(&symbolBytes))
-		//	} else {
-		//		if time.Now().Sub(logSilentTime) > 0 {
-		//			logger.Debugf("other msg %s", msg)
-		//			logSilentTime = time.Now().Add(time.Minute)
-		//		}
-		//		continue
-		//	}
-		//} else {
-		//	if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
-		//		logger.Debugf("other msg %s", msg)
-		//		logSilentTime = time.Now().Add(time.Minute)
-		//	}
-		//	continue
-		//}
-		//if ch, ok = channels[symbol]; ok {
-		//	select {
-		//	case ch <- msg:
-		//	default:
-		//		if time.Now().Sub(logSilentTime) > 0 {
-		//			logger.Debugf(" ch <- msg %s ch len %d", symbol, len(ch))
-		//			logSilentTime = time.Now().Add(time.Minute)
-		//		}
-		//	}
-		//}
-	}
-}
-
-func (w *UserWS) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 1024)
-	for {
-		if len(b) == cap(b) {
-			// Add more capacity (let append pick how much).
-			b = append(b, 0)[:len(b)]
-		}
-		n, err := r.Read(b[len(b):cap(b)])
-		b = b[:len(b)+n]
-		if err != nil {
-			if err == io.EOF {
-				err = nil
-			}
-			return b, err
 		}
 	}
 }
@@ -184,13 +163,13 @@ func (w *UserWS) reconnect(ctx context.Context, wsUrl string, proxy string, coun
 			return nil, fmt.Errorf("url.Parse(proxy) error %v", err)
 		}
 		dialer = &websocket.Dialer{
-			Proxy:             http.ProxyURL(proxyUrl),
-			HandshakeTimeout:  60 * time.Second,
+			Proxy:            http.ProxyURL(proxyUrl),
+			HandshakeTimeout: 60 * time.Second,
 			//EnableCompression: true,
 		}
 	} else {
 		dialer = &websocket.Dialer{
-			HandshakeTimeout:  10 * time.Second,
+			HandshakeTimeout: 10 * time.Second,
 			//EnableCompression: true,
 		}
 	}
@@ -516,19 +495,19 @@ func NewUserWS(
 ) *UserWS {
 	ws := UserWS{
 		done:        make(chan interface{}),
-		reconnectCh: make(chan interface{}, 4),
-		writeCh:     make(chan interface{}, 16),
-		messageCh:   make(chan []byte, 256),
-		RestartCh:   make(chan interface{}, 4),
-		trafficCh:   make(chan string, 128),
-		loginCh:     make(chan bool, 4),
+		reconnectCh: make(chan interface{}, common.ChannelSizeLowLoad),
+		writeCh:     make(chan interface{}, common.ChannelSizeLowDropRatio),
+		messageCh:   make(chan []byte, common.ChannelSizeLowDropRatio),
+		RestartCh:   make(chan interface{}, common.ChannelSizeLowLoad),
+		trafficCh:   make(chan string, common.ChannelSizeLowDropRatio),
+		loginCh:     make(chan bool, common.ChannelSizeLowLoad),
 		stopped:     0,
 		key:         key,
 		secret:      secret,
 		subAccount:  subAccount,
 		proxy:       proxy,
-		OrderCh:     make(chan Order, 128),
-		FillCh:      make(chan Fill, 128),
+		OrderCh:     make(chan Order, common.ChannelSizeLowDropRatio),
+		FillCh:      make(chan Fill, common.ChannelSizeLowDropRatio),
 	}
 	return &ws
 }

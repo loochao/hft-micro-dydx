@@ -44,8 +44,8 @@ func UpdateOrderBook(msg []byte, orderBook *OrderBook) (err error) {
 	}
 	offset += 10
 	if msg[offset] == 's' {
-		orderBook.Bids = common.Bids{}
-		orderBook.Asks = common.Asks{}
+		orderBook.Bids = orderBook.Bids[:0]
+		orderBook.Asks = orderBook.Asks[:0]
 		offset += 42
 		collectStart = offset
 		currentKey = common.JsonKeyPrice

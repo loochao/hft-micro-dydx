@@ -89,6 +89,7 @@ mainLoop:
 			continue mainLoop
 		}
 
+
 		if readCounter%1000 == 0 {
 			logger.Debugf("BNUF USER READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", userReadMsgSize, readCounter, partialReadCounter, allocateCounter)
 		}
@@ -386,7 +387,7 @@ func NewUserWebsocket(
 		RestartCh:                       make(chan interface{}, common.ChannelSizeLowLoad),
 		OrderUpdateEventCh:              make(chan *OrderUpdateEvent, common.ChannelSizeMediumLoad),
 		BalanceAndPositionUpdateEventCh: make(chan *BalanceAndPositionUpdateEvent, common.ChannelSizeMediumLoad),
-		messageCh:                       make(chan []byte, common.ChannelSizeHighLoad),
+		messageCh:                       make(chan []byte, common.ChannelSizeLowDropRatio),
 		stopped:                         0,
 	}
 	go func(ctx context.Context, ws *UserWebsocket, listenKey ListenKey) {

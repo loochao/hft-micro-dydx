@@ -146,12 +146,17 @@ type TradesData struct {
 }
 
 type OrderBook struct {
-	Action   string      `json:"action"`
-	Time     time.Time   `json:"-"`
-	Bids     common.Bids `json:"bids"`
-	Asks     common.Asks `json:"asks"`
-	Checksum uint32      `json:"checksum"`
-	Market   string      `json:"-"`
+	Action    string      `json:"action"`
+	Time      time.Time   `json:"-"`
+	Bids      common.Bids `json:"bids"`
+	Asks      common.Asks `json:"asks"`
+	Checksum  uint32      `json:"checksum"`
+	Market    string      `json:"-"`
+	ParseTime time.Time   `json:"-"`
+}
+
+func (orderBook *OrderBook) GetParseTime() time.Time {
+	return orderBook.ParseTime
 }
 
 func (orderBook *OrderBook) GetExchange() common.ExchangeID {
@@ -683,7 +688,6 @@ func (fill *Fill) GetStatus() common.OrderStatus {
 	return common.OrderStatusFilled
 }
 
-
 //{"channel": "ticker", "market": "DOGE-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
 
 type TickerData struct {
@@ -694,20 +698,29 @@ type TickerData struct {
 }
 
 type Ticker struct {
-	Bid     float64   `json:"bid"`
-	Ask     float64   `json:"ask"`
-	BidSize float64   `json:"bidSize"`
-	AskSize float64   `json:"askSize"`
-	Symbol  string    `json:"-"`
-	Time    time.Time `json:"-"`
+	Bid       float64   `json:"bid"`
+	Ask       float64   `json:"ask"`
+	BidSize   float64   `json:"bidSize"`
+	AskSize   float64   `json:"askSize"`
+	Symbol    string    `json:"-"`
+	Time      time.Time `json:"-"`
+	ParseTime time.Time `json:"-"`
+}
+
+func (t *Ticker) GetEventTime() time.Time {
+	return t.Time
+}
+
+func (t *Ticker) GetParseTime() time.Time {
+	return t.ParseTime
 }
 
 func (t *Ticker) GetBidOffset() float64 {
-	panic("implement me")
+	return (t.Ask - t.Bid) / (t.Ask + t.Bid)
 }
 
 func (t *Ticker) GetAskOffset() float64 {
-	panic("implement me")
+	return (t.Ask - t.Bid) / (t.Ask + t.Bid)
 }
 
 func (t *Ticker) GetExchange() common.ExchangeID {
@@ -715,11 +728,7 @@ func (t *Ticker) GetExchange() common.ExchangeID {
 }
 
 func (t *Ticker) GetSymbol() string {
-	panic("implement me")
-}
-
-func (t *Ticker) GetTime() time.Time {
-	return t.Time
+	return t.Symbol
 }
 
 func (t *Ticker) GetBidPrice() float64 {
@@ -762,6 +771,10 @@ type Depth struct {
 	ParseTime time.Time
 }
 
+func (d *Depth) GetParseTime() time.Time {
+	return d.ParseTime
+}
+
 func (d *Depth) GetBidOffset() float64 {
 	panic("implement me")
 }
@@ -773,7 +786,7 @@ func (d *Depth) GetAskOffset() float64 {
 func (d *Depth) GetBidPrice() float64 {
 	if len(d.Bids) > 0 {
 		return d.Bids[0][0]
-	}else{
+	} else {
 		return 0.0
 	}
 }
@@ -781,7 +794,7 @@ func (d *Depth) GetBidPrice() float64 {
 func (d *Depth) GetAskPrice() float64 {
 	if len(d.Asks) > 0 {
 		return d.Asks[0][0]
-	}else{
+	} else {
 		return 0.0
 	}
 }
@@ -789,7 +802,7 @@ func (d *Depth) GetAskPrice() float64 {
 func (d *Depth) GetBidSize() float64 {
 	if len(d.Bids) > 0 {
 		return d.Bids[0][1]
-	}else{
+	} else {
 		return 0.0
 	}
 }
@@ -797,7 +810,7 @@ func (d *Depth) GetBidSize() float64 {
 func (d *Depth) GetAskSize() float64 {
 	if len(d.Asks) > 0 {
 		return d.Asks[0][1]
-	}else{
+	} else {
 		return 0.0
 	}
 }

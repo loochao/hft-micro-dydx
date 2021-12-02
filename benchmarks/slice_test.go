@@ -23,3 +23,24 @@ func BenchmarkReSlicing(b *testing.B) {
 	}
 	_ = c
 }
+
+func BenchmarkSliceClear(b *testing.B) {
+	var c []int
+	a := [8]int{0, 1, 2, 3, 4, 5, 6, 7}
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		c = a[:0]
+	}
+	_ = c
+}
+
+func BenchmarkSliceClearWithNewEmpty(b *testing.B) {
+	var c []int
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		c = make([]int, 0)
+	}
+	_ = c
+}

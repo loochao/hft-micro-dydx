@@ -27,7 +27,6 @@ func (w *BookTickerWS) readLoop(conn *websocket.Conn, channels map[string]chan [
 	var symbol string
 	var ch chan []byte
 	var ok bool
-	var msgLen int
 	var readPool = [bookTickerReadPoolSize][]byte{}
 	var readIndex = -1
 	var msg []byte
@@ -91,8 +90,7 @@ mainLoop:
 		if readCounter%1000000 == 0 {
 			logger.Debugf("BNUF BOOK TICKER READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", bookTickerReadMsgSize, readCounter, partialReadCounter, allocateCounter)
 		}
-		msgLen = len(msg)
-		if msgLen < 128 {
+		if len(msg) < 128 {
 			continue mainLoop
 		}
 		//{"stream":"scusdt@bookTicker","data":{"e":"bookTicker","u":552297398961,"s":"SCUSDT","b":"0.012805","B":"46556","a":"0.012816","A":"90351","T":1624971386657,"E":1624971386662}}

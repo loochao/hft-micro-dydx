@@ -8,6 +8,7 @@ import (
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	dduf "github.com/geometrybase/hft-micro/dydx-usdfuture"
+	ftx_usdfuture "github.com/geometrybase/hft-micro/ftx-usdfuture"
 	kucoin_usdtfuture "github.com/geometrybase/hft-micro/kucoin-usdtfuture"
 	"github.com/geometrybase/hft-micro/logger"
 	okexv5_usdtspot "github.com/geometrybase/hft-micro/okexv5-usdtspot"
@@ -103,6 +104,9 @@ func main() {
 	case "binanceUsdtFutureWithMergedTicker":
 		xExchange = &bnuf.BinanceUsdtFutureWithMergedTicker{}
 		break
+	case "ftxUsdFutureWithWalkedDepth":
+		xExchange = &ftx_usdfuture.FtxUsdFutureWithWalkedDepth{}
+		break
 
 	case "binanceUsdtSpotWithMergedTicker":
 		xExchange = &bnus.BinanceUsdtSpotWithMergedTicker{}
@@ -188,6 +192,10 @@ func main() {
 		break
 	case "binanceBusdSpotWithMergedTicker":
 		yExchange = &bnbs.BinanceBusdSpotWithMergedTicker{}
+		break
+
+	case "ftxUsdFutureWithWalkedDepth":
+		yExchange = &ftx_usdfuture.FtxUsdFutureWithWalkedDepth{}
 		break
 
 	case "okexV5UsdtSpotWithWalkedDepth5":

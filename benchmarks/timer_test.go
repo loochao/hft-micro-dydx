@@ -18,3 +18,11 @@ func BenchmarkTimerReset(b *testing.B) {
 	}
 	GlobalTimer = timer
 }
+
+func BenchmarkTimerReset2(b *testing.B) {
+	timer := time.NewTimer(time.Hour)
+	for i := 0; i < b.N; i++ {
+		timer.Reset(time.Hour)
+	}
+	GlobalTimer = timer
+}

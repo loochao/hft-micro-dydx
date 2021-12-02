@@ -71,27 +71,76 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
 	var symbol string
-	var msg []byte
-	var err error
 	var ch chan []byte
 	var ok bool
+	var readPool = [bookTickerReadPoolSize][]byte{}
+	var readIndex = -1
+	var msg []byte
+	var n int
+	var r io.Reader
+	var err error
+	for i := range readPool {
+		readPool[i] = make([]byte, bookTickerReadMsgSize)
+	}
+	readCounter := 0
+	partialReadCounter := 0
+	allocateCounter := 0
+mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
-			logger.Debugf("conn.SetReadDeadline error %v", err)
+			logger.Warnf("conn.SetReadDeadline error %v", err)
 			w.restart()
 			return
 		}
-
-		_, msg, err = conn.ReadMessage()
+		_, r, err = conn.NextReader()
 		if err != nil {
-			logger.Debugf("conn.NextReader error %v", err)
+			logger.Warnf("conn.NextReader error %v", err)
 			w.restart()
 			return
 		}
-		msgLen := len(msg)
+		readIndex += 1
+		if readIndex == bookTickerReadPoolSize {
+			readIndex = 0
+		}
+		msg = readPool[readIndex]
+		n, err = r.Read(msg)
+		if err == nil {
+			readCounter++
+			msg = msg[:n]
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
+				partialReadCounter++
+				for {
+					if len(msg) == cap(msg) {
+						// Add more capacity (let append pick how much).
+						msg = append(msg, 0)[:len(msg)]
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+						allocateCounter++
+					}
+					n, err = r.Read(msg[len(msg):cap(msg)])
+					msg = msg[:len(msg)+n]
+					if err != nil {
+						if err == io.EOF {
+							break
+						} else {
+							logger.Debugf("r.Read error %v", err)
+							continue mainLoop
+						}
+					}
+				}
+			}
+		} else {
+			logger.Debugf("r.Read error %v", err)
+			continue mainLoop
+		}
+		if readCounter%1000000 == 0 {
+			logger.Debugf("FTXUF BOOK TICKER READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", bookTickerReadMsgSize, readCounter, partialReadCounter, allocateCounter)
+		}
+		if len(msg) < 128 {
+			continue mainLoop
+		}
 		//{"channel": "ticker", "market": "DOGE-PERP", "type": "update", "data": {"bid": 0.278362, "ask": 0.2784135, "bidSize": 107.0, "askSize": 5600.0, "last": 0.2783695, "time": 1624183024.08771}} 189
-		if msgLen > 128 && msg[31] == ' ' && msg[32] == '"' {
+		if msg[31] == ' ' && msg[32] == '"' {
 			if msg[41] == '"' {
 				symbol = common.UnsafeBytesToString(msg[33:41])
 			} else if msg[40] == '"' {
@@ -112,7 +161,7 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 				continue
 			}
 		} else {
-			if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
+			if time.Now().Sub(logSilentTime) > 0 {
 				logger.Debugf("other msg %s", msg)
 				logSilentTime = time.Now().Add(time.Minute)
 			}
@@ -131,23 +180,23 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 	}
 }
 
-func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
-	b := make([]byte, 0, 256)
-	for {
-		if len(b) == cap(b) {
-			// Add more capacity (let append pick how much).
-			b = append(b, 0)[:len(b)]
-		}
-		n, err := r.Read(b[len(b):cap(b)])
-		b = b[:len(b)+n]
-		if err != nil {
-			if err == io.EOF {
-				err = nil
-			}
-			return b, err
-		}
-	}
-}
+//func (w *TickerWS) readAll(r io.Reader) ([]byte, error) {
+//	b := make([]byte, 0, 256)
+//	for {
+//		if len(b) == cap(b) {
+//			// Add more capacity (let append pick how much).
+//			b = append(b, 0)[:len(b)]
+//		}
+//		n, err := r.Read(b[len(b):cap(b)])
+//		b = b[:len(b)+n]
+//		if err != nil {
+//			if err == io.EOF {
+//				err = nil
+//			}
+//			return b, err
+//		}
+//	}
+//}
 
 func (w *TickerWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
 
@@ -355,8 +404,8 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 	defer logger.Debugf("EXIT dataHandleLoop %s", market)
 	logSilentTime := time.Now()
 	index := -1
-	pool := [4]*Ticker{}
-	for i := 0; i < 4; i++ {
+	pool := [common.BufferSizeFor100msData]*Ticker{}
+	for i := 0; i < common.BufferSizeFor100msData; i++ {
 		pool[i] = &Ticker{}
 	}
 	var ticker *Ticker
@@ -370,7 +419,7 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 			return
 		case msg := <-inputCh:
 			index++
-			if index == 4 {
+			if index == common.BufferSizeFor100msData {
 				index = 0
 			}
 			ticker = pool[index]
@@ -409,15 +458,15 @@ func NewTickerWS(
 ) *TickerWS {
 	ws := TickerWS{
 		done:          make(chan interface{}),
-		reconnectCh:   make(chan interface{}, 4),
-		writeCh:       make(chan interface{}, 2*len(channels)),
-		marketCh:      make(chan string, len(channels)),
+		reconnectCh:   make(chan interface{}, common.ChannelSizeLowLoad),
+		writeCh:       make(chan interface{}, common.ChannelSizeLowLoad*len(channels)),
+		marketCh:      make(chan string, len(channels)*common.ChannelSizeLowLoad),
 		marketResetCh: make(chan string, len(channels)),
 		stopped:       0,
 	}
 	messagesCh := make(map[string]chan []byte)
 	for market, ch := range channels {
-		messagesCh[market] = make(chan []byte, 1000)
+		messagesCh[market] = make(chan []byte, common.ChannelSizeLowLoadLowLatency)
 		go ws.dataHandleLoop(ctx, market, messagesCh[market], ch)
 	}
 	go ws.mainLoop(ctx, proxy, messagesCh)
