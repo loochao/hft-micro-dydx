@@ -110,7 +110,7 @@ type Config struct {
 	EnterTargetFactor     float64       `yaml:"enterTargetFactor"`
 	//EnterWithProfitConfirms    bool               `yaml:"enterWithProfitConfirms"`
 	StartValues                map[string]float64 `yaml:"startValues"`
-	TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`
+	//TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`
 
 	XYPairs            map[string]string  `yaml:"xyPairs"`
 	MaxPosSizes        map[string]float64 `yaml:"maxPosSizes,omitempty"`
@@ -159,9 +159,9 @@ func (config *Config) SetDefaultIfNotSet() error {
 	if config.SpreadLookback == 0 {
 		config.SpreadLookback = time.Second
 	}
-	if config.TargetWeightUpdateInterval == 0 {
-		config.TargetWeightUpdateInterval = time.Hour
-	}
+	//if config.TargetWeightUpdateInterval == 0 {
+	//	config.TargetWeightUpdateInterval = time.Hour
+	//}
 	if config.RestartInterval == 0 {
 		config.RestartInterval = time.Hour * 9999
 	}
