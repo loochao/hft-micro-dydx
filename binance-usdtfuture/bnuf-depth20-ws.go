@@ -25,34 +25,78 @@ func (w *Depth20WS) readLoop(conn *websocket.Conn, channels map[string]chan []by
 	logger.Debugf("START readLoop")
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
+	var symbol string
 	var ch chan []byte
 	var ok bool
-	var symbol string
+	var readPool = [depth20ReadPoolSize][]byte{}
+	var readIndex = -1
+	var msg []byte
+	var n int
+	var r io.Reader
+	var err error
+	for i := range readPool {
+		readPool[i] = make([]byte, depth20ReadMsgSize)
+	}
+	readCounter := 0
+	partialReadCounter := 0
+	allocateCounter := 0
+mainLoop:
 	for {
-		err := conn.SetReadDeadline(time.Now().Add(time.Minute))
+		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
 			logger.Warnf("conn.SetReadDeadline error %v", err)
 			w.restart()
 			return
 		}
-		_, r, err := conn.NextReader()
+		_, r, err = conn.NextReader()
 		if err != nil {
 			logger.Warnf("conn.NextReader error %v", err)
 			w.restart()
 			return
 		}
-		msg, err := w.readAll(r)
-		if err != nil {
-			logger.Warnf("w.readAl error %v", err)
-			w.restart()
-			return
+		readIndex += 1
+		if readIndex == depth20ReadPoolSize {
+			readIndex = 0
+		}
+		msg = readPool[readIndex]
+		n, err = r.Read(msg)
+		if err == nil {
+			readCounter++
+			msg = msg[:n]
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
+				partialReadCounter++
+				for {
+					if len(msg) == cap(msg) {
+						// Add more capacity (let append pick how much).
+						msg = append(msg, 0)[:len(msg)]
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), depth20ReadMsgSize, msg)
+						allocateCounter++
+					}
+					n, err = r.Read(msg[len(msg):cap(msg)])
+					msg = msg[:len(msg)+n]
+					if err != nil {
+						if err == io.EOF {
+							break
+						} else {
+							logger.Debugf("r.Read error %v", err)
+							continue mainLoop
+						}
+					}
+				}
+			}
+		} else {
+			logger.Debugf("r.Read error %v", err)
+			continue
+		}
+		if readCounter%1000000 == 0 {
+			logger.Debugf("BNUF DEPTH5 READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", depth5ReadMsgSize, readCounter, partialReadCounter, allocateCounter)
+		}
+		if len(msg) < 128 {
+			continue
 		}
 		//{"stream":"btcusdt@depth20@100ms","data":{"e":"depthUpdate","E":1623494842640,"T":1623494842634,"s":"BTCUSDT","U":510756353509,"u":510756357084,"pu":510756353459,"b":[["35776.62","0.019"],["35776.34","0.049"],["35776.09","0.128"],["35776.08","0.559"],["35775.73","0.014"],["35775.36","0.006"],["35775.35","0.077"],["35775.34","0.089"],["35774.34","0.119"],["35774.10","0.015"],["35773.94","0.144"],["35773.93","0.092"],["35773.69","0.040"],["35773.55","0.015"],["35773.19","0.014"],["35773.16","0.761"],["35773.14","0.011"],["35773.08","0.140"],["35772.89","0.003"],["35772.88","0.056"]],"a":[["35778.12","0.250"],["35778.43","0.874"],["35778.49","2.100"],["35778.57","0.032"],["35779.00","0.997"],["35779.41","0.233"],["35779.42","0.001"],["35780.51","0.199"],["35780.95","0.001"],["35781.19","0.001"],["35781.20","0.162"],["35781.69","0.077"],["35781.70","0.015"],["35783.18","0.167"],["35783.19","0.432"],["35785.13","0.299"],["35787.14","0.115"],["35787.16","0.233"],["35788.69","0.003"],["35788.88","0.044"]]}}
 		//{"stream":"linkusdt@depth20@100ms","data":{"e":"depthUpdate","E":1623494842601,"T":1623494842591,"s":"LINKUSDT","U":510756352078,"u":510756355671,"pu":510756351951,"b":[["21.038","0.76"],["21.033","2.38"],["21.032","241.49"],["21.031","11.47"],["21.030","6.00"],["21.029","8441.43"],["21.028","52.37"],["21.027","15.30"],["21.026","296.49"],["21.025","457.98"],["21.024","209.65"],["21.023","970.06"],["21.022","196.17"],["21.021","44.05"],["21.019","43.33"],["21.018","60.00"],["21.017","70.01"],["21.016","316.15"],["21.015","378.55"],["21.013","96.24"]],"a":[["21.045","184.00"],["21.047","49.81"],["21.048","261.43"],["21.049","24.53"],["21.050","257.44"],["21.051","216.80"],["21.052","72.61"],["21.053","319.43"],["21.054","597.00"],["21.056","11.88"],["21.057","87.96"],["21.059","276.63"],["21.060","217.37"],["21.061","371.19"],["21.062","467.53"],["21.063","720.86"],["21.064","306.14"],["21.065","144.71"],["21.066","166.19"],["21.067","157.86"]]}}
 		//{"stream":"wavesusdt@depth20@100ms","data":{"e":"depthUpdate","E":1623494842673,"T":1623494842650,"s":"WAVESUSDT","U":510756354826,"u":510756357638,"pu":510756353771,"b":[["14.2940","21.7"],["14.2920","104.9"],["14.2910","26.9"],["14.2900","10.6"],["14.2890","266.8"],["14.2880","199.4"],["14.2870","190.7"],["14.2860","372.9"],["14.2850","187.9"],["14.2840","741.3"],["14.2830","47.2"],["14.2820","13.6"],["14.2800","77.3"],["14.2790","673.7"],["14.2780","328.6"],["14.2770","82.2"],["14.2760","15.7"],["14.2750","265.6"],["14.2740","694.7"],["14.2730","224.9"]],"a":[["14.2980","1.2"],["14.3020","12.0"],["14.3030","132.7"],["14.3040","85.0"],["14.3050","91.0"],["14.3060","65.1"],["14.3070","17.4"],["14.3090","125.9"],["14.3100","268.6"],["14.3110","410.8"],["14.3120","1005.2"],["14.3130","115.4"],["14.3140","87.4"],["14.3150","221.6"],["14.3160","5.0"],["14.3170","948.4"],["14.3180","694.1"],["14.3190","21.0"],["14.3200","144.9"],["14.3210","236.7"]]}}
-		if len(msg) < 128 {
-			continue
-		}
 		if msg[61] == 'E' {
 			symbol = common.UnsafeBytesToString(msg[11:18])
 		} else if msg[62] == 'E' {

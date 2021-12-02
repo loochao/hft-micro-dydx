@@ -361,10 +361,6 @@ func (w *WalkedDepth5WS) dataHandleLoop(ctx context.Context, inputCh chan []byte
 		case <-w.done:
 			return
 		case msg = <-inputCh:
-			index++
-			if index == common.BufferSizeFor100msData {
-				index = 0
-			}
 			err = ParseDepth5(msg, depth5)
 			if err != nil {
 				if time.Now().Sub(logSilentTime) > 0 {
@@ -372,6 +368,10 @@ func (w *WalkedDepth5WS) dataHandleLoop(ctx context.Context, inputCh chan []byte
 					logSilentTime = time.Now().Add(common.LogInterval)
 				}
 				break
+			}
+			index++
+			if index == common.BufferSizeFor100msData {
+				index = 0
 			}
 			walkedDepth5 = pool[index]
 			err = common.WalkDepth(depth5, 1.0, impact, walkedDepth5)
