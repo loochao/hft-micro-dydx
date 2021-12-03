@@ -40,11 +40,13 @@ func handleSave(
 	yTotalAskValue := 0.0
 
 	totalSuccessCount := 0.0
+	totalSpreadSlippage := 0.0
 	totalXSlippage := 0.0
 	totalYSlippage := 0.0
 	totalSuccessRatioCount := 0.0
 	totalXSlippageCount := 0.0
 	totalYSlippageCount := 0.0
+	totalSpreadSlippageCount := 0.0
 	for _, xSymbol := range xSymbols {
 		strat, ok := stratMap[xSymbol]
 		if !ok {
@@ -74,6 +76,12 @@ func handleSave(
 				fields["xySuccessRatio"] = strat.xySuccessRatioTM.Mean
 				totalSuccessCount += strat.xySuccessRatioTM.Mean * float64(strat.xySuccessRatioTM.Len())
 				totalSuccessRatioCount += float64(strat.xySuccessRatioTM.Len())
+			}
+
+			if strat.xySpreadSlippageTM.Len() > 0 {
+				fields["xySpreadSlippage"] = strat.xySpreadSlippageTM.Mean
+				totalSpreadSlippage += strat.xySpreadSlippageTM.Mean * float64(strat.xySpreadSlippageTM.Len())
+				totalSpreadSlippageCount += float64(strat.xySpreadSlippageTM.Len())
 			}
 
 			fields["xBidPrice"] = strat.xTicker.GetBidPrice()
@@ -200,7 +208,6 @@ func handleSave(
 		fields["statsXParseTimeDeltaMid"] = strat.stats.XParseTimeDeltaMid.Seconds()
 		fields["statsYParseTimeDeltaMid"] = strat.stats.YParseTimeDeltaMid.Seconds()
 
-
 		if strat.stats.XMiddlePrice > 0 {
 			fields["statsXMiddlePrice"] = strat.stats.XMiddlePrice
 		}
@@ -319,7 +326,6 @@ func handleSave(
 	//	}
 	//}
 
-
 	if yAccount != nil &&
 		xAccount != nil &&
 		hasAllSymbols {
@@ -357,6 +363,9 @@ func handleSave(
 		}
 		if totalYSlippageCount != 0 {
 			fields["meanYSlippage"] = totalYSlippage / totalYSlippageCount
+		}
+		if totalSpreadSlippageCount != 0 {
+			fields["meanSpreadSlippage"] = totalSpreadSlippage / totalSpreadSlippageCount
 		}
 		fields["xURPnl"] = xURPnl
 		fields["yURPnl"] = yURPnl

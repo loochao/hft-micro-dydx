@@ -89,3 +89,26 @@ func TestFloat64Ring_ContentSize(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkSliceAppend(b *testing.B) {
+	s := make([]float64, 10000000)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		for i := 0; i < 1000000; i++ {
+			s = append(s, 0)
+			s = s[1:]
+		}
+	}
+}
+
+func BenchmarkRingFloat64Append(b *testing.B) {
+	s := NewFloat64Ring(1000000)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		for i := 0; i < 1000000; i++ {
+			s.Enqueue(0)
+		}
+	}
+}

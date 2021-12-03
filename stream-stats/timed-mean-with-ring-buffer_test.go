@@ -21,32 +21,29 @@ func TestNewTimedMeanWithRingBuffer(t *testing.T) {
 }
 
 func BenchmarkTimedMeanWithRingBuffer(b *testing.B) {
-	tm := NewTimedMeanWithRingBuffer(time.Second*5)
+	tm := NewTimedMeanWithRingBuffer(time.Second * 3)
 	startTime := time.Now()
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		for i := time.Duration(0); i < time.Second; i+= time.Millisecond{
-			t := startTime.Add(time.Second * time.Duration(n)+i)
+		for i := time.Duration(0); i < time.Second; i += time.Nanosecond {
+			t := startTime.Add(time.Second*time.Duration(n) + i)
 			tm.Insert(t, 0)
 		}
 	}
 }
 
-var benchmarkTimedMeanOut *TimedMean
-
 func BenchmarkTimedMean(b *testing.B) {
-	tm := NewTimedMean(time.Second * 5)
+	tm := NewTimedMean(time.Second * 3)
 	startTime := time.Now()
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		for i := time.Duration(0); i < time.Second; i+= time.Millisecond{
-			t := startTime.Add(time.Second * time.Duration(n)+i)
+		for i := time.Duration(0); i < time.Second; i += time.Nanosecond {
+			t := startTime.Add(time.Second*time.Duration(n) + i)
 			tm.Insert(t, 0)
 		}
 	}
-	benchmarkTimedMeanOut = tm
 }
 
 func BenchmarkSliceAppend(b *testing.B) {
@@ -54,8 +51,8 @@ func BenchmarkSliceAppend(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		s = append(s, 0)
-		if len(s) > 100 {
+		for i := 0; i < 1000000; i++ {
+			s = append(s, 0)
 			s = s[1:]
 		}
 	}

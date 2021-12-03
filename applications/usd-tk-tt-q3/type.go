@@ -178,13 +178,17 @@ type XYStrategy struct {
 	xFundingRateFactor *float64
 	yFundingRateFactor *float64
 
-	xySuccessRatioTM *stream_stats.TimedMean
-	xSlippageTM      *stream_stats.TimedMean
-	ySlippageTM      *stream_stats.TimedMean
+	xySuccessRatioTM   *stream_stats.TimedMean
+	xySpreadSlippageTM *stream_stats.TimedMean
+	xSlippageTM        *stream_stats.TimedMean
+	ySlippageTM        *stream_stats.TimedMean
 
-	xSlippage            float64
-	ySlippage            float64
-	xSlippageTMPath      string
-	ySlippageTMPath      string
-	xySuccessRatioTMPath string
+	xSlippage        float64
+	ySlippage        float64
+	xySpreadSlippage float64
+
+	xSlippageTMPath        string
+	ySlippageTMPath        string
+	xySuccessRatioTMPath   string
+	xySpreadSlippageTMPath string
 }

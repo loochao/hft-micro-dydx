@@ -109,7 +109,12 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			strat.realisedSpread = new(float64)
 		}
 		*strat.realisedSpread = (*strat.yLastFilledSellPrice - *strat.xLastFilledBuyPrice) / *strat.yLastFilledSellPrice
+		strat.xSlippage = 0
+		strat.ySlippage = 0
+		strat.xySpreadSlippage = 0
 		if strat.referenceSpread != 0 {
+			strat.xySpreadSlippage = strat.referenceSpread - *strat.realisedSpread
+			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage)
 			if *strat.realisedSpread >= strat.referenceSpread-strat.config.EnterSlippage {
 				strat.xySuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {
@@ -134,9 +139,9 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		if strat.tdSpreadMiddle != 0 &&
 			strat.xyFundingRate != nil &&
 			strat.xFundingRateFactor != nil {
-			logger.Debugf("%10s - %10s realised short abs spread %f slippage x %f y %f quantile middle %f funding rate offset %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xSlippage, strat.ySlippage, strat.tdSpreadMiddle, *strat.xyFundingRate, *strat.realisedSpread-strat.tdSpreadMiddle+*strat.xyFundingRate)
+			logger.Debugf("%10s - %10s realised short abs spread %f slippage s %.6f x %.6f y %.6f quantile middle %f funding rate offset %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage, strat.tdSpreadMiddle, *strat.xyFundingRate, *strat.realisedSpread-strat.tdSpreadMiddle+*strat.xyFundingRate)
 		} else {
-			logger.Debugf("%10s - %10s realised short abs spread %f slippage x %f y %f ", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xSlippage, strat.ySlippage)
+			logger.Debugf("%10s - %10s realised short abs spread %f slippage s %.6f x %.6f y %.6f ", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage)
 		}
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
 	} else if strat.xLastFilledSellPrice != nil && strat.yLastFilledBuyPrice != nil {
@@ -146,7 +151,10 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		*strat.realisedSpread = (*strat.yLastFilledBuyPrice - *strat.xLastFilledSellPrice) / *strat.yLastFilledBuyPrice
 		strat.xSlippage = 0
 		strat.ySlippage = 0
+		strat.xySpreadSlippage = 0
 		if strat.referenceSpread != 0 {
+			strat.xySpreadSlippage = *strat.realisedSpread - strat.referenceSpread
+			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage)
 			if *strat.realisedSpread <= strat.referenceSpread+strat.config.EnterSlippage {
 				strat.xySuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {
@@ -171,9 +179,9 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		if strat.tdSpreadMiddle != 0 &&
 			strat.xyFundingRate != nil &&
 			strat.xFundingRateFactor != nil {
-			logger.Debugf("%10s - %10s realised long abs spread %f slippage x %f y %f quantile middle %f funding rate offset %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xSlippage, strat.ySlippage, strat.tdSpreadMiddle, *strat.xyFundingRate, *strat.realisedSpread-strat.tdSpreadMiddle+*strat.xyFundingRate)
+			logger.Debugf("%10s - %10s realised long abs spread %f slippage s %.6f x %.6f y %.6f quantile middle %f funding rate offset %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage, strat.tdSpreadMiddle, *strat.xyFundingRate, *strat.realisedSpread-strat.tdSpreadMiddle+*strat.xyFundingRate)
 		} else {
-			logger.Debugf("%10s - %10s realised long abs spread %f slippage x %f y %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xSlippage, strat.ySlippage)
+			logger.Debugf("%10s - %10s realised long abs spread %f slippage s %.6f x %.6f y %.6f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage)
 		}
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
 	}
