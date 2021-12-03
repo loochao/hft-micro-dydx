@@ -696,7 +696,7 @@ func (okus *OkexV5UsdtSpotWithWalkedDepth5) StreamTicker(ctx context.Context, ch
 	defer logger.Debugf("STOP StreamTicker")
 	defer okus.Stop()
 
-	walkImpact := okus.settings.WalkImpact
+	walkImpact := okus.settings.DepthWalkValue
 	if walkImpact <= 0 {
 		walkImpact = 1.0
 	}

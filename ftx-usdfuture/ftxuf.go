@@ -772,7 +772,7 @@ func (ftx *FtxUsdFutureWithWalkedDepth) StreamTicker(ctx context.Context, channe
 	defer logger.Debugf("STOP StreamTicker")
 	defer ftx.Stop()
 
-	walkImpact := ftx.settings.WalkImpact
+	walkImpact := ftx.settings.DepthWalkValue
 	if walkImpact <= 0 {
 		walkImpact = 1.0
 	}

@@ -133,7 +133,7 @@ type ExchangeSettings struct {
 	AccountID                           string        `yaml:"accountID" json:"accountID"`
 	AccountNumber                       string        `yaml:"accountNumber" json:"accountNumber"`
 	PriceFactorPair                     string        `yaml:"priceFactorPair" json:"priceFactorPair"`
-	WalkImpact                          float64       `yaml:"walkImpact" json:"walkImpact"`
+	DepthWalkValue                      float64       `yaml:"depthWalkValue" json:"depthWalkValue"`
 }
 
 type SpotExchange interface {

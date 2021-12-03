@@ -9,7 +9,7 @@ import (
 	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/rand"
-	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -17,8 +17,7 @@ type BinanceUsdtFuture struct {
 	ufApi    *API
 	usApi    *binance_usdtspot.API
 	done     chan interface{}
-	stopped  bool
-	mu       sync.Mutex
+	stopped  int32
 	settings common.ExchangeSettings
 }
 
@@ -27,9 +26,7 @@ func (bn *BinanceUsdtFuture) GetPriceFactor() float64 {
 }
 
 func (bn *BinanceUsdtFuture) StreamSystemStatus(ctx context.Context, output chan common.SystemStatus) {
-	bn.mu.Lock()
 	updateInterval := bn.settings.PullInterval
-	bn.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
@@ -127,9 +124,7 @@ func (bn *BinanceUsdtFuture) StreamBasic(
 	orderChMap map[string]chan common.Order,
 ) {
 	defer bn.Stop()
-	bn.mu.Lock()
 	proxy := bn.settings.Proxy
-	bn.mu.Unlock()
 	userWS, err := NewUserWebsocket(ctx, bn.ufApi, proxy)
 	if err != nil {
 		logger.Debugf("NewUserWebsocket(ctx,  bn.api, proxy) error %v", err)
@@ -325,9 +320,7 @@ func (bn *BinanceUsdtFuture) StreamDepth(ctx context.Context, channels map[strin
 		symbols = append(symbols, symbol)
 	}
 
-	bn.mu.Lock()
 	proxy := bn.settings.Proxy
-	bn.mu.Unlock()
 
 	for start := 0; start < len(symbols); start += batchSize {
 		end := start + batchSize
@@ -371,9 +364,7 @@ func (bn *BinanceUsdtFuture) StreamTrade(ctx context.Context, channels map[strin
 		symbols = append(symbols, symbol)
 	}
 
-	bn.mu.Lock()
 	proxy := bn.settings.Proxy
-	bn.mu.Unlock()
 
 	for start := 0; start < len(symbols); start += batchSize {
 		end := start + batchSize
@@ -416,9 +407,7 @@ func (bn *BinanceUsdtFuture) StreamTicker(ctx context.Context, channels map[stri
 		symbols = append(symbols, symbol)
 	}
 
-	bn.mu.Lock()
 	proxy := bn.settings.Proxy
-	bn.mu.Unlock()
 
 	for start := 0; start < len(symbols); start += batchSize {
 		end := start + batchSize
@@ -536,8 +525,7 @@ func (bn *BinanceUsdtFuture) WatchOrders(ctx context.Context, requestChannels ma
 
 func (bn *BinanceUsdtFuture) Setup(ctx context.Context, settings common.ExchangeSettings) (err error) {
 	bn.done = make(chan interface{})
-	bn.mu = sync.Mutex{}
-	bn.stopped = false
+	bn.stopped = 0
 	bn.settings = settings
 	bn.ufApi, err = NewAPI(&common.Credentials{
 		Key:    settings.ApiKey,
@@ -569,7 +557,7 @@ func (bn *BinanceUsdtFuture) Setup(ctx context.Context, settings common.Exchange
 		if _, ok := MultiplierDowns[symbol]; !ok {
 			return fmt.Errorf("multiplier down not found for %s", symbol)
 		}
-		if settings.ChangeLeverage {
+		if settings.ChangeLeverage && !settings.DryRun{
 			res, err := bn.ufApi.UpdateLeverage(ctx, UpdateLeverageParams{
 				Symbol:   symbol,
 				Leverage: int64(settings.Leverage),
@@ -580,7 +568,7 @@ func (bn *BinanceUsdtFuture) Setup(ctx context.Context, settings common.Exchange
 				logger.Debugf("UPDATE LEVERAGE FOR %s RESPONSE %v", symbol, res)
 			}
 		}
-		if settings.ChangeMarginType {
+		if settings.ChangeMarginType && !settings.DryRun{
 			res, err := bn.ufApi.UpdateMarginType(ctx, UpdateMarginTypeParams{
 				Symbol:     symbol,
 				MarginType: settings.MarginType,
@@ -596,13 +584,10 @@ func (bn *BinanceUsdtFuture) Setup(ctx context.Context, settings common.Exchange
 }
 
 func (bn *BinanceUsdtFuture) Stop() {
-	bn.mu.Lock()
-	if !bn.stopped {
-		bn.stopped = true
+	if atomic.CompareAndSwapInt32(&bn.stopped, 0, 1) {
 		close(bn.done)
 		logger.Debugf("stopped")
 	}
-	bn.mu.Unlock()
 }
 
 func (bn *BinanceUsdtFuture) Done() chan interface{} {
@@ -613,9 +598,7 @@ func (bn *BinanceUsdtFuture) watchSystemStatus(
 	ctx context.Context,
 	output chan common.SystemStatus,
 ) {
-	bn.mu.Lock()
 	updateInterval := bn.settings.PullInterval
-	bn.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
@@ -649,9 +632,7 @@ func (bn *BinanceUsdtFuture) watchSystemStatus(
 func (bn *BinanceUsdtFuture) watchPositions(
 	ctx context.Context, symbols []string, output chan []Position,
 ) {
-	bn.mu.Lock()
 	updateInterval := bn.settings.PullInterval
-	bn.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
@@ -692,9 +673,7 @@ func (bn *BinanceUsdtFuture) watchAccount(
 	ctx context.Context,
 	outputAccount chan Account,
 ) {
-	bn.mu.Lock()
 	updateInterval := bn.settings.PullInterval
-	bn.mu.Unlock()
 	timer := time.NewTimer(time.Second)
 	defer timer.Stop()
 	for {
@@ -1027,9 +1006,7 @@ func (bn *BinanceUsdtFutureWidthDepth20) StreamDepth(ctx context.Context, channe
 		symbols = append(symbols, symbol)
 	}
 
-	bn.mu.Lock()
 	proxy := bn.settings.Proxy
-	bn.mu.Unlock()
 
 	for start := 0; start < len(symbols); start += batchSize {
 		end := start + batchSize
@@ -1080,9 +1057,7 @@ func (bn *BinanceUsdtFutureWithMergedTicker) StreamTicker(ctx context.Context, c
 		symbols = append(symbols, symbol)
 	}
 
-	bn.mu.Lock()
 	proxy := bn.settings.Proxy
-	bn.mu.Unlock()
 
 	for start := 0; start < len(symbols); start += batchSize {
 		end := start + batchSize
@@ -1132,10 +1107,8 @@ func (bn *BinanceUsdtFutureWithWalkedDepth5) StreamTicker(ctx context.Context, c
 		symbols = append(symbols, symbol)
 	}
 
-	bn.mu.Lock()
-	impact := bn.settings.WalkImpact
+	impact := bn.settings.DepthWalkValue
 	proxy := bn.settings.Proxy
-	bn.mu.Unlock()
 
 	for start := 0; start < len(symbols); start += batchSize {
 		end := start + batchSize
@@ -1148,6 +1121,54 @@ func (bn *BinanceUsdtFutureWithWalkedDepth5) StreamTicker(ctx context.Context, c
 		}
 		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
 			ws1 := NewWalkedDepth5WS(ctx, proxy, impact, channels)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ws1.Done():
+					return
+				}
+			}
+		}(ctx, proxy, subChannels)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-bn.done:
+			return
+		}
+	}
+}
+
+type BinanceUsdtFutureWithWalkedDepth20 struct {
+	BinanceUsdtFuture
+}
+
+func (bn *BinanceUsdtFutureWithWalkedDepth20) StreamTicker(ctx context.Context, channels map[string]chan common.Ticker, batchSize int) {
+	logger.Debugf("START StreamMergedTicker")
+	defer logger.Debugf("STOP StreamMergedTicker")
+	defer bn.Stop()
+
+	symbols := make([]string, 0)
+	for symbol := range channels {
+		symbols = append(symbols, symbol)
+	}
+
+	impact := bn.settings.DepthWalkValue
+	proxy := bn.settings.Proxy
+
+	for start := 0; start < len(symbols); start += batchSize {
+		end := start + batchSize
+		if end > len(symbols) {
+			end = len(symbols)
+		}
+		subChannels := make(map[string]chan common.Ticker)
+		for _, symbol := range symbols[start:end] {
+			subChannels[symbol] = channels[symbol]
+		}
+		go func(ctx context.Context, proxy string, channels map[string]chan common.Ticker) {
+			ws1 := NewWalkedDepth20WS(ctx, proxy, impact, channels)
 			for {
 				select {
 				case <-ctx.Done():

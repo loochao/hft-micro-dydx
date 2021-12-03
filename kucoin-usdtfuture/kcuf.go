@@ -944,7 +944,7 @@ func (k *KucoinUsdtFutureWithWalkedDepth5) StreamTicker(ctx context.Context, cha
 	}
 	k.mu.Lock()
 	proxy := k.settings.Proxy
-	walkImpact := k.settings.WalkImpact
+	walkImpact := k.settings.DepthWalkValue
 	k.mu.Unlock()
 	if walkImpact <= 0 {
 		walkImpact = 1.0

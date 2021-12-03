@@ -743,7 +743,7 @@ func (okuf *OkexV5UsdtSwapWithWalkedDepth5) StreamTicker(ctx context.Context, ch
 	defer logger.Debugf("STOP StreamTicker")
 	defer okuf.Stop()
 
-	walkImpact := okuf.settings.WalkImpact
+	walkImpact := okuf.settings.DepthWalkValue
 	if walkImpact <= 0 {
 		walkImpact = 1.0
 	}
