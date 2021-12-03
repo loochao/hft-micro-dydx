@@ -103,6 +103,9 @@ func ParseOrderBook(msg []byte, orderBook *OrderBook) error {
 	} else if msg[46] == ',' {
 		offset = 57
 		orderBook.Market = common.UnsafeBytesToString(msg[36:45])
+	} else if msg[44] == ',' {
+		offset = 55
+		orderBook.Market = common.UnsafeBytesToString(msg[36:43])
 	} else if msg[47] == ',' {
 		offset = 58
 		orderBook.Market = common.UnsafeBytesToString(msg[36:46])
