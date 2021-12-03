@@ -71,30 +71,81 @@ func (w *WalkedOrderBookWS) readLoop(conn *websocket.Conn, channels map[string]c
 	defer logger.Debugf("EXIT readLoop")
 	logSilentTime := time.Now()
 	var symbol string
-	var msg []byte
-	var err error
 	var ch chan []byte
 	var ok bool
+	var readPool = [orderBookReadPoolSize][]byte{}
+	var readIndex = -1
+	var msg []byte
+	var n int
+	var r io.Reader
+	var err error
+	for i := range readPool {
+		readPool[i] = make([]byte, orderBookReadMsgSize)
+	}
+	readCounter := 0
+	partialReadCounter := 0
+	allocateCounter := 0
+mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
 		if err != nil {
-			logger.Debugf("conn.SetReadDeadline error %v", err)
+			logger.Warnf("conn.SetReadDeadline error %v", err)
 			w.restart()
 			return
 		}
-
-		_, msg, err = conn.ReadMessage()
+		_, r, err = conn.NextReader()
 		if err != nil {
-			logger.Debugf("conn.NextReader error %v", err)
+			logger.Warnf("conn.NextReader error %v", err)
 			w.restart()
 			return
 		}
-		msgLen := len(msg)
-		if msgLen > 128 && msg[13] == 'o' {
+		readIndex++
+		if readIndex == orderBookReadPoolSize {
+			readIndex = 0
+		}
+		msg = readPool[readIndex]
+		n, err = r.Read(msg)
+		if err == nil {
+			readCounter++
+			msg = msg[:n]
+			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
+				partialReadCounter++
+				for {
+					if len(msg) == cap(msg) {
+						// Add more capacity (let append pick how much).
+						msg = append(msg, 0)[:len(msg)]
+						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+						allocateCounter++
+					}
+					n, err = r.Read(msg[len(msg):cap(msg)])
+					msg = msg[:len(msg)+n]
+					if err != nil {
+						if err == io.EOF {
+							break
+						} else {
+							logger.Debugf("r.Read error %v", err)
+							continue mainLoop
+						}
+					}
+				}
+			}
+		} else {
+			logger.Debugf("r.Read error %v", err)
+			continue mainLoop
+		}
+		if readCounter%10000 == 0 {
+			logger.Debugf("FTX ORDER BOOK READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", orderBookReadMsgSize, readCounter, partialReadCounter, allocateCounter)
+		}
+		if len(msg) < 128 {
+			continue mainLoop
+		}
+		if msg[13] == 'o' {
 			if msg[45] == ',' {
 				symbol = common.UnsafeBytesToString(msg[36:44])
 			} else if msg[46] == ',' {
 				symbol = common.UnsafeBytesToString(msg[36:45])
+			} else if msg[44] == ',' {
+				symbol = common.UnsafeBytesToString(msg[36:43])
 			} else if msg[47] == ',' {
 				symbol = common.UnsafeBytesToString(msg[36:46])
 			} else if msg[48] == ',' {
@@ -111,7 +162,7 @@ func (w *WalkedOrderBookWS) readLoop(conn *websocket.Conn, channels map[string]c
 				continue
 			}
 		} else {
-			if time.Now().Sub(logSilentTime) > 0 && msgLen > 128 {
+			if time.Now().Sub(logSilentTime) > 0 {
 				logger.Debugf("other msg %s", msg)
 				logSilentTime = time.Now().Add(time.Minute)
 			}
@@ -389,7 +440,7 @@ func (w *WalkedOrderBookWS) dataHandleLoop(ctx context.Context, market string, i
 						logger.Debugf("%s common.WalkDepth error %v", orderBook.Market, err)
 						logSilentTime = time.Now().Add(common.LogInterval)
 					}
-				}else{
+				} else {
 					select {
 					case outputCh <- walkedOrderBook:
 					default:

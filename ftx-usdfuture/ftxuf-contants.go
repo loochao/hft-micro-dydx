@@ -16,10 +16,8 @@ const (
 	OrderTypeMarket   = "market"
 	ExchangeID        = common.FtxUsdFuture
 
-	depth5ReadPoolSize     = 8192
-	depth5ReadMsgSize      = 512
-	depth20ReadPoolSize     = 8192
-	depth20ReadMsgSize      = 1024
+	orderBookReadPoolSize     = 8192
+	orderBookReadMsgSize      = 1024
 	bookTickerReadPoolSize = 8192
 	bookTickerReadMsgSize  = 512
 	userReadPoolSize       = 4096
