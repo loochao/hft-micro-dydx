@@ -146,8 +146,8 @@ func ParseOrderBook(msg []byte, orderBook *OrderBook) error {
 					return err
 				}
 				orderBook.Time = time.Unix(0, int64(t*1000000000))
-				//从checksum的第6位开始
-				offset += 20
+				//从checksum的第4位开始
+				offset += 18
 				currentKey = common.JsonKeyID
 				continue
 			}
