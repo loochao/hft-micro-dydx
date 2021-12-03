@@ -114,7 +114,7 @@ mainLoop:
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
-						logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), bookTickerReadMsgSize, msg)
+						//logger.Debugf("BAD BUFFER SIZE CAN'T READ %d INTO %d, MSG: %s", len(msg), orderBookReadMsgSize, msg)
 						allocateCounter++
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])

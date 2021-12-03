@@ -143,7 +143,7 @@ func ParseOrderBook(msg []byte, orderBook *OrderBook) error {
 			if msg[offset] == ',' {
 				t, err = common.ParseFloat(msg[collectStart:offset])
 				if err != nil {
-					return err
+					return fmt.Errorf("time common.ParseDecimal error %v msg %s", err, msg[collectStart:offset])
 				}
 				orderBook.Time = time.Unix(0, int64(t*1000000000))
 				//从checksum的第4位开始
