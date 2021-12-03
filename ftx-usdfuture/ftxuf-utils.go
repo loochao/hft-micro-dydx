@@ -127,10 +127,10 @@ func ParseOrderBook(msg []byte, orderBook *OrderBook) error {
 		orderBook.Bids = orderBook.Bids[:0]
 		orderBook.Asks = orderBook.Asks[:0]
 		orderBook.hasPartial = true
-		offset += 41
+		offset += 36
 		collectStart += 27
 	} else if msg[offset] == 'u' {
-		offset += 40
+		offset += 35
 		collectStart += 26
 	} else {
 		return fmt.Errorf("bad msg type for %s", msg)
