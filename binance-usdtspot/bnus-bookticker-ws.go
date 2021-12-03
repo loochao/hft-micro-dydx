@@ -53,7 +53,7 @@ mainLoop:
 			w.restart()
 			return
 		}
-		readIndex += 1
+		readIndex++
 		if readIndex == bookTickerReadPoolSize {
 			readIndex = 0
 		}

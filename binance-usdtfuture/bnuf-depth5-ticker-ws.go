@@ -53,7 +53,7 @@ mainLoop:
 			w.restart()
 			return
 		}
-		readIndex += 1
+		readIndex++
 		if readIndex == depth5ReadPoolSize {
 			readIndex = 0
 		}
@@ -64,7 +64,6 @@ mainLoop:
 			msg = msg[:n]
 			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
 				partialReadCounter++
-			readLoop:
 				for {
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
@@ -76,7 +75,7 @@ mainLoop:
 					msg = msg[:len(msg)+n]
 					if err != nil {
 						if err == io.EOF {
-							break readLoop
+							break
 						} else {
 							logger.Debugf("r.Read error %v", err)
 							continue mainLoop
