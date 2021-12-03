@@ -17,7 +17,7 @@ const (
 	ExchangeID        = common.FtxUsdFuture
 
 	orderBookReadPoolSize     = 8192
-	orderBookReadMsgSize      = 2048
+	orderBookReadMsgSize      = 1024
 	bookTickerReadPoolSize = 8192
 	bookTickerReadMsgSize  = 512
 	userReadPoolSize       = 4096
