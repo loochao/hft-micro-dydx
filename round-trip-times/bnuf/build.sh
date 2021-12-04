@@ -18,10 +18,12 @@ env GOOS=linux GOARCH=arm64 go build -o "./dist/rtt-bnuf.arm64.$dt" ./round-trip
 env GOOS=linux GOARCH=amd64 go build -o "./dist/rtt-bnuf.amd64.$dt" ./round-trip-times/bnuf
 
 chmod 755 "./dist/rtt-bnuf.arm64.$dt"
+chmod 755 "./dist/rtt-bnuf.amd64.$dt"
+rsync -avx --progress "./dist/rtt-bnuf.amd64.$dt" loochao:~/
 
 #rsync -avx --progress "./dist/rtt-bnuf.arm64.$dt" tka1:/usr/local/bin/
 #rsync -avx --progress "./dist/rtt-bnuf.arm64.$dt" tka2:/usr/local/bin/
-rsync -avx --progress "./dist/rtt-bnuf.arm64.$dt" tkc1:/usr/local/bin/
+#rsync -avx --progress "./dist/rtt-bnuf.arm64.$dt" tkc1:/usr/local/bin/
 #rsync -avx --progress "./dist/rtt-bnuf.arm64.$dt" tka3:/usr/local/bin/
 #rsync -avx --progress "./dist/rtt-bnuf.arm64.$dt" way:/usr/local/bin/
 #rsync -avx --progress "./dist/rtt-bnuf.amd64.$dt" way:/usr/local/bin/
