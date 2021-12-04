@@ -6,29 +6,29 @@ import (
 	"testing"
 )
 
-func TestDecimal256_UnmarshalJSON(t *testing.T) {
-	d := Decimal256{}
-	m := "2644890941682394074696857415419096381561354281743803087373802494123523779468"
-	err := json.Unmarshal([]byte(m), &d)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, m, d.String())
-}
-
-func TestDecimal256_MarshalJSON(t *testing.T) {
-	d := Decimal256{}
-	m := "2644890941682394074696857415419096381561354281743803087373802494123523779468"
-	err := json.Unmarshal([]byte(m), &d)
-	if err != nil {
-		t.Fatal(err)
-	}
-	m2, err := json.Marshal(d)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, m, string(m2))
-}
+//func TestDecimal256_UnmarshalJSON(t *testing.T) {
+//	d := Decimal256{}
+//	m := "2644890941682394074696857415419096381561354281743803087373802494123523779468"
+//	err := json.Unmarshal([]byte(m), &d)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	assert.Equal(t, m, d.String())
+//}
+//
+//func TestDecimal256_MarshalJSON(t *testing.T) {
+//	d := Decimal256{}
+//	m := "2644890941682394074696857415419096381561354281743803087373802494123523779468"
+//	err := json.Unmarshal([]byte(m), &d)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	m2, err := json.Marshal(d)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	assert.Equal(t, m, string(m2))
+//}
 
 func TestParsePedersenParams (t *testing.T) {
 	pd := &pedersenParams{}

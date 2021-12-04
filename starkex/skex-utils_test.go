@@ -3,6 +3,7 @@ package starkex_test
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/starkex"
 	"math"
 	"math/big"
@@ -59,7 +60,7 @@ func TestSignOrder(t *testing.T) {
 	order.AssetIdSynthetic = starkex.SYNTHETIC_ASSET_ID_MAP[syntheticAsset]
 	order.AssetIdCollateral = starkex.COLLATERAL_ASSET_ID_BY_NETWORK_ID[ORDER_PARAMS.NetworkId]
 	order.AssetIdFee = starkex.SYNTHETIC_ASSET_ID_MAP[syntheticAsset]
-	order.PositionId = ORDER_PARAMS.PositionID
+	//order.PositionId = ORDER_PARAMS.PositionID
 	order.IsBuyingSynthetic = ORDER_PARAMS.Side == starkex.ORDER_SIDE_BUY
 	order.QuantumsAmountSynthetic, err = starkex.ToQuantumsExact(ORDER_PARAMS.HumanPrice, syntheticAsset)
 	if err != nil {
@@ -84,9 +85,9 @@ func TestSignOrder(t *testing.T) {
 	// to ensure their signatures are valid by the time they reach the
 	// blockchain. Therefore, we enforce that the signed expiration includes
 	// a buffer relative to the expiration timestamp sent to the dYdX API.
-	order.ExpirationEpochHours = int(math.Ceil(
-		float64(ORDER_PARAMS.ExpirationEpochSeconds) / float64(starkex.ONE_HOUR_IN_SECONDS),
-	)) + starkex.ORDER_SIGNATURE_EXPIRATION_BUFFER_HOURS
+	//order.ExpirationEpochHours = int(math.Ceil(
+	//	float64(ORDER_PARAMS.ExpirationEpochSeconds) / float64(starkex.ONE_HOUR_IN_SECONDS),
+	//)) + starkex.ORDER_SIGNATURE_EXPIRATION_BUFFER_HOURS
 
 
 	fmt.Printf("%v\n", order)
@@ -102,4 +103,14 @@ func TestGCD(t *testing.T) {
 	c.GCD(x, y, a, b)
 
 	fmt.Printf("%s*%s + %s*%s = %s\n", x, a, y, b, c)
+}
+
+func TestGetHash(t *testing.T) {
+	x, _ := new(big.Int).SetString("3b865a18323b8d147a12c556bfb1d502516c325b1477a23ba6c77af31f020fd", 16)
+	logger.Debugf("%s", x)
+	pt, err := starkex.GetHash(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Printf("%s\n", pt[0])
 }

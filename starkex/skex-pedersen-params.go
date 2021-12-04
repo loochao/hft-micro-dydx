@@ -2058,9 +2058,12 @@ const PedersenParamsJsonString = `{
 }`
 
 var PEDERSEN_PARAMS *pedersenParams
-var SHIFT_POINT [2]*big.Int
+var SHIFT_POINT EcPoint
 var FIELD_PRIME, FIELD_GEN, ALPHA, BETA, EC_ORDER *big.Int
 var CONSTANT_POINTS [506][2]*big.Int
+var N_ELEMENT_BITS_HASH = 252
+//N_ELEMENT_BITS_ECDSA = math.floor(math.log(FIELD_PRIME, 2))
+var N_ELEMENT_BITS_ECDSA = 251
 
 func init() {
 	PEDERSEN_PARAMS = &pedersenParams{}
@@ -2075,4 +2078,5 @@ func init() {
 	BETA = PEDERSEN_PARAMS.Beta
 	EC_ORDER = PEDERSEN_PARAMS.EcOrder
 	CONSTANT_POINTS = PEDERSEN_PARAMS.ConstantPoints
+	N_ELEMENT_BITS_HASH = FIELD_PRIME.BitLen()
 }

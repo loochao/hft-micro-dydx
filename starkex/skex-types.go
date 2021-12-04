@@ -2,6 +2,7 @@ package starkex
 
 import (
 	"encoding/json"
+	"github.com/geometrybase/hft-micro/logger"
 	"math/big"
 )
 
@@ -86,6 +87,8 @@ func (so *StarkwareOrder) CalculateHash() []byte {
 	part_2.Lsh(part_2, ORDER_FIELD_BIT_LENGTHS["expiration_epoch_hours"])
 	part_2.Add(part_2, so.ExpirationEpochHours)
 	part_2.Lsh(part_2, ORDER_PADDING_BITS)
+
+	logger.Debugf("%s %s", asset_id_buy, asset_id_sell)
 
 	return nil
 }

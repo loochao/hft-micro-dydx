@@ -18,12 +18,15 @@ env GOOS=linux GOARCH=arm64 go build -o "./dist/rtt-dydx.arm64.$dt" ./round-trip
 env GOOS=linux GOARCH=amd64 go build -o "./dist/rtt-dydx.amd64.$dt" ./round-trip-times/dydx
 
 chmod 755 "./dist/rtt-dydx.arm64.$dt"
+chmod 755 "./dist/rtt-dydx.amd64.$dt"
 
-echo "" && echo "" && echo "way"
-rsync -avx --progress "./dist/rtt-dydx.arm64.$dt" way:/usr/local/bin/
-rsync -avx --progress "./dist/rtt-dydx.amd64.$dt" way:/usr/local/bin/
+rsync -avx --progress "./dist/rtt-dydx.amd.$dt" loochao:/usr/local/bin/
 
-ssh way "rsync -avx --progress /usr/local/bin/rtt-dydx.arm64.$dt nv1:/usr/local/bin/"
-ssh way "rsync -avx --progress /usr/local/bin/rtt-dydx.arm64.$dt nv2:/usr/local/bin/"
-ssh way "rsync -avx --progress /usr/local/bin/rtt-dydx.arm64.$dt arm1:/usr/local/bin/"
+#echo "" && echo "" && echo "way"
+#rsync -avx --progress "./dist/rtt-dydx.arm64.$dt" way:/usr/local/bin/
+#rsync -avx --progress "./dist/rtt-dydx.amd64.$dt" way:/usr/local/bin/
+#
+#ssh way "rsync -avx --progress /usr/local/bin/rtt-dydx.arm64.$dt nv1:/usr/local/bin/"
+#ssh way "rsync -avx --progress /usr/local/bin/rtt-dydx.arm64.$dt nv2:/usr/local/bin/"
+#ssh way "rsync -avx --progress /usr/local/bin/rtt-dydx.arm64.$dt arm1:/usr/local/bin/"
 

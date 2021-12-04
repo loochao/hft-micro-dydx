@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/geometrybase/hft-micro/logger"
 	"math"
 	"math/big"
 )
@@ -22,13 +23,19 @@ func PiAsString(n int) string {
 }
 
 func DivMod(n, m, p *big.Int) (*big.Int, error) {
+	fmt.Printf("%s\n", n)
+	fmt.Printf("%s\n", m)
+	fmt.Printf("%s\n", p)
+	panic(123)
 	//Finds a non negative integer 0 <= x < p such that (m * x) % p == n
 	a := big.NewInt(0)
 	b := big.NewInt(0)
 	c := big.NewInt(0)
-	c.GCD(m, p, a, b)
+	logger.Debugf("%s %s %s %s %s\n", m, p, a, b, c)
+	c.GCD(a, b, m, p)
+	logger.Debugf("%s %s %s %s %s\n", m, p, a, b, c)
 	if !IsOne(c) {
-		return nil, fmt.Errorf("c is not one")
+		return nil, fmt.Errorf("%s is not one", c)
 	}
 	a.Mul(n, a)
 	return a.Mod(a, p), nil
@@ -41,6 +48,7 @@ func EcAdd(point1, point2 EcPoint, p *big.Int) (EcPoint, error) {
 	y := big.NewInt(0)
 	d := big.NewInt(0)
 	x.Sub(point1[0], point2[0])
+	logger.Debugf("%s = %s - %s", x, point1[0], point2[0])
 	d.Mod(x, p)
 	if len(d.Bits()) == 0 {
 		return EcPoint{}, errors.New("(point1[0] - point2[0]) %% p == 0")
@@ -114,8 +122,30 @@ func ToQuantumsRoundDown(humanAmount float64, asset string) int64 {
 //message.update(client_id.encode())  # Encode as UTF-8.
 //return int(message.digest().hex(), 16) % NONCE_UPPER_BOUND_EXCLUSIVE
 
-func GetHash(x *big.Int) (*EcPoint, error) {
-	point := SHIFT_POINT
-
-
+func GetHash(x *big.Int) (point EcPoint, err error) {
+	/*
+		Similar to pedersen_hash but also returns the y coordinate of the resulting EC point.
+			This function is used for testing.
+	*/
+	point = SHIFT_POINT
+	if x.Cmp(big.NewInt(0)) < 0 || x.Cmp(FIELD_PRIME) >= 0 {
+		return point, fmt.Errorf("bad x range should 0 <= %s < %s", x, FIELD_PRIME)
+	}
+	pointList := CONSTANT_POINTS[2 : 2+N_ELEMENT_BITS_HASH]
+	for _, pt := range pointList {
+		if pt[0].Cmp(point[0]) == 0 {
+			return point, fmt.Errorf("unhashable input %s", point[0])
+		}
+		if len(x.Bits()) != 0 {
+			point, err = EcAdd(point, pt, FIELD_PRIME)
+			if err != nil {
+				return point, err
+			}
+		}
+		x.Rsh(x, 1)
+	}
+	if len(x.Bits()) != 0 {
+		return point, fmt.Errorf("%s should be zero", x)
+	}
+	return point, nil
 }
