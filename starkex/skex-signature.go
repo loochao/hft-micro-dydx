@@ -20,5 +20,5 @@ package starkex
 //	//    Note that the real y coordinate is either y or -y.
 //	//    If x is invalid stark_key it throws an error.
 //	x := starkKeyXCoordinate
-//	ySquared := (x*x*x + PedersenParams.Alpha*x + PedersenParams.Beta) % PedersenParams.FieldPrime
+//	ySquared := (x*x*x + PEDERSEN_PARAMS.Alpha*x + PEDERSEN_PARAMS.Beta) % PEDERSEN_PARAMS.FieldPrime
 //}

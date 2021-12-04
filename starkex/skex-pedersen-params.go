@@ -1,6 +1,9 @@
 package starkex
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"math/big"
+)
 
 const PedersenParamsJsonString = `{
     "_license": [
@@ -2054,12 +2057,22 @@ const PedersenParamsJsonString = `{
     ]
 }`
 
-var PedersenParams *pedersenParams
+var PEDERSEN_PARAMS *pedersenParams
+var SHIFT_POINT [2]*big.Int
+var FIELD_PRIME, FIELD_GEN, ALPHA, BETA, EC_ORDER *big.Int
+var CONSTANT_POINTS [506][2]*big.Int
 
 func init() {
-	PedersenParams = &pedersenParams{}
-	err := json.Unmarshal([]byte(PedersenParamsJsonString), PedersenParams)
+	PEDERSEN_PARAMS = &pedersenParams{}
+	err := json.Unmarshal([]byte(PedersenParamsJsonString), PEDERSEN_PARAMS)
 	if err != nil {
 		panic(err)
 	}
+	SHIFT_POINT = PEDERSEN_PARAMS.ConstantPoints[0]
+	FIELD_PRIME = PEDERSEN_PARAMS.FieldPrime
+	FIELD_GEN = PEDERSEN_PARAMS.FiledGen
+	ALPHA = PEDERSEN_PARAMS.Alpha
+	BETA = PEDERSEN_PARAMS.Beta
+	EC_ORDER = PEDERSEN_PARAMS.EcOrder
+	CONSTANT_POINTS = PEDERSEN_PARAMS.ConstantPoints
 }

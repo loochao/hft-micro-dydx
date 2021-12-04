@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	bnbs "github.com/geometrybase/hft-micro/binance-busdspot"
 	bnuf "github.com/geometrybase/hft-micro/binance-usdtfuture"
 	bnus "github.com/geometrybase/hft-micro/binance-usdtspot"
@@ -48,6 +49,7 @@ func main() {
 	var ySystemStatus = common.SystemStatusNotReady
 	var xSystemStatusCh = make(chan common.SystemStatus, 4)
 	var ySystemStatusCh = make(chan common.SystemStatus, 4)
+	var startTime = time.Now()
 
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
@@ -464,7 +466,7 @@ func main() {
 		if xyConfig.CpuProfile != "" {
 			var heapProfFile *os.File
 			runtime.GC() // profile all outstanding allocations
-			if heapProfFile, err = os.Create(xyConfig.HeapProfile+time.Now().Format("-2006010215.heap.prof")); err != nil {
+			if heapProfFile, err = os.Create(xyConfig.HeapProfile+time.Now().Format(fmt.Sprintf("-2006010215-%v.heap.prof", time.Now().Sub(startTime)))); err != nil {
 				logger.Warnf("os.Create %s error %v", xyConfig.HeapProfile, err)
 			} else if err = pprof.WriteHeapProfile(heapProfFile); err != nil {
 				logger.Warnf("pprof.WriteHeapProfile error %v", err)
