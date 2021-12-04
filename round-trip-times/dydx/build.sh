@@ -20,7 +20,7 @@ env GOOS=linux GOARCH=amd64 go build -o "./dist/rtt-dydx.amd64.$dt" ./round-trip
 chmod 755 "./dist/rtt-dydx.arm64.$dt"
 chmod 755 "./dist/rtt-dydx.amd64.$dt"
 
-rsync -avx --progress "./dist/rtt-dydx.amd.$dt" loochao:/usr/local/bin/
+rsync -avx --progress "./dist/rtt-dydx.amd.$dt" loochao:~/
 
 #echo "" && echo "" && echo "way"
 #rsync -avx --progress "./dist/rtt-dydx.arm64.$dt" way:/usr/local/bin/
