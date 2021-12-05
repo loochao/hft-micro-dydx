@@ -2064,6 +2064,7 @@ var CONSTANT_POINTS [506][2]*big.Int
 var N_ELEMENT_BITS_HASH = 252
 //N_ELEMENT_BITS_ECDSA = math.floor(math.log(FIELD_PRIME, 2))
 var N_ELEMENT_BITS_ECDSA = 251
+var N_ELEMENT_BITS_ECDSA_MAX_VALUE = new(big.Int).Exp(big.NewInt(2), big.NewInt(int64(N_ELEMENT_BITS_ECDSA)), nil)
 
 func init() {
 	PEDERSEN_PARAMS = &pedersenParams{}

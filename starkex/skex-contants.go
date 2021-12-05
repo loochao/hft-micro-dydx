@@ -141,6 +141,9 @@ const (
 	ASSET_XTZ        = "XTZ"
 	ASSET_HNT        = "HNT"
 	COLLATERAL_ASSET = ASSET_USDC
+
+
+
 )
 
 // ------------ Synthetic Assets by Market ------------
@@ -312,9 +315,11 @@ const (
 	NONCE_UPPER_BOUND_EXCLUSIVE = 1 << ORDER_FIELD_BIT_LENGTHS_NONCE
 )
 
+
+
 const (
-	ONE_HOUR_IN_SECONDS                     = 60 * 60
-	ORDER_SIGNATURE_EXPIRATION_BUFFER_HOURS = 24 * 7 // Seven days.
+	ONE_HOUR_IN_SECONDS                     = 3600.0
+	ORDER_SIGNATURE_EXPIRATION_BUFFER_HOURS = int64(24 * 7) // Seven days.
 	CONDITIONAL_TRANSFER_PADDING_BITS       = 81
 	CONDITIONAL_TRANSFER_PREFIX             = 5
 	ORDER_PREFIX                            = 3

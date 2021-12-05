@@ -1,11 +1,9 @@
 package starkex_test
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/starkex"
-	"math"
+	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
 	"time"
@@ -19,27 +17,31 @@ const (
 	MOCK_SIGNATURE_EVEN_Y  = "00fc0756522d78bef51f70e3981dc4d1e82273f59cdac6bc31c5776baabae6ec0158963bfd45d88a99fb2d6d72c9bbcf90b24c3c0ef2394ad8d05f9d3983443a"
 )
 
-type OrderParams struct {
-	NetworkId              int     `json:"network_id"`
-	Market                 string  `json:"market"`
-	Side                   string  `json:"side"`
-	PositionID             int64   `json:"position_id"`
-	HumanSize              float64 `json:"human_size"`
-	HumanPrice             float64 `json:"human_price"`
-	LimitFee               float64 `json:"limit_fee"`
-	ClientID               string  `json:"client_id"`
-	ExpirationEpochSeconds int64   `json:"expiration_epoch_seconds"`
-}
-
-var ORDER_PARAMS = OrderParams{
-	NetworkId:  starkex.NETWORK_ID_ROPSTEN,
-	Market:     starkex.MARKET_ETH_USD,
-	Side:       starkex.ORDER_SIDE_BUY,
-	PositionID: 12345,
-	HumanSize:  145.0005,
-	HumanPrice: 350.00067,
-	LimitFee:   0.125,
-	ClientID:   "This is an ID that the client came up with to describe this order",
+func TestHashOrder(t *testing.T) {
+	tt, err := time.Parse("2006-01-02T15:04:05.999Z", "2020-09-17T04:15:55.028Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	order, err := starkex.NewStarkwareOrder(
+		starkex.NETWORK_ID_ROPSTEN,
+		starkex.MARKET_ETH_USD,
+		starkex.ORDER_SIDE_BUY,
+		12345,
+		145.0005,
+		350.00067,
+		0.125,
+		"This is an ID that the client came up with to describe this order",
+		tt.Unix(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hash, err := order.CalculateHash()
+	if err != nil {
+		t.Fatal(err)
+	}
+	answer, _ := new(big.Int).SetString("2399267126880666724459410666672606885138497587740885437088147399489673150280", 10)
+	assert.Equal(t, 0, answer.Cmp(hash))
 }
 
 func TestSignOrder(t *testing.T) {
@@ -47,51 +49,31 @@ func TestSignOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ORDER_PARAMS.ExpirationEpochSeconds = tt.Unix()
-	data, err := json.Marshal(ORDER_PARAMS)
+	_, err = starkex.NewStarkwareOrder(
+		starkex.NETWORK_ID_ROPSTEN,
+		starkex.MARKET_ETH_USD,
+		starkex.ORDER_SIDE_BUY,
+		12345,
+		145.0005,
+		350.00067,
+		0.125,
+		"This is an ID that the client came up with to describe this order",
+		tt.Unix(),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Printf("%s\n", data)
 
-	syntheticAsset := starkex.SYNTHETIC_ASSET_MAP[ORDER_PARAMS.Market]
-	order := starkex.StarkwareOrder{}
-	order.OrderType = "LIMIT_ORDER_WITH_FEES"
-	order.AssetIdSynthetic = starkex.SYNTHETIC_ASSET_ID_MAP[syntheticAsset]
-	order.AssetIdCollateral = starkex.COLLATERAL_ASSET_ID_BY_NETWORK_ID[ORDER_PARAMS.NetworkId]
-	order.AssetIdFee = starkex.SYNTHETIC_ASSET_ID_MAP[syntheticAsset]
-	//order.PositionId = ORDER_PARAMS.PositionID
-	order.IsBuyingSynthetic = ORDER_PARAMS.Side == starkex.ORDER_SIDE_BUY
-	order.QuantumsAmountSynthetic, err = starkex.ToQuantumsExact(ORDER_PARAMS.HumanPrice, syntheticAsset)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if order.IsBuyingSynthetic {
-		humanCost := math.Ceil(ORDER_PARAMS.HumanPrice * ORDER_PARAMS.HumanPrice)
-		order.QuantumsAmountCollateral = starkex.ToQuantumsRoundUp(humanCost, syntheticAsset)
-	} else {
-		humanCost := math.Floor(ORDER_PARAMS.HumanPrice * ORDER_PARAMS.HumanPrice)
-		order.QuantumsAmountCollateral = starkex.ToQuantumsRoundDown(humanCost, syntheticAsset)
-	}
-
-	// The limitFee is a fraction, e.g. 0.01 is a 1 % fee.
-	// It is always paid in the collateral asset.
-	// Constrain the limit fee to six decimals of precision.
-	// The final fee amount must be rounded up.
-	limitFeeRounded := math.Floor(ORDER_PARAMS.LimitFee/1000000) * 1000000
-	order.QuantumsAmountFee = int64(math.Ceil(limitFeeRounded * float64(order.QuantumsAmountCollateral)))
-
-	// Orders may have a short time-to-live on the orderbook, but we need
-	// to ensure their signatures are valid by the time they reach the
-	// blockchain. Therefore, we enforce that the signed expiration includes
-	// a buffer relative to the expiration timestamp sent to the dYdX API.
-	//order.ExpirationEpochHours = int(math.Ceil(
-	//	float64(ORDER_PARAMS.ExpirationEpochSeconds) / float64(starkex.ONE_HOUR_IN_SECONDS),
-	//)) + starkex.ORDER_SIGNATURE_EXPIRATION_BUFFER_HOURS
-
-
-	fmt.Printf("%v\n", order)
-
+	maxValue, _ := new(big.Int).SetString("3618502788666131106986593281521497120414687020801267626233049500247285301248", 10)
+	fmt.Printf("%s\n", maxValue)
+	fmt.Printf("%s\n", starkex.N_ELEMENT_BITS_ECDSA_MAX_VALUE)
+	fmt.Printf("%d\n", maxValue.Cmp(starkex.N_ELEMENT_BITS_ECDSA_MAX_VALUE))
+	//hash, err := order.CalculateHash()
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//answer, _ := new(big.Int).SetString("2399267126880666724459410666672606885138497587740885437088147399489673150280", 10)
+	//assert.Equal(t, 0, answer.Cmp(hash))
 }
 
 func TestGCD(t *testing.T) {
@@ -105,12 +87,130 @@ func TestGCD(t *testing.T) {
 	fmt.Printf("%s*%s + %s*%s = %s\n", x, a, y, b, c)
 }
 
-func TestGetHash(t *testing.T) {
-	x, _ := new(big.Int).SetString("3b865a18323b8d147a12c556bfb1d502516c325b1477a23ba6c77af31f020fd", 16)
-	logger.Debugf("%s", x)
-	pt, err := starkex.GetHash(x)
+func TestEcAdd(t *testing.T) {
+	point1 := starkex.EcPoint{}
+	point2 := starkex.EcPoint{}
+	answer := starkex.EcPoint{}
+	filedPrime := new(big.Int)
+	point1[0], _ = new(big.Int).SetString("2089986280348253421170679821480865132823066470938446095505822317253594081284", 10)
+	point1[1], _ = new(big.Int).SetString("1713931329540660377023406109199410414810705867260802078187082345529207694986", 10)
+	point2[0], _ = new(big.Int).SetString("100775230685312048816501234355008830851785728808228209380195522984287974518", 10)
+	point2[1], _ = new(big.Int).SetString("3198314560325546891798262260233968848553481119985289977998522774043088964633", 10)
+	filedPrime, _ = new(big.Int).SetString("3618502788666131213697322783095070105623107215331596699973092056135872020481", 10)
+	answer[0], _ = new(big.Int).SetString("1637368371864026355245122316446106576874611007407245016652355316950184561542", 10)
+	answer[1], _ = new(big.Int).SetString("2972442824041547060031660375530558262127955088805062438335262544824625022241", 10)
+	pt, err := starkex.EcAdd(point1, point2, filedPrime)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Printf("%s\n", pt[0])
+	assert.Equal(t, 0, pt[0].Cmp(answer[0]))
+	assert.Equal(t, 0, pt[1].Cmp(answer[1]))
+
+	point1[0], _ = new(big.Int).SetString("1637368371864026355245122316446106576874611007407245016652355316950184561542", 10)
+	point1[1], _ = new(big.Int).SetString("2972442824041547060031660375530558262127955088805062438335262544824625022241", 10)
+	point2[0], _ = new(big.Int).SetString("1337726844298689299569036965005062374791732295462158862097564380968412485659", 10)
+	point2[1], _ = new(big.Int).SetString("3094702644796621069343809899235459280874613277076424986270525032931210979878", 10)
+	filedPrime, _ = new(big.Int).SetString("3618502788666131213697322783095070105623107215331596699973092056135872020481", 10)
+	answer[0], _ = new(big.Int).SetString("2466881358002133364822637278001945633159199669109451817445969730922553850042", 10)
+	answer[1], _ = new(big.Int).SetString("1271130375644313270454207628605737994583176473391656197852450822562881214187", 10)
+	pt, err = starkex.EcAdd(point1, point2, filedPrime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 0, pt[0].Cmp(answer[0]))
+	assert.Equal(t, 0, pt[1].Cmp(answer[1]))
+
+	point1[0], _ = new(big.Int).SetString("2466881358002133364822637278001945633159199669109451817445969730922553850042", 10)
+	point1[1], _ = new(big.Int).SetString("1271130375644313270454207628605737994583176473391656197852450822562881214187", 10)
+	point2[0], _ = new(big.Int).SetString("855657745844414012325398643860801166203065495756352613799675558543302817038", 10)
+	point2[1], _ = new(big.Int).SetString("1379036914678019505188657918379814767819231204146554192918997656166330268474", 10)
+	filedPrime, _ = new(big.Int).SetString("3618502788666131213697322783095070105623107215331596699973092056135872020481", 10)
+	answer[0], _ = new(big.Int).SetString("492818067953291127695451335951345651920109890520024940835615895044246976579", 10)
+	answer[1], _ = new(big.Int).SetString("1149842739045414779301434642411812034512038116281457368094778245605718550168", 10)
+	pt, err = starkex.EcAdd(point1, point2, filedPrime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 0, pt[0].Cmp(answer[0]))
+	assert.Equal(t, 0, pt[1].Cmp(answer[1]))
+
+	point1[0], _ = new(big.Int).SetString("492818067953291127695451335951345651920109890520024940835615895044246976579", 10)
+	point1[1], _ = new(big.Int).SetString("1149842739045414779301434642411812034512038116281457368094778245605718550168", 10)
+	point2[0], _ = new(big.Int).SetString("2860710426779608457334569506319606721823380279653117262373857444958848532006", 10)
+	point2[1], _ = new(big.Int).SetString("1390846552016301495855136360351297463700036202880431397235275981413499580322", 10)
+	filedPrime, _ = new(big.Int).SetString("3618502788666131213697322783095070105623107215331596699973092056135872020481", 10)
+	answer[0], _ = new(big.Int).SetString("3135801844875693822174243539459344397133928002790813799052711526459420344361", 10)
+	answer[1], _ = new(big.Int).SetString("1418122846584517037160303273194013812207498515965424206485619182204740913242", 10)
+	pt, err = starkex.EcAdd(point1, point2, filedPrime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 0, pt[0].Cmp(answer[0]))
+	assert.Equal(t, 0, pt[1].Cmp(answer[1]))
+}
+
+func TestGetHash(t *testing.T) {
+	x, _ := new(big.Int).SetString("1093205074515244646656179739104081883720670447274991282058399169276196848522", 10)
+	answer, _ := new(big.Int).SetString("2855274266086995320413009292647740303355258199821409804862117800451140988819", 10)
+	pt, err := starkex.GetHash([]*big.Int{x})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 0, answer.Cmp(pt[0]))
+	x1, _ := new(big.Int).SetString("1471675751746937423994835901984787733034746094072758645529066106420348927196", 10)
+	x2, _ := new(big.Int).SetString("1244395526148093605117595054168172062218752879259769683800039479765231001178", 10)
+	answer, _ = new(big.Int).SetString("3197185028469094583235190523237161761112590433058643901650933274684999410057", 10)
+	pt, err = starkex.GetHash([]*big.Int{x1, x2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 0, answer.Cmp(pt[0]))
+
+	x1, _ = new(big.Int).SetString("3197185028469094583235190523237161761112590433058643901650933274684999410057", 10)
+	x2, _ = new(big.Int).SetString("74171605843675424352885220490031857899938574853322944333809", 10)
+	answer, _ = new(big.Int).SetString("1067101959365932490585603870096257964283976674639120806958374791609453687017", 10)
+	pt, err = starkex.GetHash([]*big.Int{x1, x2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 0, answer.Cmp(pt[0]))
+}
+
+func TestDivMod(t *testing.T) {
+	v, err := starkex.DivMod(big.NewInt(1), big.NewInt(333), big.NewInt(10000))
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 0, v.Cmp(big.NewInt(6997)))
+	vv := new(big.Int).Mul(big.NewInt(333), v)
+	assert.Equal(t, 0, vv.Mod(vv, big.NewInt(10000)).Cmp(big.NewInt(1)))
+	answer, _ := new(big.Int).SetString("1008357535208024310512793551212243230301413101977305291975416549754692247557", 10)
+	n := big.NewInt(10)
+	m, _ := new(big.Int).SetString("1093205074515244646656179739104081883720670447274991282058399169276196848522", 10)
+	p, _ := new(big.Int).SetString("3618502788666131213697322783095070105623107215331596699973092056135872020481", 10)
+
+	v, err = starkex.DivMod(n, m, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 0, answer.Cmp(v))
+	vv = new(big.Int).Mul(m, v)
+	assert.Equal(t, 0, vv.Mod(vv, p).Cmp(n))
+}
+
+func TestSign(t *testing.T) {
+	fmt.Printf("EC_ORDER %s\n", starkex.EC_ORDER)
+	privateKey, _ := new(big.Int).SetString(MOCK_PRIVATE_KEY, 16)
+	fmt.Printf("MOCK_PRIVATE_KEY %s\n", privateKey)
+	msgHash, _ := new(big.Int).SetString("2399267126880666724459410666672606885138497587740885437088147399489673150280", 10)
+	msgHashLen := msgHash.BitLen()
+	fmt.Printf("HASH LEN %d %d\n", msgHashLen, msgHash.BitLen())
+	msgHashLenMod8 := msgHashLen % 8
+	if msgHashLenMod8 >= 1 && msgHashLenMod8 <= 4 && msgHashLen >= 248 {
+		msgHash.Mul(msgHash, big.NewInt(16))
+	}
+	//rfc6979.GenerateSecret(starkex.EC_ORDER, privateKey, sha256.New, msgHash.Bytes(), func(r *big.Int) bool {
+	//	fmt.Printf("RESULT %s\n", r)
+	//	return true
+	//})
 }

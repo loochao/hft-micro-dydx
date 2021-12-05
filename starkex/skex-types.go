@@ -2,7 +2,8 @@ package starkex
 
 import (
 	"encoding/json"
-	"github.com/geometrybase/hft-micro/logger"
+	"fmt"
+	"math"
 	"math/big"
 )
 
@@ -45,37 +46,51 @@ func (pd *pedersenParams) UnmarshalJSON(data []byte) error {
 type EcPoint [2]*big.Int
 
 type StarkwareOrder struct {
-	OrderType                string   `json:"order_type"`
-	AssetIdSynthetic         *big.Int `json:"asset_id_synthetic"`
-	AssetIdCollateral        *big.Int `json:"asset_id_collateral"`
-	AssetIdFee               *big.Int `json:"asset_id_fee"`
-	QuantumsAmountSynthetic  int64    `json:"quantums_amount_synthetic"`
-	QuantumsAmountCollateral int64    `json:"quantums_amount_collateral"`
-	QuantumsAmountFee        int64    `json:"quantums_amount_fee"`
-	IsBuyingSynthetic        bool     `json:"is_buying_synthetic"`
-	PositionId               *big.Int `json:"position_id"`
-	Nonce                    *big.Int `json:"nonce"`
-	ExpirationEpochHours     *big.Int `json:"expiration_epoch_hours"`
+	OrderType                string
+	AssetIdSynthetic         *big.Int
+	AssetIdCollateral        *big.Int
+	AssetIdFee               *big.Int
+	QuantumsAmountSynthetic  *big.Int
+	QuantumsAmountCollateral *big.Int
+	QuantumsAmountFee        *big.Int
+	IsBuyingSynthetic        bool
+	PositionId               *big.Int
+	Nonce                    *big.Int
+	ExpirationEpochHours     *big.Int
+	hash                     *big.Int
 }
 
-func (so *StarkwareOrder) CalculateHash() []byte {
+func (so *StarkwareOrder) Sign(privateKeyHex string) (*big.Int, error) {
+
+	return nil, nil
+}
+
+func (so *StarkwareOrder) GetHash() (*big.Int, error) {
+	if so.hash != nil {
+		return so.hash, nil
+	} else {
+		return so.CalculateHash()
+	}
+}
+
+func (so *StarkwareOrder) CalculateHash() (*big.Int, error) {
 	var asset_id_sell, asset_id_buy, quantums_amount_sell, quantums_amount_buy *big.Int
 	if so.IsBuyingSynthetic {
 		asset_id_sell = so.AssetIdCollateral
 		asset_id_buy = so.AssetIdSynthetic
-		quantums_amount_sell = big.NewInt(so.QuantumsAmountCollateral)
-		quantums_amount_buy = big.NewInt(so.QuantumsAmountSynthetic)
+		quantums_amount_sell = so.QuantumsAmountCollateral
+		quantums_amount_buy = so.QuantumsAmountSynthetic
 	} else {
 		asset_id_sell = so.AssetIdSynthetic
 		asset_id_buy = so.AssetIdCollateral
-		quantums_amount_sell = big.NewInt(so.QuantumsAmountSynthetic)
-		quantums_amount_buy = big.NewInt(so.QuantumsAmountCollateral)
+		quantums_amount_sell = so.QuantumsAmountSynthetic
+		quantums_amount_buy = so.QuantumsAmountCollateral
 	}
 	part_1 := quantums_amount_sell
 	part_1.Lsh(part_1, ORDER_FIELD_BIT_LENGTHS["quantums_amount"])
 	part_1.Add(part_1, quantums_amount_buy)
 	part_1.Lsh(part_1, ORDER_FIELD_BIT_LENGTHS["quantums_amount"])
-	part_1.Add(part_1, big.NewInt(so.QuantumsAmountFee))
+	part_1.Add(part_1, so.QuantumsAmountFee)
 	part_1.Lsh(part_1, ORDER_FIELD_BIT_LENGTHS["nonce"])
 	part_1.Add(part_1, so.Nonce)
 
@@ -88,7 +103,72 @@ func (so *StarkwareOrder) CalculateHash() []byte {
 	part_2.Add(part_2, so.ExpirationEpochHours)
 	part_2.Lsh(part_2, ORDER_PADDING_BITS)
 
-	logger.Debugf("%s %s", asset_id_buy, asset_id_sell)
+	//fmt.Printf("part_1 %s\n", part_1)
+	//fmt.Printf("part_2 %s\n", part_2)
+	//fmt.Printf("asset_id_sell %s\n", asset_id_sell)
+	//fmt.Printf("asset_id_buy %s\n", asset_id_buy)
 
-	return nil
+	assetsHash, err := GetHash([]*big.Int{asset_id_sell, asset_id_buy})
+	if err != nil {
+		return nil, err
+	}
+	//fmt.Printf("assetsHash %s\n", assetsHash[0])
+	//fmt.Printf("AssetIdFee %s\n", so.AssetIdFee)
+	//fmt.Printf("asset_id_sell %s\n", asset_id_sell)
+	//fmt.Printf("asset_id_buy %s\n", asset_id_buy)
+	assetsHash, err = GetHash([]*big.Int{assetsHash[0], so.AssetIdFee})
+	if err != nil {
+		return nil, err
+	}
+	hash, err := GetHash([]*big.Int{assetsHash[0], part_1})
+	if err != nil {
+		return nil, err
+	}
+	hash, err = GetHash([]*big.Int{hash[0], part_2})
+	return hash[0], err
+}
+
+func NewStarkwareOrder(
+	networkId int,
+	market string,
+	side string,
+	positionID int64,
+	humanSize float64,
+	humanPrice float64,
+	limitFee float64,
+	clientID string,
+	expirationEpochSeconds int64,
+) (order *StarkwareOrder, err error) {
+
+	syntheticAsset, ok := SYNTHETIC_ASSET_MAP[market]
+	if !ok {
+		return nil, fmt.Errorf("%s no found in SYNTHETIC_ASSET_MAP", market)
+	}
+	order = &StarkwareOrder{}
+	order.OrderType = "LIMIT_ORDER_WITH_FEES"
+	order.AssetIdSynthetic = SYNTHETIC_ASSET_ID_MAP[syntheticAsset]
+	order.AssetIdCollateral = COLLATERAL_ASSET_ID_BY_NETWORK_ID[networkId]
+	order.AssetIdFee = COLLATERAL_ASSET_ID_BY_NETWORK_ID[networkId]
+	order.IsBuyingSynthetic = side == ORDER_SIDE_BUY
+	order.QuantumsAmountSynthetic, err = ToQuantumsExact(humanSize, syntheticAsset)
+	if err != nil {
+		return
+	}
+	if order.IsBuyingSynthetic {
+		humanCost := humanPrice * humanSize
+		order.QuantumsAmountCollateral = ToQuantumsRoundUp(humanCost, COLLATERAL_ASSET)
+	} else {
+		humanCost := humanPrice * humanSize
+		order.QuantumsAmountCollateral = ToQuantumsRoundDown(humanCost, COLLATERAL_ASSET)
+	}
+	// The limitFee is a fraction, e.g. 0.01 is a 1 % fee.
+	// It is always paid in the collateral asset.
+	// Constrain the limit fee to six decimals of precision.
+	// The final fee amount must be rounded up.
+	limitFeeRounded := math.Floor(limitFee*1000000) / 1000000
+	order.QuantumsAmountFee = big.NewInt(int64(math.Ceil(limitFeeRounded * float64(order.QuantumsAmountCollateral.Int64()))))
+	order.PositionId = big.NewInt(positionID)
+	order.Nonce = NonceFromClientId([]byte(clientID))
+	order.ExpirationEpochHours = big.NewInt(int64(math.Ceil(float64(expirationEpochSeconds)/ONE_HOUR_IN_SECONDS)) + ORDER_SIGNATURE_EXPIRATION_BUFFER_HOURS)
+	return
 }

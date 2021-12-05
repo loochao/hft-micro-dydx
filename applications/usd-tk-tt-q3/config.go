@@ -85,6 +85,7 @@ type Config struct {
 	SpreadWalkDelay time.Duration `yaml:"spreadWalkDelay"`
 
 	XOrderSilent           time.Duration           `yaml:"xOrderSilent"`
+	XOrderCancelAfter      time.Duration           `yaml:"xOrderCancelAfter"`
 	XOrderTimeInForce      common.OrderTimeInForce `yaml:"xOrderTimeInForce"`
 	YOrderTimeInForce      common.OrderTimeInForce `yaml:"yOrderTimeInForce"`
 	YOrderSilent           time.Duration           `yaml:"yOrderSilent"`
@@ -109,7 +110,7 @@ type Config struct {
 	EnterMinimalStep      float64       `yaml:"enterMinimalStep"`
 	EnterTargetFactor     float64       `yaml:"enterTargetFactor"`
 	//EnterWithProfitConfirms    bool               `yaml:"enterWithProfitConfirms"`
-	StartValues                map[string]float64 `yaml:"startValues"`
+	StartValues map[string]float64 `yaml:"startValues"`
 	//TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`
 
 	XYPairs            map[string]string  `yaml:"xyPairs"`
