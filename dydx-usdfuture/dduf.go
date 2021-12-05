@@ -761,7 +761,12 @@ func (dd *DydxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderP
 		newOrderParam.Price = param.Price
 	}
 	newOrderParam.ClientId = param.ClientID
-	newOrderParam.Expiration = time.Now().UTC().Add(time.Hour * 24).Format(TimeLayout)
+	if param.CancelAfter != 0 {
+		newOrderParam.Expiration = time.Now().UTC().Add(param.CancelAfter).Format(TimeLayout)
+		newOrderParam.TimeInForce = OrderTimeInForceGTT
+	}else{
+		newOrderParam.Expiration = time.Now().UTC().Add(time.Hour * 24).Format(TimeLayout)
+	}
 	newOrderParam.LimitFee = 0.0015
 	dd.mu.Lock()
 	newOrderParam.PositionID = dd.settings.PositionID

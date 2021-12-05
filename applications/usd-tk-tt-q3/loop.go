@@ -37,27 +37,24 @@ func (strat *XYStrategy) handleXOrder() {
 		strat.xOrder.GetStatus() == common.OrderStatusCancelled ||
 		strat.xOrder.GetStatus() == common.OrderStatusFilled ||
 		strat.xOrder.GetStatus() == common.OrderStatusPartiallyFilled {
-
+		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		if strat.xOrder.GetStatus() != common.OrderStatusFilled &&
 			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled {
 			logger.Debugf("%10s x %s order %s %s", strat.xOrder.GetSymbol(), strat.xOrder.GetSide(), strat.xOrder.GetClientID(), strat.xOrder.GetStatus())
-			strat.xPositionUpdateTime = time.Unix(0, 0)
-			strat.xOrderSilentTime = time.Now()
+			//strat.xPositionUpdateTime = time.Unix(0, 0)
 		} else {
 			logger.Debugf("%10s x order filled %s %s size %f price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice()*strat.xMultiplier)
-			strat.realisedSpreadTimer.Reset(time.Second * 5)
+			strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)
 			if strat.xOrder.GetSide() == common.OrderSideBuy {
 				if strat.xLastFilledBuyPrice == nil {
 					strat.xLastFilledBuyPrice = new(float64)
 				}
 				*strat.xLastFilledBuyPrice = strat.xOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)
 			} else if strat.xOrder.GetSide() == common.OrderSideSell {
 				if strat.xLastFilledSellPrice == nil {
 					strat.xLastFilledSellPrice = new(float64)
 				}
 				*strat.xLastFilledSellPrice = strat.xOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)
 			}
 		}
 	}
@@ -86,18 +83,17 @@ func (strat *XYStrategy) handleYOrder() {
 			}
 		} else {
 			logger.Debugf("%10s y order filled %s %s size %f price %f value %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice(), strat.yOrder.GetFilledPrice()*strat.yOrder.GetFilledSize()*strat.yMultiplier)
+			strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)
 			if strat.yOrder.GetSide() == common.OrderSideBuy {
 				if strat.yLastFilledBuyPrice == nil {
 					strat.yLastFilledBuyPrice = new(float64)
 				}
 				*strat.yLastFilledBuyPrice = strat.yOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)
 			} else if strat.yOrder.GetSide() == common.OrderSideSell {
 				if strat.yLastFilledSellPrice == nil {
 					strat.yLastFilledSellPrice = new(float64)
 				}
 				*strat.yLastFilledSellPrice = strat.yOrder.GetFilledPrice()
-				strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)
 			}
 		}
 	}

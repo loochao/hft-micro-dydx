@@ -171,6 +171,7 @@ func (strat *XYStrategy) updateXPosition() {
 				PostOnly:    false,
 				ReduceOnly:  true,
 				ClientID:    strat.xExchange.GenerateClientID(),
+				CancelAfter: strat.config.XOrderSilent,
 			}
 			if !strat.config.DryRun {
 				select {
@@ -253,6 +254,7 @@ func (strat *XYStrategy) updateXPosition() {
 				PostOnly:    false,
 				ReduceOnly:  true,
 				ClientID:    strat.xExchange.GenerateClientID(),
+				CancelAfter: strat.config.XOrderSilent,
 			}
 			if !strat.config.DryRun {
 				select {
@@ -387,6 +389,7 @@ func (strat *XYStrategy) updateXPosition() {
 			PostOnly:    false,
 			ReduceOnly:  false,
 			ClientID:    strat.xExchange.GenerateClientID(),
+			CancelAfter: strat.config.XOrderSilent,
 		}
 		if !strat.config.DryRun {
 			select {
@@ -518,6 +521,7 @@ func (strat *XYStrategy) updateXPosition() {
 			PostOnly:    false,
 			ReduceOnly:  false,
 			ClientID:    strat.xExchange.GenerateClientID(),
+			CancelAfter: strat.config.XOrderSilent,
 		}
 		if !strat.config.DryRun {
 			select {
