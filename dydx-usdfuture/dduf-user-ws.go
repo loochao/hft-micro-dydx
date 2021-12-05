@@ -232,7 +232,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 					logger.Debugf("w.trafficCh <- nil: failed, len %d", len(w.trafficCh))
 				}
 			case "channel_data":
-				logger.Debugf("%s", msg)
+				//logger.Debugf("%s", msg)
 				wsUserChannelData := &WSUserChannelData{}
 				err = json.Unmarshal(wsCap.Contents, wsUserChannelData)
 				if err != nil {
