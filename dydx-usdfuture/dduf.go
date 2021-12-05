@@ -14,12 +14,12 @@ import (
 )
 
 type DydxUsdFuture struct {
-	done     chan interface{}
-	stopped  int32
-	mu       sync.Mutex
-	api      *API
+	done        chan interface{}
+	stopped     int32
+	mu          sync.Mutex
+	api         *API
 	priceFactor *common.AtomicFloat64
-	settings common.ExchangeSettings
+	settings    common.ExchangeSettings
 }
 
 func (dd *DydxUsdFuture) GetPriceFactor() float64 {
@@ -232,7 +232,7 @@ func (dd *DydxUsdFuture) StreamBasic(ctx context.Context, statusCh chan common.S
 	var commissionAssetTimer = time.NewTimer(time.Second)
 	//matchedOrders := make(map[string]Order)
 	accountNumber := dd.settings.AccountNumber
-	accountNumberWithQuote :=  fmt.Sprintf("\"%s\"", accountNumber)
+	accountNumberWithQuote := fmt.Sprintf("\"%s\"", accountNumber)
 	for {
 		select {
 		case <-userWS.Done():
@@ -761,11 +761,9 @@ func (dd *DydxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderP
 		newOrderParam.Price = param.Price
 	}
 	newOrderParam.ClientId = param.ClientID
+	newOrderParam.Expiration = time.Now().UTC().Add(time.Hour * 24).Format(TimeLayout)
 	if param.CancelAfter != 0 {
-		newOrderParam.Expiration = time.Now().UTC().Add(param.CancelAfter).Format(TimeLayout)
 		newOrderParam.TimeInForce = OrderTimeInForceGTT
-	}else{
-		newOrderParam.Expiration = time.Now().UTC().Add(time.Hour * 24).Format(TimeLayout)
 	}
 	newOrderParam.LimitFee = 0.0015
 	dd.mu.Lock()
@@ -780,6 +778,16 @@ func (dd *DydxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderP
 		}:
 		default:
 			logger.Debugf("errCh <- common.OrderError failed, ch len %d", len(errCh))
+		}
+	} else if param.CancelAfter != 0 {
+		select {
+		case <-time.After(param.CancelAfter):
+			_, err = dd.api.CancelOrders(ctx, &CancelOrdersParam{
+				Market: newOrderParam.Market,
+			})
+			if err != nil {
+				logger.Debugf("CancelOrders error %v", err)
+			}
 		}
 	}
 }

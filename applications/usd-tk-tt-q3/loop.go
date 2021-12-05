@@ -37,12 +37,13 @@ func (strat *XYStrategy) handleXOrder() {
 		strat.xOrder.GetStatus() == common.OrderStatusCancelled ||
 		strat.xOrder.GetStatus() == common.OrderStatusFilled ||
 		strat.xOrder.GetStatus() == common.OrderStatusPartiallyFilled {
-		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		if strat.xOrder.GetStatus() != common.OrderStatusFilled &&
 			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled {
 			logger.Debugf("%10s x %s order %s %s", strat.xOrder.GetSymbol(), strat.xOrder.GetSide(), strat.xOrder.GetClientID(), strat.xOrder.GetStatus())
 			//strat.xPositionUpdateTime = time.Unix(0, 0)
+			strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 		} else {
+			strat.xOrderSilentTime = time.Now()
 			logger.Debugf("%10s x order filled %s %s size %f price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice()*strat.xMultiplier)
 			strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)
 			if strat.xOrder.GetSide() == common.OrderSideBuy {
