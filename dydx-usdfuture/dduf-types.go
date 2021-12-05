@@ -313,14 +313,18 @@ func (o *Order) GetStatus() common.OrderStatus {
 	switch o.Status {
 	case OrderStatusCanceled:
 		if o.CancelReason != nil && *o.CancelReason == "IMMEDIATE_OR_CANCEL_PARTIALLY_FILLED" {
-			return common.OrderStatusPartiallyFilled
+			return common.OrderStatusPartiallyFilledAndCanceled
 		} else {
 			return common.OrderStatusCancelled
 		}
 	case OrderStatusFilled:
 		return common.OrderStatusFilled
 	case OrderStatusOpen:
-		return common.OrderStatusOpen
+		if o.RemainingSize < o.Size {
+			return common.OrderStatusPartiallyFilled
+		}else{
+			return common.OrderStatusOpen
+		}
 	case OrderStatusPending:
 		return common.OrderStatusNew
 	default:

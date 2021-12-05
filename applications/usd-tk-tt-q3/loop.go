@@ -36,6 +36,7 @@ func (strat *XYStrategy) handleXOrder() {
 		strat.xOrder.GetStatus() == common.OrderStatusReject ||
 		strat.xOrder.GetStatus() == common.OrderStatusCancelled ||
 		strat.xOrder.GetStatus() == common.OrderStatusFilled ||
+		strat.xOrder.GetStatus() == common.OrderStatusPartiallyFilledAndCanceled ||
 		strat.xOrder.GetStatus() == common.OrderStatusPartiallyFilled {
 
 		//order silent after order end
