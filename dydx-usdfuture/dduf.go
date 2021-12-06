@@ -7,6 +7,8 @@ import (
 	binance_usdtspot "github.com/geometrybase/hft-micro/binance-usdtspot"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"github.com/geometrybase/hft-micro/starkex"
+	"math/big"
 	"math/rand"
 	"sync"
 	"sync/atomic"
@@ -707,6 +709,11 @@ func (dd *DydxUsdFuture) watchOrder(
 	responseCh chan common.Order,
 	errorCh chan common.OrderError,
 ) {
+	netWorkId := starkex.NETWORK_ID_MAINNET
+	privateKey, ok := new(big.Int).SetString(dd.settings.ApiStarkPrivateKey, 16)
+	if !ok {
+		logger.Fatalf("bad stark private key %s", dd.settings.ApiStarkPrivateKey)
+	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -727,7 +734,7 @@ func (dd *DydxUsdFuture) watchOrder(
 					}
 					continue
 				}
-				dd.submitOrder(ctx, *req.New, responseCh, errorCh)
+				dd.submitOrder(ctx, netWorkId, privateKey, *req.New, responseCh, errorCh)
 			} else if req.Cancel != nil {
 				dd.cancelOrder(ctx, *req.Cancel, errorCh)
 			}
@@ -735,7 +742,8 @@ func (dd *DydxUsdFuture) watchOrder(
 	}
 }
 
-func (dd *DydxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
+func (dd *DydxUsdFuture) submitOrder(ctx context.Context, netWorkId int, privateKey *big.Int, param common.NewOrderParam, respCh chan common.Order, errCh chan common.OrderError) {
+	var err error
 	newOrderParam := NewOrderParams{}
 	newOrderParam.Market = param.Symbol
 	newOrderParam.Size = param.Size
@@ -762,14 +770,25 @@ func (dd *DydxUsdFuture) submitOrder(ctx context.Context, param common.NewOrderP
 	}
 	newOrderParam.ClientId = param.ClientID
 	newOrderParam.Expiration = time.Now().UTC().Add(time.Hour * 24).Format(TimeLayout)
+	newOrderParam.ExpirationEpochSeconds = time.Now().UTC().Add(time.Hour * 24).Unix()
 	if param.CancelAfter != 0 {
 		newOrderParam.TimeInForce = OrderTimeInForceGTT
 	}
 	newOrderParam.LimitFee = 0.0015
-	dd.mu.Lock()
 	newOrderParam.PositionID = dd.settings.PositionID
-	dd.mu.Unlock()
-	_, err := dd.api.CreateOrder(ctx, &newOrderParam)
+	err = newOrderParam.SetSignature(netWorkId, privateKey)
+	if err != nil {
+		select {
+		case errCh <- common.OrderError{
+			New:   &param,
+			Error: err,
+		}:
+		default:
+			logger.Debugf("errCh <- common.OrderError failed, ch len %d", len(errCh))
+		}
+		return
+	}
+	_, err = dd.api.CreateOrderByPython(ctx, &newOrderParam)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{

@@ -2,6 +2,7 @@ package starkex_test
 
 import (
 	"fmt"
+	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/starkex"
 	"github.com/stretchr/testify/assert"
 	"math/big"
@@ -10,12 +11,13 @@ import (
 )
 
 const (
-	MOCK_PUBLIC_KEY        = "3b865a18323b8d147a12c556bfb1d502516c325b1477a23ba6c77af31f020fd"
-	MOCK_PRIVATE_KEY       = "58c7d5a90b1776bde86ebac077e053ed85b0f7164f53b080304a531947f46e3"
 	MOCK_SIGNATURE         = "00cecbe513ecdbf782cd02b2a5efb03e58d5f63d15f2b840e9bc0029af04e8dd0090b822b16f50b2120e4ea9852b340f7936ff6069d02acca02f2ed03029ace5"
 	MOCK_PUBLIC_KEY_EVEN_Y = "5c749cd4c44bdc730bc90af9bfbdede9deb2c1c96c05806ce1bc1cb4fed64f7"
 	MOCK_SIGNATURE_EVEN_Y  = "00fc0756522d78bef51f70e3981dc4d1e82273f59cdac6bc31c5776baabae6ec0158963bfd45d88a99fb2d6d72c9bbcf90b24c3c0ef2394ad8d05f9d3983443a"
 )
+
+var MOCK_PUBLIC_KEY, _ = new(big.Int).SetString("3b865a18323b8d147a12c556bfb1d502516c325b1477a23ba6c77af31f020fd", 16)
+var MOCK_PRIVATE_KEY, _ = new(big.Int).SetString("58c7d5a90b1776bde86ebac077e053ed85b0f7164f53b080304a531947f46e3", 16)
 
 func TestHashOrder(t *testing.T) {
 	tt, err := time.Parse("2006-01-02T15:04:05.999Z", "2020-09-17T04:15:55.028Z")
@@ -44,12 +46,39 @@ func TestHashOrder(t *testing.T) {
 	assert.Equal(t, 0, answer.Cmp(hash))
 }
 
+func BenchmarkHashOrder(b *testing.B) {
+	tt, err := time.Parse("2006-01-02T15:04:05.999Z", "2020-09-17T04:15:55.028Z")
+	if err != nil {
+		b.Fatal(err)
+	}
+	for i := 0; i < b.N; i++ {
+		so, err := starkex.NewStarkwareOrder(
+			starkex.NETWORK_ID_ROPSTEN,
+			starkex.MARKET_ETH_USD,
+			starkex.ORDER_SIDE_BUY,
+			12345,
+			145.0005,
+			350.00067,
+			0.125,
+			"This is an ID that the client came up with to describe this order",
+			tt.Unix(),
+		)
+		if err != nil {
+			b.Fatal(err)
+		}
+		_, err = so.CalculateHash()
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func TestSignOrder(t *testing.T) {
 	tt, err := time.Parse("2006-01-02T15:04:05.999Z", "2020-09-17T04:15:55.028Z")
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = starkex.NewStarkwareOrder(
+	so, err := starkex.NewStarkwareOrder(
 		starkex.NETWORK_ID_ROPSTEN,
 		starkex.MARKET_ETH_USD,
 		starkex.ORDER_SIDE_BUY,
@@ -64,16 +93,41 @@ func TestSignOrder(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	maxValue, _ := new(big.Int).SetString("3618502788666131106986593281521497120414687020801267626233049500247285301248", 10)
-	fmt.Printf("%s\n", maxValue)
-	fmt.Printf("%s\n", starkex.N_ELEMENT_BITS_ECDSA_MAX_VALUE)
-	fmt.Printf("%d\n", maxValue.Cmp(starkex.N_ELEMENT_BITS_ECDSA_MAX_VALUE))
-	//hash, err := order.CalculateHash()
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//answer, _ := new(big.Int).SetString("2399267126880666724459410666672606885138497587740885437088147399489673150280", 10)
-	//assert.Equal(t, 0, answer.Cmp(hash))
+	sg, err := so.Sign(MOCK_PRIVATE_KEY)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, MOCK_SIGNATURE, sg)
+}
+
+func BenchmarkSignOrder(b *testing.B) {
+	tt, err := time.Parse("2006-01-02T15:04:05.999Z", "2020-09-17T04:15:55.028Z")
+	if err != nil {
+		b.Fatal(err)
+	}
+	so, err := starkex.NewStarkwareOrder(
+		starkex.NETWORK_ID_ROPSTEN,
+		starkex.MARKET_ETH_USD,
+		starkex.ORDER_SIDE_BUY,
+		12345,
+		145.0005,
+		350.00067,
+		0.125,
+		"This is an ID that the client came up with to describe this order",
+		tt.Unix(),
+	)
+	if err != nil {
+		b.Fatal(err)
+	}
+	errCount := 0.0
+	for i := 0; i < b.N; i++ {
+		_, err = so.Sign(MOCK_PRIVATE_KEY)
+		if err != nil {
+			errCount ++
+			//b.Fatal(err)
+		}
+	}
+	logger.Debugf("%f", errCount/float64(b.N))
 }
 
 func TestGCD(t *testing.T) {
@@ -198,21 +252,4 @@ func TestDivMod(t *testing.T) {
 	assert.Equal(t, 0, vv.Mod(vv, p).Cmp(n))
 }
 
-func TestSign(t *testing.T) {
-	fmt.Printf("EC_ORDER %s\n", starkex.EC_ORDER)
-	privateKey, _ := new(big.Int).SetString(MOCK_PRIVATE_KEY, 16)
-	fmt.Printf("MOCK_PRIVATE_KEY %s\n", privateKey)
-	msgHash, _ := new(big.Int).SetString("2399267126880666724459410666672606885138497587740885437088147399489673150280", 10)
-	r, err := starkex.GoSign(msgHash, privateKey, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Printf("%s\n", r)
-	fmt.Printf("%x\n", r[0])
-	fmt.Printf("%x\n", r[1])
 
-	//rfc6979.GenerateSecret(starkex.EC_ORDER, privateKey, sha256.New, msgHash.Bytes(), func(r *big.Int) bool {
-	//	fmt.Printf("RESULT %s\n", r)
-	//	return true
-	//})
-}

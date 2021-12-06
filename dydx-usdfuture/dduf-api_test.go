@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"github.com/geometrybase/hft-micro/starkex"
 	"math"
+	"math/big"
+	"math/rand"
 	"os"
 	"sort"
 	"strconv"
@@ -185,23 +188,62 @@ func TestAPI_CancelOrders(t *testing.T) {
 	logger.Debugf("%v", account)
 }
 
-func TestAPI_CreateOrders(t *testing.T) {
+func TestAPI_CreateOrder(t *testing.T) {
+	api, err := NewAPI(Credentials{
+		ApiKey:          os.Getenv("DYDX_TEST_KEY"),
+		ApiSecret:       os.Getenv("DYDX_TEST_SECRET"),
+		ApiPassphrase:   os.Getenv("DYDX_TEST_PASSPHRASE"),
+		AccountID:       os.Getenv("DYDX_TEST_ACCOUNT_ID"),
+		StarkPrivateKey: os.Getenv("DYDX_TEST_STARK_PRIVATE_KEY"),
+	}, "socks5://127.0.0.1:1081")
+	if err != nil {
+		t.Fatal(err)
+	}
+	starkPrivateKey, _ := new(big.Int).SetString(os.Getenv("DYDX_TEST_STARK_PRIVATE_KEY"), 16)
+	nop := NewOrderParams{
+		PositionID:             119684,
+		Market:                 "BTC-USD",
+		Type:                   OrderTypeLimit,
+		Side:                   OrderSideBuy,
+		PostOnly:               true,
+		TimeInForce:            TIME_IN_FORCE_GTT,
+		LimitFee:               0.001,
+		Price:                  45000,
+		Size:                   0.001,
+		ClientId:  fmt.Sprintf("%d%04d", time.Now().Unix(), rand.Intn(10000)),
+		Expiration:             time.Now().UTC().Add(time.Hour).Format(TimeLayout),
+		ExpirationEpochSeconds: time.Now().UTC().Add(time.Hour).Unix(),
+	}
+	err = nop.SetSignature(starkex.NETWORK_ID_MAINNET, starkPrivateKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	o, err := api.CreateOrder(ctx, &nop)
+	if err != nil {
+		t.Fatal(err)
+	}
+	logger.Debugf("%v", o)
+}
+
+func TestAPI_CreateOrderByPython(t *testing.T) {
 	err := os.Setenv("DYDX_PYTHON_URL", "http://127.0.0.1:5000/")
 	if err != nil {
 		t.Fatal(err)
 	}
 	api, err := NewAPI(Credentials{
-		ApiKey:        os.Getenv("DYDX_TEST_KEY"),
-		ApiSecret:     os.Getenv("DYDX_TEST_SECRET"),
-		ApiPassphrase: os.Getenv("DYDX_TEST_PASSPHRASE"),
-		AccountID:     os.Getenv("DYDX_TEST_ACCOUNT_ID"),
+		ApiKey:          os.Getenv("DYDX_TEST_KEY"),
+		ApiSecret:       os.Getenv("DYDX_TEST_SECRET"),
+		ApiPassphrase:   os.Getenv("DYDX_TEST_PASSPHRASE"),
+		AccountID:       os.Getenv("DYDX_TEST_ACCOUNT_ID"),
+		StarkPrivateKey: os.Getenv("DYDX_TEST_STARK_PRIVATE_KEY"),
 	}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	account, err := api.CreateOrder(ctx, &NewOrderParams{
-		PositionID: "119684",
+	account, err := api.CreateOrderByPython(ctx, &NewOrderParams{
+		PositionID: 119684,
 		Market:     "BTC-USD",
 		Type:       OrderTypeLimit,
 		Side:       OrderSideBuy,

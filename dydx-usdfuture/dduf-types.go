@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
+	"github.com/geometrybase/hft-micro/starkex"
+	"math/big"
 	"net/url"
 	"strconv"
 	"time"
@@ -322,7 +324,7 @@ func (o *Order) GetStatus() common.OrderStatus {
 	case OrderStatusOpen:
 		if o.RemainingSize < o.Size {
 			return common.OrderStatusPartiallyFilled
-		}else{
+		} else {
 			return common.OrderStatusOpen
 		}
 	case OrderStatusPending:
@@ -421,26 +423,67 @@ type CancelOrdersResp struct {
 }
 
 type NewOrderParams struct {
-	PositionID  string  `json:"position_id,omitempty"`
-	Market      string  `json:"market,omitempty"`
-	Side        string  `json:"side,omitempty"`
-	Type        string  `json:"order_type,omitempty"`
-	PostOnly    bool    `json:"post_only,omitempty"`
-	Size        float64 `json:"size,string,omitempty"`
-	Price       float64 `json:"price,string,omitempty"`
-	LimitFee    float64 `json:"limit_fee,string,omitempty"`
-	Expiration  string  `json:"expiration,omitempty"`
-	ClientId    string  `json:"client_id,omitempty"`
-	TimeInForce string  `json:"time_in_force"`
+	Market                 string  `json:"market,omitempty"`
+	Side                   string  `json:"side,omitempty"`
+	Type                   string  `json:"type,omitempty"`
+	TimeInForce            string  `json:"timeInForce"`
+	Size                   float64 `json:"size,string,omitempty"`
+	Price                  float64 `json:"price,string,omitempty"`
+	LimitFee               float64 `json:"limitFee,string,omitempty"`
+	Expiration             string  `json:"expiration,omitempty"`
+	PostOnly               bool    `json:"postOnly,omitempty"`
+	ClientId               string  `json:"clientId,omitempty"`
+	Signature              string  `json:"signature"`
+
+	PositionID             int64   `json:"-"`
+	ExpirationEpochSeconds int64   `json:"-"`
 }
 
-func (nop *NewOrderParams) MarshalJSON() ([]byte, error) {
-	jsonStr := fmt.Sprintf(
-		`{"position_id": "%s", "market": "%s", "side": "%s", "order_type": "%s", "post_only": %v, "size": "%s", "price": "%s", "limit_fee": "%.4f", "expiration": "%s", "client_id": "%s", "time_in_force": "%s"}`,
+func (nop *NewOrderParams) SetSignature(networkId int, privateKey *big.Int) error{
+	nso, err := starkex.NewStarkwareOrder(
+		networkId,
+		nop.Market,
+		nop.Side,
 		nop.PositionID,
+		nop.Size,
+		nop.Price,
+		nop.LimitFee,
+		nop.ClientId,
+		nop.ExpirationEpochSeconds,
+	)
+	if err != nil {
+		return err
+	}
+	nop.Signature, err =  nso.Sign(privateKey)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (nop *NewOrderParams) ToUrlValues() url.Values {
+	v := url.Values{}
+	v.Set("market", nop.Market)
+	v.Set("side", nop.Side)
+	v.Set("type", nop.Type)
+	v.Set("timeInForce", nop.TimeInForce)
+	v.Set("size", (string)(common.FormatByPrecision(nop.Size, StepPrecisions[nop.Market])))
+	v.Set("price", (string)(common.FormatByPrecision(nop.Price, TickPrecisions[nop.Market])))
+	v.Set("limitFee", fmt.Sprintf("%.4f", nop.LimitFee))
+	v.Set("expiration", nop.Expiration)
+	v.Set("postOnly", fmt.Sprintf("%v", nop.PostOnly))
+	v.Set("clientId", nop.ClientId)
+	v.Set("signature", nop.Signature)
+	return v
+}
+
+func (nop *NewOrderParams) ToJsonForPython() ([]byte, error) {
+	jsonStr := fmt.Sprintf(
+		`{"market": "%s", "side": "%s", "type": "%s", "position_id": "%d",    "post_only": %v, "size": "%s", "price": "%s", "limit_fee": "%.4f", "expiration": "%s", "client_id": "%s", "time_in_force": "%s"}`,
 		nop.Market,
 		nop.Side,
 		nop.Type,
+		nop.PositionID,
 		nop.PostOnly,
 		common.FormatByPrecision(nop.Size, StepPrecisions[nop.Market]),
 		common.FormatByPrecision(nop.Price, TickPrecisions[nop.Market]),
@@ -646,10 +689,10 @@ type ServerTime struct {
 
 type User struct {
 	User struct {
-		EthereumAddress string `json:"ethereumAddress"`
-		IsRegistered    bool   `json:"isRegistered"`
-		Email           string `json:"email"`
-		Username        string `json:"username"`
+		EthereumAddress         string  `json:"ethereumAddress"`
+		IsRegistered            bool    `json:"isRegistered"`
+		Email                   string  `json:"email"`
+		Username                string  `json:"username"`
 		MakerFeeRate            float64 `json:"makerFeeRate,string"`
 		TakerFeeRate            float64 `json:"takerFeeRate,string"`
 		MakerVolume30D          float64 `json:"makerVolume30D,string"`

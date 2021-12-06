@@ -60,9 +60,29 @@ type StarkwareOrder struct {
 	hash                     *big.Int
 }
 
-func (so *StarkwareOrder) Sign(privateKeyHex string) (*big.Int, error) {
-
-	return nil, nil
+func (so *StarkwareOrder) Sign(privateKeyHex *big.Int) (string, error) {
+	hash, err := so.GetHash()
+	if err != nil {
+		return "", err
+	}
+	//logger.Debugf("%s", hash)
+	if err != nil {
+		return "", err
+	}
+	r, err := GoSign(hash, privateKeyHex, nil)
+	if err != nil {
+		return "", err
+	}
+	r1, err := IntToHex32(r[0])
+	if err != nil {
+		return "", err
+	}
+	r2, err := IntToHex32(r[1])
+	if err != nil {
+		return "", err
+	}
+	//logger.Debugf("%s", hash)
+	return r1+r2, nil
 }
 
 func (so *StarkwareOrder) GetHash() (*big.Int, error) {

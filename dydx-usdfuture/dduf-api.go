@@ -80,6 +80,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 			return err
 		}
 		bodyStr = string(bodyData)
+		logger.Debugf("%s", bodyStr)
 	}
 	signature := fmt.Sprintf(
 		"%s%s%s%s",
@@ -101,6 +102,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	if err != nil {
 		return err
 	}
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("DYDX-SIGNATURE", signStr)
 	req.Header.Add("DYDX-API-KEY", credentials.ApiKey)
 	req.Header.Add("DYDX-PASSPHRASE", credentials.ApiPassphrase)
@@ -112,8 +114,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	reader := resp.Body
 	contents, err := ioutil.ReadAll(reader)
 	if method == http.MethodPost {
-		logger.Debugf("%s %s %s", method, path, bodyStr)
-		logger.Debugf("%s", contents)
+		logger.Debugf("%s %s %s %s", method, path, bodyStr, contents)
 	}else{
 		//logger.Debugf("%s", contents)
 	}
@@ -217,11 +218,11 @@ func (api *API) GetOrders(ctx context.Context) ([]Order, error) {
 		or,
 	)
 }
-func (api *API) CreateOrder(ctx context.Context, params *NewOrderParams) (*Order, error) {
+func (api *API) CreateOrderByPython(ctx context.Context, params *NewOrderParams) (*Order, error) {
 	if os.Getenv("DYDX_PYTHON_URL") == "" {
 		panic("DYDX_PYTHON_URL not fund")
 	} else {
-		postData, err := json.Marshal(params)
+		postData, err := params.ToJsonForPython()
 		if err != nil {
 			return nil, err
 		}
@@ -254,6 +255,19 @@ func (api *API) CreateOrder(ctx context.Context, params *NewOrderParams) (*Order
 		err = json.Unmarshal(contents, or)
 		return &or.Order, err
 	}
+}
+
+
+func (api *API) CreateOrder(ctx context.Context, params *NewOrderParams) (*Order, error) {
+	or := &CreateOrderResp{}
+	return &or.Order, api.SendAuthenticatedHTTPRequest(
+		ctx,
+		http.MethodPost,
+		"/v3/orders",
+		nil,
+		params,
+		or,
+	)
 }
 
 func (api *API) CancelOrders(ctx context.Context, params *CancelOrdersParam) ([]Order, error) {

@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/rfc6979"
 	"math"
 	"math/big"
@@ -75,13 +74,13 @@ func EcMult(m *big.Int, point [2]*big.Int, alpha, p *big.Int) (result [2]*big.In
 	x := new(big.Int).Mod(m, big.NewInt(2))
 	if len(x.Bits()) == 0 {
 		x = x.Div(m, big.NewInt(2))
-		logger.Debugf("ec double input %s %s %s", point, alpha, p)
+		//logger.Debugf("ec double input %s %s %s", point, alpha, p)
 		var d [2]*big.Int
 		d, err = EcDouble(point, alpha, p)
 		if err != nil {
 			return
 		}
-		logger.Debugf("ec double %s", d)
+		//logger.Debugf("ec double %s", d)
 		return EcMult(x, d, alpha, p)
 	}
 	x = x.Sub(m, big.NewInt(1))
@@ -218,15 +217,10 @@ func GoSign(msgHash, privateKey, seed *big.Int) (result [2]*big.Int, _ error) {
 		} else {
 			seed.And(seed, big.NewInt(1))
 		}
-		logger.Debugf("K %s", k)
-		logger.Debugf("EC_GEN %s", EC_GEN)
-		logger.Debugf("ALPHA %s", ALPHA)
-		logger.Debugf("FIELD_PRIME %s", FIELD_PRIME)
 		// Cannot fail because 0 < k < EC_ORDER and EC_ORDER is prime.
 		x, _ := EcMult(k, EC_GEN, ALPHA, FIELD_PRIME)
 		r := x[0]
 
-		logger.Debugf("R %s", r)
 
 		if r.Cmp(big.NewInt(0)) <= 0 || r.Cmp(N_ELEMENT_BITS_ECDSA_MAX_VALUE) >= 0 {
 			// Bad value. This fails with negligible probability.
@@ -234,8 +228,7 @@ func GoSign(msgHash, privateKey, seed *big.Int) (result [2]*big.Int, _ error) {
 		}
 		y := new(big.Int).Mul(r, privateKey)
 		y = y.Add(msgHash, y)
-		y = y.Mod(y, EC_ORDER)
-		if len(y.Bits()) == 0 {
+		if len(new(big.Int).Mod(y, EC_ORDER).Bits()) == 0 {
 			//ad value. This fails with negligible probability.
 			continue
 		}
@@ -258,28 +251,27 @@ func generateSecretRfc6979(msgHash, privateKey, seed *big.Int) (result *big.Int)
 	msgHashLen := msgHash.BitLen()
 	msgHashLenMod8 := msgHashLen % 8
 	if msgHashLenMod8 >= 1 && msgHashLenMod8 <= 4 && msgHashLen >= 248 {
-		msgHash.Mul(msgHash, big.NewInt(16))
+		msgHash = new(big.Int).Mul(msgHash, big.NewInt(16))
 	}
 	extraEntropy := make([]byte, 0)
 	if seed != nil {
 		extraEntropy = seed.Bytes()
 	}
 	rfc6979.GenerateSecret(EC_ORDER, privateKey, sha256.New, msgHash.Bytes(), extraEntropy, func(r *big.Int) bool {
-		fmt.Printf("RESULT %s\n", r)
 		result = r
 		return true
 	})
 	return
 }
 
-//func IntToHex32(x *big.Int)([]byte, error){
-//	//Normalize to a 32-byte hex string without 0x prefix.
-//	fmt.Sprintf("%x", x)
-//	//paddedHex = hex(x)[2:].rjust(64, '0')
-//	//if len(padded_hex) != 64:
-//	//raise ValueError('Input does not fit in 32 bytes')
-//	//return padded_hex
-//}
+func IntToHex32(x *big.Int) (string, error) {
+	//Normalize to a 32-byte hex string without 0x prefix.
+	str := PadLeft(fmt.Sprintf("%x", x), "0", 64)
+	if len(str) != 64 {
+		return "", fmt.Errorf("%s not fit in 32 bytes", x)
+	}
+	return str, nil
+}
 
 func PadRight(str, pad string, length int) string {
 	if len(str) >= length {
@@ -287,7 +279,7 @@ func PadRight(str, pad string, length int) string {
 	}
 	for {
 		str += pad
-		if len(str) > length {
+		if len(str) >= length {
 			return str[0:length]
 		}
 	}
@@ -299,7 +291,7 @@ func PadLeft(str, pad string, length int) string {
 	}
 	for {
 		str = pad + str
-		if len(str) > length {
+		if len(str) >= length {
 			return str[0:length]
 		}
 	}
