@@ -477,22 +477,21 @@ func (nop *NewOrderParams) ToUrlValues() url.Values {
 	return v
 }
 
-func (nop *NewOrderParams) ToJsonForPython() ([]byte, error) {
+func (nop *NewOrderParams) MarshalJSON() ([]byte, error) {
 	jsonStr := fmt.Sprintf(
-		`{"market": "%s", "side": "%s", "type": "%s", "position_id": "%d",    "post_only": %v, "size": "%s", "price": "%s", "limit_fee": "%.4f", "expiration": "%s", "client_id": "%s", "time_in_force": "%s"}`,
+		`{"market": "%s", "side": "%s", "type": "%s", "timeInForce": "%s", "size": "%s", "price": "%s", "limitFee": "%.4f", "expiration": "%s", "postOnly": %v, "clientId": "%s", "signature":"%s"}`,
 		nop.Market,
 		nop.Side,
 		nop.Type,
-		nop.PositionID,
-		nop.PostOnly,
+		nop.TimeInForce,
 		common.FormatByPrecision(nop.Size, StepPrecisions[nop.Market]),
 		common.FormatByPrecision(nop.Price, TickPrecisions[nop.Market]),
 		nop.LimitFee,
 		nop.Expiration,
+		nop.PostOnly,
 		nop.ClientId,
-		nop.TimeInForce,
+		nop.Signature,
 	)
-	//logger.Debugf("%s", jsonStr)
 	return []byte(jsonStr), nil
 }
 
