@@ -788,7 +788,7 @@ func (dd *DydxUsdFuture) submitOrder(ctx context.Context, netWorkId int, private
 		}
 		return
 	}
-	_, err = dd.api.CreateOrderByPython(ctx, &newOrderParam)
+	_, err = dd.api.CreateOrder(ctx, &newOrderParam)
 	if err != nil {
 		select {
 		case errCh <- common.OrderError{
