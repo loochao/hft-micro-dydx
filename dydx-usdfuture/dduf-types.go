@@ -479,7 +479,7 @@ func (nop *NewOrderParams) ToUrlValues() url.Values {
 
 func (nop *NewOrderParams) MarshalJSON() ([]byte, error) {
 	jsonStr := fmt.Sprintf(
-		`{"market": "%s", "side": "%s", "type": "%s", "timeInForce": "%s", "size": "%s", "price": "%s", "limitFee": "%.4f", "expiration": "%s", "postOnly": %v, "clientId": "%s", "signature":"%s"}`,
+		`{"market":"%s","side":"%s","type":"%s","timeInForce":"%s","size":"%s","price":"%s","limitFee":"%.4f","expiration":"%s","postOnly":%v,"clientId":"%s","signature":"%s"}`,
 		nop.Market,
 		nop.Side,
 		nop.Type,

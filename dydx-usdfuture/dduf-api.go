@@ -1,7 +1,6 @@
 package dydx_usdfuture
 
 import (
-	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -15,7 +14,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -218,44 +216,44 @@ func (api *API) GetOrders(ctx context.Context) ([]Order, error) {
 		or,
 	)
 }
-func (api *API) CreateOrderByPython(ctx context.Context, params *NewOrderParams) (*Order, error) {
-	if os.Getenv("DYDX_PYTHON_URL") == "" {
-		panic("DYDX_PYTHON_URL not fund")
-	} else {
-		postData, err := params.ToJsonForPython()
-		if err != nil {
-			return nil, err
-		}
-		req, err := http.NewRequest(http.MethodPost, os.Getenv("DYDX_PYTHON_URL"), bytes.NewReader(postData))
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Content-Type", "application/json")
-		resp, err := api.client.Do(req.WithContext(ctx))
-		if err != nil {
-			return nil, err
-		}
-		reader := resp.Body
-		contents, err := ioutil.ReadAll(reader)
-		//logger.Debugf("%s", contents)
-		if err != nil {
-			return nil, err
-		}
-		err = resp.Body.Close()
-		if err != nil {
-			return nil, err
-		}
-		var errorsCap ErrorsCap
-		if err := json.Unmarshal(contents, &errorsCap); err == nil {
-			if errorsCap.Errors != nil {
-				return nil, errors.New(string(contents))
-			}
-		}
-		or := &CreateOrderResp{}
-		err = json.Unmarshal(contents, or)
-		return &or.Order, err
-	}
-}
+//func (api *API) CreateOrderByPython(ctx context.Context, params *NewOrderParams) (*Order, error) {
+//	if os.Getenv("DYDX_PYTHON_URL") == "" {
+//		panic("DYDX_PYTHON_URL not fund")
+//	} else {
+//		postData, err :=
+//		if err != nil {
+//			return nil, err
+//		}
+//		req, err := http.NewRequest(http.MethodPost, os.Getenv("DYDX_PYTHON_URL"), bytes.NewReader(postData))
+//		if err != nil {
+//			return nil, err
+//		}
+//		req.Header.Set("Content-Type", "application/json")
+//		resp, err := api.client.Do(req.WithContext(ctx))
+//		if err != nil {
+//			return nil, err
+//		}
+//		reader := resp.Body
+//		contents, err := ioutil.ReadAll(reader)
+//		//logger.Debugf("%s", contents)
+//		if err != nil {
+//			return nil, err
+//		}
+//		err = resp.Body.Close()
+//		if err != nil {
+//			return nil, err
+//		}
+//		var errorsCap ErrorsCap
+//		if err := json.Unmarshal(contents, &errorsCap); err == nil {
+//			if errorsCap.Errors != nil {
+//				return nil, errors.New(string(contents))
+//			}
+//		}
+//		or := &CreateOrderResp{}
+//		err = json.Unmarshal(contents, or)
+//		return &or.Order, err
+//	}
+//}
 
 
 func (api *API) CreateOrder(ctx context.Context, params *NewOrderParams) (*Order, error) {

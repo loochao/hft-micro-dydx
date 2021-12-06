@@ -205,7 +205,7 @@ func TestAPI_CreateOrder(t *testing.T) {
 		Market:                 "BTC-USD",
 		Type:                   OrderTypeLimit,
 		Side:                   OrderSideBuy,
-		PostOnly:               true,
+		PostOnly:               false,
 		TimeInForce:            TIME_IN_FORCE_GTT,
 		LimitFee:               0.001,
 		Price:                  45000,
@@ -226,38 +226,38 @@ func TestAPI_CreateOrder(t *testing.T) {
 	logger.Debugf("%v", o)
 }
 
-func TestAPI_CreateOrderByPython(t *testing.T) {
-	err := os.Setenv("DYDX_PYTHON_URL", "http://127.0.0.1:5000/")
-	if err != nil {
-		t.Fatal(err)
-	}
-	api, err := NewAPI(Credentials{
-		ApiKey:          os.Getenv("DYDX_TEST_KEY"),
-		ApiSecret:       os.Getenv("DYDX_TEST_SECRET"),
-		ApiPassphrase:   os.Getenv("DYDX_TEST_PASSPHRASE"),
-		AccountID:       os.Getenv("DYDX_TEST_ACCOUNT_ID"),
-		StarkPrivateKey: os.Getenv("DYDX_TEST_STARK_PRIVATE_KEY"),
-	}, "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	ctx := context.Background()
-	account, err := api.CreateOrderByPython(ctx, &NewOrderParams{
-		PositionID: 119684,
-		Market:     "BTC-USD",
-		Type:       OrderTypeLimit,
-		Side:       OrderSideBuy,
-		PostOnly:   true,
-		LimitFee:   0.001,
-		Price:      54000,
-		Size:       0.001,
-		Expiration: time.Now().UTC().Add(time.Hour).Format(TimeLayout),
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	logger.Debugf("%v", account)
-}
+//func TestAPI_CreateOrderByPython(t *testing.T) {
+//	err := os.Setenv("DYDX_PYTHON_URL", "http://127.0.0.1:5000/")
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	api, err := NewAPI(Credentials{
+//		ApiKey:          os.Getenv("DYDX_TEST_KEY"),
+//		ApiSecret:       os.Getenv("DYDX_TEST_SECRET"),
+//		ApiPassphrase:   os.Getenv("DYDX_TEST_PASSPHRASE"),
+//		AccountID:       os.Getenv("DYDX_TEST_ACCOUNT_ID"),
+//		StarkPrivateKey: os.Getenv("DYDX_TEST_STARK_PRIVATE_KEY"),
+//	}, "")
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	ctx := context.Background()
+//	account, err := api.CreateOrderByPython(ctx, &NewOrderParams{
+//		PositionID: 119684,
+//		Market:     "BTC-USD",
+//		Type:       OrderTypeLimit,
+//		Side:       OrderSideBuy,
+//		PostOnly:   true,
+//		LimitFee:   0.001,
+//		Price:      54000,
+//		Size:       0.001,
+//		Expiration: time.Now().UTC().Add(time.Hour).Format(TimeLayout),
+//	})
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	logger.Debugf("%v", account)
+//}
 
 func TestAPI_GetUsers(t *testing.T) {
 	api, err := NewAPI(Credentials{
