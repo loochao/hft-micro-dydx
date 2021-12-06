@@ -203,12 +203,14 @@ func TestSign(t *testing.T) {
 	privateKey, _ := new(big.Int).SetString(MOCK_PRIVATE_KEY, 16)
 	fmt.Printf("MOCK_PRIVATE_KEY %s\n", privateKey)
 	msgHash, _ := new(big.Int).SetString("2399267126880666724459410666672606885138497587740885437088147399489673150280", 10)
-	msgHashLen := msgHash.BitLen()
-	fmt.Printf("HASH LEN %d %d\n", msgHashLen, msgHash.BitLen())
-	msgHashLenMod8 := msgHashLen % 8
-	if msgHashLenMod8 >= 1 && msgHashLenMod8 <= 4 && msgHashLen >= 248 {
-		msgHash.Mul(msgHash, big.NewInt(16))
+	r, err := starkex.GoSign(msgHash, privateKey, nil)
+	if err != nil {
+		t.Fatal(err)
 	}
+	fmt.Printf("%s\n", r)
+	fmt.Printf("%x\n", r[0])
+	fmt.Printf("%x\n", r[1])
+
 	//rfc6979.GenerateSecret(starkex.EC_ORDER, privateKey, sha256.New, msgHash.Bytes(), func(r *big.Int) bool {
 	//	fmt.Printf("RESULT %s\n", r)
 	//	return true

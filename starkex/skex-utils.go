@@ -23,6 +23,10 @@ func PiAsString(n int) string {
 	return Pi1024[:n]
 }
 
+func InvModCurveSize(x *big.Int) (*big.Int, error) {
+	return DivMod(big.NewInt(1), x, EC_ORDER)
+}
+
 func DivMod(n, m, p *big.Int) (*big.Int, error) {
 	//fmt.Printf("%s\n", n)
 	//fmt.Printf("%s\n", m)
@@ -47,6 +51,7 @@ func EcDouble(point [2]*big.Int, alpha, p *big.Int) (result [2]*big.Int, err err
 	}
 	x = x.Mul(big.NewInt(3), point[0])
 	x = x.Mul(x, point[0])
+	x = x.Add(x, alpha)
 	y = new(big.Int).Mul(big.NewInt(2), point[1])
 	m, err = DivMod(x, y, p)
 	if err != nil {
@@ -70,11 +75,13 @@ func EcMult(m *big.Int, point [2]*big.Int, alpha, p *big.Int) (result [2]*big.In
 	x := new(big.Int).Mod(m, big.NewInt(2))
 	if len(x.Bits()) == 0 {
 		x = x.Div(m, big.NewInt(2))
+		logger.Debugf("ec double input %s %s %s", point, alpha, p)
 		var d [2]*big.Int
 		d, err = EcDouble(point, alpha, p)
 		if err != nil {
 			return
 		}
+		logger.Debugf("ec double %s", d)
 		return EcMult(x, d, alpha, p)
 	}
 	x = x.Sub(m, big.NewInt(1))
@@ -200,9 +207,9 @@ func GetHash(xs []*big.Int) (point EcPoint, err error) {
 	return point, nil
 }
 
-func GoSign(msgHash, privateKey, seed *big.Int) error {
+func GoSign(msgHash, privateKey, seed *big.Int) (result [2]*big.Int, _ error) {
 	if msgHash.Cmp(big.NewInt(0)) < 0 || msgHash.Cmp(N_ELEMENT_BITS_ECDSA_MAX_VALUE) >= 0 {
-		return fmt.Errorf("hash not signable")
+		return result, fmt.Errorf("hash not signable")
 	}
 	for {
 		k := generateSecretRfc6979(msgHash, privateKey, seed)
@@ -211,9 +218,40 @@ func GoSign(msgHash, privateKey, seed *big.Int) error {
 		} else {
 			seed.And(seed, big.NewInt(1))
 		}
-		logger.Debugf("%s\n", k)
+		logger.Debugf("K %s", k)
+		logger.Debugf("EC_GEN %s", EC_GEN)
+		logger.Debugf("ALPHA %s", ALPHA)
+		logger.Debugf("FIELD_PRIME %s", FIELD_PRIME)
+		// Cannot fail because 0 < k < EC_ORDER and EC_ORDER is prime.
+		x, _ := EcMult(k, EC_GEN, ALPHA, FIELD_PRIME)
+		r := x[0]
+
+		logger.Debugf("R %s", r)
+
+		if r.Cmp(big.NewInt(0)) <= 0 || r.Cmp(N_ELEMENT_BITS_ECDSA_MAX_VALUE) >= 0 {
+			// Bad value. This fails with negligible probability.
+			continue
+		}
+		y := new(big.Int).Mul(r, privateKey)
+		y = y.Add(msgHash, y)
+		y = y.Mod(y, EC_ORDER)
+		if len(y.Bits()) == 0 {
+			//ad value. This fails with negligible probability.
+			continue
+		}
+		w, err := DivMod(k, y, EC_ORDER)
+		if err != nil {
+			return result, err
+		}
+
+		if w.Cmp(big.NewInt(0)) <= 0 || w.Cmp(N_ELEMENT_BITS_ECDSA_MAX_VALUE) >= 0 {
+			// Bad value. This fails with negligible probability.
+			continue
+		}
+		result[0] = r
+		result[1], err = InvModCurveSize(w)
+		return
 	}
-	return nil
 }
 
 func generateSecretRfc6979(msgHash, privateKey, seed *big.Int) (result *big.Int) {
@@ -232,4 +270,37 @@ func generateSecretRfc6979(msgHash, privateKey, seed *big.Int) (result *big.Int)
 		return true
 	})
 	return
+}
+
+//func IntToHex32(x *big.Int)([]byte, error){
+//	//Normalize to a 32-byte hex string without 0x prefix.
+//	fmt.Sprintf("%x", x)
+//	//paddedHex = hex(x)[2:].rjust(64, '0')
+//	//if len(padded_hex) != 64:
+//	//raise ValueError('Input does not fit in 32 bytes')
+//	//return padded_hex
+//}
+
+func PadRight(str, pad string, length int) string {
+	if len(str) >= length {
+		return str
+	}
+	for {
+		str += pad
+		if len(str) > length {
+			return str[0:length]
+		}
+	}
+}
+
+func PadLeft(str, pad string, length int) string {
+	if len(str) >= length {
+		return str
+	}
+	for {
+		str = pad + str
+		if len(str) > length {
+			return str[0:length]
+		}
+	}
 }
