@@ -228,3 +228,45 @@ func TestShowBnusBnufPairsAndMaxSizes(t *testing.T) {
 		fmt.Printf("  %s: %f\n", xSymbol, posWeights[xSymbol])
 	}
 }
+
+
+func TestShowOkufBnufPairsAndMaxSizes(t *testing.T) {
+	data, err := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q3/configs/bnbs.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var config Config
+	err = yaml.Unmarshal(data, &config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	symbolMap := make(map[string]string)
+	maxPosSizes := make(map[string]float64)
+	posWeights := make(map[string]float64)
+	symbols := make([]string, 0)
+	for ySymbol, yMaxPosSize := range binance_usdtfuture.MaxPosSizes {
+		xSymbol := strings.Replace(ySymbol, "USDT", "-USDT-SWAP", -1)
+		bSymbol := strings.Replace(ySymbol, "USDT", "BUSD", -1)
+		xMaxPosSize, ok1 := okexv5_usdtswap.MaxSizes[xSymbol]
+		_, ok2 := config.PosWeights[bSymbol]
+		if ok1 && ok2 {
+			symbols = append(symbols, xSymbol)
+			symbolMap[xSymbol] = ySymbol
+			maxPosSizes[xSymbol] = math.Min(yMaxPosSize * 0.25, xMaxPosSize*okexv5_usdtswap.Multipliers[xSymbol]*0.25)
+			posWeights[xSymbol] = config.PosWeights[bSymbol]
+		}
+	}
+	sort.Strings(symbols)
+	fmt.Printf("\n\nxyPairs:\n")
+	for _, xSymbol := range symbols {
+		fmt.Printf("  %s: %s\n", xSymbol, symbolMap[xSymbol])
+	}
+	fmt.Printf("\n\nmaxPosSizes:\n")
+	for _, xSymbol := range symbols {
+		fmt.Printf("  %s: %.0f\n", xSymbol, maxPosSizes[xSymbol])
+	}
+	fmt.Printf("\n\nposWeights:\n")
+	for _, xSymbol := range symbols {
+		fmt.Printf("  %s: %f\n", xSymbol, posWeights[xSymbol])
+	}
+}
