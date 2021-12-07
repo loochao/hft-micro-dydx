@@ -242,10 +242,14 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 				if len(wsUserChannelData.Orders) > 0 {
 					select {
 					case w.OrdersCh <- wsUserChannelData.Orders:
+						for _, o := range wsUserChannelData.Orders {
+							if o.CancelReason != nil {
+								logger.Debugf("%s %s %s %s", o.Market, o.Side,o.ClientID, *o.CancelReason)
+							}
+						}
 					default:
 						logger.Debugf("w.OrdersCh <- wsUserChannelData.Orders failed, len %d", len(w.OrdersCh))
 					}
-					logger.Debugf("%s", wsCap.Contents)
 				}
 				if len(wsUserChannelData.Positions) > 0 {
 					select {
