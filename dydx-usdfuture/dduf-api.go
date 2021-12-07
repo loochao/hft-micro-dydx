@@ -112,8 +112,8 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	reader := resp.Body
 	contents, err := ioutil.ReadAll(reader)
 	if method == http.MethodPost {
-		logger.Debugf("%s %s %s %s", method, path, bodyStr, contents)
-	}else{
+		logger.Debugf("%s %s %s", method, path, contents)
+	} else {
 		//logger.Debugf("%s", contents)
 	}
 	if err != nil {
@@ -178,7 +178,6 @@ func (api *API) GetUsers(ctx context.Context) (*User, error) {
 	)
 }
 
-
 func (api *API) GetAccount(ctx context.Context) (*Account, error) {
 	ar := &AccountResp{}
 	return &ar.Account, api.SendAuthenticatedHTTPRequest(
@@ -190,7 +189,6 @@ func (api *API) GetAccount(ctx context.Context) (*Account, error) {
 		ar,
 	)
 }
-
 
 func (api *API) GetRewards(ctx context.Context, param RewardsParam) (*Rewards, error) {
 	rw := &Rewards{}
@@ -204,7 +202,6 @@ func (api *API) GetRewards(ctx context.Context, param RewardsParam) (*Rewards, e
 	)
 }
 
-
 func (api *API) GetOrders(ctx context.Context) ([]Order, error) {
 	or := &OrdersResp{}
 	return or.Orders, api.SendAuthenticatedHTTPRequest(
@@ -216,6 +213,7 @@ func (api *API) GetOrders(ctx context.Context) ([]Order, error) {
 		or,
 	)
 }
+
 //func (api *API) CreateOrderByPython(ctx context.Context, params *NewOrderParams) (*Order, error) {
 //	if os.Getenv("DYDX_PYTHON_URL") == "" {
 //		panic("DYDX_PYTHON_URL not fund")
@@ -254,7 +252,6 @@ func (api *API) GetOrders(ctx context.Context) ([]Order, error) {
 //		return &or.Order, err
 //	}
 //}
-
 
 func (api *API) CreateOrder(ctx context.Context, params *NewOrderParams) (*Order, error) {
 	or := &CreateOrderResp{}
