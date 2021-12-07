@@ -240,7 +240,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 					break
 				}
 				if len(wsUserChannelData.Orders) > 0 {
-					logger.Debugf("%s", wsCap.Contents)
+					//logger.Debugf("%s", wsCap.Contents)
 					select {
 					case w.OrdersCh <- wsUserChannelData.Orders:
 						for _, o := range wsUserChannelData.Orders {
