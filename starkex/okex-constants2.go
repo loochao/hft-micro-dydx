@@ -1,5 +1,9 @@
 package starkex
 
+import "math/big"
+
+var IntOne =big.NewInt(1)
+
 
 //"""Constants related to creating hashes of Starkware objects."""
 //

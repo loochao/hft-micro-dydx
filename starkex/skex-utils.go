@@ -26,21 +26,32 @@ func InvModCurveSize(x *big.Int) (*big.Int, error) {
 	return DivMod(big.NewInt(1), x, EC_ORDER)
 }
 
+
+
+
 func DivMod(n, m, p *big.Int) (*big.Int, error) {
+
+
+
 	//fmt.Printf("%s\n", n)
 	//fmt.Printf("%s\n", m)
 	//fmt.Printf("%s\n", p)
 	//Finds a non negative integer 0 <= x < p such that (m * x) % p == n
 	a := big.NewInt(0)
-	b := big.NewInt(0)
-	c := big.NewInt(0)
-	c.GCD(a, b, m, p)
-	if !IsOne(c) {
-		return nil, fmt.Errorf("%s is not one", c)
-	}
+	//b := big.NewInt(0)
+	//c := big.NewInt(0)
+	//c.GCD(a, b, m, p)
+	////logger.Debugf("%sx%s+%sx%s=%s",a,m,b,p,c)
+	//if !IsOne(c) {
+	//	return nil, fmt.Errorf("%s is not one", c)
+	//}
+	a.ModInverse(m, p)
+	//logger.Debugf("%s", a)
 	a.Mul(n, a)
+	//logger.Debugf("%s %s", a, p)
 	return a.Mod(a, p), nil
 }
+
 func EcDouble(point [2]*big.Int, alpha, p *big.Int) (result [2]*big.Int, err error) {
 	var x, y, m *big.Int
 	x = new(big.Int).Mod(point[1], p)

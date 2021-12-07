@@ -105,22 +105,24 @@ func BenchmarkSignOrder(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	so, err := starkex.NewStarkwareOrder(
-		starkex.NETWORK_ID_ROPSTEN,
-		starkex.MARKET_ETH_USD,
-		starkex.ORDER_SIDE_BUY,
-		12345,
-		145.0005,
-		350.00067,
-		0.125,
-		"This is an ID that the client came up with to describe this order",
-		tt.Unix(),
-	)
-	if err != nil {
-		b.Fatal(err)
-	}
 	errCount := 0.0
+	b.ResetTimer()
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
+		so, err := starkex.NewStarkwareOrder(
+			starkex.NETWORK_ID_ROPSTEN,
+			starkex.MARKET_ETH_USD,
+			starkex.ORDER_SIDE_BUY,
+			12345,
+			145.0005,
+			350.00067,
+			0.125,
+			"This is an ID that the client came up with to describe this order",
+			tt.Unix(),
+		)
+		if err != nil {
+			b.Fatal(err)
+		}
 		_, err = so.Sign(MOCK_PRIVATE_KEY)
 		if err != nil {
 			errCount ++
