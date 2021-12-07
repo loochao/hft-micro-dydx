@@ -112,7 +112,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	reader := resp.Body
 	contents, err := ioutil.ReadAll(reader)
 	if method == http.MethodPost {
-		logger.Debugf("%s %s %s", method, path)
+		logger.Debugf("%s %s", method, path)
 	} else {
 		//logger.Debugf("%s", contents)
 	}
