@@ -771,9 +771,9 @@ func (dd *DydxUsdFuture) submitOrder(ctx context.Context, netWorkId int, private
 	newOrderParam.ClientId = param.ClientID
 	newOrderParam.Expiration = time.Now().UTC().Add(time.Hour * 24).Format(TimeLayout)
 	newOrderParam.ExpirationEpochSeconds = time.Now().UTC().Add(time.Hour * 24).Unix()
-	if param.CancelAfter != 0 {
-		newOrderParam.TimeInForce = OrderTimeInForceGTT
-	}
+	//if param.CancelAfter != 0 {
+	//	newOrderParam.TimeInForce = OrderTimeInForceGTT
+	//}
 	newOrderParam.LimitFee = 0.0015
 	newOrderParam.PositionID = dd.settings.PositionID
 	err = newOrderParam.SetSignature(netWorkId, privateKey)
@@ -798,16 +798,16 @@ func (dd *DydxUsdFuture) submitOrder(ctx context.Context, netWorkId int, private
 		default:
 			logger.Debugf("errCh <- common.OrderError failed, ch len %d", len(errCh))
 		}
-	} else if param.CancelAfter != 0 {
-		select {
-		case <-time.After(param.CancelAfter):
-			_, err = dd.api.CancelOrders(ctx, &CancelOrdersParam{
-				Market: newOrderParam.Market,
-			})
-			if err != nil {
-				logger.Debugf("CancelOrders error %v", err)
-			}
-		}
+	//} else if param.CancelAfter != 0 {
+	//	select {
+	//	case <-time.After(param.CancelAfter):
+	//		_, err = dd.api.CancelOrders(ctx, &CancelOrdersParam{
+	//			Market: newOrderParam.Market,
+	//		})
+	//		if err != nil {
+	//			logger.Debugf("CancelOrders error %v", err)
+	//		}
+	//	}
 	}
 }
 
