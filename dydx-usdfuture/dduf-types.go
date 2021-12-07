@@ -269,7 +269,7 @@ type Order struct {
 	Status          string     `json:"status"`
 	TimeInForce     string     `json:"timeInForce"`
 	PostOnly        bool       `json:"postOnly"`
-	CancelReason    *string    `json:"cancelReason"`
+	CancelReason    *string    `json:"cancelReason,omitempty"`
 }
 
 func (o *Order) GetSymbol() string {
