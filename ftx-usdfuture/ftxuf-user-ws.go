@@ -136,8 +136,8 @@ mainLoop:
 			logger.Debugf("r.Read error %v", err)
 			continue mainLoop
 		}
-		if readCounter%1000 == 0 {
-			logger.Debugf("FtXUF USER READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", userReadMsgSize, readCounter, partialReadCounter, allocateCounter)
+		if readCounter%10000 == 0 {
+			logger.Debugf("FTXUF USER READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", userReadMsgSize, readCounter, partialReadCounter, allocateCounter)
 		}
 		select {
 		case w.messageCh <- msg:

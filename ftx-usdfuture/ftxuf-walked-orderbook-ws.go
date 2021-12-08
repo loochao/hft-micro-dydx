@@ -133,7 +133,7 @@ mainLoop:
 			logger.Debugf("r.Read error %v", err)
 			continue mainLoop
 		}
-		if readCounter%10000 == 0 {
+		if readCounter%1000000 == 0 {
 			logger.Debugf("FTX ORDER BOOK READ SIZE %d TOTAL %d PARTIAL %d ALLOCATE %d", orderBookReadMsgSize, readCounter, partialReadCounter, allocateCounter)
 		}
 		if len(msg) < 128 {
