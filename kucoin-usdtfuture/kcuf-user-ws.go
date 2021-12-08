@@ -141,7 +141,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 			}
 			if len(msg) < 128 {
 				if wsCap.Type == "ack" {
-					logger.Debugf("SUB SUCCESS %s", wsCap.ID)
+					//logger.Debugf("SUB SUCCESS %s", wsCap.ID)
 					select {
 					case w.topicCh <- wsCap.ID:
 					default:
@@ -394,7 +394,7 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn,
 		loop:
 			for topic, updateTime := range topicUpdatedTimes {
 				if time.Now().Sub(updateTime) > topicTimeout {
-					logger.Debugf("SUBSCRIBE %s", topic)
+					//logger.Debugf("SUBSCRIBE %s", topic)
 					select {
 					case <-ctx.Done():
 						return
