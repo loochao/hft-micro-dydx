@@ -49,6 +49,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 		return err
 	}
 	if errCap.Code != "0" {
+		logger.Debugf("%s", contents)
 		return fmt.Errorf("sendHTTPRequest error - path %s code %s msg %s", path, errCap.Code, errCap.Msg)
 	}
 	if errCap.Data == nil{
