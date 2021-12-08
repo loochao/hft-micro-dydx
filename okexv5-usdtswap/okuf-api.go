@@ -53,10 +53,12 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 		return fmt.Errorf("sendHTTPRequest error - path %s code %s msg %s", path, errCap.Code, errCap.Msg)
 	}
 	if errCap.Data == nil{
+		logger.Debugf("%s", contents)
 		return errors.New("unspecified error occurred")
 	}
 	err = json.Unmarshal(errCap.Data, result)
 	if err != nil {
+		logger.Debugf("%s", contents)
 		err = fmt.Errorf("json.Unmarshal(errCap.Data, result): \"%v\" content: %s", err, errCap.Data)
 	}
 	return err
