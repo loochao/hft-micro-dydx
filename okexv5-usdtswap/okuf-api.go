@@ -110,15 +110,18 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 		return err
 	}
 	if errCap.Code != "0" {
+		logger.Debugf("%s", contents)
 		return fmt.Errorf("sendHTTPRequest error - path %s code %s", path, errCap.Code)
 	}
 	if errCap.Data == nil{
+		logger.Debugf("%s", contents)
 		return errors.New("unspecified error occurred")
 	}
 
 	//logger.Debugf("%s", errCap.Data)
 	err = json.Unmarshal(errCap.Data, result)
 	if err != nil {
+		logger.Debugf("%s", contents)
 		err = fmt.Errorf("json.Unmarshal(errCap.Data, result): \"%v\" content: %s", err, errCap.Data)
 	}
 	return err
