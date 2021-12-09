@@ -146,7 +146,7 @@ func (w *UserWS) dataHandleLoop(ctx context.Context) {
 			return
 		case msg := <-w.messageCh:
 			if len(msg) == 4 && msg[0] == 'p' {
-				logger.Debugf("%s", msg)
+				//logger.Debugf("%s", msg)
 				select {
 				case w.pongCh <- msg:
 				default:
