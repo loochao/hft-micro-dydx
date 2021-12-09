@@ -142,10 +142,10 @@ func (w *DepthTicker5WS) readLoop(conn *websocket.Conn, channels map[string]chan
 			}
 			continue
 		} else{
-			if time.Now().Sub(logSilentTime) > 0 {
-				logger.Debugf("MSG %s", msg)
-				logSilentTime = time.Now().Add(time.Minute)
-			}
+			//if time.Now().Sub(logSilentTime) > 0 {
+			//	logger.Debugf("MSG %s", msg)
+			//	logSilentTime = time.Now().Add(time.Minute)
+			//}
 			continue
 		}
 		if ch, ok = channels[symbol]; ok {

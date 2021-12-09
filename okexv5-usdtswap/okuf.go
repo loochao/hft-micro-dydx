@@ -548,7 +548,7 @@ func (okuf *OkexV5UsdtSwap) watchSystemStatus(
 			} else {
 				ready := true
 				for _, s := range statuses {
-					if s.State == StateOngoing && (s.ServiceType == 0 || s.ServiceType == 1 || s.ServiceType == 5) {
+					if s.State == StateOngoing && (s.ServiceType == 0 || s.ServiceType == 3 || s.ServiceType == 5) {
 						ready = false
 					}
 				}
