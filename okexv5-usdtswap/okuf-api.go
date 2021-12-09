@@ -100,6 +100,8 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 	if requestPath == "/api/v5/trade/order" {
 		logger.Debugf("ORDER-PAYLOAD %s", payload)
 		//logger.Debugf("ORDER-RESULT %s", contents)
+	}else if requestPath == "/api/v5/system/status" {
+		logger.Debugf("%s", contents)
 	}
 	err = resp.Body.Close()
 	if err != nil {
