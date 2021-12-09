@@ -29,6 +29,6 @@ rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" tka3:/usr/local/bin/
 #rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" tka1:/usr/local/bin/
 #rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" tka2:/usr/local/bin/
 #
-#rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" way:/usr/local/bin/
-#ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q3.arm64.$dt nv1:/usr/local/bin/"
-#ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q3.arm64.$dt nv2:/usr/local/bin/"
+rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" way:/usr/local/bin/
+ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q3.arm64.$dt nv1:/usr/local/bin/"
+ssh way "rsync -avx --progress /usr/local/bin/usd-tk-tt-q3.arm64.$dt nv2:/usr/local/bin/"

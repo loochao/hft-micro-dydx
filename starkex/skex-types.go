@@ -174,13 +174,18 @@ func NewStarkwareOrder(
 	if err != nil {
 		return
 	}
-	if order.IsBuyingSynthetic {
-		humanCost := humanPrice * humanSize
-		order.QuantumsAmountCollateral = ToQuantumsRoundUp(humanCost, COLLATERAL_ASSET)
-	} else {
-		humanCost := humanPrice * humanSize
-		order.QuantumsAmountCollateral = ToQuantumsRoundDown(humanCost, COLLATERAL_ASSET)
+	humanCost := humanPrice * humanSize
+	order.QuantumsAmountCollateral, err = ToQuantumsExact(humanCost, COLLATERAL_ASSET)
+	if err != nil {
+		return
 	}
+	//if order.IsBuyingSynthetic {
+	//	humanCost := humanPrice * humanSize
+	//	order.QuantumsAmountCollateral = ToQuantumsRoundUp(humanCost, COLLATERAL_ASSET)
+	//} else {
+	//	humanCost := humanPrice * humanSize
+	//	order.QuantumsAmountCollateral = ToQuantumsRoundDown(humanCost, COLLATERAL_ASSET)
+	//}
 	// The limitFee is a fraction, e.g. 0.01 is a 1 % fee.
 	// It is always paid in the collateral asset.
 	// Constrain the limit fee to six decimals of precision.
