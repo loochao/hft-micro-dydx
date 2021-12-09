@@ -124,45 +124,45 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		return
 	}
-	if time.Now().Sub(strat.logSilentTime) > 0 {
-		strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-		logger.Debugf("SHORT %20s 1 %v 2 %v 3 %v 4 %v 5 %v 6 %v 7 %v 8 %v 9 %v 10 %v 11 %v 12 %v 13 %v x %.2ff > %.2ff y %.2ff > %.2ff",
-			strat.xSymbol,
-			!strat.reduceOnly,
-			!strat.isYSpot,
-			strat.tdSpreadMiddle > strat.config.SpreadMiddleMin,
-			strat.tdSpreadMiddle < strat.config.SpreadMiddleMax,
-			strat.spreadMedianShort > strat.thresholdShortTop,
-			strat.spreadLastShort > strat.spreadMedianShort,
-			*strat.xyFundingRate > strat.config.FundingRateOpenShortMin,
-			xSize > -strat.xMinSize*strat.xMultiplier,
-			strat.xAccount.GetFree() > strat.config.MinXFree,
-			strat.yAccount.GetFree() > strat.config.MinYFree,
-			xSize < strat.maxPosSize,
-			xAbsValue < strat.maxPosValue,
-			yAbsValue < strat.maxPosValue,
-			strat.xAccount.GetFree() , strat.config.MinXFree,
-			strat.yAccount.GetFree() , strat.config.MinYFree,
-		)
-		logger.Debugf("LONG  %20s 1 %v 2 %v 3 %v 4 %v 5 %v 6 %v 7 %v 8 %v 9 %v 10 %v 11 %v 12 %v 13 %v x %.2ff > %.2ff y %.2ff > %.2ff",
-			strat.xSymbol,
-			!strat.reduceOnly,
-			!strat.isXSpot,
-			strat.tdSpreadMiddle > strat.config.SpreadMiddleMin,
-			strat.tdSpreadMiddle < strat.config.SpreadMiddleMax,
-			strat.spreadMedianLong < strat.thresholdLongBot,
-			strat.spreadLastLong < strat.spreadMedianLong,
-			*strat.xyFundingRate < strat.config.FundingRateOpenLongMax,
-			xSize < strat.xMinSize*strat.xMultiplier,
-			strat.xAccount.GetFree() > strat.config.MinXFree,
-			strat.yAccount.GetFree() > strat.config.MinYFree,
-			xSize > -strat.maxPosSize,
-			xAbsValue < strat.maxPosValue,
-			yAbsValue < strat.maxPosValue,
-			strat.xAccount.GetFree() , strat.config.MinXFree,
-			strat.yAccount.GetFree() , strat.config.MinYFree,
-		)
-	}
+	//if time.Now().Sub(strat.logSilentTime) > 0 {
+	//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+	//	logger.Debugf("SHORT %20s 1 %v 2 %v 3 %v 4 %v 5 %v 6 %v 7 %v 8 %v 9 %v 10 %v 11 %v 12 %v 13 %v x %.2ff > %.2ff y %.2ff > %.2ff",
+	//		strat.xSymbol,
+	//		!strat.reduceOnly,
+	//		!strat.isYSpot,
+	//		strat.tdSpreadMiddle > strat.config.SpreadMiddleMin,
+	//		strat.tdSpreadMiddle < strat.config.SpreadMiddleMax,
+	//		strat.spreadMedianShort > strat.thresholdShortTop,
+	//		strat.spreadLastShort > strat.spreadMedianShort,
+	//		*strat.xyFundingRate > strat.config.FundingRateOpenShortMin,
+	//		xSize > -strat.xMinSize*strat.xMultiplier,
+	//		strat.xAccount.GetFree() > strat.config.MinXFree,
+	//		strat.yAccount.GetFree() > strat.config.MinYFree,
+	//		xSize < strat.maxPosSize,
+	//		xAbsValue < strat.maxPosValue,
+	//		yAbsValue < strat.maxPosValue,
+	//		strat.xAccount.GetFree() , strat.config.MinXFree,
+	//		strat.yAccount.GetFree() , strat.config.MinYFree,
+	//	)
+	//	logger.Debugf("LONG  %20s 1 %v 2 %v 3 %v 4 %v 5 %v 6 %v 7 %v 8 %v 9 %v 10 %v 11 %v 12 %v 13 %v x %.2ff > %.2ff y %.2ff > %.2ff",
+	//		strat.xSymbol,
+	//		!strat.reduceOnly,
+	//		!strat.isXSpot,
+	//		strat.tdSpreadMiddle > strat.config.SpreadMiddleMin,
+	//		strat.tdSpreadMiddle < strat.config.SpreadMiddleMax,
+	//		strat.spreadMedianLong < strat.thresholdLongBot,
+	//		strat.spreadLastLong < strat.spreadMedianLong,
+	//		*strat.xyFundingRate < strat.config.FundingRateOpenLongMax,
+	//		xSize < strat.xMinSize*strat.xMultiplier,
+	//		strat.xAccount.GetFree() > strat.config.MinXFree,
+	//		strat.yAccount.GetFree() > strat.config.MinYFree,
+	//		xSize > -strat.maxPosSize,
+	//		xAbsValue < strat.maxPosValue,
+	//		yAbsValue < strat.maxPosValue,
+	//		strat.xAccount.GetFree() , strat.config.MinXFree,
+	//		strat.yAccount.GetFree() , strat.config.MinYFree,
+	//	)
+	//}
 
 	if strat.spreadMedianLong < strat.thresholdShortBot &&
 		strat.spreadLastLong < strat.spreadMedianLong &&

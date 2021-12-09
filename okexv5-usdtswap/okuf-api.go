@@ -41,9 +41,9 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 	}
 	//logger.Debugf("%s", contents)
 
-	if requestPath == "/api/v5/system/status" {
-		logger.Debugf("%s", contents)
-	}
+	//if requestPath == "/api/v5/system/status" {
+	//	logger.Debugf("%s", contents)
+	//}
 	err = resp.Body.Close()
 	if err != nil {
 		return err
