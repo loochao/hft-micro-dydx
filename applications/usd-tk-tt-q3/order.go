@@ -23,19 +23,18 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xyFundingRate == nil ||
 		strat.xFundingRateFactor == nil ||
 		strat.enterTarget == 0 {
-		//if time.Now().Sub(strat.logSilentTime) > 0 {
-		//strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-		//logger.Debugf("%s %v %v %v %v %v %v %v",
-		//	strat.xSymbol,
-		//	strat.spreadReady,
-		//	!strat.targetWeightUpdated.True(),
-		//	strat.xPosition == nil,
-		//	strat.yPosition == nil,
-		//	strat.xyFundingRate == nil,
-		//	strat.xFundingRateFactor == nil,
-		//	strat.enterTarget == 0,
-		//)
-		//}
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+			logger.Debugf("%s %v %v %v %v %v %v",
+				strat.xSymbol,
+				strat.spreadReady,
+				strat.xPosition == nil,
+				strat.yPosition == nil,
+				strat.xyFundingRate == nil,
+				strat.xFundingRateFactor == nil,
+				strat.enterTarget == 0,
+			)
+		}
 		return
 	}
 
@@ -94,20 +93,20 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.fundingRateSettleSilent ||
 		time.Now().Sub(strat.spreadTickerTime) > strat.config.SpreadMaxAge ||
 		time.Now().Sub(strat.xOrderSilentTime) < 0 {
-		//if time.Now().Sub(strat.logSilentTime) > 0 {
-		//strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-		//logger.Debugf("%s %v %v %v %v %v %v %v %v %v %v",
-		//	strat.xSymbol,
-		//	strat.config.AccountMaxAge,
-		//	strat.xPositionUpdateTime, time.Now().Sub(strat.xPositionUpdateTime) > strat.config.AccountMaxAge,
-		//	strat.yPositionUpdateTime, time.Now().Sub(strat.yPositionUpdateTime) > strat.config.AccountMaxAge,
-		//	strat.xAccount == nil,
-		//	strat.yAccount == nil,
-		//	strat.fundingRateSettleSilent,
-		//	time.Now().Sub(strat.spreadTickerTime) > strat.config.SpreadMaxAge,
-		//	time.Now().Sub(strat.xOrderSilentTime) < 0,
-		//)
-		//}
+		if time.Now().Sub(strat.logSilentTime) > 0 {
+			strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
+			logger.Debugf("%s %v %v %v %v %v %v %v %v %v %v",
+				strat.xSymbol,
+				strat.config.AccountMaxAge,
+				strat.xPositionUpdateTime, time.Now().Sub(strat.xPositionUpdateTime) > strat.config.AccountMaxAge,
+				strat.yPositionUpdateTime, time.Now().Sub(strat.yPositionUpdateTime) > strat.config.AccountMaxAge,
+				strat.xAccount == nil,
+				strat.yAccount == nil,
+				strat.fundingRateSettleSilent,
+				time.Now().Sub(strat.spreadTickerTime) > strat.config.SpreadMaxAge,
+				time.Now().Sub(strat.xOrderSilentTime) < 0,
+			)
+		}
 		return
 	}
 
