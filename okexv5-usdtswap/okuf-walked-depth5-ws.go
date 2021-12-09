@@ -19,7 +19,7 @@ type WalkedDepth5WS struct {
 	done        chan interface{}
 	reconnectCh chan interface{}
 	symbolCh    chan string
-	pingCh      chan []byte
+	pongCh      chan []byte
 	stopped     int32
 }
 
@@ -134,10 +134,10 @@ func (w *WalkedDepth5WS) readLoop(conn *websocket.Conn, channels map[string]chan
 			}
 		} else if msgLen == 4 && msg[0] == 'p' {
 			select {
-			case w.pingCh <- msg:
+			case w.pongCh <- msg:
 			default:
 				if time.Now().Sub(logSilentTime) > 0 {
-					logger.Debugf("w.pongCh <- msg failed %s ch len %d", symbol, len(w.pingCh))
+					logger.Debugf("w.pongCh <- msg failed %s ch len %d", symbol, len(w.pongCh))
 					logSilentTime = time.Now().Add(time.Minute)
 				}
 			}
@@ -306,7 +306,9 @@ func (w *WalkedDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn
 		symbolUpdatedTimes[symbol] = time.Unix(0, 0)
 	}
 	trafficTimeout := time.NewTimer(time.Minute * 5)
-	pingTimer := time.NewTimer(time.Second * 15)
+	pingInterval := time.Second*15
+	trafficTimeoutInterval := time.Second*30
+	pingTimer := time.NewTimer(pingInterval)
 	defer trafficTimeout.Stop()
 	defer pingTimer.Stop()
 
@@ -321,23 +323,23 @@ func (w *WalkedDepth5WS) heartbeatLoop(ctx context.Context, conn *websocket.Conn
 			w.restart()
 			return
 		case <-pingTimer.C:
-			pingTimer.Reset(time.Second * 15)
 			select {
 			case w.writeCh <- []byte("ping"):
 				break
 			default:
 				logger.Debugf("w.writeCh <- ping failed, ch len %d", len(w.writeCh))
 			}
+			pingTimer.Reset(pingInterval)
 			break
 		case symbol := <-w.symbolCh:
-			pingTimer.Reset(time.Second * 15)
-			trafficTimeout.Reset(time.Second * 30)
+			//pingTimer.Reset(time.Second * 15)
+			trafficTimeout.Reset(trafficTimeoutInterval)
 			symbolUpdatedTimes[symbol] = time.Now()
 			break
-		case <-w.pingCh:
-			logger.Debugf("PING MSG")
-			pingTimer.Reset(time.Second * 15)
-			trafficTimeout.Reset(time.Second * 30)
+		case <-w.pongCh:
+			//logger.Debugf("PING MSG")
+			pingTimer.Reset(pingInterval)
+			trafficTimeout.Reset(trafficTimeoutInterval)
 			break
 		case <-symbolCheckTimer.C:
 			args := make([]WsArgs, 0)
@@ -455,7 +457,7 @@ func NewWalkedDepth5WS(
 		reconnectCh: make(chan interface{}, 4),
 		writeCh:     make(chan interface{}, 4*len(channels)),
 		symbolCh:    make(chan string, 4*len(channels)),
-		pingCh:      make(chan []byte, 4),
+		pongCh:      make(chan []byte, 4),
 		stopped:     0,
 	}
 	messageChs := make(map[string]chan []byte)

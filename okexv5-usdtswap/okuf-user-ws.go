@@ -432,7 +432,8 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) {
 	defer loginTimer.Stop()
 
 	trafficTimeout := time.NewTimer(time.Minute * 5)
-	pingTimer := time.NewTimer(time.Second * 15)
+	pingInterval := time.Second*15
+	pingTimer := time.NewTimer(pingInterval)
 	defer trafficTimeout.Stop()
 	defer pingTimer.Stop()
 
@@ -452,13 +453,12 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) {
 			w.restart()
 			return
 		case <-pingTimer.C:
-			pingTimer.Reset(time.Second * 15)
 			select {
 			case w.writeCh <- []byte("ping"):
-				break
 			default:
 				logger.Debugf("w.writeCh <- ping failed, ch len %d", len(w.writeCh))
 			}
+			pingTimer.Reset(pingInterval)
 			break
 		case <-loginTimer.C:
 			if !login {
@@ -493,14 +493,14 @@ func (w *UserWS) heartbeatLoop(ctx context.Context, conn *websocket.Conn) {
 			loginTimer.Reset(time.Minute)
 			break
 		case topic := <-w.topicCh:
-			pingTimer.Reset(time.Second * 15)
+			//pingTimer.Reset(time.Second * 15)
 			trafficTimeout.Reset(time.Second * 30)
 			if _, ok := channelUpdatedTimes[topic]; ok {
 				channelUpdatedTimes[topic] = time.Now().Add(time.Hour * 8)
 			}
 			break
 		case <-w.pongCh:
-			pingTimer.Reset(time.Second * 15)
+			pingTimer.Reset(pingInterval)
 			trafficTimeout.Reset(time.Second * 30)
 			break
 		case login = <-w.loginCh:
