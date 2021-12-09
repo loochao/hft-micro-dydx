@@ -126,7 +126,7 @@ func (strat *XYStrategy) updateXPosition() {
 	}
 	if time.Now().Sub(strat.logSilentTime) > 0 {
 		strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
-		logger.Debugf("SHORT %20s 1 %v 2 %v 3 %v 4 %v 5 %v 6 %v 7 %v 8 %v 9 %v 10 %v 11 %v 12 %v 13 %v",
+		logger.Debugf("SHORT %20s 1 %v 2 %v 3 %v 4 %v 5 %v 6 %v 7 %v 8 %v 9 %v 10 %v 11 %v 12 %v 13 %v x %.2ff > %.2ff y %.2ff > %.2ff",
 			strat.xSymbol,
 			!strat.reduceOnly,
 			!strat.isYSpot,
@@ -141,8 +141,10 @@ func (strat *XYStrategy) updateXPosition() {
 			xSize < strat.maxPosSize,
 			xAbsValue < strat.maxPosValue,
 			yAbsValue < strat.maxPosValue,
+			strat.xAccount.GetFree() , strat.config.MinXFree,
+			strat.yAccount.GetFree() , strat.config.MinYFree,
 		)
-		logger.Debugf("LONG  %20s 1 %v 2 %v 3 %v 4 %v 5 %v 6 %v 7 %v 8 %v 9 %v 10 %v 11 %v 12 %v 13 %v",
+		logger.Debugf("LONG  %20s 1 %v 2 %v 3 %v 4 %v 5 %v 6 %v 7 %v 8 %v 9 %v 10 %v 11 %v 12 %v 13 %v x %.2ff > %.2ff y %.2ff > %.2ff",
 			strat.xSymbol,
 			!strat.reduceOnly,
 			!strat.isXSpot,
@@ -157,6 +159,8 @@ func (strat *XYStrategy) updateXPosition() {
 			xSize > -strat.maxPosSize,
 			xAbsValue < strat.maxPosValue,
 			yAbsValue < strat.maxPosValue,
+			strat.xAccount.GetFree() , strat.config.MinXFree,
+			strat.yAccount.GetFree() , strat.config.MinYFree,
 		)
 	}
 
