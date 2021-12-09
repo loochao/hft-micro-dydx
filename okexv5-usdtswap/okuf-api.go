@@ -40,6 +40,10 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 		return err
 	}
 	//logger.Debugf("%s", contents)
+
+	if requestPath == "/api/v5/system/status" {
+		logger.Debugf("%s", contents)
+	}
 	err = resp.Body.Close()
 	if err != nil {
 		return err
@@ -52,7 +56,7 @@ func (api *API) SendHTTPRequest(ctx context.Context, requestPath string, result 
 		logger.Debugf("%s", contents)
 		return fmt.Errorf("sendHTTPRequest error - path %s code %s msg %s", path, errCap.Code, errCap.Msg)
 	}
-	if errCap.Data == nil{
+	if errCap.Data == nil {
 		logger.Debugf("%s", contents)
 		return errors.New("unspecified error occurred")
 	}
@@ -100,8 +104,6 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 	if requestPath == "/api/v5/trade/order" {
 		logger.Debugf("ORDER-PAYLOAD %s", payload)
 		//logger.Debugf("ORDER-RESULT %s", contents)
-	}else if requestPath == "/api/v5/system/status" {
-		logger.Debugf("%s", contents)
 	}
 	err = resp.Body.Close()
 	if err != nil {
@@ -115,7 +117,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, httpMethod, re
 		logger.Debugf("%s", contents)
 		return fmt.Errorf("sendHTTPRequest error - path %s code %s", path, errCap.Code)
 	}
-	if errCap.Data == nil{
+	if errCap.Data == nil {
 		logger.Debugf("%s", contents)
 		return errors.New("unspecified error occurred")
 	}
