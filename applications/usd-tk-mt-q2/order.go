@@ -67,10 +67,10 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.offsetStep = 1.0
 	}
 
-	strat.tdBidSpreadMiddle = strat.stats.BidSpreadMiddle.Load()
-	strat.tdAskSpreadMiddle = strat.stats.AskSpreadMiddle.Load()
-	strat.tdSpreadEnterOffset = strat.stats.SpreadEnterOffset.Load()
-	strat.tdSpreadLeaveOffset = strat.stats.SpreadLeaveOffset.Load()
+	strat.tdBidSpreadMiddle = strat.stats.BidSpreadMiddle
+	strat.tdAskSpreadMiddle = strat.stats.AskSpreadMiddle
+	strat.tdSpreadEnterOffset = strat.stats.SpreadEnterOffset
+	strat.tdSpreadLeaveOffset = strat.stats.SpreadLeaveOffset
 
 	if xSize >= 0 {
 		strat.thresholdShortTop = strat.tdBidSpreadMiddle + strat.config.ShortEnterThreshold + strat.tdSpreadEnterOffset*strat.offsetFactor - *strat.xyFundingRate**strat.xFundingRateFactor
@@ -134,8 +134,8 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, xAbsValue*0.5), math.Min(xAbsValue, yAbsValue))
 
 		//两步，第一步看x的分布，用一个td之后的bidSize, 第二步不能超过y的td之后askSize的流动性
-		tdXBidValue := strat.stats.XBidSize.Load() * strat.xMultiplier * xyMidPrice
-		tdYAskValue := strat.stats.YAskSize.Load() * strat.yMultiplier * xyMidPrice
+		tdXBidValue := strat.stats.XBidSize * strat.xMultiplier * xyMidPrice
+		tdYAskValue := strat.stats.YAskSize * strat.yMultiplier * xyMidPrice
 		if strat.enterValue > tdXBidValue {
 			strat.enterValue = tdXBidValue
 		}
@@ -165,7 +165,7 @@ func (strat *XYStrategy) updateXOrder() {
 		xSizeDiff = math.Floor(xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if xSizeDiff >= strat.xMinSize && strat.enterValue >= 1.2*strat.xMinNotional {
 
-			xPrice := strat.xTicker.GetAskPrice() * (1.0 + strat.stats.XAskVolatility.Load())
+			xPrice := strat.xTicker.GetAskPrice() * (1.0 + strat.stats.XAskVolatility)
 			xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 
 			strat.xNewOrderParam = common.NewOrderParam{
@@ -222,8 +222,8 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.enterValue = math.Min(math.Max(4*strat.enterStep, xAbsValue*0.5), math.Min(xAbsValue, yAbsValue))
 
 		//两步，第一步看x的分布，用一个td之后的askSize, 第二步不能超过y的td之后bidSize的流动性
-		tdXAskValue := strat.stats.XAskSize.Load() * strat.xMultiplier * xyMidPrice
-		tdYBidValue := strat.stats.YBidSize.Load() * strat.yMultiplier * xyMidPrice
+		tdXAskValue := strat.stats.XAskSize * strat.xMultiplier * xyMidPrice
+		tdYBidValue := strat.stats.YBidSize * strat.yMultiplier * xyMidPrice
 		if strat.enterValue > tdXAskValue {
 			strat.enterValue = tdXAskValue
 		}
@@ -253,7 +253,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.enterValue = xSizeDiff * xyMidPrice
 		xSizeDiff = math.Floor(xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if xSizeDiff >= strat.xMinSize && strat.enterValue >= 1.2*strat.xMinNotional {
-			xPrice := strat.xTicker.GetBidPrice() * (1 - strat.stats.XBidVolatility.Load())
+			xPrice := strat.xTicker.GetBidPrice() * (1 - strat.stats.XBidVolatility)
 			xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
 			strat.xNewOrderParam = common.NewOrderParam{
 				Symbol:      strat.xSymbol,
@@ -309,7 +309,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.bidSpreadMedian > strat.thresholdShortTop &&
 		strat.bidSpreadLast > strat.bidSpreadMedian &&
 		//*strat.xyFundingRate > strat.config.MinimalEnterFundingRate &&
-		strat.stats.XBidVolatility.Load() > strat.stats.YBidVolatility.Load() &&
+		strat.stats.XBidVolatility > strat.stats.YBidVolatility &&
 		xSize > -strat.xMinSize*strat.xMultiplier &&
 		strat.xAccount.GetFree() > strat.config.MinXFree &&
 		strat.yAccount.GetFree() > strat.config.MinYFree &&
@@ -329,8 +329,8 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 
 		//两步，第一步看x的分布，用一个td之后的askSize, 第二步不能超过y的td之后bidSize的流动性
-		tdXAskValue := strat.stats.XAskSize.Load() * strat.xMultiplier * xyMidPrice
-		tdYBidValue := strat.stats.YBidSize.Load() * strat.yMultiplier * xyMidPrice
+		tdXAskValue := strat.stats.XAskSize * strat.xMultiplier * xyMidPrice
+		tdYBidValue := strat.stats.YBidSize * strat.yMultiplier * xyMidPrice
 		if strat.enterValue > tdXAskValue {
 			strat.enterValue = tdXAskValue
 		}
@@ -384,7 +384,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.hedgeXPosition()
 			return
 		}
-		xPrice := strat.xTicker.GetBidPrice() * (1 - strat.stats.XBidVolatility.Load())
+		xPrice := strat.xTicker.GetBidPrice() * (1 - strat.stats.XBidVolatility)
 		xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
@@ -438,7 +438,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.tdBidSpreadMiddle < strat.config.SpreadMiddleMax &&
 		strat.askSpreadMedian < strat.thresholdLongBot &&
 		strat.askSpreadLast < strat.askSpreadMedian &&
-		strat.stats.XAskVolatility.Load() > strat.stats.YAskVolatility.Load() &&
+		strat.stats.XAskVolatility > strat.stats.YAskVolatility &&
 		//*strat.xyFundingRate < -strat.config.MinimalEnterFundingRate &&
 		xSize < strat.xMinSize*strat.xMultiplier &&
 		strat.xAccount.GetFree() > strat.config.MinXFree &&
@@ -459,8 +459,8 @@ func (strat *XYStrategy) updateXOrder() {
 		}
 
 		//两步，第一步看x的分布，用一个td之后的bidSize, 第二步不能超过y的td之后askSize的流动性
-		tdXBidValue := strat.stats.XBidSize.Load() * strat.xMultiplier * xyMidPrice
-		tdYAskValue := strat.stats.YAskSize.Load() * strat.yMultiplier * xyMidPrice
+		tdXBidValue := strat.stats.XBidSize * strat.xMultiplier * xyMidPrice
+		tdYAskValue := strat.stats.YAskSize * strat.yMultiplier * xyMidPrice
 		if strat.enterValue > tdXBidValue {
 			strat.enterValue = tdXBidValue
 		}
@@ -514,7 +514,7 @@ func (strat *XYStrategy) updateXOrder() {
 			strat.hedgeXPosition()
 			return
 		}
-		xPrice := strat.xTicker.GetAskPrice() * (1 + strat.stats.XAskVolatility.Load())
+		xPrice := strat.xTicker.GetAskPrice() * (1 + strat.stats.XAskVolatility)
 		xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 		strat.xNewOrderParam = common.NewOrderParam{
 			Symbol:      strat.xSymbol,
@@ -580,8 +580,8 @@ func (strat *XYStrategy) hedgeXPosition() {
 
 		//下单也加上控制，以防下单太大，造成市场冲击
 		if strat.stats.Ready.True() {
-			tdXBidSize := strat.stats.XBidSize.Load()
-			tdXAskSize := strat.stats.XAskSize.Load()
+			tdXBidSize := strat.stats.XBidSize
+			tdXAskSize := strat.stats.XAskSize
 			if xSizeDiff < -tdXBidSize {
 				xSizeDiff = -tdXBidSize
 			} else if xSizeDiff > tdXAskSize {
@@ -712,8 +712,8 @@ func (strat *XYStrategy) hedgeYPosition() {
 
 	//下单也加上控制，以限下单太大，造成市场冲击
 	if strat.stats.Ready.True() {
-		tdYBidSize := strat.stats.YBidSize.Load()
-		tdYAskSize := strat.stats.YAskSize.Load()
+		tdYBidSize := strat.stats.YBidSize
+		tdYAskSize := strat.stats.YAskSize
 		if ySizeDiff < -tdYBidSize {
 			ySizeDiff = -tdYBidSize
 		} else if ySizeDiff > tdYAskSize {
@@ -822,35 +822,35 @@ func (strat *XYStrategy) isXOpenOrderOk() bool {
 	//}
 	//检查价格有没有在OFFSET范围内，不在撤掉
 	if strat.xOpenOrder.Side == common.OrderSideBuy &&
-		strat.xOpenOrder.Price < strat.xTicker.GetBidPrice()*(1.0-strat.stats.XBidVolatilityFar.Load())-strat.xTickSize {
+		strat.xOpenOrder.Price < strat.xTicker.GetBidPrice()*(1.0-strat.stats.XBidVolatilityFar)-strat.xTickSize {
 		logger.Debugf("%s BUY PRICE %f < FAR BOT %f, CANCEL",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
-			strat.xTicker.GetBidPrice()*(1.0-strat.stats.XBidVolatilityFar.Load())-strat.xTickSize,
+			strat.xTicker.GetBidPrice()*(1.0-strat.stats.XBidVolatilityFar)-strat.xTickSize,
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideBuy &&
-		strat.xOpenOrder.Price > strat.xTicker.GetBidPrice()*(1.0-strat.stats.XBidVolatilityNear.Load())+strat.xTickSize {
+		strat.xOpenOrder.Price > strat.xTicker.GetBidPrice()*(1.0-strat.stats.XBidVolatilityNear)+strat.xTickSize {
 		logger.Debugf("%s BUY PRICE %f > NEAR BOT %f, CANCEL",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
-			strat.xTicker.GetBidPrice()*(1.0-strat.stats.XBidVolatilityNear.Load())+strat.xTickSize,
+			strat.xTicker.GetBidPrice()*(1.0-strat.stats.XBidVolatilityNear)+strat.xTickSize,
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
-		strat.xOpenOrder.Price > strat.xTicker.GetAskPrice()*(1.0+strat.stats.XAskVolatilityFar.Load())+strat.xTickSize {
+		strat.xOpenOrder.Price > strat.xTicker.GetAskPrice()*(1.0+strat.stats.XAskVolatilityFar)+strat.xTickSize {
 		logger.Debugf("%s SELL PRICE %f > FAR TOP %f, CANCEL ",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
-			strat.xTicker.GetAskPrice()*(1.0+strat.stats.XAskVolatilityFar.Load())+strat.xTickSize,
+			strat.xTicker.GetAskPrice()*(1.0+strat.stats.XAskVolatilityFar)+strat.xTickSize,
 		)
 		return false
 	} else if strat.xOpenOrder.Side == common.OrderSideSell &&
-		strat.xOpenOrder.Price < strat.xTicker.GetAskPrice()*(1.0+strat.stats.XAskVolatilityNear.Load())-strat.xTickSize {
+		strat.xOpenOrder.Price < strat.xTicker.GetAskPrice()*(1.0+strat.stats.XAskVolatilityNear)-strat.xTickSize {
 		logger.Debugf("%s SELL PRICE %f < NEAR TOP %f, CANCEL ",
 			strat.xSymbol,
 			strat.xOpenOrder.Price,
-			strat.xTicker.GetAskPrice()*(1.0+strat.stats.XAskVolatilityNear.Load())-strat.xTickSize,
+			strat.xTicker.GetAskPrice()*(1.0+strat.stats.XAskVolatilityNear)-strat.xTickSize,
 		)
 		return false
 	}

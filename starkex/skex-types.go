@@ -174,6 +174,7 @@ func NewStarkwareOrder(
 	if err != nil {
 		return
 	}
+	//不用向上向下取整，策略已经对tick step做过对齐, 不然出现浮点误差的时候，会签名无效
 	humanCost := humanPrice * humanSize
 	order.QuantumsAmountCollateral, err = ToQuantumsExact(humanCost, COLLATERAL_ASSET)
 	if err != nil {
@@ -182,9 +183,11 @@ func NewStarkwareOrder(
 	//if order.IsBuyingSynthetic {
 	//	humanCost := humanPrice * humanSize
 	//	order.QuantumsAmountCollateral = ToQuantumsRoundUp(humanCost, COLLATERAL_ASSET)
+	//	logger.Debugf("QuantumsAmountCollateral %s", order.QuantumsAmountCollateral)
 	//} else {
 	//	humanCost := humanPrice * humanSize
 	//	order.QuantumsAmountCollateral = ToQuantumsRoundDown(humanCost, COLLATERAL_ASSET)
+	//	logger.Debugf("QuantumsAmountCollateral %s", order.QuantumsAmountCollateral)
 	//}
 	// The limitFee is a fraction, e.g. 0.01 is a 1 % fee.
 	// It is always paid in the collateral asset.
@@ -192,6 +195,7 @@ func NewStarkwareOrder(
 	// The final fee amount must be rounded up.
 	limitFeeRounded := math.Floor(limitFee*1000000) / 1000000
 	order.QuantumsAmountFee = big.NewInt(int64(math.Ceil(limitFeeRounded * float64(order.QuantumsAmountCollateral.Int64()))))
+	//logger.Debugf("QuantumsAmountFee %s", order.QuantumsAmountFee)
 	order.PositionId = big.NewInt(positionID)
 	order.Nonce = NonceFromClientId([]byte(clientID))
 	order.ExpirationEpochHours = big.NewInt(int64(math.Ceil(float64(expirationEpochSeconds)/ONE_HOUR_IN_SECONDS)) + ORDER_SIGNATURE_EXPIRATION_BUFFER_HOURS)

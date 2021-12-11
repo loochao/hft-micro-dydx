@@ -330,6 +330,7 @@ func NewXYSimplifiedTickerStats(params NewXYSimplifiedTickerStatsParams) (*XYSim
 		spreadShortLeaveQuantileBot: params.SpreadShortLeaveQuantileBot,
 		baseEnterOffset:             params.BaseEnterOffset,
 		baseLeaveOffset:             params.BaseLeaveOffset,
+
 		xTimeDeltaOffsetTop:         params.XTimeDeltaOffsetTop,
 		xTimeDeltaOffsetBot:         params.XTimeDeltaOffsetBot,
 		yTimeDeltaOffsetTop:         params.YTimeDeltaOffsetTop,

@@ -158,6 +158,7 @@ func NonceFromClientId(clientId []byte) *big.Int {
 
 func ToQuantumsExact(humanAmount float64, asset string) (*big.Int, error) {
 	v := humanAmount * ASSET_RESOLUTION[asset]
+	//logger.Debugf("ToQuantumsExact %f %f", humanAmount, v)
 	//if v != float64(int64(v)) {
 	//	return nil, fmt.Errorf(
 	//		"amount %f is not a multiple of the quantum size %f",
@@ -165,7 +166,7 @@ func ToQuantumsExact(humanAmount float64, asset string) (*big.Int, error) {
 	//		1/ASSET_RESOLUTION[asset],
 	//	)
 	//}
-	return big.NewInt(int64(v)), nil
+	return big.NewInt(int64(math.Round(v))), nil
 }
 
 func ToQuantumsRoundUp(humanAmount float64, asset string) *big.Int {
