@@ -46,7 +46,7 @@ func (strat *XYStrategy) handleXOrder() {
 			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled &&
 			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilledAndCanceled {
 			logger.Debugf("%10s x order %s %s size %f price %f ref-price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetSize(), strat.xOrder.GetPrice(), strat.referenceXPrice, strat.xOrder.GetSize()*strat.xOrder.GetPrice()*strat.xMultiplier)
-			//strat.xPositionUpdateTime = time.Unix(0, 0)
+			//strat.xPositionUpdateTime = time.Now()
 		} else {
 			logger.Debugf("%10s x order %s %s size %f price %f ref-price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.referenceXPrice, strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice()*strat.xMultiplier)
 			strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)

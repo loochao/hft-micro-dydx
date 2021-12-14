@@ -103,9 +103,9 @@ func (w *TickerWS) readLoop(conn *websocket.Conn, channels map[string]chan []byt
 	for i := range readPool {
 		readPool[i] = make([]byte, depthReadMsgSize)
 	}
-	readCounter := 0
-	partialReadCounter := 0
-	allocateCounter := 0
+	//readCounter := 0
+	//partialReadCounter := 0
+	//allocateCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Minute))
@@ -127,16 +127,16 @@ mainLoop:
 		msg = readPool[readIndex]
 		n, err = r.Read(msg)
 		if err == nil {
-			readCounter++
+			//readCounter++
 			msg = msg[:n]
 			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}' {
-				partialReadCounter++
+				//partialReadCounter++
 			readLoop:
 				for {
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
-						allocateCounter++
+						//allocateCounter++
 						if msg[9] != 's' || msg[18] != 'd' {
 							logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", depthReadMsgSize, msg)
 						}
@@ -158,9 +158,9 @@ mainLoop:
 			continue mainLoop
 		}
 
-		if readCounter%1000000 == 0 {
-			logger.Debugf("DYDX DEPTH TICKER READ SIZE %d TOTAL READ %d PARTIAL READ %d EXPAND ALLOCATE %d", depthReadMsgSize, readCounter, partialReadCounter, allocateCounter)
-		}
+		//if readCounter%1000000 == 0 {
+		//	logger.Debugf("DYDX DEPTH TICKER READ SIZE %d TOTAL READ %d PARTIAL READ %d EXPAND ALLOCATE %d", depthReadMsgSize, readCounter, partialReadCounter, allocateCounter)
+		//}
 
 		msgLen = len(msg)
 		if msgLen > 128 {

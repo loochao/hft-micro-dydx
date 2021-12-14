@@ -92,9 +92,9 @@ func (w *UserWebsocket) readLoop(conn *websocket.Conn) {
 	for i := range readPool {
 		readPool[i] = make([]byte, userReadMsgSize)
 	}
-	readCounter := 0
-	partialReadCounter := 0
-	allocateCounter := 0
+	//readCounter := 0
+	//partialReadCounter := 0
+	//allocateCounter := 0
 mainLoop:
 	for {
 		err = conn.SetReadDeadline(time.Now().Add(time.Hour))
@@ -116,16 +116,16 @@ mainLoop:
 		msg = readPool[readIndex]
 		n, err = r.Read(msg)
 		if err == nil {
-			readCounter++
+			//readCounter++
 			msg = msg[:n]
 			if n < 2 || msg[n-1] != '}' || msg[n-2] != '}'{
-				partialReadCounter++
+				//partialReadCounter++
 			readLoop:
 				for {
 					if len(msg) == cap(msg) {
 						// Add more capacity (let append pick how much).
 						msg = append(msg, 0)[:len(msg)]
-						allocateCounter++
+						//allocateCounter++
 						//logger.Debugf("BAD BUFFER SIZE CAN'T READ INTO %d, MSG: %s", userReadMsgSize, msg)
 					}
 					n, err = r.Read(msg[len(msg):cap(msg)])
@@ -145,9 +145,9 @@ mainLoop:
 			continue mainLoop
 		}
 
-		if readCounter%100 == 0 {
-			logger.Debugf("DYDX USER WS READ SIZE %d TOTAL READ %d PARTIAL READ %d EXPAND ALLOCATE %d", userReadMsgSize,readCounter, partialReadCounter, allocateCounter)
-		}
+		//if readCounter%100 == 0 {
+		//	logger.Debugf("DYDX USER WS READ SIZE %d TOTAL READ %d PARTIAL READ %d EXPAND ALLOCATE %d", userReadMsgSize,readCounter, partialReadCounter, allocateCounter)
+		//}
 
 		select {
 		case w.messageCh <- msg:
