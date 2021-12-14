@@ -78,14 +78,8 @@ func (strat *XYStrategy) handleYOrder() {
 		if strat.yOrder.GetStatus() != common.OrderStatusFilled &&
 			strat.yOrder.GetStatus() != common.OrderStatusPartiallyFilled {
 			logger.Debugf("%10s y %s order %s %s", strat.yOrder.GetSymbol(), strat.yOrder.GetSide(), strat.yOrder.GetClientID(), strat.yOrder.GetStatus())
-			if strat.config.HedgeByLimit {
-				strat.yOrderSilentTime = time.Now()
-				strat.yPositionUpdateTime = time.Now()
-				strat.hedgeYPosition()
-			} else {
-				strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
-				strat.yPositionUpdateTime = time.Time{}
-			}
+			strat.yOrderSilentTime = time.Now().Add(strat.config.YOrderSilent)
+			strat.yPositionUpdateTime = time.Time{}
 		} else {
 			logger.Debugf("%10s y order filled %s %s size %f price %f value %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice(), strat.yOrder.GetFilledPrice()*strat.yOrder.GetFilledSize()*strat.yMultiplier)
 			strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)
@@ -116,7 +110,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		if strat.referenceSpread != 0 {
 			strat.xySpreadSlippage = strat.referenceSpread - *strat.realisedSpread
 			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage)
-			if *strat.realisedSpread >= strat.referenceSpread-strat.config.EnterSlippage {
+			if *strat.realisedSpread >= strat.referenceSpread {
 				strat.xySuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {
 				strat.xySuccessRatioTM.Insert(time.Now(), -1.0)
@@ -156,7 +150,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		if strat.referenceSpread != 0 {
 			strat.xySpreadSlippage = *strat.realisedSpread - strat.referenceSpread
 			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage)
-			if *strat.realisedSpread <= strat.referenceSpread+strat.config.EnterSlippage {
+			if *strat.realisedSpread <= strat.referenceSpread {
 				strat.xySuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {
 				strat.xySuccessRatioTM.Insert(time.Now(), -1.0)

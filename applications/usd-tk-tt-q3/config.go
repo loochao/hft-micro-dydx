@@ -95,7 +95,6 @@ type Config struct {
 	HedgeDelay             time.Duration           `yaml:"hedgeDelay"`
 	HedgeCheckDuration     time.Duration           `yaml:"hedgeCheckDuration"`
 	HedgeCheckInterval     time.Duration           `yaml:"hedgeCheckInterval"`
-	HedgeByLimit           bool                    `yaml:"hedgeByLimit"`
 	RealisedSpreadLogDelay time.Duration           `yaml:"realisedSpreadLogDelay"`
 
 	StartValue  float64 `yaml:"startValue"`
@@ -105,7 +104,6 @@ type Config struct {
 
 	BestSizeFactor        float64       `yaml:"bestSizeFactor"`
 	EnterFreePct          float64       `yaml:"enterFreePct"`
-	EnterSlippage         float64       `yaml:"enterSlippage"`
 	EnterSlippageLookback time.Duration `yaml:"enterSlippageLookback"`
 	EnterMinimalStep      float64       `yaml:"enterMinimalStep"`
 	EnterTargetFactor     float64       `yaml:"enterTargetFactor"`
