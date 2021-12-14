@@ -45,10 +45,10 @@ func (strat *XYStrategy) handleXOrder() {
 		if strat.xOrder.GetStatus() != common.OrderStatusFilled &&
 			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled &&
 			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilledAndCanceled {
-			logger.Debugf("%10s x %s order %s %s", strat.xOrder.GetSymbol(), strat.xOrder.GetSide(), strat.xOrder.GetClientID(), strat.xOrder.GetStatus())
+			logger.Debugf("%10s x order %s %s size %f price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetStatus(), strat.xOrder.GetSize(), strat.xOrder.GetPrice(), strat.xOrder.GetSize()*strat.xOrder.GetPrice()*strat.xMultiplier)
 			//strat.xPositionUpdateTime = time.Unix(0, 0)
 		} else {
-			logger.Debugf("%10s x order filled %s %s size %f price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice()*strat.xMultiplier)
+			logger.Debugf("%10s x order %s %s size %f price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice()*strat.xMultiplier)
 			strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)
 			if strat.xOrder.GetSide() == common.OrderSideBuy {
 				if strat.xLastFilledBuyPrice == nil {
