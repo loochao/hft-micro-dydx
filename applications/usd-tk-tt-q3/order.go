@@ -194,9 +194,9 @@ func (strat *XYStrategy) updateXPosition() {
 
 			xPrice := strat.xTicker.GetBidPrice()
 			//防止TickSize太大
-			//同时TickSize比slippage小又是经常存在的，所以拆个中，只要0.5个tickSize小于slippage, 就加上slippage
+			//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
 			slippage := strat.thresholdShortBot - strat.spreadLastLong
-			if strat.xTickSize/xPrice*0.5 < slippage {
+			if strat.xTickSize/xPrice*0.8 < slippage {
 				xPrice = xPrice * (1.0 - slippage)
 				xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
 			}
@@ -280,9 +280,9 @@ func (strat *XYStrategy) updateXPosition() {
 		xSizeDiff = math.Floor(xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if xSizeDiff >= strat.xMinSize && strat.enterValue >= 1.2*strat.xMinNotional {
 			xPrice := strat.xTicker.GetAskPrice()
-			//同时TickSize比slippage小又是经常存在的，所以拆个中，只要0.5个tickSize小于slippage, 就加上slippage
+			//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
 			slippage := strat.spreadLastShort - strat.thresholdLongTop
-			if strat.xTickSize/xPrice*0.5 < slippage {
+			if strat.xTickSize/xPrice*0.8 < slippage {
 				xPrice = xPrice * (1.0 + slippage)
 				xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 			}
@@ -417,9 +417,9 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 		xPrice := strat.xTicker.GetAskPrice()
-		//同时TickSize比slippage小又是经常存在的，所以拆个中，只要0.5个tickSize小于slippage, 就加上slippage
+		//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
 		slippage := strat.spreadLastShort - strat.thresholdShortTop
-		if strat.xTickSize/xPrice*0.5 < slippage {
+		if strat.xTickSize/xPrice*0.8 < slippage {
 			xPrice = xPrice * (1.0 + slippage)
 			xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 		}
@@ -551,9 +551,9 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		xPrice := strat.xTicker.GetBidPrice()
 		//防止TickSize太大
-		//同时TickSize比slippage小又是经常存在的，所以拆个中，只要0.5个tickSize小于slippage, 就加上slippage
+		//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
 		slippage := strat.thresholdLongBot - strat.spreadLastLong
-		if strat.xTickSize/xPrice*0.5 < slippage {
+		if strat.xTickSize/xPrice*0.8 < slippage {
 			xPrice = xPrice * (1.0 - slippage)
 			xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
 		}
