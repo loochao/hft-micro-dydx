@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -74,7 +73,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 			return err
 		}
 		bodyStr = string(bodyData)
-		logger.Debugf("%s", bodyStr)
+		//logger.Debugf("%s", bodyStr)
 	}
 	signature := fmt.Sprintf(
 		"%s%s%s%s",
