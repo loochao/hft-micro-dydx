@@ -23,7 +23,7 @@ chmod 755 "./dist/usd-tk-tt-q3.arm64.$dt"
 rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" tka3:/usr/local/bin/
 
 #rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" arm5:/usr/local/bin/
-#rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" arm1:/usr/local/bin/
+rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" arm1:/usr/local/bin/
 rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" arm4:/usr/local/bin/
 #rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" tkc1:/usr/local/bin/
 #rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" tka1:/usr/local/bin/
