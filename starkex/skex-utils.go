@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/geometrybase/hft-micro/logger"
 	"github.com/geometrybase/hft-micro/rfc6979"
 	"math"
 	"math/big"
@@ -159,7 +158,7 @@ func NonceFromClientId(clientId []byte) *big.Int {
 
 func ToQuantumsExact(humanAmount float64, asset string) (*big.Int, error) {
 	v := humanAmount * ASSET_RESOLUTION[asset]
-	logger.Debugf("ToQuantumsExact %f %f", humanAmount, v)
+	//logger.Debugf("ToQuantumsExact %f %f", humanAmount, v)
 	//if v != float64(int64(v)) {
 	//	return nil, fmt.Errorf(
 	//		"amount %f is not a multiple of the quantum size %f",
