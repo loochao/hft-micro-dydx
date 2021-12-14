@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
 	"time"
@@ -135,13 +134,13 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		if strat.tdSpreadMiddle != 0 &&
 			strat.xyFundingRate != nil &&
 			strat.xFundingRateFactor != nil {
-			fmt.Print("\n\n")
+			logger.Debugf("-----------------------------------")
 			logger.Debugf("%10s - %10s realised short abs spread %f slippage s %.6f x %.6f y %.6f quantile middle %f funding rate offset %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage, strat.tdSpreadMiddle, *strat.xyFundingRate, *strat.realisedSpread-strat.tdSpreadMiddle+*strat.xyFundingRate)
-			fmt.Print("\n\n")
+			logger.Debugf("-----------------------------------")
 		} else {
-			fmt.Print("\n\n")
+			logger.Debugf("-----------------------------------")
 			logger.Debugf("%10s - %10s realised short abs spread %f slippage s %.6f x %.6f y %.6f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage)
-			fmt.Print("\n\n")
+			logger.Debugf("-----------------------------------")
 		}
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
 	} else if strat.xLastFilledSellPrice != nil && strat.yLastFilledBuyPrice != nil {
@@ -179,13 +178,13 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		if strat.tdSpreadMiddle != 0 &&
 			strat.xyFundingRate != nil &&
 			strat.xFundingRateFactor != nil {
-			fmt.Print("\n\n")
+			logger.Debugf("-----------------------------------")
 			logger.Debugf("%10s - %10s realised long abs spread %f slippage s %.6f x %.6f y %.6f quantile middle %f funding rate offset %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage, strat.tdSpreadMiddle, *strat.xyFundingRate, *strat.realisedSpread-strat.tdSpreadMiddle+*strat.xyFundingRate)
-			fmt.Print("\n\n")
+			logger.Debugf("-----------------------------------")
 		} else {
-			fmt.Print("\n\n")
+			logger.Debugf("-----------------------------------")
 			logger.Debugf("%10s - %10s realised long abs spread %f slippage s %.6f x %.6f y %.6f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage)
-			fmt.Print("\n\n")
+			logger.Debugf("-----------------------------------")
 		}
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
 	}
