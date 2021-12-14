@@ -141,3 +141,36 @@ func TestSignOrderD(t *testing.T) {
 		sg,
 	)
 }
+
+func TestSignOrderE(t *testing.T) {
+	tt, err := time.Parse("2006-01-02T15:04:05.999Z", "2021-12-15T11:27:12.18Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	so, err := NewStarkwareOrder(
+		NETWORK_ID_MAINNET,
+		"LTC-USD",
+		"SELL",
+		119684,
+		6.22,
+		149.1,
+		0.0015,
+		"16394812324280",
+		tt.Unix(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk, _ := new(big.Int).SetString(os.Getenv("DYDX_TEST_STARK_PRIVATE_KEY"), 16)
+	sg, err := so.Sign(pk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(
+		t,
+		"02327b5b2d89127cd3a860c5fd53486ff1ca37a68b9f7eeaad0cb501e4f6af3c0100e4a83593cbdfc6066f57e9636de3c3717006c4891e3960295d0c9a8feedb",
+		sg,
+	)
+	logger.Debugf("\nGO_RESULT %s", sg)
+	logger.Debugf("\nST_RESULT %s", "02327b5b2d89127cd3a860c5fd53486ff1ca37a68b9f7eeaad0cb501e4f6af3c0100e4a83593cbdfc6066f57e9636de3c3717006c4891e3960295d0c9a8feedb")
+}
