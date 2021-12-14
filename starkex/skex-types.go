@@ -82,7 +82,7 @@ func (so *StarkwareOrder) Sign(privateKeyHex *big.Int) (string, error) {
 		return "", err
 	}
 	//logger.Debugf("%s", hash)
-	return r1+r2, nil
+	return r1 + r2, nil
 }
 
 func (so *StarkwareOrder) GetHash() (*big.Int, error) {
@@ -174,12 +174,14 @@ func NewStarkwareOrder(
 	if err != nil {
 		return
 	}
+	//logger.Debugf("QuantumsAmountSynthetic %s", order.QuantumsAmountSynthetic)
 	//不用向上向下取整，策略已经对tick step做过对齐, 不然出现浮点误差的时候，会签名无效
 	humanCost := humanPrice * humanSize
 	order.QuantumsAmountCollateral, err = ToQuantumsExact(humanCost, COLLATERAL_ASSET)
 	if err != nil {
 		return
 	}
+	//logger.Debugf("QuantumsAmountCollateral %s", order.QuantumsAmountCollateral)
 	//if order.IsBuyingSynthetic {
 	//	humanCost := humanPrice * humanSize
 	//	order.QuantumsAmountCollateral = ToQuantumsRoundUp(humanCost, COLLATERAL_ASSET)

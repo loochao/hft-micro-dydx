@@ -166,7 +166,8 @@ func ToQuantumsExact(humanAmount float64, asset string) (*big.Int, error) {
 	//		1/ASSET_RESOLUTION[asset],
 	//	)
 	//}
-	return big.NewInt(int64(math.Round(v))), nil
+	//return big.NewInt(int64(math.Round(v))), nil
+	return big.NewInt(int64(v)), nil
 }
 
 func ToQuantumsRoundUp(humanAmount float64, asset string) *big.Int {
