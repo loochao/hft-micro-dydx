@@ -195,7 +195,7 @@ func (strat *XYStrategy) updateXPosition() {
 			xPrice := strat.xTicker.GetBidPrice()
 			//防止TickSize太大
 			if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-				xPrice = xPrice * (1.0 - strat.config.EnterSlippage - (strat.thresholdShortBot - strat.spreadLastLong)*0.5)
+				xPrice = xPrice * (1.0 - strat.config.EnterSlippage - (strat.thresholdShortBot - strat.spreadLastLong))
 				xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
 			}
 
@@ -279,7 +279,7 @@ func (strat *XYStrategy) updateXPosition() {
 		if xSizeDiff >= strat.xMinSize && strat.enterValue >= 1.2*strat.xMinNotional {
 			xPrice := strat.xTicker.GetAskPrice()
 			if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-				xPrice = xPrice * (1.0 + strat.config.EnterSlippage + (strat.spreadLastShort - strat.thresholdLongTop)*0.5)
+				xPrice = xPrice * (1.0 + strat.config.EnterSlippage + (strat.spreadLastShort - strat.thresholdLongTop))
 				xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 			}
 			strat.xNewOrderParam = common.NewOrderParam{
@@ -414,7 +414,7 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		xPrice := strat.xTicker.GetAskPrice()
 		if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-			xPrice = xPrice * (1.0 + strat.config.EnterSlippage + (strat.spreadLastShort-strat.thresholdShortTop)*0.5)
+			xPrice = xPrice * (1.0 + strat.config.EnterSlippage + (strat.spreadLastShort-strat.thresholdShortTop))
 			xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 		}
 		strat.xNewOrderParam = common.NewOrderParam{
@@ -546,7 +546,7 @@ func (strat *XYStrategy) updateXPosition() {
 		xPrice := strat.xTicker.GetBidPrice()
 		//防止TickSize太大
 		if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-			xPrice = xPrice * (1.0 - strat.config.EnterSlippage - (strat.thresholdLongBot-strat.spreadLastLong)*0.5)
+			xPrice = xPrice * (1.0 - strat.config.EnterSlippage - (strat.thresholdLongBot-strat.spreadLastLong))
 			xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
 		}
 		strat.xNewOrderParam = common.NewOrderParam{
