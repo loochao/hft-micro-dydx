@@ -134,9 +134,9 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		if strat.tdSpreadMiddle != 0 &&
 			strat.xyFundingRate != nil &&
 			strat.xFundingRateFactor != nil {
-			logger.Debugf("%10s - %10s realised short abs spread %f slippage s %.6f x %.6f y %.6f quantile middle %f funding rate offset %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage, strat.tdSpreadMiddle, *strat.xyFundingRate, *strat.realisedSpread-strat.tdSpreadMiddle+*strat.xyFundingRate)
+			logger.Debugf("\n\n%10s - %10s realised short abs spread %f slippage s %.6f x %.6f y %.6f quantile middle %f funding rate offset %f adjusted spread %f\n\n", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage, strat.tdSpreadMiddle, *strat.xyFundingRate, *strat.realisedSpread-strat.tdSpreadMiddle+*strat.xyFundingRate)
 		} else {
-			logger.Debugf("%10s - %10s realised short abs spread %f slippage s %.6f x %.6f y %.6f ", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage)
+			logger.Debugf("\n\n%10s - %10s realised short abs spread %f slippage s %.6f x %.6f y %.6f\n\n", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage)
 		}
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
 	} else if strat.xLastFilledSellPrice != nil && strat.yLastFilledBuyPrice != nil {
@@ -174,9 +174,9 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		if strat.tdSpreadMiddle != 0 &&
 			strat.xyFundingRate != nil &&
 			strat.xFundingRateFactor != nil {
-			logger.Debugf("%10s - %10s realised long abs spread %f slippage s %.6f x %.6f y %.6f quantile middle %f funding rate offset %f adjusted spread %f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage, strat.tdSpreadMiddle, *strat.xyFundingRate, *strat.realisedSpread-strat.tdSpreadMiddle+*strat.xyFundingRate)
+			logger.Debugf("\n\n%10s - %10s realised long abs spread %f slippage s %.6f x %.6f y %.6f quantile middle %f funding rate offset %f adjusted spread %f\n\n", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage, strat.tdSpreadMiddle, *strat.xyFundingRate, *strat.realisedSpread-strat.tdSpreadMiddle+*strat.xyFundingRate)
 		} else {
-			logger.Debugf("%10s - %10s realised long abs spread %f slippage s %.6f x %.6f y %.6f", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage)
+			logger.Debugf("\n\n%10s - %10s realised long abs spread %f slippage s %.6f x %.6f y %.6f\n\n", strat.ySymbol, strat.xSymbol, *strat.realisedSpread, strat.xySpreadSlippage, strat.xSlippage, strat.ySlippage)
 		}
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
 	}
