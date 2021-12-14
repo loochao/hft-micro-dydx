@@ -194,8 +194,9 @@ func (strat *XYStrategy) updateXPosition() {
 
 			xPrice := strat.xTicker.GetBidPrice()
 			//防止TickSize太大
-			if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-				xPrice = xPrice * (1.0 - strat.config.EnterSlippage - (strat.thresholdShortBot - strat.spreadLastLong))
+			slippage := strat.config.EnterSlippage + (strat.thresholdShortBot - strat.spreadLastLong)
+			if strat.xTickSize/xPrice < slippage {
+				xPrice = xPrice * (1.0 - slippage)
 				xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
 			}
 
@@ -278,8 +279,9 @@ func (strat *XYStrategy) updateXPosition() {
 		xSizeDiff = math.Floor(xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if xSizeDiff >= strat.xMinSize && strat.enterValue >= 1.2*strat.xMinNotional {
 			xPrice := strat.xTicker.GetAskPrice()
-			if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-				xPrice = xPrice * (1.0 + strat.config.EnterSlippage + (strat.spreadLastShort - strat.thresholdLongTop))
+			slippage := strat.config.EnterSlippage + (strat.spreadLastShort - strat.thresholdLongTop)
+			if strat.xTickSize/xPrice < slippage {
+				xPrice = xPrice * (1.0 + slippage)
 				xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 			}
 			strat.xNewOrderParam = common.NewOrderParam{
@@ -413,8 +415,9 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 		xPrice := strat.xTicker.GetAskPrice()
-		if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-			xPrice = xPrice * (1.0 + strat.config.EnterSlippage + (strat.spreadLastShort-strat.thresholdShortTop))
+		slippage := strat.config.EnterSlippage + (strat.spreadLastShort - strat.thresholdShortTop)
+		if strat.xTickSize/xPrice < slippage{
+			xPrice = xPrice * (1.0 + slippage)
 			xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
 		}
 		strat.xNewOrderParam = common.NewOrderParam{
@@ -545,8 +548,9 @@ func (strat *XYStrategy) updateXPosition() {
 		}
 		xPrice := strat.xTicker.GetBidPrice()
 		//防止TickSize太大
-		if strat.xTickSize/xPrice < strat.config.EnterSlippage {
-			xPrice = xPrice * (1.0 - strat.config.EnterSlippage - (strat.thresholdLongBot-strat.spreadLastLong))
+		slippage := strat.config.EnterSlippage + (strat.thresholdLongBot - strat.spreadLastLong)
+		if strat.xTickSize/xPrice < slippage {
+			xPrice = xPrice * (1.0 - slippage)
 			xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
 		}
 		strat.xNewOrderParam = common.NewOrderParam{
