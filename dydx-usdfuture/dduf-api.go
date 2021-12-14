@@ -15,14 +15,13 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 )
 
 type API struct {
 	client      *http.Client
 	credentials Credentials
-	mu          sync.Mutex
+	//mu          sync.Mutex
 }
 
 func (api *API) SendHTTPRequest(ctx context.Context, path string, params common.Params, result interface{}) error {
@@ -67,9 +66,6 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	}
 	path = common.EncodeURLValues(path, values)
 
-	api.mu.Lock()
-	credentials := api.credentials
-	api.mu.Unlock()
 	isoTimestamp := time.Now().UTC().Format(TimeLayout)
 	var bodyStr string
 	if data != nil {
@@ -87,7 +83,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 		path,
 		bodyStr,
 	)
-	secret, err := base64.URLEncoding.DecodeString(credentials.ApiSecret)
+	secret, err := base64.URLEncoding.DecodeString(api.credentials.ApiSecret)
 	if err != nil {
 		return err
 	}
@@ -102,8 +98,8 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Add("DYDX-SIGNATURE", signStr)
-	req.Header.Add("DYDX-API-KEY", credentials.ApiKey)
-	req.Header.Add("DYDX-PASSPHRASE", credentials.ApiPassphrase)
+	req.Header.Add("DYDX-API-KEY", api.credentials.ApiKey)
+	req.Header.Add("DYDX-PASSPHRASE", api.credentials.ApiPassphrase)
 	req.Header.Add("DYDX-TIMESTAMP", isoTimestamp)
 	resp, err := api.client.Do(req.WithContext(ctx))
 	if err != nil {
@@ -111,11 +107,11 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	}
 	reader := resp.Body
 	contents, err := ioutil.ReadAll(reader)
-	if method == http.MethodPost {
-		logger.Debugf("%s %s", method, path)
-	} else {
+	//if method == http.MethodPost {
+	//	logger.Debugf("%s %s", method, path)
+	//} else {
 		//logger.Debugf("%s", contents)
-	}
+	//}
 	if err != nil {
 		return err
 	}
@@ -316,7 +312,6 @@ func NewAPI(credentials Credentials, proxy string) (*API, error) {
 	api := API{
 		client:      client,
 		credentials: credentials,
-		mu:          sync.Mutex{},
 	}
 	return &api, nil
 }
