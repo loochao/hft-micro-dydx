@@ -170,7 +170,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 				case <-w.done:
 					return
 				case w.OrderCh <- &order:
-					logger.Debugf("%s %v", order.GetStatus(),order)
+					//logger.Debugf("%s %v", order.GetStatus(),order)
 				}
 				select {
 				case w.topicCh <- wsCap.Topic:

@@ -549,6 +549,12 @@ func (wsOrder *WSOrder) GetStatus() common.OrderStatus {
 	switch wsOrder.EventType {
 	case OrderStatusOpen:
 		return common.OrderStatusOpen
+	case OrderStatusCanceled:
+		if wsOrder.FilledSize != 0 {
+			return common.OrderStatusPartiallyFilledAndCanceled
+		} else {
+			return common.OrderStatusCancelled
+		}
 	case OrderStatusDone:
 		if wsOrder.FilledSize != 0 {
 			return common.OrderStatusFilled
