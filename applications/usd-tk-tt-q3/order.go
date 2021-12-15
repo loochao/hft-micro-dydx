@@ -197,9 +197,9 @@ func (strat *XYStrategy) updateXPosition() {
 		if xSizeDiff >= strat.xMinSize && strat.enterValue >= 1.2*strat.xMinNotional {
 
 			xPrice := strat.xTicker.GetBidPrice()
-			//防止TickSize太大
+			//补偿一个TickSize,防止TickSize太大滑太远
 			//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
-			slippage := strat.thresholdShortBot - strat.spreadLastLong
+			slippage := (strat.thresholdShortBot - strat.spreadLastLong) - strat.xTickSize/xPrice
 			if slippage > strat.config.MaxSlippage {
 				slippage = strat.config.MaxSlippage
 			}
@@ -287,8 +287,9 @@ func (strat *XYStrategy) updateXPosition() {
 		xSizeDiff = math.Floor(xSizeDiff/strat.xMultiplier/strat.xStepSize) * strat.xStepSize
 		if xSizeDiff >= strat.xMinSize && strat.enterValue >= 1.2*strat.xMinNotional {
 			xPrice := strat.xTicker.GetAskPrice()
+			//补偿一个TickSize,防止TickSize太大滑太远
 			//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
-			slippage := strat.spreadLastShort - strat.thresholdLongTop
+			slippage := (strat.spreadLastShort - strat.thresholdLongTop) - strat.xTickSize/xPrice
 			if slippage > strat.config.MaxSlippage {
 				slippage = strat.config.MaxSlippage
 			}
@@ -427,8 +428,9 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 		xPrice := strat.xTicker.GetAskPrice()
+		//补偿一个TickSize,防止TickSize太大滑太远
 		//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
-		slippage := strat.spreadLastShort - strat.thresholdShortTop
+		slippage := (strat.spreadLastShort - strat.thresholdShortTop) - strat.xTickSize/xPrice
 		if slippage > strat.config.MaxSlippage {
 			slippage = strat.config.MaxSlippage
 		}
@@ -563,9 +565,9 @@ func (strat *XYStrategy) updateXPosition() {
 			return
 		}
 		xPrice := strat.xTicker.GetBidPrice()
-		//防止TickSize太大
+		//补偿一个TickSize,防止TickSize太大滑太远
 		//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
-		slippage := strat.thresholdLongBot - strat.spreadLastLong
+		slippage := (strat.thresholdLongBot - strat.spreadLastLong) - strat.xTickSize/xPrice
 		if slippage > strat.config.MaxSlippage {
 			slippage = strat.config.MaxSlippage
 		}
