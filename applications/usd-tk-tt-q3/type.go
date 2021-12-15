@@ -186,6 +186,8 @@ type XYStrategy struct {
 	xSlippage        float64
 	ySlippage        float64
 	xySpreadSlippage float64
+	xFilledValue     float64
+	yFilledValue     float64
 
 	xSlippageTMPath        string
 	ySlippageTMPath        string
