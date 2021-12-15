@@ -23,10 +23,10 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.xyFundingRate == nil ||
 		strat.xFundingRateFactor == nil ||
 		strat.enterTarget == 0 ||
-		strat.xTicker.GetBidPrice() == 0 || //此处要考虑到交易所盘口被干穿的情况，没有BID 或者 ASK， Price == 0
-		strat.xTicker.GetAskPrice() == 0 ||
-		strat.yTicker.GetBidPrice() == 0 ||
-		strat.yTicker.GetAskPrice() == 0 {
+		strat.xTicker.GetBidPrice() <= 0 || //此处要考虑到交易所盘口被干穿的情况，没有BID 或者 ASK， Price == 0
+		strat.xTicker.GetAskPrice() <= 0 ||
+		strat.yTicker.GetBidPrice() <= 0 ||
+		strat.yTicker.GetAskPrice() <= 0 {
 		//if time.Now().Sub(strat.logSilentTime) > 0 {
 		//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 		//	logger.Debugf("%s %v %v %v %v %v %v",

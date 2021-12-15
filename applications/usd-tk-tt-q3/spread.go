@@ -14,7 +14,11 @@ func (strat *XYStrategy) updateSpread() {
 		strat.xTickerTimeDelta > strat.stats.XEventTimeDeltaTop ||
 		strat.xTickerTimeDelta < strat.stats.XEventTimeDeltaBot ||
 		strat.yTickerTimeDelta > strat.stats.YEventTimeDeltaTop ||
-		strat.yTickerTimeDelta < strat.stats.YEventTimeDeltaBot {
+		strat.yTickerTimeDelta < strat.stats.YEventTimeDeltaBot ||
+		strat.xTicker.GetBidPrice() <= 0 ||
+		strat.xTicker.GetAskPrice() <= 0 ||
+		strat.yTicker.GetBidPrice() <= 0 ||
+		strat.yTicker.GetAskPrice() <= 0 {
 		return
 	}
 

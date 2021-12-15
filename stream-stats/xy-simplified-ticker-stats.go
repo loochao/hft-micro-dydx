@@ -110,6 +110,7 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 	}()
 	var err error
 	const secondFloat64 = float64(time.Second)
+	var xReady, yReady bool
 	for {
 		select {
 		case <-ctx.Done():
@@ -117,7 +118,11 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 		case <-sl.done:
 			return
 		case <-sampleTimer.C:
-			if sl.xTicker != nil {
+
+			xReady = sl.xTicker != nil && sl.xTicker.GetBidPrice() > 0 && sl.xTicker.GetAskPrice() > 0
+			yReady = sl.yTicker != nil && sl.yTicker.GetBidPrice() > 0 && sl.yTicker.GetAskPrice() > 0
+
+			if xReady {
 				// 0 is initial value
 				if sl.xEventTimeDeltaMean == 0 {
 					//logger.Debugf("X EVENT TIME DELTA %f %f", sl.xEventTimeDelta, sl.timedDeltaK)
@@ -132,7 +137,7 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 				}
 				sl.XMiddlePrice = (sl.xTicker.GetBidPrice() + sl.xTicker.GetAskPrice()) * 0.5
 			}
-			if sl.yTicker != nil {
+			if yReady {
 				if sl.yEventTimeDeltaMean == 0 {
 					//logger.Debugf("Y EVENT TIME DELTA %f %f",sl.yEventTimeDelta, sl.timedDeltaK)
 					sl.yEventTimeDeltaMean = sl.yEventTimeDelta.Seconds()
@@ -146,7 +151,7 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 				}
 				sl.YMiddlePrice = (sl.yTicker.GetBidPrice() + sl.yTicker.GetAskPrice()) * 0.5
 
-				if sl.xTicker != nil {
+				if xReady {
 					sl.xyEventTimeDelta = sl.yEventTime.Sub(sl.xEventTime)
 					sl.spread = ((sl.yTicker.GetBidPrice() + sl.yTicker.GetAskPrice()) - (sl.xTicker.GetBidPrice() + sl.xTicker.GetAskPrice())) / (sl.xTicker.GetBidPrice() + sl.xTicker.GetAskPrice())
 					if sl.xyEventTimeDelta > 0 {
