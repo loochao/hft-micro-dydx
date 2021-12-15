@@ -135,12 +135,12 @@ func TestAPI_SpotMainToSubSpot2(t *testing.T) {
 	ctx := context.Background()
 	resp, _, err := api.SubAccountUniversalTransfer(ctx, SubAccountUniversalTransferParams{
 		//FromEmail:       "bd@visioncap.io",
-		FromEmail:       "fund28@vf2021.com",
+		FromEmail:       "fund32@vf2021.com",
 		ToEmail:         "bd@visioncap.io",
 		FromAccountType: SubAccountTypeSpot,
 		ToAccountType:   SubAccountTypeSpot,
-		Asset:           "BUSD",
-		Amount:          51974,
+		Asset:           "USDC",
+		Amount:          29981,
 	})
 	if err != nil {
 		t.Fatal(err)
