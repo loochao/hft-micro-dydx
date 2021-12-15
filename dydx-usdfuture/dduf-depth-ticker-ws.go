@@ -503,7 +503,9 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, market string, inputCh ch
 						depth.Asks = depth.Asks.Update([2]float64{depth.Asks[0][0], 0.0})
 					}
 				}
-			} else {
+
+			} else if len(depth.Asks) > 0 && len(depth.Bids) > 0 && depth.Asks[0][0] > depth.Bids[0][0]{
+				//如果bid price = ask price 会导致策略无效的不停下单
 				msgCounter++
 
 				if msgCounter >= 0 {
