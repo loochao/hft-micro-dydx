@@ -51,15 +51,15 @@ func (strat *XYStrategy) handleXOrder() {
 			logger.Debugf("%10s x order %s %s size %f price %f ref-price %f value %f", strat.xSymbol, strat.xOrder.GetStatus(), strat.xOrder.GetSide(), strat.xOrder.GetFilledSize(), strat.xOrder.GetFilledPrice(), strat.referenceXPrice, strat.xOrder.GetFilledSize()*strat.xOrder.GetFilledPrice()*strat.xMultiplier)
 			strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)
 			if strat.xOrder.GetSide() == common.OrderSideBuy {
-				if strat.xLastFilledBuyPrice == nil {
+				if strat.xOrder.GetFilledPrice() > 0 {
 					strat.xLastFilledBuyPrice = new(float64)
+					*strat.xLastFilledBuyPrice = strat.xOrder.GetFilledPrice()
 				}
-				*strat.xLastFilledBuyPrice = strat.xOrder.GetFilledPrice()
 			} else if strat.xOrder.GetSide() == common.OrderSideSell {
-				if strat.xLastFilledSellPrice == nil {
+				if strat.xOrder.GetFilledPrice() > 0 {
 					strat.xLastFilledSellPrice = new(float64)
+					*strat.xLastFilledSellPrice = strat.xOrder.GetFilledPrice()
 				}
-				*strat.xLastFilledSellPrice = strat.xOrder.GetFilledPrice()
 			}
 		}
 	}
@@ -84,15 +84,15 @@ func (strat *XYStrategy) handleYOrder() {
 			logger.Debugf("%10s y order filled %s %s size %f price %f value %f", strat.yOrder.GetSymbol(), strat.yOrder.GetStatus(), strat.yOrder.GetSide(), strat.yOrder.GetFilledSize(), strat.yOrder.GetFilledPrice(), strat.yOrder.GetFilledPrice()*strat.yOrder.GetFilledSize()*strat.yMultiplier)
 			strat.realisedSpreadTimer.Reset(strat.config.RealisedSpreadLogDelay)
 			if strat.yOrder.GetSide() == common.OrderSideBuy {
-				if strat.yLastFilledBuyPrice == nil {
+				if strat.yOrder.GetFilledPrice() > 0 {
 					strat.yLastFilledBuyPrice = new(float64)
+					*strat.yLastFilledBuyPrice = strat.yOrder.GetFilledPrice()
 				}
-				*strat.yLastFilledBuyPrice = strat.yOrder.GetFilledPrice()
 			} else if strat.yOrder.GetSide() == common.OrderSideSell {
-				if strat.yLastFilledSellPrice == nil {
+				if strat.yOrder.GetFilledPrice() > 0 {
 					strat.yLastFilledSellPrice = new(float64)
+					*strat.yLastFilledSellPrice = strat.yOrder.GetFilledPrice()
 				}
-				*strat.yLastFilledSellPrice = strat.yOrder.GetFilledPrice()
 			}
 		}
 	}
