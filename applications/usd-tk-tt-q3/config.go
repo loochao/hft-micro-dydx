@@ -107,6 +107,7 @@ type Config struct {
 	EnterSlippageLookback time.Duration `yaml:"enterSlippageLookback"`
 	EnterMinimalStep      float64       `yaml:"enterMinimalStep"`
 	EnterTargetFactor     float64       `yaml:"enterTargetFactor"`
+	MaxSlippage           float64       `yaml:"maxSlippage"`
 	//EnterWithProfitConfirms    bool               `yaml:"enterWithProfitConfirms"`
 	StartValues map[string]float64 `yaml:"startValues"`
 	//TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`
@@ -142,6 +143,9 @@ func (config *Config) SetDefaultIfNotSet() error {
 	}
 	if config.RestartSilent == 0 {
 		config.RestartSilent = time.Minute * 3
+	}
+	if config.MaxSlippage == 0 {
+		config.MaxSlippage = 0.01
 	}
 	if config.StreamBatchSize <= 0 {
 		config.StreamBatchSize = 20

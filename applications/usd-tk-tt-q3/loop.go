@@ -143,7 +143,8 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			logger.Debugf("----------------------------------------------------------------------")
 		}
 		strat.xOrderSilentTime = time.Now().Add(strat.config.XEnterSilent)
-	} else if strat.xLastFilledSellPrice != nil && strat.yLastFilledBuyPrice != nil {
+	} else if strat.xLastFilledSellPrice != nil &&
+		strat.yLastFilledBuyPrice != nil {
 		if strat.realisedSpread == nil {
 			strat.realisedSpread = new(float64)
 		}

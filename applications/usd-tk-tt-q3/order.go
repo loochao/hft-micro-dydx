@@ -22,7 +22,11 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.yPosition == nil ||
 		strat.xyFundingRate == nil ||
 		strat.xFundingRateFactor == nil ||
-		strat.enterTarget == 0 {
+		strat.enterTarget == 0 ||
+		strat.xTicker.GetBidPrice() == 0 || //此处要考虑到交易所盘口被干穿的情况，没有BID 或者 ASK， Price == 0
+		strat.xTicker.GetAskPrice() == 0 ||
+		strat.yTicker.GetBidPrice() == 0 ||
+		strat.yTicker.GetAskPrice() == 0 {
 		//if time.Now().Sub(strat.logSilentTime) > 0 {
 		//	strat.logSilentTime = time.Now().Add(strat.config.LogInterval)
 		//	logger.Debugf("%s %v %v %v %v %v %v",
@@ -196,6 +200,9 @@ func (strat *XYStrategy) updateXPosition() {
 			//防止TickSize太大
 			//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
 			slippage := strat.thresholdShortBot - strat.spreadLastLong
+			if slippage > strat.config.MaxSlippage {
+				slippage = strat.config.MaxSlippage
+			}
 			if strat.xTickSize/xPrice*0.8 < slippage {
 				xPrice = xPrice * (1.0 - slippage)
 				xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
@@ -282,6 +289,9 @@ func (strat *XYStrategy) updateXPosition() {
 			xPrice := strat.xTicker.GetAskPrice()
 			//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
 			slippage := strat.spreadLastShort - strat.thresholdLongTop
+			if slippage > strat.config.MaxSlippage {
+				slippage = strat.config.MaxSlippage
+			}
 			if strat.xTickSize/xPrice*0.8 < slippage {
 				xPrice = xPrice * (1.0 + slippage)
 				xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
@@ -419,6 +429,9 @@ func (strat *XYStrategy) updateXPosition() {
 		xPrice := strat.xTicker.GetAskPrice()
 		//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
 		slippage := strat.spreadLastShort - strat.thresholdShortTop
+		if slippage > strat.config.MaxSlippage {
+			slippage = strat.config.MaxSlippage
+		}
 		if strat.xTickSize/xPrice*0.8 < slippage {
 			xPrice = xPrice * (1.0 + slippage)
 			xPrice = math.Ceil(xPrice/strat.xTickSize) * strat.xTickSize
@@ -553,6 +566,9 @@ func (strat *XYStrategy) updateXPosition() {
 		//防止TickSize太大
 		//同时TickSize比slippage小又是经常存在的，所以折个中，只要0.8个tickSize小于slippage, 就加上slippage
 		slippage := strat.thresholdLongBot - strat.spreadLastLong
+		if slippage > strat.config.MaxSlippage {
+			slippage = strat.config.MaxSlippage
+		}
 		if strat.xTickSize/xPrice*0.8 < slippage {
 			xPrice = xPrice * (1.0 - slippage)
 			xPrice = math.Floor(xPrice/strat.xTickSize) * strat.xTickSize
@@ -638,7 +654,7 @@ func (strat *XYStrategy) hedgeXPosition() {
 		} else if xSizeDiff < -strat.maxOrderSize {
 			xSizeDiff = -strat.maxOrderSize
 		}
-		 xSizeDiff /= strat.xMultiplier
+		xSizeDiff /= strat.xMultiplier
 
 		if xSizeDiff >= 0 {
 			xSizeDiff = math.Floor(xSizeDiff/strat.xStepSize) * strat.xStepSize
@@ -673,12 +689,12 @@ func (strat *XYStrategy) hedgeXPosition() {
 			orderSide = common.OrderSideBuy
 		}
 		strat.xNewOrderParam = common.NewOrderParam{
-			Symbol:      strat.xSymbol,
-			Side:        orderSide,
-			Type:        common.OrderTypeMarket,
-			Size:        xSizeDiff,
-			ReduceOnly:  true,
-			ClientID:    strat.xExchange.GenerateClientID(),
+			Symbol:     strat.xSymbol,
+			Side:       orderSide,
+			Type:       common.OrderTypeMarket,
+			Size:       xSizeDiff,
+			ReduceOnly: true,
+			ClientID:   strat.xExchange.GenerateClientID(),
 		}
 		if !strat.config.DryRun {
 			select {
