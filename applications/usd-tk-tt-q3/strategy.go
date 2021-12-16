@@ -444,7 +444,7 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			//}
 			//logger.Debugf("%s %v %v %f %f", strat.xSymbol, nextPos.GetEventTime(), strat.xPosition.GetEventTime(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()), strat.xStepSize)
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
-				strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+				//strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 				strat.yOrderSilentTime = time.Now()
 				if strat.xTicker != nil {
 					strat.xTimedPositionChange.Insert(time.Now(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize())*strat.xMidPrice*strat.xMultiplier)

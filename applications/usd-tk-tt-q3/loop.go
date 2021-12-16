@@ -40,7 +40,7 @@ func (strat *XYStrategy) handleXOrder() {
 		strat.xOrder.GetStatus() == common.OrderStatusPartiallyFilled {
 
 		//order silent after order end
-		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+		//strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 
 		if strat.xOrder.GetStatus() != common.OrderStatusFilled &&
 			strat.xOrder.GetStatus() != common.OrderStatusPartiallyFilled &&
@@ -201,7 +201,7 @@ func (strat *XYStrategy) handleXOrderError() {
 		//strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 	} else if strat.xOrderError.New != nil {
 		logger.Debugf("%10s new %v error %v", strat.xSymbol, *strat.xOrderError.New, strat.xOrderError.Error)
-		strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
+		//strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 	}
 }
 
