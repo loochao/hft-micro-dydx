@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
+	"math"
 	"time"
 )
 
@@ -123,6 +124,9 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			strat.ySlippage = (strat.referenceYPrice - *strat.yLastFilledSellPrice) / strat.referenceYPrice
 			strat.xSlippageTM.Insert(time.Now(), strat.xSlippage, strat.yFilledValue)
 			strat.ySlippageTM.Insert(time.Now(), strat.ySlippage, strat.yFilledValue)
+			if strat.ySlippageTM.Mean > 0 {
+				strat.ySlippageFactor = 1.0/math.Ceil(strat.ySlippageTM.Mean/strat.config.YSlippageReference)
+			}
 			strat.referenceSpread = 0
 		}
 		if strat.tdSpreadMiddle != 0 {
@@ -168,6 +172,9 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			strat.ySlippage = (*strat.yLastFilledBuyPrice - strat.referenceYPrice) / strat.referenceYPrice
 			strat.xSlippageTM.Insert(time.Now(), strat.xSlippage, strat.yFilledValue)
 			strat.ySlippageTM.Insert(time.Now(), strat.ySlippage, strat.yFilledValue)
+			if strat.ySlippageTM.Mean > 0 {
+				strat.ySlippageFactor = 1.0/math.Ceil(strat.ySlippageTM.Mean/strat.config.YSlippageReference)
+			}
 			strat.referenceSpread = 0
 		}
 		if strat.tdSpreadMiddle != 0 {

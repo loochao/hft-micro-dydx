@@ -179,6 +179,11 @@ func startXYStrategy(
 	strat.xSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.xSlippageTMPath, config.EnterSlippageLookback)
 	strat.ySlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.ySlippageTMPath, config.EnterSlippageLookback)
 
+	strat.ySlippageFactor = 1.0
+	if strat.ySlippageTM.Mean > 0 {
+		strat.ySlippageFactor = 1.0/math.Ceil(strat.ySlippageTM.Mean/strat.config.YSlippageReference)
+	}
+
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {
 		logger.Debugf("%v", err)

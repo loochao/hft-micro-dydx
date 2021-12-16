@@ -179,10 +179,6 @@ func (strat *XYStrategy) updateXPosition() {
 			xSizeDiff = strat.maxOrderSize
 		}
 
-		strat.ySlippageFactor = 1.0
-		if strat.ySlippageTM.Mean > 0 {
-			strat.ySlippageFactor = 1.0/math.Ceil(strat.ySlippageTM.Mean/strat.config.YSlippageReference)
-		}
 		if strat.config.BestSizeFactor > 0 {
 			//限开仓大小限制到best bid ask size, 主要关心Y的深度，保证Y的深度足够
 			xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor*strat.ySlippageFactor, xSizeDiff)
@@ -276,10 +272,6 @@ func (strat *XYStrategy) updateXPosition() {
 			xSizeDiff = strat.maxOrderSize
 		}
 
-		strat.ySlippageFactor = 1.0
-		if strat.ySlippageTM.Mean > 0 {
-			strat.ySlippageFactor = 1.0/math.Ceil(strat.ySlippageTM.Mean/strat.config.YSlippageReference)
-		}
 		if strat.config.BestSizeFactor > 0 {
 			xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor*strat.ySlippageFactor, xSizeDiff)
 		}
@@ -395,10 +387,6 @@ func (strat *XYStrategy) updateXPosition() {
 			xSizeDiff = strat.maxOrderSize
 		}
 
-		strat.ySlippageFactor = 1.0
-		if strat.ySlippageTM.Mean > 0 {
-			strat.ySlippageFactor = 1.0/math.Ceil(strat.ySlippageTM.Mean/strat.config.YSlippageReference)
-		}
 		if strat.config.BestSizeFactor > 0 {
 			xSizeDiff = math.Min(strat.yTicker.GetBidSize()*strat.yMultiplier*strat.config.BestSizeFactor*strat.ySlippageFactor, xSizeDiff)
 		}
@@ -537,10 +525,6 @@ func (strat *XYStrategy) updateXPosition() {
 			xSizeDiff = strat.maxOrderSize
 		}
 
-		strat.ySlippageFactor = 1.0
-		if strat.ySlippageTM.Mean > 0 {
-			strat.ySlippageFactor = 1.0/math.Ceil(strat.ySlippageTM.Mean/strat.config.YSlippageReference)
-		}
 		if strat.config.BestSizeFactor > 0 {
 			xSizeDiff = math.Min(strat.yTicker.GetAskSize()*strat.yMultiplier*strat.config.BestSizeFactor*strat.ySlippageFactor, xSizeDiff)
 		}
