@@ -66,6 +66,8 @@ func handleSave(
 				totalXSlippageWeight += strat.xSlippageTM.Weight
 			}
 
+			fields["ySlippageFactor"] = strat.ySlippageFactor
+
 			if strat.ySlippageTM.Len() > 0 {
 				fields["ySlippage"] = strat.ySlippageTM.Mean
 				totalYSlippage += strat.ySlippageTM.Mean * strat.ySlippageTM.Weight

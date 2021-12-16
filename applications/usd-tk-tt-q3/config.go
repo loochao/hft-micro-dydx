@@ -108,6 +108,7 @@ type Config struct {
 	EnterMinimalStep      float64       `yaml:"enterMinimalStep"`
 	EnterTargetFactor     float64       `yaml:"enterTargetFactor"`
 	MaxSlippage           float64       `yaml:"maxSlippage"`
+	YSlippageReference    float64       `yaml:"ySlippageReference"`
 	//EnterWithProfitConfirms    bool               `yaml:"enterWithProfitConfirms"`
 	StartValues map[string]float64 `yaml:"startValues"`
 	//TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`
@@ -125,6 +126,9 @@ func (config *Config) SetDefaultIfNotSet() error {
 	}
 	if config.YExchange.Leverage == 0 {
 		config.YExchange.Leverage = 1.0
+	}
+	if config.YSlippageReference == 0 {
+		config.YSlippageReference = 0.001
 	}
 	if config.InternalInflux.SaveInterval == 0 {
 		config.InternalInflux.SaveInterval = time.Minute

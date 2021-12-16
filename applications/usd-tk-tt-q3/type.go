@@ -183,14 +183,15 @@ type XYStrategy struct {
 	xSlippageTM        *stream_stats.TimedWeightedMean
 	ySlippageTM        *stream_stats.TimedWeightedMean
 
-	xSlippage              float64
-	ySlippage              float64
-	xySpreadSlippage       float64
-	xFilledValue           float64
-	yFilledValue           float64
+	xSlippage        float64
+	ySlippage        float64
+	xySpreadSlippage float64
+	xFilledValue     float64
+	yFilledValue     float64
 
 	xSlippageTMPath        string
 	ySlippageTMPath        string
 	xySuccessRatioTMPath   string
 	xySpreadSlippageTMPath string
+	ySlippageFactor        float64
 }
