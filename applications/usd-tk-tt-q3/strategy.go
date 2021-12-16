@@ -264,6 +264,12 @@ func (strat *XYStrategy) saveSlippageTMs() {
 	} else {
 		logger.Debugf("%10s ySlippageTM %s saved", strat.xSymbol, strat.ySlippageTMPath)
 	}
+	err = strat.xySpreadSlippageTM.Save(strat.xySpreadSlippageTMPath)
+	if err != nil {
+		logger.Debugf("strat.xySpreadSlippageTM.Save %s error %v", strat.xySpreadSlippageTMPath, err)
+	} else {
+		logger.Debugf("%10s xySpreadSlippageTM %s saved", strat.xSymbol, strat.xySpreadSlippageTMPath)
+	}
 }
 
 func (strat *XYStrategy) Start(ctx context.Context) {
