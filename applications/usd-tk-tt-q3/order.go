@@ -243,7 +243,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.referenceXPrice = strat.xTicker.GetBidPrice()
 			strat.referenceYPrice = strat.yTicker.GetAskPrice()
 			logger.Debugf(
-				"%10s %10s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f Fr %f",
+				"%10s %10s SHORT BOT REDUCE %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f Fr %f, Ysf %f",
 				strat.xSymbol, strat.ySymbol,
 				strat.spreadLastLong, strat.thresholdShortBot,
 				strat.spreadMedianLong, strat.thresholdShortBot,
@@ -258,6 +258,7 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.tdSpreadEnterOffset,
 				strat.tdSpreadExitOffset,
 				*strat.xyFundingRate,
+				strat.ySlippageFactor,
 			)
 		}
 	} else if strat.spreadMedianShort > strat.thresholdLongTop &&
@@ -332,7 +333,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.referenceXPrice = strat.xTicker.GetAskPrice()
 			strat.referenceYPrice = strat.yTicker.GetBidPrice()
 			logger.Debugf(
-				"%10s %10s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
+				"%10s %10s LONG TOP REDUCE %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f, Yfr %f",
 				strat.xSymbol, strat.ySymbol,
 				strat.spreadLastShort, strat.thresholdLongTop,
 				strat.spreadMedianShort, strat.thresholdLongTop,
@@ -347,6 +348,7 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.tdSpreadEnterOffset,
 				strat.tdSpreadExitOffset,
 				*strat.xyFundingRate,
+				strat.ySlippageFactor,
 			)
 		}
 	} else if !strat.reduceOnly &&
@@ -473,7 +475,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.referenceXPrice = strat.xTicker.GetAskPrice()
 		strat.referenceYPrice = strat.yTicker.GetBidPrice()
 		logger.Debugf(
-			"%10s %10s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
+			"%10s %10s SHORT TOP OPEN %f > %f, %f > %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f, Ysr %f",
 			strat.xSymbol, strat.ySymbol,
 			strat.spreadLastShort, strat.thresholdShortTop,
 			strat.spreadMedianShort, strat.thresholdShortTop,
@@ -488,6 +490,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.tdSpreadEnterOffset,
 			strat.tdSpreadExitOffset,
 			*strat.xyFundingRate,
+			strat.ySlippageFactor,
 		)
 	} else if !strat.reduceOnly &&
 		!strat.isXSpot &&
@@ -610,7 +613,7 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.referenceXPrice = strat.xTicker.GetBidPrice()
 		strat.referenceYPrice = strat.yTicker.GetAskPrice()
 		logger.Debugf(
-			"%10s %10s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f",
+			"%10s %10s LONG BOT OPEN %f < %f, %f < %f, PRICE %f SIZE %f, XTickerDiff %v YTickerDiff %v X %f %f Y %f %f, Offsets %f %f, Fr %f, Ysr %f",
 			strat.xSymbol, strat.ySymbol,
 			strat.spreadLastLong, strat.thresholdLongBot,
 			strat.spreadMedianLong, strat.thresholdLongBot,
@@ -625,6 +628,7 @@ func (strat *XYStrategy) updateXPosition() {
 			strat.tdSpreadEnterOffset,
 			strat.tdSpreadExitOffset,
 			*strat.xyFundingRate,
+			strat.ySlippageFactor,
 		)
 
 	}
