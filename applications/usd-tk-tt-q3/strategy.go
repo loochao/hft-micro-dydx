@@ -170,14 +170,14 @@ func startXYStrategy(
 		lastEnterTime:           time.Time{},
 
 		xySuccessRatioTMPath: fmt.Sprintf("%s/%s-%s.XYSRTM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		xySpreadSlippageTMPath: fmt.Sprintf("%s/%s-%s.XYSSTM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		xSlippageTMPath:      fmt.Sprintf("%s/%s-%s.XSTM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		ySlippageTMPath:      fmt.Sprintf("%s/%s-%s.YSTM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		xySpreadSlippageTMPath: fmt.Sprintf("%s/%s-%s.XYSSTWM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		xSlippageTMPath:      fmt.Sprintf("%s/%s-%s.XSTWM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		ySlippageTMPath:      fmt.Sprintf("%s/%s-%s.YSTWM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
 	}
 	strat.xySuccessRatioTM = stream_stats.LoadOrCreateTimeMean(strat.xySuccessRatioTMPath, config.EnterSlippageLookback)
-	strat.xySpreadSlippageTM = stream_stats.LoadOrCreateTimeMean(strat.xySpreadSlippageTMPath, config.EnterSlippageLookback)
-	strat.xSlippageTM = stream_stats.LoadOrCreateTimeMean(strat.xSlippageTMPath, config.EnterSlippageLookback)
-	strat.ySlippageTM = stream_stats.LoadOrCreateTimeMean(strat.ySlippageTMPath, config.EnterSlippageLookback)
+	strat.xySpreadSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.xySpreadSlippageTMPath, config.EnterSlippageLookback)
+	strat.xSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.xSlippageTMPath, config.EnterSlippageLookback)
+	strat.ySlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.ySlippageTMPath, config.EnterSlippageLookback)
 
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
 	if err != nil {

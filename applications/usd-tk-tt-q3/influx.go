@@ -44,9 +44,9 @@ func handleSave(
 	totalXSlippage := 0.0
 	totalYSlippage := 0.0
 	totalSuccessRatioCount := 0.0
-	totalXSlippageCount := 0.0
-	totalYSlippageCount := 0.0
-	totalSpreadSlippageCount := 0.0
+	totalXSlippageWeight := 0.0
+	totalYSlippageWeight := 0.0
+	totalSpreadSlippageWeight := 0.0
 	for _, xSymbol := range xSymbols {
 		strat, ok := stratMap[xSymbol]
 		if !ok {
@@ -62,26 +62,26 @@ func handleSave(
 
 			if strat.xSlippageTM.Len() > 0 {
 				fields["xSlippage"] = strat.xSlippageTM.Mean
-				totalXSlippage += strat.xSlippageTM.Mean * float64(strat.xSlippageTM.Len())
-				totalXSlippageCount += float64(strat.xSlippageTM.Len())
+				totalXSlippage += strat.xSlippageTM.Mean * strat.xSlippageTM.Weight
+				totalXSlippageWeight += strat.xSlippageTM.Weight
 			}
 
 			if strat.ySlippageTM.Len() > 0 {
 				fields["ySlippage"] = strat.ySlippageTM.Mean
-				totalYSlippage += strat.ySlippageTM.Mean * float64(strat.ySlippageTM.Len())
-				totalYSlippageCount += float64(strat.ySlippageTM.Len())
+				totalYSlippage += strat.ySlippageTM.Mean * strat.ySlippageTM.Weight
+				totalYSlippageWeight += strat.ySlippageTM.Weight
+			}
+
+			if strat.xySpreadSlippageTM.Len() > 0 {
+				fields["xySpreadSlippage"] = strat.xySpreadSlippageTM.Mean
+				totalSpreadSlippage += strat.xySpreadSlippageTM.Mean * strat.xySpreadSlippageTM.Weight
+				totalSpreadSlippageWeight += strat.xySpreadSlippageTM.Weight
 			}
 
 			if strat.xySuccessRatioTM.Len() > 0 {
 				fields["xySuccessRatio"] = strat.xySuccessRatioTM.Mean
 				totalSuccessCount += strat.xySuccessRatioTM.Mean * float64(strat.xySuccessRatioTM.Len())
 				totalSuccessRatioCount += float64(strat.xySuccessRatioTM.Len())
-			}
-
-			if strat.xySpreadSlippageTM.Len() > 0 {
-				fields["xySpreadSlippage"] = strat.xySpreadSlippageTM.Mean
-				totalSpreadSlippage += strat.xySpreadSlippageTM.Mean * float64(strat.xySpreadSlippageTM.Len())
-				totalSpreadSlippageCount += float64(strat.xySpreadSlippageTM.Len())
 			}
 
 			fields["xBidPrice"] = strat.xTicker.GetBidPrice()
@@ -358,14 +358,14 @@ func handleSave(
 			fields["totalFailureCount"] = int(totalSuccessRatioCount - totalSuccessCount)
 			fields["totalSuccessRatio"] = totalSuccessCount / totalSuccessRatioCount
 		}
-		if totalXSlippageCount != 0 {
-			fields["meanXSlippage"] = totalXSlippage / totalXSlippageCount
+		if totalXSlippageWeight != 0 {
+			fields["meanXSlippage"] = totalXSlippage / totalXSlippageWeight
 		}
-		if totalYSlippageCount != 0 {
-			fields["meanYSlippage"] = totalYSlippage / totalYSlippageCount
+		if totalYSlippageWeight != 0 {
+			fields["meanYSlippage"] = totalYSlippage / totalYSlippageWeight
 		}
-		if totalSpreadSlippageCount != 0 {
-			fields["meanSpreadSlippage"] = totalSpreadSlippage / totalSpreadSlippageCount
+		if totalSpreadSlippageWeight != 0 {
+			fields["meanSpreadSlippage"] = totalSpreadSlippage / totalSpreadSlippageWeight
 		}
 		fields["xURPnl"] = xURPnl
 		fields["yURPnl"] = yURPnl

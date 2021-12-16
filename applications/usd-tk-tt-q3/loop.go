@@ -113,7 +113,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		strat.xySpreadSlippage = 0
 		if strat.referenceSpread != 0 {
 			strat.xySpreadSlippage = strat.referenceSpread - *strat.realisedSpread
-			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage)
+			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage, strat.yFilledValue)
 			if *strat.realisedSpread >= strat.referenceSpread {
 				strat.xySuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {
@@ -121,8 +121,8 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			}
 			strat.xSlippage = (*strat.xLastFilledBuyPrice - strat.referenceXPrice) / strat.referenceXPrice
 			strat.ySlippage = (strat.referenceYPrice - *strat.yLastFilledSellPrice) / strat.referenceYPrice
-			strat.xSlippageTM.Insert(time.Now(), strat.xSlippage)
-			strat.ySlippageTM.Insert(time.Now(), strat.ySlippage)
+			strat.xSlippageTM.Insert(time.Now(), strat.xSlippage, strat.yFilledValue)
+			strat.ySlippageTM.Insert(time.Now(), strat.ySlippage, strat.yFilledValue)
 			strat.referenceSpread = 0
 		}
 		if strat.tdSpreadMiddle != 0 {
@@ -158,7 +158,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		strat.xySpreadSlippage = 0
 		if strat.referenceSpread != 0 {
 			strat.xySpreadSlippage = *strat.realisedSpread - strat.referenceSpread
-			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage)
+			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage, strat.yFilledValue)
 			if *strat.realisedSpread <= strat.referenceSpread {
 				strat.xySuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {
@@ -166,8 +166,8 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			}
 			strat.xSlippage = (strat.referenceXPrice - *strat.xLastFilledSellPrice) / strat.referenceXPrice
 			strat.ySlippage = (*strat.yLastFilledBuyPrice - strat.referenceYPrice) / strat.referenceYPrice
-			strat.xSlippageTM.Insert(time.Now(), strat.xSlippage)
-			strat.ySlippageTM.Insert(time.Now(), strat.ySlippage)
+			strat.xSlippageTM.Insert(time.Now(), strat.xSlippage, strat.yFilledValue)
+			strat.ySlippageTM.Insert(time.Now(), strat.ySlippage, strat.yFilledValue)
 			strat.referenceSpread = 0
 		}
 		if strat.tdSpreadMiddle != 0 {
