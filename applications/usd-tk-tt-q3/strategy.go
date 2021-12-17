@@ -398,9 +398,9 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 		case strat.yOrderError = <-strat.yOrderErrorCh:
 			strat.handleYOrderError()
 			break
-		//case <-strat.spreadWalkTimer.C:
-		//	strat.updateSpread()
-		//	break
+		case <-strat.spreadWalkTimer.C:
+			strat.updateSpread()
+			break
 		case strat.nextTicker = <-strat.xyTickerCh:
 			strat.handleTicker()
 			break

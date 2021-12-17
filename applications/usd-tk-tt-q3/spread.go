@@ -28,14 +28,12 @@ func (strat *XYStrategy) updateSpread() {
 		return
 	}
 
-	//y based data driven
-	strat.spreadTickerTime = strat.yTickerTime
 	strat.spreadEventTime = time.Now()
-	//if strat.xyTickerTimeDelta > 0 {
-	//	strat.spreadTickerTime = strat.xTickerTime
-	//} else {
-	//	strat.spreadTickerTime = strat.yTickerTime
-	//}
+	if strat.xyTickerTimeDelta > 0 {
+		strat.spreadTickerTime = strat.xTickerTime
+	} else {
+		strat.spreadTickerTime = strat.yTickerTime
+	}
 
 	strat.tickerMatchCount++
 
@@ -81,7 +79,9 @@ func (strat *XYStrategy) handleXTicker() {
 	strat.xMidPrice = 0.5 * (strat.xTicker.GetAskPrice() + strat.xTicker.GetBidPrice())
 	strat.xTickerTime = strat.xTicker.GetEventTime()
 	strat.xTickerTimeDelta = strat.xTickerTime.Sub(time.Now())
-	//strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
+	if strat.config.SpreadWalkByXTicker {
+		strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
+	}
 	strat.tickerCount++
 	select {
 	case strat.stats.XTickerCh <- strat.xTicker:
@@ -102,8 +102,9 @@ func (strat *XYStrategy) handleYTicker() {
 	strat.yTickerTime = strat.yTicker.GetEventTime()
 	strat.yTickerTimeDelta = strat.yTickerTime.Sub(time.Now())
 	strat.tickerCount++
-	strat.updateSpread()
-	//strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
+	if strat.config.SpreadWalkByYTicker {
+		strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
+	}
 	select {
 	case strat.stats.YTickerCh <- strat.yTicker:
 	default:
