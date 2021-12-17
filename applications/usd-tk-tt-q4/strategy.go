@@ -180,7 +180,7 @@ func startXYStrategy(
 		xyStrategyPath:         fmt.Sprintf("%s/%s-%s.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
 	}
 	strat.XYSuccessRatioTM = stream_stats.LoadOrCreateTimeMean(strat.xySuccessRatioTMPath, config.EnterSlippageLookback)
-	strat.xySpreadSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.xySpreadSlippageTMPath, config.EnterSlippageLookback)
+	strat.XYSpreadSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.xySpreadSlippageTMPath, config.EnterSlippageLookback)
 	strat.XSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.xSlippageTMPath, config.EnterSlippageLookback)
 	strat.YSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.ySlippageTMPath, config.EnterSlippageLookback)
 	strat.XTurnoverVolume = stream_stats.LoadOrCreateTimeSum(strat.xTurnoverVolumePath, config.TurnoverLookback)
@@ -327,11 +327,11 @@ func (strat *XYStrategy) saveSlippageTMs() {
 	} else {
 		logger.Debugf("%10s YSlippageTM %s saved", strat.xSymbol, strat.ySlippageTMPath)
 	}
-	err = strat.xySpreadSlippageTM.Save(strat.xySpreadSlippageTMPath)
+	err = strat.XYSpreadSlippageTM.Save(strat.xySpreadSlippageTMPath)
 	if err != nil {
-		logger.Debugf("strat.xySpreadSlippageTM.Save %s error %v", strat.xySpreadSlippageTMPath, err)
+		logger.Debugf("strat.XYSpreadSlippageTM.Save %s error %v", strat.xySpreadSlippageTMPath, err)
 	} else {
-		logger.Debugf("%10s xySpreadSlippageTM %s saved", strat.xSymbol, strat.xySpreadSlippageTMPath)
+		logger.Debugf("%10s XYSpreadSlippageTM %s saved", strat.xSymbol, strat.xySpreadSlippageTMPath)
 	}
 }
 

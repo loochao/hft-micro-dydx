@@ -13,12 +13,18 @@ import (
 )
 
 type XYSimplifiedTickerStats struct {
-	sampleInterval time.Duration
-	saveInterval   time.Duration
-
 	SpreadTD *TimedTDigest `json:"spreadTD,omitempty"`
 
-	spreadTDPath string
+	XEventTimeDeltaMean  float64 `json:"xEventTimeDeltaMean"`
+	YEventTimeDeltaMean  float64 `json:"yEventTimeDeltaMean"`
+	XYEventTimeDeltaMean float64 `json:"xyEventTimeDeltaMean"`
+
+	XParseTimeDeltaMean float64 `json:"xParseTimeDeltaMean"`
+	YParseTimeDeltaMean float64 `json:"yParseTimeDeltaMean"`
+
+	sampleInterval time.Duration
+	saveInterval   time.Duration
+	spreadTDPath   string
 
 	timedDeltaK float64
 
@@ -32,13 +38,6 @@ type XYSimplifiedTickerStats struct {
 	xEventTime  time.Time
 	yEventTime  time.Time
 	xyEventTime time.Time
-
-	xEventTimeDeltaMean  float64
-	yEventTimeDeltaMean  float64
-	xyEventTimeDeltaMean float64
-
-	xParseTimeDeltaMean float64
-	yParseTimeDeltaMean float64
 
 	spread float64
 
@@ -124,30 +123,30 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 
 			if xReady {
 				// 0 is initial value
-				if sl.xEventTimeDeltaMean == 0 {
+				if sl.XEventTimeDeltaMean == 0 {
 					//logger.Debugf("X EVENT TIME DELTA %f %f", sl.xEventTimeDelta, sl.timedDeltaK)
-					sl.xEventTimeDeltaMean = sl.xEventTimeDelta.Seconds()
+					sl.XEventTimeDeltaMean = sl.xEventTimeDelta.Seconds()
 				} else {
-					sl.xEventTimeDeltaMean = (sl.xEventTimeDelta.Seconds()-sl.xEventTimeDeltaMean)*sl.timedDeltaK + sl.xEventTimeDeltaMean
+					sl.XEventTimeDeltaMean = (sl.xEventTimeDelta.Seconds()-sl.XEventTimeDeltaMean)*sl.timedDeltaK + sl.XEventTimeDeltaMean
 				}
-				if sl.xParseTimeDeltaMean == 0 {
-					sl.xParseTimeDeltaMean = sl.xParseTimeDelta.Seconds()
+				if sl.XParseTimeDeltaMean == 0 {
+					sl.XParseTimeDeltaMean = sl.xParseTimeDelta.Seconds()
 				} else {
-					sl.xParseTimeDeltaMean = (sl.xParseTimeDelta.Seconds()-sl.xParseTimeDeltaMean)*sl.timedDeltaK + sl.xParseTimeDeltaMean
+					sl.XParseTimeDeltaMean = (sl.xParseTimeDelta.Seconds()-sl.XParseTimeDeltaMean)*sl.timedDeltaK + sl.XParseTimeDeltaMean
 				}
 				sl.XMiddlePrice = (sl.xTicker.GetBidPrice() + sl.xTicker.GetAskPrice()) * 0.5
 			}
 			if yReady {
-				if sl.yEventTimeDeltaMean == 0 {
+				if sl.YEventTimeDeltaMean == 0 {
 					//logger.Debugf("Y EVENT TIME DELTA %f %f",sl.yEventTimeDelta, sl.timedDeltaK)
-					sl.yEventTimeDeltaMean = sl.yEventTimeDelta.Seconds()
+					sl.YEventTimeDeltaMean = sl.yEventTimeDelta.Seconds()
 				} else {
-					sl.yEventTimeDeltaMean = (sl.yEventTimeDelta.Seconds()-sl.yEventTimeDeltaMean)*sl.timedDeltaK + sl.yEventTimeDeltaMean
+					sl.YEventTimeDeltaMean = (sl.yEventTimeDelta.Seconds()-sl.YEventTimeDeltaMean)*sl.timedDeltaK + sl.YEventTimeDeltaMean
 				}
-				if sl.yParseTimeDeltaMean == 0 {
-					sl.yParseTimeDeltaMean = sl.yParseTimeDelta.Seconds()
+				if sl.YParseTimeDeltaMean == 0 {
+					sl.YParseTimeDeltaMean = sl.yParseTimeDelta.Seconds()
 				} else {
-					sl.yParseTimeDeltaMean = (sl.yParseTimeDelta.Seconds()-sl.yParseTimeDeltaMean)*sl.timedDeltaK + sl.yParseTimeDeltaMean
+					sl.YParseTimeDeltaMean = (sl.yParseTimeDelta.Seconds()-sl.YParseTimeDeltaMean)*sl.timedDeltaK + sl.YParseTimeDeltaMean
 				}
 				sl.YMiddlePrice = (sl.yTicker.GetBidPrice() + sl.yTicker.GetAskPrice()) * 0.5
 
@@ -159,7 +158,7 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 					} else {
 						sl.xyEventTime = sl.xEventTime
 					}
-					sl.xyEventTimeDeltaMean = (sl.xyEventTimeDelta.Seconds()-sl.xyEventTimeDeltaMean)*sl.timedDeltaK + sl.xyEventTimeDeltaMean
+					sl.XYEventTimeDeltaMean = (sl.xyEventTimeDelta.Seconds()-sl.XYEventTimeDeltaMean)*sl.timedDeltaK + sl.XYEventTimeDeltaMean
 					err = sl.SpreadTD.Insert(sl.xyEventTime, sl.spread)
 					if err != nil {
 						logger.Debugf("sl.spreadTD.Insert error %v", err)
@@ -189,18 +188,18 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 				exitOffset = sl.baseLeaveOffset
 			}
 
-			sl.XParseTimeDeltaMid = time.Duration(sl.xParseTimeDeltaMean * secondFloat64)
-			sl.YParseTimeDeltaMid = time.Duration(sl.yParseTimeDeltaMean * secondFloat64)
+			sl.XParseTimeDeltaMid = time.Duration(sl.XParseTimeDeltaMean * secondFloat64)
+			sl.YParseTimeDeltaMid = time.Duration(sl.YParseTimeDeltaMean * secondFloat64)
 
-			sl.XEventTimeDeltaMid = time.Duration(sl.xEventTimeDeltaMean * secondFloat64)
+			sl.XEventTimeDeltaMid = time.Duration(sl.XEventTimeDeltaMean * secondFloat64)
 			sl.XEventTimeDeltaBot = sl.XEventTimeDeltaMid + sl.xTimeDeltaOffsetBot
 			sl.XEventTimeDeltaTop = sl.XEventTimeDeltaMid + sl.xTimeDeltaOffsetTop
 
-			sl.YEventTimeDeltaMid = time.Duration(sl.yEventTimeDeltaMean * secondFloat64)
+			sl.YEventTimeDeltaMid = time.Duration(sl.YEventTimeDeltaMean * secondFloat64)
 			sl.YEventTimeDeltaBot = sl.YEventTimeDeltaMid + sl.yTimeDeltaOffsetBot
 			sl.YEventTimeDeltaTop = sl.YEventTimeDeltaMid + sl.yTimeDeltaOffsetTop
 
-			sl.XYEventTimeDeltaMid = time.Duration(sl.xyEventTimeDeltaMean * secondFloat64)
+			sl.XYEventTimeDeltaMid = time.Duration(sl.XYEventTimeDeltaMean * secondFloat64)
 			sl.XYEventTimeDeltaBot = sl.XYEventTimeDeltaMid + sl.xyTimeDeltaOffsetBot
 			sl.XYEventTimeDeltaTop = sl.XYEventTimeDeltaMid + sl.xyTimeDeltaOffsetTop
 

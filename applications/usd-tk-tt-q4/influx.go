@@ -76,10 +76,10 @@ func handleSave(
 				totalYSlippageWeight += strat.YSlippageTM.Weight
 			}
 
-			if strat.xySpreadSlippageTM.Len() > 0 {
-				fields["xySpreadSlippage"] = strat.xySpreadSlippageTM.Mean
-				totalSpreadSlippage += strat.xySpreadSlippageTM.Mean * strat.xySpreadSlippageTM.Weight
-				totalSpreadSlippageWeight += strat.xySpreadSlippageTM.Weight
+			if strat.XYSpreadSlippageTM.Len() > 0 {
+				fields["xySpreadSlippage"] = strat.XYSpreadSlippageTM.Mean
+				totalSpreadSlippage += strat.XYSpreadSlippageTM.Mean * strat.XYSpreadSlippageTM.Weight
+				totalSpreadSlippageWeight += strat.XYSpreadSlippageTM.Weight
 			}
 
 			if strat.XYSuccessRatioTM.Len() > 0 {
