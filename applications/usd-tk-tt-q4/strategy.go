@@ -311,6 +311,7 @@ func (strat *XYStrategy) saveStrategy() {
 		logger.Debugf("%s stFile.Closel error %v", strat.xSymbol, err)
 		return
 	}
+	logger.Debugf("%10s - %10s STRATEGY SAVED", strat.xSymbol, strat.ySymbol)
 }
 
 func (strat *XYStrategy) Start(ctx context.Context) {
