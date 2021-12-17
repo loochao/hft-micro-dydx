@@ -79,7 +79,7 @@ func (strat *XYStrategy) handleXTicker() {
 	strat.xMidPrice = 0.5 * (strat.xTicker.GetAskPrice() + strat.xTicker.GetBidPrice())
 	strat.xTickerTime = strat.xTicker.GetEventTime()
 	strat.xTickerTimeDelta = strat.xTickerTime.Sub(time.Now())
-	strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
+	//strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 	strat.tickerCount++
 	select {
 	case strat.stats.XTickerCh <- strat.xTicker:
@@ -100,7 +100,8 @@ func (strat *XYStrategy) handleYTicker() {
 	strat.yTickerTime = strat.yTicker.GetEventTime()
 	strat.yTickerTimeDelta = strat.yTickerTime.Sub(time.Now())
 	strat.tickerCount++
-	strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
+	strat.updateSpread()
+	//strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 	select {
 	case strat.stats.YTickerCh <- strat.yTicker:
 	default:

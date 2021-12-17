@@ -278,7 +278,7 @@ func (strat *XYStrategy) saveSlippageTMs() {
 }
 
 func (strat *XYStrategy) Start(ctx context.Context) {
-	defer strat.spreadWalkTimer.Stop()
+	//defer strat.spreadWalkTimer.Stop()
 	defer strat.realisedSpreadTimer.Stop()
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
@@ -398,9 +398,9 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 		case strat.yOrderError = <-strat.yOrderErrorCh:
 			strat.handleYOrderError()
 			break
-		case <-strat.spreadWalkTimer.C:
-			strat.updateSpread()
-			break
+		//case <-strat.spreadWalkTimer.C:
+		//	strat.updateSpread()
+		//	break
 		case strat.nextTicker = <-strat.xyTickerCh:
 			strat.handleTicker()
 			break
