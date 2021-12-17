@@ -63,6 +63,7 @@ type TimedSum struct {
 	values   []float64
 	sum      float64
 }
+
 func (tm *TimedSum) Insert(timestamp time.Time, value float64) float64 {
 	tm.times = append(tm.times, timestamp)
 	tm.values = append(tm.values, value)

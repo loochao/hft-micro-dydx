@@ -81,8 +81,15 @@ type XYStrategy struct {
 	logSilentTime       time.Time
 	realisedSpreadTimer *time.Timer
 
-	xTimedPositionChange *common.TimedSum
-	yTimedPositionChange *common.TimedSum
+	xTurnoverVolume     *stream_stats.TimedSum
+	yTurnoverVolume     *stream_stats.TimedSum
+	xTurnoverVolumePath string
+	yTurnoverVolumePath string
+
+	x30DayVolume     *stream_stats.TimedSum
+	y30DayVolume     *stream_stats.TimedSum
+	x30DayVolumePath string
+	y30DayVolumePath string
 
 	tickerMatchCount int
 	tickerCount      int

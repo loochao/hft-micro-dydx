@@ -32,8 +32,10 @@ func handleSave(
 	xURPnl := 0.0
 	totalURPnl := 0.0
 	hasAllSymbols := true
-	xTradeVolume := 0.0
-	yTradeVolume := 0.0
+	xTurnoverVolume := 0.0
+	yTurnoverVolume := 0.0
+	x30DayVolume := 0.0
+	y30DayVolume := 0.0
 	xTotalBidValue := 0.0
 	xTotalAskValue := 0.0
 	yTotalBidValue := 0.0
@@ -128,8 +130,10 @@ func handleSave(
 			totalXSymbolValue += xAbsValue
 			totalYSymbolValue += yAbsValue
 
-			xTradeVolume += strat.xTimedPositionChange.Sum()
-			yTradeVolume += strat.yTimedPositionChange.Sum()
+			xTurnoverVolume += strat.xTurnoverVolume.Sum
+			yTurnoverVolume += strat.yTurnoverVolume.Sum
+			x30DayVolume += strat.x30DayVolume.Sum
+			y30DayVolume += strat.y30DayVolume.Sum
 
 			fields["unHedgeValue"] = unHedgeValue
 			fields["riskExposure"] = riskExposure
@@ -371,14 +375,16 @@ func handleSave(
 		}
 		fields["xURPnl"] = xURPnl
 		fields["yURPnl"] = yURPnl
+		fields["x30DayVolume"] = x30DayVolume
+		fields["y30DayVolume"] = y30DayVolume
 		if totalBalance != 0 {
-			fields["xyTurnover"] = (xTradeVolume + yTradeVolume) / totalBalance
+			fields["xyTurnover"] = (xTurnoverVolume + yTurnoverVolume) / totalBalance
 		}
 		if xBalance != 0 {
-			fields["xTurnover"] = xTradeVolume / xBalance
+			fields["xTurnover"] = xTurnoverVolume / xBalance
 		}
 		if yBalance != 0 {
-			fields["yTurnover"] = yTradeVolume / yBalance
+			fields["yTurnover"] = yTurnoverVolume / yBalance
 		}
 		fields["xyURPnl"] = totalURPnl
 		fields["netWorth"] = netWorth
@@ -403,6 +409,19 @@ func handleSave(
 			*lastExternalSaveTime = time.Now()
 			fields = make(map[string]interface{})
 			fields["netWorth"] = netWorth
+			fields["x30DayVolume"] = x30DayVolume
+			fields["y30DayVolume"] = y30DayVolume
+			fields["yBalance"] = yBalance
+			fields["xBalance"] = xBalance
+			if xBalance != 0 {
+				fields["xTurnover"] = xTurnoverVolume / xBalance
+			}
+			if yBalance != 0 {
+				fields["yTurnover"] = yTurnoverVolume / yBalance
+			}
+			if totalBalance != 0 {
+				fields["xyTurnover"] = (xTurnoverVolume + yTurnoverVolume) / totalBalance
+			}
 			for name, start := range xyConfig.StartValues {
 				if start > 0 {
 					fields["currentValue_"+strings.ToLower(name)] = netWorth * start

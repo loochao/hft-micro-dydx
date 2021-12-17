@@ -138,15 +138,13 @@ func startXYStrategy(
 		spreadMedianShort:    0,
 		spreadMedianLong:     0,
 
-		xTimedPositionChange: common.NewTimedSum(config.TurnoverLookback),
-		yTimedPositionChange: common.NewTimedSum(config.TurnoverLookback),
-		tickerMatchCount:     0,
-		tickerCount:          0,
-		offsetFactor:         0,
-		thresholdShortTop:    0,
-		thresholdShortBot:    0,
-		thresholdLongBot:     0,
-		thresholdLongTop:     0,
+		tickerMatchCount:  0,
+		tickerCount:       0,
+		offsetFactor:      0,
+		thresholdShortTop: 0,
+		thresholdShortBot: 0,
+		thresholdLongBot:  0,
+		thresholdLongTop:  0,
 
 		targetWeight: config.PosWeights[xSymbol],
 
@@ -169,19 +167,27 @@ func startXYStrategy(
 		tdSpreadMiddle:          0,
 		lastEnterTime:           time.Time{},
 
-		xySuccessRatioTMPath: fmt.Sprintf("%s/%s-%s.XYSRTM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		xySuccessRatioTMPath:   fmt.Sprintf("%s/%s-%s.XYSRTM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
 		xySpreadSlippageTMPath: fmt.Sprintf("%s/%s-%s.XYSSTWM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		xSlippageTMPath:      fmt.Sprintf("%s/%s-%s.XSTWM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		ySlippageTMPath:      fmt.Sprintf("%s/%s-%s.YSTWM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		xSlippageTMPath:        fmt.Sprintf("%s/%s-%s.XSTWM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		ySlippageTMPath:        fmt.Sprintf("%s/%s-%s.YSTWM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		xTurnoverVolumePath:    fmt.Sprintf("%s/%s-%s.XTV.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		yTurnoverVolumePath:    fmt.Sprintf("%s/%s-%s.YTV.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		x30DayVolumePath:       fmt.Sprintf("%s/%s-%s.X30DV.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		y30DayVolumePath:       fmt.Sprintf("%s/%s-%s.Y30DV.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
 	}
 	strat.xySuccessRatioTM = stream_stats.LoadOrCreateTimeMean(strat.xySuccessRatioTMPath, config.EnterSlippageLookback)
 	strat.xySpreadSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.xySpreadSlippageTMPath, config.EnterSlippageLookback)
 	strat.xSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.xSlippageTMPath, config.EnterSlippageLookback)
 	strat.ySlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.ySlippageTMPath, config.EnterSlippageLookback)
+	strat.xTurnoverVolume = stream_stats.LoadOrCreateTimeSum(strat.xTurnoverVolumePath, config.TurnoverLookback)
+	strat.yTurnoverVolume = stream_stats.LoadOrCreateTimeSum(strat.yTurnoverVolumePath, config.TurnoverLookback)
+	strat.x30DayVolume = stream_stats.LoadOrCreateTimeSum(strat.x30DayVolumePath, time.Hour*24*30)
+	strat.y30DayVolume = stream_stats.LoadOrCreateTimeSum(strat.y30DayVolumePath, time.Hour*24*30)
 
 	strat.ySlippageFactor = 1.0
 	if strat.ySlippageTM.Mean > 0 {
-		strat.ySlippageFactor = 1.0/math.Ceil(strat.ySlippageTM.Mean/strat.config.YSlippageReference)
+		strat.ySlippageFactor = 1.0 / math.Ceil(strat.ySlippageTM.Mean/strat.config.YSlippageReference)
 	}
 
 	strat.yTickSize, err = yExchange.GetTickSize(ySymbol)
@@ -247,6 +253,34 @@ func (strat *XYStrategy) Stop() {
 		strat.stats.Stop()
 		logger.Debugf("%10s %10s stopped", strat.xSymbol, strat.ySymbol)
 		strat.saveSlippageTMs()
+		strat.saveVolumes()
+	}
+}
+
+func (strat *XYStrategy) saveVolumes() {
+	err := strat.xTurnoverVolume.Save(strat.xTurnoverVolumePath)
+	if err != nil {
+		logger.Debugf("strat.xTurnoverVolume.Save %s error %v", strat.xTurnoverVolumePath, err)
+	} else {
+		logger.Debugf("%10s xTurnoverVolume %s saved", strat.xSymbol, strat.xTurnoverVolumePath)
+	}
+	err = strat.yTurnoverVolume.Save(strat.yTurnoverVolumePath)
+	if err != nil {
+		logger.Debugf("strat.yTurnoverVolume.Save %s error %v", strat.yTurnoverVolumePath, err)
+	} else {
+		logger.Debugf("%10s yTurnoverVolume %s saved", strat.xSymbol, strat.yTurnoverVolumePath)
+	}
+	err = strat.x30DayVolume.Save(strat.x30DayVolumePath)
+	if err != nil {
+		logger.Debugf("strat.x30DayVolume.Save %s error %v", strat.x30DayVolumePath, err)
+	} else {
+		logger.Debugf("%10s x30DayVolume %s saved", strat.xSymbol, strat.x30DayVolumePath)
+	}
+	err = strat.y30DayVolume.Save(strat.y30DayVolumePath)
+	if err != nil {
+		logger.Debugf("strat.y30DayVolume.Save %s error %v", strat.y30DayVolumePath, err)
+	} else {
+		logger.Debugf("%10s y30DayVolume %s saved", strat.xSymbol, strat.y30DayVolumePath)
 	}
 }
 
@@ -451,8 +485,9 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 			if math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) >= strat.xStepSize {
 				//strat.xOrderSilentTime = time.Now().Add(strat.config.XOrderSilent)
 				strat.yOrderSilentTime = time.Now()
+				volume := 0.0
 				if strat.xTicker != nil {
-					strat.xTimedPositionChange.Insert(time.Now(), math.Abs(strat.xPosition.GetSize()-nextPos.GetSize())*strat.xMidPrice*strat.xMultiplier)
+					volume = math.Abs(strat.xPosition.GetSize()-nextPos.GetSize()) * strat.xMidPrice * strat.xMultiplier
 				}
 				logger.Debugf("%10s x position change %f -> %f %f %v", nextPos.GetSymbol(), strat.xPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
 				strat.xPosition = nextPos
@@ -461,6 +496,10 @@ func (strat *XYStrategy) handleXPosition(nextPos common.Position) {
 					strat.hedgeYPosition()
 				} else {
 					strat.hedgeCheckTimer.Reset(strat.config.HedgeDelay)
+				}
+				if volume != 0 {
+					strat.xTurnoverVolume.Insert(time.Now(), volume)
+					strat.x30DayVolume.Insert(time.Now(), volume)
 				}
 			} else {
 				strat.xPosition = nextPos
@@ -493,7 +532,9 @@ func (strat *XYStrategy) handleYPosition(nextPos common.Position) {
 		if nextPos.GetEventTime().Sub(strat.yPosition.GetEventTime()) >= -time.Second {
 			if math.Abs(strat.yPosition.GetSize()-nextPos.GetSize()) >= strat.yStepSize {
 				if strat.yTicker != nil {
-					strat.yTimedPositionChange.Insert(time.Now(), math.Abs(strat.yPosition.GetSize()-nextPos.GetSize())*strat.yMidPrice*strat.yMultiplier)
+					volume := math.Abs(strat.yPosition.GetSize()-nextPos.GetSize()) * strat.yMidPrice * strat.yMultiplier
+					strat.yTurnoverVolume.Insert(time.Now(), volume)
+					strat.y30DayVolume.Insert(time.Now(), volume)
 				}
 				logger.Debugf("%10s y position change %f -> %f %f %v", nextPos.GetSymbol(), strat.yPosition.GetSize(), nextPos.GetSize(), nextPos.GetPrice(), nextPos.GetEventTime())
 			}
