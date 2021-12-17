@@ -28,6 +28,7 @@ func (strat *XYStrategy) updateSpread() {
 		return
 	}
 
+	//y based data driven
 	strat.spreadTickerTime = strat.yTickerTime
 	strat.spreadEventTime = time.Now()
 	//if strat.xyTickerTimeDelta > 0 {
