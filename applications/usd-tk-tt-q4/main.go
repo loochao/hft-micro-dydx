@@ -660,6 +660,7 @@ func copyFile(src, dst string) (int64, error) {
 }
 
 func archiveFiles(files []string, sourceFolder, targetFolder string) {
+	logger.Debugf("ARCHIVE STATE TO %s", targetFolder)
 	err := os.MkdirAll(targetFolder, 0775)
 	if err != nil {
 		logger.Debugf("ARCHIVE os.MkdirAll error %v", err)
