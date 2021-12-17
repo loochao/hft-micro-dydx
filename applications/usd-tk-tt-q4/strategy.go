@@ -272,7 +272,7 @@ func (strat *XYStrategy) saveStrategy() {
 }
 
 func (strat *XYStrategy) Start(ctx context.Context) {
-	//defer strat.spreadWalkTimer.Stop()
+	defer strat.spreadWalkTimer.Stop()
 	defer strat.realisedSpreadTimer.Stop()
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
