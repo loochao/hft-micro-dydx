@@ -30,9 +30,9 @@ func (strat *XYStrategy) updateSpread() {
 
 	strat.spreadEventTime = time.Now()
 	if strat.xyTickerTimeDelta > 0 {
-		strat.spreadTickerTime = strat.yTickerTime
-	} else {
 		strat.spreadTickerTime = strat.xTickerTime
+	} else {
+		strat.spreadTickerTime = strat.yTickerTime
 	}
 
 	strat.tickerMatchCount++
