@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
 	"github.com/geometrybase/hft-micro/logger"
-	"os"
 	"sync/atomic"
 	"time"
 )
@@ -21,8 +20,10 @@ type XYSimplifiedTickerStats2 struct {
 	XParseTimeDeltaMean float64 `json:"xParseTimeDeltaMean"`
 	YParseTimeDeltaMean float64 `json:"yParseTimeDeltaMean"`
 
+	xSymbol        string
+	ySymbol        string
+
 	sampleInterval time.Duration
-	saveInterval   time.Duration
 
 	spreadTDLookback    time.Duration
 	spreadTDSubInterval time.Duration
@@ -243,28 +244,10 @@ func (sl *XYSimplifiedTickerStats2) UnmarshalJSON(data []byte) error {
 			sl.SpreadTD.HalfLookback = sl.spreadTDLookback / 2
 			sl.SpreadTD.SubInterval = sl.spreadTDSubInterval
 			sl.SpreadTD.Compression = sl.spreadTDCompression
+			logger.Debugf("%10s - %10s SPREAD QUANTILE MIDDLE %.6f", sl.xSymbol, sl.ySymbol, sl.SpreadTD.Quantile(0.5))
 		}
 	}
 	return nil
-}
-
-func (sl *XYSimplifiedTickerStats2) loadTD(tdPath string, lookback, subInterval time.Duration, compression uint32) *TimedTDigest {
-	td := NewTimedTDigestWithCompression(lookback, subInterval, compression)
-	tdBytes, err := os.ReadFile(tdPath)
-	if err != nil {
-		logger.Debugf("os.ReadFile %s error %v", tdPath, err)
-	} else {
-		err = json.Unmarshal(tdBytes, td)
-		if err != nil {
-			logger.Debugf("json.Unmarshal %s error %v", tdPath, err)
-		} else {
-			td.Lookback = lookback
-			td.HalfLookback = lookback / 2
-			td.SubInterval = subInterval
-			td.Compression = compression
-		}
-	}
-	return td
 }
 
 //做成struct, 防止函数传太多参数给传错顺序了
@@ -304,6 +287,8 @@ func NewXYSimplifiedTickerStats2(params NewXYSimplifiedTickerStats2Params) (*XYS
 		spreadTDSubInterval: params.SpreadTDSubInterval,
 		spreadTDCompression: params.SpreadTDCompression,
 
+		xSymbol:        params.XSymbol,
+		ySymbol:        params.YSymbol,
 		sampleInterval: params.SampleInterval,
 
 		timedDeltaK: 2.0 / float64(params.TimeDeltaLookback/params.SampleInterval+1),
