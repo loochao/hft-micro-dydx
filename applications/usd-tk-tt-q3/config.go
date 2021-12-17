@@ -109,11 +109,11 @@ type Config struct {
 	EnterTargetFactor     float64       `yaml:"enterTargetFactor"`
 	MaxSlippage           float64       `yaml:"maxSlippage"`
 	YSlippageReference    float64       `yaml:"ySlippageReference"`
+	SpreadWalkByXTicker bool `yaml:"spreadWalkByXTicker"`
+	SpreadWalkByYTicker bool `yaml:"spreadWalkByYTicker"`
 	//EnterWithProfitConfirms    bool               `yaml:"enterWithProfitConfirms"`
 	StartValues map[string]float64 `yaml:"startValues"`
 	//TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`
-	SpreadWalkByXTicker bool `yaml:"spreadWalkByXTicker"`
-	SpreadWalkByYTicker bool `yaml:"spreadWalkByYTicker"`
 
 	XYPairs            map[string]string  `yaml:"xyPairs"`
 	MaxPosSizes        map[string]float64 `yaml:"maxPosSizes,omitempty"`

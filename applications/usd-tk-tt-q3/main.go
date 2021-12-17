@@ -587,6 +587,6 @@ mainLoop:
 		}
 	}
 	logger.Debugf("stop waiting 5s")
-	<-time.After(time.Second * 15)
+	<-time.After(time.Second * 30)
 	logger.Debugf("exit 0")
 }
