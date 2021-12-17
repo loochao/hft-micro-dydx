@@ -8,10 +8,10 @@ import (
 )
 
 type TimedSum struct {
-	Lookback time.Duration
-	Times    []time.Time
-	Values   []float64
-	Sum      float64
+	Lookback time.Duration `json:"lookback"`
+	Times    []time.Time   `json:"times"`
+	Values   []float64     `json:"values"`
+	Sum      float64       `json:"sum"`
 }
 
 func (ts *TimedSum) Insert(timestamp time.Time, value float64) float64 {
