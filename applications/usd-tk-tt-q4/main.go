@@ -382,7 +382,7 @@ func main() {
 
 	files := make([]string, 0)
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
-		files = append(files, "%s-%s.json", xSymbol, ySymbol)
+		files = append(files, fmt.Sprintf( "%s-%s.json", xSymbol, ySymbol))
 		strategyMap[xSymbol], err = startXYStrategy(
 			xyGlobalCtx,
 			xSymbol, ySymbol,
@@ -493,12 +493,12 @@ func main() {
 	lastExternalSaveTime := &time.Time{}
 
 	archive1hFolder := path.Join(config.StatsRootPath, "1h")
-	archive4hFolder := path.Join(config.StatsRootPath, "4h")
-	archive8hFolder := path.Join(config.StatsRootPath, "8h")
-	archive24hFolder := path.Join(config.StatsRootPath, "24h")
-	archive48hFolder := path.Join(config.StatsRootPath, "48h")
-	archive120hFolder := path.Join(config.StatsRootPath, "120h")
-	archive240hFolder := path.Join(config.StatsRootPath, "240h")
+	archive2hFolder := path.Join(config.StatsRootPath, "2h")
+	archive7hFolder := path.Join(config.StatsRootPath, "7h")
+	archive13hFolder := path.Join(config.StatsRootPath, "13h")
+	archive19hFolder := path.Join(config.StatsRootPath, "19h")
+	archive41hFolder := path.Join(config.StatsRootPath, "41h")
+	archive97hFolder := path.Join(config.StatsRootPath, "97h")
 
 mainLoop:
 	for {
@@ -600,30 +600,30 @@ mainLoop:
 			break
 		case <-archiveTimer.C:
 			hour1Time := time.Now().Truncate(time.Hour)
-			hour4Time := time.Now().Truncate(time.Hour*4)
-			hour8Time := time.Now().Truncate(time.Hour*8)
-			hour24Time := time.Now().Truncate(time.Hour*24)
-			hour48Time := time.Now().Truncate(time.Hour*48)
-			hour120Time := time.Now().Truncate(time.Hour*120)
-			hour240Time := time.Now().Truncate(time.Hour*240)
+			hour2Time := time.Now().Truncate(time.Hour*2)
+			hour7Time := time.Now().Truncate(time.Hour*7)
+			hour13Time := time.Now().Truncate(time.Hour*13)
+			hour19Time := time.Now().Truncate(time.Hour*19)
+			hour41Time := time.Now().Truncate(time.Hour*41)
+			hour97Time := time.Now().Truncate(time.Hour*97)
 			archiveFiles(files, config.StatsRootPath, archive1hFolder)
-			if hour1Time.Sub(hour4Time) == 0 {
-				archiveFiles(files, config.StatsRootPath, archive4hFolder)
+			if hour1Time.Sub(hour2Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive2hFolder)
 			}
-			if hour1Time.Sub(hour8Time) == 0 {
-				archiveFiles(files, config.StatsRootPath, archive8hFolder)
+			if hour1Time.Sub(hour7Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive7hFolder)
 			}
-			if hour1Time.Sub(hour24Time) == 0 {
-				archiveFiles(files, config.StatsRootPath, archive24hFolder)
+			if hour1Time.Sub(hour13Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive13hFolder)
 			}
-			if hour1Time.Sub(hour48Time) == 0 {
-				archiveFiles(files, config.StatsRootPath, archive48hFolder)
+			if hour1Time.Sub(hour19Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive19hFolder)
 			}
-			if hour1Time.Sub(hour120Time) == 0 {
-				archiveFiles(files, config.StatsRootPath, archive120hFolder)
+			if hour1Time.Sub(hour41Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive41hFolder)
 			}
-			if hour1Time.Sub(hour240Time) == 0 {
-				archiveFiles(files, config.StatsRootPath, archive240hFolder)
+			if hour1Time.Sub(hour97Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive97hFolder)
 			}
 			archiveTimer.Reset(time.Hour)
 			break
