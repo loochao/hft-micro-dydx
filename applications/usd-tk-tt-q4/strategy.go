@@ -177,6 +177,48 @@ func startXYStrategy(
 		err = json.Unmarshal(stBytes, strat)
 	}
 
+	//需要载入了之后要考虑参数重置的问题
+	if strat.XYSuccessRatioTM == nil {
+		strat.XYSuccessRatioTM = stream_stats.NewTimedMean(config.EnterSlippageLookback)
+	} else {
+		strat.XYSuccessRatioTM.Lookback = config.EnterSlippageLookback
+	}
+	if strat.XYSpreadSlippageTM == nil {
+		strat.XYSpreadSlippageTM = stream_stats.NewTimedWeightedMean(config.EnterSlippageLookback)
+	} else {
+		strat.XYSpreadSlippageTM.Lookback = config.EnterSlippageLookback
+	}
+	if strat.XSlippageTM == nil {
+		strat.XSlippageTM = stream_stats.NewTimedWeightedMean(config.EnterSlippageLookback)
+	} else {
+		strat.XSlippageTM.Lookback = config.EnterSlippageLookback
+	}
+	if strat.YSlippageTM == nil {
+		strat.YSlippageTM = stream_stats.NewTimedWeightedMean(config.EnterSlippageLookback)
+	} else {
+		strat.YSlippageTM.Lookback = config.EnterSlippageLookback
+	}
+	if strat.XTurnoverVolume == nil {
+		strat.XTurnoverVolume = stream_stats.NewTimedSum(config.TurnoverLookback)
+	} else {
+		strat.XTurnoverVolume.Lookback = config.TurnoverLookback
+	}
+	if strat.YTurnoverVolume == nil {
+		strat.YTurnoverVolume = stream_stats.NewTimedSum(config.TurnoverLookback)
+	} else {
+		strat.YTurnoverVolume.Lookback = config.TurnoverLookback
+	}
+	if strat.X30DayVolume == nil {
+		strat.X30DayVolume = stream_stats.NewTimedSum(time.Hour * 24 * 30)
+	} else {
+		strat.X30DayVolume.Lookback = time.Hour * 24 * 30
+	}
+	if strat.Y30DayVolume == nil {
+		strat.Y30DayVolume = stream_stats.NewTimedSum(time.Hour * 24 * 30)
+	} else {
+		strat.Y30DayVolume.Lookback = time.Hour * 24 * 30
+	}
+
 	strat.ySlippageFactor = 1.0
 	if strat.YSlippageTM.Mean > 0 {
 		strat.ySlippageFactor = 1.0 / math.Ceil(strat.YSlippageTM.Mean/strat.config.YSlippageReference)
