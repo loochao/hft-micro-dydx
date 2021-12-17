@@ -492,7 +492,6 @@ func main() {
 
 	lastExternalSaveTime := &time.Time{}
 
-	archive1hFolder := path.Join(config.StatsRootPath, "1h")
 	archive2hFolder := path.Join(config.StatsRootPath, "2h")
 	archive7hFolder := path.Join(config.StatsRootPath, "7h")
 	archive13hFolder := path.Join(config.StatsRootPath, "13h")
@@ -606,7 +605,6 @@ mainLoop:
 			hour19Time := time.Now().Truncate(time.Hour*19)
 			hour41Time := time.Now().Truncate(time.Hour*41)
 			hour97Time := time.Now().Truncate(time.Hour*97)
-			archiveFiles(files, config.StatsRootPath, archive1hFolder)
 			if hour1Time.Sub(hour2Time) == 0 {
 				archiveFiles(files, config.StatsRootPath, archive2hFolder)
 			}
