@@ -36,13 +36,11 @@ func startXYStrategy(
 	xyTickerCh chan common.Ticker,
 ) (strat *XYStrategy, err error) {
 
-	stats, err := stream_stats.NewXYSimplifiedTickerStats(stream_stats.NewXYSimplifiedTickerStatsParams{
-		XSymbol:        xSymbol,
-		YSymbol:        ySymbol,
-		RootPath:       config.StatsRootPath,
-		SampleInterval: config.StatsSampleInterval,
-		SaveInterval:   config.StatsSaveInterval,
+	stats, err := stream_stats.NewXYSimplifiedTickerStats2(stream_stats.NewXYSimplifiedTickerStats2Params{
+		XSymbol: xSymbol,
+		YSymbol: ySymbol,
 
+		SampleInterval:    config.StatsSampleInterval,
 		TimeDeltaLookback: config.TimeDeltaLookback,
 
 		SpreadTDLookback:    config.SpreadTDLookback,
@@ -169,24 +167,15 @@ func startXYStrategy(
 		tdSpreadMiddle:          0,
 		lastEnterTime:           time.Time{},
 
-		xySuccessRatioTMPath:   fmt.Sprintf("%s/%s-%s.XYSRTM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		xySpreadSlippageTMPath: fmt.Sprintf("%s/%s-%s.XYSSTWM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		xSlippageTMPath:        fmt.Sprintf("%s/%s-%s.XSTWM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		ySlippageTMPath:        fmt.Sprintf("%s/%s-%s.YSTWM.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		xTurnoverVolumePath:    fmt.Sprintf("%s/%s-%s.XTV.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		yTurnoverVolumePath:    fmt.Sprintf("%s/%s-%s.YTV.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		x30DayVolumePath:       fmt.Sprintf("%s/%s-%s.X30DV.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		y30DayVolumePath:       fmt.Sprintf("%s/%s-%s.Y30DV.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
-		xyStrategyPath:         fmt.Sprintf("%s/%s-%s.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
+		xyStrategyPath: fmt.Sprintf("%s/%s-%s.json", config.StatsRootPath, common.SymbolSanitize(xSymbol), common.SymbolSanitize(ySymbol)),
 	}
-	strat.XYSuccessRatioTM = stream_stats.LoadOrCreateTimeMean(strat.xySuccessRatioTMPath, config.EnterSlippageLookback)
-	strat.XYSpreadSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.xySpreadSlippageTMPath, config.EnterSlippageLookback)
-	strat.XSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.xSlippageTMPath, config.EnterSlippageLookback)
-	strat.YSlippageTM = stream_stats.LoadOrCreateTimedWeightedMean(strat.ySlippageTMPath, config.EnterSlippageLookback)
-	strat.XTurnoverVolume = stream_stats.LoadOrCreateTimeSum(strat.xTurnoverVolumePath, config.TurnoverLookback)
-	strat.YTurnoverVolume = stream_stats.LoadOrCreateTimeSum(strat.yTurnoverVolumePath, config.TurnoverLookback)
-	strat.X30DayVolume = stream_stats.LoadOrCreateTimeSum(strat.x30DayVolumePath, time.Hour*24*30)
-	strat.Y30DayVolume = stream_stats.LoadOrCreateTimeSum(strat.y30DayVolumePath, time.Hour*24*30)
+
+	stBytes, err := os.ReadFile(strat.xyStrategyPath)
+	if err != nil {
+		logger.Debugf("read %s error %v", strat.xyStrategyPath, err)
+	} else {
+		err = json.Unmarshal(stBytes, strat)
+	}
 
 	strat.ySlippageFactor = 1.0
 	if strat.YSlippageTM.Mean > 0 {
@@ -254,84 +243,31 @@ func startXYStrategy(
 func (strat *XYStrategy) Stop() {
 	if atomic.CompareAndSwapInt32(&strat.stopped, 0, 1) {
 		strat.Stats.Stop()
+		strat.saveStrategy()
 		logger.Debugf("%10s %10s stopped", strat.xSymbol, strat.ySymbol)
-		strat.saveSlippageTMs()
-		strat.saveVolumes()
-
-		stBytes, err := json.Marshal(*strat)
-		if err != nil {
-			logger.Debugf("json.Marshal(*strat) error %v", err)
-			return
-		}
-		stFile, err := os.OpenFile(strat.xyStrategyPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-		if err != nil {
-			logger.Debugf("os.OpenFile(strat.xyStrategyPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755) %s error %v", strat.xyStrategyPath, err)
-			return
-		}
-		_, err = stFile.Write(stBytes)
-		if err != nil {
-			logger.Debugf("os.OpenFile(strat.xyStrategyPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755) %s error %v", strat.xyStrategyPath, err)
-			return
-		}
-		err = stFile.Close()
-		if err != nil {
-			logger.Debugf("stFile.Close() error %v", err)
-			return
-		}
 	}
 }
 
-func (strat *XYStrategy) saveVolumes() {
-	err := strat.XTurnoverVolume.Save(strat.xTurnoverVolumePath)
+func (strat *XYStrategy) saveStrategy() {
+	stBytes, err := json.Marshal(*strat)
 	if err != nil {
-		logger.Debugf("strat.XTurnoverVolume.Save %s error %v", strat.xTurnoverVolumePath, err)
-	} else {
-		logger.Debugf("%10s XTurnoverVolume %s saved", strat.xSymbol, strat.xTurnoverVolumePath)
+		logger.Debugf("%s json.Marshal error %v", strat.xSymbol, err)
+		return
 	}
-	err = strat.YTurnoverVolume.Save(strat.yTurnoverVolumePath)
+	stFile, err := os.OpenFile(strat.xyStrategyPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
-		logger.Debugf("strat.YTurnoverVolume.Save %s error %v", strat.yTurnoverVolumePath, err)
-	} else {
-		logger.Debugf("%10s YTurnoverVolume %s saved", strat.xSymbol, strat.yTurnoverVolumePath)
+		logger.Debugf("%s os.OpenFile %s error %v", strat.xSymbol, strat.xyStrategyPath, err)
+		return
 	}
-	err = strat.X30DayVolume.Save(strat.x30DayVolumePath)
+	_, err = stFile.Write(stBytes)
 	if err != nil {
-		logger.Debugf("strat.X30DayVolume.Save %s error %v", strat.x30DayVolumePath, err)
-	} else {
-		logger.Debugf("%10s X30DayVolume %s saved", strat.xSymbol, strat.x30DayVolumePath)
+		logger.Debugf("%s stFile.Write error %v", strat.xSymbol, err)
+		return
 	}
-	err = strat.Y30DayVolume.Save(strat.y30DayVolumePath)
+	err = stFile.Close()
 	if err != nil {
-		logger.Debugf("strat.Y30DayVolume.Save %s error %v", strat.y30DayVolumePath, err)
-	} else {
-		logger.Debugf("%10s Y30DayVolume %s saved", strat.xSymbol, strat.y30DayVolumePath)
-	}
-}
-
-func (strat *XYStrategy) saveSlippageTMs() {
-	err := strat.XYSuccessRatioTM.Save(strat.xySuccessRatioTMPath)
-	if err != nil {
-		logger.Debugf("strat.XYSuccessRatioTM.Save %s error %v", strat.xySuccessRatioTMPath, err)
-	} else {
-		logger.Debugf("%10s XYSuccessRatioTM %s saved", strat.xSymbol, strat.xySuccessRatioTMPath)
-	}
-	err = strat.XSlippageTM.Save(strat.xSlippageTMPath)
-	if err != nil {
-		logger.Debugf("strat.XSlippageTM.Save %s error %v", strat.xSlippageTMPath, err)
-	} else {
-		logger.Debugf("%10s XSlippageTM %s saved", strat.xSymbol, strat.xSlippageTMPath)
-	}
-	err = strat.YSlippageTM.Save(strat.ySlippageTMPath)
-	if err != nil {
-		logger.Debugf("strat.XYSuccessRatioTM.Save %s error %v", strat.ySlippageTMPath, err)
-	} else {
-		logger.Debugf("%10s YSlippageTM %s saved", strat.xSymbol, strat.ySlippageTMPath)
-	}
-	err = strat.XYSpreadSlippageTM.Save(strat.xySpreadSlippageTMPath)
-	if err != nil {
-		logger.Debugf("strat.XYSpreadSlippageTM.Save %s error %v", strat.xySpreadSlippageTMPath, err)
-	} else {
-		logger.Debugf("%10s XYSpreadSlippageTM %s saved", strat.xSymbol, strat.xySpreadSlippageTMPath)
+		logger.Debugf("%s stFile.Closel error %v", strat.xSymbol, err)
+		return
 	}
 }
 

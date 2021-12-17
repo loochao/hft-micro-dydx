@@ -35,7 +35,7 @@ type XYStrategy struct {
 	xSystemStatus common.SystemStatus
 	ySystemStatus common.SystemStatus
 
-	Stats *stream_stats.XYSimplifiedTickerStats `json:"stats,omitempty"`
+	Stats *stream_stats.XYSimplifiedTickerStats2 `json:"stats,omitempty"`
 
 	xPositionUpdateTime time.Time
 	yPositionUpdateTime time.Time
@@ -83,13 +83,9 @@ type XYStrategy struct {
 
 	XTurnoverVolume     *stream_stats.TimedSum `json:"xTurnoverVolume,omitempty"`
 	YTurnoverVolume     *stream_stats.TimedSum `json:"yTurnoverVolume,omitempty"`
-	xTurnoverVolumePath string
-	yTurnoverVolumePath string
 
 	X30DayVolume     *stream_stats.TimedSum `json:"x30DayVolume,omitempty"`
 	Y30DayVolume     *stream_stats.TimedSum `json:"y30DayVolume,omitempty"`
-	x30DayVolumePath string
-	y30DayVolumePath string
 
 	tickerMatchCount int
 	tickerCount      int
@@ -196,10 +192,6 @@ type XYStrategy struct {
 	xFilledValue     float64
 	yFilledValue     float64
 
-	xSlippageTMPath        string
-	ySlippageTMPath        string
-	xySuccessRatioTMPath   string
-	xySpreadSlippageTMPath string
 	ySlippageFactor        float64
 
 	xyStrategyPath string
