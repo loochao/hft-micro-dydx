@@ -35,7 +35,7 @@ type XYStrategy struct {
 	xSystemStatus common.SystemStatus
 	ySystemStatus common.SystemStatus
 
-	stats *stream_stats.XYSimplifiedTickerStats
+	Stats *stream_stats.XYSimplifiedTickerStats `json:"stats,omitempty"`
 
 	xPositionUpdateTime time.Time
 	yPositionUpdateTime time.Time
@@ -81,13 +81,13 @@ type XYStrategy struct {
 	logSilentTime       time.Time
 	realisedSpreadTimer *time.Timer
 
-	xTurnoverVolume     *stream_stats.TimedSum
-	yTurnoverVolume     *stream_stats.TimedSum
+	XTurnoverVolume     *stream_stats.TimedSum `json:"xTurnoverVolume,omitempty"`
+	YTurnoverVolume     *stream_stats.TimedSum `json:"yTurnoverVolume,omitempty"`
 	xTurnoverVolumePath string
 	yTurnoverVolumePath string
 
-	x30DayVolume     *stream_stats.TimedSum
-	y30DayVolume     *stream_stats.TimedSum
+	X30DayVolume     *stream_stats.TimedSum `json:"x30DayVolume,omitempty"`
+	Y30DayVolume     *stream_stats.TimedSum `json:"y30DayVolume,omitempty"`
 	x30DayVolumePath string
 	y30DayVolumePath string
 
@@ -185,10 +185,10 @@ type XYStrategy struct {
 	xFundingRateFactor *float64
 	yFundingRateFactor *float64
 
-	xySuccessRatioTM   *stream_stats.TimedMean
+	XYSuccessRatioTM   *stream_stats.TimedMean
 	xySpreadSlippageTM *stream_stats.TimedWeightedMean
-	xSlippageTM        *stream_stats.TimedWeightedMean
-	ySlippageTM        *stream_stats.TimedWeightedMean
+	XSlippageTM        *stream_stats.TimedWeightedMean
+	YSlippageTM        *stream_stats.TimedWeightedMean
 
 	xSlippage        float64
 	ySlippage        float64
@@ -201,4 +201,6 @@ type XYStrategy struct {
 	xySuccessRatioTMPath   string
 	xySpreadSlippageTMPath string
 	ySlippageFactor        float64
+
+	xyStrategyPath string
 }

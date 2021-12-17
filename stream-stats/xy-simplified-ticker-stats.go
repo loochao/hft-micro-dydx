@@ -16,7 +16,7 @@ type XYSimplifiedTickerStats struct {
 	sampleInterval time.Duration
 	saveInterval   time.Duration
 
-	spreadTD *TimedTDigest
+	SpreadTD *TimedTDigest `json:"spreadTD,omitempty"`
 
 	spreadTDPath string
 
@@ -45,8 +45,8 @@ type XYSimplifiedTickerStats struct {
 	yTicker common.Ticker
 	xTicker common.Ticker
 
-	XTickerCh chan common.Ticker
-	YTickerCh chan common.Ticker
+	XTickerCh chan common.Ticker `json:"-"`
+	YTickerCh chan common.Ticker `json:"-"`
 
 	spreadLongEnterQuantileBot  float64
 	spreadLongLeaveQuantileTop  float64
@@ -55,32 +55,32 @@ type XYSimplifiedTickerStats struct {
 	baseEnterOffset             float64
 	baseLeaveOffset             float64
 
-	Ready bool
+	Ready bool `json:"-"`
 
-	XParseTimeDeltaMid  time.Duration
-	YParseTimeDeltaMid  time.Duration
-	XYParseTimeDeltaMid time.Duration
+	XParseTimeDeltaMid  time.Duration `json:"-"`
+	YParseTimeDeltaMid  time.Duration `json:"-"`
+	XYParseTimeDeltaMid time.Duration `json:"-"`
 
-	XEventTimeDeltaMid  time.Duration
-	YEventTimeDeltaMid  time.Duration
-	XYEventTimeDeltaMid time.Duration
-	XEventTimeDeltaTop  time.Duration
-	XEventTimeDeltaBot  time.Duration
-	YEventTimeDeltaTop  time.Duration
-	YEventTimeDeltaBot  time.Duration
-	XYEventTimeDeltaTop time.Duration
-	XYEventTimeDeltaBot time.Duration
+	XEventTimeDeltaMid  time.Duration `json:"-"`
+	YEventTimeDeltaMid  time.Duration `json:"-"`
+	XYEventTimeDeltaMid time.Duration `json:"-"`
+	XEventTimeDeltaTop  time.Duration `json:"-"`
+	XEventTimeDeltaBot  time.Duration `json:"-"`
+	YEventTimeDeltaTop  time.Duration `json:"-"`
+	YEventTimeDeltaBot  time.Duration `json:"-"`
+	XYEventTimeDeltaTop time.Duration `json:"-"`
+	XYEventTimeDeltaBot time.Duration `json:"-"`
 
-	XMiddlePrice float64
-	YMiddlePrice float64
+	XMiddlePrice float64 `json:"-"`
+	YMiddlePrice float64 `json:"-"`
 
-	SpreadMiddle        float64
-	SpreadLongEnterBot  float64
-	SpreadLongLeaveTop  float64
-	SpreadShortEnterTop float64
-	SpreadShortLeaveBot float64
-	SpreadEnterOffset   float64
-	SpreadLeaveOffset   float64
+	SpreadMiddle        float64 `json:"-"`
+	SpreadLongEnterBot  float64 `json:"-"`
+	SpreadLongLeaveTop  float64 `json:"-"`
+	SpreadShortEnterTop float64 `json:"-"`
+	SpreadShortLeaveBot float64 `json:"-"`
+	SpreadEnterOffset   float64 `json:"-"`
+	SpreadLeaveOffset   float64 `json:"-"`
 
 	xTimeDeltaOffsetTop  time.Duration
 	xTimeDeltaOffsetBot  time.Duration
@@ -160,7 +160,7 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 						sl.xyEventTime = sl.xEventTime
 					}
 					sl.xyEventTimeDeltaMean = (sl.xyEventTimeDelta.Seconds()-sl.xyEventTimeDeltaMean)*sl.timedDeltaK + sl.xyEventTimeDeltaMean
-					err = sl.spreadTD.Insert(sl.xyEventTime, sl.spread)
+					err = sl.SpreadTD.Insert(sl.xyEventTime, sl.spread)
 					if err != nil {
 						logger.Debugf("sl.spreadTD.Insert error %v", err)
 					}
@@ -170,13 +170,13 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 			sl.xTicker = nil
 			sl.yTicker = nil
 
-			if sl.spreadTD.Range() > sl.spreadTD.HalfLookback {
+			if sl.SpreadTD.Range() > sl.SpreadTD.HalfLookback {
 				sl.Ready = true
 			}
-			longEnterBot := sl.spreadTD.Quantile(sl.spreadLongEnterQuantileBot)
-			longExitTop := sl.spreadTD.Quantile(sl.spreadLongLeaveQuantileTop)
-			shortEnterTop := sl.spreadTD.Quantile(sl.spreadShortEnterQuantileTop)
-			shortExitBot := sl.spreadTD.Quantile(sl.spreadShortLeaveQuantileBot)
+			longEnterBot := sl.SpreadTD.Quantile(sl.spreadLongEnterQuantileBot)
+			longExitTop := sl.SpreadTD.Quantile(sl.spreadLongLeaveQuantileTop)
+			shortEnterTop := sl.SpreadTD.Quantile(sl.spreadShortEnterQuantileTop)
+			shortExitBot := sl.SpreadTD.Quantile(sl.spreadShortLeaveQuantileBot)
 			enterOffset := shortEnterTop - longEnterBot
 			exitOffset := longExitTop - shortExitBot
 			if enterOffset < sl.baseEnterOffset {
@@ -204,7 +204,7 @@ func (sl *XYSimplifiedTickerStats) Start(ctx context.Context) {
 			sl.XYEventTimeDeltaBot = sl.XYEventTimeDeltaMid + sl.xyTimeDeltaOffsetBot
 			sl.XYEventTimeDeltaTop = sl.XYEventTimeDeltaMid + sl.xyTimeDeltaOffsetTop
 
-			sl.SpreadMiddle = sl.spreadTD.Quantile(0.5)
+			sl.SpreadMiddle = sl.SpreadTD.Quantile(0.5)
 			sl.SpreadLongEnterBot = longEnterBot
 			sl.SpreadLongLeaveTop = longExitTop
 			sl.SpreadShortEnterTop = shortEnterTop
@@ -277,7 +277,7 @@ func (sl *XYSimplifiedTickerStats) saveTD(td *TimedTDigest, tdPath string) error
 }
 
 func (sl *XYSimplifiedTickerStats) handleSave() {
-	err := sl.saveTD(sl.spreadTD, sl.spreadTDPath)
+	err := sl.saveTD(sl.SpreadTD, sl.spreadTDPath)
 	if err != nil {
 		logger.Debugf("sl.saveTD to %s error %v", sl.spreadTDPath, err)
 	}
@@ -336,12 +336,12 @@ func NewXYSimplifiedTickerStats(params NewXYSimplifiedTickerStatsParams) (*XYSim
 		baseEnterOffset:             params.BaseEnterOffset,
 		baseLeaveOffset:             params.BaseLeaveOffset,
 
-		xTimeDeltaOffsetTop:         params.XTimeDeltaOffsetTop,
-		xTimeDeltaOffsetBot:         params.XTimeDeltaOffsetBot,
-		yTimeDeltaOffsetTop:         params.YTimeDeltaOffsetTop,
-		yTimeDeltaOffsetBot:         params.YTimeDeltaOffsetBot,
-		xyTimeDeltaOffsetTop:        params.XYTimeDeltaOffsetTop,
-		xyTimeDeltaOffsetBot:        params.XYTimeDeltaOffsetBot,
+		xTimeDeltaOffsetTop:  params.XTimeDeltaOffsetTop,
+		xTimeDeltaOffsetBot:  params.XTimeDeltaOffsetBot,
+		yTimeDeltaOffsetTop:  params.YTimeDeltaOffsetTop,
+		yTimeDeltaOffsetBot:  params.YTimeDeltaOffsetBot,
+		xyTimeDeltaOffsetTop: params.XYTimeDeltaOffsetTop,
+		xyTimeDeltaOffsetBot: params.XYTimeDeltaOffsetBot,
 
 		spreadTDPath: path.Join(params.RootPath, fmt.Sprintf("%s-%s.S.json", common.SymbolSanitize(params.XSymbol), common.SymbolSanitize(params.YSymbol))),
 
@@ -351,8 +351,8 @@ func NewXYSimplifiedTickerStats(params NewXYSimplifiedTickerStatsParams) (*XYSim
 
 	logger.Debugf("%10s TIME DELTA K %f", params.XSymbol, sl.timedDeltaK)
 
-	sl.spreadTD = sl.loadTD(sl.spreadTDPath, params.SpreadTDLookback, params.SpreadTDSubInterval, params.SpreadTDCompression)
-	logger.Debugf("%10s - %10s SPREAD QUANTILE MIDDLE %.6f", params.XSymbol, params.YSymbol, sl.spreadTD.Quantile(0.5))
+	sl.SpreadTD = sl.loadTD(sl.spreadTDPath, params.SpreadTDLookback, params.SpreadTDSubInterval, params.SpreadTDCompression)
+	logger.Debugf("%10s - %10s SPREAD QUANTILE MIDDLE %.6f", params.XSymbol, params.YSymbol, sl.SpreadTD.Quantile(0.5))
 
 	return sl, nil
 }

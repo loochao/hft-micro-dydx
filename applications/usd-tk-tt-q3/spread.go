@@ -8,13 +8,13 @@ import (
 
 func (strat *XYStrategy) updateSpread() {
 
-	if !strat.stats.Ready ||
+	if !strat.Stats.Ready ||
 		strat.xTicker == nil ||
 		strat.yTicker == nil ||
-		strat.xTickerTimeDelta > strat.stats.XEventTimeDeltaTop ||
-		strat.xTickerTimeDelta < strat.stats.XEventTimeDeltaBot ||
-		strat.yTickerTimeDelta > strat.stats.YEventTimeDeltaTop ||
-		strat.yTickerTimeDelta < strat.stats.YEventTimeDeltaBot ||
+		strat.xTickerTimeDelta > strat.Stats.XEventTimeDeltaTop ||
+		strat.xTickerTimeDelta < strat.Stats.XEventTimeDeltaBot ||
+		strat.yTickerTimeDelta > strat.Stats.YEventTimeDeltaTop ||
+		strat.yTickerTimeDelta < strat.Stats.YEventTimeDeltaBot ||
 		strat.xTicker.GetBidPrice() <= 0 ||
 		strat.xTicker.GetAskPrice() <= 0 ||
 		strat.yTicker.GetBidPrice() <= 0 ||
@@ -23,8 +23,8 @@ func (strat *XYStrategy) updateSpread() {
 	}
 
 	strat.xyTickerTimeDelta = strat.yTickerTime.Sub(strat.xTickerTime)
-	if strat.xyTickerTimeDelta > strat.stats.XYEventTimeDeltaTop ||
-		strat.xyTickerTimeDelta < strat.stats.XYEventTimeDeltaBot {
+	if strat.xyTickerTimeDelta > strat.Stats.XYEventTimeDeltaTop ||
+		strat.xyTickerTimeDelta < strat.Stats.XYEventTimeDeltaBot {
 		return
 	}
 
@@ -84,7 +84,7 @@ func (strat *XYStrategy) handleXTicker() {
 	}
 	strat.tickerCount++
 	select {
-	case strat.stats.XTickerCh <- strat.xTicker:
+	case strat.Stats.XTickerCh <- strat.xTicker:
 	default:
 	}
 }
@@ -106,7 +106,7 @@ func (strat *XYStrategy) handleYTicker() {
 		strat.spreadWalkTimer.Reset(strat.config.SpreadWalkDelay)
 	}
 	select {
-	case strat.stats.YTickerCh <- strat.yTicker:
+	case strat.Stats.YTickerCh <- strat.yTicker:
 	default:
 	}
 }

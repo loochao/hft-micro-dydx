@@ -116,16 +116,16 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			strat.xySpreadSlippage = strat.referenceSpread - *strat.realisedSpread
 			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage, strat.yFilledValue)
 			if *strat.realisedSpread >= strat.referenceSpread {
-				strat.xySuccessRatioTM.Insert(time.Now(), 1.0)
+				strat.XYSuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {
-				strat.xySuccessRatioTM.Insert(time.Now(), -1.0)
+				strat.XYSuccessRatioTM.Insert(time.Now(), -1.0)
 			}
 			strat.xSlippage = (*strat.xLastFilledBuyPrice - strat.referenceXPrice) / strat.referenceXPrice
 			strat.ySlippage = (strat.referenceYPrice - *strat.yLastFilledSellPrice) / strat.referenceYPrice
-			strat.xSlippageTM.Insert(time.Now(), strat.xSlippage, strat.yFilledValue)
-			strat.ySlippageTM.Insert(time.Now(), strat.ySlippage, strat.yFilledValue)
-			if strat.ySlippageTM.Mean > 0 {
-				strat.ySlippageFactor = 1.0/math.Ceil(strat.ySlippageTM.Mean/strat.config.YSlippageReference)
+			strat.XSlippageTM.Insert(time.Now(), strat.xSlippage, strat.yFilledValue)
+			strat.YSlippageTM.Insert(time.Now(), strat.ySlippage, strat.yFilledValue)
+			if strat.YSlippageTM.Mean > 0 {
+				strat.ySlippageFactor = 1.0/math.Ceil(strat.YSlippageTM.Mean/strat.config.YSlippageReference)
 			}
 			strat.referenceSpread = 0
 		}
@@ -164,16 +164,16 @@ func (strat *XYStrategy) handleRealisedSpread() {
 			strat.xySpreadSlippage = *strat.realisedSpread - strat.referenceSpread
 			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage, strat.yFilledValue)
 			if *strat.realisedSpread <= strat.referenceSpread {
-				strat.xySuccessRatioTM.Insert(time.Now(), 1.0)
+				strat.XYSuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {
-				strat.xySuccessRatioTM.Insert(time.Now(), -1.0)
+				strat.XYSuccessRatioTM.Insert(time.Now(), -1.0)
 			}
 			strat.xSlippage = (strat.referenceXPrice - *strat.xLastFilledSellPrice) / strat.referenceXPrice
 			strat.ySlippage = (*strat.yLastFilledBuyPrice - strat.referenceYPrice) / strat.referenceYPrice
-			strat.xSlippageTM.Insert(time.Now(), strat.xSlippage, strat.yFilledValue)
-			strat.ySlippageTM.Insert(time.Now(), strat.ySlippage, strat.yFilledValue)
-			if strat.ySlippageTM.Mean > 0 {
-				strat.ySlippageFactor = 1.0/math.Ceil(strat.ySlippageTM.Mean/strat.config.YSlippageReference)
+			strat.XSlippageTM.Insert(time.Now(), strat.xSlippage, strat.yFilledValue)
+			strat.YSlippageTM.Insert(time.Now(), strat.ySlippage, strat.yFilledValue)
+			if strat.YSlippageTM.Mean > 0 {
+				strat.ySlippageFactor = 1.0/math.Ceil(strat.YSlippageTM.Mean/strat.config.YSlippageReference)
 			}
 			strat.referenceSpread = 0
 		}

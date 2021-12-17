@@ -62,18 +62,18 @@ func handleSave(
 			strat.xMidPrice > 0 &&
 			strat.yMidPrice > 0 {
 
-			if strat.xSlippageTM.Len() > 0 {
-				fields["xSlippage"] = strat.xSlippageTM.Mean
-				totalXSlippage += strat.xSlippageTM.Mean * strat.xSlippageTM.Weight
-				totalXSlippageWeight += strat.xSlippageTM.Weight
+			if strat.XSlippageTM.Len() > 0 {
+				fields["xSlippage"] = strat.XSlippageTM.Mean
+				totalXSlippage += strat.XSlippageTM.Mean * strat.XSlippageTM.Weight
+				totalXSlippageWeight += strat.XSlippageTM.Weight
 			}
 
 			fields["ySlippageFactor"] = strat.ySlippageFactor
 
-			if strat.ySlippageTM.Len() > 0 {
-				fields["ySlippage"] = strat.ySlippageTM.Mean
-				totalYSlippage += strat.ySlippageTM.Mean * strat.ySlippageTM.Weight
-				totalYSlippageWeight += strat.ySlippageTM.Weight
+			if strat.YSlippageTM.Len() > 0 {
+				fields["ySlippage"] = strat.YSlippageTM.Mean
+				totalYSlippage += strat.YSlippageTM.Mean * strat.YSlippageTM.Weight
+				totalYSlippageWeight += strat.YSlippageTM.Weight
 			}
 
 			if strat.xySpreadSlippageTM.Len() > 0 {
@@ -82,10 +82,10 @@ func handleSave(
 				totalSpreadSlippageWeight += strat.xySpreadSlippageTM.Weight
 			}
 
-			if strat.xySuccessRatioTM.Len() > 0 {
-				fields["xySuccessRatio"] = strat.xySuccessRatioTM.Mean
-				totalSuccessCount += strat.xySuccessRatioTM.Mean * float64(strat.xySuccessRatioTM.Len())
-				totalSuccessRatioCount += float64(strat.xySuccessRatioTM.Len())
+			if strat.XYSuccessRatioTM.Len() > 0 {
+				fields["xySuccessRatio"] = strat.XYSuccessRatioTM.Mean
+				totalSuccessCount += strat.XYSuccessRatioTM.Mean * float64(strat.XYSuccessRatioTM.Len())
+				totalSuccessRatioCount += float64(strat.XYSuccessRatioTM.Len())
 			}
 
 			fields["xBidPrice"] = strat.xTicker.GetBidPrice()
@@ -130,10 +130,10 @@ func handleSave(
 			totalXSymbolValue += xAbsValue
 			totalYSymbolValue += yAbsValue
 
-			xTurnoverVolume += strat.xTurnoverVolume.Sum
-			yTurnoverVolume += strat.yTurnoverVolume.Sum
-			x30DayVolume += strat.x30DayVolume.Sum
-			y30DayVolume += strat.y30DayVolume.Sum
+			xTurnoverVolume += strat.XTurnoverVolume.Sum
+			yTurnoverVolume += strat.YTurnoverVolume.Sum
+			x30DayVolume += strat.X30DayVolume.Sum
+			y30DayVolume += strat.Y30DayVolume.Sum
 
 			fields["unHedgeValue"] = unHedgeValue
 			fields["riskExposure"] = riskExposure
@@ -192,45 +192,45 @@ func handleSave(
 			hasAllSymbols = false
 		}
 
-		if strat.stats.Ready {
+		if strat.Stats.Ready {
 			fields["statsReady"] = 1.0
 		} else {
 			fields["statsReady"] = 0.0
 		}
 
 		//stats不管策略状态，都需要保存
-		fields["statsXTimeDeltaBot"] = strat.stats.XEventTimeDeltaBot.Seconds()
-		fields["statsXTimeDeltaMid"] = strat.stats.XEventTimeDeltaMid.Seconds()
-		fields["statsXTimeDeltaTop"] = strat.stats.XEventTimeDeltaTop.Seconds()
+		fields["statsXTimeDeltaBot"] = strat.Stats.XEventTimeDeltaBot.Seconds()
+		fields["statsXTimeDeltaMid"] = strat.Stats.XEventTimeDeltaMid.Seconds()
+		fields["statsXTimeDeltaTop"] = strat.Stats.XEventTimeDeltaTop.Seconds()
 
-		fields["statsYTimeDeltaBot"] = strat.stats.YEventTimeDeltaBot.Seconds()
-		fields["statsYTimeDeltaMid"] = strat.stats.YEventTimeDeltaMid.Seconds()
-		fields["statsYTimeDeltaTop"] = strat.stats.YEventTimeDeltaTop.Seconds()
+		fields["statsYTimeDeltaBot"] = strat.Stats.YEventTimeDeltaBot.Seconds()
+		fields["statsYTimeDeltaMid"] = strat.Stats.YEventTimeDeltaMid.Seconds()
+		fields["statsYTimeDeltaTop"] = strat.Stats.YEventTimeDeltaTop.Seconds()
 
-		fields["statsXYTimeDeltaBot"] = strat.stats.XYEventTimeDeltaBot.Seconds()
-		fields["statsXYTimeDeltaMid"] = strat.stats.XYEventTimeDeltaMid.Seconds()
-		fields["statsXYTimeDeltaTop"] = strat.stats.XYEventTimeDeltaTop.Seconds()
+		fields["statsXYTimeDeltaBot"] = strat.Stats.XYEventTimeDeltaBot.Seconds()
+		fields["statsXYTimeDeltaMid"] = strat.Stats.XYEventTimeDeltaMid.Seconds()
+		fields["statsXYTimeDeltaTop"] = strat.Stats.XYEventTimeDeltaTop.Seconds()
 
-		fields["statsXParseTimeDeltaMid"] = strat.stats.XParseTimeDeltaMid.Seconds()
-		fields["statsYParseTimeDeltaMid"] = strat.stats.YParseTimeDeltaMid.Seconds()
+		fields["statsXParseTimeDeltaMid"] = strat.Stats.XParseTimeDeltaMid.Seconds()
+		fields["statsYParseTimeDeltaMid"] = strat.Stats.YParseTimeDeltaMid.Seconds()
 
-		if strat.stats.XMiddlePrice > 0 {
-			fields["statsXMiddlePrice"] = strat.stats.XMiddlePrice
+		if strat.Stats.XMiddlePrice > 0 {
+			fields["statsXMiddlePrice"] = strat.Stats.XMiddlePrice
 		}
-		if strat.stats.YMiddlePrice > 0 {
-			fields["statsYMiddlePrice"] = strat.stats.YMiddlePrice
+		if strat.Stats.YMiddlePrice > 0 {
+			fields["statsYMiddlePrice"] = strat.Stats.YMiddlePrice
 		}
 		if strat.tickerCount > 0 && strat.tickerMatchCount > 0 {
 			fields["tickerMatchRatio"] = float64(strat.tickerMatchCount) / float64(strat.tickerCount)
 		}
 
-		fields["statsSpreadEnterOffset"] = strat.stats.SpreadEnterOffset
-		fields["statsSpreadLeaveOffset"] = strat.stats.SpreadLeaveOffset
-		fields["statsSpreadLongEnterBot"] = strat.stats.SpreadLongEnterBot
-		fields["statsSpreadLongLeaveTop"] = strat.stats.SpreadLongLeaveTop
-		fields["statsSpreadShortEnterTop"] = strat.stats.SpreadShortEnterTop
-		fields["statsSpreadShortLeaveBot"] = strat.stats.SpreadShortLeaveBot
-		fields["statsSpreadMiddle"] = strat.stats.SpreadMiddle
+		fields["statsSpreadEnterOffset"] = strat.Stats.SpreadEnterOffset
+		fields["statsSpreadLeaveOffset"] = strat.Stats.SpreadLeaveOffset
+		fields["statsSpreadLongEnterBot"] = strat.Stats.SpreadLongEnterBot
+		fields["statsSpreadLongLeaveTop"] = strat.Stats.SpreadLongLeaveTop
+		fields["statsSpreadShortEnterTop"] = strat.Stats.SpreadShortEnterTop
+		fields["statsSpreadShortLeaveBot"] = strat.Stats.SpreadShortLeaveBot
+		fields["statsSpreadMiddle"] = strat.Stats.SpreadMiddle
 
 		if strat.xFundingRate != nil {
 			fields["xFundingRate"] = strat.xFundingRate.GetFundingRate()

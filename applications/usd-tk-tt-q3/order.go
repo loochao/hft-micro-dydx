@@ -69,9 +69,9 @@ func (strat *XYStrategy) updateXPosition() {
 		strat.offsetStep = 1.0
 	}
 
-	strat.tdSpreadMiddle = strat.stats.SpreadMiddle
-	strat.tdSpreadEnterOffset = strat.stats.SpreadEnterOffset
-	strat.tdSpreadExitOffset = strat.stats.SpreadLeaveOffset
+	strat.tdSpreadMiddle = strat.Stats.SpreadMiddle
+	strat.tdSpreadEnterOffset = strat.Stats.SpreadEnterOffset
+	strat.tdSpreadExitOffset = strat.Stats.SpreadLeaveOffset
 
 	if xSize >= 0 {
 		strat.thresholdShortTop = strat.tdSpreadMiddle + strat.config.ShortEnterThreshold + strat.tdSpreadEnterOffset*strat.offsetFactor - *strat.xyFundingRate**strat.xFundingRateFactor
