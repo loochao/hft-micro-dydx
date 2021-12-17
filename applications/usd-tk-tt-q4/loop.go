@@ -114,7 +114,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		strat.xySpreadSlippage = 0
 		if strat.referenceSpread != 0 {
 			strat.xySpreadSlippage = strat.referenceSpread - *strat.realisedSpread
-			strat.XYSpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage, strat.yFilledValue)
+			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage, strat.yFilledValue)
 			if *strat.realisedSpread >= strat.referenceSpread {
 				strat.XYSuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {
@@ -162,7 +162,7 @@ func (strat *XYStrategy) handleRealisedSpread() {
 		strat.xySpreadSlippage = 0
 		if strat.referenceSpread != 0 {
 			strat.xySpreadSlippage = *strat.realisedSpread - strat.referenceSpread
-			strat.XYSpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage, strat.yFilledValue)
+			strat.xySpreadSlippageTM.Insert(time.Now(), strat.xySpreadSlippage, strat.yFilledValue)
 			if *strat.realisedSpread <= strat.referenceSpread {
 				strat.XYSuccessRatioTM.Insert(time.Now(), 1.0)
 			} else {

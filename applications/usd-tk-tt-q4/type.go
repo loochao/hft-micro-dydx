@@ -185,10 +185,10 @@ type XYStrategy struct {
 	xFundingRateFactor *float64
 	yFundingRateFactor *float64
 
-	XYSuccessRatioTM   *stream_stats.TimedMean         `json:"xySuccessRatioTM,omitempty"`
-	XYSpreadSlippageTM *stream_stats.TimedWeightedMean `json:"xySpreadSlippageTM,omitempty"`
-	XSlippageTM        *stream_stats.TimedWeightedMean `json:"xSlippageTM,omitempty"`
-	YSlippageTM        *stream_stats.TimedWeightedMean `json:"ySlippageTM,omitempty"`
+	XYSuccessRatioTM   *stream_stats.TimedMean
+	xySpreadSlippageTM *stream_stats.TimedWeightedMean
+	XSlippageTM        *stream_stats.TimedWeightedMean
+	YSlippageTM        *stream_stats.TimedWeightedMean
 
 	xSlippage        float64
 	ySlippage        float64
