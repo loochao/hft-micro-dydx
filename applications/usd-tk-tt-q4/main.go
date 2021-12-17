@@ -15,9 +15,11 @@ import (
 	okexv5_usdtspot "github.com/geometrybase/hft-micro/okexv5-usdtspot"
 	okexv5_usdtswap "github.com/geometrybase/hft-micro/okexv5-usdtswap"
 	"gopkg.in/yaml.v2"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"path"
 	"runtime"
 	"runtime/pprof"
 	"strings"
@@ -79,7 +81,7 @@ func main() {
 
 	if xyConfig.CpuProfile != "" {
 		var cpuProfFile *os.File
-		cpuProfFile, err = os.Create(xyConfig.CpuProfile+time.Now().Format("-060102.cpu.prof"))
+		cpuProfFile, err = os.Create(xyConfig.CpuProfile + time.Now().Format("-060102.cpu.prof"))
 		if err != nil {
 			logger.Warnf("os.Create error %v", err)
 			return
@@ -271,7 +273,6 @@ func main() {
 	xyConfig.XExchange.Symbols = xSymbols
 	xyConfig.YExchange.Symbols = ySymbols
 
-
 	configStr, err := yaml.Marshal(xyConfig)
 	if err != nil {
 		logger.Warn(err)
@@ -379,7 +380,9 @@ func main() {
 	var xCommissionAssetValueCh = make(chan float64, 4)
 	var yCommissionAssetValueCh = make(chan float64, 4)
 
+	files := make([]string, 0)
 	for xSymbol, ySymbol := range xyConfig.XYPairs {
+		files = append(files, "%s-%s.json", xSymbol, ySymbol)
 		strategyMap[xSymbol], err = startXYStrategy(
 			xyGlobalCtx,
 			xSymbol, ySymbol,
@@ -466,7 +469,7 @@ func main() {
 		if xyConfig.CpuProfile != "" {
 			var heapProfFile *os.File
 			runtime.GC() // profile all outstanding allocations
-			if heapProfFile, err = os.Create(xyConfig.HeapProfile+time.Now().Format(fmt.Sprintf("-060102-%v.heap.prof", time.Now().Sub(startTime)))); err != nil {
+			if heapProfFile, err = os.Create(xyConfig.HeapProfile + time.Now().Format(fmt.Sprintf("-060102-%v.heap.prof", time.Now().Sub(startTime)))); err != nil {
 				logger.Warnf("os.Create %s error %v", xyConfig.HeapProfile, err)
 			} else if err = pprof.WriteHeapProfile(heapProfFile); err != nil {
 				logger.Warnf("pprof.WriteHeapProfile error %v", err)
@@ -484,7 +487,18 @@ func main() {
 	influxSaveTimer := time.NewTimer(config.RestartSilent)
 	defer influxSaveTimer.Stop()
 
+	archiveTimer := time.NewTimer(config.RestartSilent)
+	defer archiveTimer.Stop()
+
 	lastExternalSaveTime := &time.Time{}
+
+	archive1hFolder := path.Join(config.StatsRootPath, "1h")
+	archive4hFolder := path.Join(config.StatsRootPath, "4h")
+	archive8hFolder := path.Join(config.StatsRootPath, "8h")
+	archive24hFolder := path.Join(config.StatsRootPath, "24h")
+	archive48hFolder := path.Join(config.StatsRootPath, "48h")
+	archive120hFolder := path.Join(config.StatsRootPath, "120h")
+	archive240hFolder := path.Join(config.StatsRootPath, "240h")
 
 mainLoop:
 	for {
@@ -584,9 +598,79 @@ mainLoop:
 				)
 			}
 			break
+		case <-archiveTimer.C:
+			hour1Time := time.Now().Truncate(time.Hour)
+			hour4Time := time.Now().Truncate(time.Hour*4)
+			hour8Time := time.Now().Truncate(time.Hour*8)
+			hour24Time := time.Now().Truncate(time.Hour*24)
+			hour48Time := time.Now().Truncate(time.Hour*48)
+			hour120Time := time.Now().Truncate(time.Hour*120)
+			hour240Time := time.Now().Truncate(time.Hour*240)
+			archiveFiles(files, config.StatsRootPath, archive1hFolder)
+			if hour1Time.Sub(hour4Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive4hFolder)
+			}
+			if hour1Time.Sub(hour8Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive8hFolder)
+			}
+			if hour1Time.Sub(hour24Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive24hFolder)
+			}
+			if hour1Time.Sub(hour48Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive48hFolder)
+			}
+			if hour1Time.Sub(hour120Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive120hFolder)
+			}
+			if hour1Time.Sub(hour240Time) == 0 {
+				archiveFiles(files, config.StatsRootPath, archive240hFolder)
+			}
+			archiveTimer.Reset(time.Hour)
+			break
 		}
 	}
 	logger.Debugf("stop waiting 5s")
 	<-time.After(time.Second * 30)
 	logger.Debugf("exit 0")
+}
+
+func copyFile(src, dst string) (int64, error) {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
+}
+
+func archiveFiles(files []string, sourceFolder, targetFolder string) {
+	err := os.MkdirAll(targetFolder, 0775)
+	if err != nil {
+		logger.Debugf("ARCHIVE os.MkdirAll error %v", err)
+		return
+	}
+	for _, file := range files {
+		srcFile := path.Join(sourceFolder, file)
+		targetFile := path.Join(targetFolder, file)
+		_, err = copyFile(srcFile, targetFile)
+		if err != nil {
+			logger.Debugf("copyFile(srcFile, targetFile) %s -> %s error %v", srcFile, targetFile, err)
+		}
+	}
 }
