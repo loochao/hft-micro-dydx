@@ -10,10 +10,11 @@ import (
 type Config struct {
 	Name *string `yaml:"name"`
 
-	CpuProfile  string `yaml:"cpuProfile"`
-	HeapProfile string `yaml:"heapProfile"`
-	DryRun      bool   `yaml:"dryRun"`
-	ReduceOnly  bool   `yaml:"reduceOnly"`
+	CpuProfile          string `yaml:"cpuProfile"`
+	HeapProfile         string `yaml:"heapProfile"`
+	DryRun              bool   `yaml:"dryRun"`
+	ReduceOnly          bool   `yaml:"reduceOnly"`
+	ResetPrivateHistory bool   `yaml:"resetPrivateHistory"`
 
 	InternalInflux common.InfluxSettings `yaml:"internalInflux"`
 	ExternalInflux common.InfluxSettings `yaml:"externalInflux"`
@@ -109,8 +110,8 @@ type Config struct {
 	EnterTargetFactor     float64       `yaml:"enterTargetFactor"`
 	MaxSlippage           float64       `yaml:"maxSlippage"`
 	YSlippageReference    float64       `yaml:"ySlippageReference"`
-	SpreadWalkByXTicker bool `yaml:"spreadWalkByXTicker"`
-	SpreadWalkByYTicker bool `yaml:"spreadWalkByYTicker"`
+	SpreadWalkByXTicker   bool          `yaml:"spreadWalkByXTicker"`
+	SpreadWalkByYTicker   bool          `yaml:"spreadWalkByYTicker"`
 	//EnterWithProfitConfirms    bool               `yaml:"enterWithProfitConfirms"`
 	StartValues map[string]float64 `yaml:"startValues"`
 	//TargetWeightUpdateInterval time.Duration      `yaml:"targetWeightUpdateInterval"`

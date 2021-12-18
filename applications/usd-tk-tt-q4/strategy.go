@@ -178,42 +178,42 @@ func startXYStrategy(
 	}
 
 	//需要载入了之后要考虑参数重置的问题
-	if strat.XYSuccessRatioTM == nil {
+	if strat.XYSuccessRatioTM == nil || config.ResetPrivateHistory {
 		strat.XYSuccessRatioTM = stream_stats.NewTimedMean(config.EnterSlippageLookback)
 	} else {
 		strat.XYSuccessRatioTM.Lookback = config.EnterSlippageLookback
 	}
-	if strat.XYSpreadSlippageTM == nil {
+	if strat.XYSpreadSlippageTM == nil || config.ResetPrivateHistory {
 		strat.XYSpreadSlippageTM = stream_stats.NewTimedWeightedMean(config.EnterSlippageLookback)
 	} else {
 		strat.XYSpreadSlippageTM.Lookback = config.EnterSlippageLookback
 	}
-	if strat.XSlippageTM == nil {
+	if strat.XSlippageTM == nil || config.ResetPrivateHistory {
 		strat.XSlippageTM = stream_stats.NewTimedWeightedMean(config.EnterSlippageLookback)
 	} else {
 		strat.XSlippageTM.Lookback = config.EnterSlippageLookback
 	}
-	if strat.YSlippageTM == nil {
+	if strat.YSlippageTM == nil || config.ResetPrivateHistory {
 		strat.YSlippageTM = stream_stats.NewTimedWeightedMean(config.EnterSlippageLookback)
 	} else {
 		strat.YSlippageTM.Lookback = config.EnterSlippageLookback
 	}
-	if strat.XTurnoverVolume == nil {
+	if strat.XTurnoverVolume == nil || config.ResetPrivateHistory {
 		strat.XTurnoverVolume = stream_stats.NewTimedSum(config.TurnoverLookback)
 	} else {
 		strat.XTurnoverVolume.Lookback = config.TurnoverLookback
 	}
-	if strat.YTurnoverVolume == nil {
+	if strat.YTurnoverVolume == nil || config.ResetPrivateHistory {
 		strat.YTurnoverVolume = stream_stats.NewTimedSum(config.TurnoverLookback)
 	} else {
 		strat.YTurnoverVolume.Lookback = config.TurnoverLookback
 	}
-	if strat.X30DayVolume == nil {
+	if strat.X30DayVolume == nil || config.ResetPrivateHistory {
 		strat.X30DayVolume = stream_stats.NewTimedSum(time.Hour * 24 * 30)
 	} else {
 		strat.X30DayVolume.Lookback = time.Hour * 24 * 30
 	}
-	if strat.Y30DayVolume == nil {
+	if strat.Y30DayVolume == nil || config.ResetPrivateHistory {
 		strat.Y30DayVolume = stream_stats.NewTimedSum(time.Hour * 24 * 30)
 	} else {
 		strat.Y30DayVolume.Lookback = time.Hour * 24 * 30
