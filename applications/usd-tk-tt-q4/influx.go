@@ -421,11 +421,11 @@ func handleSave(
 			fields["xBalance"] = xBalance
 			if xBalance != 0 {
 				fields["xTurnover"] = xTurnoverVolume / xBalance
-				fields["xLeverage"] = totalXSymbolValue / xBalance
+				//fields["xLeverage"] = totalXSymbolValue / xBalance
 			}
 			if yBalance != 0 {
 				fields["yTurnover"] = yTurnoverVolume / yBalance
-				fields["yLeverage"] = totalYSymbolValue / yBalance
+				//fields["yLeverage"] = totalYSymbolValue / yBalance
 			}
 			if totalBalance != 0 {
 				fields["xyTurnover"] = (xTurnoverVolume + yTurnoverVolume) / totalBalance
