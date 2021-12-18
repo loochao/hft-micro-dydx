@@ -20,6 +20,9 @@ func handleSave(
 	xyInternalInfluxWriter, xyExternalInfluxWriter *common.InfluxWriter,
 	lastExternalSaveTime *time.Time,
 ) {
+	if xyConfig.InternalInflux.Address == ""{
+		return
+	}
 	if yCommissionAssetValue == nil || xCommissionAssetValue == nil {
 		logger.Debugf("miss commission %v %v", yCommissionAssetValue == nil, xCommissionAssetValue == nil)
 		return
@@ -405,7 +408,8 @@ func handleSave(
 				logger.Debugf("xyInfluxWriter.PushPoint error %v", err)
 			}
 		}
-		if time.Now().Sub(*lastExternalSaveTime) > xyConfig.ExternalInflux.SaveInterval {
+		if xyConfig.ExternalInflux.Address != "" &&
+			time.Now().Sub(*lastExternalSaveTime) > xyConfig.ExternalInflux.SaveInterval {
 			*lastExternalSaveTime = time.Now()
 			fields = make(map[string]interface{})
 			fields["netWorth"] = netWorth
