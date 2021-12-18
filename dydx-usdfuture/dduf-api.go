@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/geometrybase/hft-micro/common"
-	"github.com/geometrybase/hft-micro/logger"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -110,7 +109,7 @@ func (api *API) SendAuthenticatedHTTPRequest(ctx context.Context, method, path s
 	//if method == http.MethodPost {
 	//	logger.Debugf("%s %s", method, path)
 	//} else {
-		logger.Debugf("%s", contents)
+	//	logger.Debugf("%s", contents)
 	//}
 	if err != nil {
 		return err
