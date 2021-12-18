@@ -1,0 +1,17 @@
+{
+  "accounts": [
+    {
+      "starkKey": "076f637bb7f71eab952dae59f7ada13fe4f83a942c01f39472d7b6ea5a72f86b",
+      "positionId": "155645",
+      "equity": "515.810716",
+      "freeCollateral": "515.810716",
+      "pendingDeposits": "0.000000",
+      "pendingWithdrawals": "0.000000",
+      "openPositions": {},
+      "accountNumber": "0",
+      "id": "f1fcef42-d9e4-59ab-ae81-745232dca36b",
+      "quoteBalance": "515.810716",
+      "createdAt": "2021-12-16T18:55:23.640Z"
+    }
+  ]
+}
