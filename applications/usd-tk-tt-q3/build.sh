@@ -20,6 +20,9 @@ env GOOS=linux GOARCH=amd64 go build -o "./dist/usd-tk-tt-q3.amd64.$dt" ./applic
 chmod 755 "./dist/usd-tk-tt-q3.amd64.$dt"
 chmod 755 "./dist/usd-tk-tt-q3.arm64.$dt"
 
+rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" loochao:~/bin/
+rsync -avx --progress "./dist/usd-tk-tt-q3.amd64.$dt" loochao:~/bin/
+
 rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" tka3:/usr/local/bin/
 
 rsync -avx --progress "./dist/usd-tk-tt-q3.arm64.$dt" arm5:/usr/local/bin/
