@@ -385,9 +385,11 @@ func handleSave(
 		}
 		if xBalance != 0 {
 			fields["xTurnover"] = xTurnoverVolume / xBalance
+			fields["xLeverage"] = totalXSymbolValue / xBalance
 		}
 		if yBalance != 0 {
 			fields["yTurnover"] = yTurnoverVolume / yBalance
+			fields["yLeverage"] = totalYSymbolValue / yBalance
 		}
 		fields["xyURPnl"] = totalURPnl
 		fields["netWorth"] = netWorth
@@ -419,9 +421,11 @@ func handleSave(
 			fields["xBalance"] = xBalance
 			if xBalance != 0 {
 				fields["xTurnover"] = xTurnoverVolume / xBalance
+				fields["xLeverage"] = totalXSymbolValue / xBalance
 			}
 			if yBalance != 0 {
 				fields["yTurnover"] = yTurnoverVolume / yBalance
+				fields["yLeverage"] = totalYSymbolValue / yBalance
 			}
 			if totalBalance != 0 {
 				fields["xyTurnover"] = (xTurnoverVolume + yTurnoverVolume) / totalBalance
