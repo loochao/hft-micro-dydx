@@ -280,6 +280,21 @@ func (api *API) UpdateLeverage(ctx context.Context, params UpdateLeverageParams)
 	return &resp, nil
 }
 
+func (api *API) UpdatePositionMode(ctx context.Context, params UpdatePositionModeParams) (*Response, error) {
+	var resp Response
+	err := api.SendAuthenticatedHTTPRequest(
+		ctx,
+		http.MethodPost,
+		"/fapi/v1/positionSide/dual",
+		&params,
+		&resp,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
 func (api *API) UpdateMarginType(ctx context.Context, params UpdateMarginTypeParams) (*Response, error) {
 	var resp Response
 	err := api.SendAuthenticatedHTTPRequest(

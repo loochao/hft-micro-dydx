@@ -561,6 +561,20 @@ func (ulp *UpdateMarginTypeParams) ToUrlValues() url.Values {
 	return values
 }
 
+type UpdatePositionModeParams struct {
+	DualSidePosition bool `json:"dualSidePosition,omitempty"`
+}
+
+func (ulp *UpdatePositionModeParams) ToUrlValues() url.Values {
+	values := url.Values{}
+	if ulp.DualSidePosition {
+		values.Set("dualSidePosition", "true")
+	}else{
+		values.Set("dualSidePosition", "false")
+	}
+	return values
+}
+
 type ExchangeInfo struct {
 	Code       int    `json:"code"`
 	Msg        string `json:"msg"`

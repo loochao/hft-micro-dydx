@@ -129,6 +129,7 @@ type ExchangeSettings struct {
 	ChangeMarginType                    bool          `yaml:"changeMarginType" json:"changeMarginType"`
 	Leverage                            float64       `yaml:"leverage" json:"leverage"`
 	ChangeLeverage                      bool          `yaml:"changeLeverage" json:"changeLeverage"`
+	ChangePositionMode                  bool          `yaml:"changePositionMode" json:"changePositionMode"`
 	AutoAddCommissionDiscountAsset      bool          `yaml:"autoAddCommissionDiscountAsset" json:"autoAddCommissionDiscountAsset"`
 	MinimalCommissionDiscountAssetValue float64       `yaml:"minimalCommissionDiscountAssetValue" json:"minimalCommissionDiscountAsset"`
 	AccountID                           string        `yaml:"accountID" json:"accountID"`

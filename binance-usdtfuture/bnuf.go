@@ -538,6 +538,16 @@ func (bn *BinanceUsdtFuture) Setup(ctx context.Context, settings common.Exchange
 		Key:    settings.ApiKey,
 		Secret: settings.ApiSecret,
 	}, settings.Proxy)
+	if settings.ChangePositionMode {
+		res, err := bn.ufApi.UpdatePositionMode(ctx, UpdatePositionModeParams{
+			DualSidePosition: false,
+		})
+		if err != nil {
+			logger.Debugf("UPDATE POSITION MODE ERROR %v",  err)
+		} else {
+			logger.Debugf("UPDATE POSITION MODE RESPONSE %v",  res)
+		}
+	}
 	for _, symbol := range settings.Symbols {
 		if _, ok := TickSizes[symbol]; !ok {
 			return fmt.Errorf("tick size not found for %s", symbol)
