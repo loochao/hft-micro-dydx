@@ -122,8 +122,8 @@ func (strat *XYStrategy) updateXPosition() {
 				strat.xSymbol, strat.ySymbol, math.Abs(xValue+yValue), strat.enterStep*0.8,
 			)
 		}
-		strat.hedgeXPosition()
-		if time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
+		//如果平X去对冲，就没有必要对冲Y了，如果有hedgeCheckTimer, 也不用主动对冲Y
+		if !strat.hedgeXPosition() && time.Now().Sub(strat.hedgeCheckStopTime) > 0 {
 			strat.hedgeYPosition()
 		}
 		return
@@ -635,14 +635,14 @@ func (strat *XYStrategy) updateXPosition() {
 
 }
 
-func (strat *XYStrategy) hedgeXPosition() {
+func (strat *XYStrategy) hedgeXPosition() bool{
 	//如果lastSpreadEnterTime没有更新，说明没有信号触发，就需要检查对冲的情况
 	if time.Now().Sub(strat.lastEnterTime) > strat.config.XEnterTimeout {
 
 		//如果已经没有信号对冲，重新检查x y的仓位，对冲较小的
 		if math.Abs(strat.xPosition.GetSize()*strat.xMultiplier) < math.Abs(strat.yPosition.GetSize()*strat.yMultiplier/strat.config.HedgeRatio) {
 			//X的size比Y小，不用操作X
-			return
+			return false
 		}
 		xSizeDiff := -strat.yPosition.GetSize()*strat.yMultiplier/strat.config.HedgeRatio - strat.xPosition.GetSize()*strat.xMultiplier
 
@@ -670,20 +670,20 @@ func (strat *XYStrategy) hedgeXPosition() {
 
 		if strat.isXSpot {
 			if math.Abs(xSizeDiff) < strat.xStepSize {
-				return
+				return false
 			} else if xSizeDiff < 0 && -xSizeDiff*strat.xMultiplier*strat.xTicker.GetBidPrice() < 1.2*strat.xMinNotional {
-				return
+				return false
 			} else if xSizeDiff > 0 && xSizeDiff*strat.xMultiplier*strat.xTicker.GetAskPrice() < 1.2*strat.xMinNotional {
-				return
+				return false
 			}
 		} else {
 			//期货可以close仓位，没有minNotional限制
 			if math.Abs(xSizeDiff) < strat.xStepSize {
-				return
+				return false
 			} else if xSizeDiff < 0 && strat.xPosition.GetSize() <= 0 && -xSizeDiff*strat.xMultiplier*strat.xTicker.GetBidPrice() < 1.2*strat.xMinNotional {
-				return
+				return false
 			} else if xSizeDiff > 0 && strat.xPosition.GetSize() >= 0 && xSizeDiff*strat.xMultiplier*strat.xTicker.GetAskPrice() < 1.2*strat.xMinNotional {
-				return
+				return false
 			}
 		}
 
@@ -722,7 +722,9 @@ func (strat *XYStrategy) hedgeXPosition() {
 			orderSide,
 			xSizeDiff,
 		)
+		return true
 	}
+	return false
 }
 
 func (strat *XYStrategy) hedgeYPosition() {

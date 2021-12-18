@@ -320,7 +320,7 @@ func (strat *XYStrategy) Start(ctx context.Context) {
 	defer strat.Stop()
 	var nextXPos, nextYPos common.Position
 	strat.xOrderSilentTime = time.Now().Add(strat.config.RestartSilent)
-	strat.lastEnterTime = strat.xOrderSilentTime
+	strat.lastEnterTime = time.Now()
 	for {
 		select {
 		case <-ctx.Done():
