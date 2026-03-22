@@ -125,10 +125,10 @@ func main() {
 	}
 
 	dataPath := "/volume1/MarketData/bnus-bnuf-depth5-and-ticker"
-	//dataPath = "/Users/chenjilin/MarketData/bnus-bnuf-depth5-and-ticker"
+	//dataPath = "/home/clu/MarketData/bnus-bnuf-depth5-and-ticker"
 
 	outputPath := "/volume1/MarketData/techsharpe"
-	//outputPath = "/Users/chenjilin/Downloads"
+	//outputPath = "/home/clu/Downloads"
 
 	var nextLine = []byte{'\n'}
 

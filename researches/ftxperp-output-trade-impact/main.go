@@ -54,7 +54,7 @@ func main() {
 		buyImpactTD, _ := tdigest.New()
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/ftx-usdfuture-trade/%s-%s.ftx-usdfuture.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/home/clu/MarketData/ftx-usdfuture-trade/%s-%s.ftx-usdfuture.trade.jl.gz", dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

@@ -22,9 +22,9 @@ func main() {
 	ctx := context.Background()
 	iw, err := common.NewInfluxWriter(
 		ctx,
-		"http://localhost:8086",
-		"",
-		"",
+		os.Getenv("INFLUX_URL"),
+		os.Getenv("INFLUX_USER"),
+		os.Getenv("INFLUX_PASS"),
 		"hft",
 		500,
 	)
@@ -60,7 +60,7 @@ func main() {
 	quantileBot := 0.05
 	shortQuantileTop := 0.0
 	longQuantileBot := 0.0
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-ll-mt-q/configs/quantiles"
+	quantilePath := "/home/clu/Projects/hft-micro/applications/usd-ll-mt-q/configs/quantiles"
 
 	longTimedTDigests := make(map[string]*stream_stats.TimedTDigest)
 	shortTimedTDigests := make(map[string]*stream_stats.TimedTDigest)
@@ -77,9 +77,9 @@ func main() {
 		xWalkedDepth := &common.WalkedDepthBBMAA{}
 		yWalkedDepth := &common.WalkedDepthBBMAA{}
 		for _, dateStr := range strings.Split(dateStrs, ",") {
-			logger.Debugf("%s %s %s", symbol, dateStr, fmt.Sprintf("/Users/chenjilin/MarketData/bnspot-bnswap-depth5/%s/%s-%s.depth5.jl.gz", dateStr, dateStr, symbol))
+			logger.Debugf("%s %s %s", symbol, dateStr, fmt.Sprintf("/home/clu/MarketData/bnspot-bnswap-depth5/%s/%s-%s.depth5.jl.gz", dateStr, dateStr, symbol))
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bnspot-bnswap-depth5/%s/%s-%s.depth5.jl.gz", dateStr, dateStr, symbol),
+				fmt.Sprintf("/home/clu/MarketData/bnspot-bnswap-depth5/%s/%s-%s.depth5.jl.gz", dateStr, dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

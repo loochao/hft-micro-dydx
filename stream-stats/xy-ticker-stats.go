@@ -448,11 +448,10 @@ type NewXYTickerStatsParams struct {
 }
 
 func NewXYTickerStats(params NewXYTickerStatsParams) (*XYTickerStats, error) {
-
-	hasDefault, fields := common.DetectDefaultValues(params, []string{})
-	if hasDefault {
-		return nil, fmt.Errorf("bad params, has default field for %s", fields)
-	}
+	//hasDefault, fields := common.DetectDefaultValues(params, []string{})
+	//if hasDefault {
+	//	return nil, fmt.Errorf("bad params, has default field for %s", fields)
+	//}
 
 	if params.RootPath == "" {
 		logger.Fatal("need stats root path")

@@ -64,7 +64,7 @@ func main() {
 		commission := -0.0002
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file1, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bnuf-ticker/%s/%s-%s.ticker.jl.gz", dateStr, dateStr, symbol),
+				fmt.Sprintf("/home/clu/MarketData/bnuf-ticker/%s/%s-%s.ticker.jl.gz", dateStr, dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -77,7 +77,7 @@ func main() {
 			}
 			lagScanner := bufio.NewScanner(gr1)
 			file2, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bnuf-ticker/%s/%s-%s.ticker.jl.gz", dateStr, dateStr, *leadSymbol),
+				fmt.Sprintf("/home/clu/MarketData/bnuf-ticker/%s/%s-%s.ticker.jl.gz", dateStr, dateStr, *leadSymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

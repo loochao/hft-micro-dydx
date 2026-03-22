@@ -26,9 +26,9 @@ func main() {
 	ctx := context.Background()
 	iw, err := common.NewInfluxWriter(
 		ctx,
-		"http://localhost:8086",
-		"",
-		"",
+		os.Getenv("INFLUX_URL"),
+		os.Getenv("INFLUX_USER"),
+		os.Getenv("INFLUX_PASS"),
 		"hft",
 		500,
 	)
@@ -68,7 +68,7 @@ func main() {
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
 	outputPath := fmt.Sprintf(
-		"/Users/chenjilin/Projects/hft-micro/applications/usd-ll-mt-q2/bnbs-bnuf-quantiles/outputs/%v-%v-%v-%v-%.4f",
+		"/home/clu/Projects/hft-micro/applications/usd-ll-mt-q2/bnbs-bnuf-quantiles/outputs/%v-%v-%v-%v-%.4f",
 		jumpLookback,
 		qAddInterval,
 		quantileLookback,

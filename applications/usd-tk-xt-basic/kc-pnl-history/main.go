@@ -39,7 +39,7 @@ type Response struct {
 func main() {
 	pnls := map[string]float64{}
 	pnlDetails := map[string][]float64{}
-	contents, err := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-xt-basic/kc-pnl-history/outputs/history20210911.json")
+	contents, err := ioutil.ReadFile("/home/clu/Projects/hft-micro/applications/usd-tk-xt-basic/kc-pnl-history/outputs/history20210911.json")
 	if err != nil {
 		logger.Fatal(err)
 	}

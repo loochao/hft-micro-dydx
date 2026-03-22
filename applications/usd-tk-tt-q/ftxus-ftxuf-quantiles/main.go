@@ -25,9 +25,9 @@ func main() {
 	ctx := context.Background()
 	iw, err := common.NewInfluxWriter(
 		ctx,
-		"http://localhost:8086",
-		"",
-		"",
+		os.Getenv("INFLUX_URL"),
+		os.Getenv("INFLUX_USER"),
+		os.Getenv("INFLUX_PASS"),
 		"hft",
 		500,
 	)
@@ -62,7 +62,7 @@ func main() {
 
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/ftxus-ftxuf-ticker"
+	quantilePath := "/home/clu/Projects/hft-micro/applications/usd-tk-tt-q/configs/ftxus-ftxuf-ticker"
 	maxTimeDiff := time.Millisecond * 1000
 	quantileAddInterval := time.Second
 
@@ -89,14 +89,14 @@ func main() {
 		var lastAddTime = time.Time{}
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			logger.Debugf(
-				"/Users/chenjilin/MarketData/ftxus-ftxuf-ticker/%s/%s-%s,%s.jl.gz",
+				"/home/clu/MarketData/ftxus-ftxuf-ticker/%s/%s-%s,%s.jl.gz",
 				dateStr, dateStr,
 				common.SymbolSanitize(xSymbol),
 				common.SymbolSanitize(ySymbol),
 			)
 			file, err := os.Open(
 				fmt.Sprintf(
-					"/Users/chenjilin/MarketData/ftxus-ftxuf-ticker/%s/%s-%s,%s.jl.gz",
+					"/home/clu/MarketData/ftxus-ftxuf-ticker/%s/%s-%s,%s.jl.gz",
 					dateStr, dateStr,
 					common.SymbolSanitize(xSymbol),
 					common.SymbolSanitize(ySymbol),

@@ -70,7 +70,7 @@ func maxDrawDown(values []float64) float64 {
 }
 
 func TestSelectParams(t *testing.T) {
-	dataPath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-xt-q/configs/kcuf-bnuf-xt/"
+	dataPath := "/home/clu/Projects/hft-micro/applications/usd-tk-xt-q/configs/kcuf-bnuf-xt/"
 	files, err := ioutil.ReadDir(dataPath)
 	if err != nil {
 		t.Fatal(err)

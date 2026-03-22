@@ -418,7 +418,7 @@ func (wsOrder *WSOrder) GetClientID() string {
 }
 
 func (wsOrder *WSOrder) GetID() string {
-	return fmt.Sprintf("%s", wsOrder.OrderID)
+	return fmt.Sprintf("%d", wsOrder.OrderID)
 }
 
 func (wsOrder *WSOrder) GetStatus() common.OrderStatus {
@@ -458,7 +458,7 @@ func (wsOrder *WSOrder) GetPostOnly() bool {
 }
 
 func (wsOrder *WSOrder) GetReduceOnly() bool {
-	return false
+	return wsOrder.Offset == OrderOffsetClose
 }
 
 func (wsOrder *WSOrder) GetExchange() common.ExchangeID {

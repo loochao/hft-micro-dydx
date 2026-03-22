@@ -43,7 +43,7 @@ func main() {
 	quantile := 0.8
 
 	dataPath := "/Volumes/MarketData/MarketData/bnbs-bnuf-depth5-and-ticker"
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-ll-mt-q2/bnbs-bnuf-quantiles/outputs/size-quantiles"
+	quantilePath := "/home/clu/Projects/hft-micro/applications/usd-ll-mt-q2/bnbs-bnuf-quantiles/outputs/size-quantiles"
 	sizeTDs := make(map[string]*tdigest.TDigest)
 
 	parallelCh := make(chan interface{}, 16)

@@ -24,7 +24,7 @@ var MOCK_PRIVATE_KEY, _ = new(big.Int).SetString("58c7d5a90b1776bde86ebac077e053
 func main() {
 	var cpuProfFile *os.File
 	var err error
-	cpuProfFile, err = os.Create("/Users/chenjilin/Downloads/starkex"+time.Now().Format("-060102.cpu.prof"))
+	cpuProfFile, err = os.Create("/home/clu/Downloads/starkex"+time.Now().Format("-060102.cpu.prof"))
 	if err != nil {
 		logger.Warnf("os.Create error %v", err)
 		return
@@ -67,7 +67,7 @@ func main() {
 	pprof.StopCPUProfile()
 	var heapProfFile *os.File
 	runtime.GC() // profile all outstanding allocations
-	if heapProfFile, err = os.Create("/Users/chenjilin/Downloads/starkex"+time.Now().Format("-060102.heap.prof")); err != nil {
+	if heapProfFile, err = os.Create("/home/clu/Downloads/starkex"+time.Now().Format("-060102.heap.prof")); err != nil {
 		logger.Warnf("os.Create error %v",  err)
 	} else if err = pprof.WriteHeapProfile(heapProfFile); err != nil {
 		logger.Warnf("pprof.WriteHeapProfile error %v", err)

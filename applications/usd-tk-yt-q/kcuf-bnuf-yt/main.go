@@ -21,7 +21,7 @@ import (
 )
 
 func optBySymbol(xSymbol, ySymbol string, writer *common.InfluxWriter, measurement string) (map[string]Result, error) {
-	fileName := fmt.Sprintf("/Users/chenjilin/Downloads/20210820-20210916-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
+	fileName := fmt.Sprintf("/home/clu/Downloads/20210820-20210916-%s-%s-24h0m0s-3s-1ms.gz", xSymbol, ySymbol)
 	f, err := os.OpenFile(fileName, os.O_RDONLY, 0600)
 	if err != nil {
 		return nil, err
@@ -136,9 +136,9 @@ func main() {
 	ctx := context.Background()
 	iw, err := common.NewInfluxWriter(
 		ctx,
-		"http://localhost:8086",
-		"",
-		"",
+		os.Getenv("INFLUX_URL"),
+		os.Getenv("INFLUX_USER"),
+		os.Getenv("INFLUX_PASS"),
 		"hft",
 		500,
 	)
@@ -147,7 +147,7 @@ func main() {
 	}
 	defer iw.Stop()
 
-	dataPath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-yt-q/configs/kcuf-bnuf-yt/"
+	dataPath := "/home/clu/Projects/hft-micro/applications/usd-tk-yt-q/configs/kcuf-bnuf-yt/"
 	symbolsMap := map[string]string{
 		"XBTUSDTM":"BTCUSDT",
 	}

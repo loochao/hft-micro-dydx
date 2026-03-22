@@ -83,9 +83,9 @@ func main() {
 	ctx := context.Background()
 	iw, err := common.NewInfluxWriter(
 		ctx,
-		"http://localhost:8086",
-		"",
-		"",
+		os.Getenv("INFLUX_URL"),
+		os.Getenv("INFLUX_USER"),
+		os.Getenv("INFLUX_PASS"),
 		"hft",
 		500,
 	)
@@ -109,7 +109,7 @@ func main() {
 
 	quantileLookback := time.Hour
 	quantileSubInterval := time.Minute*5
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/kcuf-bnuf-quantiles/spread-signal/configs"
+	quantilePath := "/home/clu/Projects/hft-micro/applications/usd-tk-tt-q/kcuf-bnuf-quantiles/spread-signal/configs"
 
 	sizeTDs := make(map[string]*tdigest.TDigest)
 
@@ -132,9 +132,9 @@ func main() {
 
 		var xTD, yTD common.Ticker
 		for _, dateStr := range strings.Split(dateStrs, ",") {
-			logger.Debugf("%s %s %s", xSymbol, dateStr, fmt.Sprintf("/Users/chenjilin/MarketData/kcuf-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol))
+			logger.Debugf("%s %s %s", xSymbol, dateStr, fmt.Sprintf("/home/clu/MarketData/kcuf-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol))
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/kcuf-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
+				fmt.Sprintf("/home/clu/MarketData/kcuf-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

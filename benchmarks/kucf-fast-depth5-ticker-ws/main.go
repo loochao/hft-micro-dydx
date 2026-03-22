@@ -53,7 +53,7 @@ func init() {
 func main() {
 	var err error
 	var cpuProfFile *os.File
-	cpuProfFile, err = os.Create("/Users/chenjilin/Projects/hft-micro/benchmarks/outputs/kcuf-fast-depth5-ticker-ws.cpu.prof")
+	cpuProfFile, err = os.Create("/home/clu/Projects/hft-micro/benchmarks/outputs/kcuf-fast-depth5-ticker-ws.cpu.prof")
 	if err != nil {
 		panic(err)
 	}
@@ -68,7 +68,7 @@ func main() {
 		logger.Debugf("stop heap")
 		var heapProfFile *os.File
 		runtime.GC()
-		if heapProfFile, err = os.Create("/Users/chenjilin/Projects/hft-micro/benchmarks/outputs/kcuf-fast-depth5-ticker-ws.heap.prof"); err != nil {
+		if heapProfFile, err = os.Create("/home/clu/Projects/hft-micro/benchmarks/outputs/kcuf-fast-depth5-ticker-ws.heap.prof"); err != nil {
 			panic(err)
 		} else if err = pprof.WriteHeapProfile(heapProfFile); err != nil {
 			panic(err)

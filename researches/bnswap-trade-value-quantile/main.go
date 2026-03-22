@@ -24,7 +24,7 @@ func main() {
 		tradeValueTD, _ := tdigest.New()
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bnswap-trade/%s-%s.bnswap.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/home/clu/MarketData/bnswap-trade/%s-%s.bnswap.trade.jl.gz", dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

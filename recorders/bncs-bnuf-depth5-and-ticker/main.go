@@ -19,7 +19,7 @@ func main() {
 	symbolsStr := flag.String("symbols", "LINKUSDC,EOSUSDC,XRPUSDC,TRXUSDC,LTCUSDC,ZECUSDC,NEOUSDC,BNBUSDC,BTTUSDC,BCHUSDC,ADAUSDC,ETHUSDC,ATOMUSDC,BTCUSDC", "symbols, separate by comma")
 	savePath := flag.String("path", "/root/bncs-bnuf-depth5-and-ticker", "data save folder")
 
-	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//savePath := flag.String("path", "/home/clu/Downloads", "data save folder")
 	//symbolsStr := flag.String("symbols", "BTCUSDC", "symbols, separate by comma")
 	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1080", "symbols group batch size")
 	flag.Parse()

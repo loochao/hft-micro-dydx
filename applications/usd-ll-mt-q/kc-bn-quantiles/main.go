@@ -82,9 +82,9 @@ func main() {
 	ctx := context.Background()
 	iw, err := common.NewInfluxWriter(
 		ctx,
-		"http://localhost:8086",
-		"",
-		"",
+		os.Getenv("INFLUX_URL"),
+		os.Getenv("INFLUX_USER"),
+		os.Getenv("INFLUX_PASS"),
 		"hft",
 		500,
 	)
@@ -116,7 +116,7 @@ func main() {
 	quantileBot := 0.05
 	shortQuantileTop := 0.0
 	longQuantileBot := 0.0
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-ll-mt-q/configs/kc-quantiles"
+	quantilePath := "/home/clu/Projects/hft-micro/applications/usd-ll-mt-q/configs/kc-quantiles"
 
 	for ySymbol, xSymbol := range symbolsMap {
 		if _, err := os.Stat(path.Join(quantilePath, xSymbol+"-"+ySymbol+"-long-td.json")); err == nil {
@@ -138,9 +138,9 @@ func main() {
 		xWalkedDepth := &common.WalkedDepthBBMAA{}
 		yWalkedDepth := &common.WalkedDepthBBMAA{}
 		for _, dateStr := range strings.Split(dateStrs, ",") {
-			logger.Debugf("/Users/chenjilin/MarketData/bnuf-kcuf-depth5/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, ySymbol, xSymbol)
+			logger.Debugf("/home/clu/MarketData/bnuf-kcuf-depth5/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, ySymbol, xSymbol)
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bnuf-kcuf-depth5/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, ySymbol, xSymbol),
+				fmt.Sprintf("/home/clu/MarketData/bnuf-kcuf-depth5/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, ySymbol, xSymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

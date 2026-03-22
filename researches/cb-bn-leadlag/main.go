@@ -60,7 +60,7 @@ func main() {
 
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
-	quantilePath := "/Users/chenjilin/Downloads/cb-bn-leadlag"
+	quantilePath := "/home/clu/Downloads/cb-bn-leadlag"
 
 	//bidTDs := make(map[string]*tdigest.TDigest)
 	//askTDs := make(map[string]*tdigest.TDigest)
@@ -79,9 +79,9 @@ func main() {
 		xTicker := &coinbase_usdspot.Ticker{}
 		yTicker := &binance_usdtfuture.BookTicker{}
 		for _, dateStr := range strings.Split(dateStrs, ",") {
-			logger.Debugf("/Users/chenjilin/MarketData/cbus-bnuf-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol)
+			logger.Debugf("/home/clu/MarketData/cbus-bnuf-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol)
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/cbus-bnuf-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
+				fmt.Sprintf("/home/clu/MarketData/cbus-bnuf-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

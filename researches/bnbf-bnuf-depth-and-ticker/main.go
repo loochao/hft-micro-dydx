@@ -78,7 +78,7 @@ func main() {
 			dayCounter++
 			//logger.Debugf("%s %s", xSymbol, dateStr)
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/hbuf-bnuf-depth-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
+				fmt.Sprintf("/home/clu/MarketData/hbuf-bnuf-depth-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -178,14 +178,14 @@ func main() {
 	}
 	longBytes, err := longTD.AsBytes()
 	if err == nil {
-		err = ioutil.WriteFile("/Users/chenjilin/Projects/hft-micro/researches/hbuf-bnuf-depth-and-ticker/configs/longTD", longBytes, 0755)
+		err = ioutil.WriteFile("/home/clu/Projects/hft-micro/researches/hbuf-bnuf-depth-and-ticker/configs/longTD", longBytes, 0755)
 		if err != nil {
 			logger.Debugf("%v", err)
 		}
 	}
 	shortBytes, err := shortTD.AsBytes()
 	if err == nil {
-		err = ioutil.WriteFile("/Users/chenjilin/Projects/hft-micro/researches/hbuf-bnuf-depth-and-ticker/configs/shortTD", shortBytes, 0755)
+		err = ioutil.WriteFile("/home/clu/Projects/hft-micro/researches/hbuf-bnuf-depth-and-ticker/configs/shortTD", shortBytes, 0755)
 		if err != nil {
 			logger.Debugf("%v", err)
 		}

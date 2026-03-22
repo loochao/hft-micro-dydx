@@ -31,7 +31,7 @@ func main() {
 
 	for _, dateStr := range strings.Split(dateStrs, ",") {
 		file, err := os.Open(
-			fmt.Sprintf("/Users/chenjilin/MarketData/bnswap-depth5-leadlag/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, usdtSymbol, busdSymbol),
+			fmt.Sprintf("/home/clu/MarketData/bnswap-depth5-leadlag/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, usdtSymbol, busdSymbol),
 		)
 		logger.Debugf("%s", dateStr)
 		if err != nil {

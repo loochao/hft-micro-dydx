@@ -129,7 +129,7 @@ func main() {
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			logger.Debugf("%s %s", kSymbol, dateStr)
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bnuf-kcuf-depth5/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, bSymbol, kSymbol),
+				fmt.Sprintf("/home/clu/MarketData/bnuf-kcuf-depth5/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, bSymbol, kSymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

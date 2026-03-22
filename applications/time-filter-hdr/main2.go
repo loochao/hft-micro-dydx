@@ -20,9 +20,9 @@ func main() {
 	ctx := context.Background()
 	iw, err := common.NewInfluxWriter(
 		ctx,
-		"http://localhost:8086",
-		"",
-		"",
+		os.Getenv("INFLUX_URL"),
+		os.Getenv("INFLUX_USER"),
+		os.Getenv("INFLUX_PASS"),
 		"hft",
 		5000,
 	)
@@ -47,7 +47,7 @@ func main() {
 
 	symbols := []string{"1INCHUSDT"}
 	rootPath := "/Volumes/CryptoData/bnuf"
-	//rootPath := "/Users/chenjilin/Downloads/bnuf"
+	//rootPath := "/home/clu/Downloads/bnuf"
 	parallelCh := make(chan interface{}, 16)
 	doneCh := make(chan string)
 

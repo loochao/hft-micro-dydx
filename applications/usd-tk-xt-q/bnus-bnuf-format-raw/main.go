@@ -95,7 +95,7 @@ func main() {
 			parseSilentTime := int64(0)
 
 			//counter := 0
-			outputFileName := fmt.Sprintf("/Users/chenjilin/Downloads/%s-%s-%s-%s-%v-%v-%v.gz", startDateStr, endDateStr, xSymbol, ySymbol, quantileLookback, spreadLookback, outputInterval)
+			outputFileName := fmt.Sprintf("/home/clu/Downloads/%s-%s-%s-%s-%v-%v-%v.gz", startDateStr, endDateStr, xSymbol, ySymbol, quantileLookback, spreadLookback, outputInterval)
 			if _, err := os.Stat(outputFileName); err == nil {
 				logger.Debugf("%s exists, ignore", outputFileName)
 				return
@@ -113,10 +113,10 @@ func main() {
 			}
 
 			for _, dateStr := range strings.Split(dateStrs, ",") {
-				logger.Debugf("%s %s %s", xSymbol, dateStr, fmt.Sprintf("/Users/chenjilin/MarketData/bnus-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol))
+				logger.Debugf("%s %s %s", xSymbol, dateStr, fmt.Sprintf("/home/clu/MarketData/bnus-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol))
 				dayCounter++
 				file, err := os.Open(
-					fmt.Sprintf("/Users/chenjilin/MarketData/bnus-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
+					fmt.Sprintf("/home/clu/MarketData/bnus-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
 				)
 				if err != nil {
 					logger.Debugf("os.Open() error %v", err)

@@ -111,7 +111,7 @@ func main() {
 	//yMultiplier := 1.0
 	//depthTakerImpact := 3000.0
 
-	csvPath := "/Users/chenjilin/Downloads"
+	csvPath := "/home/clu/Downloads"
 
 	for ySymbol, xSymbol := range symbolsMap {
 		counter := 0
@@ -140,9 +140,9 @@ func main() {
 		//bidTimedTD := stream_stats.NewTimedTDigest(time.Hour, time.Minute*5)
 		//downSideJumpTimedTDigest := stream_stats.NewTimedTDigest(quantileLookback, quantileSubInterval)
 		for _, dateStr := range strings.Split(dateStrs, ",") {
-			logger.Debugf("/Users/chenjilin/MarketData/bnuf-kcuf-depth5/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, ySymbol, xSymbol)
+			logger.Debugf("/home/clu/MarketData/bnuf-kcuf-depth5/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, ySymbol, xSymbol)
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bnuf-kcuf-depth5/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, ySymbol, xSymbol),
+				fmt.Sprintf("/home/clu/MarketData/bnuf-kcuf-depth5/%s/%s-%s,%s.depth5.jl.gz", dateStr, dateStr, ySymbol, xSymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

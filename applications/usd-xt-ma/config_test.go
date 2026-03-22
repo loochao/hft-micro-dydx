@@ -149,7 +149,7 @@ func TestShowKcufBnufPairsAndMaxSizes(t *testing.T) {
 }
 
 func TestShowFtxufBnufPairsAndMaxSizes(t *testing.T) {
-	data, err := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q3/configs/bnbs.yaml")
+	data, err := ioutil.ReadFile("/home/clu/Projects/hft-micro/applications/usd-tk-tt-q3/configs/bnbs.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,7 +190,7 @@ func TestShowFtxufBnufPairsAndMaxSizes(t *testing.T) {
 }
 
 func TestShowBnusBnufPairsAndMaxSizes(t *testing.T) {
-	data, err := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q3/configs/bnus-bnuf.yaml")
+	data, err := ioutil.ReadFile("/home/clu/Projects/hft-micro/applications/usd-tk-tt-q3/configs/bnus-bnuf.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -231,7 +231,7 @@ func TestShowBnusBnufPairsAndMaxSizes(t *testing.T) {
 
 
 func TestShowOkufBnufPairsAndMaxSizes(t *testing.T) {
-	data, err := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q3/configs/bnbs.yaml")
+	data, err := ioutil.ReadFile("/home/clu/Projects/hft-micro/applications/usd-tk-tt-q3/configs/bnbs.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}

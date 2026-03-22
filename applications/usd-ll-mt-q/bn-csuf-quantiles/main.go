@@ -22,9 +22,9 @@ func main() {
 	ctx := context.Background()
 	iw, err := common.NewInfluxWriter(
 		ctx,
-		"http://localhost:8086",
-		"",
-		"",
+		os.Getenv("INFLUX_URL"),
+		os.Getenv("INFLUX_USER"),
+		os.Getenv("INFLUX_PASS"),
 		"hft",
 		500,
 	)
@@ -56,7 +56,7 @@ func main() {
 
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-ll-mt-q/configs/bn-csuf-quantiles"
+	quantilePath := "/home/clu/Projects/hft-micro/applications/usd-ll-mt-q/configs/bn-csuf-quantiles"
 
 	for _, xSymbol := range symbols {
 		ySymbol := strings.Replace(xSymbol, "USDC", "USDT", -1)
@@ -80,9 +80,9 @@ func main() {
 
 		var xTD, yTD common.Ticker
 		for _, dateStr := range strings.Split(dateStrs, ",") {
-			logger.Debugf("%s %s %s", xSymbol, dateStr, fmt.Sprintf("/Users/chenjilin/MarketData/bncs-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol))
+			logger.Debugf("%s %s %s", xSymbol, dateStr, fmt.Sprintf("/home/clu/MarketData/bncs-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol))
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bncs-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
+				fmt.Sprintf("/home/clu/MarketData/bncs-bnuf-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, xSymbol, ySymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

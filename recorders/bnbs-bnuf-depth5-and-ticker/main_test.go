@@ -22,7 +22,7 @@ func TestGetSymbols(t *testing.T) {
 
 func TestCreateGzipFile(t *testing.T) {
 	file, err := os.OpenFile(
-		"/Users/chenjilin/Downloads/TEST.depth5.jl.gz",
+		"/home/clu/Downloads/TEST.depth5.jl.gz",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		0755,
 	)

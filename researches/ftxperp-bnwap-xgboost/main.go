@@ -111,7 +111,7 @@ func main() {
 		shortMarkPrices := make(map[int]float64)
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			ftxFile, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/ftx-usdfuture-trade/%s-%s.ftx-usdfuture.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/home/clu/MarketData/ftx-usdfuture-trade/%s-%s.ftx-usdfuture.trade.jl.gz", dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -127,7 +127,7 @@ func main() {
 			ftxScanner := bufio.NewScanner(ftxGr)
 
 			bnFile, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/bnswap-trade/%s-%s.bnswap.trade.jl.gz", dateStr, pairMaps[symbol]),
+				fmt.Sprintf("/home/clu/MarketData/bnswap-trade/%s-%s.bnswap.trade.jl.gz", dateStr, pairMaps[symbol]),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)
@@ -355,11 +355,11 @@ func main() {
 		shortText = strings.Replace(shortText, "]", "", -1)
 		shortText = strings.Replace(shortText, " ", ",", -1)
 
-		err := ioutil.WriteFile(fmt.Sprintf("/Users/chenjilin/Downloads/%s-long-features.txt", symbol), []byte(longText), 0644)
+		err := ioutil.WriteFile(fmt.Sprintf("/home/clu/Downloads/%s-long-features.txt", symbol), []byte(longText), 0644)
 		if err != nil {
 			logger.Fatal(err)
 		}
-		err = ioutil.WriteFile(fmt.Sprintf("/Users/chenjilin/Downloads/%s-short-features.txt", symbol), []byte(shortText), 0644)
+		err = ioutil.WriteFile(fmt.Sprintf("/home/clu/Downloads/%s-short-features.txt", symbol), []byte(shortText), 0644)
 		if err != nil {
 			logger.Fatal(err)
 		}

@@ -13,7 +13,7 @@ import (
 )
 
 func generateLongData() ([]opts.LineData, []float64) {
-	data, _ := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/researches/kcuf-bnuf-depth5/configs/longTD")
+	data, _ := ioutil.ReadFile("/home/clu/Projects/hft-micro/researches/kcuf-bnuf-depth5/configs/longTD")
 	td, _ := tdigest.FromBytes(bytes.NewReader(data))
 	items := make([]opts.LineData, 0)
 	spreads := make([]float64, 0)
@@ -28,7 +28,7 @@ func generateLongData() ([]opts.LineData, []float64) {
 }
 
 func generateShortData() ([]opts.LineData, []float64) {
-	data, _ := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/researches/kcuf-bnuf-depth5/configs/shortTD")
+	data, _ := ioutil.ReadFile("/home/clu/Projects/hft-micro/researches/kcuf-bnuf-depth5/configs/shortTD")
 	td, _ := tdigest.FromBytes(bytes.NewReader(data))
 	items := make([]opts.LineData, 0)
 	spreads := make([]float64, 0)
@@ -75,7 +75,7 @@ func main() {
 	//	AddSeries("Category A", generateLongData()).
 	//	AddSeries("Category B", generateLongData())
 	//// Where the magic happens
-	f, _ := os.Create("/Users/chenjilin/Projects/hft-micro/researches/kcuf-bnuf-depth5/configs/pdf.html")
+	f, _ := os.Create("/home/clu/Projects/hft-micro/researches/kcuf-bnuf-depth5/configs/pdf.html")
 
 	page := components.NewPage()
 	page.AddCharts(longLine, shortLine)

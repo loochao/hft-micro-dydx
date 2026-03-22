@@ -149,7 +149,7 @@ func main() {
 		mirsMap[symbol] = make(map[time.Time][2]float64)
 
 		file, err := os.Open(
-			fmt.Sprintf("/Users/chenjilin/MarketData/mir/4h.mir.%s.csv", symbol),
+			fmt.Sprintf("/home/clu/MarketData/mir/4h.mir.%s.csv", symbol),
 		)
 		if err != nil {
 			logger.Debugf("os.Open() error %v", err)

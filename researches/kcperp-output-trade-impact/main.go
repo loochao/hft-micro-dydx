@@ -57,7 +57,7 @@ func main() {
 		buyImpactTD, _ := tdigest.New()
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/kucoin-usdtfuture-trade/%s-%s.kucoin-usdtfuture.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/home/clu/MarketData/kucoin-usdtfuture-trade/%s-%s.kucoin-usdtfuture.trade.jl.gz", dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

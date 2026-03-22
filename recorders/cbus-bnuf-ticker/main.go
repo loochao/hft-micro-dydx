@@ -19,7 +19,7 @@ func main() {
 	symbolsStr := flag.String("symbols", "MANA-USD,RLC-USD,GRT-USD,UNI-USD,ENJ-USD,ALGO-USD,BCH-USD,MATIC-USD,KEEP-USD,LTC-USD,FIL-USD,BTC-USD,XTZ-USD,DOGE-USD,OMG-USD,LRC-USD,ETC-USD,REN-USD,ZRX-USD,SUSHI-USD,BAT-USD,BAND-USD,LINK-USD,ANKR-USD,MKR-USD,ATOM-USD,SOL-USD,CRV-USD,CHZ-USD,NKN-USD,KNC-USD,DOT-USD,OGN-USD,EOS-USD,ICP-USD,GTC-USD,ZEC-USD,SNX-USD,BAL-USD,AAVE-USD,STORJ-USD,DASH-USD,XLM-USD,TRB-USD,YFI-USD,COMP-USD,ETH-USD,ADA-USD,1INCH-USD,SKL-USD", "symbols, separate by comma")
 	savePath := flag.String("path", "/root/cbus-bnuf-ticker", "data save folder")
 
-	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//savePath := flag.String("path", "/home/clu/Downloads", "data save folder")
 	//symbolsStr := flag.String("symbols", "MATIC-USD", "symbols, separate by comma")
 	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 

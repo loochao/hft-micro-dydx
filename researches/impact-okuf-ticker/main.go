@@ -43,7 +43,7 @@ func main() {
 		bookTD, _ := tdigest.New()
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/okus-ticker/%s/%s-%s.ticker.jl.gz", dateStr, dateStr, symbol),
+				fmt.Sprintf("/home/clu/MarketData/okus-ticker/%s/%s-%s.ticker.jl.gz", dateStr, dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

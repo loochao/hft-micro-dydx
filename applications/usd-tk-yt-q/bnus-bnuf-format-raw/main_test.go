@@ -15,7 +15,7 @@ func BenchmarkRead(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		func() {
-			f, err := os.OpenFile("/Users/chenjilin/Downloads/20210910-20210915-1INCHUSDT-1INCHUSDT-24h0m0s-3s-1ms.gz", os.O_RDONLY, 0600)
+			f, err := os.OpenFile("/home/clu/Downloads/20210910-20210915-1INCHUSDT-1INCHUSDT-24h0m0s-3s-1ms.gz", os.O_RDONLY, 0600)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -43,8 +43,8 @@ func BenchmarkRead(b *testing.B) {
 }
 
 func TestRead(t *testing.T) {
-	f, err := os.OpenFile("/Users/chenjilin/Downloads/20210820-20210826-VETUSDT-VETUSDT-24h0m0s-3s-25ms.gz", os.O_RDONLY, 0600)
-	//f, err := os.OpenFile("/Users/chenjilin/Downloads/20210820-20210916-VETUSDTM-VETUSDT-24h0m0s-3s-1ms.gz", os.O_RDONLY, 0600)
+	f, err := os.OpenFile("/home/clu/Downloads/20210820-20210826-VETUSDT-VETUSDT-24h0m0s-3s-25ms.gz", os.O_RDONLY, 0600)
+	//f, err := os.OpenFile("/home/clu/Downloads/20210820-20210916-VETUSDTM-VETUSDT-24h0m0s-3s-1ms.gz", os.O_RDONLY, 0600)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestRead(t *testing.T) {
 //
 //	offset := buf.Len()
 //	logger.Debugf("buf len %d sizeof struct %d", offset, unsafe.Sizeof(dataIn))
-//	f, err := os.OpenFile("/Users/chenjilin/Downloads/test_binary", os.O_RDONLY, 0600)
+//	f, err := os.OpenFile("/home/clu/Downloads/test_binary", os.O_RDONLY, 0600)
 //	if err == nil {
 //		ret, err := f.Seek(int64(-offset), 2)
 //		if err != nil {
@@ -120,7 +120,7 @@ func TestRead(t *testing.T) {
 //	}
 //
 //
-//	f, err = os.OpenFile("/Users/chenjilin/Downloads/test_binary", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+//	f, err = os.OpenFile("/home/clu/Downloads/test_binary", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 //	if err != nil {
 //		panic(err)
 //	}
@@ -135,7 +135,7 @@ func TestRead(t *testing.T) {
 //		t.Fatal(err)
 //	}
 //
-//	f, err = os.OpenFile("/Users/chenjilin/Downloads/test_binary", os.O_RDONLY, 0600)
+//	f, err = os.OpenFile("/home/clu/Downloads/test_binary", os.O_RDONLY, 0600)
 //	if err != nil {
 //		t.Fatal(err)
 //	}

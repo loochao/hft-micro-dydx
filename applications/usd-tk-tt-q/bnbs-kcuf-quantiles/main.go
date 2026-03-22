@@ -25,9 +25,9 @@ func main() {
 	ctx := context.Background()
 	iw, err := common.NewInfluxWriter(
 		ctx,
-		"http://localhost:8086",
-		"",
-		"",
+		os.Getenv("INFLUX_URL"),
+		os.Getenv("INFLUX_USER"),
+		os.Getenv("INFLUX_PASS"),
 		"hft",
 		500,
 	)
@@ -63,7 +63,7 @@ func main() {
 
 	quantileLookback := time.Hour * 72
 	quantileSubInterval := time.Hour
-	quantilePath := "/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/configs/bnbs-kcuf-quantiles"
+	quantilePath := "/home/clu/Projects/hft-micro/applications/usd-tk-tt-q/configs/bnbs-kcuf-quantiles"
 	maxTimeDiff := time.Millisecond * 100
 	quantileAddInterval := time.Second
 
@@ -92,9 +92,9 @@ func main() {
 		var t int64
 		var lastAddTime = time.Time{}
 		for _, dateStr := range strings.Split(dateStrs, ",") {
-			logger.Debugf("%s %s %s", xSymbol, dateStr, fmt.Sprintf("/Users/chenjilin/MarketData/kcuf-bnbs-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, ySymbol, xSymbol))
+			logger.Debugf("%s %s %s", xSymbol, dateStr, fmt.Sprintf("/home/clu/MarketData/kcuf-bnbs-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, ySymbol, xSymbol))
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/kcuf-bnbs-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, ySymbol, xSymbol),
+				fmt.Sprintf("/home/clu/MarketData/kcuf-bnbs-depth5-and-ticker/%s/%s-%s,%s.jl.gz", dateStr, dateStr, ySymbol, xSymbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

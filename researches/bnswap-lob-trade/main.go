@@ -36,7 +36,7 @@ func main() {
 	dateStr := "20210510"
 	for _, symbol := range strings.Split(symbols, ",") {
 		depthFile, err := os.Open(
-			fmt.Sprintf("/Users/chenjilin/MarketData/bnswap-depth20/%s-%s.depth20.jl.gz", dateStr, symbol),
+			fmt.Sprintf("/home/clu/MarketData/bnswap-depth20/%s-%s.depth20.jl.gz", dateStr, symbol),
 		)
 		if err != nil {
 			logger.Debugf("os.Open() error %v", err)
@@ -49,7 +49,7 @@ func main() {
 		}
 		depthScanner := bufio.NewScanner(depthGzReader)
 		tradeFile, err := os.Open(
-			fmt.Sprintf("/Users/chenjilin/MarketData/bnswap-trade/%s-%s.bnswap.trade.jl.gz", dateStr, symbol),
+			fmt.Sprintf("/home/clu/MarketData/bnswap-trade/%s-%s.bnswap.trade.jl.gz", dateStr, symbol),
 		)
 		if err != nil {
 			logger.Debugf("os.Open() error %v", err)

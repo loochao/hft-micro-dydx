@@ -22,7 +22,7 @@ func main() {
 	proxyAddress := flag.String("proxy", "", "symbols group batch size")
 	savePath := flag.String("path", "/root/ftxuf-bnuf-depth5-and-ticker", "data save folder")
 
-	//savePath := flag.String("path", "/Users/chenjilin/Downloads", "data save folder")
+	//savePath := flag.String("path", "/home/clu/Downloads", "data save folder")
 	//proxyAddress := flag.String("proxy", "socks5://127.0.0.1:1083", "symbols group batch size")
 	flag.Parse()
 

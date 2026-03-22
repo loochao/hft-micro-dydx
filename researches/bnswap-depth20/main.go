@@ -36,7 +36,7 @@ func main() {
 	dateStr := "20210428"
 	for _, symbol := range strings.Split(symbols, ",") {
 		file, err := os.Open(
-			fmt.Sprintf("/Users/chenjilin/MarketData/bnswap-depth20/%s-%s.depth20.jl.gzip", dateStr, symbol),
+			fmt.Sprintf("/home/clu/MarketData/bnswap-depth20/%s-%s.depth20.jl.gzip", dateStr, symbol),
 		)
 		if err != nil {
 			logger.Debugf("os.Open() error %v", err)

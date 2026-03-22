@@ -45,7 +45,7 @@ func main() {
 		tradeCounts[symbol] = 0
 		for _, dateStr := range strings.Split(dateStrs, ",") {
 			file, err := os.Open(
-				fmt.Sprintf("/Users/chenjilin/MarketData/kucoin-usdtspot-trade/%s-%s.kucoin-usdtspot.trade.jl.gz", dateStr, symbol),
+				fmt.Sprintf("/home/clu/MarketData/kucoin-usdtspot-trade/%s-%s.kucoin-usdtspot.trade.jl.gz", dateStr, symbol),
 			)
 			if err != nil {
 				logger.Debugf("os.Open() error %v", err)

@@ -34,14 +34,14 @@ func main() {
 	//busdSymbol := "BTCBUSD"
 	//tempDepth := &bnuf.Depth5{}
 	//depthFile, err := os.Open(
-	//	"/Users/chenjilin/Downloads/20210620-BTCUSDT,BTCBUSD.depth5.jl.gz",
+	//	"/home/clu/Downloads/20210620-BTCUSDT,BTCBUSD.depth5.jl.gz",
 	//)
 
 	usdtSymbol := "ETHUSDT"
 	busdSymbol := "ETHBUSD"
 	tempDepth := &bnuf.Depth5{}
 	depthFile, err := os.Open(
-		"/Users/chenjilin/MarketData/bnswap-depth5-leadlag/20210620-ETHUSDT,ETHBUSD.depth5.jl.gz",
+		"/home/clu/MarketData/bnswap-depth5-leadlag/20210620-ETHUSDT,ETHBUSD.depth5.jl.gz",
 	)
 	if err != nil {
 		logger.Debugf("os.Open() error %v", err)

@@ -388,6 +388,7 @@ func (w *TickerWS) dataHandleLoop(ctx context.Context, symbol string, inputCh ch
 				index = 0
 			}
 			ticker = pool[index]
+			err = ParseTicker(msg, ticker)
 			if err != nil && time.Now().Sub(logSilentTime) > 0 {
 				logger.Debugf("ParseTicker(msg, ticker) error %s %v", msg, err)
 				logSilentTime = time.Now().Add(time.Minute)

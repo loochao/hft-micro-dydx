@@ -33,7 +33,7 @@ func TestWeights(t *testing.T) {
 		MaxOrderValues map[string]float64 `yaml:"maxOrderValues"`
 	}
 	data := Data{}
-	contents, err := ioutil.ReadFile("/Users/chenjilin/Projects/hft-micro/applications/usd-tk-tt-q/kcus-bnuf-quantiles/config.yaml")
+	contents, err := ioutil.ReadFile("/home/clu/Projects/hft-micro/applications/usd-tk-tt-q/kcus-bnuf-quantiles/config.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
