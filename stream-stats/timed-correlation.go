@@ -1,6 +1,7 @@
 package stream_stats
 
 import (
+	"math"
 	"time"
 )
 
@@ -43,7 +44,25 @@ func (tm *TimedCorrelation) Insert(timestamp time.Time, x, y float64) float64 {
 		tm.times = tm.times[cutIndex:]
 	}
 	if len(tm.xs) > 0 {
-		tm.covariance = tm.sumXY/float64(len(tm.xs)) - tm.sumX/float64(len(tm.xs))*tm.sumY/float64(len(tm.xs))
+		n := float64(len(tm.xs))
+		meanX := tm.sumX / n
+		meanY := tm.sumY / n
+		tm.covariance = tm.sumXY/n - meanX*meanY
+		// Compute standard deviations for normalization
+		varX := 0.0
+		varY := 0.0
+		for i, xi := range tm.xs {
+			yi := tm.ys[i]
+			varX += (xi - meanX) * (xi - meanX)
+			varY += (yi - meanY) * (yi - meanY)
+		}
+		varX /= n
+		varY /= n
+		stdX := math.Sqrt(varX)
+		stdY := math.Sqrt(varY)
+		if stdX > 0 && stdY > 0 {
+			tm.covariance = tm.covariance / (stdX * stdY)
+		}
 	}
 	return tm.covariance
 }

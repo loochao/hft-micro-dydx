@@ -41,8 +41,9 @@ func (dd *DydxUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan c
 		case <-dd.done:
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 			serverTime, err := dd.api.GetServerTime(subCtx)
+			subCancel()
 			if err != nil {
 				logger.Debugf("dd.api.GetSystemStatus(subCtx) error %v", err)
 				select {
@@ -84,8 +85,7 @@ func (dd *DydxUsdFuture) Done() chan interface{} {
 }
 
 func (dd *DydxUsdFuture) Stop() {
-	if atomic.LoadInt32(&dd.stopped) == 0 {
-		atomic.StoreInt32(&dd.stopped, 1)
+	if atomic.CompareAndSwapInt32(&dd.stopped, 0, 1) {
 		close(dd.done)
 		logger.Debugf("stopped")
 	}
@@ -583,8 +583,9 @@ func (dd *DydxUsdFuture) StreamFundingRate(ctx context.Context, channels map[str
 		case <-dd.done:
 			return
 		case <-afterFrTimer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 			markets, err := dd.api.GetMarkets(subCtx)
+			subCancel()
 			if err != nil {
 				logger.Debugf("dd.api.GetMarkets error %v", err)
 			} else {
@@ -601,8 +602,9 @@ func (dd *DydxUsdFuture) StreamFundingRate(ctx context.Context, channels map[str
 			afterFrTimer.Reset(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
 			break
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 			markets, err := dd.api.GetMarkets(subCtx)
+			subCancel()
 			if err != nil {
 				logger.Debugf("dd.api.GetMarkets error %v", err)
 			} else {
@@ -690,8 +692,9 @@ func (dd *DydxUsdFuture) accountLoop(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 			account, err := dd.api.GetAccount(subCtx)
+			subCancel()
 			if err != nil {
 				logger.Debugf("dd.api.GetAccountOverView error %v", err)
 			} else {

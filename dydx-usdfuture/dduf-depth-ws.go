@@ -208,6 +208,7 @@ func (w *DepthWS) readAll(r io.Reader) ([]byte, error) {
 }
 
 func (w *DepthWS) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+  for {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retires", wsUrl, counter)
@@ -246,10 +247,12 @@ func (w *DepthWS) reconnect(ctx context.Context, wsUrl string, proxy string, cou
 		case <-w.done:
 			return nil, fmt.Errorf("reconnect error: ws is done")
 		case <-time.After(time.Second * 10):
-			return w.reconnect(ctx, wsUrl, proxy, counter+1)
+			counter++
+			continue
 		}
 	}
 	return conn, nil
+  }
 }
 
 func (w *DepthWS) mainLoop(ctx context.Context, proxy string, channels map[string]chan []byte) {

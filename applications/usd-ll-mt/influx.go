@@ -68,7 +68,7 @@ func handleSave(
 			fields["xAbsValue"] = st.xAbsValue
 			fields["xValue"] = st.xValue
 			fields["ySize"] = st.ySize
-			fields["yAbsValue"] = st.xAbsValue
+			fields["yAbsValue"] = st.yAbsValue
 			fields["yValue"] = st.yValue
 			fields["xyValue"] = st.xValue + st.yValue
 			totalURPnl += st.xValue + st.yValue

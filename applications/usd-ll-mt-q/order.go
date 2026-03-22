@@ -28,7 +28,7 @@ func (strat *XYStrategy) updateXOrder() {
 		strat.quantileMiddle == nil ||
 		time.Now().Sub(strat.spread.EventTime) > strat.config.TimeToEnter ||
 		strat.fundingRateSettleSilent {
-		if time.Now().Sub(strat.spread.EventTime) > strat.config.TimeToCancel {
+		if strat.spread != nil && time.Now().Sub(strat.spread.EventTime) > strat.config.TimeToCancel {
 			strat.tryCancelXOpenOrder("spread time out")
 		} else if strat.fundingRateSettleSilent {
 			strat.tryCancelXOpenOrder("funding rate silent")
@@ -437,7 +437,7 @@ func (strat *XYStrategy) updateXOrder() {
 }
 
 func (strat *XYStrategy) isXOpenOrderOk() bool {
-	if time.Now().Sub(strat.spread.EventTime) > strat.config.TimeToCancel {
+	if strat.spread != nil && time.Now().Sub(strat.spread.EventTime) > strat.config.TimeToCancel {
 		logger.Debugf("%s CANCEL, SPREAD IS OUT OF DATE", strat.xSymbol)
 		return false
 	}

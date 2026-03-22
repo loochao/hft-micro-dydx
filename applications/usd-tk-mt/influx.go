@@ -61,7 +61,7 @@ func handleSave(
 			fields["xAbsValue"] = st.xAbsValue
 			fields["xValue"] = st.xValue
 			fields["ySize"] = st.ySize
-			fields["yAbsValue"] = st.xAbsValue
+			fields["yAbsValue"] = st.yAbsValue
 			fields["yValue"] = st.yValue
 			fields["xyValue"] = st.xValue + st.yValue
 			totalURPnl += st.xValue + st.yValue
@@ -107,7 +107,7 @@ func handleSave(
 				fields["xTimeDelta"] = st.spreadReport.XTimeDelta
 				fields["yTimeDelta"] = st.spreadReport.YTimeDelta
 				fields["xTickerFilterRatio"] = st.spreadReport.XTickerFilterRatio
-				fields["yTickerFilterRatio"] = st.spreadReport.XTickerFilterRatio
+				fields["yTickerFilterRatio"] = st.spreadReport.YTickerFilterRatio
 				fields["xExpireRatio"] = st.spreadReport.XExpireRatio
 				fields["yExpireRatio"] = st.spreadReport.YExpireRatio
 			}

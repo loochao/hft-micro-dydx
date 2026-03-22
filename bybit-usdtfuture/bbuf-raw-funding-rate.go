@@ -44,8 +44,9 @@ func StreamRawFundingRate(
 		case <-afterFrTimer.C:
 			timer.Reset(time.Now().Truncate(interval).Add(interval).Sub(time.Now()))
 			for symbol, ch := range channels {
-				subCtx, _ = context.WithTimeout(ctx, time.Minute)
+				subCtx, subCancel = context.WithTimeout(ctx, time.Minute)
 				msg, err = api.SendRawHTTPRequest(
+    subCancel()
 					subCtx,
 					http.MethodGet,
 					"/public/linear/funding/prev-funding-rate", &PrevFundingRateParam{
@@ -76,8 +77,9 @@ func StreamRawFundingRate(
 			break
 		case <-timer.C:
 			for symbol, ch := range channels {
-				subCtx, _ = context.WithTimeout(ctx, time.Minute)
+				subCtx, subCancel = context.WithTimeout(ctx, time.Minute)
 				msg, err = api.SendRawHTTPRequest(
+    subCancel()
 					subCtx,
 					http.MethodGet,
 					"/public/linear/funding/prev-funding-rate", &PrevFundingRateParam{

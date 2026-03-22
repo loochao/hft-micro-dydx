@@ -127,7 +127,7 @@ func handleSave(
 			fields["xTimeDelta"] = st.spreadReport.XTimeDelta
 			fields["yTimeDelta"] = st.spreadReport.YTimeDelta
 			fields["xTickerFilterRatio"] = st.spreadReport.XTickerFilterRatio
-			fields["yTickerFilterRatio"] = st.spreadReport.XTickerFilterRatio
+			fields["yTickerFilterRatio"] = st.spreadReport.YTickerFilterRatio
 			fields["xExpireRatio"] = st.spreadReport.XExpireRatio
 			fields["yExpireRatio"] = st.spreadReport.YExpireRatio
 		}

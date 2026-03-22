@@ -96,31 +96,36 @@ func (so *StarkwareOrder) GetHash() (*big.Int, error) {
 func (so *StarkwareOrder) CalculateHash() (*big.Int, error) {
 	var assetIdSell, assetIdBuy, quantumsAmountSell, quantumsAmountBuy *big.Int
 	if so.IsBuyingSynthetic {
-		assetIdSell = so.AssetIdCollateral
-		assetIdBuy = so.AssetIdSynthetic
-		quantumsAmountSell = so.QuantumsAmountCollateral
-		quantumsAmountBuy = so.QuantumsAmountSynthetic
+		assetIdSell = new(big.Int).Set(so.AssetIdCollateral)
+		assetIdBuy = new(big.Int).Set(so.AssetIdSynthetic)
+		quantumsAmountSell = new(big.Int).Set(so.QuantumsAmountCollateral)
+		quantumsAmountBuy = new(big.Int).Set(so.QuantumsAmountSynthetic)
 	} else {
-		assetIdSell = so.AssetIdSynthetic
-		assetIdBuy = so.AssetIdCollateral
-		quantumsAmountSell = so.QuantumsAmountSynthetic
-		quantumsAmountBuy = so.QuantumsAmountCollateral
+		assetIdSell = new(big.Int).Set(so.AssetIdSynthetic)
+		assetIdBuy = new(big.Int).Set(so.AssetIdCollateral)
+		quantumsAmountSell = new(big.Int).Set(so.QuantumsAmountSynthetic)
+		quantumsAmountBuy = new(big.Int).Set(so.QuantumsAmountCollateral)
 	}
+	quantumsAmountFee := new(big.Int).Set(so.QuantumsAmountFee)
+	nonce := new(big.Int).Set(so.Nonce)
+	positionId := new(big.Int).Set(so.PositionId)
+	expirationEpochHours := new(big.Int).Set(so.ExpirationEpochHours)
+
 	part1 := quantumsAmountSell
 	part1.Lsh(part1, ORDER_FIELD_BIT_LENGTHS["quantums_amount"])
 	part1.Add(part1, quantumsAmountBuy)
 	part1.Lsh(part1, ORDER_FIELD_BIT_LENGTHS["quantums_amount"])
-	part1.Add(part1, so.QuantumsAmountFee)
+	part1.Add(part1, quantumsAmountFee)
 	part1.Lsh(part1, ORDER_FIELD_BIT_LENGTHS["nonce"])
-	part1.Add(part1, so.Nonce)
+	part1.Add(part1, nonce)
 
 	part2 := big.NewInt(ORDER_PREFIX)
 	for i := 0; i < 3; i++ {
 		part2.Lsh(part2, ORDER_FIELD_BIT_LENGTHS["position_id"])
-		part2.Add(part2, so.PositionId)
+		part2.Add(part2, positionId)
 	}
 	part2.Lsh(part2, ORDER_FIELD_BIT_LENGTHS["expiration_epoch_hours"])
-	part2.Add(part2, so.ExpirationEpochHours)
+	part2.Add(part2, expirationEpochHours)
 	part2.Lsh(part2, ORDER_PADDING_BITS)
 
 	//fmt.Printf("part_1 %s\n", part_1)

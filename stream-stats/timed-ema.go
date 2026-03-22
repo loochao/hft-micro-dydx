@@ -25,6 +25,7 @@ func (tm *TimedEMA) Insert(timestamp time.Time, value float64) float64 {
 		k := 2.0 / (tm.Period + 1.0)
 		tm.Ema *= 1 - k
 		tm.Ema += k * value
+		tm.LastTime = timestamp
 	}
 	return tm.Ema
 }

@@ -411,8 +411,9 @@ func (k *KucoinCoinFuture) StreamFundingRate(ctx context.Context, channels map[s
 			return
 		case <-timer.C:
 			for symbol, ch := range channels {
-				subCtx, _ := context.WithTimeout(ctx, time.Minute)
+				subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 				fr, err := k.api.GetCurrentFundingRate(subCtx, symbol)
+    subCancel()
 				if err != nil {
 					logger.Debugf("api.GetCurrentFundingRate error %v", err)
 				} else {
@@ -479,8 +480,9 @@ func (k *KucoinCoinFuture) systemStatusLoop(
 		case <-k.done:
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 			systemStatus, err := k.api.GetSystemStatus(subCtx)
+   subCancel()
 			if err != nil {
 				logger.Debugf("k.api.GetSystemStatus(subCtx) error %v", err)
 				select {
@@ -521,8 +523,9 @@ func (k *KucoinCoinFuture) accountLoop(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 			account, err := k.api.GetAccountOverView(subCtx, AccountParam{
+   subCancel()
 				Currency: currency,
 			})
 			if err != nil {
@@ -550,8 +553,9 @@ func (k *KucoinCoinFuture) positionsLoop(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 			positions, err := k.api.GetPositions(subCtx)
+   subCancel()
 			if err != nil {
 				logger.Debugf("api.GetPositions error %v", err)
 			} else {

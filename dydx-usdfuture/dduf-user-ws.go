@@ -286,6 +286,7 @@ func (w *UserWebsocket) dataHandleLoop(ctx context.Context) {
 }
 
 func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy string, counter int64) (*websocket.Conn, error) {
+  for {
 
 	if counter != 0 {
 		logger.Debugf("reconnect %s, %d retries", wsUrl, counter)
@@ -324,10 +325,12 @@ func (w *UserWebsocket) reconnect(ctx context.Context, wsUrl string, proxy strin
 		case <-w.done:
 			return nil, fmt.Errorf("reconnect error: ws is done")
 		case <-time.After(time.Second * 10):
-			return w.reconnect(ctx, wsUrl, proxy, counter+1)
+			counter++
+			continue
 		}
 	}
 	return conn, nil
+  }
 }
 
 func (w *UserWebsocket) mainLoop(ctx context.Context, proxy string) {

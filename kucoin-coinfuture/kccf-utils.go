@@ -229,8 +229,9 @@ func PositionsHttpLoop(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 			positions, err := api.GetPositions(subCtx)
+   subCancel()
 			if err != nil {
 				logger.Debugf("api.GetPositions error %v", err)
 			} else {
@@ -269,8 +270,9 @@ func AccountHttpLoop(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 			account, err := api.GetAccountOverView(subCtx, param)
+   subCancel()
 			if err != nil {
 				logger.Debugf("api.GetAccountOverView error %v", err)
 			} else {
@@ -292,8 +294,9 @@ func WatchSystemStatusHttp(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, _ := context.WithTimeout(ctx, time.Minute)
+			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 			systemStatus, err := api.GetSystemStatus(subCtx)
+   subCancel()
 			if err != nil {
 				logger.Debugf("api.GetSystemStatus error %v", err)
 				select {
@@ -371,8 +374,9 @@ func FundingRateLoop(
 			return
 		case <-timer.C:
 			for _, symbol := range symbols {
-				subCtx, _ := context.WithTimeout(ctx, time.Minute)
+				subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
 				fr, err := api.GetCurrentFundingRate(subCtx, symbol)
+    subCancel()
 				if err != nil {
 					logger.Debugf("api.GetCurrentFundingRate error %v", err)
 				} else {

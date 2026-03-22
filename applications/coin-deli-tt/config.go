@@ -67,7 +67,7 @@ func (config *Config) SetDefaultIfNotSet() {
 		config.LoopInterval = time.Second
 	}
 	if config.LogInterval == 0 {
-		config.LoopInterval = time.Minute
+		config.LogInterval = time.Minute
 	}
 	if config.BalancePositionMaxAge == 0 {
 		config.BalancePositionMaxAge = time.Minute * 3
@@ -100,7 +100,7 @@ func (config *Config) SetDefaultIfNotSet() {
 		config.DepthMaxAgeDiffBias = time.Millisecond * 100
 	}
 	if config.ReportCount == 0 {
-		config.RestartSilent = 1000
+		config.ReportCount = 1000
 	}
 	if config.SpreadTimeToLive == 0 {
 		config.SpreadTimeToLive = time.Second * 3
