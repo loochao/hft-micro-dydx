@@ -41,9 +41,9 @@ func (dd *DydxUsdFuture) StreamSystemStatus(ctx context.Context, statusCh chan c
 		case <-dd.done:
 			return
 		case <-timer.C:
-			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+				defer cancel()
 			serverTime, err := dd.api.GetServerTime(subCtx)
-			subCancel()
 			if err != nil {
 				logger.Debugf("dd.api.GetSystemStatus(subCtx) error %v", err)
 				select {
@@ -583,9 +583,9 @@ func (dd *DydxUsdFuture) StreamFundingRate(ctx context.Context, channels map[str
 		case <-dd.done:
 			return
 		case <-afterFrTimer.C:
-			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+				defer cancel()
 			markets, err := dd.api.GetMarkets(subCtx)
-			subCancel()
 			if err != nil {
 				logger.Debugf("dd.api.GetMarkets error %v", err)
 			} else {
@@ -602,9 +602,9 @@ func (dd *DydxUsdFuture) StreamFundingRate(ctx context.Context, channels map[str
 			afterFrTimer.Reset(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
 			break
 		case <-timer.C:
-			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+				defer cancel()
 			markets, err := dd.api.GetMarkets(subCtx)
-			subCancel()
 			if err != nil {
 				logger.Debugf("dd.api.GetMarkets error %v", err)
 			} else {
@@ -692,9 +692,9 @@ func (dd *DydxUsdFuture) accountLoop(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+				defer cancel()
 			account, err := dd.api.GetAccount(subCtx)
-			subCancel()
 			if err != nil {
 				logger.Debugf("dd.api.GetAccountOverView error %v", err)
 			} else {

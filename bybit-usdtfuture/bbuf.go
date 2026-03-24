@@ -395,9 +395,9 @@ func (h *BybitUsdtFuture) StreamFundingRate(ctx context.Context, channels map[st
 			return
 		case <-afterFrTimer.C:
 			for symbol, ch := range channels {
-				subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+				subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+				defer cancel()
 				fr, err := h.api.GetPrevFundingRate(subCtx, PrevFundingRateParam{
-    subCancel()
 					Symbol: symbol,
 				})
 				if err != nil {
@@ -421,9 +421,9 @@ func (h *BybitUsdtFuture) StreamFundingRate(ctx context.Context, channels map[st
 			break
 		case <-timer.C:
 			for symbol, ch := range channels {
-				subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+				subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+				defer cancel()
 				fr, err := h.api.GetPrevFundingRate(subCtx, PrevFundingRateParam{
-    subCancel()
 					Symbol: symbol,
 				})
 				if err != nil {
@@ -533,9 +533,9 @@ func (h *BybitUsdtFuture) accountLoop(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+				defer cancel()
 			account, err := h.api.GetBalance(subCtx, BalanceParam{
-   subCancel()
 				Coin: "USDT",
 			})
 			if err != nil {
@@ -566,9 +566,9 @@ func (h *BybitUsdtFuture) positionsLoop(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+				defer cancel()
 			positions, err := h.api.GetPositions(subCtx)
-   subCancel()
 			if err != nil {
 				logger.Debugf("api.GetPositions error %v", err)
 			} else {

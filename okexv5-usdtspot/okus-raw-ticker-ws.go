@@ -277,7 +277,7 @@ func (w *RawTickerWS) mainLoop(ctx context.Context, proxy string, channels map[s
 				internalCancel()
 			}
 			internalCtx, internalCancel = context.WithCancel(ctx)
-			conn, err := w.reconnect(internalCtx, "wss://ws.okex.com:8443/ws/v5/public", proxy, 0)
+			conn, err := w.reconnect(internalCtx, "wss://ws.okx.com:8443/ws/v5/public", proxy, 0)
 			if err != nil {
 				logger.Debugf("w.reconnect error %v", err)
 				internalCancel()

@@ -401,7 +401,8 @@ func (h *HuobiUsdtFuture) StreamFundingRate(ctx context.Context, channels map[st
 		case <-h.done:
 			return
 		case <-afterFrTimer.C:
-			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+			_ = cancel
 			frs, err := h.api.GetFundingRates(subCtx)
 			if err != nil {
 				logger.Debugf("k.api.GetFundingRates error %v", err)
@@ -420,7 +421,8 @@ func (h *HuobiUsdtFuture) StreamFundingRate(ctx context.Context, channels map[st
 			afterFrTimer.Reset(time.Now().Truncate(time.Hour * 4).Add(time.Hour*4 + time.Second).Sub(time.Now()))
 			break
 		case <-timer.C:
-			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+			_ = cancel
 			frs, err := h.api.GetFundingRates(subCtx)
 			if err != nil {
 				logger.Debugf("k.api.GetFundingRates error %v", err)
@@ -485,7 +487,8 @@ func (h *HuobiUsdtFuture) systemStatusLoop(
 		case <-h.done:
 			return
 		case <-timer.C:
-			subCtx, subCancel := context.WithTimeout(ctx, time.Second*3)
+			subCtx, cancel := context.WithTimeout(ctx, time.Second*3)
+			_ = cancel
 			heartBeat, err := h.api.GetHeartBeat(subCtx)
 			if err != nil {
 				logger.Debugf("h.api.GetHeartBeat(subCtx) error %v", err)
@@ -526,7 +529,8 @@ func (h *HuobiUsdtFuture) accountLoop(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+			_ = cancel
 			accounts, err := h.api.GetAccounts(subCtx)
 			if err != nil {
 				logger.Debugf("h.api.GetAccounts error %v", err)
@@ -556,7 +560,8 @@ func (h *HuobiUsdtFuture) positionsLoop(
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			subCtx, subCancel := context.WithTimeout(ctx, time.Minute)
+			subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+			_ = cancel
 			positions, err := h.api.GetPositions(subCtx)
 			if err != nil {
 				logger.Debugf("api.GetPositions error %v", err)

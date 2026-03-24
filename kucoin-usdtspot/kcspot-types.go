@@ -101,6 +101,7 @@ type Depth5 struct {
 	Bids      [5][2]float64 `json:"-"`
 	Asks      [5][2]float64 `json:"_"`
 	EventTime time.Time     `json:"-"`
+	ParseTime time.Time     `json:"-"`
 }
 
 func (depth *Depth5) GetBidOffset() float64 {
@@ -141,6 +142,7 @@ func (depth *Depth5) GetExchange() common.ExchangeID {
 
 func (depth *Depth5) GetSymbol() string       { return depth.Symbol }
 func (depth *Depth5) GetEventTime() time.Time { return depth.EventTime }
+func (depth *Depth5) GetParseTime() time.Time { return depth.ParseTime }
 func (depth *Depth5) UnmarshalJSON(data []byte) error {
 	type Alias Depth5
 	aux := struct {
@@ -641,6 +643,14 @@ func (ticker *Ticker) GetSymbol() string {
 }
 
 func (ticker *Ticker) GetTime() time.Time {
+	return ticker.EventTime
+}
+
+func (ticker *Ticker) GetEventTime() time.Time {
+	return ticker.EventTime
+}
+
+func (ticker *Ticker) GetParseTime() time.Time {
 	return ticker.EventTime
 }
 

@@ -111,6 +111,7 @@ func (depth *Depth20) GetBids() common.Bids { return depth.Bids[:] }
 func (depth *Depth20) GetAsks() common.Asks { return depth.Asks[:] }
 func (depth *Depth20) GetSymbol() string       { return depth.Symbol }
 func (depth *Depth20) GetEventTime() time.Time { return depth.EventTime }
+func (depth *Depth20) GetParseTime() time.Time { return depth.ParseTime }
 
 func (depth *Depth20) UnmarshalJSON(data []byte) error {
 	type Alias Depth20
@@ -665,6 +666,14 @@ func (t *Ticker) GetSymbol() string {
 }
 
 func (t *Ticker) GetTime() time.Time {
+	return t.EventTime
+}
+
+func (t *Ticker) GetEventTime() time.Time {
+	return t.EventTime
+}
+
+func (t *Ticker) GetParseTime() time.Time {
 	return t.EventTime
 }
 

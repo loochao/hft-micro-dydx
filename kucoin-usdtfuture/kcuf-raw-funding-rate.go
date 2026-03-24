@@ -38,17 +38,16 @@ func StreamRawFundingRate(
 		}
 	}
 	var msg []byte
-	var subCtx context.Context
-
+	
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-afterFrTimer.C:
 			for symbol, ch := range channels {
-				subCtx, subCancel = context.WithTimeout(ctx, time.Minute)
+				subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+				defer cancel()
 				msg, err = api.GetRawData(subCtx, http.MethodGet, fmt.Sprintf("/api/v1/funding-rate/%s/current", symbol), nil)
-    subCancel()
 				if err != nil {
 					logger.Debugf("api.GetCurrentFundingRate error %v", err)
 				} else {
@@ -73,9 +72,9 @@ func StreamRawFundingRate(
 			break
 		case <-timer.C:
 			for symbol, ch := range channels {
-				subCtx, subCancel = context.WithTimeout(ctx, time.Minute)
+				subCtx, cancel := context.WithTimeout(ctx, time.Minute)
+				defer cancel()
 				msg, err = api.GetRawData(subCtx, http.MethodGet, fmt.Sprintf("/api/v1/funding-rate/%s/current", symbol), nil)
-    subCancel()
 				if err != nil {
 					logger.Debugf("api.GetCurrentFundingRate error %v", err)
 				} else {
