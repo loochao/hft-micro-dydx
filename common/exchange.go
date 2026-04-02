@@ -23,4 +23,5 @@ const (
 	DydxUsdFuture
 	OkexV5UsdtSpot
 	OkexV5UsdtSwap
+	DydxV4UsdFuture
 )

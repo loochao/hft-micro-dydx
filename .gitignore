@@ -3,3 +3,5 @@ dist
 *.yaml
 configs
 outputs
+bin/
+usd-tk-tt-q4
