@@ -320,9 +320,17 @@ func (w *UserWebsocket) heartbeatLoop(ctx context.Context, conn *websocket.Conn)
 	})
 
 	timer := time.NewTimer(time.Minute * 15)
+	keepAliveTimer := time.NewTimer(time.Second * 30)
+	defer keepAliveTimer.Stop()
 
 	for {
 		select {
+		case <-keepAliveTimer.C:
+			err := conn.WriteControl(websocket.PingMessage, []byte("keepalive"), time.Now().Add(time.Second*10))
+			if err != nil {
+				logger.Debugf("keepalive ping error %v", err)
+			}
+			keepAliveTimer.Reset(time.Second * 30)
 		case <-timer.C:
 			logger.Warnf("no traffic in %v, restart ws", time.Minute*15)
 			w.restart()
