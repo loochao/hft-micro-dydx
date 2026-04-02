@@ -417,6 +417,25 @@ type WSOrderbookLevel struct {
 	Size  string `json:"size"`
 }
 
+// UnmarshalJSON handles both object format {"price":"X","size":"Y"} (snapshots)
+// and array format ["X","Y"] (channel_data updates)
+func (l *WSOrderbookLevel) UnmarshalJSON(data []byte) error {
+	if len(data) > 0 && data[0] == '[' {
+		var arr []string
+		if err := json.Unmarshal(data, &arr); err != nil {
+			return err
+		}
+		if len(arr) >= 2 {
+			l.Price = arr[0]
+			l.Size = arr[1]
+		}
+		return nil
+	}
+	type Alias WSOrderbookLevel
+	aux := &struct{ *Alias }{Alias: (*Alias)(l)}
+	return json.Unmarshal(data, aux)
+}
+
 type WSOrderbookUpdate struct {
 	Asks []WSOrderbookLevel `json:"asks"`
 	Bids []WSOrderbookLevel `json:"bids"`
