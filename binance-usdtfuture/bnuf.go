@@ -538,6 +538,51 @@ func (bn *BinanceUsdtFuture) Setup(ctx context.Context, settings common.Exchange
 		Key:    settings.ApiKey,
 		Secret: settings.ApiSecret,
 	}, settings.Proxy)
+	// Dynamically load contract info from exchange
+	exchangeInfo, eiErr := bn.ufApi.GetExchangeInfo(ctx)
+	if eiErr != nil {
+		logger.Debugf("GetExchangeInfo error %v, using static limits", eiErr)
+	} else {
+		for _, sym := range exchangeInfo.Symbols {
+			if sym.Status != "TRADING" || sym.ContractType != "PERPETUAL" {
+				continue
+			}
+			for _, filter := range sym.Filters {
+				switch filter.FilterType {
+				case "PRICE_FILTER":
+					if filter.TickSize > 0 {
+						TickSizes[sym.Symbol] = filter.TickSize
+					}
+					if filter.MultiplierUp > 0 {
+						MultiplierUps[sym.Symbol] = filter.MultiplierUp
+					}
+					if filter.MultiplierDown > 0 {
+						MultiplierDowns[sym.Symbol] = filter.MultiplierDown
+					}
+				case "LOT_SIZE":
+					if filter.StepSize > 0 {
+						StepSizes[sym.Symbol] = filter.StepSize
+					}
+					if filter.MinQty > 0 {
+						MinSizes[sym.Symbol] = filter.MinQty
+					}
+				case "MIN_NOTIONAL":
+					if filter.Notional > 0 {
+						MinNotional[sym.Symbol] = filter.Notional
+					}
+				case "PERCENT_PRICE":
+					if filter.MultiplierUp > 0 {
+						MultiplierUps[sym.Symbol] = filter.MultiplierUp
+					}
+					if filter.MultiplierDown > 0 {
+						MultiplierDowns[sym.Symbol] = filter.MultiplierDown
+					}
+				}
+			}
+		}
+		logger.Debugf("Loaded %d symbols from exchangeInfo", len(exchangeInfo.Symbols))
+	}
+
 	if settings.ChangePositionMode {
 		res, err := bn.ufApi.UpdatePositionMode(ctx, UpdatePositionModeParams{
 			DualSidePosition: false,
